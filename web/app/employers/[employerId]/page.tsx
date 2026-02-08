@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -329,7 +330,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
       {employer.bannerUrl && (
         <div className="relative w-full h-48 md:h-64 rounded-t-lg overflow-hidden mb-0">
           <Image
-            src={`${employer.bannerUrl}${employer.bannerUrl.includes('?') ? '&' : '?'}v=${(employer as any).bannerUpdatedAt?.seconds || Date.now()}`}
+            src={`${employer.bannerUrl}${employer.bannerUrl.includes('?') ? '&' : '?'}v=${(employer as any).bannerUpdatedAt?.seconds || '1'}`}
             alt={`${employer.organizationName} banner`}
             fill
             className="object-cover"

@@ -348,7 +348,7 @@ export function ProfileCompletionCard({ profile, onNavigateToProfile, compact = 
       {completionPercent === 100 && (
         <div className="mt-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 p-4 text-center">
           <p className="text-purple-400 font-medium">Your profile is complete!</p>
-          <p className="text-xs text-[var(--text-muted)] mt-1">You're more likely to be discovered by employers</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">You&apos;re more likely to be discovered by employers</p>
         </div>
       )}
     </div>

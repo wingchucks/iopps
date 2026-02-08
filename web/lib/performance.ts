@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Web Performance Monitoring Utilities
  * Tracks Core Web Vitals and custom performance metrics

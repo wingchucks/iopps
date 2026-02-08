@@ -28,6 +28,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
   const [highlightedSpeakerId, setHighlightedSpeakerId] = useState<string | null>(null);
 
   // Check if conference is expired on client side
+  /* eslint-disable react-hooks/set-state-in-effect -- intentional: sync local state from server prop */
   useEffect(() => {
     if (initialConference) {
       if (initialConference.active === false || isConferenceExpired(initialConference)) {
@@ -38,6 +39,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
       }
     }
   }, [initialConference]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Load saved state when user is logged in
   useEffect(() => {

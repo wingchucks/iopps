@@ -146,7 +146,7 @@ export async function addEmployerProduct(params: AddProductParams): Promise<stri
   const quantity = params.quantity || 1;
 
   // Calculate stats based on product type and quantity
-  let stats = { ...config.defaultStats };
+  const stats = { ...config.defaultStats };
 
   // Apply quantity multiplier for job products
   if (config.category === "job" && quantity > 1) {

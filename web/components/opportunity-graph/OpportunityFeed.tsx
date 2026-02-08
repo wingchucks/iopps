@@ -311,7 +311,7 @@ export function OpportunityFeed({
                 textDecoration: "none",
               }}
             >
-              Get Started — It's Free
+              Get Started — It&apos;s Free
             </a>
             <a
               href="/login"
@@ -650,7 +650,7 @@ export function OpportunityFeed({
               fontSize: 14,
             }}
           >
-            ✨ You're all caught up — check back later for new opportunities
+            ✨ You&apos;re all caught up — check back later for new opportunities
           </div>
         </div>
       )}

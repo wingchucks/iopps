@@ -29,6 +29,7 @@ export default function PricingTabs({ children }: PricingTabsProps) {
   useEffect(() => {
     const hash = window.location.hash.slice(1) as TabId;
     if (hash && tabs.some(t => t.id === hash)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: sync tab from URL hash
       setActiveTab(hash);
     }
   }, []);

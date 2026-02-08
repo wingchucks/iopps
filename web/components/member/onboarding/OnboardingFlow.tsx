@@ -379,9 +379,9 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
           {currentStep === 3 && (
             <div className="space-y-6">
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-white">You're All Set!</h2>
+                <h2 className="text-2xl font-bold text-white">You&apos;re All Set!</h2>
                 <p className="mt-2 text-[var(--text-muted)]">
-                  Based on your interests, here's what to do next
+                  Based on your interests, here&apos;s what to do next
                 </p>
               </div>
 

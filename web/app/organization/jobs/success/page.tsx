@@ -14,6 +14,7 @@ function PaymentSuccessContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    /* eslint-disable react-hooks/set-state-in-effect -- intentional: sync initial state from URL params */
     useEffect(() => {
         // Success if we have a Stripe session OR a job_id from subscription/free posting
         if (sessionId || jobId) {
@@ -23,6 +24,7 @@ function PaymentSuccessContent() {
             setLoading(false);
         }
     }, [sessionId, jobId]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     if (loading) {
         return (

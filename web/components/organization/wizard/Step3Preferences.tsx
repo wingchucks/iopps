@@ -31,7 +31,7 @@ export default function Step3Preferences({
             <div className="mb-6">
                 <h2 className="text-xl font-bold text-foreground">Preferences</h2>
                 <p className="text-sm text-[var(--text-muted)]">
-                    Fine-tune who you're looking for and how they should apply.
+                    Fine-tune who you&apos;re looking for and how they should apply.
                 </p>
             </div>
 

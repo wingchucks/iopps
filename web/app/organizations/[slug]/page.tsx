@@ -56,18 +56,8 @@ export default async function OrganizationProfilePage({ params }: Props) {
     notFound();
   }
 
-  console.log(`[BusinessProfile] Loading profile for slug: "${slug}"`);
-
   // Try to get published profile first
   let org = await getPublicOrganizationBySlug(slug);
-
-  if (org) {
-    console.log(`[BusinessProfile] Found public profile:`, {
-      id: org.id,
-      organizationName: org.organizationName,
-      slug: org.slug,
-    });
-  }
 
   // If not found as published, try to get any profile (for preview/owner view)
   // This will only succeed if the user is the owner or an admin (per Firestore rules)

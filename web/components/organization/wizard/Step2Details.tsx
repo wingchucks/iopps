@@ -76,7 +76,7 @@ export default function Step2Details({
                 <div>
                     <h2 className="text-xl font-bold text-foreground">Job Details</h2>
                     <p className="text-sm text-[var(--text-muted)]">
-                        Tell candidates what they'll be doing and what you need.
+                        Tell candidates what they&apos;ll be doing and what you need.
                     </p>
                 </div>
                 <button

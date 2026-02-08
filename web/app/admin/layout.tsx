@@ -207,6 +207,7 @@ export default function AdminLayout({
 
   // Close mobile nav on route change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: sync UI with route change
     setMobileNavOpen(false);
   }, [pathname]);
 

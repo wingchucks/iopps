@@ -225,6 +225,7 @@ export function useEntityCounts(
   }, [entityType, statusValues]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: fetch data on mount/param change
     fetchCounts();
   }, [fetchCounts]);
 

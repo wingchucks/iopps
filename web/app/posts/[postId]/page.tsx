@@ -94,7 +94,7 @@ function PostDetailContent() {
           <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
             <p className="text-lg font-semibold text-[var(--text-secondary)]">Post not found</p>
             <p className="mt-2 text-sm text-foreground0">
-              This post may have been deleted or you don't have permission to view it.
+              This post may have been deleted or you don&apos;t have permission to view it.
             </p>
           </div>
         </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Scholarship Analytics - Track apply clicks with bot protection
  */

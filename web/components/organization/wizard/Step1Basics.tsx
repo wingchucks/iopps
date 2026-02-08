@@ -32,7 +32,7 @@ export default function Step1Basics({ data, updateData, onNext }: Step1Props) {
             <div className="mb-6">
                 <h2 className="text-xl font-bold text-foreground">The Basics</h2>
                 <p className="text-sm text-[var(--text-muted)]">
-                    Let's start with the core details of the role.
+                    Let&apos;s start with the core details of the role.
                 </p>
             </div>
 

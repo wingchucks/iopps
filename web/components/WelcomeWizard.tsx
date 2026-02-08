@@ -81,8 +81,8 @@ export default function WelcomeWizard({
               Welcome{organizationName ? `, ${organizationName}` : ""}!
             </h2>
             <p className="mt-4 text-[var(--text-secondary)]">
-              You've taken the first step to connect with Indigenous talent across Canada.
-              Let's get your organization set up on IOPPS.
+              You&apos;ve taken the first step to connect with Indigenous talent across Canada.
+              Let&apos;s get your organization set up on IOPPS.
             </p>
             <div className="mt-8 grid gap-4 text-left sm:grid-cols-3">
               <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
@@ -130,7 +130,7 @@ export default function WelcomeWizard({
                 <div>
                   <h4 className="font-semibold text-white">Upload Your Logo</h4>
                   <p className="mt-1 text-sm text-[var(--text-muted)]">
-                    Add your organization's logo to stand out and be recognized
+                    Add your organization&apos;s logo to stand out and be recognized
                   </p>
                 </div>
               </div>
@@ -181,7 +181,7 @@ export default function WelcomeWizard({
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 flex-shrink-0">📧</span>
-                  <span>You'll receive an email notification once approved</span>
+                  <span>You&apos;ll receive an email notification once approved</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 flex-shrink-0">👁️</span>
@@ -206,10 +206,10 @@ export default function WelcomeWizard({
               <span className="text-5xl">🚀</span>
             </div>
             <h2 className="text-2xl font-bold text-white">
-              You're All Set!
+              You&apos;re All Set!
             </h2>
             <p className="mt-4 text-[var(--text-secondary)]">
-              Here's what you can do right now to get started:
+              Here&apos;s what you can do right now to get started:
             </p>
             <div className="mt-8 space-y-4">
               <Link

@@ -19,6 +19,7 @@ function UnsubscribeContent() {
   const [message, setMessage] = useState("");
   const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- intentional: async token verification on mount */
   useEffect(() => {
     if (!token || !email) {
       setStatus("error");
@@ -27,29 +28,29 @@ function UnsubscribeContent() {
     }
 
     // Verify the token
-    verifyToken();
-  }, [token, email]);
+    async function doVerify() {
+      try {
+        const response = await fetch(
+          `/api/emails/unsubscribe?token=${encodeURIComponent(token!)}&email=${encodeURIComponent(email!)}`
+        );
 
-  async function verifyToken() {
-    try {
-      const response = await fetch(
-        `/api/emails/unsubscribe?token=${encodeURIComponent(token!)}&email=${encodeURIComponent(email!)}`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setVerifiedEmail(data.email);
-        setStatus("ready");
-      } else {
-        const data = await response.json();
+        if (response.ok) {
+          const data = await response.json();
+          setVerifiedEmail(data.email);
+          setStatus("ready");
+        } else {
+          const data = await response.json();
+          setStatus("error");
+          setMessage(data.error || "Invalid or expired unsubscribe link.");
+        }
+      } catch {
         setStatus("error");
-        setMessage(data.error || "Invalid or expired unsubscribe link.");
+        setMessage("Failed to verify unsubscribe link. Please try again.");
       }
-    } catch {
-      setStatus("error");
-      setMessage("Failed to verify unsubscribe link. Please try again.");
     }
-  }
+    doVerify();
+  }, [token, email]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   async function handleUnsubscribe() {
     if (!token || !email) return;
@@ -136,7 +137,7 @@ function UnsubscribeContent() {
               </div>
               <h1 className="text-2xl font-bold text-[var(--text-primary)]">Unsubscribe</h1>
               <p className="mt-4 text-foreground0">
-                You're about to unsubscribe <span className="text-[var(--text-primary)]">{verifiedEmail}</span> from{" "}
+                You&apos;re about to unsubscribe <span className="text-[var(--text-primary)]">{verifiedEmail}</span> from{" "}
                 <span className="text-[var(--text-primary)]">{getTypeLabel(type)}</span>.
               </p>
               <button
@@ -163,7 +164,7 @@ function UnsubscribeContent() {
               <h1 className="text-2xl font-bold text-[var(--text-primary)]">Unsubscribed</h1>
               <p className="mt-4 text-foreground0">{message}</p>
               <p className="mt-2 text-sm text-foreground0">
-                You'll still receive important account notifications.
+                You&apos;ll still receive important account notifications.
               </p>
               <div className="mt-6 space-y-3">
                 <Link

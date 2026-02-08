@@ -64,7 +64,7 @@ export default function OfflinePage() {
           <ul className="text-xs text-foreground0 space-y-1 text-left">
             <li>• Check your internet connection</li>
             <li>• Try switching between WiFi and mobile data</li>
-            <li>• Disable airplane mode if it's on</li>
+            <li>• Disable airplane mode if it&apos;s on</li>
             <li>• Previously visited pages may still be available</li>
           </ul>
         </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Service-related Firestore operations for Indigenous Marketplace
 import {
   addDoc,

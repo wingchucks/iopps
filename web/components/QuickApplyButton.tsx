@@ -382,7 +382,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                     />
                                                 )}
                                                 <p className="text-xs text-foreground0">
-                                                    Don't have one? <a href="/member/tools/cover-letter-builder" target="_blank" className="text-accent hover:underline">Create one with our builder</a>.
+                                                    Don&apos;t have one? <a href="/member/tools/cover-letter-builder" target="_blank" className="text-accent hover:underline">Create one with our builder</a>.
                                                 </p>
                                             </div>
                                         )}

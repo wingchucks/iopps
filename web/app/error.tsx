@@ -37,8 +37,8 @@ export default function Error({
                     Something went wrong
                 </h1>
                 <p className="mt-4 max-w-md text-[var(--text-muted)]">
-                    We encountered an unexpected error. Don't worry, our team has been
-                    notified and we're looking into it.
+                    We encountered an unexpected error. Don&apos;t worry, our team has been
+                    notified and we&apos;re looking into it.
                 </p>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">

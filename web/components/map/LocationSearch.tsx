@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect -- intentional: sync local state from props and localStorage */
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";

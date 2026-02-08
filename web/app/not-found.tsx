@@ -25,8 +25,8 @@ export default function NotFound() {
                     Page Not Found
                 </h2>
                 <p className="mt-4 max-w-md text-[var(--text-muted)]">
-                    Sorry, we couldn't find the page you're looking for. The opportunity
-                    you're seeking might have moved or no longer exists.
+                    Sorry, we couldn&apos;t find the page you&apos;re looking for. The opportunity
+                    you&apos;re seeking might have moved or no longer exists.
                 </p>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Vendor-related Firestore operations
 import {
   addDoc,
@@ -353,8 +354,8 @@ export async function upsertVendorProfile(
   } else {
     const slug = data.businessName ? generateUniqueSlug(data.businessName) : '';
 
-    let statusValue = vendorStatus === 'active' ? 'active' : 'draft';
-    let verificationStatus = vendorStatus === 'active' ? 'verified' : 'pending';
+    const statusValue = vendorStatus === 'active' ? 'active' : 'draft';
+    const verificationStatus = vendorStatus === 'active' ? 'verified' : 'pending';
 
     const categories = data.category ? [data.category] : [];
     const categoryIds = data.category

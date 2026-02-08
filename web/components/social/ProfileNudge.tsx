@@ -60,6 +60,7 @@ export default function ProfileNudge() {
 
   useEffect(() => {
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: handle missing user
       setLoading(false);
       return;
     }

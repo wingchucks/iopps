@@ -11,6 +11,7 @@ function PaymentSuccessContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    /* eslint-disable react-hooks/set-state-in-effect -- intentional: sync initial state from URL params */
     useEffect(() => {
         if (sessionId) {
             // Payment was successful
@@ -20,6 +21,7 @@ function PaymentSuccessContent() {
             setLoading(false);
         }
     }, [sessionId]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     if (loading) {
         return (

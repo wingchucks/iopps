@@ -68,12 +68,12 @@ function TierBadge({ tier }: { tier: string }) {
   );
 }
 
-function formatDate(date: any): string {
+function formatDate(date: unknown): string {
   if (!date) return "N/A";
 
   // Handle Firestore Timestamp
-  if (date.toDate && typeof date.toDate === "function") {
-    return new Date(date.toDate()).toLocaleDateString("en-US", {
+  if (typeof date === "object" && date !== null && typeof (date as Record<string, unknown>).toDate === "function") {
+    return new Date(((date as Record<string, unknown>).toDate as () => Date)()).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -81,7 +81,7 @@ function formatDate(date: any): string {
   }
 
   // Handle Date object or string
-  return new Date(date).toLocaleDateString("en-US", {
+  return new Date(date as string | number).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",

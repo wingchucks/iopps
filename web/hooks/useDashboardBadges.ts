@@ -39,6 +39,7 @@ export function useDashboardBadges(user: { uid: string } | null, role: 'member' 
 
     useEffect(() => {
         if (!user || !role) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: handle missing auth
             setLoading(false);
             return;
         }

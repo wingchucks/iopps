@@ -30,7 +30,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             Empowering Indigenous Success
           </h2>
           <p className="mt-4 text-lg text-[var(--text-muted)] leading-relaxed">
-            Whether you're seeking opportunities or looking to connect with Indigenous talent, join Canada's premier Indigenous platform.
+            Whether you&apos;re seeking opportunities or looking to connect with Indigenous talent, join Canada&apos;s premier Indigenous platform.
           </p>
 
           <div className="mt-10 space-y-4">

@@ -279,7 +279,7 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                                 </div>
                                 <h3 className="text-2xl font-bold text-white mb-2">Profile Completed!</h3>
                                 <p className="text-[var(--text-muted)] max-w-md">
-                                    You've successfully set up your profile. You can always edit it later or add more details like your education and portfolio.
+                                    You&apos;ve successfully set up your profile. You can always edit it later or add more details like your education and portfolio.
                                 </p>
 
                                 <div className="grid grid-cols-2 gap-4 w-full mt-8">

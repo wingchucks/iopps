@@ -520,7 +520,7 @@ export default function SearchFilters({
                   <p className="font-medium text-white truncate">{search.name}</p>
                   {search.filters.query && (
                     <p className="text-sm text-[var(--text-muted)] truncate">
-                      "{search.filters.query}"
+                      &quot;{search.filters.query}&quot;
                     </p>
                   )}
                 </div>

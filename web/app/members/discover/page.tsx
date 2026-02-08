@@ -329,7 +329,7 @@ export default function DiscoverPage() {
                   <Briefcase className="h-8 w-8 text-blue-400 mb-3" />
                   <h4 className="font-medium text-[var(--text-primary)] mb-1">Add Your Experience</h4>
                   <p className="text-sm text-foreground0">
-                    Connect with others who've worked at similar companies or in similar roles.
+                    Connect with others who&apos;ve worked at similar companies or in similar roles.
                   </p>
                 </div>
                 <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border)]">

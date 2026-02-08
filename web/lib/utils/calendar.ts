@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Calendar integration utilities for generating "Add to Calendar" links
  */

@@ -89,6 +89,7 @@ export function EntityActionsMenu({
 
   // Ensure we're on client for portal
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: track client mount for portal
     setMounted(true);
   }, []);
 

@@ -185,14 +185,13 @@ function transformToOpportunities(): Promise<MapOpportunity[]> {
       vendors.forEach((vendor: Vendor) => {
         let locString = "";
         if (typeof vendor.location === "object" && vendor.location !== null) {
-          // @ts-ignore - location might have city/province structure
+          // @ts-expect-error - location might have city/province structure
           const city = vendor.location.city;
-          // @ts-ignore
+          // @ts-expect-error - location might have province/region
           const prov = vendor.location.province || vendor.location.region;
           if (city && prov) locString = `${city}, ${prov}`;
           else if (city) locString = city;
         }
-        // @ts-ignore - location might be a string
         if (!locString && typeof vendor.location === "string") locString = vendor.location;
         if (!locString) return;
 

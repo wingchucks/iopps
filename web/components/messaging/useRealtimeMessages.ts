@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect -- intentional: setState in snapshot subscription callbacks */
 "use client";
 
 import { useState, useEffect } from "react";

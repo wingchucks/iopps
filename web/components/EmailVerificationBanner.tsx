@@ -71,7 +71,7 @@ export default function EmailVerificationBanner({
           <p className="mt-1 text-sm text-amber-200/80">
             {sent ? (
               <>
-                We've sent a verification email to{" "}
+                We&apos;ve sent a verification email to{" "}
                 <strong>{email}</strong>. Please check your inbox and click the
                 verification link.
               </>
@@ -129,7 +129,7 @@ export default function EmailVerificationBanner({
               aria-label="Refresh page after verifying email"
               className="inline-flex items-center gap-2 rounded-lg border border-amber-500/30 px-4 py-2 text-sm font-medium text-amber-300 transition-colors hover:bg-amber-500/10"
             >
-              I've verified, refresh
+              I&apos;ve verified, refresh
             </button>
           </div>
         </div>

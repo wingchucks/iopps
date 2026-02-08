@@ -101,7 +101,7 @@ export default function MobileAppPage() {
 
                                 {success && (
                                     <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-600">
-                                        ✓ You're on the list! We'll notify you when the app launches.
+                                        ✓ You&apos;re on the list! We&apos;ll notify you when the app launches.
                                     </div>
                                 )}
                             </form>

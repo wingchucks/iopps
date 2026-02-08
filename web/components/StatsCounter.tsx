@@ -27,6 +27,7 @@ function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string
 
     useEffect(() => {
         if (value === 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reset animation counter
             setCount(0);
             return;
         }

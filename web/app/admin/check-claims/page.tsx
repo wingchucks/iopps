@@ -216,7 +216,7 @@ export default function CheckClaimsPage() {
                       Fix My Claims Automatically
                     </button>
                     <p className="text-xs text-amber-400 mt-2">
-                      This will set <code>admin: true</code> on your account. Click "Refresh Claims" after to verify.
+                      This will set <code>admin: true</code> on your account. Click &quot;Refresh Claims&quot; after to verify.
                     </p>
                   </div>
                 )}

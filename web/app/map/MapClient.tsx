@@ -15,7 +15,7 @@ import { PopupContent } from "@/components/map/MapPopup";
 
 // Fix for Leaflet default icon issues in Next.js
 const setupLeafletIcon = () => {
-  // @ts-ignore
+  // @ts-expect-error - Leaflet default icon workaround for Next.js
   delete Icon.Default.prototype._getIconUrl;
   Icon.Default.mergeOptions({
     iconRetinaUrl:
@@ -51,6 +51,7 @@ export default function MapClient({
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: track client mount
     setIsMounted(true);
     setupLeafletIcon();
 
@@ -166,7 +167,7 @@ export default function MapClient({
                 key={`${opportunity.type}-${opportunity.id}`}
                 position={[opportunity.coordinates.lat, opportunity.coordinates.lng]}
                 icon={getMarkerIcon(opportunity.type, opportunity.featured)}
-                // @ts-ignore - Custom data for cluster icon calculation
+                // @ts-expect-error - Custom data for cluster icon calculation
                 data={{ category: opportunity.category }}
               >
                 <Popup maxWidth={320} className="map-popup">

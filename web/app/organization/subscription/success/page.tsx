@@ -11,6 +11,7 @@ function SubscriptionSuccessContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    /* eslint-disable react-hooks/set-state-in-effect -- intentional: sync initial state from URL params */
     useEffect(() => {
         if (sessionId) {
             // Payment was successful
@@ -20,6 +21,7 @@ function SubscriptionSuccessContent() {
             setLoading(false);
         }
     }, [sessionId]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     if (loading) {
         return (
@@ -83,7 +85,7 @@ function SubscriptionSuccessContent() {
                     <p>✅ Payment confirmed</p>
                     <p>✅ Subscription is now active for 12 months</p>
                     <p>✅ You can now post jobs without additional payment</p>
-                    <p>✅ You'll receive a confirmation email shortly</p>
+                    <p>✅ You&apos;ll receive a confirmation email shortly</p>
                 </div>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">

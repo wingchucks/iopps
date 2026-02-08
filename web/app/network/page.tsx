@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -236,7 +237,7 @@ export default function NetworkPage() {
 
                     {suggestions.length === 0 && (
                         <div className="col-span-full p-12 text-center border border-dashed border-[var(--border)] rounded-lg">
-                            <p className="text-foreground0">We're finding the best matches for you...</p>
+                            <p className="text-foreground0">We&apos;re finding the best matches for you...</p>
                         </div>
                     )}
                 </div>

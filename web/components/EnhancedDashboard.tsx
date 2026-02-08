@@ -68,6 +68,7 @@ export default function EnhancedDashboard() {
     const [isLoaded, setIsLoaded] = useState(false);
 
     // Load persistence
+    /* eslint-disable react-hooks/set-state-in-effect -- intentional: load persisted state on mount */
     useEffect(() => {
         const savedMode = localStorage.getItem('dashboard_active_mode');
         if (savedMode === 'employer' || savedMode === 'vendor') {
@@ -75,6 +76,7 @@ export default function EnhancedDashboard() {
         }
         setIsLoaded(true);
     }, []);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     // Save persistence
     useEffect(() => {

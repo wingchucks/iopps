@@ -342,7 +342,7 @@ function GlobalSearch() {
             </div>
           ) : results.length === 0 ? (
             <div className="px-3 py-4 text-center text-sm text-foreground0">
-              No results found for "{query}"
+              No results found for &quot;{query}&quot;
             </div>
           ) : (
             <div className="max-h-72 overflow-y-auto">

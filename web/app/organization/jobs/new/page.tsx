@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -1168,7 +1169,7 @@ function NewJobPageContent() {
                   <h2 className="text-lg font-bold text-foreground mb-1">Application Method</h2>
                   <p className="text-sm text-[var(--text-secondary)]">
                     All applications will be received through IOPPS using the <strong>Quick Apply</strong> button.
-                    You'll be able to view and manage all applications in your{" "}
+                    You&apos;ll be able to view and manage all applications in your{" "}
                     <Link href="/organization/hire/applications" className="text-[#14B8A6] hover:underline font-semibold">
                       employer dashboard
                     </Link>.
@@ -1313,7 +1314,7 @@ function NewJobPageContent() {
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input type="checkbox" name="driversLicense" checked={formData.driversLicense} onChange={handleChange} className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6]" />
-                  <span className="text-sm text-[var(--text-secondary)]">Driver's License Required</span>
+                  <span className="text-sm text-[var(--text-secondary)]">Driver&apos;s License Required</span>
                 </label>
               </div>
             </section>

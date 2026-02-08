@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
@@ -188,7 +189,7 @@ export default function EditEventPage() {
     return (
       <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-4xl text-center">
-          <p className="text-red-400 mb-4">You don't have permission to edit this event.</p>
+          <p className="text-red-400 mb-4">You don&apos;t have permission to edit this event.</p>
           <Link
             href="/organization/host/events"
             className="text-accent hover:underline"

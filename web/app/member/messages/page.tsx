@@ -63,6 +63,7 @@ function MemberMessagesContent() {
     // Check peer conversations first
     const peerConvo = peerConversations.find((c) => c.id === conversationIdParam);
     if (peerConvo) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: sync selected conversation from URL param
       setSelectedConversation({ ...peerConvo, conversationType: "peer" });
       return;
     }

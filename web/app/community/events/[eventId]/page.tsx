@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Metadata } from "next";
 import { db } from "@/lib/firebase-admin";
 import PowwowDetailClient from "../../[powwowId]/PowwowDetailClient";

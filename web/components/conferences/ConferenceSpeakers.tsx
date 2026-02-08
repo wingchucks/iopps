@@ -24,6 +24,7 @@ function SpeakerCard({
   useEffect(() => {
     if (isHighlighted && cardRef.current) {
       cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: expand card when highlighted
       setIsExpanded(true);
     }
   }, [isHighlighted]);

@@ -306,8 +306,8 @@ export async function initializeModules(userId: string): Promise<OrganizationMod
 
     // Build module settings
     const moduleSettings: ModuleSettings = {};
-    for (const module of detectedModules) {
-      moduleSettings[module] = {
+    for (const mod of detectedModules) {
+      moduleSettings[mod] = {
         enabled: true,
         setupComplete: true, // Assume complete if data exists
       };

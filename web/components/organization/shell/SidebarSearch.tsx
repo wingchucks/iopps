@@ -109,6 +109,7 @@ export default function SidebarSearch({
 
   // Reset selection when results change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reset index when search results change
     setSelectedIndex(0);
   }, [filteredPages]);
 

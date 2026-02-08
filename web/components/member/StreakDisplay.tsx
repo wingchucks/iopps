@@ -191,7 +191,7 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
       {status.isActiveToday ? (
         <div className="flex items-center gap-2 p-3 rounded-xl bg-accent/10 border border-accent/20 mb-4">
           <CheckCircle className="h-5 w-5 text-accent" />
-          <p className="text-sm text-accent">You're active today! Come back tomorrow to continue your streak.</p>
+          <p className="text-sm text-accent">You&apos;re active today! Come back tomorrow to continue your streak.</p>
         </div>
       ) : !status.willBreakTomorrow && (
         <button

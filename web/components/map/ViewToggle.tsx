@@ -58,6 +58,7 @@ export function useViewPreference(defaultView: ViewMode = "map"): [ViewMode, (vi
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(VIEW_PREFERENCE_KEY);
       if (stored === "map" || stored === "list") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: load persisted preference
         setViewState(stored);
       }
     }

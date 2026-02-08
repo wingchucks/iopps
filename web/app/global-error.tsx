@@ -117,7 +117,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                 lineHeight: "1.5",
               }}
             >
-              We're sorry, but something unexpected happened. Our team has been
+              We&apos;re sorry, but something unexpected happened. Our team has been
               notified and is working to fix the issue.
             </p>
 
