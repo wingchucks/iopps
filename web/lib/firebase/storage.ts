@@ -85,14 +85,6 @@ function generateFilename(vendorId: string, originalName: string): string {
  * Validate image file
  */
 export function validateImage(file: File): { valid: boolean; error?: string } {
-  // Log file info for debugging (especially on mobile Safari)
-  console.log('[Storage] Validating image:', {
-    name: file.name,
-    type: file.type,
-    size: file.size,
-    sizeFormatted: formatFileSize(file.size),
-  });
-
   // Check for HEIC/HEIF images (common on iPhone) - provide specific error message
   if (HEIC_TYPES.includes(file.type) || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
     return {

@@ -182,7 +182,6 @@ export default function AdminFeedsPage() {
                     setFeedType(result.feedType);
                 }
                 if (result.feedStructure) {
-                    console.log(`Feed structure detected: ${result.feedStructure} (${result.feedType})`);
                 }
             } else {
                 // Show detailed error with hint if available

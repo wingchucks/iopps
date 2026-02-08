@@ -277,7 +277,6 @@ export function scrapeJobsFromHtml(html: string, baseUrl: string): ScrapeResult 
     // First, try to extract jobs from JSON-LD structured data (most reliable)
     const jsonLdJobs = extractJobsFromJsonLd($, baseUrl);
     if (jsonLdJobs.length > 0) {
-        console.log(`Found ${jsonLdJobs.length} jobs from JSON-LD structured data`);
         jsonLdJobs.forEach(job => {
             jobs.push(job);
             Object.keys(job).forEach(k => {
@@ -307,7 +306,6 @@ export function scrapeJobsFromHtml(html: string, baseUrl: string): ScrapeResult 
             });
             if (hasJobContent) {
                 jobElements = elements;
-                console.log(`Found ${elements.length} job elements with selector: ${selector}`);
                 break;
             }
         }
@@ -327,7 +325,6 @@ export function scrapeJobsFromHtml(html: string, baseUrl: string): ScrapeResult 
             });
 
         if (jobLinks.length > 0) {
-            console.log(`Found ${jobLinks.length} job links`);
             jobLinks.each((_, el) => {
                 const $link = $(el);
                 const job: ScrapedJob = {

@@ -94,7 +94,7 @@ function SubscriptionSuccessContent() {
                         Post Your First Job
                     </Link>
                     <Link
-                        href="/organization/dashboard"
+                        href="/organization"
                         className="rounded-lg border border-[var(--card-border)] px-6 py-3 font-semibold text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
                     >
                         Go to Dashboard

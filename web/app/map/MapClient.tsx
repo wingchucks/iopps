@@ -67,7 +67,7 @@ export default function MapClient({
   }, []);
 
   // Create cluster icon function
-  const createClusterCustomIcon = useCallback((cluster: any) => {
+  const createClusterCustomIcon = useCallback((cluster: { getAllChildMarkers: () => Array<{ options: { data?: { category?: string } } }>; getChildCount?: () => number }) => {
     const markers = cluster.getAllChildMarkers();
     const count = markers.length;
 
@@ -79,7 +79,7 @@ export default function MapClient({
       education: 0,
     };
 
-    markers.forEach((marker: any) => {
+    markers.forEach((marker) => {
       const category = marker.options.data?.category as MapCategory;
       if (category) {
         categoryCounts[category]++;

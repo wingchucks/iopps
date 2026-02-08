@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import {
+  validateRequired,
+  validateString,
+  sanitizeString,
+  firstError,
+} from "@/lib/api-validation";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -39,19 +45,19 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { orgId, story } = body;
 
-    if (!orgId) {
-      return NextResponse.json({ error: "Missing orgId" }, { status: 400 });
-    }
+    // Validate required fields
+    const requiredErr = validateRequired(body, ["orgId"]);
+    if (requiredErr) return requiredErr;
 
-    if (typeof story !== "string") {
-      return NextResponse.json(
-        { error: "Story must be a string" },
-        { status: 400 }
-      );
-    }
+    // Validate field types
+    const fieldErr = firstError([
+      validateString(orgId, "orgId", { minLength: 1, maxLength: 128 }),
+      validateString(story, "story"),
+    ]);
+    if (fieldErr) return fieldErr;
 
-    // Validate story length
-    const storyTrimmed = story.trim();
+    // Sanitize and validate story length
+    const storyTrimmed = sanitizeString(story);
     if (storyTrimmed.length > STORY_MAX_CHARS) {
       return NextResponse.json(
         {
@@ -95,9 +101,6 @@ export async function PUT(req: NextRequest) {
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    console.log(
-      `[STORY] User ${userId} updated story for org ${orgId} (${employerData?.organizationName})`
-    );
 
     return NextResponse.json({
       success: true,

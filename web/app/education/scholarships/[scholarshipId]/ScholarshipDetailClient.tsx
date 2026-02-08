@@ -91,7 +91,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
       });
       setSuccess(true);
       setTimeout(() => {
-        router.push("/member/dashboard");
+        router.push(user ? `/member/${user.uid}` : "/discover");
       }, 2000);
     } catch (err) {
       console.error("Failed to submit application", err);

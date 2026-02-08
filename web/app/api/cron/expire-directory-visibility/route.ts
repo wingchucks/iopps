@@ -63,9 +63,6 @@ export async function GET(request: NextRequest) {
           const recomputeResult = await recomputeOrganizationVisibility(orgDoc.id);
           if (recomputeResult.success && !recomputeResult.isDirectoryVisible) {
             unapprovedGrandfathered++;
-            console.log(
-              `[expire-directory-visibility] Hid unapproved grandfathered org: ${orgDoc.id}`
-            );
           }
         }
       }

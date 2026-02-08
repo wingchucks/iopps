@@ -1,263 +1,98 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useRouter, useSearchParams } from 'next/navigation';
-import MemberDashboardLayout from '@/components/member/dashboard/MemberDashboardLayout';
-import MemberSidebar from '@/components/member/dashboard/MemberSidebar';
-import { type MemberSection } from '@/components/member/dashboard/MemberMobileNav';
-import { OnboardingFlow } from '@/components/member/onboarding/OnboardingFlow';
-import SettingsTab from './SettingsTab';
+import { Suspense } from 'react';
 
-// Tab Components
-import OverviewTab from './OverviewTab';
-import ApplicationsTab from './ApplicationsTab';
-import SavedItemsTab from './SavedItemsTab';
-import SavedScholarshipsTab from './SavedScholarshipsTab';
-import JobAlertsTab from './JobAlertsTab';
-import TrainingTab from './TrainingTab';
-import MessagesTab from './MessagesTab';
-import ProfileTab from './ProfileTab';
-import AnalyticsTab from './AnalyticsTab';
-
-// Data Fetching
-import {
-  getMemberProfile,
-  listMemberApplications,
-  getJobPosting,
-  getMemberSettings,
-} from '@/lib/firestore';
-import type { MemberProfile, JobApplication, JobPosting } from '@/lib/types';
-import { useDashboardBadges } from '@/hooks/useDashboardBadges';
-
-// Extended type for OverviewTab
-interface ApplicationWithJob extends JobApplication {
-  job?: JobPosting | null;
-}
-
-function MemberDashboardContent() {
+/**
+ * Legacy /member/dashboard redirect page.
+ *
+ * Maps old dashboard tab URLs to new profile-hub routes:
+ *   - ?tab=applications  → /member/[userId]?tab=applications
+ *   - ?tab=messages      → /member/messages
+ *   - ?tab=settings      → /member/settings
+ *   - ?tab=profile       → /member/[userId]
+ *   - ?tab=alerts        → /member/alerts
+ *   - (default)          → /member/[userId]
+ */
+function DashboardRedirectContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // State
-  const [activeSection, setActiveSection] = useState<MemberSection>('overview');
-  const [profile, setProfile] = useState<MemberProfile | null>(null);
-  const [applications, setApplications] = useState<ApplicationWithJob[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingChecked, setOnboardingChecked] = useState(false);
-
-  // Real-time Badges
-  const { badges } = useDashboardBadges(user, 'member');
-
-  // Derived stats
-  const profileCompletion = profile
-    ? [
-      profile.displayName,
-      profile.tagline,
-      profile.location,
-      profile.skills?.length,
-      profile.experience?.length,
-      profile.education?.length
-    ].filter(Boolean).length / 6 * 100
-    : 0;
-
-  const stats = {
-    totalApplications: applications.length,
-    recentApplications: applications.filter(a => {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      return a.createdAt && a.createdAt.toDate() > thirtyDaysAgo;
-    }).length,
-    profileCompletion: Math.round(profileCompletion)
-  };
-
-  // Initialize from URL params if present
   useEffect(() => {
-    const tabParam = searchParams.get('tab') as MemberSection | null;
-    if (tabParam) {
-      setActiveSection(tabParam);
-    }
-  }, [searchParams]);
+    if (loading) return;
 
-  // Load Data
-  useEffect(() => {
-    async function loadData() {
-      if (!user) return;
-
-      try {
-        setLoadingData(true);
-        // Load profile, applications, and settings in parallel
-        const [userProfile, userApps, memberSettings] = await Promise.all([
-          getMemberProfile(user.uid),
-          listMemberApplications(user.uid),
-          getMemberSettings(user.uid),
-        ]);
-
-        setProfile(userProfile);
-
-        // Check if onboarding is needed
-        if (!memberSettings.onboarding.completed) {
-          setShowOnboarding(true);
-        }
-        setOnboardingChecked(true);
-
-        // Fetch job details for applications
-        const appsWithJobs = await Promise.all(
-          userApps.map(async (app: JobApplication) => {
-            if (!app.jobId) return app;
-            try {
-              const job = await getJobPosting(app.jobId);
-              return { ...app, job };
-            } catch (e) {
-              return app;
-            }
-          })
-        );
-
-        setApplications(appsWithJobs);
-
-      } catch (err) {
-        console.error("Error loading dashboard data:", err);
-        setOnboardingChecked(true); // Continue without onboarding on error
-      } finally {
-        setLoadingData(false);
-      }
+    if (!user) {
+      router.replace('/login?redirect=/member/dashboard');
+      return;
     }
 
-    if (user && !loading) {
-      loadData();
-    }
-  }, [user, loading]);
+    const tab = searchParams.get('tab');
+    const userId = user.uid;
 
-  // Handle Section Change (Updates URL)
-  const handleSectionChange = (section: MemberSection) => {
-    setActiveSection(section);
-
-    // Update URL without refresh
-    const params = new URLSearchParams(searchParams);
-    params.set('tab', section);
-    router.push(`/member/dashboard?${params.toString()}`, { scroll: false });
-
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Show loading while fetching dashboard data (auth is handled by ProtectedRoute)
-  if (loadingData && !profile) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
-      </div>
-    );
-  }
-
-
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'overview':
-        return (
-          <OverviewTab
-            profile={profile}
-            profileCompletion={stats.profileCompletion}
-            stats={stats}
-            applications={applications} // Passes ApplicationWithJob[]
-            onNavigate={(tab) => {
-              // Map internal OverviewTab tabs to Sidebar sections if possible
-              // Typically OverviewTab might link to 'profile' or 'applications'
-              // If tab is 'jobs', maybe map to 'applications' or 'saved-jobs'
-              // For now, simple mapping:
-              if (tab === 'profile') handleSectionChange('profile');
-              else if (tab === 'applications') handleSectionChange('applications');
-              else if (tab === 'saved') handleSectionChange('saved-jobs');
-            }}
-          />
-        );
-
-      // Career
+    switch (tab) {
       case 'applications':
-        return <ApplicationsTab />;
-      case 'saved-jobs':
-        return <SavedItemsTab />;
-      case 'job-alerts':
-        return <JobAlertsTab />;
-      case 'analytics':
-        return <AnalyticsTab />;
-
-      // Learning
-      case 'training':
-        return <TrainingTab />;
-      case 'saved-scholarships':
-        return <SavedScholarshipsTab />;
-
-      // Account
-      case 'messages':
-        return <MessagesTab />;
-      case 'profile':
-        return <ProfileTab />;
+        router.replace(`/member/${userId}?tab=applications`);
+        break;
+      case 'messages': {
+        const conversationId = searchParams.get('conversation');
+        if (conversationId) {
+          router.replace(`/member/messages?id=${conversationId}`);
+        } else {
+          router.replace('/member/messages');
+        }
+        break;
+      }
       case 'settings':
-        return <SettingsTab />;
-
+        router.replace('/member/settings');
+        break;
+      case 'alerts':
+      case 'job-alerts':
+        router.replace('/member/alerts');
+        break;
+      case 'profile':
+        router.replace(`/member/${userId}`);
+        break;
+      case 'saved-jobs':
+      case 'saved':
+        router.replace('/saved');
+        break;
+      case 'training':
+        router.replace(`/member/${userId}?tab=training`);
+        break;
+      case 'analytics':
+        router.replace(`/member/${userId}?tab=analytics`);
+        break;
+      case 'discover':
+        router.replace('/members/discover');
+        break;
       default:
-        // Pass required props even to default
-        return (
-          <OverviewTab
-            profile={profile}
-            profileCompletion={stats.profileCompletion}
-            stats={stats}
-            applications={applications}
-            onNavigate={(tab) => {
-              if (tab === 'profile') handleSectionChange('profile');
-              else if (tab === 'applications') handleSectionChange('applications');
-            }}
-          />
-        );
+        // No tab or unrecognized tab → go to profile hub
+        router.replace(`/member/${userId}`);
+        break;
     }
-  };
-
-  // Show onboarding if needed
-  if (showOnboarding && onboardingChecked) {
-    return (
-      <OnboardingFlow
-        onComplete={() => setShowOnboarding(false)}
-        userName={profile?.displayName || user?.displayName || undefined}
-      />
-    );
-  }
+  }, [user, loading, router, searchParams]);
 
   return (
-    <MemberDashboardLayout
-      sidebar={
-        <MemberSidebar
-          activeSection={activeSection}
-          onSectionChange={handleSectionChange}
-          badges={badges}
-        />
-      }
-      activeSection={activeSection}
-      onSectionChange={handleSectionChange}
-      badges={badges}
-    >
-      {renderContent()}
-    </MemberDashboardLayout>
+    <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+        <p className="text-sm text-[var(--text-muted)]">Redirecting...</p>
+      </div>
+    </div>
   );
 }
 
-export default function MemberDashboard() {
+export default function MemberDashboardRedirect() {
   return (
-    <ProtectedRoute
-      allowedRoles={["community"]}
-      unauthorizedPath="/organization/dashboard"
-    >
-      <Suspense fallback={
-        <div className="flex h-screen items-center justify-center bg-background">
-          <p className="text-[var(--text-muted)]">Loading dashboard...</p>
-        </div>
-      }>
-        <MemberDashboardContent />
-      </Suspense>
-    </ProtectedRoute>
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+      </div>
+    }>
+      <DashboardRedirectContent />
+    </Suspense>
   );
 }

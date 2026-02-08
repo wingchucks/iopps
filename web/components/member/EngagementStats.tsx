@@ -87,7 +87,7 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
       borderColor: "border-blue-500/20",
       iconColor: "text-blue-400",
       trend: stats.profileViews.trend,
-      link: "/member/dashboard?tab=profile",
+      link: user ? `/member/${user.uid}` : "/member/profile",
     },
     {
       label: "Connections",

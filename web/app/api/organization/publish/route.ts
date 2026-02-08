@@ -5,6 +5,14 @@ import {
   checkProfileCompleteness,
   getMissingFieldsMessage,
 } from "@/lib/validation/profile-completeness";
+import {
+  validateRequired,
+  validateString,
+  validateEnum,
+  validateUrl,
+  sanitizeString,
+  firstError,
+} from "@/lib/api-validation";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -68,31 +76,38 @@ export async function POST(req: NextRequest) {
       enabledModules,
     } = body;
 
-    console.log(`[PUBLISH] Received request for user ${userId}:`, {
-      organizationName,
-      orgType,
-      province,
-      city,
-      hasLogo: !!logoUrl,
-      hasBanner: !!bannerUrl,
-      hasDescription: !!description,
-      hasStory: !!story,
-    });
-
-    if (!organizationName || !orgType) {
-      console.log(`[PUBLISH] Missing required fields - organizationName: "${organizationName}", orgType: "${orgType}"`);
-      return NextResponse.json(
-        { error: "Missing required fields: organizationName and orgType" },
-        { status: 400 }
-      );
+    // --- Input validation ---
+    const requiredErr = validateRequired(body, ["organizationName", "orgType"]);
+    if (requiredErr) {
+      return requiredErr;
     }
 
+    const VALID_ORG_TYPES = [
+      "INDIGENOUS_BUSINESS",
+      "ALLY_BUSINESS",
+      "GOVERNMENT",
+      "NON_PROFIT",
+      "EDUCATIONAL",
+      "OTHER",
+    ] as const;
+
+    const fieldErr = firstError([
+      validateString(organizationName, "organizationName", { minLength: 1, maxLength: 200 }),
+      validateEnum(orgType, "orgType", VALID_ORG_TYPES),
+      website ? validateUrl(website, "website") : null,
+      introVideoUrl ? validateUrl(introVideoUrl, "introVideoUrl") : null,
+      logoUrl && typeof logoUrl !== "string" ? "logoUrl must be a string" : null,
+      bannerUrl && typeof bannerUrl !== "string" ? "bannerUrl must be a string" : null,
+      province && typeof province !== "string" ? "province must be a string" : null,
+      city && typeof city !== "string" ? "city must be a string" : null,
+    ]);
+    if (fieldErr) return fieldErr;
+
     // Validate field lengths (max limits)
-    const aboutTrimmed = (description || "").trim();
-    const storyTrimmed = (story || "").trim();
+    const aboutTrimmed = sanitizeString(description || "");
+    const storyTrimmed = sanitizeString(story || "");
 
     if (aboutTrimmed.length > ABOUT_MAX_CHARS) {
-      console.log(`[PUBLISH] About exceeds limit - ${aboutTrimmed.length} > ${ABOUT_MAX_CHARS}`);
       return NextResponse.json(
         {
           error: `About must be ${ABOUT_MAX_CHARS} characters or less (currently ${aboutTrimmed.length}).`,
@@ -103,7 +118,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (storyTrimmed.length > STORY_MAX_CHARS) {
-      console.log(`[PUBLISH] Story exceeds limit - ${storyTrimmed.length} > ${STORY_MAX_CHARS}`);
       return NextResponse.json(
         {
           error: `Our Story must be ${STORY_MAX_CHARS} characters or less (currently ${storyTrimmed.length}).`,
@@ -121,12 +135,6 @@ export async function POST(req: NextRequest) {
       story: storyTrimmed,
     };
     const completeness = checkProfileCompleteness(profileData);
-
-    console.log(`[PUBLISH] Completeness check:`, {
-      isComplete: completeness.isComplete,
-      missingFields: completeness.missingFields,
-      score: completeness.score,
-    });
 
     // Check if employer document exists (by ID or by userId field)
     let employerRef = db.collection("employers").doc(userId);
@@ -182,16 +190,6 @@ export async function POST(req: NextRequest) {
         publicationStatus = "DRAFT";
       }
 
-      console.log(`[PUBLISH] Updating existing profile for ${userId}:`, {
-        oldName: existingData?.organizationName,
-        newName: organizationName,
-        docId: existingId,
-        currentStatus,
-        newStatus,
-        isApproved,
-        publicationStatus,
-      });
-
       // Determine submission tracking timestamps
       const submissionTracking: Record<string, any> = {};
       if (completeness.isComplete && newStatus === "pending") {
@@ -233,10 +231,6 @@ export async function POST(req: NextRequest) {
         ...(wasRejected && completeness.isComplete ? { rejectionReason: null } : {}),
       });
 
-      // Verify the update by reading the document back
-      const verifyDoc = await employerRef.get();
-      const verifyData = verifyDoc.data();
-      console.log(`[PUBLISH] Verified after update - stored name: "${verifyData?.organizationName}"`);
     } else {
       // Create new profile
       slug = generateUniqueSlug(organizationName);
@@ -244,13 +238,6 @@ export async function POST(req: NextRequest) {
       // Determine status based on completeness
       const newStatus = completeness.isComplete ? "pending" : "incomplete";
       const publicationStatus = completeness.isComplete ? "PENDING_APPROVAL" : "DRAFT";
-
-      console.log(`[PUBLISH] Creating new profile for ${userId}:`, {
-        organizationName,
-        newStatus,
-        publicationStatus,
-        isComplete: completeness.isComplete,
-      });
 
       await employerRef.set({
         id: userId,

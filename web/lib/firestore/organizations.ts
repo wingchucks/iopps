@@ -102,7 +102,7 @@ export async function getOrganizationBySlug(slug: string): Promise<OrganizationP
     }
   } catch (error) {
     // Permission denied or other error - document may exist but not accessible
-    console.log(`[getOrganizationBySlug] Fallback lookup failed for "${slug}":`, error);
+    // Fallback lookup failed - document may not exist or may not be accessible
   }
 
   return null;
@@ -424,7 +424,6 @@ export async function getPublicOrganizationBySlug(slug: string): Promise<Organiz
     const docSnap = fallbackSnap.docs[0];
     const data = docSnap.data();
     // Approved status is the source of truth - show profile
-    console.log(`[getPublicOrganizationBySlug] Found approved profile via fallback for slug "${slug}", publicationStatus: ${data.publicationStatus || 'not set'}`);
     return { id: docSnap.id, ...data } as OrganizationProfile;
   }
 
@@ -437,13 +436,12 @@ export async function getPublicOrganizationBySlug(slug: string): Promise<Organiz
       const data = docSnap.data();
       // Approved status is the source of truth
       if (data.status === "approved") {
-        console.log(`[getPublicOrganizationBySlug] Found approved profile by doc ID for "${slug}"`);
         return { id: docSnap.id, ...data } as OrganizationProfile;
       }
     }
   } catch (error) {
     // Permission denied or other error - document may exist but not accessible
-    console.log(`[getPublicOrganizationBySlug] Doc ID lookup failed for "${slug}":`, error);
+    // Doc ID lookup failed - document may not exist or may not be accessible
   }
 
   return null;

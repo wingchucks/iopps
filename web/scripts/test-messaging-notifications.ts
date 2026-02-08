@@ -87,8 +87,8 @@ async function testCreateNotification(): Promise<string | null> {
       fail("Create notification", "No document ID returned");
       return null;
     }
-  } catch (error: any) {
-    fail("Create notification", error.message);
+  } catch (error: unknown) {
+    fail("Create notification", error instanceof Error ? error.message : String(error));
     return null;
   }
 }
@@ -116,8 +116,8 @@ async function testGetNotifications(notificationId: string): Promise<boolean> {
       fail("Get notifications", "Notification not found in results");
       return false;
     }
-  } catch (error: any) {
-    fail("Get notifications", error.message);
+  } catch (error: unknown) {
+    fail("Get notifications", error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -140,8 +140,8 @@ async function testMarkNotificationAsRead(notificationId: string): Promise<boole
       fail("Mark notification as read", "Read status not updated");
       return false;
     }
-  } catch (error: any) {
-    fail("Mark notification as read", error.message);
+  } catch (error: unknown) {
+    fail("Mark notification as read", error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -173,8 +173,8 @@ async function testGetUnreadCount(): Promise<boolean> {
       fail("Get unread count", `Expected at least 1 unread, got ${snapshot.size}`);
       return false;
     }
-  } catch (error: any) {
-    fail("Get unread count", error.message);
+  } catch (error: unknown) {
+    fail("Get unread count", error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -214,8 +214,8 @@ async function testCreateConversation(): Promise<string | null> {
       fail("Create conversation", "No document ID returned");
       return null;
     }
-  } catch (error: any) {
-    fail("Create conversation", error.message);
+  } catch (error: unknown) {
+    fail("Create conversation", error instanceof Error ? error.message : String(error));
     return null;
   }
 }
@@ -251,8 +251,8 @@ async function testSendMessage(conversationId: string): Promise<string | null> {
       fail("Send message", "No document ID returned");
       return null;
     }
-  } catch (error: any) {
-    fail("Send message", error.message);
+  } catch (error: unknown) {
+    fail("Send message", error instanceof Error ? error.message : String(error));
     return null;
   }
 }
@@ -279,8 +279,8 @@ async function testGetConversationMessages(conversationId: string, messageId: st
       fail("Get conversation messages", "Message not found in conversation");
       return false;
     }
-  } catch (error: any) {
-    fail("Get conversation messages", error.message);
+  } catch (error: unknown) {
+    fail("Get conversation messages", error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -308,8 +308,8 @@ async function testGetEmployerConversations(conversationId: string): Promise<boo
       fail("Get employer conversations", "Conversation not found for employer");
       return false;
     }
-  } catch (error: any) {
-    fail("Get employer conversations", error.message);
+  } catch (error: unknown) {
+    fail("Get employer conversations", error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -337,8 +337,8 @@ async function testGetMemberConversations(conversationId: string): Promise<boole
       fail("Get member conversations", "Conversation not found for member");
       return false;
     }
-  } catch (error: any) {
-    fail("Get member conversations", error.message);
+  } catch (error: unknown) {
+    fail("Get member conversations", error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -373,8 +373,8 @@ async function testMarkMessagesAsRead(conversationId: string): Promise<boolean> 
       fail("Mark messages as read", "Some messages still unread");
       return false;
     }
-  } catch (error: any) {
-    fail("Mark messages as read", error.message);
+  } catch (error: unknown) {
+    fail("Mark messages as read", error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -421,8 +421,8 @@ async function cleanup(notificationIds: string[], conversationId: string | null,
     }
 
     console.log("  ✓ Cleanup complete");
-  } catch (error: any) {
-    console.log(`  ⚠ Cleanup warning: ${error.message}`);
+  } catch (error: unknown) {
+    console.log(`  ⚠ Cleanup warning: ${error instanceof Error ? error.message : error}`);
   }
 }
 

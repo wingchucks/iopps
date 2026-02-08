@@ -31,9 +31,11 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
         business: "text-pink-400 bg-pink-500/10 border-pink-500/20",
     }[type];
 
-    const formattedDate = (date: any) => {
+    const formattedDate = (date: unknown) => {
         if (!date) return "";
-        const d = date.toDate ? date.toDate() : new Date(date);
+        const d = (typeof date === "object" && date !== null && typeof (date as Record<string, unknown>).toDate === "function")
+            ? ((date as Record<string, unknown>).toDate as () => Date)()
+            : new Date(date as string | number);
         return formatDistanceToNow(d, { addSuffix: true });
     };
 

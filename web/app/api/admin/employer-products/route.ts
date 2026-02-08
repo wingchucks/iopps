@@ -265,10 +265,6 @@ export async function POST(req: NextRequest) {
       console.error("Failed to create audit log:", auditError);
     }
 
-    console.log(
-      `[AUDIT] Admin ${authResult.adminEmail} added ${config.name} to employer ${employerId} (${employerData?.organizationName})`
-    );
-
     return NextResponse.json({
       success: true,
       productId: docRef.id,

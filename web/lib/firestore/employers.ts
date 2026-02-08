@@ -226,14 +226,14 @@ export async function createPendingEmployerProfile(
 ): Promise<void> {
   const firestore = checkFirebase();
   if (!firestore) {
-    console.log("[createPendingEmployerProfile] Skipped - offline mode");
+    // Skipped - offline mode
     return;
   }
 
   // Check if employer profile already exists
   const existingProfile = await getEmployerProfile(userId);
   if (existingProfile) {
-    console.log("[createPendingEmployerProfile] Profile already exists for:", userId);
+    // Profile already exists
     return;
   }
 
@@ -324,7 +324,7 @@ export async function updateEmployerStatus(
     throw new Error(`Employer profile not found for userId: ${userId}`);
   }
 
-  const updates: any = {
+  const updates: Record<string, unknown> = {
     status,
     updatedAt: serverTimestamp(),
   };

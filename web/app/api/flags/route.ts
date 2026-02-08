@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { verifyAuthToken } from "@/lib/api-auth";
 import { FieldValue } from "firebase-admin/firestore";
+import { validateString, sanitizeString } from "@/lib/api-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -276,6 +277,22 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Missing flagId" }, { status: 400 });
     }
 
+    // Validate flagId is a string
+    const flagIdErr = validateString(flagId, "flagId", { minLength: 1, maxLength: 128 });
+    if (flagIdErr) {
+      return NextResponse.json({ error: flagIdErr }, { status: 400 });
+    }
+
+    // Validate and sanitize moderatorNotes if present
+    if (moderatorNotes !== undefined && moderatorNotes !== null) {
+      if (typeof moderatorNotes !== "string") {
+        return NextResponse.json({ error: "moderatorNotes must be a string" }, { status: 400 });
+      }
+      if (moderatorNotes.length > 2000) {
+        return NextResponse.json({ error: "moderatorNotes must be 2000 characters or fewer" }, { status: 400 });
+      }
+    }
+
     // Validate status if provided
     if (status && !VALID_STATUSES.includes(status)) {
       return NextResponse.json(
@@ -312,7 +329,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (moderatorNotes !== undefined) {
-      updateData.moderatorNotes = moderatorNotes;
+      updateData.moderatorNotes = typeof moderatorNotes === "string"
+        ? sanitizeString(moderatorNotes)
+        : moderatorNotes;
     }
 
     if (actionTaken) {

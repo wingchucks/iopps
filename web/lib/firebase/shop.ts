@@ -218,7 +218,7 @@ export interface VendorFilters {
 
 export async function getActiveVendors(filters?: VendorFilters): Promise<Vendor[]> {
   if (!db) {
-    console.log('[getActiveVendors] Firebase db not initialized');
+    console.warn('[getActiveVendors] Firebase db not initialized');
     return [];
   }
 
@@ -241,7 +241,6 @@ export async function getActiveVendors(filters?: VendorFilters): Promise<Vendor[
 
   const q = query(collection(db, VENDORS_COLLECTION), ...constraints);
   const snap = await getDocs(q);
-  console.log('[getActiveVendors] Query returned', snap.docs.length, 'vendors');
   let vendors = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vendor));
 
   // Client-side search filter (Firestore doesn't support full-text search)

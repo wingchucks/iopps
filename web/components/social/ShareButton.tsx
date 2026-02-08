@@ -20,7 +20,7 @@ import { PostType } from "@/lib/types";
 interface ShareButtonProps {
     entityId: string;
     type: PostType; // e.g., 'share_job'
-    data: any; // The entity data (e.g. Job object)
+    data: Record<string, string | undefined>; // The entity data (e.g. Job object)
     className?: string; // Styled trigger button
 }
 

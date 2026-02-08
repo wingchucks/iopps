@@ -60,8 +60,6 @@ export async function POST(req: NextRequest) {
     // Delete the pow wow
     await db.collection("powwows").doc(powwowId).delete();
 
-    console.log(`[DELETE] Pow wow ${powwowId} deleted by user ${userId} (owner: ${isOwner}, admin: ${isAdminOrModerator})`);
-
     return NextResponse.json({
       success: true,
       message: "Pow wow deleted successfully",

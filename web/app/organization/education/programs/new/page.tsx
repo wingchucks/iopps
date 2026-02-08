@@ -195,7 +195,7 @@ export default function NewProgramPage() {
         applicationUrl: applicationUrl || undefined,
       });
 
-      router.push("/organization/dashboard?tab=education");
+      router.push("/organization/educate/programs");
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Could not create program.");
@@ -209,7 +209,7 @@ export default function NewProgramPage() {
       <div className="mx-auto max-w-3xl px-4 py-10">
         <div className="mb-6">
           <Link
-            href="/organization/dashboard?tab=education"
+            href="/organization/educate/programs"
             className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ← Back to Education Dashboard

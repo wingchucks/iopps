@@ -90,13 +90,13 @@ async function applyTestCredits() {
     }
 }
 
-async function applyCreditsToEmployer(employerId: string, currentData: any) {
+async function applyCreditsToEmployer(employerId: string, currentData: Record<string, unknown>) {
     console.log(`\nEmployer: ${employerId}`);
-    console.log(`  Current jobCredits: ${currentData.jobCredits || 0}`);
-    
+    console.log(`  Current jobCredits: ${(currentData.jobCredits as number) || 0}`);
+
     // This was a $1 test payment - just add 1 test credit
     const creditsToAdd = 1;
-    const newCredits = (currentData.jobCredits || 0) + creditsToAdd;
+    const newCredits = ((currentData.jobCredits as number) || 0) + creditsToAdd;
     
     console.log(`  Adding ${creditsToAdd} credits (from 7 test payments of $125)`);
     console.log(`  New total: ${newCredits}`);

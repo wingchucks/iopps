@@ -47,7 +47,7 @@ function OrgWelcome() {
             View Plans & Pricing
           </Link>
           <Link
-            href="/organization/dashboard"
+            href="/organization"
             className="block w-full rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] px-6 py-3 text-center text-sm font-semibold text-[var(--text-primary)] hover:border-accent/30 transition-colors"
           >
             Go to Dashboard

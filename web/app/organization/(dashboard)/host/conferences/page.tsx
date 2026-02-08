@@ -48,13 +48,10 @@ export default function HostConferencesPage() {
 
         if (isSuperAdmin) {
           // Super admin sees all conferences
-          console.log('[HostConferences] Loading ALL conferences for super admin:', user.email);
           conferencesList = await listConferences({ includeExpired: true });
         } else {
-          console.log('[HostConferences] Loading conferences for user:', user.uid, user.email);
           conferencesList = await listEmployerConferences(user.uid);
         }
-        console.log('[HostConferences] Found conferences:', conferencesList.length);
         setConferences(conferencesList);
       } catch (error) {
         console.error('[HostConferences] Error loading conferences:', error);

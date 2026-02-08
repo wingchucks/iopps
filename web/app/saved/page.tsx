@@ -120,10 +120,10 @@ export default function SavedJobsPage() {
             </p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               <Link
-                href="/member/dashboard"
+                href={user ? `/member/${user.uid}` : '/discover'}
                 className="rounded-md border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 text-[var(--text-secondary)] transition hover:border-[#0D9488] hover:text-[#0D9488]"
               >
-                Go to Dashboard &rarr;
+                Go to Profile &rarr;
               </Link>
             </div>
           </div>

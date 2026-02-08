@@ -328,7 +328,7 @@ export async function shareEntity(
     userInfo: { name: string, avatarUrl?: string },
     entityType: PostType,
     entityReferenceId: string,
-    entityData: any,
+    entityData: Record<string, unknown>,
     comment?: string
 ) {
     // Sharing is just creating a post with special metadata

@@ -143,8 +143,8 @@ async function importRssJobs() {
                 console.log(`   ✅ Imported: "${title}" at ${company}`);
                 imported++;
 
-            } catch (err: any) {
-                console.error(`   ❌ Error processing job: ${err.message}`);
+            } catch (err: unknown) {
+                console.error(`   ❌ Error processing job: ${err instanceof Error ? err.message : err}`);
                 errors++;
             }
         }
@@ -157,7 +157,7 @@ async function importRssJobs() {
         console.log(`  Errors:   ${errors}`);
         console.log("========================================\n");
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("❌ Fatal error:", error);
         process.exit(1);
     }

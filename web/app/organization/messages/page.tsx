@@ -127,7 +127,7 @@ function EmployerMessagesContent() {
           <div className="flex items-center justify-between">
             <div>
               <Link
-                href="/organization/dashboard"
+                href="/organization"
                 className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 ← Dashboard

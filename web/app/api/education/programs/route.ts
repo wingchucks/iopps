@@ -61,16 +61,16 @@ export async function GET(req: NextRequest) {
     let programs = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    }));
+    })) as Array<Record<string, unknown> & { id: string }>;
 
     // Client-side text search if specified
     if (search) {
       const searchLower = search.toLowerCase();
       programs = programs.filter(
-        (p: any) =>
-          p.name?.toLowerCase().includes(searchLower) ||
-          p.description?.toLowerCase().includes(searchLower) ||
-          p.category?.toLowerCase().includes(searchLower)
+        (p) =>
+          (p.name as string | undefined)?.toLowerCase().includes(searchLower) ||
+          (p.description as string | undefined)?.toLowerCase().includes(searchLower) ||
+          (p.category as string | undefined)?.toLowerCase().includes(searchLower)
       );
     }
 

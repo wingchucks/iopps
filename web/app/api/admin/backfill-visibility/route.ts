@@ -93,8 +93,6 @@ export async function POST(request: NextRequest) {
       // Mark existing approved orgs as grandfathered
       // ============================================
       case "grandfather": {
-        console.log("[backfill-visibility] Starting grandfather migration...");
-
         // Default cutoff: now (all currently approved orgs are grandfathered)
         const cutoff = cutoffDate ? new Date(cutoffDate) : new Date();
 
@@ -123,7 +121,6 @@ export async function POST(request: NextRequest) {
           const createdAt = data.createdAt?.toDate?.() || data.approvedAt?.toDate?.();
           if (createdAt && createdAt > cutoff) {
             // Org created after cutoff - not grandfathered
-            console.log(`[backfill-visibility] Skipping ${doc.id} - created after cutoff`);
             skipped++;
             continue;
           }
@@ -187,8 +184,6 @@ export async function POST(request: NextRequest) {
       // Recompute visibility for all approved orgs
       // ============================================
       case "recompute_all": {
-        console.log("[backfill-visibility] Starting bulk recompute...");
-
         const result = await recomputeOrganizationVisibilityForAllApprovedOrgs({
           dryRun: !!dryRun,
         });
@@ -228,8 +223,6 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-
-        console.log(`[backfill-visibility] Recomputing visibility for ${orgId}...`);
 
         const result = await recomputeOrganizationVisibility(orgId, {
           dryRun: !!dryRun,

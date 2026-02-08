@@ -33,7 +33,7 @@ import {
   vendorToOpportunity,
   postToOpportunity,
 } from "./adapters";
-import { CreatePost } from "@/components/social/CreatePost";
+import { PostCreationBar } from "@/components/social/PostCreationBar";
 import ProfileNudge from "@/components/social/ProfileNudge";
 import { Icon } from "./Icon";
 import type { OpportunityType } from "./tokens";
@@ -208,8 +208,6 @@ export function OpportunityFeed({
   // Handle save/unsave action
   const handleSave = useCallback(async (itemId: string, shouldSave: boolean) => {
     if (!user) {
-      // Could show a login prompt here
-      console.log("User must be logged in to save items");
       return;
     }
 
@@ -335,7 +333,7 @@ export function OpportunityFeed({
 
       {/* Quick Composer (for logged-in users) */}
       {showBanner && user && (
-        <CreatePost onPostCreated={() => setRefreshKey(k => k + 1)} />
+        <PostCreationBar onPostCreated={() => setRefreshKey(k => k + 1)} />
       )}
 
       {/* Profile Nudge (for logged-in users with incomplete profiles) */}

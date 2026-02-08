@@ -47,9 +47,11 @@ const CATEGORY_COLORS: Record<string, { text: string; bg: string }> = {
 // Helpers
 // ============================================================================
 
-function timeAgo(date: any): string {
+function timeAgo(date: unknown): string {
   if (!date) return "";
-  const d = date?.toDate ? date.toDate() : new Date(date);
+  const d = (typeof date === "object" && date !== null && typeof (date as Record<string, unknown>).toDate === "function")
+    ? ((date as Record<string, unknown>).toDate as () => Date)()
+    : new Date(date as string | number);
   const now = new Date();
   const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
   if (diff < 60) return "just now";

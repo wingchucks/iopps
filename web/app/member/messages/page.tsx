@@ -200,10 +200,10 @@ function MemberMessagesContent() {
           <div className="flex items-center justify-between">
             <div>
               <Link
-                href="/member/dashboard"
+                href={user ? `/member/${user.uid}` : '/discover'}
                 className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
-                &larr; Dashboard
+                &larr; My Profile
               </Link>
               <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Messages

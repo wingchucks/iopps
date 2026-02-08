@@ -70,9 +70,9 @@ async function testScraper() {
         console.log(`\n💡 All jobs would be imported successfully!`);
         console.log(`   Duplicate detection uses 'applyurl' as unique identifier`);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("\n❌ Test Failed:");
-        console.error(error.message);
+        console.error(error instanceof Error ? error.message : error);
         process.exit(1);
     }
 }

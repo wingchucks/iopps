@@ -79,8 +79,6 @@ export async function POST(req: NextRequest) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://iopps.ca";
         const apiUrl = `${baseUrl}/api/emails/send-${campaignType}`;
 
-        console.log(`[Admin Trigger] ${decodedToken.email} triggering ${campaignType} campaign`);
-
         // Call the actual email endpoint with the cron secret
         const response = await fetch(apiUrl, {
             method: "POST",
@@ -115,8 +113,6 @@ export async function POST(req: NextRequest) {
         } catch (auditError) {
             console.error("Failed to create audit log:", auditError);
         }
-
-        console.log(`[Admin Trigger] Campaign ${campaignType} completed:`, result);
 
         return NextResponse.json({
             success: true,

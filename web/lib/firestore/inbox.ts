@@ -99,7 +99,7 @@ export async function getUnifiedInbox(
         }
       } catch {
         // Collection may not exist or have different index
-        console.log("Student inquiries query failed, skipping");
+        // Collection may not exist or have different index
       }
     }
 

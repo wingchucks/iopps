@@ -26,8 +26,6 @@ export default function CelebrateWinModal({ isOpen, onClose }: CelebrateWinModal
         // Simulate network request
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        console.log("Posted Win:", content);
-
         // Reset and close
         setIsPosting(false);
         setContent("");

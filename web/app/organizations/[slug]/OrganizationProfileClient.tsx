@@ -33,9 +33,8 @@ import CompanyIntroVideo from '@/components/employer/CompanyIntroVideo';
 import EmployerInterviewSection from '@/components/employer/EmployerInterviewSection';
 import type {
   OrganizationProfile,
-  OrganizationModule,
   OrgType,
-  ExtendedSocialLinks,
+  EmployerProfile,
   JobPosting,
   Scholarship,
   Service,
@@ -59,9 +58,43 @@ import {
   detectVideoProvider,
 } from '@/lib/firestore/organizations';
 import type { TeamMember } from '@/lib/types';
+import dynamic from 'next/dynamic';
+import {
+  Cog6ToothIcon,
+  ChartBarIcon,
+  DocumentTextIcon as DocIcon,
+  CreditCardIcon,
+  WrenchScrewdriverIcon,
+} from '@heroicons/react/24/outline';
+import {
+  CreateJobPanel,
+  CreateEventPanel,
+  CreateScholarshipPanel,
+  CreateProductPanel,
+  CreateTrainingPanel,
+  CreateFundingPanel,
+} from '@/components/organization/create-panels';
+
+// Lazy-load admin tab components (only loaded when manage mode is on)
+const OrgApplicationsTab = dynamic(() => import('@/components/organization/profile/OrgApplicationsTab'), {
+  loading: () => <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" /></div>,
+});
+const OrgAnalyticsTab = dynamic(() => import('@/components/organization/profile/OrgAnalyticsTab'), {
+  loading: () => <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" /></div>,
+});
+const OrgBillingTab = dynamic(() => import('@/components/organization/profile/OrgBillingTab'), {
+  loading: () => <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" /></div>,
+});
+const OrgTeamTab = dynamic(() => import('@/components/organization/profile/OrgTeamTab'), {
+  loading: () => <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" /></div>,
+});
+const OrgSettingsTab = dynamic(() => import('@/components/organization/profile/OrgSettingsTab'), {
+  loading: () => <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" /></div>,
+});
 
 // Tab types
-type ProfileTab = 'overview' | 'jobs' | 'programs' | 'offerings' | 'events' | 'funding';
+type ProfileTab = 'overview' | 'jobs' | 'programs' | 'offerings' | 'events' | 'funding'
+  | 'applications' | 'analytics' | 'billing' | 'team' | 'settings';
 
 interface Props {
   organization: OrganizationProfile;
@@ -122,12 +155,49 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const [eventCount, setEventCount] = useState(0);
   const [scholarshipCount, setScholarshipCount] = useState(0);
 
+  // Manage mode state (persisted in localStorage)
+  const [manageMode, setManageMode] = useState(false);
+
+  // Initialize manage mode from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('iopps_manage_mode');
+      if (stored === 'true' && canEdit) {
+        setManageMode(true);
+      }
+    } catch {
+      // localStorage not available
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleManageMode = () => {
+    const next = !manageMode;
+    setManageMode(next);
+    try {
+      localStorage.setItem('iopps_manage_mode', String(next));
+    } catch {
+      // localStorage not available
+    }
+    // If switching off manage mode and on an admin tab, go back to overview
+    if (!next && ['applications', 'analytics', 'billing', 'team', 'settings'].includes(activeTab)) {
+      setActiveTab('overview');
+    }
+  };
+
   // Intro video editing state
   const [introVideoUrl, setIntroVideoUrl] = useState(org.introVideoUrl || '');
   const [showIntroVideoModal, setShowIntroVideoModal] = useState(false);
   const [introVideoInput, setIntroVideoInput] = useState('');
   const [introVideoError, setIntroVideoError] = useState('');
   const [savingIntroVideo, setSavingIntroVideo] = useState(false);
+
+  // Create panel state
+  const [openPanel, setOpenPanel] = useState<'job' | 'event' | 'scholarship' | 'product' | 'training' | 'funding' | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const handlePanelSuccess = () => {
+    setRefreshKey((k) => k + 1);
+  };
 
   // Story is read-only on public profile - editing happens via Edit Profile
   const currentStory = org.story || '';
@@ -209,8 +279,19 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       tabs.push({ id: 'funding', label: 'Funding', icon: CurrencyDollarIcon });
     }
 
+    // Admin-only tabs (visible when canEdit AND manage mode is on)
+    if (canEdit && manageMode) {
+      if (enabledModules.includes('hire')) {
+        tabs.push({ id: 'applications', label: 'Applications', icon: DocIcon });
+      }
+      tabs.push({ id: 'analytics', label: 'Analytics', icon: ChartBarIcon });
+      tabs.push({ id: 'billing', label: 'Billing', icon: CreditCardIcon });
+      tabs.push({ id: 'team', label: 'Team', icon: UserGroupIcon });
+      tabs.push({ id: 'settings', label: 'Settings', icon: Cog6ToothIcon });
+    }
+
     return tabs;
-  }, [enabledModules, canEdit, hasActiveServices]);
+  }, [enabledModules, canEdit, hasActiveServices, manageMode]);
 
   // Track page view
   useEffect(() => {
@@ -357,12 +438,12 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             </div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            <Link
-              href="/organization/jobs/new"
+            <button
+              onClick={() => setOpenPanel('job')}
               className="flex-1 sm:flex-none text-center rounded-full bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors"
             >
               Post a Job
-            </Link>
+            </button>
             <Link
               href="/pricing"
               className="flex-1 sm:flex-none text-center rounded-full bg-slate-600 px-4 py-2 text-sm font-medium text-white hover:bg-slate-500 transition-colors"
@@ -373,13 +454,34 @@ export function OrganizationProfileClient({ organization: org }: Props) {
         </div>
       )}
 
+      {/* Manage Mode Banner */}
+      {canEdit && manageMode && (
+        <div className="mb-6 rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <WrenchScrewdriverIcon className="h-5 w-5 text-amber-400" />
+            <div>
+              <p className="text-sm font-medium text-amber-400">Manage Mode</p>
+              <p className="text-xs text-amber-400/70">
+                Admin tabs are visible. Only you can see Applications, Analytics, Billing, Team, and Settings.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={toggleManageMode}
+            className="rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 transition-colors"
+          >
+            Exit Manage Mode
+          </button>
+        </div>
+      )}
+
       {/* Header Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-100 via-white to-slate-100 border border-[var(--border)] mb-8">
-        {/* Banner */}
+      <div className="relative overflow-hidden rounded-none sm:rounded-3xl bg-gradient-to-br from-slate-100 via-white to-slate-100 border-b sm:border border-[var(--border)] mb-8">
+        {/* Banner - full width on mobile */}
         <div className="relative h-48 sm:h-64 bg-gradient-to-br from-slate-100 to-slate-200">
           {org.bannerUrl && (
             <Image
-              src={`${org.bannerUrl}${org.bannerUrl.includes('?') ? '&' : '?'}v=${(org as any).bannerUpdatedAt?.seconds || Date.now()}`}
+              src={`${org.bannerUrl}${org.bannerUrl.includes('?') ? '&' : '?'}v=${(org as unknown as Record<string, { seconds?: number }>).bannerUpdatedAt?.seconds || Date.now()}`}
               alt=""
               fill
               className="object-cover"
@@ -420,41 +522,59 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             </span>
           </div>
 
-          {/* Actions */}
-          <div className="absolute top-4 right-4 flex gap-2">
+          {/* Actions - icon-only on mobile, full labels on desktop */}
+          <div className="absolute top-4 right-4 flex flex-wrap gap-1.5 sm:gap-2 max-w-[50%] sm:max-w-none justify-end">
             {(org.contactEmail || org.contactPhone) && (
               <a
                 href={org.contactEmail ? `mailto:${org.contactEmail}` : `tel:${org.contactPhone}`}
-                className="flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent transition-colors"
+                className="flex items-center gap-1.5 rounded-full bg-accent px-2 sm:px-3 py-1.5 text-sm font-medium text-white hover:bg-accent transition-colors"
+                aria-label="Contact this organization"
               >
                 <EnvelopeIcon className="h-4 w-4" />
-                Contact
+                <span className="hidden sm:inline">Contact</span>
               </a>
             )}
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 rounded-full bg-[var(--card-bg)]/80 px-3 py-1.5 text-sm text-[var(--text-primary)] hover:bg-surface transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-[var(--card-bg)]/80 px-2 sm:px-3 py-1.5 text-sm text-[var(--text-primary)] hover:bg-surface transition-colors"
+              aria-label={copied ? 'Link copied to clipboard' : 'Share this organization profile'}
             >
               <ShareIcon className="h-4 w-4" />
-              {copied ? 'Copied!' : 'Share'}
+              <span className="hidden sm:inline">{copied ? 'Copied!' : 'Share'}</span>
             </button>
+            {canEdit && (
+              <button
+                onClick={toggleManageMode}
+                className={`flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium transition-colors ${
+                  manageMode
+                    ? 'bg-amber-500 text-white hover:bg-amber-600'
+                    : 'bg-[var(--card-bg)]/80 text-[var(--text-primary)] hover:bg-surface'
+                }`}
+                aria-label={manageMode ? 'Exit manage mode' : 'Enter manage mode to access admin tabs'}
+                aria-pressed={manageMode}
+              >
+                <WrenchScrewdriverIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">{manageMode ? 'Exit Manage' : 'Manage'}</span>
+              </button>
+            )}
             {canEdit && (
               <Link
                 href="/organization/profile"
-                className="flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-sm text-white hover:bg-accent transition-colors"
+                className="flex items-center gap-1.5 rounded-full bg-accent px-2 sm:px-3 py-1.5 text-sm text-white hover:bg-accent transition-colors"
+                aria-label="Edit organization profile"
               >
                 <PencilIcon className="h-4 w-4" />
-                Edit Profile
+                <span className="hidden sm:inline">Edit Profile</span>
               </Link>
             )}
           </div>
         </div>
 
         {/* Profile Info */}
-        <div className="relative px-6 pb-6 sm:px-8 sm:pb-8">
-          {/* Logo */}
-          <div className="absolute -top-16 sm:-top-20">
-            <div className="h-24 w-24 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-white bg-surface shadow-xl">
+        <div className="relative px-4 pb-6 sm:px-8 sm:pb-8">
+          {/* Logo - overlaps banner */}
+          <div className="absolute -top-12 sm:-top-20 left-4 sm:left-8">
+            <div className="h-20 w-20 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-white bg-surface shadow-xl">
               {org.logoUrl ? (
                 <Image
                   src={org.logoUrl}
@@ -472,7 +592,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
           </div>
 
           {/* Name and Details */}
-          <div className="pt-12 sm:pt-16 sm:ml-36">
+          <div className="pt-12 sm:pt-16 sm:ml-36 text-center sm:text-left">
             <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
               {org.organizationName}
             </h1>
@@ -483,7 +603,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
 
             {/* Stats Row */}
             {(jobCount > 0 || eventCount > 0 || scholarshipCount > 0 || org.createdAt) && (
-              <div className="mt-4 flex flex-wrap items-center gap-6">
+              <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-6">
                 {jobCount > 0 && (
                   <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
@@ -536,7 +656,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             )}
 
             {/* Location & Industry */}
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-foreground0">
+            <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm text-foreground0">
               {(org.city || org.province || org.location) && (
                 <span className="flex items-center gap-1.5">
                   <MapPinIcon className="h-4 w-4" />
@@ -554,7 +674,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             </div>
 
             {/* Social Links */}
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-3">
               {links.website && (
                 <a
                   href={links.website}
@@ -607,29 +727,51 @@ export function OrganizationProfileClient({ organization: org }: Props) {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 border-b border-[var(--border)]">
-        {availableTabs.map((tab) => {
+      {/* Tabs Navigation - horizontally scrollable on mobile */}
+      <div
+        className="mb-8 flex items-center gap-2 overflow-x-auto scrollbar-none pb-2 border-b border-[var(--border)] -mx-4 px-4 sm:mx-0 sm:px-0"
+        role="tablist"
+        aria-label="Organization profile sections"
+      >
+        {availableTabs.map((tab, index) => {
           const TabIcon = tab.icon;
+          const isAdminTab = ['applications', 'analytics', 'billing', 'team', 'settings'].includes(tab.id);
+          const prevTab = index > 0 ? availableTabs[index - 1] : null;
+          const prevIsPublic = prevTab ? !['applications', 'analytics', 'billing', 'team', 'settings'].includes(prevTab.id) : false;
+          const showDivider = isAdminTab && prevIsPublic;
+
           return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? 'bg-accent text-white'
-                  : 'text-foreground0 hover:bg-surface hover:text-[var(--text-primary)]'
-              }`}
-            >
-              <TabIcon className="h-4 w-4" />
-              {tab.label}
-            </button>
+            <div key={tab.id} className="flex items-center shrink-0">
+              {showDivider && (
+                <div className="mx-1 h-6 w-px bg-amber-500/30" aria-hidden="true" />
+              )}
+              <button
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                aria-controls={`orgpanel-${tab.id}`}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 whitespace-nowrap rounded-full px-3 sm:px-4 py-2 text-sm font-medium transition-all shrink-0 ${
+                  activeTab === tab.id
+                    ? isAdminTab
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-accent text-white'
+                    : isAdminTab
+                      ? 'text-amber-400/70 hover:bg-amber-500/10 hover:text-amber-400'
+                      : 'text-foreground0 hover:bg-surface hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <TabIcon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+              </button>
+            </div>
           );
         })}
       </div>
 
-      {/* Tab Content */}
-      <div className="min-h-[400px]">
+      {/* Tab Content - crossfade animation on tab change */}
+      <div className="min-h-[400px]" key={activeTab} id={`orgpanel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`}>
+        <div className="animate-crossfade">
         {activeTab === 'overview' && (
           <OverviewTab
             org={org}
@@ -641,26 +783,43 @@ export function OrganizationProfileClient({ organization: org }: Props) {
           />
         )}
         {activeTab === 'jobs' && (
-          <JobsTab org={org} canEdit={canEdit} />
+          <JobsTab org={org} canEdit={canEdit} onOpenPanel={() => setOpenPanel('job')} refreshKey={refreshKey} />
         )}
         {activeTab === 'programs' && (
-          <ProgramsTab org={org} canEdit={canEdit} />
+          <ProgramsTab org={org} canEdit={canEdit} onOpenScholarship={() => setOpenPanel('scholarship')} onOpenTraining={() => setOpenPanel('training')} refreshKey={refreshKey} />
         )}
         {activeTab === 'offerings' && (
-          <OfferingsTab org={org} canEdit={canEdit} />
+          <OfferingsTab org={org} canEdit={canEdit} onOpenPanel={() => setOpenPanel('product')} refreshKey={refreshKey} />
         )}
         {activeTab === 'events' && (
-          <EventsTab org={org} canEdit={canEdit} />
+          <EventsTab org={org} canEdit={canEdit} onOpenPanel={() => setOpenPanel('event')} refreshKey={refreshKey} />
         )}
         {activeTab === 'funding' && (
-          <FundingTab org={org} canEdit={canEdit} />
+          <FundingTab org={org} canEdit={canEdit} onOpenPanel={() => setOpenPanel('funding')} refreshKey={refreshKey} />
         )}
+        {/* Admin Tabs */}
+        {activeTab === 'applications' && canEdit && manageMode && (
+          <OrgApplicationsTab />
+        )}
+        {activeTab === 'analytics' && canEdit && manageMode && (
+          <OrgAnalyticsTab />
+        )}
+        {activeTab === 'billing' && canEdit && manageMode && (
+          <OrgBillingTab />
+        )}
+        {activeTab === 'team' && canEdit && manageMode && (
+          <OrgTeamTab />
+        )}
+        {activeTab === 'settings' && canEdit && manageMode && (
+          <OrgSettingsTab />
+        )}
+        </div>
       </div>
 
       {/* Intro Video Modal */}
       {showIntroVideoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" role="presentation">
+          <div className="relative w-full max-w-lg rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6 shadow-xl animate-slide-up" role="dialog" aria-modal="true" aria-label={introVideoUrl ? 'Edit intro video' : 'Add intro video'}>
             {/* Close button */}
             <button
               onClick={() => setShowIntroVideoModal(false)}
@@ -746,6 +905,42 @@ export function OrganizationProfileClient({ organization: org }: Props) {
         </div>
       )}
 
+      {/* Create Panels */}
+      {canEdit && (
+        <>
+          <CreateJobPanel
+            isOpen={openPanel === 'job'}
+            onClose={() => setOpenPanel(null)}
+            onSuccess={handlePanelSuccess}
+          />
+          <CreateEventPanel
+            isOpen={openPanel === 'event'}
+            onClose={() => setOpenPanel(null)}
+            onSuccess={handlePanelSuccess}
+          />
+          <CreateScholarshipPanel
+            isOpen={openPanel === 'scholarship'}
+            onClose={() => setOpenPanel(null)}
+            onSuccess={handlePanelSuccess}
+          />
+          <CreateProductPanel
+            isOpen={openPanel === 'product'}
+            onClose={() => setOpenPanel(null)}
+            onSuccess={handlePanelSuccess}
+          />
+          <CreateTrainingPanel
+            isOpen={openPanel === 'training'}
+            onClose={() => setOpenPanel(null)}
+            onSuccess={handlePanelSuccess}
+          />
+          <CreateFundingPanel
+            isOpen={openPanel === 'funding'}
+            onClose={() => setOpenPanel(null)}
+            onSuccess={handlePanelSuccess}
+          />
+        </>
+      )}
+
     </FeedLayout>
   );
 }
@@ -793,6 +988,7 @@ function OverviewTab({
   // Fetch team members if owner
   useEffect(() => {
     if (!canEdit) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronous init before async fetch is intentional
     setLoadingTeam(true);
     getTeamMembers(org.userId)
       .then(setTeamMembers)
@@ -924,7 +1120,7 @@ function OverviewTab({
 
         {/* Employer Interviews */}
         {org.interviews && org.interviews.length > 0 && (
-          <EmployerInterviewSection employer={org as any} />
+          <EmployerInterviewSection employer={org as unknown as EmployerProfile} />
         )}
 
         {/* Indigenous Verification Details */}
@@ -1335,12 +1531,13 @@ function OverviewTab({
   );
 }
 
-function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean }) {
+function JobsTab({ org, canEdit, onOpenPanel, refreshKey }: { org: OrganizationProfile; canEdit: boolean; onOpenPanel?: () => void; refreshKey?: number }) {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchJobs() {
+      setLoading(true);
       try {
         const data = await listEmployerJobs(org.userId);
         // Only show active jobs for public view
@@ -1352,7 +1549,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
       }
     }
     fetchJobs();
-  }, [org.userId, canEdit]);
+  }, [org.userId, canEdit, refreshKey]);
 
   const formatSalary = (salaryRange: JobPosting['salaryRange']) => {
     if (!salaryRange) return null;
@@ -1381,7 +1578,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
             title="No jobs posted yet"
             description="Reach thousands of Indigenous professionals actively seeking opportunities. Post your first job today."
             ctaText="Post a Job"
-            ctaHref="/organization/jobs/new"
+            onCtaClick={onOpenPanel}
             icon={<BriefcaseIcon className="h-7 w-7" />}
           />
         ) : (
@@ -1508,12 +1705,13 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
   );
 }
 
-function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean }) {
+function ProgramsTab({ org, canEdit, onOpenScholarship, onOpenTraining, refreshKey }: { org: OrganizationProfile; canEdit: boolean; onOpenScholarship?: () => void; onOpenTraining?: () => void; refreshKey?: number }) {
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchPrograms() {
+      setLoading(true);
       try {
         const data = await listEmployerScholarships(org.userId);
         // Only show active scholarships for public view
@@ -1525,7 +1723,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
       }
     }
     fetchPrograms();
-  }, [org.userId, canEdit]);
+  }, [org.userId, canEdit, refreshKey]);
 
   const formatDate = (date: Scholarship['deadline']) => {
     if (!date) return null;
@@ -1558,7 +1756,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
             title="No programs listed"
             description="Showcase your commitment to Indigenous education. Add scholarships and training programs to attract diverse talent."
             ctaText="Add Scholarship"
-            ctaHref="/organization/scholarships/new"
+            onCtaClick={onOpenScholarship}
             icon={<AcademicCapIcon className="h-7 w-7" />}
           />
         ) : (
@@ -1647,12 +1845,13 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
   );
 }
 
-function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean }) {
+function OfferingsTab({ org, canEdit, onOpenPanel, refreshKey }: { org: OrganizationProfile; canEdit: boolean; onOpenPanel?: () => void; refreshKey?: number }) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchServices() {
+      setLoading(true);
       try {
         const data = await listUserServices(org.userId);
         // Only show active services for public view
@@ -1664,7 +1863,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
       }
     }
     fetchServices();
-  }, [org.userId, canEdit]);
+  }, [org.userId, canEdit, refreshKey]);
 
   if (loading) {
     return (
@@ -1682,7 +1881,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
             title="No products or services listed"
             description="Showcase what you offer. List your products and services to connect with potential customers and partners."
             ctaText="Add Product or Service"
-            ctaHref="/organization/services/new"
+            onCtaClick={onOpenPanel}
             icon={<BuildingStorefrontIcon className="h-7 w-7" />}
           />
         ) : (
@@ -1792,13 +1991,14 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
   );
 }
 
-function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean }) {
+function EventsTab({ org, canEdit, onOpenPanel, refreshKey }: { org: OrganizationProfile; canEdit: boolean; onOpenPanel?: () => void; refreshKey?: number }) {
   const [conferences, setConferences] = useState<Conference[]>([]);
   const [powwows, setPowwows] = useState<PowwowEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchEvents() {
+      setLoading(true);
       try {
         const [confData, powwowData] = await Promise.all([
           listEmployerConferences(org.userId),
@@ -1814,7 +2014,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
       }
     }
     fetchEvents();
-  }, [org.userId, canEdit]);
+  }, [org.userId, canEdit, refreshKey]);
 
   const formatEventDate = (date: Conference['startDate'] | PowwowEvent['startDate']) => {
     if (!date) return null;
@@ -1875,7 +2075,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
             title="No events scheduled"
             description="Build connections with the community. Host conferences, networking events, or cultural gatherings."
             ctaText="Create Event"
-            ctaHref="/organization/conferences/new"
+            onCtaClick={onOpenPanel}
             icon={<CalendarIcon className="h-7 w-7" />}
           />
         ) : (
@@ -2090,12 +2290,13 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
   );
 }
 
-function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean }) {
+function FundingTab({ org, canEdit, onOpenPanel, refreshKey }: { org: OrganizationProfile; canEdit: boolean; onOpenPanel?: () => void; refreshKey?: number }) {
   const [grants, setGrants] = useState<BusinessGrant[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchGrants() {
+      setLoading(true);
       try {
         const data = await listOrganizationGrants(org.userId);
         // Only show active grants for public view
@@ -2107,7 +2308,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
       }
     }
     fetchGrants();
-  }, [org.userId, canEdit]);
+  }, [org.userId, canEdit, refreshKey]);
 
   const formatGrantDate = (date: BusinessGrant['deadline']) => {
     if (!date) return null;
@@ -2161,7 +2362,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
             title="No funding opportunities"
             description="Support Indigenous entrepreneurs. Share grants, loans, and funding programs to help businesses grow."
             ctaText="Add Funding"
-            ctaHref="/organization/grants/new"
+            onCtaClick={onOpenPanel}
             icon={<CurrencyDollarIcon className="h-7 w-7" />}
           />
         ) : (

@@ -14,12 +14,15 @@ interface SettingsTabProps {
 }
 
 // Helper to convert timestamp to Date
-function toDate(timestamp: any): Date | null {
+function toDate(timestamp: unknown): Date | null {
     if (!timestamp) return null;
     if (timestamp instanceof Date) return timestamp;
-    if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
-    if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
-    if (timestamp.toDate) return timestamp.toDate();
+    if (typeof timestamp === "object" && timestamp !== null) {
+        const ts = timestamp as Record<string, unknown>;
+        if (ts._seconds) return new Date((ts._seconds as number) * 1000);
+        if (ts.seconds) return new Date((ts.seconds as number) * 1000);
+        if (typeof ts.toDate === "function") return (ts.toDate as () => Date)();
+    }
     if (typeof timestamp === "string") return new Date(timestamp);
     return null;
 }
@@ -154,7 +157,7 @@ export function SettingsTab({ conference }: SettingsTabProps) {
         try {
             await deleteConference(conference.id);
             toast.success("Conference deleted");
-            router.push("/organization/dashboard");
+            router.push("/organization");
         } catch (error) {
             console.error(error);
             toast.error("Failed to delete conference");

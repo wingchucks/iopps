@@ -148,7 +148,7 @@ export default function MobileNavBar({
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const isActive = (path: string) => {
-    if (path === '/organization/dashboard') {
+    if (path === '/organization') {
       return currentPath === '/organization/dashboard' || currentPath === '/organization';
     }
     return currentPath.startsWith(path);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
 import { stripe, VENDOR_PRODUCTS, VendorProductType } from "@/lib/stripe";
 import { auth, db } from "@/lib/firebase-admin";
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
         const isMonthlyWithTrial = productType === "MONTHLY" && product.firstMonthFree;
 
         // Create Checkout Session
-        const sessionConfig: any = {
+        const sessionConfig: Stripe.Checkout.SessionCreateParams = {
             payment_method_types: ["card"],
             line_items: [
                 {

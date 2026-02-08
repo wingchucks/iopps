@@ -37,11 +37,11 @@ const PROVINCES = [
   "Canada-wide",
 ];
 
-function formatDateForInput(date: any): string {
+function formatDateForInput(date: unknown): string {
   if (!date) return "";
-  if (typeof date === "object" && "toDate" in date) {
+  if (typeof date === "object" && date !== null && "toDate" in date && typeof (date as Record<string, unknown>).toDate === "function") {
     try {
-      return (date as any).toDate().toISOString().split("T")[0];
+      return ((date as Record<string, unknown>).toDate as () => Date)().toISOString().split("T")[0];
     } catch (e) {
       console.error("Error converting timestamp", e);
       return "";
@@ -191,7 +191,7 @@ export default function EditFundingPage({
           Funding opportunity not found
         </h1>
         <Link
-          href="/organization/dashboard?tab=business"
+          href="/organization/funding/opportunities"
           className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Back to Dashboard
@@ -264,7 +264,7 @@ export default function EditFundingPage({
 
       setSuccess(true);
       setTimeout(() => {
-        router.push("/organization/dashboard?tab=business");
+        router.push("/organization/funding/opportunities");
       }, 1500);
     } catch (err) {
       console.error(err);
@@ -279,7 +279,7 @@ export default function EditFundingPage({
       <div className="mx-auto max-w-3xl px-4 py-10">
         <div className="mb-6">
           <Link
-            href="/organization/dashboard?tab=business"
+            href="/organization/funding/opportunities"
             className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ← Back to Business Dashboard
@@ -660,7 +660,7 @@ export default function EditFundingPage({
               {saving ? "Saving..." : "Save Changes"}
             </button>
             <Link
-              href="/organization/dashboard?tab=business"
+              href="/organization/funding/opportunities"
               className="rounded-md border border-[var(--card-border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-surface transition-colors"
             >
               Cancel

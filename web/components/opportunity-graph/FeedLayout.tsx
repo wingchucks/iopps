@@ -1,29 +1,38 @@
 /**
  * IOPPS Social Opportunity Graph — Feed Layout
  *
- * Shared three-column layout used across all section pages.
- * Extracted from the homepage to ensure visual consistency site-wide.
+ * Social-platform-style layout (LinkedIn/Facebook pattern):
+ * - Desktop: sticky top bar (logo + search + nav + icons + avatar dropdown),
+ *   optional left sidebar, main content, optional right sidebar.
+ * - Mobile: slim top bar, full-width content, fixed bottom nav (5 items).
  */
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback, FormEvent } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import NotificationBell from "@/components/NotificationBell";
 import { colors } from "./tokens";
-import { Icon, IconName } from "./Icon";
+import { Icon } from "./Icon";
 import { Avatar } from "./Avatar";
 import {
   NAV_ITEMS,
   BOTTOM_NAV,
+  ICON_NAV_ITEMS,
+  AVATAR_MENU_ITEMS,
   QUICK_LINKS,
   FOOTER_LINKS,
   resolveHref,
+  resolveAvatarHref,
   type NavId,
 } from "@/lib/constants/navigation";
 import { TREATY_ACKNOWLEDGMENT } from "@/lib/constants/content";
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
 
 interface FeedLayoutProps {
   children: React.ReactNode;
@@ -33,6 +42,10 @@ interface FeedLayoutProps {
   fullWidth?: boolean;
 }
 
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+
 export function FeedLayout({
   children,
   activeNav,
@@ -40,62 +53,296 @@ export function FeedLayout({
   showFab = true,
   fullWidth = false,
 }: FeedLayoutProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
 
   const userName = user?.displayName || user?.email?.split("@")[0] || "Guest";
   const userAvatar = user?.photoURL || undefined;
+  const userId = user?.uid || "";
   const isLoggedIn = !!user;
 
-  // Auto-detect active nav from pathname if not explicitly set
-  const resolvedActiveNav: NavId | undefined = activeNav ?? (() => {
-    if (pathname === "/discover") return "feed";
-    const match = NAV_ITEMS.find((item) => item.href !== "/discover" && pathname?.startsWith(item.href));
+  /* ---- Active nav detection ---- */
+  // Map legacy NavId values to new ones so the correct top-bar item lights up
+  const LEGACY_NAV_MAP: Partial<Record<NavId, NavId>> = {
+    feed: "home",
+    careers: "jobs",
+    community: "events",
+    organizations: "business",
+    live: "home",
+    nations: "home",
+    pricing: "home",
+  };
+
+  const rawActiveNav: NavId | undefined = activeNav ?? (() => {
+    if (pathname === "/" || pathname === "/discover") return "home";
+    const match = NAV_ITEMS.find(
+      (item) => item.href !== "/" && pathname?.startsWith(item.href),
+    );
     return match?.id;
   })();
+
+  const resolvedActiveNav: NavId | undefined =
+    rawActiveNav && LEGACY_NAV_MAP[rawActiveNav]
+      ? LEGACY_NAV_MAP[rawActiveNav]
+      : rawActiveNav;
 
   const isNavActive = (id: NavId) => resolvedActiveNav === id;
 
   const isBottomNavActive = (href: string) => {
-    if (href === "/discover") return pathname === "/discover";
+    if (href === "/") return pathname === "/" || pathname === "/discover";
+    if (href === "#") return false;
     return pathname?.startsWith(href) ?? false;
   };
 
+  /* ---- Close avatar dropdown on outside click ---- */
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        avatarMenuRef.current &&
+        !avatarMenuRef.current.contains(event.target as Node)
+      ) {
+        setAvatarMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  /* ---- Close avatar menu on route change ---- */
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync UI state with route change
+    setAvatarMenuOpen(false);
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  /* ---- Keyboard support for avatar dropdown ---- */
+  const handleAvatarKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setAvatarMenuOpen((prev) => !prev);
+      }
+      if (e.key === "Escape") {
+        setAvatarMenuOpen(false);
+      }
+    },
+    [],
+  );
+
+  /* ---- Search submit ---- */
+  const handleSearchSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (q) {
+      router.push(`/search?q=${encodeURIComponent(q)}`);
+      setSearchQuery("");
+    }
+  };
+
+  /* ---- Avatar menu item click ---- */
+  const handleAvatarMenuClick = async (item: (typeof AVATAR_MENU_ITEMS)[number]) => {
+    setAvatarMenuOpen(false);
+    if (item.action === "signout") {
+      await logout();
+      router.push("/");
+    }
+  };
+
+  /* ---- Render ---- */
   return (
     <div className="feed-container">
-      {/* Sticky Header */}
+      {/* ============================================================ */}
+      {/*  Sticky Top Bar                                               */}
+      {/* ============================================================ */}
       <header className="feed-header">
         <div className="feed-header-inner">
-          <Link href="/discover" className="feed-logo">
+          {/* Logo */}
+          <Link href="/" className="feed-logo" aria-label="IOPPS Home">
             <span className="feed-logo-text">IOPPS</span>
-            <span className="feed-logo-tagline">Empowering Indigenous Success</span>
           </Link>
 
-          <Link href="/search" className="feed-search">
+          {/* Desktop Search Bar */}
+          <form
+            className="feed-search"
+            onSubmit={handleSearchSubmit}
+            role="search"
+          >
             <Icon name="search" size={18} color={colors.textMuted} />
-            <span>Search jobs, vendors, programs, or Nations...</span>
-          </Link>
+            <input
+              type="text"
+              className="feed-search-input"
+              placeholder="Search jobs, programs, or organizations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search"
+            />
+          </form>
 
+          {/* Desktop Main Nav */}
+          <nav className="feed-topnav" aria-label="Main navigation">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className={`feed-topnav-item ${isNavActive(item.id) ? "active" : ""}`}
+                aria-current={isNavActive(item.id) ? "page" : undefined}
+              >
+                <Icon
+                  name={item.icon}
+                  size={20}
+                  color={isNavActive(item.id) ? colors.accent : colors.textSoft}
+                />
+                <span className="feed-topnav-label">{item.label}</span>
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right-side actions */}
           <div className="feed-actions">
+            {/* Desktop icon nav items (messages) */}
+            {isLoggedIn &&
+              ICON_NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="feed-icon-btn"
+                  aria-label={item.label}
+                  title={item.label}
+                >
+                  <Icon name={item.icon} size={20} color={colors.textSoft} />
+                </Link>
+              ))}
+
+            {/* Notification bell */}
             {isLoggedIn && <NotificationBell />}
-            <Link href={isLoggedIn ? "/member/dashboard" : "/login"} className="feed-avatar-link">
-              <Avatar name={userName} src={userAvatar} size={36} ring />
+
+            {/* Mobile search icon */}
+            <Link
+              href="/search"
+              className="feed-mobile-search-btn"
+              aria-label="Search"
+            >
+              <Icon name="search" size={20} color={colors.textSoft} />
             </Link>
+
+            {/* Avatar dropdown (desktop) */}
+            {isLoggedIn ? (
+              <div className="feed-avatar-wrapper" ref={avatarMenuRef}>
+                <button
+                  className="feed-avatar-btn"
+                  onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
+                  onKeyDown={handleAvatarKeyDown}
+                  aria-label="Account menu"
+                  aria-expanded={avatarMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <Avatar name={userName} src={userAvatar} size={32} />
+                  <Icon
+                    name="chevronDown"
+                    size={14}
+                    color={colors.textMuted}
+                    className="feed-avatar-chevron"
+                  />
+                </button>
+
+                {avatarMenuOpen && (
+                  <div
+                    className="feed-avatar-menu"
+                    role="menu"
+                    aria-label="Account options"
+                  >
+                    {/* User info header */}
+                    <div className="feed-avatar-menu-header">
+                      <Avatar name={userName} src={userAvatar} size={40} ring />
+                      <div>
+                        <div className="feed-avatar-menu-name">{userName}</div>
+                        <div className="feed-avatar-menu-email">
+                          {user.email}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="feed-avatar-menu-divider" />
+
+                    {AVATAR_MENU_ITEMS.map((item) => {
+                      const href =
+                        item.action === "signout"
+                          ? "#"
+                          : resolveAvatarHref(item.href, userId);
+
+                      if (item.action === "signout") {
+                        return (
+                          <button
+                            key={item.label}
+                            className="feed-avatar-menu-item"
+                            role="menuitem"
+                            onClick={() => handleAvatarMenuClick(item)}
+                          >
+                            <Icon
+                              name={item.icon}
+                              size={18}
+                              color={colors.textSoft}
+                            />
+                            <span>{item.label}</span>
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={item.label}
+                          href={href}
+                          className="feed-avatar-menu-item"
+                          role="menuitem"
+                          onClick={() => setAvatarMenuOpen(false)}
+                        >
+                          <Icon
+                            name={item.icon}
+                            size={18}
+                            color={colors.textSoft}
+                          />
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link href="/login" className="feed-signin-btn">
+                Sign In
+              </Link>
+            )}
+
+            {/* Mobile hamburger */}
             <button
               className="feed-mobile-menu-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Menu"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
             >
-              <Icon name={mobileMenuOpen ? "x" : "menu"} size={24} color={colors.textSoft} />
+              <Icon
+                name={mobileMenuOpen ? "x" : "menu"}
+                size={24}
+                color={colors.textSoft}
+              />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Mobile Navigation Overlay */}
+      {/* ============================================================ */}
+      {/*  Mobile Navigation Overlay                                    */}
+      {/* ============================================================ */}
       {mobileMenuOpen && (
-        <div className="feed-mobile-nav">
+        <div className="feed-mobile-nav" aria-label="Mobile navigation">
           <nav>
             {NAV_ITEMS.map((item) => (
               <Link
@@ -104,25 +351,82 @@ export function FeedLayout({
                 className={`feed-mobile-nav-link ${isNavActive(item.id) ? "active" : ""}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Icon name={item.icon} size={20} color={isNavActive(item.id) ? colors.accent : colors.textSoft} />
+                <Icon
+                  name={item.icon}
+                  size={20}
+                  color={
+                    isNavActive(item.id) ? colors.accent : colors.textSoft
+                  }
+                />
                 <span>{item.label}</span>
               </Link>
             ))}
+
+            <div className="feed-mobile-nav-divider" />
+
+            {isLoggedIn && (
+              <>
+                <Link
+                  href={`/member/${userId}`}
+                  className="feed-mobile-nav-link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Icon name="user" size={20} color={colors.textSoft} />
+                  <span>View Profile</span>
+                </Link>
+                <Link
+                  href="/member/settings"
+                  className="feed-mobile-nav-link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Icon name="settings" size={20} color={colors.textSoft} />
+                  <span>Settings & Privacy</span>
+                </Link>
+                <button
+                  className="feed-mobile-nav-link feed-mobile-nav-btn"
+                  onClick={async () => {
+                    setMobileMenuOpen(false);
+                    await logout();
+                    router.push("/");
+                  }}
+                >
+                  <Icon name="logout" size={20} color={colors.textSoft} />
+                  <span>Sign Out</span>
+                </button>
+              </>
+            )}
+
+            {!isLoggedIn && (
+              <Link
+                href="/login"
+                className="feed-mobile-nav-link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Icon name="user" size={20} color={colors.accent} />
+                <span>Sign In</span>
+              </Link>
+            )}
           </nav>
         </div>
       )}
 
-      {/* Main Content */}
+      {/* ============================================================ */}
+      {/*  Main Content Area                                            */}
+      {/* ============================================================ */}
       <div className="feed-main">
-        <div className={`feed-layout ${fullWidth ? "feed-layout--full" : ""}`}>
+        <div
+          className={`feed-layout ${fullWidth ? "feed-layout--full" : ""}`}
+        >
           {/* Left Sidebar — Desktop Only */}
-          <aside className="feed-sidebar-left">
+          <aside className="feed-sidebar-left" aria-label="User profile and navigation">
             {/* User Card */}
             <div className="feed-user-card">
               <div className="feed-user-card-inner">
                 <Avatar name={userName} src={userAvatar} size={44} ring />
                 <div>
-                  <div className="feed-user-name">{isLoggedIn ? userName : "Welcome!"}</div>
+                  <div className="feed-user-name">
+                    {isLoggedIn ? userName : "Welcome!"}
+                  </div>
                   <div className="feed-user-cta">
                     {isLoggedIn && user ? (
                       <Link href={`/member/${user.uid}`}>View profile</Link>
@@ -136,16 +440,27 @@ export function FeedLayout({
               </div>
             </div>
 
-            {/* Navigation */}
-            <nav className="feed-nav">
+            {/* Sidebar Nav */}
+            <nav className="feed-nav" aria-label="Sidebar navigation">
               {NAV_ITEMS.map((item, i) => (
                 <Link
                   key={item.id}
                   href={item.href}
                   className={`feed-nav-link ${isNavActive(item.id) ? "active" : ""}`}
-                  style={{ borderBottom: i < NAV_ITEMS.length - 1 ? `1px solid ${colors.borderLt}` : "none" }}
+                  style={{
+                    borderBottom:
+                      i < NAV_ITEMS.length - 1
+                        ? `1px solid ${colors.borderLt}`
+                        : "none",
+                  }}
                 >
-                  <Icon name={item.icon} size={20} color={isNavActive(item.id) ? colors.accent : colors.textSoft} />
+                  <Icon
+                    name={item.icon}
+                    size={20}
+                    color={
+                      isNavActive(item.id) ? colors.accent : colors.textSoft
+                    }
+                  />
                   <span>{item.label}</span>
                 </Link>
               ))}
@@ -157,35 +472,74 @@ export function FeedLayout({
 
           {/* Right Sidebar — Desktop Only */}
           {!fullWidth && (
-            <aside className="feed-sidebar-right">
+            <aside className="feed-sidebar-right" aria-label="Trending and quick links">
               {rightSidebar || <DefaultRightSidebar />}
             </aside>
           )}
         </div>
       </div>
 
-      {/* Floating Action Button */}
+      {/* ============================================================ */}
+      {/*  Floating Action Button (desktop)                             */}
+      {/* ============================================================ */}
       {showFab && (
         <Link
           href={isLoggedIn ? "/organization/jobs/new" : "/login"}
           className="feed-fab"
           title={isLoggedIn ? "Post a job" : "Sign in to post"}
+          aria-label={isLoggedIn ? "Post a job" : "Sign in to post"}
         >
           <Icon name="plus" size={24} color="#fff" />
         </Link>
       )}
 
-      {/* Mobile Bottom Nav */}
-      <nav className="feed-mobile-bottom-nav">
+      {/* ============================================================ */}
+      {/*  Mobile Bottom Nav                                            */}
+      {/* ============================================================ */}
+      <nav className="feed-mobile-bottom-nav" aria-label="Mobile navigation">
         {BOTTOM_NAV.map((item) => {
-          const href = resolveHref(item.href, isLoggedIn);
+          const href = resolveHref(item.href, isLoggedIn, userId);
+          const active = isBottomNavActive(
+            typeof item.href === "string" ? item.href : href,
+          );
+          const isCreatePost = item.action === "create-post";
+
+          if (isCreatePost) {
+            return (
+              <button
+                key={item.label}
+                className="feed-bottom-nav-item feed-bottom-nav-create"
+                aria-label={item.label}
+                onClick={() => {
+                  // Placeholder: navigate to a create page or open a modal
+                  if (isLoggedIn) {
+                    router.push("/organization/jobs/new");
+                  } else {
+                    router.push("/login");
+                  }
+                }}
+              >
+                <Icon
+                  name={item.icon}
+                  size={26}
+                  color={colors.accent}
+                />
+                <span>{item.label}</span>
+              </button>
+            );
+          }
+
           return (
             <Link
               key={item.label}
               href={href}
-              className={`feed-bottom-nav-item ${isBottomNavActive(typeof item.href === "string" ? item.href : href) ? "active" : ""}`}
+              className={`feed-bottom-nav-item ${active ? "active" : ""}`}
             >
-              <Icon name={item.icon} size={22} color={isBottomNavActive(typeof item.href === "string" ? item.href : href) ? colors.accent : colors.textSoft} />
+              <Icon
+                name={item.icon}
+                size={22}
+                color={active ? colors.accent : colors.textSoft}
+              />
               <span>{item.label}</span>
             </Link>
           );
@@ -197,7 +551,10 @@ export function FeedLayout({
   );
 }
 
-/** Default right sidebar with trending + quick links */
+/* ------------------------------------------------------------------ */
+/*  Default Right Sidebar                                              */
+/* ------------------------------------------------------------------ */
+
 function DefaultRightSidebar() {
   return (
     <>
@@ -210,14 +567,18 @@ function DefaultRightSidebar() {
         {[
           { title: "SIGA Hiring Spree", org: "Saskatchewan", saves: 47 },
           { title: "Tech Futures Scholarship", org: "SIIT", saves: 89 },
-          { title: "Indigenous Professionals Summit", org: "IOPPS", saves: 156 },
+          {
+            title: "Indigenous Professionals Summit",
+            org: "IOPPS",
+            saves: 156,
+          },
         ].map((t, i) => (
           <div key={i} className="feed-trending-item">
             <span className="feed-trending-num">{i + 1}</span>
             <div>
               <div className="feed-trending-title">{t.title}</div>
               <div className="feed-trending-meta">
-                {t.org} · {t.saves} saves
+                {t.org} &middot; {t.saves} saves
               </div>
             </div>
           </div>
@@ -229,7 +590,7 @@ function DefaultRightSidebar() {
         <div className="feed-quick-links-header">Quick Links</div>
         {QUICK_LINKS.map((link, i) => (
           <Link key={i} href={link.href} className="feed-quick-link">
-            {link.label} →
+            {link.label} &rarr;
           </Link>
         ))}
       </div>
@@ -239,10 +600,12 @@ function DefaultRightSidebar() {
         {TREATY_ACKNOWLEDGMENT}
         <div className="feed-footer-links">
           {FOOTER_LINKS.map((link) => (
-            <Link key={link.href} href={link.href}>{link.label}</Link>
+            <Link key={link.href} href={link.href}>
+              {link.label}
+            </Link>
           ))}
         </div>
-        © {new Date().getFullYear()} IOPPS.ca
+        &copy; {new Date().getFullYear()} IOPPS.ca
       </div>
     </>
   );
@@ -253,6 +616,7 @@ function DefaultRightSidebar() {
 /* ------------------------------------------------------------------ */
 
 const feedLayoutStyles = `
+  /* ---- Base Container ---- */
   .feed-container {
     min-height: 100vh;
     background: ${colors.bg};
@@ -263,7 +627,9 @@ const feedLayoutStyles = `
     .feed-container { padding-bottom: 0; }
   }
 
-  /* Header */
+  /* ================================================================ */
+  /*  Header / Top Bar                                                 */
+  /* ================================================================ */
   .feed-header {
     position: sticky;
     top: 0;
@@ -279,19 +645,19 @@ const feedLayoutStyles = `
     height: 56px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
   }
   @media (min-width: 768px) {
-    .feed-header-inner { padding: 0 24px; height: 64px; }
+    .feed-header-inner { padding: 0 24px; height: 60px; gap: 12px; }
   }
 
-  /* Logo */
+  /* ---- Logo ---- */
   .feed-logo {
     display: flex;
     align-items: baseline;
     gap: 6px;
     text-decoration: none;
+    flex-shrink: 0;
   }
   .feed-logo-text {
     font-size: 20px;
@@ -299,64 +665,244 @@ const feedLayoutStyles = `
     color: ${colors.accent};
     letter-spacing: -0.5px;
   }
-  .feed-logo-tagline {
-    display: none;
-    font-size: 12px;
-    color: ${colors.textMuted};
-    font-weight: 500;
-  }
   @media (min-width: 768px) {
     .feed-logo-text { font-size: 22px; }
-    .feed-logo-tagline { display: block; }
   }
 
-  /* Search */
+  /* ---- Desktop Search Bar ---- */
   .feed-search {
     display: none;
-    flex: 1;
-    max-width: 480px;
-    margin: 0 32px;
+    flex: 0 1 320px;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
-    border-radius: 10px;
+    padding: 7px 14px;
+    border-radius: 8px;
     background: ${colors.bg};
     border: 1px solid ${colors.border};
-    font-size: 14px;
-    color: ${colors.textMuted};
-    text-decoration: none;
   }
-  @media (min-width: 1024px) {
+  .feed-search:focus-within {
+    border-color: ${colors.accent};
+    box-shadow: 0 0 0 2px ${colors.accentBg};
+  }
+  .feed-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: ${colors.text};
+    font-family: inherit;
+  }
+  .feed-search-input::placeholder {
+    color: ${colors.textMuted};
+  }
+  @media (min-width: 768px) {
     .feed-search { display: flex; }
   }
 
-  /* Actions */
+  /* ---- Desktop Top Nav (center) ---- */
+  .feed-topnav {
+    display: none;
+    align-items: center;
+    gap: 2px;
+    margin: 0 auto;
+  }
+  @media (min-width: 1024px) {
+    .feed-topnav { display: flex; }
+  }
+  .feed-topnav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 16px;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.15s, color 0.15s;
+    min-width: 64px;
+  }
+  .feed-topnav-item:hover {
+    border-bottom-color: ${colors.border};
+  }
+  .feed-topnav-item.active {
+    border-bottom-color: ${colors.accent};
+  }
+  .feed-topnav-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: ${colors.textSoft};
+    white-space: nowrap;
+  }
+  .feed-topnav-item.active .feed-topnav-label {
+    color: ${colors.accent};
+    font-weight: 700;
+  }
+
+  /* ---- Right-side Actions ---- */
   .feed-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: auto;
   }
   @media (min-width: 768px) {
-    .feed-actions { gap: 12px; }
+    .feed-actions { gap: 8px; }
   }
-  .feed-avatar-link {
+
+  /* Icon button (messages etc.) */
+  .feed-icon-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     text-decoration: none;
+    transition: background 0.15s;
+  }
+  .feed-icon-btn:hover {
+    background: ${colors.bg};
+  }
+  @media (min-width: 768px) {
+    .feed-icon-btn { display: flex; }
+  }
+
+  /* Mobile search button */
+  .feed-mobile-search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .feed-mobile-search-btn:hover {
+    background: ${colors.bg};
+  }
+  @media (min-width: 768px) {
+    .feed-mobile-search-btn { display: none; }
+  }
+
+  /* Sign-in button (when not logged in, desktop only) */
+  .feed-signin-btn {
+    display: none;
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: ${colors.accent};
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .feed-signin-btn:hover {
+    background: ${colors.accentDk};
+  }
+  @media (min-width: 768px) {
+    .feed-signin-btn { display: block; }
+  }
+
+  /* ---- Avatar Dropdown ---- */
+  .feed-avatar-wrapper {
+    position: relative;
     display: none;
   }
   @media (min-width: 768px) {
-    .feed-avatar-link { display: block; }
+    .feed-avatar-wrapper { display: block; }
   }
+  .feed-avatar-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 24px;
+    transition: opacity 0.15s;
+  }
+  .feed-avatar-btn:hover { opacity: 0.85; }
+  .feed-avatar-chevron {
+    transition: transform 0.15s;
+  }
+
+  .feed-avatar-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    width: 280px;
+    background: ${colors.surface};
+    border: 1px solid ${colors.border};
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 200;
+    overflow: hidden;
+  }
+  .feed-avatar-menu-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+  }
+  .feed-avatar-menu-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: ${colors.text};
+  }
+  .feed-avatar-menu-email {
+    font-size: 12px;
+    color: ${colors.textSoft};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+  }
+  .feed-avatar-menu-divider {
+    height: 1px;
+    background: ${colors.borderLt};
+  }
+  .feed-avatar-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: ${colors.textMd};
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+    font-family: inherit;
+  }
+  .feed-avatar-menu-item:hover {
+    background: ${colors.bg};
+  }
+
+  /* ---- Mobile Hamburger ---- */
   .feed-mobile-menu-btn {
     padding: 8px;
     background: none;
     border: none;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   @media (min-width: 768px) {
     .feed-mobile-menu-btn { display: none; }
   }
 
-  /* Mobile Nav Overlay */
+  /* ================================================================ */
+  /*  Mobile Nav Overlay                                               */
+  /* ================================================================ */
   .feed-mobile-nav {
     position: fixed;
     top: 56px;
@@ -375,21 +921,36 @@ const feedLayoutStyles = `
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px;
+    padding: 14px 16px;
     text-decoration: none;
     color: ${colors.textMd};
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 500;
     border-radius: 12px;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
   .feed-mobile-nav-link.active {
     background: ${colors.accentBg};
     color: ${colors.accentDp};
     font-weight: 700;
   }
+  .feed-mobile-nav-btn {
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+  }
+  .feed-mobile-nav-divider {
+    height: 1px;
+    background: ${colors.borderLt};
+    margin: 8px 16px;
+  }
 
-  /* Main Layout */
+  /* ================================================================ */
+  /*  Main Layout                                                      */
+  /* ================================================================ */
   .feed-main {
     max-width: 1280px;
     margin: 0 auto;
@@ -407,7 +968,7 @@ const feedLayoutStyles = `
     min-width: 0;
   }
 
-  /* Sidebars */
+  /* ---- Sidebars ---- */
   .feed-sidebar-left,
   .feed-sidebar-right {
     display: none;
@@ -425,7 +986,7 @@ const feedLayoutStyles = `
     }
   }
 
-  /* User Card */
+  /* ---- User Card ---- */
   .feed-user-card {
     padding: 16px;
     margin-bottom: 16px;
@@ -452,7 +1013,7 @@ const feedLayoutStyles = `
     text-decoration: none;
   }
 
-  /* Nav */
+  /* ---- Sidebar Nav ---- */
   .feed-nav {
     background: ${colors.surface};
     border-radius: 12px;
@@ -475,13 +1036,15 @@ const feedLayoutStyles = `
     font-weight: 700;
   }
 
-  /* Content */
+  /* ---- Content ---- */
   .feed-content {
     flex: 1;
     min-width: 0;
   }
 
-  /* Trending */
+  /* ================================================================ */
+  /*  Right Sidebar Widgets                                            */
+  /* ================================================================ */
   .feed-trending {
     background: ${colors.surface};
     border-radius: 12px;
@@ -527,7 +1090,7 @@ const feedLayoutStyles = `
     margin-top: 2px;
   }
 
-  /* Quick Links */
+  /* ---- Quick Links ---- */
   .feed-quick-links {
     background: ${colors.surface};
     border-radius: 12px;
@@ -552,7 +1115,7 @@ const feedLayoutStyles = `
   }
   .feed-quick-link:last-child { border-bottom: none; }
 
-  /* Footer */
+  /* ---- Footer ---- */
   .feed-footer {
     padding: 8px 0;
     font-size: 11px;
@@ -569,7 +1132,9 @@ const feedLayoutStyles = `
     text-decoration: none;
   }
 
-  /* Mobile Bottom Nav */
+  /* ================================================================ */
+  /*  Mobile Bottom Nav                                                */
+  /* ================================================================ */
   .feed-mobile-bottom-nav {
     position: fixed;
     bottom: 0;
@@ -591,19 +1156,28 @@ const feedLayoutStyles = `
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     text-decoration: none;
     font-size: 10px;
     font-weight: 500;
     color: ${colors.textSoft};
     padding: 8px 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
   }
   .feed-bottom-nav-item.active {
     color: ${colors.accent};
     font-weight: 700;
   }
+  .feed-bottom-nav-create {
+    color: ${colors.accent};
+  }
 
-  /* Floating Action Button */
+  /* ================================================================ */
+  /*  Floating Action Button                                           */
+  /* ================================================================ */
   .feed-fab {
     position: fixed;
     bottom: 90px;
@@ -631,7 +1205,7 @@ const feedLayoutStyles = `
     .feed-fab { bottom: 30px; right: 30px; }
   }
 
-  /* Pulse Animation */
+  /* ---- Pulse Animation ---- */
   @keyframes ioppsPulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }

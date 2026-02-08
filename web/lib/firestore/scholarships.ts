@@ -17,6 +17,7 @@ import {
   documentId,
   checkFirebase,
 } from "./shared";
+import type { QueryConstraint } from "./shared";
 import type { Scholarship, ScholarshipApplication, ApplicationStatus } from "@/lib/types";
 import { MOCK_SCHOLARSHIPS } from "../mockData";
 import { toDate } from "./timestamps";
@@ -163,7 +164,7 @@ export async function listScholarshipApplicantsForEmployer(
   scholarshipId?: string
 ): Promise<ScholarshipApplication[]> {
   const ref = collection(db!, scholarshipApplicationsCollection);
-  const constraints: any[] = [where("employerId", "==", employerId)];
+  const constraints: QueryConstraint[] = [where("employerId", "==", employerId)];
   if (scholarshipId) {
     constraints.push(where("scholarshipId", "==", scholarshipId));
   }

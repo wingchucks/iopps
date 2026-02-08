@@ -155,7 +155,7 @@ export default function DiscoverPage() {
               Complete your profile with your skills, experience, and interests to get personalized
               connection recommendations.
             </p>
-            <Link href="/member/dashboard?tab=profile">
+            <Link href="/member/profile">
               <Button>Update Your Profile</Button>
             </Link>
           </div>
@@ -347,7 +347,7 @@ export default function DiscoverPage() {
                   </p>
                 </div>
               </div>
-              <Link href="/member/dashboard?tab=profile" className="inline-block mt-4">
+              <Link href="/member/profile" className="inline-block mt-4">
                 <Button variant="outline" className="border-accent/30 text-accent hover:bg-accent/10">
                   Update Your Profile
                   <ChevronRight className="h-4 w-4 ml-2" />

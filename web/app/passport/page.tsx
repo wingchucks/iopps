@@ -3,19 +3,20 @@
 import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import OverviewTab, { ApplicationWithJob } from "@/app/member/dashboard/OverviewTab";
-import MemberProfileView from "@/app/member/dashboard/MemberProfileView";
 import {
     getMemberProfile,
     listMemberApplications,
     getJobPosting,
     listMemberScholarshipApplications,
-    getUnreadMessageCount
 } from "@/lib/firestore";
 import type {
     MemberProfile,
+    JobApplication,
+    JobPosting,
     ScholarshipApplication
 } from "@/lib/types";
+
+type ApplicationWithJob = JobApplication & { job?: JobPosting | null };
 
 export default function PassportPage() {
     const { user, role, loading } = useAuth();
@@ -34,7 +35,7 @@ export default function PassportPage() {
 
         // Redirect employers to their organization dashboard
         if (!loading && user && role === "employer") {
-            router.replace("/organization/dashboard");
+            router.replace("/organization");
             return;
         }
 
@@ -131,20 +132,7 @@ export default function PassportPage() {
                 <p className="text-[var(--text-muted)]">Your career journey and tools.</p>
             </div>
 
-            {/* <OverviewTab
-                profile={profile}
-                profileCompletion={profileCompletion}
-                stats={recentStats}
-                applications={applications}
-                onNavigate={(tab) => {
-                    // Start simple: just log or maybe redirect to full dashboard if needed
-                    // For mobile MVP, maybe some tabs link to full pages?
-                    if (tab === 'applications') router.push('/member/dashboard?tab=applications');
-                    else if (tab === 'profile') router.push('/member/dashboard?tab=profile');
-                    else console.log("Navigate to", tab);
-                }}
-            /> */}
-            {/* <MemberProfileView profile={profile} /> */}
+            {/* TODO: Passport content — old OverviewTab + MemberProfileView removed during dashboard cleanup */}
         </div>
     );
 }

@@ -144,7 +144,7 @@ export default function NewEventPage() {
 
       // Redirect to dashboard after short delay
       setTimeout(() => {
-        router.push("/organization/dashboard");
+        router.push("/organization/host/events");
       }, 2000);
     } catch (err) {
       console.error(err);
@@ -180,7 +180,7 @@ export default function NewEventPage() {
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/organization/dashboard"
+            href="/organization/host/events"
             className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-white transition-colors mb-4"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -436,7 +436,7 @@ export default function NewEventPage() {
               {saving ? (uploadingImage ? "Uploading image..." : "Creating event...") : "Publish Event"}
             </button>
             <Link
-              href="/organization/dashboard"
+              href="/organization/host/events"
               className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
             >
               Cancel

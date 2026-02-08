@@ -112,8 +112,6 @@ export async function POST(req: NextRequest) {
       updatedAt: now,
     });
 
-    console.log(`[BADGE] User ${userId} updated badge preference to "${badgePreference}" (derived: ${derivedOrgType})`);
-
     return NextResponse.json({
       success: true,
       badgePreference,

@@ -9,12 +9,13 @@ interface PageProps {
 }
 
 // Helper to serialize Firestore data for client components
-function serializeForClient(obj: any): any {
+function serializeForClient(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
 
   // Handle Firestore Timestamp (Admin SDK has .seconds and .toDate())
-  if (obj && typeof obj === 'object' && typeof obj.toDate === 'function') {
-    return { _seconds: obj.seconds || Math.floor(obj.toDate().getTime() / 1000) };
+  if (obj && typeof obj === 'object' && 'toDate' in obj && typeof (obj as Record<string, unknown>).toDate === 'function') {
+    const record = obj as Record<string, unknown>;
+    return { _seconds: record.seconds || Math.floor((record.toDate as () => Date)().getTime() / 1000) };
   }
 
   // Handle Date objects
@@ -29,9 +30,9 @@ function serializeForClient(obj: any): any {
 
   // Handle plain objects
   if (typeof obj === 'object') {
-    const result: any = {};
+    const result: Record<string, unknown> = {};
     for (const key of Object.keys(obj)) {
-      result[key] = serializeForClient(obj[key]);
+      result[key] = serializeForClient((obj as Record<string, unknown>)[key]);
     }
     return result;
   }
@@ -40,18 +41,21 @@ function serializeForClient(obj: any): any {
 }
 
 // Helper to convert timestamp to Date for expiration check
-function toDate(timestamp: any): Date | null {
+function toDate(timestamp: unknown): Date | null {
   if (!timestamp) return null;
   if (timestamp instanceof Date) return timestamp;
-  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
-  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
-  if (timestamp.toDate) return timestamp.toDate();
+  if (typeof timestamp === "object" && timestamp !== null) {
+    const ts = timestamp as Record<string, unknown>;
+    if (ts._seconds) return new Date((ts._seconds as number) * 1000);
+    if (ts.seconds) return new Date((ts.seconds as number) * 1000);
+    if (typeof ts.toDate === "function") return (ts.toDate as () => Date)();
+  }
   if (typeof timestamp === "string") return new Date(timestamp);
   return null;
 }
 
 // Check if a job has expired
-function isJobExpired(job: any): boolean {
+function isJobExpired(job: Record<string, unknown>): boolean {
   const now = new Date();
 
   const closingDate = toDate(job.closingDate);
@@ -64,7 +68,7 @@ function isJobExpired(job: any): boolean {
 }
 
 // Fetch job data server-side
-async function getJobData(jobId: string): Promise<{ data: any | null; expired: boolean }> {
+async function getJobData(jobId: string): Promise<{ data: JobPosting | null; expired: boolean }> {
   try {
     if (!db) {
       console.error("Firebase Admin not initialized");
@@ -74,15 +78,15 @@ async function getJobData(jobId: string): Promise<{ data: any | null; expired: b
     const docSnap = await docRef.get();
     if (!docSnap.exists) return { data: null, expired: false };
 
-    const data = docSnap.data();
+    const data = docSnap.data() as Record<string, unknown> | undefined;
 
     // Check if job is inactive or expired
-    if (data?.active === false || isJobExpired(data)) {
+    if (data?.active === false || isJobExpired(data ?? {})) {
       return { data: null, expired: true };
     }
 
     // Serialize the entire object to make it safe for client components
-    return { data: serializeForClient({ id: docSnap.id, ...data }), expired: false };
+    return { data: serializeForClient({ id: docSnap.id, ...data }) as JobPosting, expired: false };
   } catch (error) {
     console.error("Error fetching job:", error);
     return { data: null, expired: false };
@@ -127,7 +131,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: fullDescription,
     image: ogImageUrl,
     path: `/careers/${jobId}`,
-    publishedTime: job.createdAt?._seconds ? new Date(job.createdAt._seconds * 1000).toISOString() : undefined
+    publishedTime: (job.createdAt as unknown as { _seconds?: number } | null)?._seconds ? new Date(((job.createdAt as unknown as { _seconds: number })._seconds) * 1000).toISOString() : undefined
   });
 }
 

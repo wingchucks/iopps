@@ -50,16 +50,17 @@ export async function GET(req: NextRequest) {
     let events = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    }));
+    })) as Array<Record<string, unknown> & { id: string }>;
 
     // Filter for upcoming events if requested
     if (upcoming === "true") {
       const now = new Date();
-      events = events.filter((event: any) => {
+      events = events.filter((event) => {
         if (!event.startDatetime) return false;
-        const startDate = event.startDatetime.toDate
-          ? event.startDatetime.toDate()
-          : new Date(event.startDatetime);
+        const ts = event.startDatetime as { toDate?: () => Date } | string;
+        const startDate = typeof ts === "object" && ts.toDate
+          ? ts.toDate()
+          : new Date(ts as string);
         return startDate >= now;
       });
     }

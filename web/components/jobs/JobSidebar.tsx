@@ -45,18 +45,18 @@ function getSalaryDisplay(job: JobPosting): string {
 }
 
 export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
-    const formatDate = (timestamp: any) => {
+    const formatDate = (timestamp: unknown) => {
         if (!timestamp) return null;
         try {
             let date: Date;
 
             // Handle Firestore Timestamp objects
-            if (timestamp.toDate && typeof timestamp.toDate === "function") {
-                date = timestamp.toDate();
+            if (typeof timestamp === "object" && timestamp !== null && typeof (timestamp as Record<string, unknown>).toDate === "function") {
+                date = ((timestamp as Record<string, unknown>).toDate as () => Date)();
             }
             // Handle serialized Firestore timestamps (from server components)
-            else if (timestamp._seconds !== undefined) {
-                date = new Date(timestamp._seconds * 1000);
+            else if (typeof timestamp === "object" && timestamp !== null && (timestamp as Record<string, unknown>)._seconds !== undefined) {
+                date = new Date(((timestamp as Record<string, unknown>)._seconds as number) * 1000);
             }
             // Handle seconds timestamp (number)
             else if (typeof timestamp === "number" && timestamp > 1000000000 && timestamp < 10000000000) {
@@ -76,7 +76,7 @@ export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
             }
             // Fallback
             else {
-                date = new Date(timestamp);
+                date = new Date(String(timestamp));
             }
 
             // Validate the date

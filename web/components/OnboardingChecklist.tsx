@@ -39,7 +39,7 @@ export default function OnboardingChecklist({
       label: "Add organization logo",
       description: "Upload your logo to build brand recognition",
       completed: !!profile?.logoUrl,
-      href: "/organization/dashboard?tab=profile",
+      href: "/organization/settings",
       action: "Upload logo",
     },
     {
@@ -51,7 +51,7 @@ export default function OnboardingChecklist({
         profile?.description &&
         profile?.location
       ),
-      href: "/organization/dashboard?tab=profile",
+      href: "/organization/settings",
       action: "Complete profile",
     },
     {
@@ -59,7 +59,7 @@ export default function OnboardingChecklist({
       label: "Get profile approved",
       description: "Your profile will be reviewed within 1-2 business days",
       completed: profile?.status === "approved",
-      href: "/organization/dashboard?tab=profile",
+      href: "/organization/settings",
       action: "View status",
     },
     {

@@ -32,8 +32,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const frequency = body.frequency || "weekly";
 
-    console.log(`Processing ${frequency} vendor alerts...`);
-
     // Calculate lookback period
     const now = new Date();
     let lookbackMs: number;
@@ -60,7 +58,6 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (vendorsSnap.empty) {
-      console.log("No new vendors in the lookback period");
       return NextResponse.json({
         success: true,
         message: "No new vendors to alert about",
@@ -73,8 +70,6 @@ export async function POST(request: NextRequest) {
       ...doc.data(),
     })) as Vendor[];
 
-    console.log(`Found ${vendors.length} new vendors`);
-
     // Get users with shop updates enabled
     const prefsSnap = await db
       .collection("emailPreferences")
@@ -84,15 +79,12 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (prefsSnap.empty) {
-      console.log(`No users subscribed to ${frequency} shop alerts`);
       return NextResponse.json({
         success: true,
         message: "No subscribers for this frequency",
         processed: 0,
       });
     }
-
-    console.log(`Found ${prefsSnap.size} subscribers`);
 
     // Get user emails
     const userIds = prefsSnap.docs.map((doc) => doc.id);

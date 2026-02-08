@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, auth } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import type { NotificationType } from "@/lib/types";
+import {
+  validateRequired,
+  validateString,
+  validateEnum,
+  sanitizeString,
+  firstError,
+} from "@/lib/api-validation";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -101,12 +108,41 @@ export async function POST(request: NextRequest) {
     const body: CreateNotificationRequest = await request.json();
 
     // Validate required fields
-    if (!body.userId || !body.type || !body.title || !body.message) {
-      return NextResponse.json(
-        { error: "Missing required fields: userId, type, title, message" },
-        { status: 400 }
-      );
-    }
+    const requiredErr = validateRequired(body as unknown as Record<string, unknown>, [
+      "userId",
+      "type",
+      "title",
+      "message",
+    ]);
+    if (requiredErr) return requiredErr;
+
+    // Validate field types, lengths, and enum values
+    const VALID_NOTIFICATION_TYPES: readonly string[] = [
+      "new_application",
+      "application_status",
+      "new_message",
+      "job_alert",
+      "employer_approved",
+      "employer_rejected",
+      "scholarship_status",
+      "system",
+      "interview_scheduled",
+      "interview_cancelled",
+      "interview_rescheduled",
+    ];
+
+    const fieldErr = firstError([
+      validateString(body.userId, "userId", { minLength: 1, maxLength: 128 }),
+      validateEnum(body.type, "type", VALID_NOTIFICATION_TYPES),
+      validateString(body.title, "title", { minLength: 1, maxLength: 200 }),
+      validateString(body.message, "message", { minLength: 1, maxLength: 2000 }),
+      body.link ? validateString(body.link, "link", { maxLength: 2000 }) : null,
+    ]);
+    if (fieldErr) return fieldErr;
+
+    // Sanitize text fields
+    body.title = sanitizeString(body.title);
+    body.message = sanitizeString(body.message);
 
     // Rate limiting per target user to prevent notification spam
     const now = Date.now();

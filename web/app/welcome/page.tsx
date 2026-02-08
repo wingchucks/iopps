@@ -38,7 +38,7 @@ const employerSteps: StepCard[] = [
   {
     title: "Explore Dashboard",
     description: "See your analytics, manage listings, and track applications.",
-    href: "/organization/dashboard",
+    href: "/organization",
     icon: SparklesIcon,
   },
 ];

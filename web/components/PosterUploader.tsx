@@ -129,7 +129,7 @@ export function PosterUploader({
       formData.append("eventType", eventType);
 
       // Retry loop with exponential backoff
-      let lastError: Error | null = null;
+      let lastError: unknown = null;
 
       for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         try {
@@ -175,10 +175,11 @@ export function PosterUploader({
           }
 
           return; // Exit on success
-        } catch (fetchError: any) {
+        } catch (fetchError: unknown) {
           lastError = fetchError;
           // Only retry on network errors or rate limits, not on other errors
-          if (!fetchError.message?.includes("rate") && !fetchError.message?.includes("busy") && attempt === 0) {
+          const errMsg = fetchError instanceof Error ? fetchError.message : "";
+          if (!errMsg.includes("rate") && !errMsg.includes("busy") && attempt === 0) {
             throw fetchError;
           }
         }
@@ -186,13 +187,14 @@ export function PosterUploader({
 
       // All retries exhausted
       throw lastError || new Error("Failed after multiple attempts");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Poster analysis error:", err);
-      const isRateLimit = err.message?.includes("unavailable") || err.message?.includes("busy") || err.message?.includes("rate");
+      const errMsg = err instanceof Error ? err.message : "";
+      const isRateLimit = errMsg.includes("unavailable") || errMsg.includes("busy") || errMsg.includes("rate");
       setError(
         isRateLimit
           ? "AI service is temporarily unavailable due to high usage. Please try again in a few minutes, or fill in the form manually."
-          : err.message || "Failed to analyze poster. Please try again."
+          : errMsg || "Failed to analyze poster. Please try again."
       );
     } finally {
       setIsAnalyzing(false);

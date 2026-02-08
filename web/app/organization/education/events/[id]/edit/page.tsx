@@ -182,7 +182,7 @@ export default function EditEducationEventPage({
           Event not found
         </h1>
         <Link
-          href="/organization/dashboard?tab=education"
+          href="/organization/educate/profile"
           className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Back to Dashboard
@@ -227,7 +227,7 @@ export default function EditEducationEventPage({
 
       setSuccess(true);
       setTimeout(() => {
-        router.push("/organization/dashboard?tab=education");
+        router.push("/organization/educate/profile");
       }, 1500);
     } catch (err) {
       console.error(err);
@@ -242,7 +242,7 @@ export default function EditEducationEventPage({
       <div className="mx-auto max-w-3xl px-4 py-10">
         <div className="mb-6">
           <Link
-            href="/organization/dashboard?tab=education"
+            href="/organization/educate/profile"
             className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ← Back to Education Dashboard
@@ -522,7 +522,7 @@ export default function EditEducationEventPage({
               {saving ? "Saving..." : "Save Changes"}
             </button>
             <Link
-              href="/organization/dashboard?tab=education"
+              href="/organization/educate/profile"
               className="rounded-md border border-[var(--card-border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-surface transition-colors"
             >
               Cancel

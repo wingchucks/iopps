@@ -34,7 +34,7 @@ export function parseJobCSV(csvContent: string): ParsedJob[] {
         }
         values.push(currentVal.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
 
-        const job: any = {
+        const job: ParsedJob = {
             active: false, // Default to inactive draft
             employmentType: 'Full-time', // Default
             indigenousPreference: false,

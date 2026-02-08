@@ -17,6 +17,7 @@ import {
   savedProgramsCollection,
   checkFirebase,
 } from "./shared";
+import type { QueryConstraint } from "./shared";
 import type {
   EducationProgram,
   SavedProgram,
@@ -112,7 +113,7 @@ export async function listEducationPrograms(options: ListEducationProgramsOption
     if (!firestore) return [];
 
     const ref = collection(firestore, educationProgramsCollection);
-    const constraints: any[] = [];
+    const constraints: QueryConstraint[] = [];
 
     if (options.publishedOnly !== false) {
       constraints.push(where("isPublished", "==", true));

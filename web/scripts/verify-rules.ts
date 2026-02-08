@@ -142,9 +142,9 @@ async function runTests() {
 
         console.log('\n🎉 ALL SECURITY CHECKS PASSED!');
 
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error('\n❌ TEST FAILED:', e);
-        if (e.stack) {
+        if (e instanceof Error && e.stack) {
             console.error(e.stack);
         }
         process.exit(1);

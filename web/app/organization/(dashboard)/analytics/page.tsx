@@ -142,6 +142,7 @@ export default function AnalyticsPage() {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function aggregateByMonth(items: any[], dateField: string) {
     const monthCounts = new Map<string, number>();
 

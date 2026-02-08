@@ -22,13 +22,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   useEffect(() => {
     if (!auth) {
-      router.push('/login?redirect=/organization/dashboard');
+      router.push('/login?redirect=/organization');
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        router.push('/login?redirect=/organization/dashboard');
+        router.push('/login?redirect=/organization');
         return;
       }
 

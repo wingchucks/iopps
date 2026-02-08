@@ -20,7 +20,9 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type Firestore,
   type QueryDocumentSnapshot,
+  type QueryConstraint,
   type DocumentData,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
@@ -51,7 +53,7 @@ export {
   auth,
 };
 
-export type { QueryDocumentSnapshot, DocumentData };
+export type { Firestore, QueryDocumentSnapshot, QueryConstraint, DocumentData };
 
 // Collection names
 export const employerCollection = "employers";

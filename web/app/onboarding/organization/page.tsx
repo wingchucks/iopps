@@ -204,8 +204,8 @@ export default function OrganizationOnboardingPage() {
     try {
       const result = await uploadImage(file, user.uid, "profile");
       updateField("logoUrl", result.url);
-    } catch (err: any) {
-      setError(err?.message || "Failed to upload logo.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to upload logo.");
     } finally {
       setUploading(false);
     }
@@ -219,8 +219,8 @@ export default function OrganizationOnboardingPage() {
     try {
       const result = await uploadImage(file, user.uid, "cover");
       updateField("coverImageUrl", result.url);
-    } catch (err: any) {
-      setError(err?.message || "Failed to upload cover image.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to upload cover image.");
     } finally {
       setUploadingCover(false);
     }
@@ -298,10 +298,10 @@ export default function OrganizationOnboardingPage() {
         });
       }
 
-      router.push("/organization/dashboard");
-    } catch (err: any) {
+      router.push("/organization");
+    } catch (err: unknown) {
       console.error("Onboarding save error:", err);
-      setError(err?.message || "Failed to save. Please try again.");
+      setError(err instanceof Error ? err.message : "Failed to save. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -832,7 +832,7 @@ export default function OrganizationOnboardingPage() {
           {existingProfile && (
             <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
               <Link
-                href="/organization/dashboard"
+                href="/organization"
                 className="text-accent hover:underline"
               >
                 Skip to Dashboard

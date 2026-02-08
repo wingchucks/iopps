@@ -180,10 +180,10 @@ function EmailPreferencesContent() {
           <div className="flex items-center justify-between">
             <div>
               <Link
-                href="/member/dashboard"
+                href="/member/settings"
                 className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
-                ← Back to Dashboard
+                ← Back to Settings
               </Link>
               <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Email Preferences

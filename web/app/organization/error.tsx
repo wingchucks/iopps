@@ -49,7 +49,7 @@ export default function OrganizationError({
                         Try Again
                     </button>
                     <Link
-                        href="/organization/dashboard"
+                        href="/organization"
                         className="rounded-full border border-[var(--card-border)] px-6 py-3 font-semibold text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
                     >
                         Organization Dashboard

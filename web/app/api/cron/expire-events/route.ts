@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
     // POW WOW EXPIRATION
     // Deactivate pow wows where endDate has passed
     // =========================================================================
-    console.log("Querying pow wows with expired endDate...");
     const expiredPowwowsSnapshot = await db
       .collection("powwows")
       .where("active", "==", true)
@@ -39,10 +38,6 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (!expiredPowwowsSnapshot.empty) {
-      console.log(
-        `Found ${expiredPowwowsSnapshot.size} pow wows with expired endDate`
-      );
-
       for (const powwowDoc of expiredPowwowsSnapshot.docs) {
         try {
           await db.collection("powwows").doc(powwowDoc.id).update({
@@ -52,22 +47,16 @@ export async function GET(request: NextRequest) {
             expirationReason: "endDate passed",
           });
           powwowsExpired++;
-          console.log(`Expired pow wow: ${powwowDoc.id}`);
         } catch (error) {
           console.error(`Error updating pow wow ${powwowDoc.id}:`, error);
         }
       }
     }
 
-    console.log(
-      `Pow wow expiration completed. Total expired: ${powwowsExpired}`
-    );
-
     // =========================================================================
     // CONFERENCE EXPIRATION
     // Deactivate conferences where endDate has passed
     // =========================================================================
-    console.log("Querying conferences with expired endDate...");
     const expiredConferencesSnapshot = await db
       .collection("conferences")
       .where("active", "==", true)
@@ -75,10 +64,6 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (!expiredConferencesSnapshot.empty) {
-      console.log(
-        `Found ${expiredConferencesSnapshot.size} conferences with expired endDate`
-      );
-
       for (const conferenceDoc of expiredConferencesSnapshot.docs) {
         try {
           await db.collection("conferences").doc(conferenceDoc.id).update({
@@ -88,7 +73,6 @@ export async function GET(request: NextRequest) {
             expirationReason: "endDate passed",
           });
           conferencesExpired++;
-          console.log(`Expired conference: ${conferenceDoc.id}`);
         } catch (error) {
           console.error(
             `Error updating conference ${conferenceDoc.id}:`,
@@ -99,7 +83,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `Conference expiration completed. Total expired: ${conferencesExpired}`
+      `Event expiration cron completed. Pow wows expired: ${powwowsExpired}, Conferences expired: ${conferencesExpired}`
     );
 
     return NextResponse.json({

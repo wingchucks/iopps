@@ -48,7 +48,7 @@ export function AppHeader() {
           <div className="app-actions">
             <ThemeToggle />
             {isLoggedIn && <NotificationBell />}
-            <Link href={isLoggedIn ? "/member/dashboard" : "/login"} className="app-avatar-link">
+            <Link href={isLoggedIn && user ? `/member/${user.uid}` : "/login"} className="app-avatar-link">
               <Avatar name={userName} src={userAvatar} size={36} ring />
             </Link>
             <button
@@ -85,8 +85,8 @@ export function AppHeader() {
           { icon: "home", label: "Feed", href: "/discover" },
           { icon: "briefcase", label: "Jobs", href: "/careers" },
           { icon: "search", label: "Search", href: "/careers" },
-          { icon: "bell", label: "Alerts", href: isLoggedIn ? "/member/dashboard?tab=alerts" : "/login" },
-          { icon: "user", label: "Profile", href: isLoggedIn ? "/member/dashboard" : "/login" },
+          { icon: "bell", label: "Alerts", href: isLoggedIn ? "/member/alerts" : "/login" },
+          { icon: "user", label: "Profile", href: isLoggedIn && user ? `/member/${user.uid}` : "/login" },
         ].map((item) => (
           <Link
             key={item.label}

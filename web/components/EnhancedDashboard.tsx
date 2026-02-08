@@ -31,7 +31,7 @@ import {
  */
 // --- UI Components ---
 
-const SidebarItem = ({ icon: Icon, label, active = false, badge = 0 }: any) => (
+const SidebarItem = ({ icon: Icon, label, active = false, badge = 0 }: { icon: React.ComponentType<{ size: number }>; label: string; active?: boolean; badge?: number }) => (
     <div className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all cursor-pointer mb-1 ${active
         ? 'bg-accent/10 text-[#14B8A6] border border-[#14B8A6]/20'
         : 'text-[var(--text-muted)] hover:text-foreground hover:bg-surface'
@@ -48,7 +48,7 @@ const SidebarItem = ({ icon: Icon, label, active = false, badge = 0 }: any) => (
     </div>
 );
 
-const StatCard = ({ icon: Icon, value, label }: any) => (
+const StatCard = ({ icon: Icon, value, label }: { icon: React.ComponentType<{ size: number }>; value: string | number; label: string }) => (
     <div className="bg-surface border border-[var(--card-border)]/80 p-6 rounded-2xl hover:border-[#14B8A6]/50 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50 transition-all group">
         <div className="flex items-center gap-4 mb-2">
             <div className="p-2.5 rounded-xl bg-surface text-[var(--text-muted)] group-hover:text-[#14B8A6] transition-colors">

@@ -103,9 +103,7 @@ export default function AdminEmployersPage() {
       // Clear the pendingEmployerApproval flag from any jobs created while pending
       // This allows the employer to publish their jobs
       const jobsCleared = await clearPendingEmployerApprovalFlag(employerId);
-      if (jobsCleared > 0) {
-        console.log(`Cleared pending flag from ${jobsCleared} job(s) for employer ${employerId}`);
-      }
+      // jobsCleared count is informational only
 
       // Send approval email to employer (fire and forget)
       if (employerEmail) {

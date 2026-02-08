@@ -169,7 +169,7 @@ export default function NewFundingPage() {
         createdBy: user.uid,
       });
 
-      router.push("/organization/dashboard?tab=business");
+      router.push("/organization/funding/opportunities");
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Could not create funding opportunity.");
@@ -183,7 +183,7 @@ export default function NewFundingPage() {
       <div className="mx-auto max-w-3xl px-4 py-10">
         <div className="mb-6">
           <Link
-            href="/organization/dashboard?tab=business"
+            href="/organization/funding/opportunities"
             className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ← Back to Business Dashboard

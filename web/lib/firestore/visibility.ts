@@ -428,10 +428,6 @@ export async function recomputeOrganizationVisibility(
       await orgRef.update(updateData);
     }
 
-    console.log(
-      `[visibility] Computed for ${orgId}: visible=${isDirectoryVisible}, reason=${visibilityReason}, until=${directoryVisibleUntil?.toISOString() || "none"}`
-    );
-
     return result;
   } catch (error) {
     console.error(`[visibility] Error computing for ${orgId}:`, error);
@@ -495,7 +491,6 @@ export async function recomputeOrganizationVisibilityForAllApprovedOrgs(opts?: {
       .get();
 
     result.total = orgsSnapshot.size;
-    console.log(`[visibility] Starting bulk recompute for ${result.total} approved orgs`);
 
     for (const orgDoc of orgsSnapshot.docs) {
       try {
@@ -524,10 +519,6 @@ export async function recomputeOrganizationVisibilityForAllApprovedOrgs(opts?: {
         );
       }
     }
-
-    console.log(
-      `[visibility] Bulk recompute complete: ${result.processed}/${result.total} processed, ${result.visible} visible, ${result.hidden} hidden, ${result.errors.length} errors`
-    );
 
     return result;
   } catch (error) {
@@ -617,7 +608,6 @@ export async function expireStaleVisibility(): Promise<{
           const computeResult = await recomputeOrganizationVisibility(orgDoc.id);
           if (computeResult.success && !computeResult.isDirectoryVisible) {
             result.expired++;
-            console.log(`[visibility] Expired visibility for ${orgDoc.id}`);
           }
         } catch (error) {
           result.errors.push(
@@ -626,10 +616,6 @@ export async function expireStaleVisibility(): Promise<{
         }
       }
     }
-
-    console.log(
-      `[visibility] Expiration check complete: ${result.checked} checked, ${result.expired} expired`
-    );
 
     return result;
   } catch (error) {

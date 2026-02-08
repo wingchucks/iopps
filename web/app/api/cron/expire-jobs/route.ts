@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
     let expiredCount = 0;
 
     // Query 1: Jobs where expiresAt <= current date AND active = true
-    console.log("Querying jobs with expired expiresAt...");
     const expiresAtSnapshot = await db
       .collection("jobs")
       .where("active", "==", true)
@@ -36,10 +35,6 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (!expiresAtSnapshot.empty) {
-      console.log(
-        `Found ${expiresAtSnapshot.size} jobs with expired expiresAt`
-      );
-
       for (const jobDoc of expiresAtSnapshot.docs) {
         try {
           await db.collection("jobs").doc(jobDoc.id).update({
@@ -47,7 +42,6 @@ export async function GET(request: NextRequest) {
             updatedAt: FieldValue.serverTimestamp(),
           });
           expiredCount++;
-          console.log(`Expired job: ${jobDoc.id} (expiresAt)`);
         } catch (error) {
           console.error(`Error updating job ${jobDoc.id}:`, error);
         }
@@ -55,7 +49,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Query 2: Jobs where closingDate <= current date AND active = true
-    console.log("Querying jobs with expired closingDate...");
     const closingDateSnapshot = await db
       .collection("jobs")
       .where("active", "==", true)
@@ -63,14 +56,9 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (!closingDateSnapshot.empty) {
-      console.log(
-        `Found ${closingDateSnapshot.size} jobs with expired closingDate`
-      );
-
       for (const jobDoc of closingDateSnapshot.docs) {
         // Skip if already processed in expiresAt query
         if (expiresAtSnapshot.docs.some((d: { id: string }) => d.id === jobDoc.id)) {
-          console.log(`Skipping job ${jobDoc.id} - already processed`);
           continue;
         }
 
@@ -80,7 +68,6 @@ export async function GET(request: NextRequest) {
             updatedAt: FieldValue.serverTimestamp(),
           });
           expiredCount++;
-          console.log(`Expired job: ${jobDoc.id} (closingDate)`);
         } catch (error) {
           console.error(`Error updating job ${jobDoc.id}:`, error);
         }
@@ -97,7 +84,6 @@ export async function GET(request: NextRequest) {
     // =========================================================================
     let vendorFeaturedRemoved = 0;
 
-    console.log("Querying vendors with expired subscriptions...");
     const expiredVendorsSnapshot = await db
       .collection("vendors")
       .where("featured", "==", true)
@@ -105,10 +91,6 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (!expiredVendorsSnapshot.empty) {
-      console.log(
-        `Found ${expiredVendorsSnapshot.size} vendors with expired featured subscriptions`
-      );
-
       for (const vendorDoc of expiredVendorsSnapshot.docs) {
         try {
           await db.collection("vendors").doc(vendorDoc.id).update({
@@ -117,16 +99,12 @@ export async function GET(request: NextRequest) {
             updatedAt: FieldValue.serverTimestamp(),
           });
           vendorFeaturedRemoved++;
-          console.log(`Removed featured status from vendor: ${vendorDoc.id}`);
         } catch (error) {
           console.error(`Error updating vendor ${vendorDoc.id}:`, error);
         }
       }
     }
 
-    console.log(
-      `Vendor featured expiration completed. Total vendors unfeatured: ${vendorFeaturedRemoved}`
-    );
 
     // =========================================================================
     // TALENT POOL ACCESS EXPIRATION
@@ -134,7 +112,6 @@ export async function GET(request: NextRequest) {
     // =========================================================================
     let talentPoolAccessExpired = 0;
 
-    console.log("Querying employers with expired talent pool access...");
     const expiredTalentPoolSnapshot = await db
       .collection("employers")
       .where("talentPoolAccess.active", "==", true)
@@ -142,10 +119,6 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (!expiredTalentPoolSnapshot.empty) {
-      console.log(
-        `Found ${expiredTalentPoolSnapshot.size} employers with expired talent pool access`
-      );
-
       for (const employerDoc of expiredTalentPoolSnapshot.docs) {
         try {
           await db.collection("employers").doc(employerDoc.id).update({
@@ -153,16 +126,11 @@ export async function GET(request: NextRequest) {
             updatedAt: FieldValue.serverTimestamp(),
           });
           talentPoolAccessExpired++;
-          console.log(`Expired talent pool access for employer: ${employerDoc.id}`);
         } catch (error) {
           console.error(`Error updating employer ${employerDoc.id}:`, error);
         }
       }
     }
-
-    console.log(
-      `Talent pool access expiration completed. Total expired: ${talentPoolAccessExpired}`
-    );
 
     return NextResponse.json({
       success: true,

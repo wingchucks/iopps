@@ -3,6 +3,17 @@ import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { Resend } from "resend";
 import type { ScheduledInterview, ScheduledInterviewType } from "@/lib/types";
+import {
+  validateRequired,
+  validateEnum,
+  validateNumber,
+  validateDateString,
+  validateUrl,
+  validateEmail,
+  validateString,
+  sanitizeString,
+  firstError,
+} from "@/lib/api-validation";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -80,7 +91,7 @@ async function sendInterviewInviteEmail(
   employerName: string
 ): Promise<void> {
   if (!process.env.RESEND_API_KEY) {
-    console.log("[Interview Email] Skipped - RESEND_API_KEY not configured");
+    console.warn("[Interview Email] Skipped - RESEND_API_KEY not configured");
     return;
   }
 
@@ -158,7 +169,6 @@ async function sendInterviewInviteEmail(
       ],
     });
 
-    console.log(`[Interview Email] Sent invitation to ${candidateEmail}`);
   } catch (error) {
     console.error("[Interview Email] Failed to send:", error);
   }
@@ -205,7 +215,6 @@ async function sendInterviewCancelledEmail(
       text,
     });
 
-    console.log(`[Interview Email] Sent cancellation to ${candidateEmail}`);
   } catch (error) {
     console.error("[Interview Email] Failed to send cancellation:", error);
   }
@@ -292,7 +301,6 @@ async function sendInterviewRescheduledEmail(
       ],
     });
 
-    console.log(`[Interview Email] Sent reschedule notification to ${candidateEmail}`);
   } catch (error) {
     console.error("[Interview Email] Failed to send reschedule:", error);
   }
@@ -391,9 +399,35 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!applicationId || !scheduledAt || !duration || !type) {
+    const requiredErr = validateRequired(body, [
+      "applicationId",
+      "scheduledAt",
+      "duration",
+      "type",
+    ]);
+    if (requiredErr) return requiredErr;
+
+    // Validate field types and values
+    const VALID_INTERVIEW_TYPES: readonly string[] = ["virtual", "phone", "in-person"];
+    const fieldErr = firstError([
+      validateString(applicationId, "applicationId", { minLength: 1, maxLength: 128 }),
+      validateDateString(scheduledAt, "scheduledAt"),
+      validateNumber(duration, "duration", { min: 5, max: 480 }),
+      validateEnum(type, "type", VALID_INTERVIEW_TYPES),
+      meetingUrl ? validateUrl(meetingUrl, "meetingUrl") : null,
+      interviewerEmail ? validateEmail(interviewerEmail, "interviewerEmail") : null,
+      interviewerName ? validateString(interviewerName, "interviewerName", { maxLength: 200 }) : null,
+      notes ? validateString(notes, "notes", { maxLength: 2000 }) : null,
+      location ? validateString(location, "location", { maxLength: 500 }) : null,
+      phoneNumber ? validateString(phoneNumber, "phoneNumber", { maxLength: 30 }) : null,
+    ]);
+    if (fieldErr) return fieldErr;
+
+    // Validate scheduled date is in the future
+    const scheduledDate = new Date(scheduledAt);
+    if (scheduledDate.getTime() < Date.now()) {
       return NextResponse.json(
-        { error: "Missing required fields: applicationId, scheduledAt, duration, type" },
+        { error: "scheduledAt must be in the future" },
         { status: 400 }
       );
     }
@@ -521,6 +555,25 @@ export async function PUT(request: NextRequest) {
     if (!interviewId) {
       return NextResponse.json({ error: "Interview ID required" }, { status: 400 });
     }
+
+    // Validate interviewId format
+    const idErr = validateString(interviewId, "interviewId", { minLength: 1, maxLength: 128 });
+    if (idErr) return NextResponse.json({ error: idErr }, { status: 400 });
+
+    // Validate optional update fields when present
+    const VALID_INTERVIEW_TYPES: readonly string[] = ["virtual", "phone", "in-person"];
+    const VALID_STATUSES: readonly string[] = ["scheduled", "completed", "cancelled", "rescheduled", "no-show"];
+    const updateErr = firstError([
+      updates.type ? validateEnum(updates.type, "type", VALID_INTERVIEW_TYPES) : null,
+      updates.status ? validateEnum(updates.status, "status", VALID_STATUSES) : null,
+      updates.duration ? validateNumber(updates.duration, "duration", { min: 5, max: 480 }) : null,
+      updates.scheduledAt ? validateDateString(updates.scheduledAt, "scheduledAt") : null,
+      updates.meetingUrl ? validateUrl(updates.meetingUrl, "meetingUrl") : null,
+      updates.interviewerEmail ? validateEmail(updates.interviewerEmail, "interviewerEmail") : null,
+      updates.notes ? validateString(updates.notes, "notes", { maxLength: 2000 }) : null,
+      updates.cancelReason ? validateString(updates.cancelReason, "cancelReason", { maxLength: 1000 }) : null,
+    ]);
+    if (updateErr) return updateErr;
 
     // Get the interview
     const interviewDoc = await db.collection("scheduledInterviews").doc(interviewId).get();

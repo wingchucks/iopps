@@ -32,8 +32,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const frequency = body.frequency || "weekly"; // instant, daily, weekly
 
-    console.log(`Processing ${frequency} conference alerts...`);
-
     // Calculate lookback period
     const now = new Date();
     let lookbackMs: number;
@@ -60,7 +58,6 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (conferencesSnap.empty) {
-      console.log("No new conferences in the lookback period");
       return NextResponse.json({
         success: true,
         message: "No new conferences to alert about",
@@ -73,8 +70,6 @@ export async function POST(request: NextRequest) {
       ...doc.data(),
     })) as Conference[];
 
-    console.log(`Found ${conferences.length} new conferences`);
-
     // Get users with conference updates enabled
     const prefsSnap = await db
       .collection("emailPreferences")
@@ -84,15 +79,12 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (prefsSnap.empty) {
-      console.log(`No users subscribed to ${frequency} conference alerts`);
       return NextResponse.json({
         success: true,
         message: "No subscribers for this frequency",
         processed: 0,
       });
     }
-
-    console.log(`Found ${prefsSnap.size} subscribers`);
 
     // Get user emails
     const userIds = prefsSnap.docs.map((doc) => doc.id);

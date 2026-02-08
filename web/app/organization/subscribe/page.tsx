@@ -38,7 +38,7 @@ export default function SubscribePage() {
 
         // If already approved, redirect to dashboard
         if (employerProfile.status === "approved") {
-          router.push("/organization/dashboard");
+          router.push("/organization");
           return;
         }
 

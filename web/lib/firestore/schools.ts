@@ -18,6 +18,7 @@ import {
   savedSchoolsCollection,
   checkFirebase,
 } from "./shared";
+import type { QueryConstraint } from "./shared";
 import type {
   School,
   StudentInquiry,
@@ -123,7 +124,7 @@ export async function listSchools(options: ListSchoolsOptions = {}): Promise<Sch
     if (!firestore) return [];
 
     const ref = collection(firestore, schoolsCollection);
-    const constraints: any[] = [];
+    const constraints: QueryConstraint[] = [];
 
     if (options.publishedOnly !== false) {
       constraints.push(where("isPublished", "==", true));

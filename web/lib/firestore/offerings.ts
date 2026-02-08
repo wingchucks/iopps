@@ -109,7 +109,7 @@ export async function listUserOfferings(userId: string): Promise<UnifiedOffering
         }
       } catch {
         // Products collection may not have the index
-        console.log("Products query without orderBy");
+        // Products collection may not have the index, retry without orderBy
         const productsQuery2 = query(
           collection(firestore, productServiceListingsCollection),
           where("vendorId", "==", vendorId)

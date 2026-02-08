@@ -4,10 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Post, Comment, ReactionType } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { Bookmark, MoreHorizontal, Trash2 } from "lucide-react";
+import { JobShareCard } from "@/components/social/cards/JobShareCard";
+import { EventShareCard } from "@/components/social/cards/EventShareCard";
+import { AchievementCard } from "@/components/social/cards/AchievementCard";
+import { ArticleCard } from "@/components/social/cards/ArticleCard";
 import { getUserReaction, deletePost, toggleSavePost, isPostSaved } from "@/lib/firestore/social";
 import ReactionBar from "@/components/social/ReactionBar";
 import { ShareButton } from "@/components/social/ShareButton";
@@ -198,22 +201,37 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
             </CardHeader>
 
             <CardContent className="p-4 pt-2 space-y-3">
-                <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+                {/* Rich card rendering based on post type */}
+                {post.type === 'share_job' && post.referenceData ? (
+                    <JobShareCard post={post} />
+                ) : post.type === 'share_event' && post.referenceData ? (
+                    <EventShareCard post={post} />
+                ) : post.type === 'achievement' && post.achievementType ? (
+                    <AchievementCard post={post} />
+                ) : (post.type === 'share_link' || post.type === 'article') && post.linkUrl ? (
+                    <ArticleCard post={post} />
+                ) : (
+                    <>
+                        {/* Default text post */}
+                        <p className="text-sm whitespace-pre-wrap">{post.content}</p>
 
-                {/* Render Media */}
-                {post.mediaUrls && post.mediaUrls.length > 0 && (
-                    <div className="rounded-md overflow-hidden bg-muted/20">
-                        <img src={post.mediaUrls[0]} alt="Post content" className="w-full h-auto object-cover max-h-96" />
-                    </div>
-                )}
-
-                {/* Render Reference Content (Shared Job, etc) */}
-                {post.type === 'share_job' && post.referenceData && (
-                    <div className="border rounded-md p-3 bg-muted/30">
-                        <p className="text-xs font-medium text-accent mb-1">Shared a Job</p>
-                        <h4 className="font-semibold">{post.referenceData.title}</h4>
-                        <p className="text-sm text-muted-foreground">{post.referenceData.employerName}</p>
-                    </div>
+                        {/* Render Media */}
+                        {post.mediaUrls && post.mediaUrls.length > 0 && (
+                            <div className="rounded-md overflow-hidden bg-muted/20">
+                                {post.mediaUrls.length === 1 ? (
+                                    <img src={post.mediaUrls[0]} alt="Post content" className="w-full h-auto object-cover max-h-96" />
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-0.5">
+                                        {post.mediaUrls.slice(0, 4).map((url, idx) => (
+                                            <div key={idx} className="aspect-square overflow-hidden">
+                                                <img src={url} alt={`Post image ${idx + 1}`} className="w-full h-full object-cover" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </>
                 )}
             </CardContent>
 

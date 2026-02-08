@@ -151,7 +151,7 @@ export default function SiteHeader() {
                     {/* Messages icon with badge */}
                     {(role === "community" || role === "employer") && (
                       <Link
-                        href={role === "community" ? "/member/messages" : "/organization/dashboard?tab=messages"}
+                        href={role === "community" ? "/member/messages" : "/organization/inbox"}
                         className="relative rounded-full border border-white/30 bg-[var(--card-bg)]/10 p-2 text-white backdrop-blur transition hover:bg-[var(--card-bg)]/20"
                         aria-label="Messages"
                       >
@@ -194,16 +194,16 @@ export default function SiteHeader() {
                           <div className="space-y-1.5">
                             {role !== "employer" && role !== "admin" && role !== "moderator" && (
                               <Link
-                                href="/member/dashboard"
+                                href={`/member/${user.uid}`}
                                 className="block rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:bg-accent/20 hover:text-[#14B8A6]"
                                 onClick={closeMenu}
                               >
-                                <span className="font-semibold">My Dashboard</span>
+                                <span className="font-semibold">My Profile</span>
                               </Link>
                             )}
                             {role === "employer" && (
                               <Link
-                                href="/organization/dashboard"
+                                href="/organization"
                                 className="block rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:bg-accent/20 hover:text-[#14B8A6]"
                                 onClick={closeMenu}
                               >
@@ -270,23 +270,23 @@ export default function SiteHeader() {
 
                       {role !== "employer" && role !== "admin" && role !== "moderator" && (
                         <Link
-                          href="/member/dashboard"
+                          href={`/member/${user.uid}`}
                           onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/member/dashboard"
+                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname?.startsWith("/member/")
                             ? "bg-[var(--card-bg)]/20 text-white"
                             : "text-white/80 hover:bg-[var(--card-bg)]/10 hover:text-white"
                             }`}
                         >
-                          Dashboard
+                          My Profile
                         </Link>
                       )}
 
                       {role === "employer" && (
                         <>
                           <Link
-                            href="/organization/dashboard"
+                            href="/organization"
                             onClick={() => setMobileNavOpen(false)}
-                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/organization/dashboard"
+                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/organization" || pathname?.startsWith("/organization/")
                               ? "bg-[var(--card-bg)]/20 text-white"
                               : "text-white/80 hover:bg-[var(--card-bg)]/10 hover:text-white"
                               }`}

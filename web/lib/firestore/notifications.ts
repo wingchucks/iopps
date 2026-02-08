@@ -16,6 +16,7 @@ import {
   notificationsCollection,
   checkFirebase,
 } from "./shared";
+import { onSnapshot } from "firebase/firestore";
 import type { Notification, NotificationType } from "@/lib/types";
 
 export async function createNotification(params: {
@@ -155,4 +156,72 @@ export async function deleteAllUserNotifications(
   );
 
   await Promise.all(deletePromises);
+}
+
+// ============================================
+// REAL-TIME LISTENERS
+// ============================================
+
+/**
+ * Get the Firestore query for a user's notifications.
+ * Can be used directly with onSnapshot for real-time listening.
+ */
+export function getNotificationsQuery(userId: string, limitCount: number = 50) {
+  checkFirebase();
+  return query(
+    collection(db!, notificationsCollection),
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc"),
+    limit(limitCount)
+  );
+}
+
+/**
+ * Subscribe to real-time notifications for a user.
+ * Returns an unsubscribe function to clean up the listener.
+ */
+export function subscribeToNotifications(
+  userId: string,
+  callback: (notifications: Notification[]) => void,
+  limitCount: number = 50
+): () => void {
+  const firestore = checkFirebase();
+  if (!firestore) {
+    // If Firebase is not available, return a no-op unsubscribe
+    return () => {};
+  }
+
+  const q = getNotificationsQuery(userId, limitCount);
+
+  return onSnapshot(q, (snapshot) => {
+    const notifications = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    })) as Notification[];
+    callback(notifications);
+  });
+}
+
+/**
+ * Subscribe to unread notification count for a user.
+ * Returns an unsubscribe function to clean up the listener.
+ */
+export function subscribeToUnreadCount(
+  userId: string,
+  callback: (count: number) => void
+): () => void {
+  const firestore = checkFirebase();
+  if (!firestore) {
+    return () => {};
+  }
+
+  const q = query(
+    collection(db!, notificationsCollection),
+    where("userId", "==", userId),
+    where("read", "==", false)
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    callback(snapshot.size);
+  });
 }

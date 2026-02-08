@@ -89,7 +89,7 @@ function EditConferenceContent() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-center">
         <p className="text-[var(--text-muted)]">Access denied or conference not found.</p>
-        <Link href="/organization/dashboard" className="text-[#14B8A6] hover:underline mt-4 block">Return to Dashboard</Link>
+        <Link href="/organization" className="text-[#14B8A6] hover:underline mt-4 block">Return to Dashboard</Link>
       </div>
     );
   }
@@ -142,7 +142,7 @@ function EditConferenceContent() {
       <header className="flex items-center justify-between border-b border-[var(--card-border)] bg-surface px-6 py-4">
         <div className="flex items-center gap-4">
           <Link
-            href="/organization/dashboard"
+            href="/organization"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ←

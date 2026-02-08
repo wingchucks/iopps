@@ -399,12 +399,12 @@ export async function getTimeSeriesData(
     // Group by date
     const dateMap = new Map<string, number>();
 
-    items.forEach((item: any) => {
-      const timestamp = item.createdAt;
+    (items as Array<Record<string, unknown>>).forEach((item) => {
+      const timestamp = item.createdAt as { seconds?: number } | string | undefined;
       if (!timestamp) return;
 
       let date: Date;
-      if (timestamp.seconds) {
+      if (typeof timestamp === "object" && timestamp.seconds) {
         date = new Date(timestamp.seconds * 1000);
       } else if (typeof timestamp === "string") {
         date = new Date(timestamp);

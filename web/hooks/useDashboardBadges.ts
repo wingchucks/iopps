@@ -33,7 +33,7 @@ const initialBadges: DashboardBadges = {
     messages: 0,
 };
 
-export function useDashboardBadges(user: any, role: 'member' | 'employer' | 'vendor' | null) {
+export function useDashboardBadges(user: { uid: string } | null, role: 'member' | 'employer' | 'vendor' | null) {
     const [badges, setBadges] = useState<DashboardBadges>(initialBadges);
     const [loading, setLoading] = useState(true);
 

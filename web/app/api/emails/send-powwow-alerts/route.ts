@@ -32,8 +32,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const frequency = body.frequency || "weekly";
 
-    console.log(`Processing ${frequency} pow wow alerts...`);
-
     // Calculate lookback period
     const now = new Date();
     let lookbackMs: number;
@@ -60,7 +58,6 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (powwowsSnap.empty) {
-      console.log("No new pow wows in the lookback period");
       return NextResponse.json({
         success: true,
         message: "No new pow wows to alert about",
@@ -73,8 +70,6 @@ export async function POST(request: NextRequest) {
       ...doc.data(),
     })) as PowwowEvent[];
 
-    console.log(`Found ${powwows.length} new pow wows/events`);
-
     // Get users with pow wow updates enabled
     const prefsSnap = await db
       .collection("emailPreferences")
@@ -84,15 +79,12 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (prefsSnap.empty) {
-      console.log(`No users subscribed to ${frequency} pow wow alerts`);
       return NextResponse.json({
         success: true,
         message: "No subscribers for this frequency",
         processed: 0,
       });
     }
-
-    console.log(`Found ${prefsSnap.size} subscribers`);
 
     // Get user emails
     const userIds = prefsSnap.docs.map((doc) => doc.id);

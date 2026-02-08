@@ -15,6 +15,7 @@ import {
   db,
   checkFirebase,
 } from "./shared";
+import type { QueryConstraint } from "./shared";
 import type { NewsArticle, NewsCategory, NewsStatus } from "@/lib/types";
 
 // ============================================
@@ -53,7 +54,7 @@ export async function listNewsArticles(
     } = options;
 
     const ref = collection(firestore, newsCollection);
-    const constraints: any[] = [];
+    const constraints: QueryConstraint[] = [];
 
     if (status !== "all") {
       constraints.push(where("status", "==", status));

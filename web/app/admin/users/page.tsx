@@ -210,7 +210,7 @@ function AdminUsersContent() {
       } else if (targetUser?.role === "admin" || targetUser?.role === "moderator") {
         router.push("/admin");
       } else {
-        router.push("/member/dashboard");
+        router.push("/discover");
       }
     } catch (error) {
       console.error("Error impersonating user:", error);

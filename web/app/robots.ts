@@ -36,7 +36,7 @@ export default function robots(): MetadataRoute.Robots {
                 allow: "/",
                 disallow: [
                     "/admin/*",
-                    "/member/dashboard/*",
+                    "/member/*",
                     "/organization/*",
                     "/api/*",
                 ],

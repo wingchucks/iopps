@@ -3,6 +3,12 @@ import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { Resend } from "resend";
 import type { TeamRole, TeamMember, TeamInvitation } from "@/lib/types";
+import {
+  validateRequired,
+  validateEnum,
+  validateEmail,
+  firstError,
+} from "@/lib/api-validation";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -119,20 +125,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, role } = body;
 
-    if (!email || !role) {
-      return NextResponse.json(
-        { error: "Email and role are required" },
-        { status: 400 }
-      );
-    }
+    // Validate required fields
+    const requiredErr = validateRequired(body, ["email", "role"]);
+    if (requiredErr) return requiredErr;
 
-    const validRoles: TeamRole[] = ["admin", "editor", "viewer"];
-    if (!validRoles.includes(role)) {
-      return NextResponse.json(
-        { error: "Invalid role" },
-        { status: 400 }
-      );
-    }
+    // Validate field types and values
+    const VALID_ROLES: readonly string[] = ["admin", "editor", "viewer"];
+    const fieldErr = firstError([
+      validateEmail(email, "email"),
+      validateEnum(role, "role", VALID_ROLES),
+    ]);
+    if (fieldErr) return fieldErr;
 
     const normalizedEmail = email.toLowerCase().trim();
 

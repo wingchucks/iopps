@@ -17,6 +17,7 @@ import {
   checkFirebase,
   Timestamp,
 } from "./shared";
+import type { QueryConstraint } from "./shared";
 import type {
   EducationEvent,
   EducationEventType,
@@ -98,7 +99,7 @@ export async function listEducationEvents(options: ListEducationEventsOptions = 
     if (!firestore) return [];
 
     const ref = collection(firestore, educationEventsCollection);
-    const constraints: any[] = [];
+    const constraints: QueryConstraint[] = [];
 
     if (options.publishedOnly !== false) {
       constraints.push(where("isPublished", "==", true));

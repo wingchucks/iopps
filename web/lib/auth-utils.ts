@@ -4,8 +4,8 @@
  * CRITICAL: This file enforces the hard separation between Community and Organization accounts.
  *
  * RULES:
- * - Community users: Browse/apply to jobs, save items, access /member/dashboard ONLY
- * - Employers/Organizations: Post jobs, manage org, access /organization/dashboard ONLY
+ * - Community users: Browse/apply to jobs, save items, access /member/[userId] profile hub ONLY
+ * - Employers/Organizations: Post jobs, manage org, access /organization dashboard ONLY
  * - No page may ever show Community UI ("My Dashboard") to an Employer/Organization account
  * - No page may ever show Organization UI to a Community account
  * - If role detection is ambiguous, treat as anonymous (no dashboard CTA)
@@ -73,7 +73,7 @@ export function getAccountMode(
 export function getDashboardUrl(mode: AccountMode): string | null {
   switch (mode) {
     case "community":
-      return "/member/dashboard";
+      return "/discover";
     case "organization":
       return "/organization";
     default:

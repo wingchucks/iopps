@@ -1,5 +1,14 @@
 import type { Timestamp } from "firebase/firestore";
 
+/** A flexible timestamp type that covers Firestore Timestamps, serialized timestamps, Date objects, and ISO strings. */
+export type TimestampLike =
+  | Timestamp
+  | { _seconds: number; _nanoseconds?: number }
+  | { seconds: number; nanoseconds?: number }
+  | { toDate: () => Date }
+  | Date
+  | string;
+
 export type UserRole = "community" | "employer" | "moderator" | "admin";
 export type EmployerStatus = "incomplete" | "pending" | "approved" | "rejected" | "deleted";
 
@@ -895,7 +904,7 @@ export interface Scholarship {
   provider: string;
   providerName?: string; // Alias for provider
   description: string;
-  amount?: any;
+  amount?: number | string;
   deadline?: Timestamp | string | Date | null;
   level: string;
   region?: string;
@@ -1425,14 +1434,17 @@ export interface Conversation {
 
 // Notification Types
 export type NotificationType =
-  | "new_application"      // Employer receives when someone applies
-  | "application_status"   // Member receives when status changes
-  | "new_message"          // Both receive when new message arrives
-  | "job_alert"            // Member receives matching job alert
-  | "employer_approved"    // Employer receives when approved
-  | "employer_rejected"    // Employer receives when rejected
-  | "scholarship_status"   // Member receives scholarship updates
-  | "system";              // System announcements
+  | "new_application"          // Employer receives when someone applies
+  | "application_status"       // Member receives when status changes
+  | "new_message"              // Both receive when new message arrives
+  | "job_alert"                // Member receives matching job alert
+  | "employer_approved"        // Employer receives when approved
+  | "employer_rejected"        // Employer receives when rejected
+  | "scholarship_status"       // Member receives scholarship updates
+  | "interview_scheduled"      // Interview has been scheduled
+  | "interview_cancelled"      // Interview has been cancelled
+  | "interview_rescheduled"    // Interview has been rescheduled
+  | "system";                  // System announcements
 
 export interface Notification {
   id: string;
@@ -2724,7 +2736,8 @@ export interface BusinessGrant {
 // ============================================
 
 export type AuthorType = 'member' | 'organization' | 'system';
-export type PostType = 'status' | 'share_job' | 'share_scholarship' | 'share_event' | 'share_product' | 'article' | 'poll';
+export type PostType = 'status' | 'share_job' | 'share_scholarship' | 'share_event' | 'share_product' | 'article' | 'poll' | 'achievement' | 'share_link';
+export type AchievementType = 'new_job' | 'completed_training' | 'earned_certification' | 'promotion' | 'graduation' | 'custom';
 export type PostVisibility = 'public' | 'connections' | 'private';
 export type ReactionType = 'love' | 'honor' | 'fire';
 
@@ -2756,7 +2769,15 @@ export interface Post {
   sharesCount: number;
   reactionsCount?: ReactionsCount;
   referenceId?: string; // ID of the shared entity (job, scholarship, etc.)
-  referenceData?: any; // Cached data of the shared entity for display
+  referenceData?: Record<string, string | undefined>; // Cached data of the shared entity for display
+  achievementType?: AchievementType; // Type of achievement (if post type is 'achievement')
+  linkUrl?: string; // External link URL (for link preview posts)
+  linkPreview?: { // Cached open graph data for link previews
+    title?: string;
+    description?: string;
+    image?: string;
+    domain?: string;
+  };
   isEdited?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;

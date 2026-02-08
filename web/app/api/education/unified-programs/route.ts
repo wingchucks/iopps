@@ -5,10 +5,10 @@ import type { UnifiedEducationListing, ProgramSource, UnifiedProgramType, Progra
 export const runtime = "nodejs";
 
 // Helper to convert Firestore timestamp to date string
-function timestampToDateString(timestamp: any): string | null {
+function timestampToDateString(timestamp: unknown): string | null {
   if (!timestamp) return null;
-  if (timestamp.toDate) {
-    return timestamp.toDate().toISOString();
+  if (typeof timestamp === "object" && timestamp !== null && typeof (timestamp as Record<string, unknown>).toDate === "function") {
+    return ((timestamp as Record<string, unknown>).toDate as () => Date)().toISOString();
   }
   if (typeof timestamp === "string") {
     return timestamp;

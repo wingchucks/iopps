@@ -213,7 +213,7 @@ export default function WelcomeWizard({
             </p>
             <div className="mt-8 space-y-4">
               <Link
-                href="/organization/dashboard?tab=profile"
+                href="/organization/settings"
                 className="flex items-center justify-between rounded-xl border border-accent/30 bg-accent/10 p-4 transition-colors hover:bg-accent/20"
               >
                 <div className="flex items-center gap-4">

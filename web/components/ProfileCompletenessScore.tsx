@@ -40,7 +40,7 @@ export function calculateProfileCompleteness(
       completed: !!profile?.logoUrl,
       weight: 15,
       action: "Upload logo",
-      href: "/organization/dashboard?tab=profile",
+      href: "/organization/settings",
     },
     {
       id: "description",
@@ -48,7 +48,7 @@ export function calculateProfileCompleteness(
       completed: !!(profile?.description && profile.description.length >= 100),
       weight: 15,
       action: "Add description",
-      href: "/organization/dashboard?tab=profile",
+      href: "/organization/settings",
     },
     {
       id: "location",
@@ -56,7 +56,7 @@ export function calculateProfileCompleteness(
       completed: !!profile?.location,
       weight: 10,
       action: "Add location",
-      href: "/organization/dashboard?tab=profile",
+      href: "/organization/settings",
     },
     {
       id: "industry",
@@ -64,7 +64,7 @@ export function calculateProfileCompleteness(
       completed: !!profile?.industry,
       weight: 10,
       action: "Select industry",
-      href: "/organization/dashboard?tab=profile",
+      href: "/organization/settings",
     },
     {
       id: "website",
@@ -72,7 +72,7 @@ export function calculateProfileCompleteness(
       completed: !!profile?.website,
       weight: 10,
       action: "Add website",
-      href: "/organization/dashboard?tab=profile",
+      href: "/organization/settings",
     },
     {
       id: "contactEmail",
@@ -80,7 +80,7 @@ export function calculateProfileCompleteness(
       completed: !!profile?.contactEmail,
       weight: 10,
       action: "Add contact email",
-      href: "/organization/dashboard?tab=profile",
+      href: "/organization/settings",
     },
     {
       id: "banner",
@@ -88,7 +88,7 @@ export function calculateProfileCompleteness(
       completed: !!profile?.bannerUrl,
       weight: 5,
       action: "Upload banner",
-      href: "/organization/dashboard?tab=profile",
+      href: "/organization/settings",
     },
   ];
 

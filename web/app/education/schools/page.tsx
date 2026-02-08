@@ -263,7 +263,7 @@ export default function SchoolsPage() {
           List your institution on IOPPS and connect with Indigenous students seeking educational opportunities.
         </p>
         <Link
-          href="/organization/dashboard?tab=education"
+          href="/organization/educate/profile"
           className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors"
         >
           List Your School

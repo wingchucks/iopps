@@ -114,7 +114,7 @@ function PaymentSuccessContent() {
 
                 <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
                     <Link
-                        href="/organization/dashboard?tab=opportunities"
+                        href="/organization"
                         className="rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 px-6 py-3 font-semibold text-white transition hover:from-purple-600 hover:to-indigo-600"
                     >
                         View Dashboard

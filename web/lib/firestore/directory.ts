@@ -28,6 +28,7 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
 } from "./shared";
+import type { QueryConstraint } from "./shared";
 import type {
   DirectoryEntry,
   DirectoryFilters,
@@ -296,7 +297,7 @@ export async function queryDirectory(
   }
 
   // Build query constraints
-  const constraints: any[] = [where("directoryVisible", "==", true)];
+  const constraints: QueryConstraint[] = [where("directoryVisible", "==", true)];
 
   // Filter by org type
   if (filters.orgType) {
@@ -410,7 +411,7 @@ export async function listDirectoryEntries(
   const firestore = checkFirebase();
   if (!firestore) return [];
 
-  const constraints: any[] = [where("directoryVisible", "==", true)];
+  const constraints: QueryConstraint[] = [where("directoryVisible", "==", true)];
 
   if (orgTypes && orgTypes.length > 0) {
     constraints.push(where("orgType", "in", orgTypes));

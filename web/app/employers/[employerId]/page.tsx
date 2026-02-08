@@ -150,7 +150,7 @@ async function getEmployerData(employerId: string, isPreview: boolean = false): 
           .limit(20)
           .get();
 
-        const jobs = jobsSnapshot.docs.map((doc: any) => ({
+        const jobs = jobsSnapshot.docs.map((doc) => ({
           ...doc.data(),
           id: doc.id,
         })) as JobPosting[];
@@ -180,7 +180,7 @@ async function getEmployerData(employerId: string, isPreview: boolean = false): 
       .limit(20)
       .get();
 
-    const jobs = jobsSnapshot.docs.map((doc: any) => ({
+    const jobs = jobsSnapshot.docs.map((doc) => ({
       ...doc.data(),
       id: doc.id,
     })) as JobPosting[];
@@ -309,7 +309,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
               </p>
             </div>
             <Link
-              href="/organization/dashboard?tab=profile"
+              href="/organization/settings"
               className="flex-shrink-0 rounded-lg bg-amber-500/20 px-4 py-2 text-sm font-medium text-amber-300 hover:bg-amber-500/30 transition-colors"
             >
               Back to Dashboard

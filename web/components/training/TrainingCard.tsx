@@ -25,9 +25,11 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
         }
     };
 
-    const formatDate = (timestamp: any) => {
+    const formatDate = (timestamp: unknown) => {
         if (!timestamp) return 'On-demand';
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const date = (typeof timestamp === "object" && timestamp !== null && typeof (timestamp as Record<string, unknown>).toDate === "function")
+            ? ((timestamp as Record<string, unknown>).toDate as () => Date)()
+            : new Date(timestamp as string);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 

@@ -32,7 +32,7 @@ async function recomputeVisibility(orgId: string): Promise<void> {
         const { recomputeOrganizationVisibility } = await import("@/lib/firestore/visibility");
         const result = await recomputeOrganizationVisibility(orgId);
         if (result.success) {
-            console.log(`[webhook] Recomputed visibility for ${orgId}: visible=${result.isDirectoryVisible}, reason=${result.visibilityReason}`);
+            // Visibility recomputed successfully
         } else {
             console.warn(`[webhook] Failed to recompute visibility for ${orgId}: ${result.error}`);
         }
@@ -70,7 +70,6 @@ async function savePaymentRecord(
     const userId = metadata.userId || metadata.employerId;
 
     if (!userId) {
-        console.log("No userId found for payment record, skipping");
         return;
     }
 
@@ -144,7 +143,6 @@ export async function POST(request: NextRequest) {
     // Idempotency check - skip if already processed
     try {
         if (await isEventProcessed(db, event.id)) {
-            console.log(`Event ${event.id} already processed, skipping`);
             return NextResponse.json({ received: true, skipped: true });
         }
     } catch (error) {
@@ -215,7 +213,6 @@ export async function POST(request: NextRequest) {
                             amountPaid: 0, // Bundled - no separate charge
                         };
 
-                        console.log(`Bundled ${talentPoolDays} days talent pool access for user ${userId}`);
                     }
 
                     // Check if employer is pending and auto-approve on payment
@@ -226,8 +223,6 @@ export async function POST(request: NextRequest) {
                         updateData.status = "approved";
                         updateData.approvedAt = new Date();
                         updateData.approvalMethod = "payment"; // Track auto-approval via payment
-                        console.log(`Auto-approving employer ${userId} via subscription purchase`);
-
                         // Also activate any jobs that were waiting for employer approval
                         const pendingJobs = await db.collection("jobs")
                             .where("employerId", "==", userId)
@@ -239,7 +234,6 @@ export async function POST(request: NextRequest) {
                                 active: true,
                                 pendingEmployerApproval: false,
                             });
-                            console.log(`Activated pending job ${pendingJobDoc.id} after employer approval`);
                         }
                     }
 
@@ -252,8 +246,6 @@ export async function POST(request: NextRequest) {
                         "subscription",
                         `${productType === "TIER2" ? "Unlimited" : "Growth"} Subscription`
                     );
-
-                    console.log(`Subscription ${productType} activated for user ${userId}`);
 
                     // Recompute directory visibility (subscription extends visibility)
                     await recomputeVisibility(userId);
@@ -295,8 +287,6 @@ export async function POST(request: NextRequest) {
                             featured === "true" ? "Annual Vendor Plan" : "Monthly Vendor Listing"
                         );
                     }
-
-                    console.log(`Vendor ${vendorId} subscription activated until ${expirationDate.toISOString()}`);
 
                     // Recompute directory visibility for the vendor's owner organization
                     if (vendorData?.ownerUserId) {
@@ -341,8 +331,6 @@ export async function POST(request: NextRequest) {
                         updateData.status = "approved";
                         updateData.approvedAt = new Date();
                         updateData.approvalMethod = "payment";
-                        console.log(`Auto-approving employer ${userId} via job credit purchase`);
-
                         // Also activate any jobs that were waiting for employer approval
                         const pendingJobs = await db.collection("jobs")
                             .where("employerId", "==", userId)
@@ -354,7 +342,6 @@ export async function POST(request: NextRequest) {
                                 active: true,
                                 pendingEmployerApproval: false,
                             });
-                            console.log(`Activated pending job ${pendingJobDoc.id} after employer approval`);
                         }
                     }
 
@@ -387,8 +374,6 @@ export async function POST(request: NextRequest) {
                         "job_credit",
                         isFeatured ? "Featured Job Credit" : "Job Credit"
                     );
-
-                    console.log(`Job credit granted to employer ${userId}`);
 
                     // Recompute directory visibility
                     await recomputeVisibility(userId);
@@ -451,7 +436,6 @@ export async function POST(request: NextRequest) {
                             },
                         });
 
-                        console.log(`Granted ${talentPoolDays} days bonus talent pool access to employer ${jobData.employerId}`);
                     }
 
                     // Send admin notification for new paid job
@@ -472,8 +456,6 @@ export async function POST(request: NextRequest) {
                         );
                     }
 
-                    console.log(`Job ${jobId} activated successfully`);
-
                     // Auto-approve pending employers on successful payment
                     // Payment = trust signal, no need for manual approval
                     if (jobData?.employerId) {
@@ -487,8 +469,6 @@ export async function POST(request: NextRequest) {
                                 approvedAt: new Date(),
                                 approvalMethod: "payment", // Track that this was auto-approved via payment
                             });
-                            console.log(`Auto-approved employer ${jobData.employerId} via job payment`);
-
                             // Also activate any jobs that were waiting for employer approval
                             const pendingJobs = await db.collection("jobs")
                                 .where("employerId", "==", jobData.employerId)
@@ -500,8 +480,7 @@ export async function POST(request: NextRequest) {
                                     active: true,
                                     pendingEmployerApproval: false,
                                 });
-                                console.log(`Activated pending job ${pendingJobDoc.id} after employer approval`);
-                            }
+                                }
                         }
 
                         // Recompute directory visibility (job publish extends visibility)
@@ -605,7 +584,6 @@ export async function POST(request: NextRequest) {
                         );
                     }
 
-                    console.log(`Conference ${conferenceId} activated successfully`);
                     break;
                 }
 
@@ -640,7 +618,6 @@ export async function POST(request: NextRequest) {
                         );
                     }
 
-                    console.log(`Training program ${programId} featured successfully until ${featuredExpiresAt.toISOString()}`);
                     break;
                 }
 
@@ -694,7 +671,6 @@ export async function POST(request: NextRequest) {
                         `Training Program Listing (${durationDays} days): ${programData.title || "Training Program"}`
                     );
 
-                    console.log(`Training program ${programRef.id} created and activated for ${durationDays} days`);
                     break;
                 }
 
@@ -727,7 +703,6 @@ export async function POST(request: NextRequest) {
                         `Talent Pool Access (${tier === "ANNUAL" ? "Annual" : "Monthly"})`
                     );
 
-                    console.log(`Talent Pool Access (${tier}) activated for user ${userId} until ${expirationDate.toISOString()}`);
                     break;
                 }
 
@@ -746,7 +721,6 @@ export async function POST(request: NextRequest) {
                         await db.collection("jobs").doc(failedMetadata.jobId).update({
                             paymentStatus: "failed",
                         });
-                        console.log(`Job ${failedMetadata.jobId} marked as payment failed`);
                     } catch (updateErr) {
                         console.error("Failed to update job payment status:", updateErr);
                     }
@@ -756,7 +730,6 @@ export async function POST(request: NextRequest) {
                         await db.collection("conferences").doc(failedMetadata.conferenceId).update({
                             paymentStatus: "failed",
                         });
-                        console.log(`Conference ${failedMetadata.conferenceId} marked as payment failed`);
                     } catch (updateErr) {
                         console.error("Failed to update conference payment status:", updateErr);
                     }
@@ -766,8 +739,6 @@ export async function POST(request: NextRequest) {
 
             case "charge.refunded": {
                 const charge = event.data.object as Stripe.Charge;
-                console.log("Charge refunded:", charge.id);
-
                 // Find the payment intent to get metadata
                 if (charge.payment_intent) {
                     try {
@@ -784,8 +755,6 @@ export async function POST(request: NextRequest) {
                                 active: false,
                                 paymentStatus: "refunded",
                             });
-                            console.log(`Job ${refundMetadata.jobId} deactivated due to refund`);
-
                             // Recompute visibility after job deactivation
                             if (jobEmployerId) {
                                 await recomputeVisibility(jobEmployerId);
@@ -796,7 +765,6 @@ export async function POST(request: NextRequest) {
                                 active: false,
                                 paymentStatus: "refunded",
                             });
-                            console.log(`Conference ${refundMetadata.conferenceId} deactivated due to refund`);
                         }
                     } catch (refundErr) {
                         console.error("Failed to process refund:", refundErr);
@@ -807,8 +775,6 @@ export async function POST(request: NextRequest) {
 
             case "customer.subscription.deleted": {
                 const subscription = event.data.object as Stripe.Subscription;
-                console.log("Subscription cancelled:", subscription.id);
-
                 // Find and deactivate the vendor subscription
                 try {
                     const vendorsSnapshot = await db.collection("vendors")
@@ -820,8 +786,6 @@ export async function POST(request: NextRequest) {
                             subscriptionStatus: "cancelled",
                             status: "inactive",
                         });
-                        console.log(`Vendor ${vendorDoc.id} subscription cancelled`);
-
                         // Recompute visibility for vendor's owner organization
                         const vendorData = vendorDoc.data();
                         if (vendorData?.ownerUserId) {
@@ -855,7 +819,6 @@ export async function POST(request: NextRequest) {
                             await vendorDoc.ref.update({
                                 subscriptionStatus: "past_due",
                             });
-                            console.log(`Vendor ${vendorDoc.id} marked as past due`);
                         }
                     } catch (invoiceErr) {
                         console.error("Failed to process invoice failure:", invoiceErr);
@@ -865,7 +828,6 @@ export async function POST(request: NextRequest) {
             }
 
             default:
-                console.log(`Unhandled event type: ${event.type}`);
         }
 
         // Mark event as processed for idempotency

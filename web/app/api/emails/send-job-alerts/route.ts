@@ -37,8 +37,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const frequency: JobAlertFrequency = body.frequency || "daily";
 
-    console.log(`Processing ${frequency} job alerts...`);
-
     // Get the time threshold based on frequency
     const now = new Date();
     let lookbackMs: number;
@@ -65,15 +63,12 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (alertsSnapshot.empty) {
-      console.log(`No active ${frequency} alerts found`);
       return NextResponse.json({
         success: true,
         message: `No active ${frequency} alerts`,
         processed: 0,
       });
     }
-
-    console.log(`Found ${alertsSnapshot.size} active ${frequency} alerts`);
 
     // Get recent active jobs
     const jobsSnapshot = await db
@@ -85,7 +80,6 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (jobsSnapshot.empty) {
-      console.log("No new jobs in the lookback period");
       return NextResponse.json({
         success: true,
         message: "No new jobs to alert about",
@@ -97,8 +91,6 @@ export async function POST(request: NextRequest) {
       id: doc.id,
       ...doc.data(),
     })) as JobPosting[];
-
-    console.log(`Found ${jobs.length} new jobs to match against`);
 
     // Get member emails for all alerts
     const memberIds = new Set<string>();
@@ -135,7 +127,6 @@ export async function POST(request: NextRequest) {
       };
 
       if (!alert.memberEmail) {
-        console.log(`Skipping alert ${alert.id} - no email found for member`);
         continue;
       }
 
@@ -159,8 +150,6 @@ export async function POST(request: NextRequest) {
         matchedAlerts.push({ alert, matchingJobs });
       }
     }
-
-    console.log(`${matchedAlerts.length} alerts have matching jobs`);
 
     if (matchedAlerts.length === 0) {
       return NextResponse.json({

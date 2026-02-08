@@ -19,6 +19,7 @@ import {
   db,
   checkFirebase,
 } from "./shared";
+import type { Firestore } from "./shared";
 import type { ScholarshipApplyClickEvent, ScholarshipAdminAuditLog, Scholarship } from "@/lib/types";
 
 // ============================================
@@ -186,7 +187,7 @@ export async function trackScholarshipApplyClick(
  * Check for suspicious click activity
  */
 async function checkSuspiciousActivity(
-  firestore: any,
+  firestore: Firestore,
   sessionId: string,
   fingerprintHash: string
 ): Promise<{ suspicious: boolean; count: number }> {

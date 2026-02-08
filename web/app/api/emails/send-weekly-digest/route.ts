@@ -212,8 +212,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    console.log("Processing weekly digest...");
-
     // Get content from the last 7 days
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
@@ -276,15 +274,12 @@ export async function POST(request: NextRequest) {
     // Check if there's any content to share
     const totalContent = jobs.length + conferences.length + powwows.length + vendors.length;
     if (totalContent === 0) {
-      console.log("No new content for weekly digest");
       return NextResponse.json({
         success: true,
         message: "No new content for digest",
         processed: 0,
       });
     }
-
-    console.log(`Digest content: ${jobs.length} jobs, ${conferences.length} conferences, ${powwows.length} events, ${vendors.length} vendors`);
 
     // Get users with weekly digest enabled
     const prefsSnap = await db
@@ -294,15 +289,12 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (prefsSnap.empty) {
-      console.log("No users subscribed to weekly digest");
       return NextResponse.json({
         success: true,
         message: "No subscribers",
         processed: 0,
       });
     }
-
-    console.log(`Found ${prefsSnap.size} digest subscribers`);
 
     // Get user emails
     const userIds = prefsSnap.docs.map((doc) => doc.id);

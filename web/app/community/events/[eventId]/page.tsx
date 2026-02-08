@@ -5,23 +5,21 @@ import type { PowwowEvent } from "@/lib/types";
 import { generatePowwowSchema } from "@/lib/seo";
 
 // Helper to convert Firestore Timestamp to Date
-function toDate(timestamp: any): Date | null {
+function toDate(timestamp: unknown): Date | null {
   if (!timestamp) return null;
   if (timestamp instanceof Date) return timestamp;
-  if (typeof timestamp === "object" && "_seconds" in timestamp) {
-    return new Date(timestamp._seconds * 1000);
+  if (typeof timestamp === "object" && timestamp !== null) {
+    const ts = timestamp as Record<string, unknown>;
+    if (ts._seconds) return new Date((ts._seconds as number) * 1000);
+    if (ts.seconds) return new Date((ts.seconds as number) * 1000);
+    if (typeof ts.toDate === "function") return (ts.toDate as () => Date)();
   }
-  if (timestamp.toDate && typeof timestamp.toDate === "function") {
-    return timestamp.toDate();
-  }
-  if (typeof timestamp === "string") {
-    return new Date(timestamp);
-  }
+  if (typeof timestamp === "string") return new Date(timestamp);
   return null;
 }
 
 // Check if an event has ended based on endDate
-function isEventExpired(event: any): boolean {
+function isEventExpired(event: { endDate?: unknown }): boolean {
   const now = new Date();
   const endDate = toDate(event.endDate);
   if (endDate && endDate < now) return true;

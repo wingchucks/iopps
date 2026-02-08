@@ -626,9 +626,9 @@ function NewJobPageContent() {
       clearDraft();
       window.location.href = url;
 
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      setError(e.message);
+      setError(e instanceof Error ? e.message : "An error occurred");
       setSubmitting(false);
     }
   };
@@ -1169,7 +1169,7 @@ function NewJobPageContent() {
                   <p className="text-sm text-[var(--text-secondary)]">
                     All applications will be received through IOPPS using the <strong>Quick Apply</strong> button.
                     You'll be able to view and manage all applications in your{" "}
-                    <Link href="/organization/dashboard" className="text-[#14B8A6] hover:underline font-semibold">
+                    <Link href="/organization/hire/applications" className="text-[#14B8A6] hover:underline font-semibold">
                       employer dashboard
                     </Link>.
                   </p>

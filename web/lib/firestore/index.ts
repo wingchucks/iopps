@@ -224,6 +224,9 @@ export {
   getUnreadNotificationCount,
   deleteNotification,
   deleteAllUserNotifications,
+  getNotificationsQuery,
+  subscribeToNotifications,
+  subscribeToUnreadCount,
 } from "./notifications";
 
 // Misc (global search, contacts, settings, RSS, job alerts)

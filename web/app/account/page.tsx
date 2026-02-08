@@ -85,7 +85,7 @@ export default function AccountPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/organization/dashboard"
+              href="/organization"
               className="inline-flex rounded-md bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--text-primary)] hover:bg-accent/90"
             >
               Go to Dashboard
@@ -103,10 +103,10 @@ export default function AccountPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/member/dashboard"
+              href={user ? `/member/${user.uid}` : '/discover'}
               className="inline-flex rounded-md bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--text-primary)] hover:bg-accent/90"
             >
-              Go to Dashboard
+              My Profile
             </Link>
           </div>
         </div>

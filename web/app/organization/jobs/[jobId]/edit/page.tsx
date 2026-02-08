@@ -322,7 +322,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           {error}
         </h1>
         <Link
-          href="/organization/dashboard"
+          href="/organization/hire/jobs"
           className="inline-flex rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Back to Dashboard
@@ -342,7 +342,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           You don&rsquo;t have permission to edit this job posting.
         </p>
         <Link
-          href="/organization/dashboard"
+          href="/organization/hire/jobs"
           className="inline-flex rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Back to Dashboard
@@ -610,7 +610,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                 <p className="text-xs text-[var(--text-secondary)]">
                   All applications will be received through IOPPS using the <strong>Quick Apply</strong> button.
                   Candidates can apply with their saved profile and resume. View and manage all applications in your{" "}
-                  <Link href="/organization/dashboard" className="text-[#14B8A6] hover:underline font-semibold">
+                  <Link href="/organization/hire/jobs" className="text-[#14B8A6] hover:underline font-semibold">
                     employer dashboard
                   </Link>.
                 </p>
@@ -720,7 +720,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
               {saving ? "Saving..." : "Save Changes"}
             </button>
             <Link
-              href="/organization/dashboard"
+              href="/organization/hire/jobs"
               className="rounded-xl border border-[var(--card-border)] px-6 py-2.5 text-sm text-foreground hover:border-[var(--card-border)] transition-colors"
             >
               Cancel

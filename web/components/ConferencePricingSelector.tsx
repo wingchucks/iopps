@@ -43,9 +43,9 @@ export default function ConferencePricingSelector({ conferenceId, userId, onSkip
             } else {
                 throw new Error("No checkout URL received");
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Checkout error:", err);
-            setError(err.message || "Something went wrong");
+            setError(err instanceof Error ? err.message : "Something went wrong");
         } finally {
             setLoading(null);
         }

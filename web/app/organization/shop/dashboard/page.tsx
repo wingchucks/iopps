@@ -41,7 +41,7 @@ export default function VendorDashboard() {
   // Redirect employers to the unified dashboard
   useEffect(() => {
     if (!authLoading && role === 'employer') {
-      router.replace('/organization/dashboard?tab=shop');
+      router.replace('/organization/sell/profile');
     }
   }, [authLoading, role, router]);
   const [vendor, setVendor] = useState<Vendor | null>(null);
@@ -159,9 +159,9 @@ export default function VendorDashboard() {
         await loadVendor();
         toast.success('Profile saved successfully!');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving vendor:', error);
-      toast.error(`Failed to save profile: ${error?.message || 'Unknown error'}`);
+      toast.error(`Failed to save profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }

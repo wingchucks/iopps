@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getMemberProfileServer } from "@/lib/firestore/server-members";
-import PublicProfileView from "./PublicProfileView";
+import MemberProfile from "./MemberProfile";
 
 interface PageProps {
   params: Promise<{ userId: string }>;
@@ -53,5 +53,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
     notFound();
   }
 
-  return <PublicProfileView profile={profile} />;
+  // isOwner will be determined client-side inside MemberProfile via useAuth()
+  // We pass isOwner=false as default; MemberProfile's client code handles the real check
+  return <MemberProfile profile={profile} isOwner={false} userId={userId} />;
 }

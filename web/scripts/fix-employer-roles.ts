@@ -108,8 +108,8 @@ async function fixEmployerRoles() {
 
       console.log(`   ✅ Fixed: ${orgName} (${currentRole} → employer)`);
       fixed++;
-    } catch (error: any) {
-      console.log(`   ❌ Error: ${orgName} - ${error.message}`);
+    } catch (error: unknown) {
+      console.log(`   ❌ Error: ${orgName} - ${error instanceof Error ? error.message : error}`);
       errors++;
     }
   }

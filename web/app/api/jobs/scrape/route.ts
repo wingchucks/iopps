@@ -151,7 +151,6 @@ async function parseOracleHcmJobs(apiUrl: string, careerSiteUrl: string): Promis
     let lastError = "";
     for (const endpoint of apiEndpoints) {
         try {
-            console.log(`Trying Oracle API endpoint: ${endpoint}`);
             const response = await fetch(endpoint, {
                 headers: {
                     "Accept": "application/json",
@@ -163,17 +162,14 @@ async function parseOracleHcmJobs(apiUrl: string, careerSiteUrl: string): Promis
                 const data = await response.json();
                 const jobs = normalizeOracleJobs(data, careerSiteUrl);
                 if (jobs.length > 0) {
-                    console.log(`Successfully fetched ${jobs.length} jobs from Oracle HCM`);
                     return jobs;
                 }
             } else {
                 const errorText = await response.text();
                 lastError = `${response.status}: ${errorText.substring(0, 200)}`;
-                console.log(`Oracle API returned ${response.status} for endpoint`);
             }
         } catch (err) {
             lastError = err instanceof Error ? err.message : String(err);
-            console.log(`Error fetching from Oracle API: ${lastError}`);
         }
     }
 
@@ -181,6 +177,7 @@ async function parseOracleHcmJobs(apiUrl: string, careerSiteUrl: string): Promis
     throw new Error(`Oracle HCM API not accessible. The site "${siteName}" may require authentication or use a different API format. Last error: ${lastError}`);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeOracleJobs(data: any, careerSiteUrl: string): NormalizedJob[] {
     const jobs: NormalizedJob[] = [];
     const items = data.items || data.requisitionList || [];
@@ -203,7 +200,7 @@ function normalizeOracleJobs(data: any, careerSiteUrl: string): NormalizedJob[] 
         // Get description from requisitionDescriptions if available
         let description = "";
         if (requisition.requisitionDescriptions && requisition.requisitionDescriptions.length > 0) {
-            const desc = requisition.requisitionDescriptions.find((d: any) => d.DescriptionType === "External" || d.descriptionType === "External")
+            const desc = requisition.requisitionDescriptions.find((d: Record<string, string>) => d.DescriptionType === "External" || d.descriptionType === "External")
                 || requisition.requisitionDescriptions[0];
             description = desc?.Content || desc?.content || desc?.ShortDescription || desc?.shortDescription || "";
         }
@@ -950,20 +947,21 @@ function getMappedValue(job: ScrapedJob, mappedField: string | undefined, defaul
 /**
  * Get value from XML job using field mapping
  */
-function getXmlFieldValue(job: any, fieldName: string | undefined, defaultFields: string[]): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getXmlFieldValue(job: Record<string, any>, fieldName: string | undefined, defaultFields: string[]): string {
     if (fieldName) {
         if (fieldName.includes(".")) {
             const parts = fieldName.split(".");
-            let value = job;
+            let value: unknown = job;
             for (const part of parts) {
                 if (value && typeof value === "object") {
-                    value = value[part];
+                    value = (value as Record<string, unknown>)[part];
                 } else {
                     break;
                 }
             }
-            if (Array.isArray(value)) return value[0] || "";
-            return value || "";
+            if (Array.isArray(value)) return (value[0] as string) || "";
+            return (value as string) || "";
         }
         const value = job[fieldName];
         if (Array.isArray(value)) return value[0] || "";

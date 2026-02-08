@@ -1,18 +1,30 @@
 /**
  * Shared navigation constants used across the IOPPS platform.
  * Single source of truth for nav items, footer links, and quick links.
+ *
+ * Social-platform-style navigation (LinkedIn/Facebook pattern):
+ * - Desktop: top bar with main nav + icon actions + avatar dropdown
+ * - Mobile: top bar + bottom nav (5 items)
  */
 
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+
 export type NavId =
-  | "feed"
-  | "careers"
+  | "home"
+  | "network"
+  | "jobs"
   | "education"
   | "events"
-  | "live"
-  | "nations"
   | "business"
+  // Legacy IDs — kept for backward compat with pages that pass these to FeedLayout
+  | "feed"
+  | "careers"
   | "community"
   | "organizations"
+  | "live"
+  | "nations"
   | "pricing";
 
 export interface NavItem {
@@ -22,10 +34,26 @@ export interface NavItem {
   href: string;
 }
 
+export interface IconNavItem {
+  icon: string;
+  label: string;
+  href: string;
+}
+
+export interface AvatarMenuItem {
+  icon: string;
+  label: string;
+  /** Static href, or "dynamic" when it needs userId at runtime, or "action" for sign-out */
+  href: string;
+  action?: "signout";
+}
+
 export interface BottomNavItem {
   icon: string;
   label: string;
-  href: string | ((loggedIn: boolean) => string);
+  /** Static string, a function of (loggedIn, userId?) returning a string, or "action" for post creation */
+  href: string | ((loggedIn: boolean, userId?: string) => string);
+  action?: "create-post";
 }
 
 export interface QuickLink {
@@ -33,24 +61,60 @@ export interface QuickLink {
   href: string;
 }
 
-/** Main sidebar/mobile navigation items */
+/* ------------------------------------------------------------------ */
+/*  Main nav items — desktop top bar center                            */
+/* ------------------------------------------------------------------ */
+
 export const NAV_ITEMS: NavItem[] = [
-  { id: "feed", icon: "home", label: "Home Feed", href: "/discover" },
-  { id: "careers", icon: "briefcase", label: "Careers", href: "/careers" },
+  { id: "home", icon: "home", label: "Home", href: "/" },
+  { id: "network", icon: "users", label: "Network", href: "/members" },
+  { id: "jobs", icon: "briefcase", label: "Jobs", href: "/careers" },
   { id: "education", icon: "academic", label: "Education", href: "/education" },
   { id: "events", icon: "calendar", label: "Events", href: "/community" },
-  { id: "live", icon: "video", label: "IOPPS Live", href: "/live" },
-  { id: "nations", icon: "map", label: "Nations Map", href: "/map" },
+  { id: "business", icon: "building", label: "Business", href: "/business/directory" },
 ];
 
-/** Mobile bottom navigation bar items */
-export const BOTTOM_NAV: BottomNavItem[] = [
-  { icon: "home", label: "Feed", href: "/discover" },
-  { icon: "briefcase", label: "Jobs", href: "/careers" },
-  { icon: "search", label: "Search", href: "/search" },
-  { icon: "bell", label: "Alerts", href: (loggedIn) => (loggedIn ? "/member/dashboard?tab=alerts" : "/login") },
-  { icon: "user", label: "Profile", href: (loggedIn) => (loggedIn ? "/member/profile" : "/login") },
+/* ------------------------------------------------------------------ */
+/*  Icon-only nav items — desktop top bar right side                   */
+/* ------------------------------------------------------------------ */
+
+export const ICON_NAV_ITEMS: IconNavItem[] = [
+  { icon: "mail", label: "Messages", href: "/messages" },
+  // Notifications are handled by the NotificationBell component
 ];
+
+/* ------------------------------------------------------------------ */
+/*  Avatar dropdown menu                                               */
+/* ------------------------------------------------------------------ */
+
+/** userId placeholder "{{userId}}" is replaced at render time */
+export const AVATAR_MENU_ITEMS: AvatarMenuItem[] = [
+  { icon: "user", label: "View Profile", href: "/member/{{userId}}" },
+  { icon: "settings", label: "Settings & Privacy", href: "/member/settings" },
+  { icon: "help", label: "Help", href: "/contact" },
+  { icon: "logout", label: "Sign Out", href: "#", action: "signout" },
+];
+
+/** Resolve "{{userId}}" in avatar menu item hrefs */
+export function resolveAvatarHref(href: string, userId: string): string {
+  return href.replace("{{userId}}", userId);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mobile bottom nav — 5 items                                        */
+/* ------------------------------------------------------------------ */
+
+export const BOTTOM_NAV: BottomNavItem[] = [
+  { icon: "home", label: "Home", href: "/" },
+  { icon: "search", label: "Search", href: "/search" },
+  { icon: "plusCircle", label: "Post", href: "#", action: "create-post" },
+  { icon: "mail", label: "Messages", href: (loggedIn) => (loggedIn ? "/messages" : "/login") },
+  { icon: "user", label: "Profile", href: (loggedIn, userId) => (loggedIn && userId ? `/member/${userId}` : "/login") },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Sidebar & footer links                                             */
+/* ------------------------------------------------------------------ */
 
 /** Default quick links shown in right sidebar */
 export const QUICK_LINKS: QuickLink[] = [
@@ -103,10 +167,15 @@ export const EVENTS_SIDEBAR_LINKS: QuickLink[] = [
   { label: "Host an Event", href: "/organization/events/new" },
 ];
 
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
 /** Resolve a BottomNavItem href that may be a function */
 export function resolveHref(
-  href: string | ((loggedIn: boolean) => string),
+  href: string | ((loggedIn: boolean, userId?: string) => string),
   loggedIn: boolean,
+  userId?: string,
 ): string {
-  return typeof href === "function" ? href(loggedIn) : href;
+  return typeof href === "function" ? href(loggedIn, userId) : href;
 }

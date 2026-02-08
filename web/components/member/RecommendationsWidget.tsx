@@ -135,7 +135,7 @@ export default function RecommendationsWidget({
           <Sparkles className="h-12 w-12 mx-auto text-[var(--text-secondary)] mb-3" />
           <p className="text-[var(--text-muted)]">Complete your profile to get personalized recommendations</p>
           <Link
-            href="/member/dashboard?tab=profile"
+            href="/member/profile"
             className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-lg bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
           >
             Update Profile
@@ -155,7 +155,7 @@ export default function RecommendationsWidget({
             <h3 className="font-semibold text-white">Recommended for You</h3>
           </div>
           <Link
-            href="/member/dashboard?tab=discover"
+            href="/members/discover"
             className="text-sm text-accent hover:text-emerald-300"
           >
             See all

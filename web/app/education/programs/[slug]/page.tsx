@@ -9,12 +9,13 @@ interface PageProps {
 }
 
 // Helper to serialize Firestore data for client components
-function serializeForClient(obj: any): any {
+function serializeForClient(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
 
   // Handle Firestore Timestamp
-  if (obj && typeof obj === 'object' && typeof obj.toDate === 'function') {
-    return { _seconds: obj.seconds || Math.floor(obj.toDate().getTime() / 1000) };
+  if (obj && typeof obj === 'object' && 'toDate' in obj && typeof (obj as Record<string, unknown>).toDate === 'function') {
+    const record = obj as Record<string, unknown>;
+    return { _seconds: record.seconds || Math.floor((record.toDate as () => Date)().getTime() / 1000) };
   }
 
   if (obj instanceof Date) {
@@ -26,9 +27,9 @@ function serializeForClient(obj: any): any {
   }
 
   if (typeof obj === 'object') {
-    const result: any = {};
+    const result: Record<string, unknown> = {};
     for (const key of Object.keys(obj)) {
-      result[key] = serializeForClient(obj[key]);
+      result[key] = serializeForClient((obj as Record<string, unknown>)[key]);
     }
     return result;
   }
@@ -37,7 +38,7 @@ function serializeForClient(obj: any): any {
 }
 
 // Fetch program data server-side (try by slug first, then by ID)
-async function getProgramData(slugOrId: string): Promise<any | null> {
+async function getProgramData(slugOrId: string): Promise<EducationProgram | null> {
   try {
     if (!db) {
       console.error("Firebase Admin not initialized");
@@ -53,14 +54,14 @@ async function getProgramData(slugOrId: string): Promise<any | null> {
 
     if (!slugQuery.empty) {
       const doc = slugQuery.docs[0];
-      return serializeForClient({ id: doc.id, ...doc.data() });
+      return serializeForClient({ id: doc.id, ...doc.data() }) as EducationProgram;
     }
 
     // Try by ID
     const docRef = db.collection("education_programs").doc(slugOrId);
     const docSnap = await docRef.get();
     if (docSnap.exists && docSnap.data()?.active !== false) {
-      return serializeForClient({ id: docSnap.id, ...docSnap.data() });
+      return serializeForClient({ id: docSnap.id, ...docSnap.data() }) as EducationProgram;
     }
 
     return null;

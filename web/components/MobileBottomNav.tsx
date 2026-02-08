@@ -25,7 +25,7 @@ export function MobileBottomNav() {
         { href: "/live", label: "Live", Icon: VideoCameraIcon, ActiveIcon: VideoCameraIconSolid },
         { href: "/map", label: "Map", Icon: MapIcon, ActiveIcon: MapIconSolid },
         user
-            ? { href: "/member/dashboard", label: "Dashboard", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid }
+            ? { href: `/member/${user.uid}`, label: "Profile", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid }
             : { href: "/login", label: "Sign In", Icon: ArrowRightOnRectangleIcon, ActiveIcon: ArrowRightOnRectangleIconSolid },
     ];
 

@@ -30,8 +30,6 @@ export async function GET(request: NextRequest) {
 
     // Query scholarships where deadline <= current date AND active = true
     // AND not force-published by admin
-    console.log("Querying scholarships with expired deadlines...");
-
     const expiredSnapshot = await db
       .collection("scholarships")
       .where("active", "==", true)
@@ -39,16 +37,11 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (!expiredSnapshot.empty) {
-      console.log(
-        `Found ${expiredSnapshot.size} scholarships with expired deadlines`
-      );
-
       for (const scholarshipDoc of expiredSnapshot.docs) {
         const data = scholarshipDoc.data();
 
         // Skip if admin has force-published this scholarship
         if (data.adminOverride?.forcePublished === true) {
-          console.log(`Skipping scholarship ${scholarshipDoc.id} - force published by admin`);
           continue;
         }
 
@@ -60,17 +53,13 @@ export async function GET(request: NextRequest) {
             updatedAt: FieldValue.serverTimestamp(),
           });
           expiredCount++;
-          console.log(`Expired scholarship: ${scholarshipDoc.id} - "${data.title}"`);
         } catch (error) {
           console.error(`Error updating scholarship ${scholarshipDoc.id}:`, error);
         }
       }
-    } else {
-      console.log("No scholarships with expired deadlines found");
     }
 
     // Also check for scholarships that were already inactive but need expiration metadata
-    console.log("Checking inactive scholarships for expiration metadata...");
 
     const inactiveSnapshot = await db
       .collection("scholarships")

@@ -20,9 +20,9 @@ export async function GET() {
             .limit(500) // Limit to prevent huge feeds
             .get();
 
-        const jobs = jobsSnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter((job: any) => !job.noIndex); // Exclude noIndex jobs from public feed
+        const jobs = (jobsSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() })) as FeedJob[])
+            .filter((job) => !job.noIndex); // Exclude noIndex jobs from public feed
 
         // Build XML
         const xml = buildJobFeedXml(jobs);
@@ -58,16 +58,21 @@ function escapeXml(str: string | undefined | null): string {
         .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
 }
 
-function formatDate(timestamp: any): string {
+function formatDate(timestamp: unknown): string {
     if (!timestamp) return "";
     try {
         let date: Date;
-        if (timestamp._seconds) {
-            date = new Date(timestamp._seconds * 1000);
-        } else if (timestamp.toDate) {
-            date = timestamp.toDate();
+        if (typeof timestamp === "object" && timestamp !== null) {
+            const ts = timestamp as Record<string, unknown>;
+            if (ts._seconds) {
+                date = new Date((ts._seconds as number) * 1000);
+            } else if (typeof ts.toDate === "function") {
+                date = (ts.toDate as () => Date)();
+            } else {
+                date = new Date(timestamp as unknown as string);
+            }
         } else {
-            date = new Date(timestamp);
+            date = new Date(timestamp as string);
         }
         return date.toISOString();
     } catch {
@@ -75,7 +80,27 @@ function formatDate(timestamp: any): string {
     }
 }
 
-function buildJobFeedXml(jobs: any[]): string {
+interface FeedJob {
+    id: string;
+    title?: string;
+    description?: string;
+    location?: string;
+    employerName?: string;
+    employmentType?: string;
+    applicationLink?: string;
+    remoteFlag?: boolean;
+    indigenousPreference?: boolean;
+    category?: string;
+    requirements?: string;
+    benefits?: string;
+    createdAt?: unknown;
+    closingDate?: unknown;
+    salaryRange?: { min?: number; max?: number };
+    salary?: { display?: string };
+    [key: string]: unknown;
+}
+
+function buildJobFeedXml(jobs: FeedJob[]): string {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://jobs.iopps.ca";
     const now = new Date().toISOString();
 

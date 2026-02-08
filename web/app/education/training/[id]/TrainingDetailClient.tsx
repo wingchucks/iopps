@@ -116,21 +116,31 @@ export default function TrainingDetailClient({
     );
   }
 
-  const formatDate = (timestamp: any) => {
+  const formatDate = (timestamp: unknown) => {
     if (!timestamp) return null;
     try {
       // Handle serialized Firestore timestamps
-      if (timestamp._seconds) {
-        return new Date(timestamp._seconds * 1000).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        });
+      if (typeof timestamp === "object" && timestamp !== null) {
+        const ts = timestamp as Record<string, unknown>;
+        if (ts._seconds) {
+          return new Date((ts._seconds as number) * 1000).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          });
+        }
+        if (typeof ts.toDate === "function") {
+          const d = (ts.toDate as () => Date)();
+          if (d instanceof Date) {
+            return d.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            });
+          }
+        }
       }
-      const date =
-        timestamp.toDate?.() instanceof Date
-          ? timestamp.toDate()
-          : new Date(timestamp);
+      const date = new Date(timestamp as string);
       return date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",

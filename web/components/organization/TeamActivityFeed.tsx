@@ -75,16 +75,21 @@ export function TeamActivityFeed({ limit = 10, showHeader = true }: TeamActivity
     }
   };
 
-  const formatRelativeTime = (timestamp: any): string => {
+  const formatRelativeTime = (timestamp: unknown): string => {
     if (!timestamp) return "";
 
     let date: Date;
-    if (timestamp.toDate) {
-      date = timestamp.toDate();
-    } else if (timestamp._seconds) {
-      date = new Date(timestamp._seconds * 1000);
+    if (typeof timestamp === "object" && timestamp !== null) {
+      const ts = timestamp as Record<string, unknown>;
+      if (typeof ts.toDate === "function") {
+        date = (ts.toDate as () => Date)();
+      } else if (ts._seconds) {
+        date = new Date((ts._seconds as number) * 1000);
+      } else {
+        date = new Date(String(timestamp));
+      }
     } else {
-      date = new Date(timestamp);
+      date = new Date(String(timestamp));
     }
 
     const now = new Date();

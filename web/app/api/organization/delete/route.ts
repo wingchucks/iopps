@@ -88,8 +88,6 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    console.log(`[DELETE-ORG] User ${userId} requesting deletion of employer ${employerId}`);
-
     // Soft delete the organization using shared function
     const deleteResult = await softDeleteOrganization(employerId, userId, reason);
 
@@ -154,10 +152,6 @@ export async function DELETE(req: NextRequest) {
     } catch (auditError) {
       console.error("Failed to create audit log:", auditError);
     }
-
-    console.log(
-      `[DELETE-ORG] User ${userId} successfully deleted organization "${deleteResult.organizationName}"`
-    );
 
     return NextResponse.json({
       success: true,

@@ -429,8 +429,8 @@ async function importEmployers(filePath: string): Promise<void> {
       }, { merge: true });
 
       stats.employers.success++;
-    } catch (error: any) {
-      console.log(`   ❌ Failed: ${name} - ${error.message}`);
+    } catch (error: unknown) {
+      console.log(`   ❌ Failed: ${name} - ${error instanceof Error ? error.message : error}`);
       stats.employers.failed++;
     }
   }
@@ -512,8 +512,8 @@ async function importJobs(filePath: string): Promise<void> {
       await db.collection("jobs").add(jobData);
       console.log(`   ✓ Imported: ${title} at ${company}`);
       stats.jobs.success++;
-    } catch (error: any) {
-      console.log(`   ❌ Failed: ${title} - ${error.message}`);
+    } catch (error: unknown) {
+      console.log(`   ❌ Failed: ${title} - ${error instanceof Error ? error.message : error}`);
       stats.jobs.failed++;
     }
   }
@@ -614,8 +614,8 @@ async function importCandidates(filePath: string, altFilePath?: string): Promise
       }, { merge: true });
 
       stats.candidates.success++;
-    } catch (error: any) {
-      console.log(`   ❌ Failed: ${email} - ${error.message}`);
+    } catch (error: unknown) {
+      console.log(`   ❌ Failed: ${email} - ${error instanceof Error ? error.message : error}`);
       stats.candidates.failed++;
     }
   }

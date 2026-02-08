@@ -19,7 +19,7 @@ import {
   conferenceFingerprintHistoryCollection,
   checkFirebase,
 } from "./shared";
-import type { Conference, ConferenceRegistration, ConferenceVisibilityTier } from "@/lib/types";
+import type { Conference, ConferenceRegistration, ConferenceVisibilityTier, TimestampLike } from "@/lib/types";
 import { MOCK_CONFERENCES } from "../mockData";
 import { toDate } from "./timestamps";
 
@@ -46,7 +46,7 @@ export function isConferenceExpired(conference: Conference): boolean {
 export function generateConferenceFingerprint(
   employerId: string,
   title: string,
-  startDate: any, // Accept any timestamp format
+  startDate: TimestampLike | null | undefined, // Accept any timestamp format
   location: string
 ): string {
   // Normalize inputs
@@ -427,7 +427,7 @@ export type SavedConference = {
   id?: string;
   memberId: string;
   conferenceId: string;
-  createdAt?: any;
+  createdAt?: TimestampLike | null;
   conference?: Conference | null;
 };
 

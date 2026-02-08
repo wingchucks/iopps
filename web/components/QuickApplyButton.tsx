@@ -261,7 +261,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
                                                 <p className="text-sm text-red-200">
                                                     ⚠ No resume saved. Please upload one below or add one to your{" "}
-                                                    <a href="/member/dashboard" className="underline font-semibold">
+                                                    <a href={user ? `/member/${user.uid}` : "/member/profile"} className="underline font-semibold">
                                                         profile
                                                     </a>
                                                     .

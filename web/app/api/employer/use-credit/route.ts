@@ -64,8 +64,6 @@ export async function POST(request: NextRequest) {
             lastCreditUsedForJob: jobId,
         });
 
-        console.log(`Used job credit for employer ${userId}, job ${jobId}. Remaining: ${currentCredits - 1}`);
-
         return NextResponse.json({ 
             success: true, 
             remainingCredits: currentCredits - 1 

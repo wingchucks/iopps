@@ -16,8 +16,8 @@ interface DashboardEntryCTAProps {
  * DashboardEntryCTA - Single source of truth for dashboard CTA on public pages
  *
  * IMPORTANT: This component ensures proper role-based dashboard routing:
- * - Community members → "My Dashboard" → /member/dashboard
- * - Employers/Organizations → "Organization Dashboard" → /organization/dashboard
+ * - Community members → "My Profile" → /member/[userId]
+ * - Employers/Organizations → "Organization Dashboard" → /organization
  * - Admins/Moderators → No CTA (they use admin panel)
  * - Unknown/Loading → No CTA (prevents role leakage)
  *
@@ -57,8 +57,8 @@ export function DashboardEntryCTA({
   }
 
   // Determine the link and label based on role
-  const dashboardHref = isCommunityMember ? '/member/dashboard' : '/organization/dashboard';
-  const dashboardLabel = isCommunityMember ? 'My Dashboard' : 'Organization Dashboard';
+  const dashboardHref = isCommunityMember ? `/member/${user.uid}` : '/organization';
+  const dashboardLabel = isCommunityMember ? 'My Profile' : 'Organization Dashboard';
   const dashboardDescription = isCommunityMember
     ? 'Track applications, continue learning, and manage your certificates.'
     : 'Manage your job postings, view applications, and grow your presence.';
@@ -124,8 +124,8 @@ export function useDashboardRoute() {
     isCommunityMember: !!user && isCommunityMember,
     isEmployer: !!user && isEmployer,
     isAdminOrModerator: !!user && isAdminOrModerator,
-    dashboardHref: !user ? null : isCommunityMember ? '/member/dashboard' : isEmployer ? '/organization/dashboard' : '/admin',
-    dashboardLabel: !user ? null : isCommunityMember ? 'My Dashboard' : isEmployer ? 'Organization Dashboard' : 'Admin Dashboard',
+    dashboardHref: !user ? null : isCommunityMember ? `/member/${user.uid}` : isEmployer ? '/organization' : '/admin',
+    dashboardLabel: !user ? null : isCommunityMember ? 'My Profile' : isEmployer ? 'Organization Dashboard' : 'Admin Dashboard',
   };
 }
 

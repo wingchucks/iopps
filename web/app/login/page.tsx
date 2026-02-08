@@ -27,7 +27,7 @@ async function getRedirectPath(userId: string): Promise<string> {
         return "/admin";
       }
       if (role === "employer") {
-        return "/organization/dashboard";
+        return "/organization";
       }
     }
   } catch (error) {

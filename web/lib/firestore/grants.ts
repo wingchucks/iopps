@@ -17,6 +17,7 @@ import {
   businessGrantsCollection,
   checkFirebase,
 } from "./shared";
+import type { QueryConstraint } from "./shared";
 import type { BusinessGrant, BusinessGrantStatus, BusinessGrantType, NorthAmericanRegion } from "@/lib/types";
 
 // ============================================
@@ -53,7 +54,7 @@ export async function listBusinessGrants(
     } = options;
 
     const ref = collection(firestore, businessGrantsCollection);
-    const constraints: any[] = [];
+    const constraints: QueryConstraint[] = [];
 
     // Status filter
     if (status !== "all") {

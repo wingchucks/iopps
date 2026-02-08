@@ -107,7 +107,7 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
       });
 
       // Navigate to messages tab with conversation ID
-      router.push(`/member/dashboard?tab=messages&conversation=${conversation.id}`);
+      router.push(`/member/messages?id=${conversation.id}`);
     } catch (error) {
       console.error("Error starting conversation:", error);
       toast.error("Failed to start conversation. Please try again.");
@@ -185,7 +185,7 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
                   {/* Action Buttons */}
                   <div className="flex gap-2">
                     {isOwnProfile ? (
-                      <Link href="/member/dashboard?tab=profile">
+                      <Link href="/member/profile">
                         <Button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white">
                           <Pencil className="h-4 w-4 mr-2" />
                           Edit Profile
@@ -396,7 +396,7 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
                   <p className="text-sm text-[var(--text-muted)] mb-4">
                     A complete profile helps you stand out to employers and connect with the community.
                   </p>
-                  <Link href="/member/dashboard?tab=profile">
+                  <Link href="/member/profile">
                     <Button variant="outline" className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
                       <Pencil className="h-4 w-4 mr-2" />
                       Complete Profile

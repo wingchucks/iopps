@@ -56,8 +56,8 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
       toast.success("Endorsement submitted!");
       setIsOpen(false);
       resetForm();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to submit endorsement");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to submit endorsement");
     } finally {
       setSubmitting(false);
     }

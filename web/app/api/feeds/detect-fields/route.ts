@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { parseStringPromise } from "xml2js";
 import { scrapeJobsFromHtml, isHtmlContent, isXmlContent } from "@/lib/html-job-scraper";
+import { validateRequired, validateUrl, validationError } from "@/lib/api-validation";
 
 export async function POST(request: NextRequest) {
     try {
@@ -21,11 +22,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        const { feedUrl } = await request.json();
+        const body = await request.json();
+        const { feedUrl } = body;
 
-        if (!feedUrl) {
-            return NextResponse.json({ error: "Feed URL is required" }, { status: 400 });
-        }
+        // Validate required field
+        const requiredErr = validateRequired(body, ["feedUrl"]);
+        if (requiredErr) return requiredErr;
+
+        // Validate URL format
+        const urlErr = validateUrl(feedUrl, "feedUrl");
+        if (urlErr) return validationError(urlErr);
 
         // Fetch content from URL
         const response = await fetch(feedUrl, {
@@ -148,18 +154,15 @@ async function processXmlFeed(xmlText: string, feedUrl: string): Promise<NextRes
 
         // If XML parsing fails, try HTML scraping as a fallback
         // This handles cases where content was incorrectly identified as XML
-        console.log(`XML parsing failed: ${parseErrorMsg}. Trying HTML scraping as fallback.`);
 
         try {
             const htmlResult = processHtmlPage(xmlText, feedUrl);
             // Check if HTML scraping found jobs
             const htmlJson = await htmlResult.json();
             if (htmlJson.success && htmlJson.totalJobs > 0) {
-                console.log(`HTML fallback successful: found ${htmlJson.totalJobs} jobs`);
                 return NextResponse.json(htmlJson);
             }
         } catch (htmlError) {
-            console.log("HTML fallback also failed:", htmlError);
         }
 
         // If HTML fallback didn't work, return the original XML error

@@ -9,12 +9,13 @@ interface PageProps {
 }
 
 // Helper to serialize Firestore data for client components
-function serializeForClient(obj: any): any {
+function serializeForClient(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
 
   // Handle Firestore Timestamp (Admin SDK has .seconds and .toDate())
-  if (obj && typeof obj === 'object' && typeof obj.toDate === 'function') {
-    return { _seconds: obj.seconds || Math.floor(obj.toDate().getTime() / 1000) };
+  if (obj && typeof obj === 'object' && 'toDate' in obj && typeof (obj as Record<string, unknown>).toDate === 'function') {
+    const record = obj as Record<string, unknown>;
+    return { _seconds: record.seconds || Math.floor((record.toDate as () => Date)().getTime() / 1000) };
   }
 
   // Handle Date objects
@@ -29,9 +30,9 @@ function serializeForClient(obj: any): any {
 
   // Handle plain objects
   if (typeof obj === 'object') {
-    const result: any = {};
+    const result: Record<string, unknown> = {};
     for (const key of Object.keys(obj)) {
-      result[key] = serializeForClient(obj[key]);
+      result[key] = serializeForClient((obj as Record<string, unknown>)[key]);
     }
     return result;
   }
@@ -40,18 +41,21 @@ function serializeForClient(obj: any): any {
 }
 
 // Helper to convert timestamp to Date
-function toDate(timestamp: any): Date | null {
+function toDate(timestamp: unknown): Date | null {
   if (!timestamp) return null;
   if (timestamp instanceof Date) return timestamp;
-  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
-  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
-  if (timestamp.toDate) return timestamp.toDate();
+  if (typeof timestamp === "object" && timestamp !== null) {
+    const ts = timestamp as Record<string, unknown>;
+    if (ts._seconds) return new Date((ts._seconds as number) * 1000);
+    if (ts.seconds) return new Date((ts.seconds as number) * 1000);
+    if (typeof ts.toDate === "function") return (ts.toDate as () => Date)();
+  }
   if (typeof timestamp === "string") return new Date(timestamp);
   return null;
 }
 
 // Check if conference has ended
-function isConferenceExpired(conference: any): boolean {
+function isConferenceExpired(conference: Record<string, unknown>): boolean {
   const now = new Date();
   const endDate = toDate(conference.endDate);
   if (endDate && endDate < now) return true;
@@ -59,7 +63,7 @@ function isConferenceExpired(conference: any): boolean {
 }
 
 // Fetch conference data server-side
-async function getConferenceData(conferenceId: string): Promise<{ data: any | null; expired: boolean }> {
+async function getConferenceData(conferenceId: string): Promise<{ data: Conference | null; expired: boolean }> {
   try {
     if (!db) {
       console.error("Firebase Admin not initialized");
@@ -72,12 +76,13 @@ async function getConferenceData(conferenceId: string): Promise<{ data: any | nu
     const data = docSnap.data();
 
     // Check if conference is inactive or expired
-    if (data?.active === false || isConferenceExpired(data)) {
+    const docData = data as Record<string, unknown> | undefined;
+    if (docData?.active === false || isConferenceExpired(docData ?? {})) {
       return { data: null, expired: true };
     }
 
     // Serialize the entire object to make it safe for client components
-    return { data: serializeForClient({ id: docSnap.id, ...data }), expired: false };
+    return { data: serializeForClient({ id: docSnap.id, ...data }) as Conference, expired: false };
   } catch (error) {
     console.error("Error fetching conference:", error);
     return { data: null, expired: false };
@@ -85,7 +90,7 @@ async function getConferenceData(conferenceId: string): Promise<{ data: any | nu
 }
 
 // Format date for display
-function formatDateRange(startDate: any, endDate: any): string {
+function formatDateRange(startDate: unknown, endDate: unknown): string {
   const start = toDate(startDate);
   const end = toDate(endDate);
 

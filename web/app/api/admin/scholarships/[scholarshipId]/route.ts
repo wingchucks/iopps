@@ -204,10 +204,6 @@ export async function POST(
       },
     });
 
-    console.log(
-      `[ADMIN] User ${adminUserId} performed ${action} on scholarship ${scholarshipId}`
-    );
-
     return NextResponse.json({
       success: true,
       action,

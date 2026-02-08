@@ -16,6 +16,7 @@ import {
   powwowRegistrationsCollection,
   checkFirebase,
 } from "./shared";
+import type { QueryConstraint } from "./shared";
 import type { PowwowEvent, PowwowRegistration } from "@/lib/types";
 import { toDate } from "./timestamps";
 
@@ -151,7 +152,7 @@ export async function listPowwowRegistrants(
   powwowId?: string
 ): Promise<PowwowRegistration[]> {
   const ref = collection(db!, powwowRegistrationsCollection);
-  const constraints: any[] = [where("employerId", "==", employerId)];
+  const constraints: QueryConstraint[] = [where("employerId", "==", employerId)];
   if (powwowId) {
     constraints.push(where("powwowId", "==", powwowId));
   }
