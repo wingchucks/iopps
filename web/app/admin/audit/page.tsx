@@ -24,10 +24,17 @@ const actionColors: Record<string, string> = {
   request_edits: "bg-yellow-500/10 text-yellow-400",
 };
 
-function formatTimestamp(ts: { toDate?: () => Date } | Date | string | null): string {
+function formatTimestamp(ts: unknown): string {
   if (!ts) return "--";
   try {
-    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    let date: Date;
+    if (ts instanceof Date) {
+      date = ts;
+    } else if (typeof ts === "object" && ts !== null && "toDate" in ts) {
+      date = (ts as { toDate: () => Date }).toDate();
+    } else {
+      date = new Date(ts as string | number);
+    }
     return date.toLocaleString("en-US", {
       month: "short",
       day: "numeric",

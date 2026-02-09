@@ -51,10 +51,17 @@ const orgTypeIcons: Record<OrgType, typeof BuildingOfficeIcon> = {
   other: BuildingOfficeIcon,
 };
 
-function formatDate(ts: { toDate?: () => Date } | Date | string | null): string {
+function formatDate(ts: unknown): string {
   if (!ts) return "Unknown";
   try {
-    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    let date: Date;
+    if (ts instanceof Date) {
+      date = ts;
+    } else if (typeof ts === "object" && ts !== null && "toDate" in ts) {
+      date = (ts as { toDate: () => Date }).toDate();
+    } else {
+      date = new Date(ts as string | number);
+    }
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
