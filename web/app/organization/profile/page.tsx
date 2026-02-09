@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
 import { getEmployerProfile } from '@/lib/firestore';
+import { toDate } from '@/lib/firestore/timestamps';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import type { EmployerProfile, OrganizationProfile } from '@/lib/types';
 import {
@@ -26,7 +27,11 @@ import {
   CheckBadgeIcon,
 } from '@heroicons/react/24/outline';
 
-type ProfileWithOrgFields = EmployerProfile & Partial<Pick<OrganizationProfile, 'publicationStatus' | 'slug' | 'directoryVisible'>>;
+type ProfileWithOrgFields = EmployerProfile & Partial<Pick<OrganizationProfile, 'publicationStatus' | 'slug' | 'directoryVisible'>> & {
+  story?: string;
+  teamSize?: string;
+  websiteUrl?: string;
+};
 
 interface ProfileStats {
   activeJobs: number;
@@ -108,9 +113,7 @@ export default function OrganizationProfilePage() {
 
   const isPublished = profile.publicationStatus === 'PUBLISHED' && profile.slug;
   const publicUrl = profile.slug ? `/organizations/${profile.slug}` : null;
-  const memberSince = profile.createdAt 
-    ? new Date(profile.createdAt.seconds ? profile.createdAt.seconds * 1000 : profile.createdAt).getFullYear()
-    : new Date().getFullYear();
+  const memberSince = (toDate(profile.createdAt) ?? new Date()).getFullYear();
 
   // Get initials for avatar fallback
   const getInitials = (name: string) => {
@@ -182,7 +185,7 @@ export default function OrganizationProfilePage() {
                     <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
                       {profile.organizationName || 'Your Organization'}
                       {isPublished && (
-                        <CheckBadgeIcon className="w-6 h-6 text-teal-400" title="Verified" />
+                        <CheckBadgeIcon className="w-6 h-6 text-teal-400" />
                       )}
                     </h1>
                     {profile.location && (
