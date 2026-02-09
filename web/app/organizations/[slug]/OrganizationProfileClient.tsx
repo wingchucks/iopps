@@ -476,9 +476,9 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       )}
 
       {/* Header Section */}
-      <div className="relative overflow-hidden rounded-none sm:rounded-3xl bg-gradient-to-br from-slate-100 via-white to-slate-100 border-b sm:border border-[var(--border)] mb-8">
+      <div className="relative overflow-hidden rounded-none sm:rounded-3xl bg-gradient-to-br from-[var(--navy)] via-[var(--navy-lt)] to-accent/80 border-b sm:border border-[var(--border)] mb-8">
         {/* Banner - full width on mobile */}
-        <div className="relative h-48 sm:h-64 bg-gradient-to-br from-slate-100 to-slate-200">
+        <div className="relative h-48 sm:h-64 bg-gradient-to-br from-[var(--navy)] via-[var(--navy-lt)] to-accent/80">
           {org.bannerUrl && (
             <Image
               src={`${org.bannerUrl}${org.bannerUrl.includes('?') ? '&' : '?'}v=${(org as unknown as Record<string, { seconds?: number }>).bannerUpdatedAt?.seconds || Date.now()}`}
@@ -489,34 +489,36 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               unoptimized
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent" />
+          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy)] via-[var(--navy)]/60 to-transparent" />
 
           {/* Badges */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
             {isIndigenousOwned && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white/90 border border-white/20">
                 <CheckBadgeIcon className="h-4 w-4" />
                 Indigenous-Owned
               </span>
             )}
             {org.indigenousVerification?.status === 'approved' && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-accent/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white/90 border border-white/20">
                 <CheckBadgeIcon className="h-4 w-4" />
                 Verified
               </span>
             )}
             {jobCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-accent/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white/90 border border-white/20">
                 <BriefcaseIcon className="h-4 w-4" />
                 Hiring
               </span>
             )}
             {org.trcAlignment?.commitmentStatement && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white/90 border border-white/20">
                 TRC Committed
               </span>
             )}
-            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--card-bg)]/80 px-3 py-1 text-sm font-medium text-[var(--text-secondary)]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white/80 border border-white/10">
               <Icon className="h-4 w-4" />
               {ORG_TYPE_LABELS[org.orgType || 'EMPLOYER']}
             </span>
@@ -527,7 +529,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             {(org.contactEmail || org.contactPhone) && (
               <a
                 href={org.contactEmail ? `mailto:${org.contactEmail}` : `tel:${org.contactPhone}`}
-                className="flex items-center gap-1.5 rounded-full bg-accent px-2 sm:px-3 py-1.5 text-sm font-medium text-white hover:bg-accent transition-colors"
+                className="flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-2 sm:px-3 py-1.5 text-sm font-medium text-white hover:bg-white/25 transition-colors"
                 aria-label="Contact this organization"
               >
                 <EnvelopeIcon className="h-4 w-4" />
@@ -536,7 +538,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             )}
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 rounded-full bg-[var(--card-bg)]/80 px-2 sm:px-3 py-1.5 text-sm text-[var(--text-primary)] hover:bg-surface transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-2 sm:px-3 py-1.5 text-sm text-white hover:bg-white/20 transition-colors"
               aria-label={copied ? 'Link copied to clipboard' : 'Share this organization profile'}
             >
               <ShareIcon className="h-4 w-4" />
@@ -548,7 +550,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                 className={`flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium transition-colors ${
                   manageMode
                     ? 'bg-amber-500 text-white hover:bg-amber-600'
-                    : 'bg-[var(--card-bg)]/80 text-[var(--text-primary)] hover:bg-surface'
+                    : 'bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20'
                 }`}
                 aria-label={manageMode ? 'Exit manage mode' : 'Enter manage mode to access admin tabs'}
                 aria-pressed={manageMode}
@@ -560,7 +562,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             {canEdit && (
               <Link
                 href="/organization/profile"
-                className="flex items-center gap-1.5 rounded-full bg-accent px-2 sm:px-3 py-1.5 text-sm text-white hover:bg-accent transition-colors"
+                className="flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-2 sm:px-3 py-1.5 text-sm text-white hover:bg-white/25 transition-colors"
                 aria-label="Edit organization profile"
               >
                 <PencilIcon className="h-4 w-4" />
@@ -568,13 +570,42 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               </Link>
             )}
           </div>
+
+          {/* Identity Row */}
+          {(org.nation || org.city || org.companySize || org.yearEstablished) && (
+            <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-3">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                {org.nation && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-white/90 border border-white/10">
+                    {org.nation}
+                  </span>
+                )}
+                {(org.city || org.province) && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-white/90 border border-white/10">
+                    <MapPinIcon className="h-3.5 w-3.5" />
+                    {org.city && org.province ? `${org.city}, ${org.province}` : org.city || org.province}
+                  </span>
+                )}
+                {org.companySize && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-white/90 border border-white/10">
+                    {org.companySize} employees
+                  </span>
+                )}
+                {org.yearEstablished && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-white/90 border border-white/10">
+                    Founded {org.yearEstablished}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Profile Info */}
         <div className="relative px-4 pb-6 sm:px-8 sm:pb-8">
           {/* Logo - overlaps banner */}
           <div className="absolute -top-12 sm:-top-20 left-4 sm:left-8">
-            <div className="h-20 w-20 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-white bg-surface shadow-xl">
+            <div className="h-20 w-20 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-[var(--card-bg)] bg-surface shadow-xl">
               {org.logoUrl ? (
                 <Image
                   src={org.logoUrl}
@@ -584,7 +615,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-teal-500 to-teal-600 text-4xl font-bold text-white">
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--navy)] to-accent text-4xl font-bold text-white">
                   {org.organizationName.charAt(0)}
                 </div>
               )}
@@ -601,62 +632,34 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               <p className="mt-2 text-lg text-[var(--text-secondary)]">{org.tagline}</p>
             )}
 
-            {/* Stats Row */}
-            {(jobCount > 0 || eventCount > 0 || scholarshipCount > 0 || org.createdAt) && (
-              <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-6">
-                {jobCount > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
-                      <BriefcaseIcon className="h-4 w-4 text-accent" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-[var(--text-primary)]">{jobCount}</p>
-                      <p className="text-xs text-foreground0">Active Jobs</p>
-                    </div>
-                  </div>
-                )}
-                {eventCount > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10">
-                      <CalendarIcon className="h-4 w-4 text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-[var(--text-primary)]">{eventCount}</p>
-                      <p className="text-xs text-foreground0">Events</p>
-                    </div>
-                  </div>
-                )}
-                {scholarshipCount > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
-                      <AcademicCapIcon className="h-4 w-4 text-amber-400" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-[var(--text-primary)]">{scholarshipCount}</p>
-                      <p className="text-xs text-foreground0">Scholarships</p>
-                    </div>
-                  </div>
-                )}
-                {org.createdAt && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface">
-                      <CheckBadgeIcon className="h-4 w-4 text-foreground0" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-[var(--text-primary)]">
-                        {typeof org.createdAt === 'object' && 'toDate' in org.createdAt
-                          ? org.createdAt.toDate().getFullYear()
-                          : new Date(org.createdAt as unknown as string).getFullYear()}
-                      </p>
-                      <p className="text-xs text-foreground0">Member Since</p>
-                    </div>
-                  </div>
-                )}
+            {/* Stats Ribbon */}
+            <div className="mt-4 grid grid-cols-4 gap-4 sm:gap-6">
+              <div className="text-center sm:text-left">
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{jobCount}</p>
+                <p className="text-xs text-[var(--text-muted)]">Active Jobs</p>
               </div>
-            )}
+              <div className="text-center sm:text-left">
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{eventCount}</p>
+                <p className="text-xs text-[var(--text-muted)]">Events</p>
+              </div>
+              <div className="text-center sm:text-left">
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{scholarshipCount}</p>
+                <p className="text-xs text-[var(--text-muted)]">Scholarships</p>
+              </div>
+              <div className="text-center sm:text-left">
+                <p className="text-2xl font-bold text-[var(--text-primary)]">
+                  {org.createdAt
+                    ? typeof org.createdAt === 'object' && 'toDate' in org.createdAt
+                      ? org.createdAt.toDate().getFullYear()
+                      : new Date(org.createdAt as unknown as string).getFullYear()
+                    : '\u2014'}
+                </p>
+                <p className="text-xs text-[var(--text-muted)]">Member Since</p>
+              </div>
+            </div>
 
             {/* Location & Industry */}
-            <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm text-foreground0">
+            <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm text-[var(--text-muted)]">
               {(org.city || org.province || org.location) && (
                 <span className="flex items-center gap-1.5">
                   <MapPinIcon className="h-4 w-4" />

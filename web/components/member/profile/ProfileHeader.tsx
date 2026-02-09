@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { useMessageDrawer } from "@/components/messaging";
@@ -12,7 +12,10 @@ import {
   getOrCreatePeerConversation,
   getMemberProfile,
   upsertMemberProfile,
+  getTopSkills,
+  getMemberEngagementStats,
 } from "@/lib/firestore";
+import { getEndorsementsForUser } from "@/lib/firestore/endorsements";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import type { MemberProfile } from "@/lib/types";
@@ -25,6 +28,8 @@ import {
   Share2,
   Eye,
   Loader2,
+  Award,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -48,6 +53,19 @@ export default function ProfileHeader({
   const { openConversation } = useMessageDrawer();
   const [startingChat, setStartingChat] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [topSkills, setTopSkills] = useState<{ skill: string; count: number }[]>([]);
+  const [endorsementCount, setEndorsementCount] = useState(0);
+  const [engagementStats, setEngagementStats] = useState<{ connections: number; profileViews: number } | null>(null);
+
+  useEffect(() => {
+    if (profile.userId) {
+      getTopSkills(profile.userId, 3).then(setTopSkills).catch(() => {});
+      getEndorsementsForUser(profile.userId).then(e => setEndorsementCount(e.length)).catch(() => {});
+      getMemberEngagementStats(profile.userId).then(s => {
+        setEngagementStats({ connections: s.connections.total, profileViews: s.profileViews.total });
+      }).catch(() => {});
+    }
+  }, [profile.userId]);
 
   const getInitials = (name?: string) => {
     if (!name) return "?";
@@ -213,16 +231,152 @@ export default function ProfileHeader({
 
   return (
     <>
-      {/* Banner - full width on mobile (no padding/radius) */}
-      <div className="relative h-48 sm:h-56 sm:rounded-t-2xl overflow-hidden bg-gradient-to-br from-emerald-600/20 via-teal-600/20 to-cyan-600/20">
+      {/* Banner - navy gradient with accent glow */}
+      <div className="relative h-48 sm:h-56 sm:rounded-t-2xl overflow-hidden bg-gradient-to-br from-[var(--navy)] via-[var(--navy-lt)] to-accent/80">
         <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-10" />
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+
+        {/* Action buttons in banner top-right */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex flex-wrap gap-2">
+          {isOwner ? (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                onClick={handleShareProfile}
+                aria-label="Share profile"
+              >
+                <Share2 className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
+                <span className="hidden sm:inline">Share</span>
+              </Button>
+              <Link href={`/member/${userId}?preview=true`}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                  aria-label="Preview profile as others see it"
+                >
+                  <Eye className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
+                  <span className="hidden sm:inline">Preview</span>
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                onClick={() => setSettingsOpen(true)}
+                aria-label="Open profile settings"
+              >
+                <Settings className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <ConnectionButton targetUserId={profile.userId} />
+              <Button
+                variant="ghost"
+                className="bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                onClick={handleStartConversation}
+                disabled={startingChat}
+                aria-label={startingChat ? "Starting conversation..." : `Send message to ${profile.displayName}`}
+              >
+                {startingChat ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
+                ) : (
+                  <MessageSquare className="h-4 w-4 mr-2" aria-hidden="true" />
+                )}
+                Message
+              </Button>
+            </>
+          )}
+        </div>
+
+        {/* Badges in banner - frosted pills */}
+        <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 flex flex-wrap gap-2">
+          {availabilityInfo && (
+            <button
+              type="button"
+              onClick={isOwner ? handleToggleAvailability : undefined}
+              className={`bg-white/15 backdrop-blur-sm text-white border border-white/20 rounded-full px-3 py-1 text-xs font-medium inline-flex items-center gap-1.5 ${
+                isOwner ? "cursor-pointer hover:bg-white/25 transition-colors" : ""
+              }`}
+              aria-label={isOwner ? `Change availability status. Currently: ${availabilityInfo.label}` : availabilityInfo.label}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
+              {availabilityInfo.label}
+            </button>
+          )}
+          {isOwner && !availabilityInfo && (
+            <button
+              type="button"
+              onClick={handleToggleAvailability}
+              className="bg-white/15 backdrop-blur-sm text-white border border-white/20 rounded-full px-3 py-1 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer hover:bg-white/25 transition-colors"
+              aria-label="Set your availability status"
+            >
+              <CheckCircle className="h-3 w-3" />
+              Set availability
+            </button>
+          )}
+        </div>
+
+        {/* Identity Row */}
+        {(profile.nation || profile.territory || profile.band || profile.location) && (
+          <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-3">
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              {profile.nation && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-white/90 border border-white/10">
+                  <Users className="h-3.5 w-3.5" /> {profile.nation}
+                </span>
+              )}
+              {profile.territory && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-white/90 border border-white/10">
+                  {profile.territory}
+                </span>
+              )}
+              {profile.band && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-white/90 border border-white/10">
+                  {profile.band}
+                </span>
+              )}
+              {profile.location && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-white/90 border border-white/10">
+                  <MapPin className="h-3.5 w-3.5" /> {profile.location}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Stats Ribbon */}
+      <div className="grid grid-cols-4 divide-x divide-[var(--card-border)] border-b border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="flex flex-col items-center py-3 sm:py-4">
+          <span className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{engagementStats?.connections ?? 0}</span>
+          <span className="text-[10px] sm:text-xs text-[var(--text-muted)]">Connections</span>
+        </div>
+        <div className="flex flex-col items-center py-3 sm:py-4">
+          <span className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{endorsementCount}</span>
+          <span className="text-[10px] sm:text-xs text-[var(--text-muted)]">Endorsements</span>
+        </div>
+        <div className="flex flex-col items-center py-3 sm:py-4">
+          <span className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{engagementStats?.profileViews ?? 0}</span>
+          <span className="text-[10px] sm:text-xs text-[var(--text-muted)]">Profile Views</span>
+        </div>
+        <div className="flex flex-col items-center py-3 sm:py-4">
+          <span className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">
+            {profile.createdAt ? (typeof profile.createdAt === 'object' && 'toDate' in profile.createdAt ? profile.createdAt.toDate().getFullYear() : new Date(profile.createdAt as unknown as string).getFullYear()) : '\u2014'}
+          </span>
+          <span className="text-[10px] sm:text-xs text-[var(--text-muted)]">Member Since</span>
+        </div>
       </div>
 
       {/* Profile header card */}
-      <div className="relative -mt-16 px-4 sm:px-8 pb-6">
+      <div className="relative -mt-0 px-4 sm:px-8 pb-6 pt-4">
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center sm:items-start">
           {/* Avatar - overlaps banner bottom edge */}
-          <div className="relative -mt-8 sm:-mt-8 z-10">
+          <div className="relative -mt-20 sm:-mt-20 z-10">
             {isOwner ? (
               <ImageUploader
                 currentImageUrl={
@@ -238,7 +392,7 @@ export default function ProfileHeader({
                 <AvatarImage
                   src={profile.avatarUrl || profile.photoURL}
                 />
-                <AvatarFallback className="text-3xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+                <AvatarFallback className="text-3xl bg-gradient-to-br from-[var(--navy)] to-accent text-white">
                   {getInitials(profile.displayName)}
                 </AvatarFallback>
               </Avatar>
@@ -281,58 +435,11 @@ export default function ProfileHeader({
                   )
                 )}
 
-                {/* Location & Affiliation */}
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2 text-sm">
-                  {profile.location && (
-                    <span className="flex items-center gap-1.5 text-[var(--text-muted)]">
-                      <MapPin className="h-4 w-4" aria-hidden="true" />
-                      {profile.location}
-                    </span>
-                  )}
-                  {(profile.nation || profile.indigenousAffiliation) && (
-                    <span className="flex items-center gap-1.5 text-[var(--accent)]">
-                      <Users className="h-4 w-4" aria-hidden="true" />
-                      {profile.nation || profile.indigenousAffiliation}
-                      {profile.territory && ` | ${profile.territory}`}
-                    </span>
-                  )}
-                  {profile.pronouns && (
-                    <span className="text-[var(--text-muted)]">
-                      ({profile.pronouns})
-                    </span>
-                  )}
-                </div>
-
-                {/* Availability badge */}
-                {availabilityInfo && (
-                  <div className="mt-2 flex justify-center sm:justify-start">
-                    <button
-                      type="button"
-                      onClick={isOwner ? handleToggleAvailability : undefined}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${availabilityInfo.color} ${
-                        isOwner
-                          ? "cursor-pointer hover:opacity-80 transition-opacity"
-                          : ""
-                      }`}
-                      aria-label={isOwner ? `Change availability status. Currently: ${availabilityInfo.label}` : availabilityInfo.label}
-                    >
-                      <CheckCircle className="h-3 w-3" aria-hidden="true" />
-                      {availabilityInfo.label}
-                    </button>
-                  </div>
-                )}
-                {isOwner && !availabilityInfo && (
-                  <div className="flex justify-center sm:justify-start">
-                    <button
-                      type="button"
-                      onClick={handleToggleAvailability}
-                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border border-dashed border-[var(--card-border)] text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
-                      aria-label="Set your availability status"
-                    >
-                      <CheckCircle className="h-3 w-3" aria-hidden="true" />
-                      Set availability
-                    </button>
-                  </div>
+                {/* Pronouns */}
+                {profile.pronouns && (
+                  <span className="mt-1 inline-block text-sm text-[var(--text-muted)]">
+                    ({profile.pronouns})
+                  </span>
                 )}
 
                 {/* Achievement badges */}
@@ -343,61 +450,29 @@ export default function ProfileHeader({
                     maxDisplay={5}
                   />
                 </div>
-              </div>
 
-              {/* Action buttons - icon-only on mobile, full on desktop */}
-              <div className="flex flex-wrap justify-center sm:justify-end gap-2">
-                {isOwner ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-[var(--card-border)] text-[var(--text-secondary)] hover:bg-[var(--border-lt)]"
-                      onClick={handleShareProfile}
-                      aria-label="Share profile"
-                    >
-                      <Share2 className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
-                      <span className="hidden sm:inline">Share</span>
-                    </Button>
-                    <Link href={`/member/${userId}?preview=true`}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-[var(--card-border)] text-[var(--text-secondary)] hover:bg-[var(--border-lt)]"
-                        aria-label="Preview profile as others see it"
+                {/* Top Endorsed Skills */}
+                {topSkills.length > 0 && (
+                  <div className="mt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <Award className="h-4 w-4 text-accent" aria-hidden="true" />
+                    {topSkills.map((s) => (
+                      <span
+                        key={s.skill}
+                        className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent"
                       >
-                        <Eye className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
-                        <span className="hidden sm:inline">Preview</span>
-                      </Button>
+                        {s.skill}
+                        <span className="rounded-full bg-accent/20 px-1.5 text-[10px] font-semibold">
+                          {s.count}
+                        </span>
+                      </span>
+                    ))}
+                    <Link
+                      href="/member/endorsements"
+                      className="text-xs text-[var(--text-muted)] hover:text-accent transition-colors"
+                    >
+                      View all
                     </Link>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-[var(--card-border)] text-[var(--text-secondary)] hover:bg-[var(--border-lt)]"
-                      onClick={() => setSettingsOpen(true)}
-                      aria-label="Open profile settings"
-                    >
-                      <Settings className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <ConnectionButton targetUserId={profile.userId} />
-                    <Button
-                      variant="outline"
-                      className="border-[var(--card-border)] hover:bg-[var(--border-lt)]"
-                      onClick={handleStartConversation}
-                      disabled={startingChat}
-                      aria-label={startingChat ? "Starting conversation..." : `Send message to ${profile.displayName}`}
-                    >
-                      {startingChat ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
-                      ) : (
-                        <MessageSquare className="h-4 w-4 mr-2" aria-hidden="true" />
-                      )}
-                      Message
-                    </Button>
-                  </>
+                  </div>
                 )}
               </div>
             </div>

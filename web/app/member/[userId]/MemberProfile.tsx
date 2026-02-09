@@ -14,11 +14,13 @@ import {
   Bell,
   LayoutDashboard,
   ClipboardList,
+  User,
+  Briefcase as BriefcaseLucide,
+  Award,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 // Sub-components
-import EngagementStats from "@/components/member/EngagementStats";
 import ProfileHeader from "@/components/member/profile/ProfileHeader";
 import ExperienceSection from "@/components/member/profile/ExperienceSection";
 import EducationSection from "@/components/member/profile/EducationSection";
@@ -29,6 +31,7 @@ import ProfileApplications from "@/components/member/profile/ProfileApplications
 import ProfileSaved from "@/components/member/profile/ProfileSaved";
 import ProfileAlerts from "@/components/member/profile/ProfileAlerts";
 import ProfileOverview from "@/components/member/profile/ProfileOverview";
+import ProfileEndorsementsTab from "@/components/member/profile/ProfileEndorsementsTab";
 
 interface MemberProfileProps {
   profile: MemberProfileType;
@@ -43,9 +46,9 @@ export default function MemberProfile({
 }: MemberProfileProps) {
   const { user, role } = useAuth();
   const [profile, setProfile] = useState<MemberProfileType>(initialProfile);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("about");
   // Track which tabs have been activated (for lazy loading)
-  const [activatedTabs, setActivatedTabs] = useState<Set<string>>(new Set(["overview"]));
+  const [activatedTabs, setActivatedTabs] = useState<Set<string>>(new Set(["about"]));
 
   // Determine ownership client-side (overrides server prop once auth is loaded)
   const isOwner = user?.uid === userId || isOwnerProp;
@@ -107,13 +110,12 @@ export default function MemberProfile({
     }
   };
 
-  // Tab definitions (only show owner-only tabs when isOwner)
+  // Tab definitions
   const tabs = [
-    {
-      id: "overview",
-      label: "Overview",
-      icon: <LayoutDashboard className="h-4 w-4" />,
-    },
+    { id: "about", label: "About", icon: <User className="h-4 w-4" /> },
+    { id: "experience", label: "Experience", icon: <BriefcaseLucide className="h-4 w-4" /> },
+    { id: "endorsements", label: "Endorsements", icon: <Award className="h-4 w-4" /> },
+    { id: "activity", label: "Activity", icon: <LayoutDashboard className="h-4 w-4" /> },
     ...(isOwner
       ? [
           {
@@ -137,10 +139,8 @@ export default function MemberProfile({
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      {/* Profile card container */}
       <div className="container max-w-4xl mx-auto px-0 sm:px-4 pb-24">
         <div className="sm:rounded-2xl border-b sm:border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden">
-          {/* Header (banner + avatar + name + actions) */}
           <ProfileHeader
             profile={profile}
             isOwner={isOwner}
@@ -149,82 +149,8 @@ export default function MemberProfile({
           />
         </div>
 
-        {/* Engagement Stats (owner only) */}
-        {isOwner && (
-          <div className="mt-6 px-4 sm:px-0">
-            <EngagementStats onNavigate={(tab) => handleTabChange(tab)} />
-          </div>
-        )}
-
-        {/* Profile body sections - staggered fade-in */}
-        <div className="mt-6 space-y-6 px-4 sm:px-0 stagger-children">
-          {/* About / Bio */}
-          <SectionEditWrapper title="About" canEdit={false}>
-            {isOwner ? (
-              <InlineEditTextArea
-                value={profile.bio || ""}
-                onSave={handleBioSave}
-                canEdit={true}
-                placeholder="Write a brief introduction about yourself, your background, and what you're looking for..."
-                maxLength={500}
-                rows={4}
-              />
-            ) : profile.bio ? (
-              <p className="text-[var(--text-secondary)] whitespace-pre-wrap text-sm">
-                {profile.bio}
-              </p>
-            ) : (
-              <p className="text-[var(--text-muted)] text-sm text-center py-4">
-                No bio available.
-              </p>
-            )}
-          </SectionEditWrapper>
-
-          {/* Experience */}
-          <ExperienceSection
-            profile={profile}
-            isOwner={isOwner}
-            userId={userId}
-            onProfileUpdate={handleProfileUpdate}
-          />
-
-          {/* Education */}
-          <EducationSection
-            profile={profile}
-            isOwner={isOwner}
-            userId={userId}
-            onProfileUpdate={handleProfileUpdate}
-          />
-
-          {/* Skills */}
-          <SkillsSection
-            profile={profile}
-            isOwner={isOwner}
-            userId={userId}
-            onProfileUpdate={handleProfileUpdate}
-          />
-
-          {/* Portfolio */}
-          <PortfolioSection
-            profile={profile}
-            isOwner={isOwner}
-            userId={userId}
-            onProfileUpdate={handleProfileUpdate}
-          />
-
-          {/* Resume */}
-          {(isOwner || profile.resumeUrl) && (
-            <ResumeSection
-              profile={profile}
-              isOwner={isOwner}
-              userId={userId}
-              onProfileUpdate={handleProfileUpdate}
-            />
-          )}
-        </div>
-
-        {/* Profile Tabs (below the fold) */}
-        <div className="mt-8 px-4 sm:px-0">
+        {/* Tabs immediately after header */}
+        <div className="mt-6 px-4 sm:px-0">
           <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden">
             <ProfileTabBar
               tabs={tabs}
@@ -233,13 +159,84 @@ export default function MemberProfile({
             />
 
             <div className="p-4 sm:p-6">
-              {/* Tab content with crossfade animation */}
               <div key={activeTab} className="animate-crossfade">
-                {activeTab === "overview" && (
+                {activeTab === "about" && (
+                  <div className="space-y-6">
+                    {/* Bio */}
+                    <SectionEditWrapper title="About" canEdit={false}>
+                      {isOwner ? (
+                        <InlineEditTextArea
+                          value={profile.bio || ""}
+                          onSave={handleBioSave}
+                          canEdit={true}
+                          placeholder="Write a brief introduction about yourself, your background, and what you're looking for..."
+                          maxLength={500}
+                          rows={4}
+                        />
+                      ) : profile.bio ? (
+                        <p className="text-[var(--text-secondary)] whitespace-pre-wrap text-sm">
+                          {profile.bio}
+                        </p>
+                      ) : (
+                        <p className="text-[var(--text-muted)] text-sm text-center py-4">
+                          No bio available.
+                        </p>
+                      )}
+                    </SectionEditWrapper>
+
+                    {/* Skills */}
+                    <SkillsSection
+                      profile={profile}
+                      isOwner={isOwner}
+                      userId={userId}
+                      onProfileUpdate={handleProfileUpdate}
+                    />
+
+                    {/* Education */}
+                    <EducationSection
+                      profile={profile}
+                      isOwner={isOwner}
+                      userId={userId}
+                      onProfileUpdate={handleProfileUpdate}
+                    />
+
+                    {/* Portfolio */}
+                    <PortfolioSection
+                      profile={profile}
+                      isOwner={isOwner}
+                      userId={userId}
+                      onProfileUpdate={handleProfileUpdate}
+                    />
+
+                    {/* Resume */}
+                    {(isOwner || profile.resumeUrl) && (
+                      <ResumeSection
+                        profile={profile}
+                        isOwner={isOwner}
+                        userId={userId}
+                        onProfileUpdate={handleProfileUpdate}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "experience" && (
+                  <ExperienceSection
+                    profile={profile}
+                    isOwner={isOwner}
+                    userId={userId}
+                    onProfileUpdate={handleProfileUpdate}
+                  />
+                )}
+
+                {activeTab === "endorsements" && (
+                  <ProfileEndorsementsTab userId={userId} profile={profile} isOwner={isOwner} />
+                )}
+
+                {activeTab === "activity" && (
                   <ProfileOverview userId={userId} profile={profile} />
                 )}
 
-                {/* Lazy-loaded tabs: only render once activated */}
                 {activeTab === "applications" && isOwner && activatedTabs.has("applications") && (
                   <ProfileApplications />
                 )}

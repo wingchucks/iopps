@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SectionEditWrapper } from "@/components/shared/inline-edit";
-import { upsertMemberProfile } from "@/lib/firestore";
+import { upsertMemberProfile, getTopSkills } from "@/lib/firestore";
+import { EndorseButton } from "@/components/social/EndorseButton";
 import type { MemberProfile } from "@/lib/types";
 import { Sparkles, Plus, X } from "lucide-react";
 import toast from "react-hot-toast";
@@ -22,7 +23,18 @@ export default function SkillsSection({
 }: SkillsSectionProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [skillInput, setSkillInput] = useState("");
+  const [skillCounts, setSkillCounts] = useState<Map<string, number>>(new Map());
   const skills = profile.skills || [];
+
+  useEffect(() => {
+    if (userId) {
+      getTopSkills(userId, 50).then(top => {
+        const counts = new Map<string, number>();
+        top.forEach(s => counts.set(s.skill, s.count));
+        setSkillCounts(counts);
+      }).catch(() => {});
+    }
+  }, [userId]);
 
   const handleAddSkill = async () => {
     const trimmed = skillInput.trim();
@@ -100,6 +112,11 @@ export default function SkillsSection({
                 className="group inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)]/10 border border-[var(--accent)]/20 px-3 py-1 text-sm text-[var(--accent)]"
               >
                 {skill}
+                {skillCounts.get(skill) ? (
+                  <span className="rounded-full bg-accent/20 px-1.5 text-[10px] font-semibold text-accent">
+                    {skillCounts.get(skill)}
+                  </span>
+                ) : null}
                 {isOwner && (
                   <button
                     type="button"
@@ -155,6 +172,12 @@ export default function SkillsSection({
               <Plus className="h-4 w-4" />
               Add Skill
             </button>
+          )}
+
+          {!isOwner && skills.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+              <EndorseButton targetUserId={userId} targetSkills={skills} />
+            </div>
           )}
         </div>
       )}
