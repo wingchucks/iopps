@@ -289,10 +289,16 @@ export default function ProfileHeader({
                       {profile.location}
                     </span>
                   )}
-                  {profile.indigenousAffiliation && (
+                  {(profile.nation || profile.indigenousAffiliation) && (
                     <span className="flex items-center gap-1.5 text-[var(--accent)]">
                       <Users className="h-4 w-4" aria-hidden="true" />
-                      {profile.indigenousAffiliation}
+                      {profile.nation || profile.indigenousAffiliation}
+                      {profile.territory && ` | ${profile.territory}`}
+                    </span>
+                  )}
+                  {profile.pronouns && (
+                    <span className="text-[var(--text-muted)]">
+                      ({profile.pronouns})
                     </span>
                   )}
                 </div>

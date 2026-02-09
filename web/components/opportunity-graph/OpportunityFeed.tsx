@@ -90,6 +90,7 @@ export function OpportunityFeed({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [displayCount, setDisplayCount] = useState(20);
 
   // Fetch saved items when user is logged in
   useEffect(() => {
@@ -183,7 +184,7 @@ export function OpportunityFeed({
         // 4. Combine: live first, then interleaved
         const sortedItems = [...liveItems, ...interleavedItems];
 
-        setItems(sortedItems.slice(0, maxItems * 2));
+        setItems(sortedItems);
       } catch (err) {
         console.error("Failed to load feed:", err);
         setError("Failed to load opportunities. Please try again.");
@@ -208,6 +209,15 @@ export function OpportunityFeed({
     if (activeTab === "community") return result.filter(i => i.type === "update");
     return result;
   }, [items, activeTab, filterFn]);
+
+  const displayedItems = useMemo(() => {
+    return filteredItems.slice(0, displayCount);
+  }, [filteredItems, displayCount]);
+
+  // Reset display count when tab changes
+  useEffect(() => {
+    setDisplayCount(20);
+  }, [activeTab]);
 
   // Handle save/unsave action
   const handleSave = useCallback(async (itemId: string, shouldSave: boolean) => {
@@ -637,7 +647,7 @@ export function OpportunityFeed({
       {/* Feed Cards */}
       {!loading && !error && filteredItems.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {filteredItems.map((item) => (
+          {displayedItems.map((item) => (
             <OpportunityCard
               key={item.id}
               item={{ ...item, saved: savedIds.has(item.id) }}
@@ -645,17 +655,37 @@ export function OpportunityFeed({
             />
           ))}
           
-          {/* End of Feed */}
-          <div
-            style={{
-              textAlign: "center",
-              padding: "32px 16px",
-              color: colors.textMuted,
-              fontSize: 14,
-            }}
-          >
-            ✨ You&apos;re all caught up — check back later for new opportunities
-          </div>
+          {/* Load More / End of Feed */}
+          {displayCount < filteredItems.length ? (
+            <div style={{ textAlign: "center", padding: "24px 16px" }}>
+              <button
+                onClick={() => setDisplayCount((c) => c + 20)}
+                style={{
+                  padding: "12px 32px",
+                  borderRadius: 10,
+                  background: colors.surface,
+                  border: `1px solid ${colors.border}`,
+                  color: colors.text,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Load More ({filteredItems.length - displayCount} remaining)
+              </button>
+            </div>
+          ) : (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "32px 16px",
+                color: colors.textMuted,
+                fontSize: 14,
+              }}
+            >
+              You&apos;re all caught up — check back later for new opportunities
+            </div>
+          )}
         </div>
       )}
 

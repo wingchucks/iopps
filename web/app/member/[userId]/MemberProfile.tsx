@@ -12,7 +12,7 @@ import type { MemberProfile as MemberProfileType } from "@/lib/types";
 import {
   Bookmark,
   Bell,
-  Activity,
+  LayoutDashboard,
   ClipboardList,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -28,6 +28,7 @@ import ResumeSection from "@/components/member/profile/ResumeSection";
 import ProfileApplications from "@/components/member/profile/ProfileApplications";
 import ProfileSaved from "@/components/member/profile/ProfileSaved";
 import ProfileAlerts from "@/components/member/profile/ProfileAlerts";
+import ProfileOverview from "@/components/member/profile/ProfileOverview";
 
 interface MemberProfileProps {
   profile: MemberProfileType;
@@ -42,9 +43,9 @@ export default function MemberProfile({
 }: MemberProfileProps) {
   const { user, role } = useAuth();
   const [profile, setProfile] = useState<MemberProfileType>(initialProfile);
-  const [activeTab, setActiveTab] = useState("activity");
+  const [activeTab, setActiveTab] = useState("overview");
   // Track which tabs have been activated (for lazy loading)
-  const [activatedTabs, setActivatedTabs] = useState<Set<string>>(new Set(["activity"]));
+  const [activatedTabs, setActivatedTabs] = useState<Set<string>>(new Set(["overview"]));
 
   // Determine ownership client-side (overrides server prop once auth is loaded)
   const isOwner = user?.uid === userId || isOwnerProp;
@@ -109,9 +110,9 @@ export default function MemberProfile({
   // Tab definitions (only show owner-only tabs when isOwner)
   const tabs = [
     {
-      id: "activity",
-      label: "Activity",
-      icon: <Activity className="h-4 w-4" />,
+      id: "overview",
+      label: "Overview",
+      icon: <LayoutDashboard className="h-4 w-4" />,
     },
     ...(isOwner
       ? [
@@ -234,16 +235,8 @@ export default function MemberProfile({
             <div className="p-4 sm:p-6">
               {/* Tab content with crossfade animation */}
               <div key={activeTab} className="animate-crossfade">
-                {activeTab === "activity" && (
-                  <div className="text-center py-12">
-                    <Activity className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" aria-hidden="true" />
-                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">
-                      No activity yet
-                    </h3>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      Posts, shares, and comments will appear here.
-                    </p>
-                  </div>
+                {activeTab === "overview" && (
+                  <ProfileOverview userId={userId} profile={profile} />
                 )}
 
                 {/* Lazy-loaded tabs: only render once activated */}

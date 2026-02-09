@@ -7,6 +7,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage
 import { storage } from "@/lib/firebase";
 import type { WorkExperience, Education, PortfolioItem } from "@/lib/types";
 import toast from "react-hot-toast";
+import { NATIONS, TREATY_TERRITORIES, PRONOUNS } from "@/lib/constants/indigenous";
 
 export default function MemberProfilePage() {
   const { user, role, loading } = useAuth();
@@ -29,6 +30,13 @@ export default function MemberProfilePage() {
   const [quickApplyEnabled, setQuickApplyEnabled] = useState(false);
   const [bio, setBio] = useState("");
   const [defaultCoverLetter, setDefaultCoverLetter] = useState("");
+  const [nation, setNation] = useState("");
+  const [territory, setTerritory] = useState("");
+  const [band, setBand] = useState("");
+  const [pronouns, setPronouns] = useState("");
+  const [nationOther, setNationOther] = useState("");
+  const [territoryOther, setTerritoryOther] = useState("");
+  const [pronounsOther, setPronounsOther] = useState("");
 
   // Modal states
   const [showExperienceModal, setShowExperienceModal] = useState(false);
@@ -56,6 +64,10 @@ export default function MemberProfilePage() {
           setPortfolio(profile.portfolio || []);
           setResumeUrl(profile.resumeUrl || "");
           setIndigenousAffiliation(profile.indigenousAffiliation || "");
+          setNation(profile.nation || "");
+          setTerritory(profile.territory || "");
+          setBand(profile.band || "");
+          setPronouns(profile.pronouns || "");
           setMessagingHandle(profile.messagingHandle || "");
           setAvailability(profile.availableForInterviews || "");
           setQuickApplyEnabled(profile.quickApplyEnabled || false);
@@ -102,7 +114,11 @@ export default function MemberProfilePage() {
         education,
         portfolio,
         resumeUrl,
-        indigenousAffiliation,
+        nation: nation === "Other" ? nationOther : nation,
+        territory: territory === "Other" ? territoryOther : territory,
+        band,
+        pronouns: pronouns === "Other" ? pronounsOther : pronouns,
+        indigenousAffiliation: nation === "Other" ? nationOther : nation,
         messagingHandle,
         availableForInterviews: availability,
         quickApplyEnabled,
@@ -375,14 +391,83 @@ export default function MemberProfilePage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Indigenous Affiliation</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Nation / Affiliation</label>
+                <select
+                  value={nation}
+                  onChange={(e) => setNation(e.target.value)}
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+                >
+                  <option value="">Select...</option>
+                  {NATIONS.map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+                {nation === "Other" && (
+                  <input
+                    type="text"
+                    value={nationOther}
+                    onChange={(e) => setNationOther(e.target.value)}
+                    className="mt-2 w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+                    placeholder="Please specify"
+                  />
+                )}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Treaty Territory</label>
+                <select
+                  value={territory}
+                  onChange={(e) => setTerritory(e.target.value)}
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+                >
+                  <option value="">Select...</option>
+                  {TREATY_TERRITORIES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                {territory === "Other" && (
+                  <input
+                    type="text"
+                    value={territoryOther}
+                    onChange={(e) => setTerritoryOther(e.target.value)}
+                    className="mt-2 w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+                    placeholder="Please specify"
+                  />
+                )}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Band / Community</label>
                 <input
                   type="text"
-                  value={indigenousAffiliation}
-                  onChange={(e) => setIndigenousAffiliation(e.target.value)}
+                  value={band}
+                  onChange={(e) => setBand(e.target.value)}
                   className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
-                  placeholder="Your nation, community, or affiliation"
+                  placeholder="e.g. Whitecap Dakota First Nation"
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Pronouns</label>
+                <select
+                  value={pronouns}
+                  onChange={(e) => setPronouns(e.target.value)}
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+                >
+                  <option value="">Select...</option>
+                  {PRONOUNS.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                {pronouns === "Other" && (
+                  <input
+                    type="text"
+                    value={pronounsOther}
+                    onChange={(e) => setPronounsOther(e.target.value)}
+                    className="mt-2 w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+                    placeholder="Please specify"
+                  />
+                )}
               </div>
 
               <div>

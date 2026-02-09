@@ -8,16 +8,13 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { upsertMemberProfile } from "@/lib/firestore/members";
 import type { MemberType, ExperienceLevel } from "@/lib/types";
+import { NATIONS, TREATY_TERRITORIES, PRONOUNS } from "@/lib/constants/indigenous";
 
 const STEPS = [
   { label: "Identity" },
   { label: "Professional" },
   { label: "Preferences" },
   { label: "Profile" },
-];
-
-const NATIONS = [
-  "First Nations", "Metis", "Inuit", "Non-status", "Prefer not to say", "Other",
 ];
 
 const MEMBER_TYPES: { id: MemberType; label: string; desc: string }[] = [
@@ -175,13 +172,16 @@ function MemberOnboarding() {
 
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Treaty Territory</label>
-                  <input
-                    type="text"
+                  <select
                     value={territory}
                     onChange={(e) => setTerritory(e.target.value)}
-                    placeholder="e.g. Treaty 6"
                     className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--text-primary)]"
-                  />
+                  >
+                    <option value="">Select...</option>
+                    {TREATY_TERRITORIES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -197,13 +197,16 @@ function MemberOnboarding() {
 
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Pronouns</label>
-                  <input
-                    type="text"
+                  <select
                     value={pronouns}
                     onChange={(e) => setPronouns(e.target.value)}
-                    placeholder="e.g. she/her, he/him, they/them"
                     className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--text-primary)]"
-                  />
+                  >
+                    <option value="">Select...</option>
+                    {PRONOUNS.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             )}
