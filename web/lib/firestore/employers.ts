@@ -82,14 +82,14 @@ export async function getEmployerProfile(
 }
 
 // Helper to find employer document reference (handles doc ID mismatch)
-async function getEmployerDocRef(userId: string): Promise<{ ref: ReturnType<typeof doc>; exists: boolean }> {
+async function getEmployerDocRef(userId: string): Promise<{ ref: ReturnType<typeof doc>; exists: boolean; data?: any }> {
   const firestore = db!;
 
   // First try: look up by document ID
   const directRef = doc(firestore, employerCollection, userId);
   const directSnap = await getDoc(directRef);
   if (directSnap.exists()) {
-    return { ref: directRef, exists: true };
+    return { ref: directRef, exists: true, data: directSnap.data() };
   }
 
   // Second try: query by userId field
@@ -99,7 +99,7 @@ async function getEmployerDocRef(userId: string): Promise<{ ref: ReturnType<type
   );
   const querySnap = await getDocs(q);
   if (!querySnap.empty) {
-    return { ref: querySnap.docs[0].ref, exists: true };
+    return { ref: querySnap.docs[0].ref, exists: true, data: querySnap.docs[0].data() };
   }
 
   // Not found - return direct ref for creating new document
@@ -238,21 +238,49 @@ export async function createPendingEmployerProfile(
     return;
   }
 
+  // Generate URL-friendly slug from organization name
+  const baseSlug = data.organizationName
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 50);
+  const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+  const slug = `${baseSlug}-${uniqueSuffix}`;
+
   const ref = doc(firestore, employerCollection, userId);
   await setDoc(ref, {
     id: userId,
     userId,
     organizationName: data.organizationName,
+    companyName: data.organizationName, // Alias for compatibility
+    slug, // URL-friendly identifier
     contactEmail: data.email,
+    email: data.email, // Alias for compatibility
     intent: data.intent || null,
     status: "pending" as EmployerStatus,
+    publicationStatus: "DRAFT", // Will be set to PUBLISHED when approved
     description: "",
     website: "",
     location: "",
     logoUrl: "",
+    verified: false,
+    isDirectoryVisible: false, // Will be set when approved
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+
+  // Link employer ID back to user document
+  try {
+    const userRef = doc(firestore, "users", userId);
+    await updateDoc(userRef, {
+      employerId: userId, // The employer doc ID is the same as user ID
+      updatedAt: serverTimestamp(),
+    });
+    console.log("[createPendingEmployerProfile] Linked employerId to user:", userId);
+  } catch (linkErr) {
+    console.error("[createPendingEmployerProfile] Failed to link employerId:", linkErr);
+  }
 }
 
 /**
@@ -320,7 +348,7 @@ export async function updateEmployerStatus(
   approvedBy?: string,
   rejectionReason?: string
 ) {
-  const { ref, exists } = await getEmployerDocRef(userId);
+  const { ref, exists, data } = await getEmployerDocRef(userId);
   if (!exists) {
     throw new Error(`Employer profile not found for userId: ${userId}`);
   }
@@ -333,6 +361,27 @@ export async function updateEmployerStatus(
   if (status === "approved") {
     updates.approvedAt = serverTimestamp();
     updates.approvedBy = approvedBy;
+    // Set fields required for public visibility
+    updates.publicationStatus = "PUBLISHED";
+    updates.verified = true;
+    updates.isDirectoryVisible = true;
+    
+    // Generate slug if not already set
+    if (!data?.slug && data?.organizationName) {
+      const baseSlug = data.organizationName
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/[\s_-]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .substring(0, 50);
+      const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+      updates.slug = `${baseSlug}-${uniqueSuffix}`;
+    }
+    
+    // Ensure companyName is set (alias for organizationName)
+    if (!data?.companyName && data?.organizationName) {
+      updates.companyName = data.organizationName;
+    }
   }
 
   if (status === "rejected" && rejectionReason) {

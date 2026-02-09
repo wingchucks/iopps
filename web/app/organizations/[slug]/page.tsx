@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPublicOrganizationBySlug, getOrganizationBySlug, isOrganizationDeleted } from '@/lib/firestore/organizations';
 import { OrganizationProfileClient } from './OrganizationProfileClient';
+import { serializeTimestamps } from '@/lib/firestore/timestamps';
 
 // Disable caching for this page so profile updates show immediately
 export const dynamic = 'force-dynamic';
@@ -99,5 +100,8 @@ export default async function OrganizationProfilePage({ params }: Props) {
     throw deletedError;
   }
 
-  return <OrganizationProfileClient organization={org} />;
+  // Serialize timestamps to plain values for client component
+  const serializedOrg = serializeTimestamps(org);
+  
+  return <OrganizationProfileClient organization={serializedOrg} />;
 }
