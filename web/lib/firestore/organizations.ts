@@ -261,8 +261,13 @@ export async function updateOrganizationProfile(
     updates.location = city && province ? `${city}, ${province}` : province || city || "";
   }
 
+  // Strip undefined values — Firestore rejects them
+  const cleaned = Object.fromEntries(
+    Object.entries(updates).filter(([, v]) => v !== undefined)
+  );
+
   await updateDoc(ref, {
-    ...updates,
+    ...cleaned,
     updatedAt: serverTimestamp(),
   });
 }
