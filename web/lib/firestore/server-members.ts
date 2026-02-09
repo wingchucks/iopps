@@ -52,27 +52,38 @@ export async function getMemberProfileServer(
   userId: string
 ): Promise<MemberProfile | null> {
   if (!adminDb) {
-    console.error("Firebase Admin not initialized - cannot fetch member profile server-side");
-    return null;
+    throw new Error("Firebase Admin not initialized — cannot fetch member profile server-side");
   }
 
-  try {
-    const docRef = adminDb.collection("memberProfiles").doc(userId);
-    const snap = await docRef.get();
+  const maxRetries = 2;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const docRef = adminDb.collection("memberProfiles").doc(userId);
+      const snap = await docRef.get();
 
-    if (!snap.exists) {
-      return null;
+      if (!snap.exists) {
+        return null;
+      }
+
+      const data = snap.data();
+      if (!data) return null;
+
+      // Recursively convert all Firestore Timestamps/GeoPoints to plain values
+      return serializeFirestoreData(data) as MemberProfile;
+    } catch (error: unknown) {
+      const code = (error as { code?: number }).code;
+      const isTransient = code === 503 || code === 429 || code === 14; // 14 = gRPC UNAVAILABLE
+      if (isTransient && attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+        continue;
+      }
+      console.error("Error fetching member profile server-side:", error);
+      throw error;
     }
-
-    const data = snap.data();
-    if (!data) return null;
-
-    // Recursively convert all Firestore Timestamps/GeoPoints to plain values
-    return serializeFirestoreData(data) as MemberProfile;
-  } catch (error) {
-    console.error("Error fetching member profile server-side:", error);
-    throw error;
   }
+
+  // Should never reach here, but satisfy TypeScript
+  throw new Error("Unexpected: exhausted retries without result");
 }
 
 /**
