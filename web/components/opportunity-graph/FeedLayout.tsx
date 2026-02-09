@@ -303,10 +303,15 @@ export function FeedLayout({
                     <div className="feed-avatar-menu-divider" />
 
                     {AVATAR_MENU_ITEMS.map((item) => {
-                      const href =
+                      let href =
                         item.action === "signout"
                           ? "#"
                           : resolveAvatarHref(item.href, userId);
+
+                      // Route employers/admins to org profile instead of member profile
+                      if (item.label === "View Profile" && (role === "employer" || role === "admin")) {
+                        href = "/organization/profile";
+                      }
 
                       if (item.action === "signout") {
                         return (
@@ -460,7 +465,7 @@ export function FeedLayout({
                   </div>
                   <div className="feed-user-cta">
                     {isLoggedIn && user ? (
-                      <Link href={`/member/${user.uid}`}>View profile</Link>
+                      <Link href={role === "employer" || role === "admin" ? "/organization/profile" : `/member/${user.uid}`}>View profile</Link>
                     ) : (
                       <>
                         <Link href="/login">Sign in</Link> to save jobs
@@ -529,11 +534,16 @@ export function FeedLayout({
       {/* ============================================================ */}
       <nav className="feed-mobile-bottom-nav" aria-label="Mobile navigation">
         {BOTTOM_NAV.map((item) => {
-          const href = resolveHref(item.href, isLoggedIn, userId);
+          let href = resolveHref(item.href, isLoggedIn, userId);
           const active = isBottomNavActive(
             typeof item.href === "string" ? item.href : href,
           );
           const isCreatePost = item.action === "create-post";
+
+          // Route employers/admins to org profile instead of member profile
+          if (item.label === "Profile" && isLoggedIn && (role === "employer" || role === "admin")) {
+            href = "/organization/profile";
+          }
 
           if (isCreatePost) {
             // Only show job-posting action for employers/admins;
