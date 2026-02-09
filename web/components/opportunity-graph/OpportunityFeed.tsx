@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   listJobPostings,
   listScholarships,
@@ -21,6 +21,7 @@ import {
   listSavedConferenceIds,
   getFeedPosts,
 } from "@/lib/firestore";
+import type { DocumentSnapshot } from "firebase/firestore";
 import { useAuth } from "@/components/AuthProvider";
 import { colors, typeConfig } from "./tokens";
 import { OpportunityCard, OpportunityItem } from "./OpportunityCard";
@@ -91,6 +92,9 @@ export function OpportunityFeed({
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [displayCount, setDisplayCount] = useState(20);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const postsSnapshotRef = useRef<DocumentSnapshot | undefined>(undefined);
 
   // Fetch saved items when user is logged in
   useEffect(() => {
@@ -136,8 +140,12 @@ export function OpportunityFeed({
           shouldFetch(["livestream"]) ? listLiveStreams().catch(() => []) : Promise.resolve([]),
           shouldFetch(["program"]) ? listTrainingPrograms().catch(() => []) : Promise.resolve([]),
           shouldFetch(["product", "service"]) ? listApprovedVendors().catch(() => []) : Promise.resolve([]),
-          shouldFetch(["update"]) ? getFeedPosts(20).catch(() => ({ posts: [], lastSnapshot: undefined })) : Promise.resolve({ posts: [], lastSnapshot: undefined }),
+          shouldFetch(["update"]) ? getFeedPosts(20).catch(() => ({ posts: [], lastSnapshot: undefined as DocumentSnapshot | undefined })) : Promise.resolve({ posts: [], lastSnapshot: undefined as DocumentSnapshot | undefined }),
         ]);
+
+        // Store cursor for social posts pagination
+        postsSnapshotRef.current = socialPostsResult.lastSnapshot;
+        setHasMorePosts(socialPostsResult.posts.length >= 20);
 
         // Convert to OpportunityItems
         const allItems: OpportunityItem[] = [
@@ -218,6 +226,27 @@ export function OpportunityFeed({
   useEffect(() => {
     setDisplayCount(20);
   }, [activeTab]);
+
+  // Load more social posts from server (cursor pagination)
+  const loadMorePosts = useCallback(async () => {
+    if (loadingMore || !hasMorePosts || !postsSnapshotRef.current) return;
+    setLoadingMore(true);
+    try {
+      const result = await getFeedPosts(20, postsSnapshotRef.current);
+      if (result.posts.length > 0) {
+        postsSnapshotRef.current = result.lastSnapshot;
+        setHasMorePosts(result.posts.length >= 20);
+        const newItems = result.posts.map(postToOpportunity);
+        setItems((prev) => [...prev, ...newItems]);
+      } else {
+        setHasMorePosts(false);
+      }
+    } catch (err) {
+      console.error("Failed to load more posts:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMorePosts]);
 
   // Handle save/unsave action
   const handleSave = useCallback(async (itemId: string, shouldSave: boolean) => {
@@ -672,6 +701,26 @@ export function OpportunityFeed({
                 }}
               >
                 Load More ({filteredItems.length - displayCount} remaining)
+              </button>
+            </div>
+          ) : hasMorePosts ? (
+            <div style={{ textAlign: "center", padding: "24px 16px" }}>
+              <button
+                onClick={loadMorePosts}
+                disabled={loadingMore}
+                style={{
+                  padding: "12px 32px",
+                  borderRadius: 10,
+                  background: colors.surface,
+                  border: `1px solid ${colors.border}`,
+                  color: colors.text,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: loadingMore ? "wait" : "pointer",
+                  opacity: loadingMore ? 0.6 : 1,
+                }}
+              >
+                {loadingMore ? "Loading..." : "Load More Posts"}
               </button>
             </div>
           ) : (

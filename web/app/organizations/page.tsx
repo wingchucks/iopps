@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import { SectionHeader } from "@/components/opportunity-graph";
 import { EmptyState } from "@/components/EmptyState";
 import { listEmployers } from "@/lib/firestore";
-import type { EmployerProfile, IndustryType, OrganizationProfile } from "@/lib/types";
+import type { EmployerProfile, IndustryType, CompanySize } from "@/lib/types";
 import {
   BuildingOfficeIcon,
   MapPinIcon,
   UsersIcon,
   CheckBadgeIcon,
   BriefcaseIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 import {
   SearchBarRow,
@@ -41,61 +42,112 @@ const INDUSTRIES: { value: IndustryType; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+const COMPANY_SIZES: { value: CompanySize; label: string }[] = [
+  { value: "1-10", label: "1-10" },
+  { value: "11-50", label: "11-50" },
+  { value: "51-200", label: "51-200" },
+  { value: "201-500", label: "201-500" },
+  { value: "500+", label: "500+" },
+];
+
 export default function OrganizationsPage() {
-  // Use OrganizationProfile which includes slug field
-  const [organizations, setOrganizations] = useState<(EmployerProfile & { slug?: string })[]>([]);
+  const [allOrganizations, setAllOrganizations] = useState<(EmployerProfile & { slug?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState<IndustryType | "">("");
+  const [companySize, setCompanySize] = useState<CompanySize | "">("");
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [region, setRegion] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  const loadOrganizations = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Fetch approved organizations - includeHidden=true to show all approved orgs
-      // until visibility backfill is complete
-      const data = await listEmployers("approved", false, true);
-      let filtered = data;
-
-      // Apply search filter
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filtered = filtered.filter(
-          (org) =>
-            org.organizationName?.toLowerCase().includes(searchLower) ||
-            org.description?.toLowerCase().includes(searchLower) ||
-            org.location?.toLowerCase().includes(searchLower)
-        );
-      }
-
-      // Apply industry filter
-      if (industry) {
-        filtered = filtered.filter((org) => org.industry === industry);
-      }
-
-      setOrganizations(filtered);
-    } catch (error) {
-      console.error("Failed to load organizations:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [search, industry]);
-
+  // Fetch all orgs once, filter client-side
   useEffect(() => {
-    loadOrganizations();
-  }, [loadOrganizations]);
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await listEmployers("approved", false, true);
+        setAllOrganizations(data);
+      } catch (error) {
+        console.error("Failed to load organizations:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  // Derive unique regions from org locations
+  const regionOptions = useMemo(() => {
+    const regions = new Set<string>();
+    for (const org of allOrganizations) {
+      if (org.location) {
+        // Extract province/territory from "City, Province" pattern
+        const parts = org.location.split(",").map((s) => s.trim());
+        const last = parts[parts.length - 1];
+        if (last) regions.add(last);
+      }
+    }
+    return [
+      { label: "All Regions", value: "" },
+      ...[...regions].sort().map((r) => ({ label: r, value: r })),
+    ];
+  }, [allOrganizations]);
+
+  // Client-side filtering
+  const organizations = useMemo(() => {
+    let filtered = allOrganizations;
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(
+        (org) =>
+          org.organizationName?.toLowerCase().includes(searchLower) ||
+          org.description?.toLowerCase().includes(searchLower) ||
+          org.location?.toLowerCase().includes(searchLower) ||
+          org.indigenousVerification?.nationAffiliation?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    if (industry) {
+      filtered = filtered.filter((org) => org.industry === industry);
+    }
+
+    if (companySize) {
+      filtered = filtered.filter((org) => org.companySize === companySize);
+    }
+
+    if (region) {
+      filtered = filtered.filter((org) => org.location?.includes(region));
+    }
+
+    if (verifiedOnly) {
+      filtered = filtered.filter(
+        (org) => org.indigenousVerification?.status === "approved"
+      );
+    }
+
+    return filtered;
+  }, [allOrganizations, search, industry, companySize, region, verifiedOnly]);
 
   const clearFilters = () => {
     setSearch("");
     setIndustry("");
+    setCompanySize("");
+    setRegion("");
+    setVerifiedOnly(false);
   };
 
-  const hasFilters = search || industry;
+  const hasFilters = search || industry || companySize || region || verifiedOnly;
 
   // Filter groups for FiltersDrawer
   const industryOptions = [
     { label: "All Industries", value: "" },
     ...INDUSTRIES.map((ind) => ({ label: ind.label, value: ind.value })),
+  ];
+
+  const sizeOptions = [
+    { label: "All Sizes", value: "" },
+    ...COMPANY_SIZES.map((s) => ({ label: s.label, value: s.value })),
   ];
 
   const filterGroups: FilterGroup[] = [
@@ -106,6 +158,30 @@ export default function OrganizationsPage() {
       options: industryOptions,
       value: industry,
       onChange: (v) => setIndustry(v as IndustryType | ""),
+    },
+    {
+      id: "region",
+      label: "Region",
+      type: "select",
+      options: regionOptions,
+      value: region,
+      onChange: (v) => setRegion(v as string),
+    },
+    {
+      id: "companySize",
+      label: "Company Size",
+      type: "select",
+      options: sizeOptions,
+      value: companySize,
+      onChange: (v) => setCompanySize(v as CompanySize | ""),
+    },
+    {
+      id: "verified",
+      label: "Indigenous Verified",
+      type: "toggle",
+      options: [{ label: "Verified Only", value: "true" }],
+      value: verifiedOnly,
+      onChange: (v) => setVerifiedOnly(v as boolean),
     },
   ];
 
@@ -197,9 +273,16 @@ export default function OrganizationsPage() {
                     <h3 className="text-lg font-semibold text-[var(--text-primary)] group-hover:text-[#14B8A6] transition-colors line-clamp-1">
                       {org.organizationName}
                     </h3>
-                    {org.status === "approved" && (
-                      <CheckBadgeIcon className="h-5 w-5 flex-shrink-0 text-[#14B8A6]" />
-                    )}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {org.indigenousVerification?.status === "approved" && (
+                        <span title="Indigenous Verified">
+                          <ShieldCheckIcon className="h-5 w-5 text-amber-500" />
+                        </span>
+                      )}
+                      {org.status === "approved" && (
+                        <CheckBadgeIcon className="h-5 w-5 text-[#14B8A6]" />
+                      )}
+                    </div>
                   </div>
 
                   {org.description && (
@@ -210,6 +293,12 @@ export default function OrganizationsPage() {
 
                   {/* Tags */}
                   <div className="mt-3 flex flex-wrap gap-2">
+                    {org.indigenousVerification?.status === "approved" && org.indigenousVerification.nationAffiliation && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-500">
+                        <ShieldCheckIcon className="h-3 w-3" />
+                        {org.indigenousVerification.nationAffiliation}
+                      </span>
+                    )}
                     {org.industry && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-[#14B8A6]">
                         <BuildingOfficeIcon className="h-3 w-3" />
