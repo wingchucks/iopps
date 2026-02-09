@@ -61,15 +61,30 @@ export async function getMemberProfileServer(
       const docRef = adminDb.collection("memberProfiles").doc(userId);
       const snap = await docRef.get();
 
-      if (!snap.exists) {
-        return null;
+      if (snap.exists && snap.data()) {
+        return serializeFirestoreData(snap.data()) as MemberProfile;
       }
 
-      const data = snap.data();
-      if (!data) return null;
+      // No memberProfiles doc — fall back to "users" collection for basic info.
+      // This handles users who signed up but haven't completed onboarding.
+      const userSnap = await adminDb.collection("users").doc(userId).get();
+      if (userSnap.exists && userSnap.data()) {
+        const u = userSnap.data()!;
+        return {
+          id: userId,
+          userId,
+          displayName: u.displayName || u.name || undefined,
+          avatarUrl: u.avatarUrl || u.photoURL || undefined,
+          photoURL: u.photoURL || undefined,
+          bio: undefined,
+          tagline: undefined,
+          location: undefined,
+          skills: [],
+          createdAt: u.createdAt ? serializeFirestoreData(u.createdAt) : undefined,
+        } as MemberProfile;
+      }
 
-      // Recursively convert all Firestore Timestamps/GeoPoints to plain values
-      return serializeFirestoreData(data) as MemberProfile;
+      return null;
     } catch (error: unknown) {
       const code = (error as { code?: number }).code;
       const isTransient = code === 503 || code === 429 || code === 14; // 14 = gRPC UNAVAILABLE
