@@ -14,27 +14,36 @@ import {
   AuthDivider,
   AuthInput,
 } from "@/components/auth";
+import { getOrganizationByOwner } from "@/lib/firestore/v2-organizations";
 
 // Helper to get redirect path based on user role
 async function getRedirectPath(userId: string): Promise<string> {
-  if (!db) return "/discover";
+  if (!db) return "/home";
 
   try {
     const userDoc = await getDoc(doc(db, "users", userId));
     if (userDoc.exists()) {
       const role = userDoc.data()?.role;
+
       if (role === "admin" || role === "moderator") {
         return "/admin";
       }
+
       if (role === "employer") {
-        return "/discover";
+        const org = await getOrganizationByOwner(userId);
+        if (org) {
+          if (org.status === "active") return "/org/dashboard";
+          if (org.status === "rejected") return "/org/rejected";
+          return "/org/pending";
+        }
+        return "/org/pending";
       }
     }
   } catch (error) {
     console.error("Error fetching user role:", error);
   }
 
-  return "/discover";
+  return "/home";
 }
 
 export default function LoginPage() {
@@ -89,7 +98,7 @@ export default function LoginPage() {
         const redirectPath = await getRedirectPath(auth.currentUser.uid);
         router.push(redirectPath);
       } else {
-        router.push("/discover");
+        router.push("/home");
       }
     } catch (err) {
       console.error(err);

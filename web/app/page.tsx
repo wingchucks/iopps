@@ -1,10 +1,10 @@
 import LandingPage from "@/components/landing/LandingPage";
-import { AuthHomeRedirect } from "@/components/AuthHomeRedirect";
+import { RoleRedirect } from "@/components/auth/RoleRedirect";
 
 export default function HomePage() {
   return (
     <>
-      <AuthHomeRedirect />
+      <RoleRedirect />
       <LandingPage />
     </>
   );

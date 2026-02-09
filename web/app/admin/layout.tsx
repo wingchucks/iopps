@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import {
   ShieldCheckIcon,
   UsersIcon,
-  UserGroupIcon,
   BriefcaseIcon,
   ChartBarIcon,
   ArrowLeftOnRectangleIcon,
@@ -25,6 +24,8 @@ import {
   ClipboardDocumentListIcon,
   FlagIcon,
   NewspaperIcon,
+  CheckBadgeIcon,
+  DocumentMagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { AdminNavGroup, AdminTopBar, type NavItem } from "@/components/admin";
 import { useAdminCounts } from "@/lib/hooks/admin";
@@ -79,6 +80,7 @@ function useNavigationGroups(): NavGroup[] {
     {
       label: "Moderation",
       items: [
+        { name: "V2 Approvals", href: "/admin/approvals", icon: CheckBadgeIcon },
         { name: "Flagged Content", href: "/admin/moderation", icon: FlagIcon },
         { name: "Verification", href: "/admin/verification", icon: ShieldCheckIcon },
       ],
@@ -123,7 +125,10 @@ function useNavigationGroups(): NavGroup[] {
     },
     {
       label: "Settings",
-      items: [{ name: "Platform Settings", href: "/admin/settings", icon: Cog6ToothIcon }],
+      items: [
+        { name: "Platform Settings", href: "/admin/settings", icon: Cog6ToothIcon },
+        { name: "Audit Log", href: "/admin/audit", icon: DocumentMagnifyingGlassIcon },
+      ],
       defaultOpen: false,
     },
   ];

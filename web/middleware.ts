@@ -84,5 +84,11 @@ export const config = {
         '/organization/:path*',
         '/member/:path*',
         '/business/:path*',
+        // V2 routes
+        '/get-started',
+        '/home',
+        '/org/:path*',
+        '/admin/:path*',
+        '/me/:path*',
     ],
 };

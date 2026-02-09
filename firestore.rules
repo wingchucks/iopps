@@ -1333,5 +1333,91 @@ service cloud.firestore {
       // Only admins/moderators can read, update, or delete flags
       allow read, update, delete: if isSignedIn() && isAdminOrModerator();
     }
+
+    // ==========================================================================
+    // V2 COLLECTIONS
+    // ==========================================================================
+
+    // ===========================================================================
+    // V2 ORGANIZATIONS (New multi-admin org model)
+    // ===========================================================================
+    match /v2_organizations/{orgId} {
+      // Admins can read all orgs regardless of status
+      allow read: if isAdmin();
+
+      // Document owner or adminUids members can read regardless of status
+      allow read: if isSignedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        request.auth.uid in resource.data.adminUids
+      );
+
+      // Anyone authenticated can read active organizations
+      allow read: if isSignedIn() && resource.data.status == "active";
+
+      // Creator must set themselves as owner
+      allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+
+      // Admin members can update non-status fields; platform admins can update anything
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        request.auth.uid in resource.data.adminUids &&
+        request.resource.data.status == resource.data.status
+      );
+
+      // Only platform admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // USER PRIVATE DATA (Strict owner-only access)
+    // ===========================================================================
+    match /user_private/{uid} {
+      // Only the owner can read/write — no admin access for strict privacy
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // User private subcollections (resumes, certificates, resume_builder, saved, following, shares)
+    match /user_private/{uid}/{subcollection=**} {
+      // Only the owner can read/write — no admin access for strict privacy
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ===========================================================================
+    // ADMIN AUDIT LOG (Immutable audit trail)
+    // ===========================================================================
+    match /admin_audit/{auditId} {
+      // Only platform admins can read
+      allow read: if isAdmin();
+
+      // Only platform admins can create entries
+      allow create: if isAdmin();
+
+      // Audit records are immutable — no updates or deletes
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ===========================================================================
+    // V2 APPLICATIONS (New application model)
+    // ===========================================================================
+    match /v2_applications/{applicationId} {
+      // Applicant or platform admin can read
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.applicantId ||
+        isAdmin()
+      );
+
+      // Creator must set themselves as applicant
+      allow create: if isSignedIn() && request.resource.data.applicantId == request.auth.uid;
+
+      // Applicant or platform admin can update
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.applicantId ||
+        isAdmin()
+      );
+
+      // Only platform admins can delete
+      allow delete: if isAdmin();
+    }
   }
 }

@@ -1,8 +1,35 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
 
-export default function SignupPage() {
+export default function GetStartedPage() {
+  const router = useRouter();
+  const { user, role, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (role === "employer") {
+        router.push("/org/dashboard");
+      } else {
+        router.push("/home");
+      }
+    }
+  }, [loading, user, role, router]);
+
+  if (loading || user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <svg className="animate-spin h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Minimal header */}
@@ -81,7 +108,7 @@ export default function SignupPage() {
               </span>
             </Link>
 
-            {/* Organization Card */}
+            {/* Employer / Organization Card */}
             <Link
               href="/signup/employer"
               className="group relative rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md focus-within:shadow-md active:shadow-md sm:p-8"
@@ -107,7 +134,7 @@ export default function SignupPage() {
               </div>
 
               <h2 className="mt-4 text-lg font-bold text-[var(--text-primary)]">
-                Organization
+                Employer / Organization
               </h2>
               <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">
                 Post jobs, promote events and scholarships, list your business
