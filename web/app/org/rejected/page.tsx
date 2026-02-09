@@ -48,22 +48,22 @@ function RejectedContent() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="max-w-lg w-full text-center">
         {/* Error Banner */}
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-8 mb-6">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100 mb-4">
-            <svg className="h-7 w-7 text-red-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-8 mb-6">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-500/15 mb-4">
+            <svg className="h-7 w-7 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-red-900">Your application was not approved</h1>
+          <h1 className="text-xl font-bold text-red-700 dark:text-red-300">Your application was not approved</h1>
 
           {org.rejectReason && (
-            <div className="mt-4 rounded-xl bg-red-100/50 p-4 text-left">
-              <p className="text-xs font-medium text-red-700 uppercase tracking-wide mb-1">Reason</p>
-              <p className="text-sm text-red-800">{org.rejectReason}</p>
+            <div className="mt-4 rounded-xl bg-red-500/10 p-4 text-left">
+              <p className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">Reason</p>
+              <p className="text-sm text-red-700 dark:text-red-300">{org.rejectReason}</p>
             </div>
           )}
 
-          <p className="mt-4 text-sm text-red-700">
+          <p className="mt-4 text-sm text-red-600 dark:text-red-400">
             If you believe this was a mistake or would like more information, please contact our support team.
           </p>
         </div>

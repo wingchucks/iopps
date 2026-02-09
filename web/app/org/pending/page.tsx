@@ -122,16 +122,16 @@ function PendingPageContent() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       {/* Pending Banner */}
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 mb-6">
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 mb-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
-            <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/15">
+            <svg className="h-5 w-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-amber-900">Your organization is under review</h2>
-            <p className="mt-1 text-sm text-amber-700">
+            <h2 className="text-lg font-semibold text-amber-700 dark:text-amber-300">Your organization is under review</h2>
+            <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">
               We&apos;ll notify you once your application is approved. In the meantime, complete your profile.
             </p>
           </div>
@@ -160,6 +160,7 @@ function PendingPageContent() {
             <button
               type="button"
               onClick={() => logoInputRef.current?.click()}
+              aria-label="Upload logo"
               className="relative h-[120px] w-[120px] rounded-full border-2 border-dashed border-[var(--border)] hover:border-accent transition overflow-hidden flex items-center justify-center bg-[var(--surface)]"
             >
               {uploadingLogo ? (
@@ -196,6 +197,7 @@ function PendingPageContent() {
           <button
             type="button"
             onClick={() => coverInputRef.current?.click()}
+            aria-label="Upload cover image"
             className="relative w-full rounded-xl border-2 border-dashed border-[var(--border)] hover:border-accent transition overflow-hidden flex items-center justify-center bg-[var(--surface)]"
             style={{ aspectRatio: "3/1" }}
           >

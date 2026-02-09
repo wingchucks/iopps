@@ -125,17 +125,17 @@ export default function CommunityShell({ children }: { children: React.ReactNode
             </div>
 
             <div className="flex items-center gap-3">
-              <button className="relative p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--background)] transition-colors">
+              <button className="relative p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--background)] transition-colors" aria-label="Notifications">
                 <NavIcon icon="bell" className="h-5 w-5" />
               </button>
-              <button className="relative p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--background)] transition-colors sm:hidden">
+              <button className="relative p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--background)] transition-colors sm:hidden" aria-label="Search">
                 <NavIcon icon="search" className="h-5 w-5" />
               </button>
               <Link href="/me/career-vault" className="flex items-center">
                 {user?.photoURL ? (
                   <img
                     src={user.photoURL}
-                    alt=""
+                    alt="Profile photo"
                     className="h-8 w-8 rounded-full border border-[var(--border)] object-cover"
                   />
                 ) : (

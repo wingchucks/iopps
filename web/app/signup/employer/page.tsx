@@ -303,7 +303,7 @@ export default function EmployerSignupPage() {
               </div>
 
               {error && (
-                <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                <div className="mt-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
                   {error}
                 </div>
               )}
@@ -372,7 +372,7 @@ export default function EmployerSignupPage() {
 
               <div className="mt-8 space-y-6">
                 {error && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
                     {error}
                   </div>
                 )}
@@ -456,7 +456,7 @@ export default function EmployerSignupPage() {
                       type="checkbox"
                       checked={consent}
                       onChange={(e) => setConsent(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-accent focus:ring-teal-500"
+                      className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-accent focus:ring-accent"
                     />
                     <span className="text-sm text-[var(--text-secondary)] leading-relaxed">
                       I agree to uphold{" "}

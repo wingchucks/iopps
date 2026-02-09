@@ -134,14 +134,14 @@ function DashboardContent() {
         )}
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">{org.name}</h1>
-          <span className="inline-block mt-0.5 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+          <span className="inline-block mt-0.5 rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
             Dashboard
           </span>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           { label: "Total Views", value: "\u2014" },
           { label: "Applications This Month", value: "\u2014" },

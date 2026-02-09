@@ -151,14 +151,14 @@ function SkeletonCard() {
   return (
     <div className="animate-pulse rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5">
       <div className="flex gap-4">
-        <div className="h-14 w-14 rounded-lg bg-slate-700/50" />
+        <div className="h-14 w-14 rounded-lg bg-[var(--border)]" />
         <div className="flex-1 space-y-3">
-          <div className="h-5 w-48 rounded bg-slate-700/50" />
+          <div className="h-5 w-48 rounded bg-[var(--border)]" />
           <div className="flex gap-2">
-            <div className="h-4 w-20 rounded-full bg-slate-700/50" />
-            <div className="h-4 w-32 rounded bg-slate-700/50" />
+            <div className="h-4 w-20 rounded-full bg-[var(--border)]" />
+            <div className="h-4 w-32 rounded bg-[var(--border)]" />
           </div>
-          <div className="h-4 w-full rounded bg-slate-700/50" />
+          <div className="h-4 w-full rounded bg-[var(--border)]" />
         </div>
       </div>
     </div>
@@ -380,8 +380,8 @@ export default function AdminApprovalsPage() {
           <div
             className={`rounded-lg border px-6 py-4 shadow-lg ${
               toast.type === "success"
-                ? "border-green-500/50 bg-green-950/90 text-green-400"
-                : "border-red-500/50 bg-red-950/90 text-red-400"
+                ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
+                : "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400"
             }`}
           >
             <div className="flex items-center gap-3">

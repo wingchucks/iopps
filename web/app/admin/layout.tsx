@@ -161,7 +161,8 @@ function MobileNav({ isOpen, onClose, groups }: MobileNavProps) {
           </Link>
           <button
             onClick={onClose}
-            className="rounded-md p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white"
+            className="rounded-md p-2 text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
+            aria-label="Close navigation"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -182,10 +183,10 @@ function MobileNav({ isOpen, onClose, groups }: MobileNavProps) {
         <div className="border-t border-[var(--card-border)] p-4">
           <Link
             href="/"
-            className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-white"
+            className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
             onClick={onClose}
           >
-            <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-foreground0 group-hover:text-[var(--text-muted)]" />
+            <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-[var(--text-muted)] group-hover:text-foreground" />
             Back to Site
           </Link>
         </div>
@@ -271,9 +272,9 @@ export default function AdminLayout({
           <div className="border-t border-[var(--card-border)] p-4">
             <Link
               href="/"
-              className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-white"
+              className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
             >
-              <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-foreground0 group-hover:text-[var(--text-muted)]" />
+              <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-[var(--text-muted)] group-hover:text-foreground" />
               Back to Site
             </Link>
           </div>
@@ -285,7 +286,8 @@ export default function AdminLayout({
           <header className="flex h-16 items-center justify-between border-b border-[var(--card-border)] bg-surface px-4 md:hidden">
             <button
               onClick={() => setMobileNavOpen(true)}
-              className="rounded-md p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white"
+              className="rounded-md p-2 text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
+              aria-label="Open navigation"
             >
               <Bars3Icon className="h-6 w-6" />
             </button>
