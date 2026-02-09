@@ -84,7 +84,7 @@ function DashboardContent() {
     (async () => {
       const found = await getOrganizationByOwner(user.uid);
       if (!found) {
-        router.replace("/");
+        router.replace("/organization/dashboard");
         return;
       }
       if (found.status === "pending") {

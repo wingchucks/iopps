@@ -39,9 +39,11 @@ export function RoleRedirect() {
           router.replace("/org/dashboard");
         } else if (orgStatus === "rejected") {
           router.replace("/org/rejected");
-        } else {
-          // pending or no org found
+        } else if (orgStatus === "pending") {
           router.replace("/org/pending");
+        } else {
+          // No V2 org — fall back to legacy employer dashboard
+          router.replace("/organization/dashboard");
         }
         break;
 

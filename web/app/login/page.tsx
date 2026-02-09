@@ -36,7 +36,8 @@ async function getRedirectPath(userId: string): Promise<string> {
           if (org.status === "rejected") return "/org/rejected";
           return "/org/pending";
         }
-        return "/org/pending";
+        // No V2 org — fall back to legacy employer dashboard
+        return "/organization/dashboard";
       }
     }
   } catch (error) {
