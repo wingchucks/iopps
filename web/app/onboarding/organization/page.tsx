@@ -115,6 +115,7 @@ interface FormData {
   size: string;
   yearEstablished: string;
   description: string;
+  story: string;
   sector: string;
   enabledModules: OrganizationModule[];
   logoUrl: string;
@@ -149,6 +150,7 @@ export default function OrganizationOnboardingPage() {
     size: "",
     yearEstablished: "",
     description: "",
+    story: "",
     sector: "",
     enabledModules: ["educate", "host", "funding"],
     logoUrl: "",
@@ -178,6 +180,7 @@ export default function OrganizationOnboardingPage() {
           size: profile.size || "",
           yearEstablished: profile.yearEstablished ? String(profile.yearEstablished) : "",
           description: profile.description || "",
+          story: profile.story || "",
           sector: profile.sector || "",
           enabledModules: profile.enabledModules || ["educate", "host", "funding"],
           logoUrl: profile.logoUrl || "",
@@ -269,6 +272,7 @@ export default function OrganizationOnboardingPage() {
           size: formData.size || "",
           yearEstablished: year,
           description: formData.description || "",
+          story: formData.story || "",
           sector: formData.sector || "",
           enabledModules: formData.enabledModules,
           logoUrl: formData.logoUrl || "",
@@ -289,6 +293,7 @@ export default function OrganizationOnboardingPage() {
           size: formData.size || "",
           yearEstablished: year,
           description: formData.description || "",
+          story: formData.story || "",
           sector: formData.sector || "",
           enabledModules: formData.enabledModules,
           logoUrl: formData.logoUrl || "",
@@ -535,6 +540,23 @@ export default function OrganizationOnboardingPage() {
                   />
                   <p className="mt-1 text-right text-xs text-[var(--text-muted)]">
                     {formData.description.length} / 3,000
+                  </p>
+                </div>
+
+                <div>
+                  <label className={labelClass}>Our Story <span className="text-[var(--text-muted)] font-normal">(optional)</span></label>
+                  <textarea
+                    value={formData.story}
+                    onChange={(e) => {
+                      const val = e.target.value.slice(0, 5000);
+                      updateField("story", val);
+                    }}
+                    placeholder="Share your organization's story, history, and journey..."
+                    rows={5}
+                    className={`${inputClass} resize-none`}
+                  />
+                  <p className="mt-1 text-right text-xs text-[var(--text-muted)]">
+                    {formData.story.length} / 5,000
                   </p>
                 </div>
 
