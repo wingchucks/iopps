@@ -10,10 +10,10 @@ import UserMenu from "@/components/member/UserMenu";
 const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: "home" },
   { href: "/discover", label: "Network", icon: "users" },
-  { href: "/home/jobs", label: "Jobs", icon: "briefcase" },
-  { href: "/home/education", label: "Education", icon: "academic" },
-  { href: "/home/events", label: "Events", icon: "calendar" },
-  { href: "/home/business", label: "Business", icon: "building" },
+  { href: "/careers", label: "Jobs", icon: "briefcase" },
+  { href: "/education", label: "Education", icon: "academic" },
+  { href: "/community", label: "Events", icon: "calendar" },
+  { href: "/business", label: "Business", icon: "building" },
   { href: "/member/messages", label: "Messages", icon: "chat" },
   { href: "/me/opportunities", label: "My Stuff", icon: "folder" },
 ] as const;
@@ -21,7 +21,7 @@ const NAV_ITEMS = [
 const MOBILE_NAV_ITEMS = [
   { href: "/home", label: "Home", icon: "home" },
   { href: "/discover", label: "Network", icon: "users" },
-  { href: "/home/jobs", label: "Jobs", icon: "briefcase" },
+  { href: "/careers", label: "Jobs", icon: "briefcase" },
   { href: "/me/opportunities", label: "My Stuff", icon: "folder" },
   { href: "/member/messages", label: "Messages", icon: "chat" },
 ] as const;
