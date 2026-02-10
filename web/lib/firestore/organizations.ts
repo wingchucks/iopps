@@ -159,6 +159,7 @@ export interface CreateOrganizationInput {
   logoUrl?: string;
   bannerUrl?: string;
   description?: string;
+  story?: string;
   website?: string;
   enabledModules?: OrganizationModule[];
   // Onboarding fields
@@ -204,6 +205,7 @@ export async function createOrganizationProfile(
     logoUrl: input.logoUrl || "",
     bannerUrl: input.bannerUrl || "",
     description: input.description || "",
+    story: input.story || "",
     publicationStatus: "DRAFT",
     directoryVisible: true,
     enabledModules: input.enabledModules || [],
