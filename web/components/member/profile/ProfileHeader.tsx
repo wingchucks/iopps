@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { useMessageDrawer } from "@/components/messaging";
@@ -30,6 +30,7 @@ import {
   Loader2,
   Award,
   Calendar,
+  Camera,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -56,6 +57,8 @@ export default function ProfileHeader({
   const [topSkills, setTopSkills] = useState<{ skill: string; count: number }[]>([]);
   const [endorsementCount, setEndorsementCount] = useState(0);
   const [engagementStats, setEngagementStats] = useState<{ connections: number; profileViews: number } | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile.userId) {
@@ -139,6 +142,37 @@ export default function ProfileHeader({
       console.error("Error uploading photo:", error);
       toast.error("Failed to upload photo.");
       throw error;
+    }
+  };
+
+  // Handle cover photo upload
+  const handleCoverPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB.");
+      return;
+    }
+    try {
+      setCoverUploading(true);
+      const ext = file.name.split(".").pop();
+      const coverRef = ref(storage!, `users/${user.uid}/cover/banner.${ext}`);
+      await uploadBytes(coverRef, file);
+      const url = await getDownloadURL(coverRef);
+      await upsertMemberProfile(user.uid, { coverPhotoUrl: url });
+      onProfileUpdate({ coverPhotoUrl: url });
+      toast.success("Cover photo updated!");
+    } catch (error) {
+      console.error("Error uploading cover photo:", error);
+      toast.error("Failed to upload cover photo.");
+    } finally {
+      setCoverUploading(false);
+      // Reset input so re-selecting the same file triggers change
+      if (coverInputRef.current) coverInputRef.current.value = "";
     }
   };
 
@@ -231,11 +265,51 @@ export default function ProfileHeader({
 
   return (
     <>
-      {/* Banner - navy gradient with accent glow */}
+      {/* Banner - cover photo or navy gradient fallback */}
       <div className="relative h-48 sm:h-56 sm:rounded-t-2xl overflow-hidden bg-gradient-to-br from-[var(--navy)] via-[var(--navy-lt)] to-accent/80">
-        <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-10" />
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+        {profile.coverPhotoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={profile.coverPhotoUrl}
+            alt="Cover photo"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-10" />
+            <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
+            <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+          </>
+        )}
+        {/* Dark overlay for text readability on cover photos */}
+        {profile.coverPhotoUrl && <div className="absolute inset-0 bg-black/30" />}
+
+        {/* Cover photo upload button (owner only) */}
+        {isOwner && (
+          <>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleCoverPhotoUpload}
+            />
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              disabled={coverUploading}
+              className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-lg bg-black/50 backdrop-blur-sm px-3 py-1.5 text-xs font-medium text-white border border-white/20 hover:bg-black/60 transition-colors"
+              aria-label={profile.coverPhotoUrl ? "Change cover photo" : "Add cover photo"}
+            >
+              {coverUploading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Camera className="h-3.5 w-3.5" />
+              )}
+              {profile.coverPhotoUrl ? "Change Cover" : "Add Cover Photo"}
+            </button>
+          </>
+        )}
 
         {/* Action buttons in banner top-right */}
         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex flex-wrap gap-2">

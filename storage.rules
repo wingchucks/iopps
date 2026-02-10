@@ -41,6 +41,21 @@ service firebase.storage {
     }
 
     // ===========================================================================
+    // USER COVER PHOTOS
+    // ===========================================================================
+    match /users/{userId}/cover/{fileName} {
+      // Public read for cover photos
+      allow read: if true;
+
+      // Users can upload their own cover photo
+      // Max 5MB, must be image
+      allow write: if isSignedIn()
+                   && request.auth.uid == userId
+                   && isImage()
+                   && isValidSize(5);
+    }
+
+    // ===========================================================================
     // USER AVATAR PICTURES (alternate path)
     // ===========================================================================
     match /users/{userId}/avatar/{fileName} {

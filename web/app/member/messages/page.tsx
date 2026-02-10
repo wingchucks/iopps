@@ -229,8 +229,8 @@ function MemberMessagesContent() {
             onClick={() => setFilter("all")}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
               filter === "all"
-                ? "bg-slate-700 text-white"
-                : "text-[var(--text-muted)] hover:text-white"
+                ? "bg-accent/10 text-accent"
+                : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             All ({allConversations.length})
@@ -239,8 +239,8 @@ function MemberMessagesContent() {
             onClick={() => setFilter("employers")}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition flex items-center gap-1.5 ${
               filter === "employers"
-                ? "bg-slate-700 text-white"
-                : "text-[var(--text-muted)] hover:text-white"
+                ? "bg-accent/10 text-accent"
+                : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             <Briefcase className="h-3.5 w-3.5" />
@@ -250,8 +250,8 @@ function MemberMessagesContent() {
             onClick={() => setFilter("peers")}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition flex items-center gap-1.5 ${
               filter === "peers"
-                ? "bg-slate-700 text-white"
-                : "text-[var(--text-muted)] hover:text-white"
+                ? "bg-accent/10 text-accent"
+                : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             <Users className="h-3.5 w-3.5" />
@@ -263,9 +263,9 @@ function MemberMessagesContent() {
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-4">
         {allConversations.length === 0 ? (
-          <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-12 text-center">
+          <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-12 text-center">
             <MessageSquare className="mx-auto h-16 w-16 text-[var(--text-secondary)]" />
-            <h3 className="mt-4 text-lg font-semibold text-white">
+            <h3 className="mt-4 text-lg font-semibold text-[var(--text-primary)]">
               No messages yet
             </h3>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
@@ -280,12 +280,12 @@ function MemberMessagesContent() {
             </button>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-slate-900/60">
+          <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
             <div className="grid h-[calc(100vh-300px)] min-h-[500px] md:grid-cols-[320px_1fr]">
               {/* Conversation List */}
               <div className="border-r border-[var(--card-border)] overflow-y-auto">
                 <div className="border-b border-[var(--card-border)] p-4 space-y-3">
-                  <h2 className="font-semibold text-white">Conversations</h2>
+                  <h2 className="font-semibold text-[var(--text-primary)]">Conversations</h2>
                   {/* Search */}
                   <div className="relative">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground0" />
@@ -483,7 +483,7 @@ function PeerAwareConversationList({
             onClick={() => onSelect(conversation)}
             className={`w-full p-4 text-left transition hover:bg-surface ${
               isSelected
-                ? "bg-slate-800/70 border-l-2 border-accent"
+                ? "bg-accent/10 border-l-2 border-accent"
                 : ""
             }`}
           >
@@ -493,7 +493,7 @@ function PeerAwareConversationList({
                   <span className="text-foreground0">{icon}</span>
                   <span
                     className={`font-medium truncate ${
-                      unreadCount > 0 ? "text-white" : "text-[var(--text-secondary)]"
+                      unreadCount > 0 ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
                     }`}
                   >
                     {displayName}

@@ -17,8 +17,13 @@ import {
   User,
   Briefcase as BriefcaseLucide,
   Award,
+  ArrowLeft,
+  MessageSquare,
+  Shield,
 } from "lucide-react";
+import Link from "next/link";
 import toast from "react-hot-toast";
+import UserMenu from "@/components/member/UserMenu";
 
 // Sub-components
 import ProfileHeader from "@/components/member/profile/ProfileHeader";
@@ -138,9 +143,61 @@ export default function MemberProfile({
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <div className="bg-[var(--background)]">
+      {/* Sticky nav bar */}
+      <header className="sticky top-0 z-30 h-14 border-b border-[var(--border)] bg-[var(--card-bg)] backdrop-blur-sm">
+        <div className="flex h-full items-center justify-between px-4 sm:px-6 max-w-4xl mx-auto">
+          <div className="flex items-center gap-3">
+            <Link href="/home" className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--background)] transition-colors" aria-label="Back to feed">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <Link href="/home" className="text-lg font-bold text-accent">
+              IOPPS
+            </Link>
+          </div>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <>
+                <Link
+                  href="/member/messages"
+                  className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--background)] transition-colors"
+                  aria-label="Messages"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                </Link>
+                <UserMenu />
+              </>
+            ) : (
+              <div className="flex items-center gap-2 text-sm">
+                <Link href="/login" className="px-3 py-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--background)] transition-colors">
+                  Login
+                </Link>
+                <Link href="/signup/member" className="px-3 py-1.5 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors">
+                  Join
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Privacy info banner (owner only) */}
+      {isOwner && (
+        <div className="border-b border-[var(--border)] bg-accent/5">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2.5 flex items-center gap-2 text-sm">
+            <Shield className="h-4 w-4 text-accent flex-shrink-0" />
+            <p className="text-[var(--text-secondary)]">
+              Your profile details are only visible to employers you choose to share with.{" "}
+              <Link href="/member/settings/privacy" className="text-accent hover:underline font-medium">
+                Manage privacy &rarr;
+              </Link>
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="container max-w-4xl mx-auto px-0 sm:px-4 pb-24">
-        <div className="sm:rounded-2xl border-b sm:border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden">
+        <div className="sm:rounded-2xl border-b sm:border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden sm:mt-4">
           <ProfileHeader
             profile={profile}
             isOwner={isOwner}

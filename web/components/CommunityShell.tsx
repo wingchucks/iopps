@@ -1,10 +1,11 @@
-/* eslint-disable @next/next/no-img-element */
+ 
 "use client";
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import UserMenu from "@/components/member/UserMenu";
 
 const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: "home" },
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/home/education", label: "Education", icon: "academic" },
   { href: "/home/events", label: "Events", icon: "calendar" },
   { href: "/home/business", label: "Business", icon: "building" },
+  { href: "/member/messages", label: "Messages", icon: "chat" },
   { href: "/me/opportunities", label: "My Stuff", icon: "folder" },
 ] as const;
 
@@ -21,7 +23,7 @@ const MOBILE_NAV_ITEMS = [
   { href: "/discover", label: "Network", icon: "users" },
   { href: "/home/jobs", label: "Jobs", icon: "briefcase" },
   { href: "/me/opportunities", label: "My Stuff", icon: "folder" },
-  { href: "/home/messages", label: "Messages", icon: "chat" },
+  { href: "/member/messages", label: "Messages", icon: "chat" },
 ] as const;
 
 function NavIcon({ icon, className }: { icon: string; className?: string }) {
@@ -88,6 +90,12 @@ function NavIcon({ icon, className }: { icon: string; className?: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       );
+    case "logout":
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -95,7 +103,7 @@ function NavIcon({ icon, className }: { icon: string; className?: string }) {
 
 export default function CommunityShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const isActive = (href: string) => {
     if (href === "/home") return pathname === "/home";
@@ -131,19 +139,7 @@ export default function CommunityShell({ children }: { children: React.ReactNode
               <button className="relative p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--background)] transition-colors sm:hidden" aria-label="Search">
                 <NavIcon icon="search" className="h-5 w-5" />
               </button>
-              <Link href="/me/career-vault" className="flex items-center">
-                {user?.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt="Profile photo"
-                    className="h-8 w-8 rounded-full border border-[var(--border)] object-cover"
-                  />
-                ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-sm font-medium text-white">
-                    {user?.displayName?.charAt(0) || "?"}
-                  </div>
-                )}
-              </Link>
+              <UserMenu />
             </div>
           </div>
         </header>
@@ -151,7 +147,7 @@ export default function CommunityShell({ children }: { children: React.ReactNode
         <div className="flex">
           {/* Desktop sidebar */}
           <aside className="hidden md:flex w-56 flex-shrink-0 flex-col border-r border-[var(--border)] bg-[var(--card-bg)] min-h-[calc(100vh-3.5rem)] sticky top-14">
-            <nav className="flex flex-col gap-1 p-3 pt-4">
+            <nav className="flex flex-1 flex-col gap-1 p-3 pt-4">
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.href);
                 return (
@@ -169,6 +165,15 @@ export default function CommunityShell({ children }: { children: React.ReactNode
                   </Link>
                 );
               })}
+              <div className="mt-auto pt-3 border-t border-[var(--border)]">
+                <button
+                  onClick={() => logout()}
+                  className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-[var(--background)] transition-colors"
+                >
+                  <NavIcon icon="logout" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </nav>
           </aside>
 

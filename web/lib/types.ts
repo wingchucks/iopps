@@ -802,6 +802,7 @@ export interface MemberProfile {
   userId: string;
   displayName?: string;
   avatarUrl?: string;
+  coverPhotoUrl?: string;
   photoURL?: string; // For compatibility with Firebase User
   tagline?: string;
   bio?: string; // About me / personal summary
