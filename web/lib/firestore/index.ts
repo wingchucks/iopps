@@ -76,6 +76,7 @@ export {
   addApplicantNote,
   updateApplicantNote,
   deleteApplicantNote,
+  updateApplicantRating,
 } from "./applications";
 
 // Members

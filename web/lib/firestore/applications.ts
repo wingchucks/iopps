@@ -304,3 +304,17 @@ export async function deleteApplicantNote(
     updatedAt: serverTimestamp(),
   });
 }
+
+/**
+ * Update applicant rating (1-5 stars)
+ */
+export async function updateApplicantRating(
+  applicationId: string,
+  rating: number
+): Promise<void> {
+  const ref = doc(db!, applicationsCollection, applicationId);
+  await updateDoc(ref, {
+    rating: Math.min(5, Math.max(1, rating)),
+    updatedAt: serverTimestamp(),
+  });
+}

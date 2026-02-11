@@ -759,6 +759,8 @@ export interface JobApplication {
   // Application flow fields (new)
   interestStatement?: string;
   portfolioURL?: string;
+  // Employer Rating (1-5 stars)
+  rating?: number;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
