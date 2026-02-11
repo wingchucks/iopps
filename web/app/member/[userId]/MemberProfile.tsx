@@ -37,6 +37,9 @@ import ProfileSaved from "@/components/member/profile/ProfileSaved";
 import ProfileAlerts from "@/components/member/profile/ProfileAlerts";
 import ProfileOverview from "@/components/member/profile/ProfileOverview";
 import ProfileEndorsementsTab from "@/components/member/profile/ProfileEndorsementsTab";
+import ProfileDashboard from "@/components/member/profile/ProfileDashboard";
+import ProfileCompleteness from "@/components/member/profile/ProfileCompleteness";
+import JobRecommendations from "@/components/member/profile/JobRecommendations";
 
 interface MemberProfileProps {
   profile: MemberProfileType;
@@ -51,9 +54,11 @@ export default function MemberProfile({
 }: MemberProfileProps) {
   const { user, role } = useAuth();
   const [profile, setProfile] = useState<MemberProfileType>(initialProfile);
-  const [activeTab, setActiveTab] = useState("about");
+  // Determine initial tab - owners start on dashboard, others on about
+  const initialTab = isOwnerProp ? "dashboard" : "about";
+  const [activeTab, setActiveTab] = useState(initialTab);
   // Track which tabs have been activated (for lazy loading)
-  const [activatedTabs, setActivatedTabs] = useState<Set<string>>(new Set(["about"]));
+  const [activatedTabs, setActivatedTabs] = useState<Set<string>>(new Set([initialTab]));
 
   // Determine ownership client-side (overrides server prop once auth is loaded)
   const isOwner = user?.uid === userId || isOwnerProp;
@@ -117,10 +122,15 @@ export default function MemberProfile({
 
   // Tab definitions
   const tabs = [
+    ...(isOwner
+      ? [{ id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> }]
+      : []),
     { id: "about", label: "About", icon: <User className="h-4 w-4" /> },
     { id: "experience", label: "Experience", icon: <BriefcaseLucide className="h-4 w-4" /> },
     { id: "endorsements", label: "Endorsements", icon: <Award className="h-4 w-4" /> },
-    { id: "activity", label: "Activity", icon: <LayoutDashboard className="h-4 w-4" /> },
+    ...(!isOwner
+      ? [{ id: "activity", label: "Activity", icon: <LayoutDashboard className="h-4 w-4" /> }]
+      : []),
     ...(isOwner
       ? [
           {
@@ -217,6 +227,14 @@ export default function MemberProfile({
 
             <div className="p-4 sm:p-6">
               <div key={activeTab} className="animate-crossfade">
+                {activeTab === "dashboard" && isOwner && (
+                  <div className="space-y-6">
+                    <ProfileCompleteness profile={profile} compact />
+                    <ProfileDashboard />
+                    <JobRecommendations />
+                  </div>
+                )}
+
                 {activeTab === "about" && (
                   <div className="space-y-6">
                     {/* Bio */}
