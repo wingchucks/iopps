@@ -210,6 +210,70 @@ export async function getJobPosting(jobId: string): Promise<JobPosting | null> {
   };
 }
 
+/**
+ * Duplicate an existing job posting
+ * Creates a new inactive copy with "(Copy)" appended to title
+ * Resets views, applications, and dates
+ */
+export async function duplicateJobPosting(
+  jobId: string,
+  employerId: string
+): Promise<string | null> {
+  const firestore = checkFirebase();
+  if (!firestore) return null;
+
+  try {
+    // Get the original job
+    const originalRef = doc(firestore, jobsCollection, jobId);
+    const originalSnap = await getDoc(originalRef);
+    
+    if (!originalSnap.exists()) {
+      console.error("[duplicateJobPosting] Original job not found:", jobId);
+      return null;
+    }
+
+    const originalData = originalSnap.data() as JobPosting;
+
+    // Verify ownership
+    if (originalData.employerId !== employerId) {
+      console.error("[duplicateJobPosting] Employer mismatch");
+      return null;
+    }
+
+    // Create new job with copied data
+    const newJobRef = doc(collection(firestore, jobsCollection));
+    const newJobData = {
+      ...originalData,
+      id: newJobRef.id,
+      title: `${originalData.title} (Copy)`,
+      active: false, // Start as inactive/draft
+      viewsCount: 0,
+      applicationsCount: 0,
+      createdAt: serverTimestamp(),
+      publishedAt: null,
+      closingDate: null, // Clear deadline - user should set new one
+      expiresAt: null,
+      scheduledPublishAt: null,
+      // Clear payment info - new job needs new payment
+      paymentStatus: undefined,
+      paymentId: undefined,
+      productType: undefined,
+      amountPaid: undefined,
+      // Clear import fields
+      importedFrom: undefined,
+      originalUrl: undefined,
+      originalApplicationLink: undefined,
+    };
+
+    await setDoc(newJobRef, newJobData);
+    
+    return newJobRef.id;
+  } catch (error) {
+    console.error("[duplicateJobPosting] Error:", error);
+    return null;
+  }
+}
+
 export async function listEmployerJobs(
   employerId: string
 ): Promise<JobPosting[]> {
@@ -443,4 +507,104 @@ export function getSavedJobsQuery(memberId: string) {
     collection(db!, savedJobsCollection),
     where("memberId", "==", memberId)
   );
+}
+
+// ============================================
+// JOB TEMPLATE HELPERS
+// (Core template functions are in jobTemplates.ts)
+// ============================================
+
+import { createJobTemplate as createTemplate, getJobTemplate } from "./jobTemplates";
+import type { JobTemplate } from "@/lib/types";
+
+/**
+ * Save an existing job as a template
+ * Helper that extracts job data and creates a template
+ */
+export async function saveJobAsTemplate(
+  jobId: string,
+  employerId: string,
+  templateName: string,
+  templateDescription?: string
+): Promise<string | null> {
+  const firestore = checkFirebase();
+  if (!firestore) return null;
+
+  // Get the job
+  const job = await getJobPosting(jobId);
+  if (!job || job.employerId !== employerId) {
+    console.error("[saveJobAsTemplate] Job not found or access denied");
+    return null;
+  }
+
+  // Create template from job using the core function
+  const templateData: Omit<JobTemplate, "id" | "createdAt" | "updatedAt" | "usageCount"> = {
+    employerId,
+    name: templateName,
+    description: templateDescription,
+    title: job.title,
+    location: job.location,
+    employmentType: job.employmentType,
+    remoteFlag: job.remoteFlag,
+    indigenousPreference: job.indigenousPreference,
+    jobDescription: job.description,
+    responsibilities: job.responsibilities,
+    qualifications: job.qualifications,
+    requirements: job.requirements,
+    benefits: job.benefits,
+    salaryRange: job.salaryRange,
+    category: job.category,
+    locationType: job.locationType,
+    cpicRequired: job.cpicRequired,
+    willTrain: job.willTrain,
+    driversLicense: job.driversLicense,
+    quickApplyEnabled: job.quickApplyEnabled,
+  };
+
+  return createTemplate(templateData);
+}
+
+/**
+ * Create a job from a template
+ * Returns the new job ID (job is created as inactive/draft)
+ */
+export async function createJobFromTemplate(
+  templateId: string,
+  employerId: string,
+  employerName?: string
+): Promise<string | null> {
+  const firestore = checkFirebase();
+  if (!firestore) return null;
+
+  const template = await getJobTemplate(templateId);
+  if (!template || template.employerId !== employerId) {
+    console.error("[createJobFromTemplate] Template not found or access denied");
+    return null;
+  }
+
+  // Create job from template
+  const jobData: JobInput = {
+    employerId,
+    employerName,
+    title: template.title || "Untitled Position",
+    location: template.location || "",
+    employmentType: template.employmentType || "Full-time",
+    remoteFlag: template.remoteFlag,
+    indigenousPreference: template.indigenousPreference,
+    description: template.jobDescription || "",
+    responsibilities: template.responsibilities,
+    qualifications: template.qualifications,
+    requirements: template.requirements,
+    benefits: template.benefits,
+    salaryRange: template.salaryRange,
+    category: template.category,
+    locationType: template.locationType,
+    cpicRequired: template.cpicRequired,
+    willTrain: template.willTrain,
+    driversLicense: template.driversLicense,
+    quickApplyEnabled: template.quickApplyEnabled,
+    active: false, // Start as draft
+  };
+
+  return createJobPosting(jobData);
 }

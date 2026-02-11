@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { listEmployerJobs } from '@/lib/firestore';
+import { listEmployerJobs, duplicateJobPosting } from '@/lib/firestore';
 import type { JobPosting } from '@/lib/types';
 import {
   BriefcaseIcon,
@@ -14,13 +15,16 @@ import {
   CheckCircleIcon,
   ClockIcon,
   XCircleIcon,
+  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 
 export default function HireJobsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [duplicating, setDuplicating] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   useEffect(() => {
@@ -39,6 +43,23 @@ export default function HireJobsPage() {
 
     loadJobs();
   }, [user]);
+
+  const handleDuplicate = async (jobId: string) => {
+    if (!user || duplicating) return;
+    
+    setDuplicating(jobId);
+    try {
+      const newJobId = await duplicateJobPosting(jobId, user.uid);
+      if (newJobId) {
+        // Navigate to edit the new job
+        router.push(`/organization/jobs/${newJobId}/edit`);
+      }
+    } catch (error) {
+      console.error('Error duplicating job:', error);
+    } finally {
+      setDuplicating(null);
+    }
+  };
 
   const filteredJobs = jobs.filter(job => {
     if (filter === 'active') return job.active;
@@ -198,9 +219,22 @@ export default function HireJobsPage() {
                   )}
 
                   {/* Actions */}
+                  <button
+                    onClick={() => handleDuplicate(job.id)}
+                    disabled={duplicating === job.id}
+                    className="p-2 text-foreground0 hover:text-accent transition-colors disabled:opacity-50"
+                    title="Duplicate job"
+                  >
+                    {duplicating === job.id ? (
+                      <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <DocumentDuplicateIcon className="w-4 h-4" />
+                    )}
+                  </button>
                   <Link
                     href={`/organization/jobs/${job.id}/edit`}
                     className="p-2 text-foreground0 hover:text-[var(--text-secondary)] transition-colors"
+                    title="Edit job"
                   >
                     <PencilIcon className="w-4 h-4" />
                   </Link>

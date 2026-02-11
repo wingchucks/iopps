@@ -32,6 +32,7 @@ export type { GrantFreePostingParams } from "./employers";
 // Jobs
 export {
   createJobPosting,
+  duplicateJobPosting,
   listJobPostings,
   getJobPosting,
   listEmployerJobs,
@@ -47,6 +48,9 @@ export {
   isJobSaved,
   isJobExpired,
   clearPendingEmployerApprovalFlag,
+  // Job template helpers (uses jobTemplates.ts internally)
+  saveJobAsTemplate,
+  createJobFromTemplate,
 } from "./jobs";
 
 // Job Templates
