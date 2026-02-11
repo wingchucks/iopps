@@ -73,6 +73,7 @@ export {
   listEmployerApplications,
   updateApplicationStatus,
   withdrawJobApplication,
+  getJobApplication,
   addApplicantNote,
   updateApplicantNote,
   deleteApplicantNote,

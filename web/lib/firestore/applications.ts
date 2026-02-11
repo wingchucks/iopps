@@ -43,6 +43,16 @@ type ApplicationInput = {
   }[];
 };
 
+/**
+ * Get a single job application by ID
+ */
+export async function getJobApplication(applicationId: string): Promise<JobApplication | null> {
+  const ref = doc(db!, applicationsCollection, applicationId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as JobApplication;
+}
+
 export async function checkExistingApplication(
   memberId: string,
   jobId: string
