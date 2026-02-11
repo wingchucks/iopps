@@ -5,7 +5,7 @@
  */
 
 import type { JobPosting, Scholarship, Conference, PowwowEvent, TrainingProgram, LiveStreamEvent, Vendor, Post } from "@/lib/types";
-import type { OpportunityItem, OpportunityAuthor, OpportunityMeta } from "./OpportunityCard";
+import type { OpportunityItem, OpportunityAuthor, OpportunityMeta, OpportunityFilterData } from "./OpportunityCard";
 import { formatDistanceToNow } from "date-fns";
 
 // Helper to format timestamps to relative time
@@ -72,6 +72,68 @@ function formatLocationMode(location: string, remoteFlag?: boolean, locationType
   return location;
 }
 
+// Canadian provinces/territories for extraction
+const PROVINCES: Record<string, string> = {
+  "AB": "Alberta", "Alberta": "Alberta",
+  "BC": "British Columbia", "British Columbia": "British Columbia",
+  "MB": "Manitoba", "Manitoba": "Manitoba",
+  "NB": "New Brunswick", "New Brunswick": "New Brunswick",
+  "NL": "Newfoundland and Labrador", "Newfoundland": "Newfoundland and Labrador", "Newfoundland and Labrador": "Newfoundland and Labrador",
+  "NS": "Nova Scotia", "Nova Scotia": "Nova Scotia",
+  "NT": "Northwest Territories", "Northwest Territories": "Northwest Territories", "NWT": "Northwest Territories",
+  "NU": "Nunavut", "Nunavut": "Nunavut",
+  "ON": "Ontario", "Ontario": "Ontario",
+  "PE": "Prince Edward Island", "Prince Edward Island": "Prince Edward Island", "PEI": "Prince Edward Island",
+  "QC": "Quebec", "Quebec": "Quebec", "Québec": "Quebec",
+  "SK": "Saskatchewan", "Saskatchewan": "Saskatchewan",
+  "YT": "Yukon", "Yukon": "Yukon",
+};
+
+// Extract province from location string
+function extractProvince(location: string): string | undefined {
+  if (!location) return undefined;
+  
+  // Check for province abbreviations or names in the location string
+  for (const [key, value] of Object.entries(PROVINCES)) {
+    // Match abbreviation at end (e.g., "Saskatoon, SK") or full name anywhere
+    const abbrevPattern = new RegExp(`\\b${key}\\b`, "i");
+    if (abbrevPattern.test(location)) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+// Extract salary range numbers
+function extractSalaryRange(salaryRange?: JobPosting["salaryRange"]): { min?: number; max?: number } {
+  if (!salaryRange) return {};
+  if (typeof salaryRange === "string") {
+    // Try to parse string like "$50k - $70k" or "$50,000 - $70,000"
+    const matches = salaryRange.match(/\$?([\d,]+)k?/gi);
+    if (matches && matches.length >= 1) {
+      const nums = matches.map(m => {
+        const n = parseFloat(m.replace(/[$,]/g, ""));
+        return m.toLowerCase().includes("k") ? n * 1000 : n;
+      });
+      return { min: nums[0], max: nums[1] || nums[0] };
+    }
+    return {};
+  }
+  return { min: salaryRange.min, max: salaryRange.max };
+}
+
+// Convert timestamp to Date
+function toDateSafe(date: Date | { toDate: () => Date } | string | null | undefined): Date | undefined {
+  if (!date) return undefined;
+  try {
+    if (typeof date === "string") return new Date(date);
+    if ("toDate" in date) return date.toDate();
+    return date;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Convert a JobPosting to OpportunityItem
  */
@@ -99,6 +161,20 @@ export function jobToOpportunity(job: JobPosting): OpportunityItem {
     summary = summary.slice(0, 197) + "...";
   }
 
+  // Extract filter data from raw job
+  const salaryRange = extractSalaryRange(job.salaryRange);
+  const filterData: OpportunityFilterData = {
+    location: job.location,
+    province: extractProvince(job.location),
+    employmentType: job.employmentType,
+    remoteFlag: job.remoteFlag,
+    indigenousPreference: job.indigenousPreference,
+    salaryMin: salaryRange.min,
+    salaryMax: salaryRange.max,
+    category: job.category,
+    createdAt: toDateSafe(job.createdAt || job.publishedAt),
+  };
+
   return {
     id: job.id,
     type: "job",
@@ -114,6 +190,7 @@ export function jobToOpportunity(job: JobPosting): OpportunityItem {
     href: `/careers/${job.id}`,
     // Social proof could be added if we have network data
     social: job.indigenousPreference ? "Indigenous Preference Hiring" : undefined,
+    filterData,
   };
 }
 
@@ -214,6 +291,14 @@ export function trainingToOpportunity(program: TrainingProgram): OpportunityItem
     price: program.cost || "Free",
   };
 
+  // Extract filter data for programs
+  const filterData: OpportunityFilterData = {
+    location: program.location,
+    province: extractProvince(program.location || ""),
+    format: program.format,
+    createdAt: toDateSafe(program.createdAt),
+  };
+
   return {
     id: program.id,
     type: "program",
@@ -223,6 +308,7 @@ export function trainingToOpportunity(program: TrainingProgram): OpportunityItem
     time: formatRelativeTime(program.createdAt),
     meta,
     href: `/careers/programs/${program.id}`,
+    filterData,
   };
 }
 

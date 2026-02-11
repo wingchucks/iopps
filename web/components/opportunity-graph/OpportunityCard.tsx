@@ -59,6 +59,22 @@ export interface OpportunityEngagement {
   views?: number;
 }
 
+// Raw data for filtering (preserved from source objects)
+export interface OpportunityFilterData {
+  // Jobs
+  location?: string; // Raw location string (city, province)
+  province?: string; // Extracted province
+  employmentType?: string; // Full-time, Part-time, Contract, Internship
+  remoteFlag?: boolean;
+  indigenousPreference?: boolean;
+  salaryMin?: number;
+  salaryMax?: number;
+  category?: string; // Technology, Healthcare, etc.
+  createdAt?: Date; // For date posted filtering
+  // Programs
+  format?: string; // in-person, online, hybrid
+}
+
 export interface OpportunityItem {
   id: string;
   type: OpportunityType;
@@ -73,6 +89,7 @@ export interface OpportunityItem {
   href?: string; // link to detail page
   live?: boolean; // currently live (livestreams)
   featured?: boolean; // editorially featured
+  filterData?: OpportunityFilterData; // Raw data for filtering
 }
 
 interface OpportunityCardProps {
