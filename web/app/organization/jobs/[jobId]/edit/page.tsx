@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { getJobPosting, updateJobPosting, deleteJobPosting } from "@/lib/firestore";
+import { getJobPosting, updateJobPosting, deleteJobPosting, saveJobAsTemplate } from "@/lib/firestore";
 import type { JobPosting, LocationType, SalaryPeriod, JobCategory } from "@/lib/types";
 import { RichTextEditor } from "@/components/forms/RichTextEditor";
 import { SalaryRangeInput } from "@/components/forms/SalaryRangeInput";
@@ -77,6 +77,11 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  
+  // Template
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   useEffect(() => {
     if (!jobId) return;
@@ -719,6 +724,17 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTemplateName(title || "My Template");
+                setShowTemplateModal(true);
+              }}
+              disabled={saving || deleting || savingTemplate}
+              className="rounded-xl border border-[var(--card-border)] px-4 py-2.5 text-sm text-foreground hover:border-accent hover:text-accent transition-colors disabled:opacity-60"
+            >
+              Save as Template
+            </button>
             <Link
               href="/organization/hire/jobs"
               className="rounded-xl border border-[var(--card-border)] px-6 py-2.5 text-sm text-foreground hover:border-[var(--card-border)] transition-colors"
@@ -736,6 +752,60 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           </button>
         </div>
       </form>
+
+      {/* Save as Template Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-card border border-card-border rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Save as Template</h3>
+            <p className="text-sm text-[var(--text-muted)] mb-4">
+              Create a reusable template from this job posting. You can use it to quickly create similar jobs in the future.
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Template Name
+              </label>
+              <input
+                type="text"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g., Senior Developer Role"
+                className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowTemplateModal(false)}
+                className="rounded-xl border border-[var(--card-border)] px-4 py-2 text-sm text-foreground hover:border-[var(--card-border)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!user || !templateName.trim()) return;
+                  setSavingTemplate(true);
+                  try {
+                    await saveJobAsTemplate(jobId, user.uid, templateName.trim());
+                    setShowTemplateModal(false);
+                    alert("Template saved! Find it in Hire > Templates.");
+                  } catch (err) {
+                    console.error("Error saving template:", err);
+                    alert("Failed to save template. Please try again.");
+                  } finally {
+                    setSavingTemplate(false);
+                  }
+                }}
+                disabled={savingTemplate || !templateName.trim()}
+                className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors disabled:opacity-60"
+              >
+                {savingTemplate ? "Saving..." : "Save Template"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

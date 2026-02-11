@@ -16,6 +16,7 @@ import {
   ClockIcon,
   XCircleIcon,
   DocumentDuplicateIcon,
+  ArrowUpTrayIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 
@@ -88,13 +89,22 @@ export default function HireJobsPage() {
             Manage your job postings
           </p>
         </div>
-        <Link
-          href="/organization/jobs/new"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
-        >
-          <PlusIcon className="w-4 h-4" />
-          Post New Job
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/organization/hire/jobs/import"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-surface border border-[var(--card-border)] text-foreground rounded-lg font-medium hover:border-accent transition-colors"
+          >
+            <ArrowUpTrayIcon className="w-4 h-4" />
+            Bulk Import
+          </Link>
+          <Link
+            href="/organization/jobs/new"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
+          >
+            <PlusIcon className="w-4 h-4" />
+            Post New Job
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}

@@ -19,6 +19,7 @@ import {
   BriefcaseIcon,
   DocumentTextIcon,
   VideoCameraIcon,
+  DocumentDuplicateIcon,
   CubeIcon,
   ChatBubbleLeftRightIcon,
   BookOpenIcon,
@@ -225,6 +226,13 @@ export default function NavigationSidebar({
                   label="Interviews"
                   icon={VideoCameraIcon}
                   active={isActive('/organization/hire/interviews')}
+                  onClick={onNavigate}
+                />
+                <NavItem
+                  href="/organization/hire/templates"
+                  label="Templates"
+                  icon={DocumentDuplicateIcon}
+                  active={isActive('/organization/hire/templates')}
                   onClick={onNavigate}
                 />
                 {/* Talent Search hidden until feature is ready */}
