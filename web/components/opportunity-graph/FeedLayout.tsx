@@ -308,10 +308,8 @@ export function FeedLayout({
                           ? "#"
                           : resolveAvatarHref(item.href, userId);
 
-                      // Route employers/admins to org profile instead of member profile
-                      if (item.label === "View Profile" && (role === "employer" || role === "admin")) {
-                        href = "/organization/profile";
-                      }
+                      // Always route to member profile for "View Profile"
+                      // Org users access org dashboard via sidebar/separate link
 
                       if (item.action === "signout") {
                         return (
@@ -465,7 +463,7 @@ export function FeedLayout({
                   </div>
                   <div className="feed-user-cta">
                     {isLoggedIn && user ? (
-                      <Link href={role === "employer" || role === "admin" ? "/organization/profile" : `/member/${user.uid}`}>View profile</Link>
+                      <Link href={`/member/${user.uid}`}>View profile</Link>
                     ) : (
                       <>
                         <Link href="/login">Sign in</Link> to save jobs
@@ -540,10 +538,9 @@ export function FeedLayout({
           );
           const isCreatePost = item.action === "create-post";
 
-          // Route employers/admins to org profile instead of member profile
-          if (item.label === "Profile" && isLoggedIn && (role === "employer" || role === "admin")) {
-            href = "/organization/profile";
-          }
+          // Always route to member profile - org users can access org dashboard separately
+          // This ensures all users see the job seeker hub with their activity
+          // (removed employer/admin redirect to /organization/profile)
 
           if (isCreatePost) {
             // Only show job-posting action for employers/admins;
