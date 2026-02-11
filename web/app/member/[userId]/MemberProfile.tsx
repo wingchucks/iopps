@@ -40,6 +40,7 @@ import ProfileEndorsementsTab from "@/components/member/profile/ProfileEndorseme
 import ProfileDashboard from "@/components/member/profile/ProfileDashboard";
 import ProfileCompleteness from "@/components/member/profile/ProfileCompleteness";
 import JobRecommendations from "@/components/member/profile/JobRecommendations";
+import ProfileActionSidebar from "@/components/member/profile/ProfileActionSidebar";
 
 interface MemberProfileProps {
   profile: MemberProfileType;
@@ -54,11 +55,10 @@ export default function MemberProfile({
 }: MemberProfileProps) {
   const { user, role } = useAuth();
   const [profile, setProfile] = useState<MemberProfileType>(initialProfile);
-  // Determine initial tab - owners start on dashboard, others on about
-  const initialTab = isOwnerProp ? "dashboard" : "about";
-  const [activeTab, setActiveTab] = useState(initialTab);
+  // Always start on about - sidebar shows activity for owners
+  const [activeTab, setActiveTab] = useState("about");
   // Track which tabs have been activated (for lazy loading)
-  const [activatedTabs, setActivatedTabs] = useState<Set<string>>(new Set([initialTab]));
+  const [activatedTabs, setActivatedTabs] = useState<Set<string>>(new Set(["about"]));
 
   // Determine ownership client-side (overrides server prop once auth is loaded)
   const isOwner = user?.uid === userId || isOwnerProp;
@@ -120,33 +120,34 @@ export default function MemberProfile({
     }
   };
 
-  // Tab definitions
+  // Tab definitions - simplified for owners since sidebar shows activity
   const tabs = [
-    ...(isOwner
-      ? [{ id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> }]
-      : []),
     { id: "about", label: "About", icon: <User className="h-4 w-4" /> },
     { id: "experience", label: "Experience", icon: <BriefcaseLucide className="h-4 w-4" /> },
     { id: "endorsements", label: "Endorsements", icon: <Award className="h-4 w-4" /> },
     ...(!isOwner
       ? [{ id: "activity", label: "Activity", icon: <LayoutDashboard className="h-4 w-4" /> }]
       : []),
+    // Mobile-only tabs for owners (desktop has sidebar)
     ...(isOwner
       ? [
           {
             id: "applications",
             label: "Applications",
             icon: <ClipboardList className="h-4 w-4" />,
+            mobileOnly: true,
           },
           {
             id: "saved",
             label: "Saved",
             icon: <Bookmark className="h-4 w-4" />,
+            mobileOnly: true,
           },
           {
             id: "alerts",
             label: "Alerts",
             icon: <Bell className="h-4 w-4" />,
+            mobileOnly: true,
           },
         ]
       : []),
@@ -206,35 +207,38 @@ export default function MemberProfile({
         </div>
       )}
 
-      <div className="container max-w-4xl mx-auto px-0 sm:px-4 pb-24">
-        <div className="sm:rounded-2xl border-b sm:border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden sm:mt-4">
-          <ProfileHeader
-            profile={profile}
-            isOwner={isOwner}
-            userId={userId}
-            onProfileUpdate={handleProfileUpdate}
-          />
-        </div>
+      <div className={`container mx-auto px-0 sm:px-4 pb-24 ${isOwner ? 'max-w-6xl' : 'max-w-4xl'}`}>
+        {/* Two-column layout for owners */}
+        <div className={`${isOwner ? 'lg:grid lg:grid-cols-[1fr,320px] lg:gap-6' : ''}`}>
+          {/* Main Column */}
+          <div>
+            <div className="sm:rounded-2xl border-b sm:border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden sm:mt-4">
+              <ProfileHeader
+                profile={profile}
+                isOwner={isOwner}
+                userId={userId}
+                onProfileUpdate={handleProfileUpdate}
+              />
+            </div>
 
-        {/* Tabs immediately after header */}
-        <div className="mt-6 px-4 sm:px-0">
-          <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden">
-            <ProfileTabBar
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-            />
+            {/* Profile Completeness Banner (owners only, mobile) */}
+            {isOwner && (
+              <div className="lg:hidden mt-4 px-4 sm:px-0">
+                <ProfileCompleteness profile={profile} compact />
+              </div>
+            )}
+
+            {/* Tabs immediately after header */}
+            <div className="mt-6 px-4 sm:px-0">
+              <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden">
+                <ProfileTabBar
+                  tabs={tabs}
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
+                />
 
             <div className="p-4 sm:p-6">
               <div key={activeTab} className="animate-crossfade">
-                {activeTab === "dashboard" && isOwner && (
-                  <div className="space-y-6">
-                    <ProfileCompleteness profile={profile} compact />
-                    <ProfileDashboard />
-                    <JobRecommendations />
-                  </div>
-                )}
-
                 {activeTab === "about" && (
                   <div className="space-y-6">
                     {/* Bio */}
@@ -326,6 +330,20 @@ export default function MemberProfile({
               </div>
             </div>
           </div>
+        </div>
+          </div>
+
+          {/* Right Sidebar (owners only, desktop) */}
+          {isOwner && (
+            <div className="hidden lg:block mt-4">
+              <div className="sticky top-20">
+                <ProfileCompleteness profile={profile} compact />
+                <div className="mt-4">
+                  <ProfileActionSidebar profile={profile} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
