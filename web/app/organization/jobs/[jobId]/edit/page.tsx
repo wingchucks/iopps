@@ -44,6 +44,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
   const [indigenousPreference, setIndigenousPreference] = useState(true);
   const [cpicRequired, setCpicRequired] = useState(false);
   const [willTrain, setWillTrain] = useState(false);
+  const [quickApplyEnabled, setQuickApplyEnabled] = useState(true);
 
   // Salary (using object format to match SalaryRangeInput component)
   const [salaryRange, setSalaryRange] = useState<{
@@ -112,6 +113,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         setIndigenousPreference(jobData.indigenousPreference ?? true);
         setCpicRequired(jobData.cpicRequired ?? false);
         setWillTrain(jobData.willTrain ?? false);
+        setQuickApplyEnabled(jobData.quickApplyEnabled ?? true);
 
         // Handle salary range - could be string or object
         if (jobData.salaryRange && typeof jobData.salaryRange === "object") {
@@ -243,7 +245,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           .split("\n")
           .map((line) => line.trim())
           .filter(Boolean),
-        quickApplyEnabled: true, // Always enable Quick Apply as the only application method
+        quickApplyEnabled, // Allow Quick Apply applications through IOPPS
         active,
         jobVideo: jobVideo || undefined, // Set to undefined to remove if cleared
       });
@@ -526,6 +528,19 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
               <div>
                 <span className="block text-sm font-medium text-foreground">Will Train</span>
                 <span className="text-xs text-[var(--text-muted)]">On-the-job training provided</span>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 p-4 rounded-xl border border-accent/30 bg-accent/5 cursor-pointer hover:border-accent/50 transition-colors">
+              <input
+                type="checkbox"
+                checked={quickApplyEnabled}
+                onChange={(e) => setQuickApplyEnabled(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent"
+              />
+              <div>
+                <span className="block text-sm font-medium text-foreground">⚡ Quick Apply</span>
+                <span className="text-xs text-[var(--text-muted)]">Allow one-click applications via IOPPS</span>
               </div>
             </label>
           </div>

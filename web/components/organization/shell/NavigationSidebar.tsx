@@ -235,6 +235,13 @@ export default function NavigationSidebar({
                   active={isActive('/organization/hire/templates')}
                   onClick={onNavigate}
                 />
+                <NavItem
+                  href="/organization/hire/analytics"
+                  label="Analytics"
+                  icon={ChartBarIcon}
+                  active={isActive('/organization/hire/analytics')}
+                  onClick={onNavigate}
+                />
                 {/* Talent Search hidden until feature is ready */}
               </NavGroup>
             )}
