@@ -657,7 +657,9 @@ function DefaultRightSidebar() {
       {/* Quick Links */}
       <div className="feed-quick-links">
         <div className="feed-quick-links-header">Quick Links</div>
-        {QUICK_LINKS.map((link, i) => (
+        {QUICK_LINKS.filter(
+          (link) => link.href !== "/organization/jobs/new" || role === "employer" || role === "admin"
+        ).map((link, i) => (
           <Link key={i} href={link.href} className="feed-quick-link">
             {link.label} &rarr;
           </Link>
