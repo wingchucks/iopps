@@ -111,7 +111,7 @@ export default function LandingPage() {
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
-              href="/careers"
+              href="/signup"
               className="px-10 py-5 rounded-2xl text-xl font-bold text-white border-2 border-slate-700 hover:border-teal-500/50 hover:bg-teal-500/10 transition-all duration-300"
             >
               Explore Opportunities
@@ -169,7 +169,7 @@ export default function LandingPage() {
                   Organizations committed to Indigenous hiring, training, and advancement. Your experience matters here.
                 </p>
                 <Link
-                  href="/careers"
+                  href="/signup"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-white text-teal-700 rounded-xl font-bold hover:bg-slate-100 transition-colors"
                 >
                   Browse Jobs
@@ -186,7 +186,7 @@ export default function LandingPage() {
               <span className="text-4xl mb-4 block">🎓</span>
               <h3 className="text-2xl font-bold text-white mb-2">Education</h3>
               <p className="text-white/70 mb-4">Training programs & scholarships</p>
-              <Link href="/education" className="text-white font-medium hover:underline">
+              <Link href="/signup" className="text-white font-medium hover:underline">
                 Explore →
               </Link>
             </div>
@@ -197,7 +197,7 @@ export default function LandingPage() {
               <span className="text-4xl mb-4 block">📅</span>
               <h3 className="text-2xl font-bold text-white mb-2">Events</h3>
               <p className="text-white/70 mb-4">Pow wows, conferences & gatherings</p>
-              <Link href="/community" className="text-white font-medium hover:underline">
+              <Link href="/signup" className="text-white font-medium hover:underline">
                 Explore →
               </Link>
             </div>
@@ -208,7 +208,7 @@ export default function LandingPage() {
               <span className="text-4xl mb-4 block">🏪</span>
               <h3 className="text-2xl font-bold text-white mb-2">Shop Indigenous</h3>
               <p className="text-white/70 mb-4">Support community businesses</p>
-              <Link href="/business" className="text-white font-medium hover:underline">
+              <Link href="/signup" className="text-white font-medium hover:underline">
                 Explore →
               </Link>
             </div>
@@ -219,7 +219,7 @@ export default function LandingPage() {
               <span className="text-4xl mb-4 block">🤝</span>
               <h3 className="text-2xl font-bold text-white mb-2">Your Network</h3>
               <p className="text-slate-400 mb-4">Connect with Indigenous professionals & organizations across Turtle Island</p>
-              <Link href="/members" className="text-teal-400 font-medium hover:underline">
+              <Link href="/signup" className="text-teal-400 font-medium hover:underline">
                 Join the Network →
               </Link>
             </div>
@@ -266,7 +266,7 @@ export default function LandingPage() {
               Create Free Account
             </Link>
             <Link
-              href="/careers"
+              href="/signup"
               className="px-10 py-5 border-2 border-white text-white rounded-2xl text-xl font-bold hover:bg-white/10 transition-all"
             >
               Browse Opportunities

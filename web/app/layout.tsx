@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/lib/seo";
 import MainLayout from "@/components/MainLayout";
 import Providers from "@/components/Providers";
+import AuthGate from "@/components/AuthGate";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
 import { Toaster } from "react-hot-toast";
 
@@ -160,7 +161,9 @@ export default function RootLayout({
                 <strong>Demo Mode:</strong> Running with mock data because Firebase is not configured.
               </div>
             )}
-            <MainLayout>{children}</MainLayout>
+            <AuthGate>
+              <MainLayout>{children}</MainLayout>
+            </AuthGate>
           </Providers>
         </AuthProvider>
         <Toaster position="bottom-right" toastOptions={{
