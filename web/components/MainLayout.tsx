@@ -11,13 +11,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   // Admin routes have their own layout
   const isAdminRoute = pathname?.startsWith("/admin");
   
-  // Pages using FeedLayout have their own complete layout with header
+  // Pages using FeedLayout or CommunityShell have their own complete layout with header
   const isFeedRoute =
     pathname === "/" ||
     pathname?.startsWith("/signup") ||
     pathname?.startsWith("/onboarding") ||
     pathname?.startsWith("/welcome") ||
-    pathname?.startsWith("/discover") ||
     pathname?.startsWith("/discover") ||
     pathname?.startsWith("/for-employers") ||
     pathname?.startsWith("/pricing") ||
@@ -37,7 +36,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     pathname?.startsWith("/organizations") ||
     pathname?.startsWith("/employers") ||
     pathname?.startsWith("/members") ||
-    pathname?.startsWith("/network");
+    pathname?.startsWith("/network") ||
+    pathname?.startsWith("/home") ||  // CommunityShell provides its own header
+    pathname?.startsWith("/me");      // Career vault, opportunities etc. use CommunityShell
 
   // Organization dashboard pages have their own layout (singular /organization/)
   const isOrgDashboard = pathname?.startsWith("/organization/");

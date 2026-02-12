@@ -85,7 +85,7 @@ export function AppHeader() {
         {[
           { icon: "home", label: "Feed", href: "/discover" },
           { icon: "briefcase", label: "Jobs", href: "/careers" },
-          { icon: "search", label: "Search", href: "/careers" },
+          { icon: "search", label: "Search", href: "/search" },
           { icon: "bell", label: "Alerts", href: isLoggedIn ? "/member/alerts" : "/login" },
           { icon: "user", label: "Profile", href: isLoggedIn && user ? `/member/${user.uid}` : "/login" },
         ].map((item) => (

@@ -21,20 +21,36 @@ export async function GET() {
       });
     }
 
-    // Fetch counts in parallel
-    const [jobsSnap, usersSnap, orgsSnap, eventsSnap, programsSnap] = await Promise.all([
+    // Fetch counts in parallel - use correct collection names
+    const [
+      jobsSnap,
+      usersSnap,
+      employersSnap,
+      powwowsSnap,
+      conferencesSnap,
+      communityEventsSnap,
+      programsSnap,
+    ] = await Promise.all([
       db.collection("jobs").where("active", "==", true).count().get(),
       db.collection("users").count().get(),
-      db.collection("organizations").count().get(),
-      db.collection("events").where("active", "==", true).count().get(),
+      db.collection("employers").where("status", "==", "approved").count().get(),
+      db.collection("powwows").count().get(),
+      db.collection("conferences").count().get(),
+      db.collection("communityEvents").count().get().catch(() => ({ data: () => ({ count: 0 }) })),
       db.collection("programs").where("active", "==", true).count().get(),
     ]);
+
+    // Calculate totals
+    const totalEvents = 
+      (powwowsSnap.data().count || 0) + 
+      (conferencesSnap.data().count || 0) + 
+      (communityEventsSnap.data().count || 0);
 
     const stats = {
       jobs: jobsSnap.data().count || 0,
       members: usersSnap.data().count || 0,
-      organizations: orgsSnap.data().count || 0,
-      events: eventsSnap.data().count || 0,
+      organizations: employersSnap.data().count || 0,
+      events: totalEvents,
       programs: programsSnap.data().count || 0,
     };
 
