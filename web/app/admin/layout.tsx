@@ -11,6 +11,7 @@ import {
   ChartBarIcon,
   ChartBarSquareIcon,
   ArrowLeftOnRectangleIcon,
+  ArrowRightOnRectangleIcon,
   ArrowDownTrayIcon,
   VideoCameraIcon,
   SparklesIcon,
@@ -151,7 +152,16 @@ interface MobileNavProps {
 }
 
 function MobileNav({ isOpen, onClose, groups }: MobileNavProps) {
+  const { logout } = useAuth();
+  const router = useRouter();
+
   if (!isOpen) return null;
+
+  const handleSignOut = async () => {
+    onClose();
+    router.push("/");
+    await logout();
+  };
 
   return (
     <div className="fixed inset-0 z-50 md:hidden">
@@ -186,7 +196,7 @@ function MobileNav({ isOpen, onClose, groups }: MobileNavProps) {
           ))}
         </nav>
 
-        <div className="border-t border-[var(--card-border)] p-4">
+        <div className="border-t border-[var(--card-border)] p-4 space-y-1">
           <Link
             href="/discover"
             className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
@@ -195,6 +205,13 @@ function MobileNav({ isOpen, onClose, groups }: MobileNavProps) {
             <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-[var(--text-muted)] group-hover:text-foreground" />
             Back to Site
           </Link>
+          <button
+            onClick={() => void handleSignOut()}
+            className="group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-400"
+          >
+            <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-[var(--text-muted)] group-hover:text-red-400" />
+            Sign Out
+          </button>
         </div>
       </div>
     </div>
@@ -210,12 +227,17 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const navGroups = useNavigationGroups();
+
+  const handleLogout = async () => {
+    router.push("/");
+    await logout();
+  };
 
   // Close mobile nav on route change
   useEffect(() => {
@@ -275,14 +297,21 @@ export default function AdminLayout({
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-[var(--card-border)] p-4">
+          <div className="border-t border-[var(--card-border)] p-4 space-y-1">
             <Link
-              href="/"
+              href="/discover"
               className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
             >
               <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-[var(--text-muted)] group-hover:text-foreground" />
               Back to Site
             </Link>
+            <button
+              onClick={() => void handleLogout()}
+              className="group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-400"
+            >
+              <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-[var(--text-muted)] group-hover:text-red-400" />
+              Sign Out
+            </button>
           </div>
         </div>
 
