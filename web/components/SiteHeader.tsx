@@ -268,17 +268,19 @@ export default function SiteHeader() {
                         </p>
                       </div>
 
-                      {/* My Profile link - available to all logged-in users */}
-                      <Link
-                        href={`/member/${user.uid}`}
-                        onClick={() => setMobileNavOpen(false)}
-                        className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname?.startsWith("/member/") && !pathname?.includes("/settings")
-                          ? "bg-[var(--card-bg)]/20 text-white"
-                          : "text-white/80 hover:bg-[var(--card-bg)]/10 hover:text-white"
-                          }`}
-                      >
-                        My Profile
-                      </Link>
+                      {/* My Profile link - community members only (admins don't have profiles) */}
+                      {role !== "employer" && role !== "admin" && role !== "moderator" && (
+                        <Link
+                          href={`/member/${user.uid}`}
+                          onClick={() => setMobileNavOpen(false)}
+                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname?.startsWith("/member/") && !pathname?.includes("/settings")
+                            ? "bg-[var(--card-bg)]/20 text-white"
+                            : "text-white/80 hover:bg-[var(--card-bg)]/10 hover:text-white"
+                            }`}
+                        >
+                          My Profile
+                        </Link>
+                      )}
 
                       {role === "employer" && (
                         <>

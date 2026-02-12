@@ -1,12 +1,25 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { NextRequest, NextResponse } from "next/server";
+import { auth, db } from "@/lib/firebase-admin";
 
 // GET /api/admin/audit-scholarships
 // Shows all scholarships and why they're hidden/visible
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    if (!db) {
-      return NextResponse.json({ error: "Database not initialized" }, { status: 500 });
+    if (!auth || !db) {
+      return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
+    }
+
+    // Verify admin authorization
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const idToken = authHeader.split("Bearer ")[1];
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const userDoc = await db.collection("users").doc(decodedToken.uid).get();
+    const userData = userDoc.data();
+    if (userData?.role !== "admin" && userData?.role !== "moderator") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const snapshot = await db.collection("scholarships").get();

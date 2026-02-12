@@ -9,6 +9,7 @@ import {
   UsersIcon,
   BriefcaseIcon,
   ChartBarIcon,
+  ChartBarSquareIcon,
   ArrowLeftOnRectangleIcon,
   ArrowDownTrayIcon,
   VideoCameraIcon,
@@ -18,6 +19,7 @@ import {
   Cog6ToothIcon,
   DocumentTextIcon,
   EnvelopeIcon,
+  InboxIcon,
   Bars3Icon,
   XMarkIcon,
   AcademicCapIcon,
@@ -26,6 +28,7 @@ import {
   NewspaperIcon,
   CheckBadgeIcon,
   DocumentMagnifyingGlassIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { AdminNavGroup, AdminTopBar, type NavItem } from "@/components/admin";
 import { useAdminCounts } from "@/lib/hooks/admin";
@@ -58,6 +61,7 @@ function useNavigationGroups(): NavGroup[] {
           badge: pendingApprovals > 0 ? pendingApprovals : undefined,
           badgeVariant: "warning" as const,
         },
+        { name: "Analytics", href: "/admin/analytics", icon: ChartBarSquareIcon },
       ],
       defaultOpen: true,
       collapsible: false,
@@ -73,6 +77,7 @@ function useNavigationGroups(): NavGroup[] {
           badge: counts.employers.pending > 0 ? counts.employers.pending : undefined,
           badgeVariant: "warning" as const,
         },
+        { name: "Members", href: "/admin/members", icon: UserGroupIcon },
         { name: "Applications", href: "/admin/applications", icon: ClipboardDocumentListIcon },
       ],
       defaultOpen: true,
@@ -94,6 +99,7 @@ function useNavigationGroups(): NavGroup[] {
         { name: "Conferences", href: "/admin/conferences", icon: BuildingOfficeIcon },
         { name: "Pow Wows", href: "/admin/powwows", icon: SparklesIcon },
         { name: "News", href: "/admin/news", icon: NewspaperIcon },
+        { name: "Contact Messages", href: "/admin/content", icon: InboxIcon },
       ],
       defaultOpen: true,
     },
@@ -155,7 +161,7 @@ function MobileNav({ isOpen, onClose, groups }: MobileNavProps) {
       {/* Drawer */}
       <div className="fixed inset-y-0 left-0 w-72 bg-surface shadow-xl">
         <div className="flex h-16 items-center justify-between border-b border-[var(--card-border)] px-4">
-          <Link href="/" className="flex items-center gap-2 font-bold text-foreground" onClick={onClose}>
+          <Link href="/discover" className="flex items-center gap-2 font-bold text-foreground" onClick={onClose}>
             <ShieldCheckIcon className="h-6 w-6 text-accent" />
             <span>IOPPS Admin</span>
           </Link>
@@ -182,7 +188,7 @@ function MobileNav({ isOpen, onClose, groups }: MobileNavProps) {
 
         <div className="border-t border-[var(--card-border)] p-4">
           <Link
-            href="/"
+            href="/discover"
             className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
             onClick={onClose}
           >
@@ -249,7 +255,7 @@ export default function AdminLayout({
         <div className="hidden w-64 flex-col border-r border-[var(--card-border)] bg-surface md:flex">
           {/* Logo */}
           <div className="flex h-16 items-center border-b border-[var(--card-border)] px-6">
-            <Link href="/" className="flex items-center gap-2 font-bold text-foreground">
+            <Link href="/discover" className="flex items-center gap-2 font-bold text-foreground">
               <ShieldCheckIcon className="h-6 w-6 text-accent" />
               <span>IOPPS Admin</span>
             </Link>

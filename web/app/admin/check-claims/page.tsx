@@ -187,7 +187,7 @@ export default function CheckClaimsPage() {
                 </p>
 
                 {/* Auto-fix button for super admin */}
-                {user?.email === "nathan.arias@iopps.ca" && (
+                {user?.email && (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean).includes(user.email.toLowerCase()) && (
                   <div className="mb-4">
                     <button
                       onClick={async () => {

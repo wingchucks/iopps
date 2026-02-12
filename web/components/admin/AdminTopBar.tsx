@@ -420,7 +420,6 @@ export function AdminTopBar({
         {showDateRange && (
           <DateRangeSelector value={currentDateRange} onChange={handleDateRangeChange} />
         )}
-        <CreateDropdown />
       </div>
     </div>
   );

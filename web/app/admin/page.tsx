@@ -329,7 +329,7 @@ export default function AdminDashboard() {
           <QueueCard
             type="flagged"
             title="Flagged Content"
-            items={[]}
+            items={counts.contentFlags.pending > 0 ? [{ label: "Pending flags", count: counts.contentFlags.pending, href: "/admin/moderation?status=pending" }] : []}
             href="/admin/moderation"
             loading={isLoading}
             emptyMessage="No flagged content"
@@ -337,7 +337,7 @@ export default function AdminDashboard() {
           <QueueCard
             type="pending"
             title="Verification Queue"
-            items={[]}
+            items={counts.verificationRequests.pending > 0 ? [{ label: "Pending requests", count: counts.verificationRequests.pending, href: "/admin/verification" }] : []}
             href="/admin/verification"
             loading={isLoading}
             emptyMessage="No pending verifications"

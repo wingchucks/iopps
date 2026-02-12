@@ -40,6 +40,8 @@ const defaultCounts: AdminCountsSnapshot = {
   conferences: { total: 0, active: 0 },
   applications: { total: 0, recent7d: 0, recent30d: 0 },
   powwows: { total: 0, active: 0 },
+  contentFlags: { total: 0, pending: 0 },
+  verificationRequests: { total: 0, pending: 0 },
 };
 
 /**

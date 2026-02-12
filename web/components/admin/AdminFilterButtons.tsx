@@ -26,7 +26,7 @@ export function AdminFilterButtons({ options, value, onChange }: AdminFilterButt
 
         const inactiveClass = isPurple
           ? "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-purple-500"
-          : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]";
+          : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-accent";
 
         return (
           <button

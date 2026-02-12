@@ -78,6 +78,8 @@ export interface AdminCountsSnapshot {
   conferences: { total: number; active: number };
   applications: { total: number; recent7d: number; recent30d: number };
   powwows: { total: number; active: number };
+  contentFlags: { total: number; pending: number };
+  verificationRequests: { total: number; pending: number };
 }
 
 // ============================================================================
@@ -288,6 +290,8 @@ export async function getAllAdminCounts(): Promise<AdminCountsSnapshot> {
     conferences: { total: 0, active: 0 },
     applications: { total: 0, recent7d: 0, recent30d: 0 },
     powwows: { total: 0, active: 0 },
+    contentFlags: { total: 0, pending: 0 },
+    verificationRequests: { total: 0, pending: 0 },
   };
 
   if (!db) return defaultCounts;
@@ -303,6 +307,8 @@ export async function getAllAdminCounts(): Promise<AdminCountsSnapshot> {
       conferencesSnap,
       applicationsSnap,
       powwowsSnap,
+      contentFlagsSnap,
+      verificationRequestsSnap,
     ] = await Promise.all([
       getDocs(collection(db, "users")),
       getDocs(collection(db, "memberProfiles")),
@@ -312,6 +318,8 @@ export async function getAllAdminCounts(): Promise<AdminCountsSnapshot> {
       getDocs(collection(db, "conferences")),
       getDocs(collection(db, "applications")),
       getDocs(collection(db, "powwows")),
+      getDocs(collection(db, "contentFlags")),
+      getDocs(collection(db, "verificationRequests")),
     ]);
 
     // Process users
@@ -377,6 +385,14 @@ export async function getAllAdminCounts(): Promise<AdminCountsSnapshot> {
     const powwows = powwowsSnap.docs;
     const activePowwows = powwows.filter((doc) => doc.data().active === true).length;
 
+    // Process content flags
+    const contentFlags = contentFlagsSnap.docs;
+    const pendingFlags = contentFlags.filter((doc) => doc.data().status === "pending").length;
+
+    // Process verification requests
+    const verificationRequests = verificationRequestsSnap.docs;
+    const pendingVerifications = verificationRequests.filter((doc) => doc.data().status === "pending").length;
+
     return {
       users: { total: users.length, byRole: usersByRole },
       memberProfiles: { total: memberProfiles.length, withResume: memberProfilesWithResume, withSkills: memberProfilesWithSkills },
@@ -386,6 +402,8 @@ export async function getAllAdminCounts(): Promise<AdminCountsSnapshot> {
       conferences: { total: conferences.length, active: activeConferences },
       applications: { total: applications.length, recent7d, recent30d },
       powwows: { total: powwows.length, active: activePowwows },
+      contentFlags: { total: contentFlags.length, pending: pendingFlags },
+      verificationRequests: { total: verificationRequests.length, pending: pendingVerifications },
     };
   } catch (error) {
     console.error("Error fetching admin counts:", error);
