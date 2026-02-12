@@ -2,11 +2,11 @@
  * Set admin or moderator role for a user
  * 
  * Usage:
- *   npx tsx scripts/set-admin-role.ts <email> [admin|moderator]
- * 
+ *   npx tsx scripts/set-admin-role.ts <email> [community|employer|moderator|admin]
+ *
  * Examples:
  *   npx tsx scripts/set-admin-role.ts test@iopps.ca admin
- *   npx tsx scripts/set-admin-role.ts user@example.com moderator
+ *   npx tsx scripts/set-admin-role.ts user@example.com community
  */
 
 import * as dotenv from "dotenv";
@@ -33,12 +33,13 @@ async function setAdminRole() {
     const role = process.argv[3] || "admin";
     
     if (!email) {
-        console.error("❌ Usage: npx tsx scripts/set-admin-role.ts <email> [admin|moderator]");
+        console.error("❌ Usage: npx tsx scripts/set-admin-role.ts <email> [community|employer|moderator|admin]");
         process.exit(1);
     }
     
-    if (role !== "admin" && role !== "moderator") {
-        console.error("❌ Role must be 'admin' or 'moderator'");
+    const validRoles = ["community", "employer", "moderator", "admin"];
+    if (!validRoles.includes(role)) {
+        console.error(`❌ Role must be one of: ${validRoles.join(", ")}`);
         process.exit(1);
     }
     
@@ -92,7 +93,6 @@ async function setAdminRole() {
     });
     
     console.log(`\n🎉 Successfully set role to '${role}' for ${email}`);
-    console.log(`\n📌 The user can now access /admin after logging in.`);
 }
 
 setAdminRole().catch(console.error);
