@@ -116,17 +116,36 @@ export async function listPendingOrganizations(): Promise<V2Organization[]> {
 }
 
 /**
- * Approve an organization (set status to active) and write audit log
+ * Approve an organization (set status to active), upgrade owner role, and write audit log
  */
 export async function approveOrganization(orgId: string, adminUid: string): Promise<void> {
   const firestore = checkFirebase();
   if (!firestore) throw new Error("Firebase not available");
 
   const ref = doc(firestore, V2_ORGS_COLLECTION, orgId);
+
+  // Get org to find owner
+  const orgSnap = await getDoc(ref);
+  if (!orgSnap.exists()) throw new Error("Organization not found");
+  const orgData = orgSnap.data();
+
+  // Update org status
   await updateDoc(ref, {
     status: "active" as OrgStatus,
     updatedAt: serverTimestamp(),
   });
+
+  // Upgrade owner's role to employer (only if they're still community)
+  if (orgData.ownerUid) {
+    const userRef = doc(firestore, "users", orgData.ownerUid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists() && userSnap.data()?.role === "community") {
+      await updateDoc(userRef, {
+        role: "employer",
+        updatedAt: serverTimestamp(),
+      });
+    }
+  }
 
   await writeAuditLog({ adminUid, action: "approve_org", orgId });
 }

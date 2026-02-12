@@ -7,7 +7,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/components/AuthProvider";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
@@ -214,14 +214,17 @@ export default function EmployerSignupPage() {
     setGoogleLoading(true);
 
     try {
-      const { isNewUser } = await signInWithGoogle();
+      await signInWithGoogle();
 
-      if (isNewUser && auth?.currentUser && db) {
-        await setDoc(
-          doc(db!, "users", auth.currentUser.uid),
-          { role: "employer" },
-          { merge: true }
-        );
+      if (auth?.currentUser && db) {
+        // Only set role to employer for new users or community members (don't downgrade admins/moderators)
+        const userRef = doc(db!, "users", auth.currentUser.uid);
+        const existingUser = await getDoc(userRef);
+        const existingRole = existingUser.exists() ? existingUser.data()?.role : null;
+
+        if (!existingRole || existingRole === "community") {
+          await setDoc(userRef, { role: "employer" }, { merge: true });
+        }
 
         // Create v2_organizations
         try {
