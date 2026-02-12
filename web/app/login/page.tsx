@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -49,6 +49,8 @@ async function getRedirectPath(userId: string): Promise<string> {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { signInWithGoogle, redirectLoading, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -59,11 +61,15 @@ export default function LoginPage() {
   // When returning from a Google redirect sign-in, auto-navigate once auth resolves
   useEffect(() => {
     if (!redirectLoading && user) {
-      getRedirectPath(user.uid).then((path) => {
-        router.push(path);
-      });
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        getRedirectPath(user.uid).then((path) => {
+          router.push(path);
+        });
+      }
     }
-  }, [redirectLoading, user, router]);
+  }, [redirectLoading, user, router, redirectTo]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -78,7 +84,7 @@ export default function LoginPage() {
 
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      const redirectPath = await getRedirectPath(cred.user.uid);
+      const redirectPath = redirectTo || await getRedirectPath(cred.user.uid);
       router.push(redirectPath);
     } catch (err) {
       console.error(err);
@@ -95,7 +101,9 @@ export default function LoginPage() {
     try {
       await signInWithGoogle();
       // If popup succeeded (didn't fall back to redirect), navigate now
-      if (auth?.currentUser) {
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else if (auth?.currentUser) {
         const redirectPath = await getRedirectPath(auth.currentUser.uid);
         router.push(redirectPath);
       } else {
