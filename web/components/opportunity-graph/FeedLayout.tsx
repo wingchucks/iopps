@@ -625,6 +625,7 @@ export function FeedLayout({
 /* ------------------------------------------------------------------ */
 
 function DefaultRightSidebar() {
+  const { role } = useAuth();
   return (
     <>
       {/* Trending */}
