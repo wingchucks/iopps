@@ -12,6 +12,7 @@ import {
   updateDoc,
   serverTimestamp,
   checkFirebase,
+  employerCollection,
 } from "./shared";
 import type { V2Organization, OrgStatus } from "./v2-types";
 import { writeAuditLog } from "./v2-audit";
@@ -142,6 +143,18 @@ export async function approveOrganization(orgId: string, adminUid: string): Prom
     if (userSnap.exists() && userSnap.data()?.role === "community") {
       await updateDoc(userRef, {
         role: "employer",
+        updatedAt: serverTimestamp(),
+      });
+    }
+  }
+
+  // BUG-021: Sync employer profile status with V2 org approval
+  if (orgData.ownerUid) {
+    const employerRef = doc(firestore, employerCollection, orgData.ownerUid);
+    const employerSnap = await getDoc(employerRef);
+    if (employerSnap.exists()) {
+      await updateDoc(employerRef, {
+        status: "approved",
         updatedAt: serverTimestamp(),
       });
     }
