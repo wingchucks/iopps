@@ -198,15 +198,15 @@ export default function NetworkPage() {
                                 </div>
                             </Link>
 
-                            <CardContent className="p-4 pt-0 relative">
-                                <Link href={`/member/${person.id}`} className="block absolute -top-8 left-4">
+              <CardContent className="p-4 pt-12 relative">
+                <Link href={`/member/${person.id}`} className="block absolute -top-6 left-4">
                                     <Avatar className="h-16 w-16 border-4 border-white shadow-lg hover:border-accent/50 transition-colors cursor-pointer">
                                         <AvatarImage src={person.photoURL || person.avatarUrl} />
                                         <AvatarFallback>{person.displayName?.[0]}</AvatarFallback>
                                     </Avatar>
                                 </Link>
 
-                                <div className="mt-10 mb-4 space-y-1">
+                <div className="mt-12 mb-4 space-y-1">
                                     <Link href={`/member/${person.id}`} className="block">
                                         <h3 className="font-semibold text-[var(--text-primary)] line-clamp-1 group-hover:text-accent transition-colors cursor-pointer" title={person.displayName}>
                                             {person.displayName}
@@ -247,4 +247,4 @@ export default function NetworkPage() {
             </section>
         </div></FeedLayout>
     );
-}
+                                 }
