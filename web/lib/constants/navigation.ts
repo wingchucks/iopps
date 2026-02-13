@@ -104,12 +104,15 @@ export function resolveAvatarHref(href: string, userId: string): string {
 /*  Mobile bottom nav — 5 items                                        */
 /* ------------------------------------------------------------------ */
 
-export const BOTTOM_NAV: BottomNavItem[] = [
+export const BOTTOM_NAV: NavItem[] = [
   { icon: "home", label: "Home", href: "/" },
-  { icon: "search", label: "Search", href: "/search" },
-  { icon: "plusCircle", label: "Post", href: "#", action: "create-post" },
-  { icon: "mail", label: "Messages", href: (loggedIn) => (loggedIn ? "/messages" : "/login") },
-  { icon: "user", label: "Profile", href: (loggedIn, userId) => (loggedIn && userId ? `/member/${userId}` : "/login") },
+  { icon: "briefcase", label: "Jobs", href: "/careers" },
+  { icon: "users", label: "Network", href: "/discover" },
+  { icon: "academic", label: "Learn", href: "/education" },
+  { icon: "calendar", label: "Events", href: "/community" },
+  { icon: "building", label: "Shop", href: "/business" },
+  { icon: "mail", label: "Chat", href: (loggedIn, role) => resolveHref("/member/messages", loggedIn, role) },
+  { icon: "user", label: "Profile", href: (loggedIn, role) => resolveHref("/me/opportunities", loggedIn, role) },
 ];
 
 /* ------------------------------------------------------------------ */
