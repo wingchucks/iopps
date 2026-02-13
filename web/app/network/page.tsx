@@ -68,7 +68,7 @@ export default function NetworkPage() {
     }
 
     return (
-        <FeedLayout activeNav="community" fullWidth><div className="container max-w-6xl py-8 space-y-10">
+        <FeedLayout activeNav="network" fullWidth><div className="container max-w-6xl py-8 space-y-10">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
@@ -247,4 +247,4 @@ export default function NetworkPage() {
             </section>
         </div></FeedLayout>
     );
-                                 }
+}
