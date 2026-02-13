@@ -123,14 +123,14 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
         <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-10" />
       </div>
 
-      <div className="container max-w-4xl mx-auto px-4 -mt-24 pb-12">
+      <div className="container max-w-4xl mx-auto px-4 -mt-16 sm:-mt-24 pb-12">
         {/* Profile Header Card */}
         <Card className="bg-slate-900/90 border-[var(--card-border)] backdrop-blur-sm mb-6">
           <CardContent className="p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row gap-6">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
               {/* Avatar */}
               <div className="flex-shrink-0">
-                <Avatar className="h-32 w-32 border-4 border-[var(--card-border)] shadow-xl">
+                <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-[var(--card-border)] shadow-xl">
                   <AvatarImage src={profile.avatarUrl || profile.photoURL} />
                   <AvatarFallback className="text-3xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
                     {getInitials(profile.displayName)}
@@ -410,4 +410,4 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
       </div>
     </div>
   );
-}
+    }
