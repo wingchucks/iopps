@@ -768,6 +768,17 @@ const feedLayoutStyles = `
   .feed-search-input::placeholder {
     color: ${colors.textMuted};
   }
+
+  /* BUG-028: Keyboard accessibility - focus-visible outlines */
+  .feed-nav-link:focus-visible,
+  .feed-bottom-nav-item:focus-visible,
+  .feed-mobile-bottom-nav a:focus-visible,
+  .feed-mobile-bottom-nav button:focus-visible,
+  .feed-fab:focus-visible {
+    outline: 2px solid ${colors.accent};
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
   @media (min-width: 768px) {
     .feed-search { display: flex; }
   }
