@@ -5,7 +5,7 @@
 
 /** Treaty acknowledgment text */
 export const TREATY_ACKNOWLEDGMENT =
-  "IOPPS operates on Treaty 6 Territory, the traditional homeland of the Cree, Metis, and many other Indigenous peoples.";
+  "IOPPS operates on Treaty 6 Territory, the traditional homeland of the Cree, Métis, and many other Indigenous peoples.";
 
 /** Platform statistics displayed on the landing page hero */
 export const HERO_STATS = [
