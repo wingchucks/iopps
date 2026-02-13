@@ -13,6 +13,8 @@ import {
 } from '@/lib/firestore';
 import type { JobApplication, ApplicationStatus, JobPosting } from '@/lib/types';
 import { InterviewScheduler } from '@/components/employer/InterviewScheduler';
+import type { InterviewSlot } from '@/components/employer/InterviewScheduler';
+import type { Timestamp } from 'firebase/firestore';
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -112,7 +114,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ ap
     }
   };
 
-  const handleScheduleInterview = async (slot: any) => {
+  const handleScheduleInterview = async (slot: InterviewSlot) => {
     // TODO: Save interview to database and send email
     console.log('Interview scheduled:', slot);
     setShowScheduler(false);
@@ -306,7 +308,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ ap
                 {application.stageHistory.map((entry, i) => {
                   const entryDate = entry.timestamp instanceof Date
                     ? entry.timestamp
-                    : (entry.timestamp as any)?.toDate?.();
+                    : (entry.timestamp as Timestamp)?.toDate?.();
                   const statusConfig = STATUS_OPTIONS.find(s => s.value === entry.status);
                   
                   return (
@@ -374,7 +376,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ ap
               {application.employerNotes?.map((note) => {
                 const noteDate = note.createdAt instanceof Date
                   ? note.createdAt
-                  : (note.createdAt as any)?.toDate?.();
+                  : (note.createdAt as Timestamp)?.toDate?.();
                 return (
                   <div key={note.id} className="p-3 bg-surface rounded-lg">
                     <p className="text-sm text-foreground">{note.content}</p>

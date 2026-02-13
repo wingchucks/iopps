@@ -480,6 +480,8 @@ export interface JobPosting {
 
   featured?: boolean;
   trcAlignment?: TRCAlignment;
+  // Denormalized compatibility alias for employerName
+  companyName?: string;
 }
 
 // Job Templates (reusable templates for employers)
@@ -763,6 +765,8 @@ export interface JobApplication {
   rating?: number;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+  // Denormalized fields from Firestore
+  jobTitle?: string;
 }
 
 export interface WorkExperience {
@@ -862,6 +866,9 @@ export interface SavedJob {
   memberId: string;
   createdAt?: Timestamp | null;
   job?: JobPosting | null;
+  // Denormalized fields from Firestore
+  jobTitle?: string;
+  companyName?: string;
 }
 
 export interface SavedTraining {

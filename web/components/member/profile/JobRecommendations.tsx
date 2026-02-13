@@ -163,7 +163,7 @@ function JobRecommendationCard({ job, isSaved }: { job: JobWithScore; isSaved: b
             {job.title}
           </h4>
           <p className="text-xs text-[var(--text-muted)] truncate">
-            {job.employerName || (job as any).companyName || 'Company'}
+            {job.employerName || job.companyName || 'Company'}
           </p>
         </div>
         {isSaved ? (

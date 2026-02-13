@@ -191,7 +191,7 @@ export default function ProfileDashboard() {
                   <div key={app.id} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-[var(--text-primary)] truncate">
-                        {(app as any).jobTitle || 'Job Application'}
+                        {app.jobTitle || 'Job Application'}
                       </p>
                       {date && (
                         <p className="text-xs text-[var(--text-muted)]">

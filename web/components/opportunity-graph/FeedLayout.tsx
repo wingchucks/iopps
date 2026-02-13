@@ -303,7 +303,7 @@ export function FeedLayout({
                     <div className="feed-avatar-menu-divider" />
 
                     {AVATAR_MENU_ITEMS.map((item) => {
-                      let href =
+                      const href =
                         item.action === "signout"
                           ? "#"
                           : resolveAvatarHref(item.href, userId);
@@ -532,7 +532,7 @@ export function FeedLayout({
       {/* ============================================================ */}
       <nav className="feed-mobile-bottom-nav" aria-label="Mobile navigation">
         {BOTTOM_NAV.map((item) => {
-          let href = resolveHref(item.href, isLoggedIn, userId);
+          const href = resolveHref(item.href, isLoggedIn, userId);
           const active = isBottomNavActive(
             typeof item.href === "string" ? item.href : href,
           );

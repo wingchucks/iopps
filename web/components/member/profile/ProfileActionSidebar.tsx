@@ -164,10 +164,10 @@ export default function ProfileActionSidebar({ profile }: ProfileActionSidebarPr
                 className="block p-2 bg-[var(--background)] rounded-lg hover:bg-accent/5 transition-colors"
               >
                 <p className="text-xs font-medium text-[var(--text-primary)] truncate">
-                  {(saved as any).jobTitle || 'Saved Job'}
+                  {saved.jobTitle || 'Saved Job'}
                 </p>
                 <p className="text-[10px] text-[var(--text-muted)] truncate">
-                  {(saved as any).companyName || 'Company'}
+                  {saved.companyName || 'Company'}
                 </p>
               </Link>
             ))}
@@ -284,7 +284,7 @@ function ApplicationMini({ application }: { application: JobApplication }) {
       <Icon className={`w-4 h-4 ${config.color} flex-shrink-0`} />
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-[var(--text-primary)] truncate">
-          {(application as any).jobTitle || 'Job Application'}
+          {application.jobTitle || 'Job Application'}
         </p>
         <p className="text-[10px] text-[var(--text-muted)]">
           {config.label} • {date ? formatDistanceToNow(date, { addSuffix: true }) : 'recently'}

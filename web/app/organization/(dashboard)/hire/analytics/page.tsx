@@ -67,7 +67,7 @@ export default function HireAnalyticsPage() {
   // Calculate metrics
   const metrics = useMemo(() => {
     const activeJobs = jobs.filter(j => j.active);
-    const totalViews = jobs.reduce((sum, j) => sum + ((j as any).viewCount || 0), 0);
+    const totalViews = jobs.reduce((sum, j) => sum + ((j as unknown as Record<string, unknown>).viewCount as number || 0), 0);
     const totalApps = filteredApplications.length;
     const conversionRate = totalViews > 0 ? (totalApps / totalViews) * 100 : 0;
     
@@ -141,7 +141,7 @@ export default function HireAnalyticsPage() {
     return jobs
       .map(job => {
         const jobApps = filteredApplications.filter(a => a.jobId === job.id);
-        const viewCount = (job as any).viewCount || 0;
+        const viewCount = (job as unknown as Record<string, unknown>).viewCount as number || 0;
         return {
           ...job,
           applicationCount: jobApps.length,

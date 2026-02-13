@@ -105,7 +105,7 @@ export default function JobTemplatesPage() {
       {/* Info Banner */}
       <div className="bg-blue-900/20 border border-blue-800/30 rounded-xl p-4">
         <p className="text-blue-300 text-sm">
-          💡 <strong>Tip:</strong> Create a template by clicking "Save as Template" when editing any job posting.
+          💡 <strong>Tip:</strong> Create a template by clicking &quot;Save as Template&quot; when editing any job posting.
         </p>
       </div>
 
@@ -117,7 +117,7 @@ export default function JobTemplatesPage() {
             No templates yet
           </h3>
           <p className="text-foreground0 max-w-md mx-auto mb-6">
-            Create your first template by posting a job and clicking "Save as Template" to reuse it later.
+            Create your first template by posting a job and clicking &quot;Save as Template&quot; to reuse it later.
           </p>
           <Link
             href="/organization/jobs/new"

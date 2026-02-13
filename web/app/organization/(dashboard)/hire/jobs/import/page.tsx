@@ -126,7 +126,7 @@ export default function BulkImportJobsPage() {
 
     try {
       const profile = await getEmployerProfile(user.uid);
-      const employerName = profile?.organizationName || (profile as any)?.companyName || '';
+      const employerName = profile?.organizationName || (profile as unknown as Record<string, unknown>)?.companyName as string || '';
 
       const importResults: ImportResult[] = [];
 

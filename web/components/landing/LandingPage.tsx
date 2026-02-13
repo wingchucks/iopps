@@ -142,7 +142,7 @@ export default function LandingPage() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <span className="inline-block px-4 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-sm font-medium mb-4">
-              WHAT'S HAPPENING
+              WHAT&apos;S HAPPENING
             </span>
             <h2 className="text-4xl sm:text-5xl font-bold text-white">
               Opportunities{" "}

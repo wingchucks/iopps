@@ -111,7 +111,7 @@ export default function HireApplicationsPage() {
   const uniqueJobs = Array.from(new Set(applications.map(a => a.jobId)))
     .map(jobId => {
       const app = applications.find(a => a.jobId === jobId);
-      return { id: jobId, title: (app as any)?.jobTitle || jobId };
+      return { id: jobId, title: (app as unknown as Record<string, unknown>)?.jobTitle as string || jobId };
     });
 
   useEffect(() => {
