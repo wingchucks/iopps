@@ -203,7 +203,13 @@ const nextConfig: NextConfig = {
         destination: "/member/alerts",
         permanent: true,
       },
-      // Events to Community redirect (BUG-007)
+      // Organization root to dashboard redirect (BUG-016)
+    {
+      source: "/organization",
+      destination: "/organization/dashboard",
+      permanent: false,
+    },
+    // Events to Community redirect (BUG-007)
       {
         source: "/events",
         destination: "/community",
