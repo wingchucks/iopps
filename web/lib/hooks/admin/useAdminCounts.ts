@@ -15,7 +15,8 @@ import {
   type AdminCountsSnapshot,
   type PendingItem,
   type FailedImport,
-} from "@/lib/firestore/admin-queries";
+} from "@/lib/firestore/admin-queries"
+import { auth } from "@/lib/firebase";
 
 export interface AdminCountsState {
   counts: AdminCountsSnapshot;
@@ -53,6 +54,42 @@ const defaultCounts: AdminCountsSnapshot = {
  * - Manual refresh capability
  * - Consistent with list page counts
  */
+
+async function fetchCountsFromAPI(): Promise<AdminCountsSnapshot> {
+  try {
+    const currentUser = auth?.currentUser;
+    if (!currentUser) {
+      throw new Error("No authenticated user");
+    }
+    const token = await currentUser.getIdToken();
+    const response = await fetch("/api/admin/counts", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+      throw new Error("API returned " + response.status);
+    }
+    const data = await response.json();
+    const c = data.counts;
+    // Map API response to AdminCountsSnapshot format
+    return {
+      users: { total: c.users?.total ?? 0, byRole: {} },
+      memberProfiles: { total: c.members?.total ?? 0, withResume: 0, withSkills: 0 },
+      employers: { total: c.employers?.total ?? 0, pending: c.employers?.pending ?? 0, approved: 0, rejected: 0 },
+      vendors: { total: c.vendors?.total ?? 0, pending: 0, active: 0, featured: 0 },
+      jobs: { total: c.jobs?.total ?? 0, active: c.jobs?.active ?? 0, inactive: 0 },
+      conferences: { total: c.events?.total ?? 0, active: 0 },
+      applications: { total: c.applications?.total ?? 0, recent7d: 0, recent30d: 0 },
+      powwows: { total: c.powwows?.total ?? 0, active: 0 },
+      contentFlags: { total: c.flags?.total ?? 0, pending: 0, resolved: 0 },
+      verificationRequests: { total: 0, pending: c.verifications?.pending ?? 0 },
+    };
+  } catch (error) {
+    console.error("Failed to fetch counts from API, falling back to direct query:", error);
+    // Fallback to direct Firestore query
+    return getAllAdminCounts();
+  }
+}
+
 export function useAdminCounts(): UseAdminCountsReturn {
   const [state, setState] = useState<AdminCountsState>({
     counts: defaultCounts,
@@ -74,7 +111,7 @@ export function useAdminCounts(): UseAdminCountsReturn {
     try {
       // Fetch all data in parallel
       const [counts, pendingItems, failedImports] = await Promise.all([
-        getAllAdminCounts(),
+        fetchCountsFromAPI(),
         getPendingItems(10),
         getFailedImports(),
       ]);

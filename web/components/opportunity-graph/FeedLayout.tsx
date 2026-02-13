@@ -768,6 +768,17 @@ const feedLayoutStyles = `
   .feed-search-input::placeholder {
     color: ${colors.textMuted};
   }
+
+  /* BUG-028: Keyboard accessibility - focus-visible outlines */
+  .feed-nav-link:focus-visible,
+  .feed-bottom-nav-item:focus-visible,
+  .feed-mobile-bottom-nav a:focus-visible,
+  .feed-mobile-bottom-nav button:focus-visible,
+  .feed-fab:focus-visible {
+    outline: 2px solid ${colors.accent};
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
   @media (min-width: 768px) {
     .feed-search { display: flex; }
   }
@@ -1229,7 +1240,7 @@ const feedLayoutStyles = `
     z-index: 100;
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .feed-mobile-bottom-nav { display: none; }
   }
   .feed-bottom-nav-item {
