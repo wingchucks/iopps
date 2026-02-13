@@ -203,6 +203,18 @@ const nextConfig: NextConfig = {
         destination: "/member/alerts",
         permanent: true,
       },
+      // Events to Community redirect (BUG-007)
+      {
+        source: "/events",
+        destination: "/community",
+        permanent: false,
+      },
+      // Messages to Member Messages redirect (BUG-013)
+      {
+        source: "/messages",
+        destination: "/member/messages",
+        permanent: false,
+      },
       // Organization registration shortcut
       {
         source: "/organization/register",
