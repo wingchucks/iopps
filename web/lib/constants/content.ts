@@ -10,6 +10,6 @@ export const TREATY_ACKNOWLEDGMENT =
 /** Platform statistics displayed on the landing page hero */
 export const HERO_STATS = [
   { value: "105+", label: "Jobs" },
-  { value: "2,400+", label: "Members" },
-  { value: "50+", label: "Organizations" },
+  { value: "700+", label: "Members" },
+  { value: "35+", label: "Organizations" },
 ] as const;
