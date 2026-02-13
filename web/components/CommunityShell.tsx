@@ -20,10 +20,13 @@ const NAV_ITEMS = [
 
 const MOBILE_NAV_ITEMS = [
   { href: "/home", label: "Home", icon: "home" },
-  { href: "/discover", label: "Network", icon: "users" },
   { href: "/careers", label: "Jobs", icon: "briefcase" },
+  { href: "/discover", label: "Network", icon: "users" },
+  { href: "/education", label: "Learn", icon: "academic" },
+  { href: "/community", label: "Events", icon: "calendar" },
+  { href: "/business", label: "Shop", icon: "building" },
+  { href: "/member/messages", label: "Chat", icon: "chat" },
   { href: "/me/opportunities", label: "My Stuff", icon: "folder" },
-  { href: "/member/messages", label: "Messages", icon: "chat" },
 ] as const;
 
 function NavIcon({ icon, className }: { icon: string; className?: string }) {
