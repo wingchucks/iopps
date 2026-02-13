@@ -182,6 +182,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     if (!auth) throw new Error("Auth not available");
     await signOut(auth);
+    // BUG-002: Redirect to homepage after sign-out instead of /login
+    window.location.href = "/";
   };
 
   const signInWithGoogle = async (): Promise<{ isNewUser: boolean }> => {
