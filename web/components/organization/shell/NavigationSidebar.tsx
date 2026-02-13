@@ -8,10 +8,10 @@ import type { EmployerProfile, OrganizationModule } from '@/lib/types';
 import { MODULE_CONFIG } from './constants';
 import SidebarSearch from './SidebarSearch';
 import { HelpButton } from './HelpDrawer';
-import {
-  HomeIcon,
 import { useAuth } from '@/components/AuthProvider';
 import { LogOut } from 'lucide-react';
+import {
+  HomeIcon,
   UserCircleIcon,
   InboxIcon,
   ChartBarIcon,
