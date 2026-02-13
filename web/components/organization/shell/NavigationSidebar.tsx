@@ -130,10 +130,10 @@ export default function NavigationSidebar({
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h2 className="font-bold text-foreground truncate text-sm">
+            <h2 className="font-bold text-foreground truncate text-sm" title={profile.organizationName || 'Organization'}>
               {profile.organizationName || 'Organization'}
             </h2>
-            <p className="text-xs text-foreground0 truncate">
+            <p className="text-xs text-foreground0 truncate" title={profile.location || 'Location not set'}>
               {profile.location || 'Location not set'}
             </p>
           </div>
@@ -360,4 +360,4 @@ export default function NavigationSidebar({
       </div>
     </div>
   );
-}
+                }
