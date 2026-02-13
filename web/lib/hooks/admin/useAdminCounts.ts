@@ -80,7 +80,7 @@ async function fetchCountsFromAPI(): Promise<AdminCountsSnapshot> {
       conferences: { total: c.events?.total ?? 0, active: 0 },
       applications: { total: c.applications?.total ?? 0, recent7d: 0, recent30d: 0 },
       powwows: { total: c.powwows?.total ?? 0, active: 0 },
-      contentFlags: { total: c.flags?.total ?? 0, pending: 0, resolved: 0 },
+      contentFlags: { total: c.flags?.total ?? 0, pending: 0 },
       verificationRequests: { total: 0, pending: c.verifications?.pending ?? 0 },
     };
   } catch (error) {
