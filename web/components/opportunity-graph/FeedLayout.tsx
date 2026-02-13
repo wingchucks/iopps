@@ -98,6 +98,7 @@ export function FeedLayout({
       : rawActiveNav;
 
   const isNavActive = (id: NavId) => resolvedActiveNav === id;
+  const pageTitle = NAV_ITEMS.find((item) => item.id === resolvedActiveNav)?.label || "IOPPS";
 
   const isBottomNavActive = (href: string) => {
     if (href === "/") return pathname === "/" || pathname === "/discover";
@@ -502,7 +503,10 @@ export function FeedLayout({
           </aside>
 
           {/* Center Content */}
-          <main className="feed-content">{children}</main>
+          <main className="feed-content">
+          <h1 className="sr-only">{pageTitle}</h1>
+          {children}
+        </main>
 
           {/* Right Sidebar — Desktop Only */}
           {!fullWidth && (
