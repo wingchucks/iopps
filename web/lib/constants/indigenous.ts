@@ -8,7 +8,7 @@ export const NATIONS = [
   "Haida",
   "Tlingit",
   "Coast Salish",
-  "Metis",
+  "Métis",
   "Inuit",
   "Inuvialuit",
   "Cherokee",
