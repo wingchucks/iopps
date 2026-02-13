@@ -10,6 +10,8 @@ import SidebarSearch from './SidebarSearch';
 import { HelpButton } from './HelpDrawer';
 import {
   HomeIcon,
+import { useAuth } from '@/components/AuthProvider';
+import { LogOut } from 'lucide-react';
   UserCircleIcon,
   InboxIcon,
   ChartBarIcon,
@@ -106,6 +108,7 @@ export default function NavigationSidebar({
   badges = {},
   onNavigate,
 }: NavigationSidebarProps) {
+  const { logout } = useAuth();
   const isActive = (path: string) => currentPath === path || currentPath.startsWith(path + '/');
 
   return (
@@ -344,9 +347,16 @@ export default function NavigationSidebar({
         )}
       </nav>
 
-      {/* Help Section - Fixed at bottom */}
+      {/* Sign Out & Help Section - Fixed at bottom */}
       <div className="flex-shrink-0 pt-4 border-t border-[var(--card-border)]">
-        <HelpButton />
+        <button
+              onClick={async () => { await logout(); }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors w-full mb-2"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Sign Out</span>
+            </button>
+            <HelpButton />
       </div>
     </div>
   );
