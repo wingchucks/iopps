@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 import { verifyAdminToken } from "@/lib/api-auth";
-import type { Firestore, Query } from "firebase-admin/firestore";
+import type { Firestore, Query, WhereFilterOp } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
 async function getCollectionCount(
   firestore: Firestore,
   collectionName: string,
-  conditions?: { field: string; op: string; value: unknown }[]
+  conditions?: { field: string; op: WhereFilterOp; value: unknown }[]
 ): Promise<number> {
   try {
     let ref: Query = firestore.collection(collectionName);
