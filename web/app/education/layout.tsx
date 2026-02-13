@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     "First Nations scholarships",
     "Indigenous training programs",
     "Indigenous schools",
-    "Metis education",
+    "Métis education",
     "Inuit scholarships",
     "Indigenous student funding",
     "Indigenous career training",
