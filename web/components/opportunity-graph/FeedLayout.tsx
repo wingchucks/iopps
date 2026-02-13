@@ -1229,7 +1229,7 @@ const feedLayoutStyles = `
     z-index: 100;
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .feed-mobile-bottom-nav { display: none; }
   }
   .feed-bottom-nav-item {
