@@ -33,6 +33,15 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "community", label: "Community" },
 ];
 
+const TAB_EMPTY_STATES: Record<TabKey, { message: string; cta: string; href: string }> = {
+  all: { message: "You haven\u2019t saved anything yet. Tap the bookmark icon on any job, program, event, or post to save it here for later.", cta: "Explore opportunities", href: "/careers" },
+  jobs: { message: "No saved jobs yet. Browse available positions and save the ones that interest you.", cta: "Browse jobs", href: "/careers" },
+  training: { message: "No saved training programs yet. Discover skills development and training opportunities.", cta: "Find training", href: "/careers/programs" },
+  education: { message: "No saved education items yet. Explore schools and programs across Canada.", cta: "Explore education", href: "/education" },
+  events: { message: "No saved events yet. Check out upcoming conferences and community gatherings.", cta: "View events", href: "/community" },
+  community: { message: "No saved community posts yet. Join the conversation and save posts you want to revisit.", cta: "Visit community", href: "/community" },
+};
+
 type NormalizedItem = {
   id: string;
   type: TabKey;
@@ -364,13 +373,21 @@ export default function SavedItemsPage() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] p-8 text-center">
-            <p className="text-sm text-[var(--text-secondary)]">
-              {activeTab === "all"
-                ? "You have not saved any items yet. Browse the platform and save things you are interested in."
-                : `No saved ${TABS.find((t) => t.key === activeTab)?.label.toLowerCase()} items.`}
-            </p>
-          </div>
+            <div className="rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] p-8 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--hover-bg)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-secondary)]"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+              </div>
+              <p className="text-sm font-medium text-[var(--text-primary)] mb-1">
+                {activeTab === "all" ? "Nothing saved yet" : `No saved ${TABS.find((t) => t.key === activeTab)?.label.toLowerCase() ?? ""}`}
+              </p>
+              <p className="text-sm text-[var(--text-secondary)] mb-4">
+                {TAB_EMPTY_STATES[activeTab]?.message}
+              </p>
+              <Link href={TAB_EMPTY_STATES[activeTab]?.href ?? "/careers"} className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 transition-colors">
+                {TAB_EMPTY_STATES[activeTab]?.cta ?? "Explore opportunities"}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </Link>
+            </div>
         ) : (
           <div className="grid gap-4">
             {filtered.map((item) => (
@@ -422,4 +439,4 @@ export default function SavedItemsPage() {
       </div>
     </FeedLayout>
   );
-}
+    }
