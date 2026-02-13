@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { initAdmin } from "@/lib/firebase-admin";
+import { db } from "@/lib/firebase-admin";
 import { verifyAdminToken } from "@/lib/api-auth";
+import type { Firestore, Query } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
 async function getCollectionCount(
-  db: FirebaseFirestore.Firestore,
+  firestore: Firestore,
   collectionName: string,
-  conditions?: { field: string; op: FirebaseFirestore.WhereFilterOp; value: unknown }[]
+  conditions?: { field: string; op: string; value: unknown }[]
 ): Promise<number> {
   try {
-    let ref: FirebaseFirestore.Query = db.collection(collectionName);
+    let ref: Query = firestore.collection(collectionName);
     if (conditions) {
       for (const c of conditions) {
         ref = ref.where(c.field, c.op, c.value);
@@ -35,7 +36,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { db } = initAdmin();
     if (!db) {
       return NextResponse.json(
         { error: "Database not initialized" },

@@ -104,7 +104,7 @@ export function resolveAvatarHref(href: string, userId: string): string {
 /*  Mobile bottom nav — 5 items                                        */
 /* ------------------------------------------------------------------ */
 
-export const BOTTOM_NAV: NavItem[] = [
+export const BOTTOM_NAV: BottomNavItem[] = [
   { icon: "home", label: "Home", href: "/" },
   { icon: "briefcase", label: "Jobs", href: "/careers" },
   { icon: "users", label: "Network", href: "/discover" },
