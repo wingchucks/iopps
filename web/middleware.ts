@@ -62,8 +62,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl, { status: 301 });
     }
 
-    // No tab/mode specified - continue to the dashboard page
-    return NextResponse.next();
+    // No tab/mode specified — redirect to org home (hire/jobs is the default landing)
+    const redirectUrl = new URL('/organization/hire/jobs', request.url);
+    return NextResponse.redirect(redirectUrl, { status: 301 });
   }
 
   // Handle standalone page redirects
