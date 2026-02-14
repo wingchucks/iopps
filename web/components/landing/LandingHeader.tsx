@@ -1,12 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LandingHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--card-bg)]/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-baseline gap-1.5">
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/logo.png"
+            alt="IOPPS"
+            width={36}
+            height={36}
+            className="h-9 w-9"
+            priority
+          />
           <span className="text-xl font-black tracking-tight text-accent">
             IOPPS
           </span>

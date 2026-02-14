@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import NotificationBell from "@/components/NotificationBell";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import Image from "next/image";
 import { colors, Icon, Avatar } from "@/components/opportunity-graph";
 
 export function AppHeader() {
@@ -37,6 +38,7 @@ export function AppHeader() {
       <header className="app-header">
         <div className="app-header-inner">
           <Link href="/discover" className="app-logo">
+            <Image src="/logo.png" alt="IOPPS" width={32} height={32} className="app-logo-img" priority />
             <span className="app-logo-text">IOPPS</span>
             <span className="app-logo-tagline">Empowering Indigenous Success</span>
           </Link>
@@ -124,9 +126,14 @@ export function AppHeader() {
         }
         .app-logo {
           display: flex;
-          align-items: baseline;
+          align-items: center;
           gap: 6px;
           text-decoration: none;
+        }
+        .app-logo-img {
+          height: 32px;
+          width: 32px;
+          border-radius: 9999px;
         }
         .app-logo-text {
           font-size: 20px;

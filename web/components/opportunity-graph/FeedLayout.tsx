@@ -11,6 +11,7 @@
 
 import { useState, useEffect, useRef, useCallback, FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { useMessageDrawer } from "@/components/messaging";
@@ -171,6 +172,7 @@ export function FeedLayout({
         <div className="feed-header-inner">
           {/* Logo */}
           <Link href="/" className="feed-logo" aria-label="IOPPS Home">
+            <Image src="/logo.png" alt="IOPPS" width={28} height={28} className="feed-logo-img" priority />
             <span className="feed-logo-text">IOPPS</span>
           </Link>
 
@@ -737,6 +739,11 @@ const feedLayoutStyles = `
     gap: 6px;
     text-decoration: none;
     flex-shrink: 0;
+  }
+  .feed-logo-img {
+    height: 28px;
+    width: 28px;
+    border-radius: 9999px;
   }
   .feed-logo-text {
     font-size: 22px;
