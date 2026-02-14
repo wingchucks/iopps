@@ -1,536 +1,313 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { collection, getDocs, orderBy, limit, query } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
-import {
-  UsersIcon,
-  BriefcaseIcon,
-  UserGroupIcon,
-  BuildingStorefrontIcon,
-  DocumentTextIcon,
-  ArrowPathIcon,
-} from "@heroicons/react/24/outline";
-import {
-  QueueCard,
-  QueueGrid,
-  KPICard,
-  KPIGrid,
-  ActivityFeed,
-  SystemHealthPanel,
-  type QueueItem,
-  type ActivityItem,
-  type HealthItem,
-} from "@/components/admin";
-import { useAdminCounts } from "@/lib/hooks/admin";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/components/auth/AuthProvider";
 
-// ============================================================================
+// ---------------------------------------------------------------------------
 // Types
-// ============================================================================
+// ---------------------------------------------------------------------------
 
-interface DashboardState {
-  loading: boolean;
-  refreshing: boolean;
-  error: string | null;
-  lastUpdated: Date | null;
+interface AdminCounts {
+  totalUsers: number;
+  activeJobs: number;
+  employers: number;
+  pendingEmployers: number;
+  conferences: number;
+  scholarships: number;
+  applications: number;
 }
 
-// ============================================================================
-// Main Component
-// ============================================================================
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  badge?: string;
+  badgeColor?: string;
+  delay?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Stat card component
+// ---------------------------------------------------------------------------
+
+function StatCard({ icon, label, value, badge, badgeColor, delay = 0 }: StatCardProps) {
+  return (
+    <div
+      className="animate-fade-up bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-5 transition-all duration-200 hover:border-[var(--card-border-hover)]"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent">
+          {icon}
+        </div>
+        {badge && (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+              badgeColor || "bg-warning/10 text-warning"
+            }`}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+      <p className="mt-4 text-2xl font-bold text-foreground">{value}</p>
+      <p className="mt-0.5 text-sm text-[var(--text-muted)]">{label}</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline SVG icons for stats
+// ---------------------------------------------------------------------------
+
+function UsersIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  );
+}
+
+function BriefcaseIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+      <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
+    </svg>
+  );
+}
+
+function BuildingIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+      <path d="M9 22v-4h6v4" />
+      <line x1="8" y1="6" x2="8" y2="6" />
+      <line x1="12" y1="6" x2="12" y2="6" />
+      <line x1="16" y1="6" x2="16" y2="6" />
+      <line x1="8" y1="10" x2="8" y2="10" />
+      <line x1="12" y1="10" x2="12" y2="10" />
+      <line x1="16" y1="10" x2="16" y2="10" />
+      <line x1="8" y1="14" x2="8" y2="14" />
+      <line x1="12" y1="14" x2="12" y2="14" />
+      <line x1="16" y1="14" x2="16" y2="14" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function AwardIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="7" />
+      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+    </svg>
+  );
+}
+
+function FileTextIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className || "h-4 w-4"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard page
+// ---------------------------------------------------------------------------
 
 export default function AdminDashboard() {
-  const {
-    counts,
-    pendingItems,
-    failedImports,
-    loading: countsLoading,
-    refresh,
-    isRefreshing,
-  } = useAdminCounts();
+  const { user } = useAuth();
+  const [counts, setCounts] = useState<AdminCounts | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const [dashboardState, setDashboardState] = useState<DashboardState>({
-    loading: true,
-    refreshing: false,
-    error: null,
-    lastUpdated: null,
-  });
+  useEffect(() => {
+    if (!user) return;
 
-  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
-  const [healthItems, setHealthItems] = useState<HealthItem[]>([]);
+    let cancelled = false;
 
-  // Fetch recent activity
-  const fetchRecentActivity = useCallback(async () => {
-    if (!db) return;
-
-    try {
-      const activities: ActivityItem[] = [];
-
-      // Get recent employers
+    async function fetchCounts() {
       try {
-        const employersSnap = await getDocs(
-          query(collection(db, "employers"), orderBy("createdAt", "desc"), limit(5))
-        );
-        employersSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          const createdAt = data.createdAt?.toDate?.() || new Date();
-          if (data.status === "approved") {
-            activities.push({
-              id: `employer-${doc.id}`,
-              type: "employer_approved",
-              title: `${data.organizationName || "Employer"} approved`,
-              timestamp: createdAt,
-              href: `/admin/employers`,
-            });
-          } else if (data.status === "pending") {
-            activities.push({
-              id: `employer-new-${doc.id}`,
-              type: "user_created",
-              title: `New employer: ${data.organizationName || "Unknown"}`,
-              timestamp: createdAt,
-              href: `/admin/employers?status=pending`,
-            });
-          }
+        const token = await user!.getIdToken();
+        const res = await fetch("/api/admin/counts", {
+          headers: { Authorization: `Bearer ${token}` },
         });
-      } catch (e) {
-        console.error("Error fetching recent employers:", e);
-      }
 
-      // Get recent jobs
-      try {
-        const jobsSnap = await getDocs(
-          query(collection(db, "jobs"), orderBy("createdAt", "desc"), limit(5))
-        );
-        jobsSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          const createdAt = data.createdAt?.toDate?.() || new Date();
-          activities.push({
-            id: `job-${doc.id}`,
-            type: "job_posted",
-            title: `New job: ${data.title || "Untitled"}`,
-            description: data.employerName,
-            timestamp: createdAt,
-            href: `/admin/jobs`,
-          });
-        });
-      } catch (e) {
-        console.error("Error fetching recent jobs:", e);
-      }
-
-      // Get recent members
-      try {
-        const membersSnap = await getDocs(
-          query(collection(db, "memberProfiles"), orderBy("createdAt", "desc"), limit(5))
-        );
-        membersSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          const createdAt = data.createdAt?.toDate?.() || new Date();
-          activities.push({
-            id: `member-${doc.id}`,
-            type: "member_signup",
-            title: `New member: ${data.fullName || data.displayName || "Anonymous"}`,
-            timestamp: createdAt,
-            href: `/admin/members`,
-          });
-        });
-      } catch (e) {
-        console.error("Error fetching recent members:", e);
-      }
-
-      // Get recent applications
-      try {
-        const applicationsSnap = await getDocs(
-          query(collection(db, "applications"), orderBy("createdAt", "desc"), limit(5))
-        );
-        applicationsSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          const createdAt = data.createdAt?.toDate?.() || new Date();
-          activities.push({
-            id: `application-${doc.id}`,
-            type: "application_received",
-            title: `Application for ${data.jobTitle || "job"}`,
-            timestamp: createdAt,
-            href: `/admin/applications`,
-          });
-        });
-      } catch (e) {
-        console.error("Error fetching recent applications:", e);
-      }
-
-      // Sort by timestamp and take most recent
-      activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-      setRecentActivity(activities.slice(0, 10));
-    } catch (error) {
-      console.error("Error fetching recent activity:", error);
-    }
-  }, []);
-
-  // Fetch system health via API
-  const fetchSystemHealth = useCallback(async () => {
-    try {
-      // Get current user token for authentication
-      if (!auth) {
-        setHealthItems([
-          { id: "auth", name: "Authentication", status: "error", message: "Auth not initialized" },
-        ]);
-        return;
-      }
-      const user = auth.currentUser;
-      if (!user) {
-        setHealthItems([
-          { id: "auth", name: "Authentication", status: "error", message: "Not authenticated" },
-        ]);
-        return;
-      }
-
-      const token = await user.getIdToken();
-      const response = await fetch("/api/admin/health", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setHealthItems(data.checks);
-      } else {
-        // Fallback to basic checks if API fails
-        const health: HealthItem[] = [
-          { id: "api", name: "Health API", status: "error", message: "Failed to fetch" },
-        ];
-
-        // Still try to check RSS feeds locally
-        if (db) {
-          try {
-            const feedsSnap = await getDocs(collection(db, "rssFeeds"));
-            const totalFeeds = feedsSnap.docs.length;
-            const failedFeeds = feedsSnap.docs.filter(
-              (doc) => doc.data().lastError || doc.data().lastRunStatus === "error"
-            ).length;
-
-            health.push({
-              id: "rss",
-              name: "RSS Imports",
-              status: failedFeeds > 0 ? "warning" : totalFeeds > 0 ? "healthy" : "unknown",
-              details: totalFeeds > 0 ? `${totalFeeds - failedFeeds}/${totalFeeds} OK` : "No feeds",
-              message: failedFeeds > 0 ? `${failedFeeds} failed` : undefined,
-            });
-          } catch {
-            health.push({
-              id: "rss",
-              name: "RSS Imports",
-              status: "unknown",
-              message: "Unable to check",
-            });
-          }
+        if (!res.ok) {
+          throw new Error(`Failed to fetch counts (${res.status})`);
         }
 
-        setHealthItems(health);
+        const data = await res.json();
+        if (!cancelled) setCounts(data);
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Error fetching admin counts:", err);
+          setError("Unable to load platform statistics.");
+        }
       }
-    } catch (error) {
-      console.error("Error fetching system health:", error);
-      setHealthItems([
-        { id: "api", name: "Health API", status: "error", message: "Connection failed" },
-      ]);
     }
-  }, []);
 
-  // Initial load
-  useEffect(() => {
-    const loadDashboard = async () => {
-      setDashboardState((prev) => ({ ...prev, loading: true }));
-      await Promise.all([fetchRecentActivity(), fetchSystemHealth()]);
-      setDashboardState({
-        loading: false,
-        refreshing: false,
-        error: null,
-        lastUpdated: new Date(),
-      });
+    fetchCounts();
+    return () => {
+      cancelled = true;
     };
+  }, [user]);
 
-    loadDashboard();
-  }, [fetchRecentActivity, fetchSystemHealth]);
-
-  // Build queue items
-  const pendingApprovalItems: QueueItem[] = [
+  const stats: StatCardProps[] = [
     {
-      label: "Employers",
-      count: counts.employers.pending,
-      href: "/admin/employers?status=pending",
+      icon: <UsersIcon />,
+      label: "Total Users",
+      value: counts?.totalUsers ?? "\u2014",
+      delay: 0,
     },
     {
-      label: "Vendors",
-      count: counts.vendors.pending,
-      href: "/admin/vendors?status=pending",
+      icon: <BriefcaseIcon />,
+      label: "Active Jobs",
+      value: counts?.activeJobs ?? "\u2014",
+      delay: 80,
+    },
+    {
+      icon: <BuildingIcon />,
+      label: "Employers",
+      value: counts?.employers ?? "\u2014",
+      badge: counts?.pendingEmployers ? `${counts.pendingEmployers} pending` : undefined,
+      badgeColor: "bg-warning/10 text-warning",
+      delay: 160,
+    },
+    {
+      icon: <CalendarIcon />,
+      label: "Conferences",
+      value: counts?.conferences ?? "\u2014",
+      delay: 240,
+    },
+    {
+      icon: <AwardIcon />,
+      label: "Scholarships",
+      value: counts?.scholarships ?? "\u2014",
+      delay: 320,
+    },
+    {
+      icon: <FileTextIcon />,
+      label: "Applications",
+      value: counts?.applications ?? "\u2014",
+      delay: 400,
     },
   ];
 
-  const failedImportItems: QueueItem[] = failedImports.map((f) => ({
-    label: f.feedName,
-    count: 1,
-  }));
-
-  // Handle refresh
-  const handleRefresh = async () => {
-    setDashboardState((prev) => ({ ...prev, refreshing: true }));
-    await Promise.all([refresh(), fetchRecentActivity(), fetchSystemHealth()]);
-    setDashboardState((prev) => ({
-      ...prev,
-      refreshing: false,
-      lastUpdated: new Date(),
-    }));
-  };
-
-  const isLoading = countsLoading || dashboardState.loading;
-  const totalPending = counts.employers.pending + counts.vendors.pending;
+  const quickActions = [
+    { label: "Manage Employers", href: "/admin/employers" },
+    { label: "Manage Jobs", href: "/admin/jobs" },
+    { label: "View Analytics", href: "/admin/analytics" },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-          <p className="text-sm text-[var(--text-muted)]">
-            {isLoading
-              ? "Loading..."
-              : dashboardState.lastUpdated
-              ? `Last updated ${dashboardState.lastUpdated.toLocaleTimeString()}`
-              : "Welcome to IOPPS administration"}
-          </p>
-        </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing || dashboardState.refreshing}
-          className="flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--card-border)] hover:text-white disabled:opacity-50"
-        >
-          <ArrowPathIcon
-            className={`h-4 w-4 ${
-              isRefreshing || dashboardState.refreshing ? "animate-spin" : ""
-            }`}
-          />
-          {isRefreshing || dashboardState.refreshing ? "Refreshing..." : "Refresh"}
-        </button>
+    <div className="mx-auto max-w-6xl space-y-8">
+      {/* ---- Header ---- */}
+      <div className="animate-fade-in">
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+          Admin Dashboard
+        </h1>
+        <p className="mt-1 text-[var(--text-secondary)]">
+          Platform overview and moderation tools
+        </p>
       </div>
 
-      {/* Urgent Queues */}
-      <div>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-foreground0">
-          Needs Attention
+      {/* ---- Error state ---- */}
+      {error && (
+        <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
+          {error}
+        </div>
+      )}
+
+      {/* ---- KPI Stats Grid ---- */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {stats.map((stat) => (
+          <StatCard key={stat.label} {...stat} />
+        ))}
+      </div>
+
+      {/* ---- Quick Actions ---- */}
+      <div className="animate-fade-in" style={{ animationDelay: "200ms" }}>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+          Quick Actions
         </h2>
-        <QueueGrid>
-          <QueueCard
-            type="pending"
-            title="Pending Approvals"
-            items={pendingApprovalItems}
-            href="/admin/employers?status=pending"
-            loading={isLoading}
-            emptyMessage="No pending approvals"
-          />
-          <QueueCard
-            type="flagged"
-            title="Flagged Content"
-            items={counts.contentFlags.pending > 0 ? [{ label: "Pending flags", count: counts.contentFlags.pending, href: "/admin/moderation?status=pending" }] : []}
-            href="/admin/moderation"
-            loading={isLoading}
-            emptyMessage="No flagged content"
-          />
-          <QueueCard
-            type="pending"
-            title="Verification Queue"
-            items={counts.verificationRequests.pending > 0 ? [{ label: "Pending requests", count: counts.verificationRequests.pending, href: "/admin/verification" }] : []}
-            href="/admin/verification"
-            loading={isLoading}
-            emptyMessage="No pending verifications"
-          />
-          <QueueCard
-            type="failed"
-            title="Failed Imports"
-            items={failedImportItems.length > 0 ? failedImportItems : []}
-            href="/admin/feeds"
-            loading={isLoading}
-            emptyMessage="All imports healthy"
-          />
-        </QueueGrid>
-      </div>
-
-      {/* KPIs */}
-      <div>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-foreground0">
-          Platform Overview
-        </h2>
-        <KPIGrid columns={5}>
-          <KPICard
-            label="Active Jobs"
-            value={counts.jobs.active}
-            definition="Job postings currently visible on the platform"
-            icon={<BriefcaseIcon className="h-5 w-5" />}
-            color="green"
-            loading={isLoading}
-            href="/admin/jobs?status=active"
-            breakdown={`${counts.jobs.inactive} inactive`}
-          />
-          <KPICard
-            label="Member Profiles"
-            value={counts.memberProfiles.total}
-            definition="Job seeker profiles created on the platform"
-            icon={<UserGroupIcon className="h-5 w-5" />}
-            color="blue"
-            loading={isLoading}
-            href="/admin/members"
-            breakdown={`${counts.memberProfiles.withResume} with resume`}
-          />
-          <KPICard
-            label="Employer Orgs"
-            value={counts.employers.approved}
-            definition="Approved employer organization profiles"
-            icon={<BriefcaseIcon className="h-5 w-5" />}
-            color="teal"
-            loading={isLoading}
-            href="/admin/employers"
-            breakdown={`${counts.employers.pending} pending`}
-          />
-          <KPICard
-            label="Active Vendors"
-            value={counts.vendors.active}
-            definition="Shop Indigenous vendor listings"
-            icon={<BuildingStorefrontIcon className="h-5 w-5" />}
-            color="purple"
-            loading={isLoading}
-            href="/admin/vendors?status=active"
-            breakdown={`${counts.vendors.featured} featured`}
-          />
-          <KPICard
-            label="Applications"
-            value={counts.applications.recent7d}
-            definition="Job applications submitted in the last 7 days"
-            icon={<DocumentTextIcon className="h-5 w-5" />}
-            color="amber"
-            loading={isLoading}
-            href="/admin/applications"
-            breakdown={`${counts.applications.total} total`}
-          />
-        </KPIGrid>
-      </div>
-
-      {/* Secondary Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
-          <div className="flex items-center gap-2">
-            <UsersIcon className="h-4 w-4 text-foreground0" />
-            <span className="text-xs text-foreground0">Users (Auth)</span>
-          </div>
-          <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? (
-              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
-            ) : (
-              counts.users.total.toLocaleString()
-            )}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
-          <div className="flex items-center gap-2">
-            <BriefcaseIcon className="h-4 w-4 text-foreground0" />
-            <span className="text-xs text-foreground0">Total Jobs</span>
-          </div>
-          <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? (
-              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
-            ) : (
-              counts.jobs.total.toLocaleString()
-            )}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
-          <div className="flex items-center gap-2">
-            <BuildingStorefrontIcon className="h-4 w-4 text-foreground0" />
-            <span className="text-xs text-foreground0">Total Vendors</span>
-          </div>
-          <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? (
-              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
-            ) : (
-              counts.vendors.total.toLocaleString()
-            )}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
-          <div className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 text-foreground0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {quickActions.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="group flex items-center justify-between rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-3.5 text-sm font-medium text-foreground transition-all duration-200 hover:border-accent hover:bg-accent/5"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-              />
-            </svg>
-            <span className="text-xs text-foreground0">Conferences</span>
-          </div>
-          <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? (
-              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
-            ) : (
-              counts.conferences.total.toLocaleString()
-            )}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
-          <div className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 text-foreground0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-              />
-            </svg>
-            <span className="text-xs text-foreground0">Pow Wows</span>
-          </div>
-          <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? (
-              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
-            ) : (
-              counts.powwows.total.toLocaleString()
-            )}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
-          <div className="flex items-center gap-2">
-            <DocumentTextIcon className="h-4 w-4 text-foreground0" />
-            <span className="text-xs text-foreground0">Total Apps</span>
-          </div>
-          <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? (
-              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
-            ) : (
-              counts.applications.total.toLocaleString()
-            )}
-          </p>
+              {action.label}
+              <ChevronRightIcon className="h-4 w-4 text-[var(--text-muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-accent" />
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* Activity and Health */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <ActivityFeed
-          activities={recentActivity}
-          loading={dashboardState.loading}
-          maxItems={8}
-        />
-        <SystemHealthPanel
-          items={healthItems}
-          loading={dashboardState.loading}
-          onRefresh={fetchSystemHealth}
-          isRefreshing={dashboardState.refreshing}
-        />
+      {/* ---- Pending Approvals ---- */}
+      <div
+        className="animate-fade-in rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5"
+        style={{ animationDelay: "300ms" }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">
+              Pending Approvals
+            </h2>
+            <p className="mt-0.5 text-sm text-[var(--text-muted)]">
+              {counts?.pendingEmployers
+                ? `${counts.pendingEmployers} employer${counts.pendingEmployers !== 1 ? "s" : ""} awaiting review`
+                : "No pending employer approvals"}
+            </p>
+          </div>
+          {counts?.pendingEmployers ? (
+            <Link
+              href="/admin/employers?status=pending"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+            >
+              Review
+              <ChevronRightIcon className="h-3.5 w-3.5" />
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
+      {/* ---- Recent Activity Placeholder ---- */}
+      <div
+        className="animate-fade-in rounded-2xl border border-dashed border-[var(--card-border)] bg-[var(--card-bg)] p-8 text-center"
+        style={{ animationDelay: "400ms" }}
+      >
+        <p className="text-sm text-[var(--text-muted)]">
+          Activity feed coming soon
+        </p>
       </div>
     </div>
   );

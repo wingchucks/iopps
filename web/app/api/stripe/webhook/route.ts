@@ -2,45 +2,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import Stripe from "stripe";
-import { notifyAdmin } from "@/lib/admin-notifications";
 
 // Mark this route as dynamic to prevent static analysis
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 export const maxDuration = 60; // 60 second timeout for complex webhook operations
 
-//  Lazy-load firebase-admin to prevent build-time initialization errors
+// Stub notifyAdmin as a no-op (not yet ported to web-v2)
+const notifyAdmin = async (..._args: unknown[]) => {};
+
+// Stub recomputeVisibility as a no-op (not yet ported to web-v2)
+const recomputeVisibility = async (_orgId: string): Promise<void> => {};
+
+// Lazy-load firebase-admin to prevent build-time initialization errors
 async function getFirebaseAdmin() {
-    const { initAdmin } = await import("@/lib/firebase-admin");
+    // Dynamic import triggers initAdmin() on module load
+    await import("@/lib/firebase-admin");
     const { getFirestore } = await import("firebase-admin/firestore");
-    
-    // Ensure Firebase is initialized
-    await initAdmin();
-    
-    // Get Firestore instance directly (don't rely on exported db which may be stale)
     const { getApps } = await import("firebase-admin/app");
+
     if (!getApps().length) {
         console.error("Firebase Admin failed to initialize - no apps registered");
         return null;
     }
-    
-    return getFirestore();
-}
 
-// Lazy-load visibility recompute function
-async function recomputeVisibility(orgId: string): Promise<void> {
-    try {
-        const { recomputeOrganizationVisibility } = await import("@/lib/firestore/visibility");
-        const result = await recomputeOrganizationVisibility(orgId);
-        if (result.success) {
-            // Visibility recomputed successfully
-        } else {
-            console.warn(`[webhook] Failed to recompute visibility for ${orgId}: ${result.error}`);
-        }
-    } catch (error) {
-        // Non-fatal - visibility will be corrected by scheduled reconciliation
-        console.warn(`[webhook] Error recomputing visibility for ${orgId}:`, error);
-    }
+    return getFirestore();
 }
 
 // Check if event has already been processed (idempotency)
@@ -124,7 +110,6 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error("Webhook signature verification failed:", message);
-        // Return generic error message to avoid information leakage
         return NextResponse.json(
             { error: "Webhook signature verification failed" },
             { status: 400 }
@@ -213,7 +198,6 @@ export async function POST(request: NextRequest) {
                             paymentId: session.payment_intent as string,
                             amountPaid: 0, // Bundled - no separate charge
                         };
-
                     }
 
                     // Check if employer is pending and auto-approve on payment
@@ -223,7 +207,7 @@ export async function POST(request: NextRequest) {
                     if (employerData?.status === "pending") {
                         updateData.status = "approved";
                         updateData.approvedAt = new Date();
-                        updateData.approvalMethod = "payment"; // Track auto-approval via payment
+                        updateData.approvalMethod = "payment";
                         // Also activate any jobs that were waiting for employer approval
                         const pendingJobs = await db.collection("jobs")
                             .where("employerId", "==", userId)
@@ -268,7 +252,7 @@ export async function POST(request: NextRequest) {
                         break;
                     }
 
-                    // Update vendor with subscription info (using new Vendor type fields)
+                    // Update vendor with subscription info
                     await vendorRef.update({
                         status: "active",
                         featured: featured === "true",
@@ -400,7 +384,6 @@ export async function POST(request: NextRequest) {
                     await jobRef.update({
                         active: true,
                         featured: featured === "true",
-                        // Don't reset createdAt - preserve original creation time
                         expiresAt: expirationDate,
                         paymentStatus: "paid",
                         paymentId: session.payment_intent as string,
@@ -417,7 +400,6 @@ export async function POST(request: NextRequest) {
                         // Extend existing access or create new
                         let newExpiration = new Date();
                         if (existing?.active && existing?.expiresAt) {
-                            // Get expiration date from existing access
                             const existingExpires = existing.expiresAt.toDate ? existing.expiresAt.toDate() : new Date(existing.expiresAt);
                             if (existingExpires > new Date()) {
                                 newExpiration = existingExpires;
@@ -431,12 +413,10 @@ export async function POST(request: NextRequest) {
                                 tier: existing?.tier || "bonus",
                                 purchasedAt: existing?.purchasedAt || new Date(),
                                 expiresAt: newExpiration,
-                                // Preserve existing payment info if upgrading
                                 ...(existing?.paymentId && { paymentId: existing.paymentId }),
                                 ...(existing?.amountPaid && { amountPaid: existing.amountPaid }),
                             },
                         });
-
                     }
 
                     // Send admin notification for new paid job
@@ -458,7 +438,6 @@ export async function POST(request: NextRequest) {
                     }
 
                     // Auto-approve pending employers on successful payment
-                    // Payment = trust signal, no need for manual approval
                     if (jobData?.employerId) {
                         const employerRef = db.collection("employers").doc(jobData.employerId);
                         const employerDoc = await employerRef.get();
@@ -468,7 +447,7 @@ export async function POST(request: NextRequest) {
                             await employerRef.update({
                                 status: "approved",
                                 approvedAt: new Date(),
-                                approvalMethod: "payment", // Track that this was auto-approved via payment
+                                approvalMethod: "payment",
                             });
                             // Also activate any jobs that were waiting for employer approval
                             const pendingJobs = await db.collection("jobs")
@@ -481,7 +460,7 @@ export async function POST(request: NextRequest) {
                                     active: true,
                                     pendingEmployerApproval: false,
                                 });
-                                }
+                            }
                         }
 
                         // Recompute directory visibility (job publish extends visibility)
@@ -521,7 +500,7 @@ export async function POST(request: NextRequest) {
                     if (!existingData?.publishedAt) {
                         const now = new Date();
                         const freeVisibilityExpiresAt = new Date(now);
-                        freeVisibilityExpiresAt.setDate(freeVisibilityExpiresAt.getDate() + 45); // 45-day free period
+                        freeVisibilityExpiresAt.setDate(freeVisibilityExpiresAt.getDate() + 45);
 
                         updateData.publishedAt = now;
                         updateData.freeVisibilityExpiresAt = freeVisibilityExpiresAt;
@@ -626,7 +605,7 @@ export async function POST(request: NextRequest) {
                 if (type === "training_program_listing" && userId) {
                     const durationDays = metadata.durationDays ? parseInt(metadata.durationDays, 10) : 60;
                     const programDataStr = metadata.programData;
-                    
+
                     if (!programDataStr) {
                         console.error("Missing programData in training_program_listing metadata");
                         break;
@@ -645,12 +624,12 @@ export async function POST(request: NextRequest) {
                     expiresAt.setDate(expiresAt.getDate() + durationDays);
 
                     // Create the training program
-                    const programRef = await db.collection("training_programs").add({
+                    await db.collection("training_programs").add({
                         ...programData,
                         organizationId: userId,
-                        status: "approved", // Auto-approve since they paid
+                        status: "approved",
                         active: true,
-                        featured: true, // Featured since they paid
+                        featured: true,
                         featuredAt: new Date(),
                         featuredExpiresAt: expiresAt,
                         listingExpiresAt: expiresAt,
@@ -804,9 +783,8 @@ export async function POST(request: NextRequest) {
                 console.error("Invoice payment failed:", invoice.id);
 
                 // Handle recurring payment failure for vendor subscriptions
-                // Access subscription via any cast since Stripe types vary by version
                 const invoiceSubscription = (invoice as any).subscription;
-                const subscriptionId = typeof invoiceSubscription === 'string'
+                const subscriptionId = typeof invoiceSubscription === "string"
                     ? invoiceSubscription
                     : invoiceSubscription?.id;
 
@@ -847,10 +825,9 @@ export async function POST(request: NextRequest) {
         // Emergency logging to Firestore
         try {
             const { getFirestore } = await import("firebase-admin/firestore");
-            const { initAdmin } = await import("@/lib/firebase-admin");
-            await initAdmin();
-            const db = getFirestore();
-            await db.collection("system_logs").add({
+            await import("@/lib/firebase-admin");
+            const emergencyDb = getFirestore();
+            await emergencyDb.collection("system_logs").add({
                 event: "stripe_webhook_error",
                 error: errMessage,
                 stack: errStack,
@@ -860,7 +837,6 @@ export async function POST(request: NextRequest) {
             console.error("Failed to log to Firestore:", logErr);
         }
 
-        // Return generic error message to avoid information leakage
         return NextResponse.json(
             { error: "Webhook processing failed" },
             { status: 400 }

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/firebase-admin";
+import { adminAuth } from "@/lib/firebase-admin";
 import type { DecodedIdToken } from "firebase-admin/auth";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export interface AuthResult {
   success: true;
@@ -12,22 +16,32 @@ export interface AuthError {
   response: NextResponse;
 }
 
+// ---------------------------------------------------------------------------
+// Token verification
+// ---------------------------------------------------------------------------
+
 /**
- * Verify Firebase ID token from Authorization header.
- * Returns the decoded token on success, or a NextResponse error on failure.
+ * Verify the Firebase ID token from the Authorization header.
+ *
+ * Extracts the Bearer token from the request, validates it against
+ * Firebase Admin Auth, and returns the decoded token on success.
  */
 export async function verifyAuthToken(
   request: NextRequest
 ): Promise<AuthResult | AuthError> {
   const authHeader = request.headers.get("authorization");
+
   if (!authHeader?.startsWith("Bearer ")) {
     return {
       success: false,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      response: NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      ),
     };
   }
 
-  if (!auth) {
+  if (!adminAuth) {
     return {
       success: false,
       response: NextResponse.json(
@@ -39,19 +53,28 @@ export async function verifyAuthToken(
 
   try {
     const token = authHeader.substring(7);
-    const decodedToken = await auth.verifyIdToken(token);
+    const decodedToken = await adminAuth.verifyIdToken(token);
     return { success: true, decodedToken };
   } catch {
     return {
       success: false,
-      response: NextResponse.json({ error: "Invalid token" }, { status: 401 }),
+      response: NextResponse.json(
+        { error: "Invalid token" },
+        { status: 401 }
+      ),
     };
   }
 }
 
+// ---------------------------------------------------------------------------
+// Admin-only verification
+// ---------------------------------------------------------------------------
+
 /**
- * Verify that the request is from an admin user.
- * Returns the decoded token on success, or a NextResponse error on failure.
+ * Verify the Firebase ID token **and** require admin privileges.
+ *
+ * Checks both the custom claim `admin: true` and `role: "admin"` on the
+ * decoded token to support both legacy and current claim structures.
  */
 export async function verifyAdminToken(
   request: NextRequest
@@ -66,7 +89,10 @@ export async function verifyAdminToken(
   if (!isAdmin) {
     return {
       success: false,
-      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+      response: NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      ),
     };
   }
 

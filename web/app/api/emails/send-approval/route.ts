@@ -1,243 +1,193 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { Resend } from "resend";
-import { auth, db } from "@/lib/firebase-admin";
-import { rateLimiters, getRateLimitHeaders } from "@/lib/rate-limit";
+import { verifyAuthToken } from "@/lib/api-auth";
+import { wrapEmail, ctaButton, escapeHtml } from "@/lib/emails/templates";
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://iopps.ca";
+const FROM_ADDRESS = "noreply@iopps.ca";
+
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type ApprovalStatus = "approved" | "rejected";
+
+interface SendApprovalBody {
+  employerEmail: string;
+  organizationName: string;
+  status: ApprovalStatus;
+  reason?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Validation
+// ---------------------------------------------------------------------------
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const VALID_STATUSES: ReadonlySet<string> = new Set(["approved", "rejected"]);
+
+function validateBody(
+  body: unknown,
+): { valid: true; data: SendApprovalBody } | { valid: false; error: string } {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return { valid: false, error: "Invalid request body" };
+  }
+
+  const { employerEmail, organizationName, status, reason } =
+    body as Record<string, unknown>;
+
+  if (typeof employerEmail !== "string" || !EMAIL_REGEX.test(employerEmail.trim())) {
+    return { valid: false, error: "A valid employerEmail is required" };
+  }
+
+  if (typeof organizationName !== "string" || organizationName.trim().length === 0) {
+    return { valid: false, error: "organizationName is required" };
+  }
+
+  if (typeof status !== "string" || !VALID_STATUSES.has(status)) {
+    return { valid: false, error: "status must be 'approved' or 'rejected'" };
+  }
+
+  if (reason !== undefined && typeof reason !== "string") {
+    return { valid: false, error: "reason must be a string if provided" };
+  }
+
+  return {
+    valid: true,
+    data: {
+      employerEmail: employerEmail.trim().toLowerCase(),
+      organizationName: organizationName.trim(),
+      status: status as ApprovalStatus,
+      reason: typeof reason === "string" ? reason.trim() : undefined,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Email builders
+// ---------------------------------------------------------------------------
+
+function buildApprovedEmail(orgName: string): { subject: string; html: string } {
+  const subject = "Welcome to IOPPS - Your Employer Account is Approved!";
+
+  const content = `
+<h2 style="color:#e0e0e0;margin:0 0 16px;">Congratulations, ${escapeHtml(orgName)}!</h2>
+<p style="color:#ccc;line-height:1.6;margin:0 0 12px;">
+  Your employer account on IOPPS has been <strong style="color:#22c55e;">approved</strong>.
+  You can now post job opportunities, connect with Indigenous talent, and manage
+  your organization's profile.
+</p>
+<p style="color:#ccc;line-height:1.6;margin:0 0 20px;">
+  Get started by visiting your employer dashboard to create your first job posting.
+</p>
+${ctaButton("Go to Dashboard", `${SITE_URL}/organization/dashboard`)}
+<p style="color:#888;font-size:13px;margin:16px 0 0;">
+  If you have any questions, please reach out to us at
+  <a href="mailto:support@iopps.ca" style="color:#d97706;text-decoration:none;">support@iopps.ca</a>.
+</p>`;
+
+  return { subject, html: wrapEmail(subject, content) };
+}
+
+function buildRejectedEmail(
+  orgName: string,
+  reason?: string,
+): { subject: string; html: string } {
+  const subject = "IOPPS Employer Account Application Update";
+
+  const reasonBlock = reason
+    ? `<div style="background-color:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:16px;margin:16px 0;">
+<p style="color:#aaa;font-size:13px;margin:0 0 4px;">Reason:</p>
+<p style="color:#e0e0e0;margin:0;">${escapeHtml(reason)}</p>
+</div>`
+    : "";
+
+  const content = `
+<h2 style="color:#e0e0e0;margin:0 0 16px;">Application Update for ${escapeHtml(orgName)}</h2>
+<p style="color:#ccc;line-height:1.6;margin:0 0 12px;">
+  Thank you for your interest in joining IOPPS as an employer. After reviewing your
+  application, we are unable to approve your account at this time.
+</p>
+${reasonBlock}
+<p style="color:#ccc;line-height:1.6;margin:0 0 12px;">
+  You are welcome to re-apply after addressing the items above. If you believe this
+  decision was made in error, please contact our support team.
+</p>
+${ctaButton("Contact Support", `${SITE_URL}/contact`)}
+<p style="color:#888;font-size:13px;margin:16px 0 0;">
+  You can reach us directly at
+  <a href="mailto:support@iopps.ca" style="color:#d97706;text-decoration:none;">support@iopps.ca</a>.
+</p>`;
+
+  return { subject, html: wrapEmail(subject, content) };
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/emails/send-approval
+// ---------------------------------------------------------------------------
+
+/**
+ * Send an employer approval or rejection email.
+ *
+ * Restricted to admin and moderator roles.
+ */
 export async function POST(request: NextRequest) {
-  // Rate limiting
-  const rateLimitResult = rateLimiters.strict(request);
-  if (!rateLimitResult.success) {
-    return NextResponse.json(
-      { error: "Too many requests", retryAfter: rateLimitResult.retryAfter },
-      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
-    );
+  const auth = await verifyAuthToken(request);
+  if (!auth.success) return auth.response;
+
+  // Only admins and moderators may send approval emails
+  const role = auth.decodedToken.role as string | undefined;
+  const isAdmin = auth.decodedToken.admin === true || role === "admin";
+  const isModerator = role === "moderator";
+
+  if (!isAdmin && !isModerator) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Check if Firebase Admin is initialized
-  if (!auth || !db) {
-    console.error("Firebase Admin not initialized");
-    return NextResponse.json(
-      { error: "Server configuration error" },
-      { status: 503 }
-    );
-  }
-
-  // Verify authentication - only admins/moderators can send approval emails
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const idToken = authHeader.split("Bearer ")[1];
-    const decodedToken = await auth.verifyIdToken(idToken);
-
-    // Check if the user is an admin or moderator
-    const userDoc = await db.collection("users").doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-
-    if (!userData || (userData.role !== "admin" && userData.role !== "moderator")) {
-      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
-    }
-  } catch (authError) {
-    console.error("Auth verification error:", authError);
-    return NextResponse.json({ error: "Invalid authentication token" }, { status: 401 });
-  }
-
-  const resend = new Resend(process.env.RESEND_API_KEY);
   try {
     const body = await request.json();
-    const { to, organizationName, status, rejectionReason } = body;
+    const validation = validateBody(body);
 
-    if (!to || !organizationName || !status) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const isApproved = status === "approved";
-    const subject = isApproved
-      ? "Welcome to IOPPS - Your Employer Account is Approved!"
-      : "IOPPS Employer Account Application Update";
+    const { employerEmail, organizationName, status, reason } = validation.data;
 
-    const htmlContent = isApproved
-      ? getApprovalEmailHTML(organizationName)
-      : getRejectionEmailHTML(organizationName, rejectionReason);
+    const { subject, html } =
+      status === "approved"
+        ? buildApprovedEmail(organizationName)
+        : buildRejectedEmail(organizationName, reason);
 
-    const textContent = isApproved
-      ? getApprovalEmailText(organizationName)
-      : getRejectionEmailText(organizationName, rejectionReason);
-
-    // Only send email if API key is configured
-    if (!process.env.RESEND_API_KEY) {
-      console.warn("RESEND_API_KEY not configured - skipping email send");
-      return NextResponse.json({
-        success: true,
-        skipped: true,
-        message: "Email API not configured"
-      });
-    }
-
-    const { data, error } = await resend.emails.send({
-      from: "IOPPS <noreply@iopps.ca>",
-      to: [to],
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: employerEmail,
       subject,
-      html: htmlContent,
-      text: textContent,
+      html,
     });
 
     if (error) {
-      console.error("Resend error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("[POST /api/emails/send-approval] Resend error:", error);
+      return NextResponse.json(
+        { error: "Failed to send email" },
+        { status: 500 },
+      );
     }
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Email API error:", error);
+    console.error("[POST /api/emails/send-approval] Error:", error);
     return NextResponse.json(
-      { error: "Failed to send email" },
-      { status: 500 }
+      { error: "Failed to send approval email" },
+      { status: 500 },
     );
   }
-}
-
-function getApprovalEmailHTML(organizationName: string): string {
-  const safeOrgName = organizationName.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, system-ui, sans-serif; background: #0D0D0F;">
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table width="600" cellpadding="0" cellspacing="0" style="background: #1a1a1f; border: 1px solid #2d2d35; border-radius: 16px;">
-          <tr>
-            <td style="background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%); padding: 32px; text-align: center;">
-              <h1 style="margin: 0; font-size: 28px; color: #fff;">Welcome to IOPPS!</h1>
-              <p style="margin: 12px 0 0; font-size: 16px; color: #f0f9ff;">Your employer account has been approved</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 32px;">
-              <p style="margin: 0 0 16px; font-size: 16px; color: #cbd5e1;">Hello ${safeOrgName},</p>
-              <p style="margin: 0 0 16px; font-size: 16px; color: #cbd5e1;">Your employer account on the Indigenous Opportunities Platform has been approved!</p>
-              <p style="margin: 0 0 24px; font-size: 16px; color: #cbd5e1;">You can now:</p>
-              <ul style="margin: 0 0 24px; padding-left: 24px; color: #cbd5e1;">
-                <li style="margin-bottom: 12px;">Post job opportunities</li>
-                <li style="margin-bottom: 12px;">Share conferences and events</li>
-                <li style="margin-bottom: 12px;">Offer scholarships</li>
-                <li style="margin-bottom: 12px;">Connect with Indigenous professionals</li>
-              </ul>
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="https://iopps.ca/organization" style="display: inline-block; padding: 14px 32px; background: #14B8A6; color: #0D0D0F; text-decoration: none; border-radius: 8px; font-weight: 600;">Go to Dashboard</a>
-              </div>
-              <p style="margin: 24px 0 0; font-size: 14px; color: #94a3b8;">Questions? Visit our <a href="https://iopps.ca/contact" style="color: #14B8A6;">contact page</a>.</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="background: #16161b; padding: 24px; text-align: center; border-top: 1px solid #2d2d35;">
-              <p style="margin: 0; font-size: 14px; color: #64748b;">Indigenous Opportunities Platform (IOPPS)</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function getApprovalEmailText(organizationName: string): string {
-  return `Welcome to IOPPS!
-
-Hello ${organizationName},
-
-Your employer account on the Indigenous Opportunities Platform has been approved!
-
-You can now:
-- Post job opportunities
-- Share conferences and events
-- Offer scholarships
-- Connect with Indigenous professionals
-
-Visit your dashboard: https://iopps.ca/organization
-
-Questions? Visit https://iopps.ca/contact
-
----
-Indigenous Opportunities Platform (IOPPS)`;
-}
-
-function getRejectionEmailHTML(organizationName: string, rejectionReason?: string): string {
-  const safeOrgName = organizationName.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const safeReason = rejectionReason?.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, system-ui, sans-serif; background: #0D0D0F;">
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table width="600" cellpadding="0" cellspacing="0" style="background: #1a1a1f; border: 1px solid #2d2d35; border-radius: 16px;">
-          <tr>
-            <td style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); padding: 32px; text-align: center;">
-              <h1 style="margin: 0; font-size: 28px; color: #fff;">Application Update</h1>
-              <p style="margin: 12px 0 0; font-size: 16px; color: #f0f9ff;">IOPPS Employer Account</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 32px;">
-              <p style="margin: 0 0 16px; font-size: 16px; color: #cbd5e1;">Hello ${safeOrgName},</p>
-              <p style="margin: 0 0 16px; font-size: 16px; color: #cbd5e1;">Thank you for your interest in joining the Indigenous Opportunities Platform.</p>
-              <p style="margin: 0 0 24px; font-size: 16px; color: #cbd5e1;">We are unable to approve your employer account at this time.</p>
-              ${safeReason ? `<div style="background: #2d1f1f; border-left: 4px solid #ef4444; padding: 16px; margin: 0 0 24px; border-radius: 4px;">
-                <p style="margin: 0; font-size: 14px; font-weight: 600; color: #fca5a5;">Reason:</p>
-                <p style="margin: 8px 0 0; font-size: 14px; color: #fecaca;">${safeReason}</p>
-              </div>` : ''}
-              <p style="margin: 0 0 24px; font-size: 16px; color: #cbd5e1;">If you believe this was an error, please reach out to our team.</p>
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="https://iopps.ca/contact" style="display: inline-block; padding: 14px 32px; background: #14B8A6; color: #0D0D0F; text-decoration: none; border-radius: 8px; font-weight: 600;">Contact Us</a>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td style="background: #16161b; padding: 24px; text-align: center; border-top: 1px solid #2d2d35;">
-              <p style="margin: 0; font-size: 14px; color: #64748b;">Indigenous Opportunities Platform (IOPPS)</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function getRejectionEmailText(organizationName: string, rejectionReason?: string): string {
-  return `IOPPS Application Update
-
-Hello ${organizationName},
-
-Thank you for your interest in joining the Indigenous Opportunities Platform.
-
-We are unable to approve your employer account at this time.
-
-${rejectionReason ? `Reason: ${rejectionReason}\n\n` : ''}If you believe this was an error, please reach out to our team.
-
-Contact us: https://iopps.ca/contact
-
----
-Indigenous Opportunities Platform (IOPPS)`;
 }

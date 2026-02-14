@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, SUBSCRIPTION_PRODUCTS, SubscriptionProductType } from "@/lib/stripe";
-import { auth, db } from "@/lib/firebase-admin";
+import { adminAuth, adminDb } from "@/lib/firebase-admin";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
     try {
         // Check if Firebase Admin is initialized
-        if (!auth || !db) {
+        if (!adminAuth || !adminDb) {
             console.error("Firebase Admin not initialized - check environment variables");
             return NextResponse.json(
                 { error: "Server configuration error" },
@@ -20,11 +23,11 @@ export async function POST(request: NextRequest) {
         }
 
         const idToken = authHeader.split("Bearer ")[1];
-        const decodedToken = await auth.verifyIdToken(idToken);
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
         const userId = decodedToken.uid;
 
         // Verify user is an employer
-        const userDoc = await db.collection("users").doc(userId).get();
+        const userDoc = await adminDb.collection("users").doc(userId).get();
         if (!userDoc.exists) {
             return NextResponse.json(
                 { error: "User not found" },
@@ -54,7 +57,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if user already has an active subscription
-        const employerDoc = await db.collection("employers").doc(userId).get();
+        const employerDoc = await adminDb.collection("employers").doc(userId).get();
         if (employerDoc.exists) {
             const employerData = employerDoc.data();
             if (employerData?.subscription?.active && employerData?.subscription?.expiresAt?.toDate() > new Date()) {

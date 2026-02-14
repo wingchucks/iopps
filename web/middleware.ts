@@ -1,94 +1,91 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-// Legacy URL redirects - maps old dashboard tabs to new routes
-const TAB_REDIRECTS: Record<string, string> = {
-  jobs: '/organization/hire/jobs',
-  applications: '/organization/hire/applications',
-  videos: '/organization/hire/interviews',
-  school: '/organization/educate/profile',
-  programs: '/organization/educate/programs',
-  scholarships: '/organization/educate/scholarships',
-  events: '/organization/host/events',
-  'student-inquiries': '/organization/educate/inquiries',
-  products: '/organization/sell/offerings',
-  services: '/organization/sell/offerings',
-  'shop-inquiries': '/organization/inbox?filter=customers',
-  funding: '/organization/funding/opportunities',
-  messages: '/organization/inbox',
-  billing: '/organization/billing',
-  profile: '/organization/settings',
-  team: '/organization/team',
-};
+/**
+ * Essential URL redirects for backwards compatibility.
+ * Trimmed from 40+ to the most important ones that protect SEO rankings.
+ */
+const REDIRECTS: { source: string; destination: string; permanent: boolean }[] =
+  [
+    // Core URL renames
+    { source: "/hub", destination: "/discover", permanent: false },
+    { source: "/jobs", destination: "/careers", permanent: true },
+    { source: "/jobs-training", destination: "/careers", permanent: true },
+    { source: "/scholarships", destination: "/education/scholarships", permanent: true },
+    { source: "/marketplace", destination: "/business", permanent: true },
+    { source: "/shop", destination: "/business", permanent: true },
+    { source: "/powwows", destination: "/community", permanent: true },
+    { source: "/events", destination: "/community", permanent: false },
+    { source: "/streams", destination: "/live", permanent: true },
+    { source: "/signin", destination: "/login", permanent: true },
+    { source: "/businesses", destination: "/organizations", permanent: true },
+    // Employer → Organization
+    { source: "/employer", destination: "/organization", permanent: true },
+    // Organization root → dashboard
+    { source: "/organization", destination: "/organization/dashboard", permanent: false },
+    // Admin alias
+    { source: "/admin/members", destination: "/admin/users", permanent: false },
+  ];
 
-// Mode-based redirects
-const MODE_REDIRECTS: Record<string, string> = {
-  vendor: '/organization/sell/profile',
-  employer: '/organization/hire/jobs',
-};
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-// Standalone page redirects
-const PAGE_REDIRECTS: Record<string, string> = {
-  '/organization/subscription': '/organization/billing',
-  '/organization/shop/dashboard': '/organization/sell/profile',
-};
-
-export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-  const searchParams = request.nextUrl.searchParams;
-
-  // Handle legacy /business/[slug] → /organizations/[slug] redirect
-  const businessMatch = path.match(/^\/business\/([^/]+)$/);
-  if (businessMatch) {
-    const slug = businessMatch[1];
-    const redirectUrl = new URL(`/organizations/${slug}`, request.url);
-    return NextResponse.redirect(redirectUrl, { status: 301 });
-  }
-
-  // Handle legacy dashboard tab redirects
-  if (path === '/organization/dashboard') {
-    const tab = searchParams.get('tab');
-    const mode = searchParams.get('mode');
-
-    // Tab-based redirect takes priority
-    if (tab && TAB_REDIRECTS[tab]) {
-      const redirectUrl = new URL(TAB_REDIRECTS[tab], request.url);
-      return NextResponse.redirect(redirectUrl, { status: 301 });
+  // Check for exact-match redirects
+  for (const redirect of REDIRECTS) {
+    if (pathname === redirect.source) {
+      const url = request.nextUrl.clone();
+      url.pathname = redirect.destination;
+      return NextResponse.redirect(url, redirect.permanent ? 308 : 307);
     }
-
-    // Mode-based redirect
-    if (mode && MODE_REDIRECTS[mode]) {
-      const redirectUrl = new URL(MODE_REDIRECTS[mode], request.url);
-      return NextResponse.redirect(redirectUrl, { status: 301 });
-    }
-
-    // No tab/mode specified - continue to the dashboard page
-    return NextResponse.next();
   }
 
-  // Handle standalone page redirects
-  if (PAGE_REDIRECTS[path]) {
-    const redirectUrl = new URL(PAGE_REDIRECTS[path], request.url);
-    return NextResponse.redirect(redirectUrl, { status: 301 });
+  // Wildcard: /employer/* → /organization/*
+  if (pathname.startsWith("/employer/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace("/employer/", "/organization/");
+    return NextResponse.redirect(url, 308);
   }
 
-  // Protected routes checks (placeholder - actual auth happens client-side)
-  // Note: Client-side SDK handles auth state via onAuthStateChanged.
-  // Real protection happens in Firestore Rules (backend) and Components (client-side redirects).
+  // Wildcard: /jobs/* → /careers/*
+  if (pathname.startsWith("/jobs/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace("/jobs/", "/careers/");
+    return NextResponse.redirect(url, 308);
+  }
+
+  // Wildcard: /jobs-training/* → /careers/*
+  if (pathname.startsWith("/jobs-training/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace("/jobs-training/", "/careers/");
+    return NextResponse.redirect(url, 308);
+  }
+
+  // Wildcard: /scholarships/* → /education/scholarships/*
+  if (pathname.startsWith("/scholarships/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace("/scholarships/", "/education/scholarships/");
+    return NextResponse.redirect(url, 308);
+  }
+
+  // Wildcard: /powwows/* → /community/*
+  if (pathname.startsWith("/powwows/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace("/powwows/", "/community/");
+    return NextResponse.redirect(url, 308);
+  }
+
+  // Wildcard: /vendor/* → /organization/shop/*
+  if (pathname.startsWith("/vendor/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace("/vendor/", "/organization/shop/");
+    return NextResponse.redirect(url, 308);
+  }
 
   return NextResponse.next();
 }
 
 export const config = {
-    matcher: [
-        '/organization/:path*',
-        '/member/:path*',
-        '/business/:path*',
-        // V2 routes
-        '/get-started',
-        '/home',
-        '/org/:path*',
-        '/admin/:path*',
-        '/me/:path*',
-    ],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

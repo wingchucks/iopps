@@ -1,153 +1,180 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import { verifyCronSecret } from "@/lib/cron-auth";
 
-// Mark this route as dynamic to prevent static analysis
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+
+// ---------------------------------------------------------------------------
+// GET /api/cron/expire-jobs
+// Runs daily at midnight. Expires jobs, vendor features, and talent pool access.
+// ---------------------------------------------------------------------------
+
+function verifyCronSecret(request: NextRequest): boolean {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ") || !process.env.CRON_SECRET) return false;
+  const token = authHeader.substring(7);
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(token),
+      Buffer.from(process.env.CRON_SECRET),
+    );
+  } catch {
+    return false;
+  }
+}
 
 export async function GET(request: NextRequest) {
-  // Verify CRON_SECRET for security - REQUIRED in all environments
-  const authError = verifyCronSecret(request);
-  if (authError) return authError;
+  if (!verifyCronSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  // Check if Firebase Admin is initialized
-  if (!db) {
-    console.error("Firebase Admin not initialized");
+  if (!adminDb) {
+    console.error("[cron/expire-jobs] Firebase Admin not initialized");
     return NextResponse.json(
       { error: "Database not configured" },
-      { status: 503 }
+      { status: 503 },
     );
   }
 
   try {
-    console.log("Starting job expiration cron job...");
-
+    console.log("[cron/expire-jobs] Starting job expiration cron...");
     const now = new Date();
-    let expiredCount = 0;
 
-    // Query 1: Jobs where expiresAt <= current date AND active = true
-    const expiresAtSnapshot = await db
-      .collection("jobs")
-      .where("active", "==", true)
-      .where("expiresAt", "<=", now)
-      .get();
-
-    if (!expiresAtSnapshot.empty) {
-      for (const jobDoc of expiresAtSnapshot.docs) {
-        try {
-          await db.collection("jobs").doc(jobDoc.id).update({
-            active: false,
-            updatedAt: FieldValue.serverTimestamp(),
-          });
-          expiredCount++;
-        } catch (error) {
-          console.error(`Error updating job ${jobDoc.id}:`, error);
-        }
-      }
-    }
-
-    // Query 2: Jobs where closingDate <= current date AND active = true
-    const closingDateSnapshot = await db
-      .collection("jobs")
-      .where("active", "==", true)
-      .where("closingDate", "<=", now)
-      .get();
-
-    if (!closingDateSnapshot.empty) {
-      for (const jobDoc of closingDateSnapshot.docs) {
-        // Skip if already processed in expiresAt query
-        if (expiresAtSnapshot.docs.some((d: { id: string }) => d.id === jobDoc.id)) {
-          continue;
-        }
-
-        try {
-          await db.collection("jobs").doc(jobDoc.id).update({
-            active: false,
-            updatedAt: FieldValue.serverTimestamp(),
-          });
-          expiredCount++;
-        } catch (error) {
-          console.error(`Error updating job ${jobDoc.id}:`, error);
-        }
-      }
-    }
+    // Run all three expiration tasks in parallel
+    const [jobsExpired, vendorsExpired, talentPoolExpired] = await Promise.all([
+      expireJobs(now),
+      expireVendorFeatures(now),
+      expireTalentPoolAccess(now),
+    ]);
 
     console.log(
-      `Job expiration cron completed. Total jobs expired: ${expiredCount}`
+      `[cron/expire-jobs] Complete. Jobs: ${jobsExpired}, Vendors: ${vendorsExpired}, TalentPool: ${talentPoolExpired}`,
     );
 
-    // =========================================================================
-    // VENDOR FEATURED EXPIRATION
-    // Remove featured status from vendors whose subscription has expired
-    // =========================================================================
-    let vendorFeaturedRemoved = 0;
-
-    const expiredVendorsSnapshot = await db
-      .collection("vendors")
-      .where("featured", "==", true)
-      .where("subscriptionEndsAt", "<=", now)
-      .get();
-
-    if (!expiredVendorsSnapshot.empty) {
-      for (const vendorDoc of expiredVendorsSnapshot.docs) {
-        try {
-          await db.collection("vendors").doc(vendorDoc.id).update({
-            featured: false,
-            subscriptionStatus: "expired",
-            updatedAt: FieldValue.serverTimestamp(),
-          });
-          vendorFeaturedRemoved++;
-        } catch (error) {
-          console.error(`Error updating vendor ${vendorDoc.id}:`, error);
-        }
-      }
-    }
-
-
-    // =========================================================================
-    // TALENT POOL ACCESS EXPIRATION
-    // Deactivate talent pool access for employers whose subscription has expired
-    // =========================================================================
-    let talentPoolAccessExpired = 0;
-
-    const expiredTalentPoolSnapshot = await db
-      .collection("employers")
-      .where("talentPoolAccess.active", "==", true)
-      .where("talentPoolAccess.expiresAt", "<=", now)
-      .get();
-
-    if (!expiredTalentPoolSnapshot.empty) {
-      for (const employerDoc of expiredTalentPoolSnapshot.docs) {
-        try {
-          await db.collection("employers").doc(employerDoc.id).update({
-            "talentPoolAccess.active": false,
-            updatedAt: FieldValue.serverTimestamp(),
-          });
-          talentPoolAccessExpired++;
-        } catch (error) {
-          console.error(`Error updating employer ${employerDoc.id}:`, error);
-        }
-      }
-    }
-
     return NextResponse.json({
-      success: true,
-      jobsExpired: expiredCount,
-      vendorFeaturedRemoved,
-      talentPoolAccessExpired,
+      expired: {
+        jobs: jobsExpired,
+        vendors: vendorsExpired,
+        talentPool: talentPoolExpired,
+      },
       timestamp: now.toISOString(),
-      message: `Successfully expired ${expiredCount} job(s), removed featured from ${vendorFeaturedRemoved} vendor(s), and expired ${talentPoolAccessExpired} talent pool access(es)`,
     });
   } catch (error) {
-    console.error("Job expiration cron error:", error);
+    console.error("[cron/expire-jobs] Fatal error:", error);
     return NextResponse.json(
       {
         error: "Failed to process job expiration",
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Task a) Expire active jobs past their expiresAt or closingDate
+// ---------------------------------------------------------------------------
+async function expireJobs(now: Date): Promise<number> {
+  let count = 0;
+
+  // Query jobs where expiresAt has passed
+  const expiresAtSnap = await adminDb!
+    .collection("jobs")
+    .where("active", "==", true)
+    .where("expiresAt", "<=", now)
+    .get();
+
+  const processedIds = new Set<string>();
+
+  for (const doc of expiresAtSnap.docs) {
+    try {
+      await doc.ref.update({
+        active: false,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      processedIds.add(doc.id);
+      count++;
+    } catch (err) {
+      console.error(`[cron/expire-jobs] Error expiring job ${doc.id}:`, err);
+    }
+  }
+
+  // Query jobs where closingDate has passed
+  const closingDateSnap = await adminDb!
+    .collection("jobs")
+    .where("active", "==", true)
+    .where("closingDate", "<=", now)
+    .get();
+
+  for (const doc of closingDateSnap.docs) {
+    // Skip already-processed docs from the expiresAt query
+    if (processedIds.has(doc.id)) continue;
+
+    try {
+      await doc.ref.update({
+        active: false,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      count++;
+    } catch (err) {
+      console.error(`[cron/expire-jobs] Error expiring job ${doc.id}:`, err);
+    }
+  }
+
+  return count;
+}
+
+// ---------------------------------------------------------------------------
+// Task b) Remove featured status from vendors with expired subscriptions
+// ---------------------------------------------------------------------------
+async function expireVendorFeatures(now: Date): Promise<number> {
+  let count = 0;
+
+  const snap = await adminDb!
+    .collection("vendors")
+    .where("featured", "==", true)
+    .where("subscriptionEndsAt", "<=", now)
+    .get();
+
+  for (const doc of snap.docs) {
+    try {
+      await doc.ref.update({
+        featured: false,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      count++;
+    } catch (err) {
+      console.error(`[cron/expire-jobs] Error un-featuring vendor ${doc.id}:`, err);
+    }
+  }
+
+  return count;
+}
+
+// ---------------------------------------------------------------------------
+// Task c) Deactivate talent pool access for employers past expiry
+// ---------------------------------------------------------------------------
+async function expireTalentPoolAccess(now: Date): Promise<number> {
+  let count = 0;
+
+  const snap = await adminDb!
+    .collection("employers")
+    .where("talentPoolAccess.active", "==", true)
+    .where("talentPoolAccess.expiresAt", "<=", now)
+    .get();
+
+  for (const doc of snap.docs) {
+    try {
+      await doc.ref.update({
+        "talentPoolAccess.active": false,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      count++;
+    } catch (err) {
+      console.error(`[cron/expire-jobs] Error expiring talent pool for employer ${doc.id}:`, err);
+    }
+  }
+
+  return count;
 }

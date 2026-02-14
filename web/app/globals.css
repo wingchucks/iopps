@@ -6,6 +6,7 @@
   --background: #F8F9FA;
   --foreground: #111827;
   --surface: #FFFFFF;
+  --muted: #F3F4F6;
   --card-bg: #FFFFFF;
   --card-border: #E5E7EB;
   --card-border-hover: rgba(13, 148, 136, 0.5);
@@ -53,6 +54,7 @@
   --background: #020617;
   --foreground: #e2e8f0;
   --surface: #0f172a;
+  --muted: #1e293b;
   --card-bg: #08090C;
   --card-border: rgba(30, 41, 59, 0.8);
   --card-border-hover: rgba(20, 184, 166, 0.7);
@@ -88,11 +90,31 @@
   --info: #38bdf8;
 }
 
+/* ===== ADMIN AMBER THEME SCOPE ===== */
+[data-admin] {
+  --accent: #D97706;
+  --accent-soft: #B45309;
+  --accent-hover: #F59E0B;
+  --accent-bg: #FFFBEB;
+  --accent-lt: #FEF3C7;
+}
+
+[data-theme="dark"][data-admin],
+[data-theme="dark"] [data-admin] {
+  --accent: #fbbf24;
+  --accent-soft: #f59e0b;
+  --accent-hover: #fcd34d;
+  --accent-bg: rgba(251, 191, 36, 0.1);
+  --accent-lt: rgba(251, 191, 36, 0.2);
+}
+
+/* ===== TAILWIND v4 THEME BRIDGE ===== */
 @theme inline {
   /* Base colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-muted: var(--muted);
 
   /* Brand accent colors */
   --color-accent: var(--accent);
@@ -136,7 +158,7 @@
   --color-info: var(--info);
 
   /* Fonts */
-  --font-sans: var(--font-inter);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
@@ -146,10 +168,14 @@ body {
   min-height: 100%;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* Dark mode body gradient (subtle) */
@@ -158,6 +184,38 @@ body {
     radial-gradient(circle at top left, rgba(20, 184, 166, 0.08), transparent 55%),
     radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.08), transparent 55%),
     var(--background);
+}
+
+/* ===== SELECTION ===== */
+::selection {
+  background: var(--accent-lt);
+  color: var(--text-primary);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
 }
 
 /* ===== GLOBAL FOCUS STATES ===== */
@@ -177,7 +235,7 @@ textarea:focus {
   border-color: var(--input-focus);
 }
 
-/* ===== MOBILE-FIRST TOUCH OPTIMIZATION ===== */
+/* ===== TOUCH OPTIMIZATION ===== */
 @media (pointer: coarse) {
   button,
   [role="button"] {
@@ -205,44 +263,6 @@ textarea:focus {
   }
 }
 
-@media (max-width: 640px) {
-  .mobile-card-padding {
-    padding: 1.25rem !important;
-  }
-
-  body {
-    overflow-x: hidden;
-  }
-
-  .sticky-bottom-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 1rem;
-    background: var(--card-bg);
-    border-top: 1px solid var(--card-border);
-    z-index: 40;
-  }
-}
-
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .has-safe-area {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  @media (max-width: 640px) {
-    .sticky-bottom-bar {
-      padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-    }
-  }
-}
-
-html {
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
 button,
 [role="button"] {
   -webkit-user-select: none;
@@ -250,23 +270,9 @@ button,
   -webkit-tap-highlight-color: transparent;
 }
 
-@media (max-width: 640px) {
-  ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-  }
+/* ===== UTILITY CLASSES ===== */
 
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--text-subtle);
-    border-radius: 4px;
-  }
-}
-
-/* Scrollable tab bar with hidden scrollbar and fade edges */
+/* Scrollbar hiding */
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -275,7 +281,16 @@ button,
   display: none;
 }
 
-/* Screen reader only - visually hidden but accessible */
+/* Focus ring */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Screen reader only - visible on focus */
 .sr-only-focusable:not(:focus):not(:focus-within) {
   position: absolute;
   width: 1px;
@@ -288,17 +303,7 @@ button,
   border-width: 0;
 }
 
-/* Focus visible ring for accessibility */
-.focus-ring {
-  outline: none;
-}
-.focus-ring:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 /* ===== ANIMATIONS ===== */
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -332,26 +337,6 @@ button,
   }
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
 @keyframes scaleIn {
   from {
     opacity: 0;
@@ -360,74 +345,6 @@ button,
   to {
     opacity: 1;
     transform: scale(1);
-  }
-}
-
-@keyframes tabIndicatorSlide {
-  from {
-    opacity: 0.5;
-    transform: scaleX(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-}
-
-@keyframes saveSuccess {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes saveFadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes contentCrossfade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes expandIn {
-  from {
-    opacity: 0;
-    max-height: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    max-height: 500px;
-    transform: translateY(0);
-  }
-}
-
-@keyframes collapseOut {
-  from {
-    opacity: 1;
-    max-height: 500px;
-  }
-  to {
-    opacity: 0;
-    max-height: 0;
   }
 }
 
@@ -440,69 +357,18 @@ button,
   }
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
   }
-  50% {
-    transform: translateY(-6px);
+  to {
+    transform: rotate(360deg);
   }
-}
-
-@keyframes confetti {
-  0% {
-    opacity: 1;
-    transform: translateY(0) rotate(0deg);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-100px) rotate(720deg);
-  }
-}
-
-@keyframes checkmark {
-  0% {
-    stroke-dashoffset: 100;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes gradient-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes ioppsPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
 }
 
 /* Animation utility classes */
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
-}
-
-.animate-fade-in-delay {
-  animation: fadeIn 0.4s ease-out 0.1s forwards;
-  opacity: 0;
 }
 
 .animate-fade-up {
@@ -513,51 +379,9 @@ button,
   animation: slideUp 0.4s ease-out forwards;
 }
 
-.animate-slide-in {
-  animation: slideIn 0.4s ease-out forwards;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out;
-}
-
 .animate-scale-in {
   animation: scaleIn 0.2s ease-out forwards;
 }
-
-.animate-tab-indicator {
-  animation: tabIndicatorSlide 0.25s ease-out forwards;
-}
-
-.animate-save-success {
-  animation: saveSuccess 0.4s ease-out forwards;
-}
-
-.animate-save-fade-out {
-  animation: saveFadeOut 0.3s ease-out 1.5s forwards;
-}
-
-.animate-crossfade {
-  animation: contentCrossfade 0.3s ease-out;
-}
-
-.animate-expand-in {
-  animation: expandIn 0.3s ease-out forwards;
-  overflow: hidden;
-}
-
-/* Staggered children animations */
-.stagger-children > * {
-  opacity: 0;
-  animation: fadeIn 0.4s ease-out forwards;
-}
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 80ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 160ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 240ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 320ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 400ms; }
-.stagger-children > *:nth-child(7) { animation-delay: 480ms; }
 
 /* Skeleton shimmer for loading states */
 .skeleton-shimmer {
@@ -572,41 +396,17 @@ button,
   border-radius: 0.5rem;
 }
 
-.animate-shimmer {
-  background: linear-gradient(90deg, transparent 33%, rgba(255,255,255,0.1) 50%, transparent 66%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+/* Staggered children animations */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
 }
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-confetti {
-  animation: confetti 1s ease-out forwards;
-}
-
-.animate-checkmark {
-  stroke-dasharray: 100;
-  animation: checkmark 0.6s ease-out forwards;
-}
-
-.animate-gradient {
-  background-size: 300% 300%;
-  animation: gradient-shift 8s ease infinite;
-}
-
-.animate-scroll {
-  animation: scroll 40s linear infinite;
-}
-
-.animate-iopps-pulse {
-  animation: ioppsPulse 1.5s ease-in-out infinite;
-}
-
-.pause-on-hover:hover {
-  animation-play-state: paused;
-}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 320ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 400ms; }
 
 /* Interactive utility classes */
 .btn-hover {
@@ -635,30 +435,36 @@ button,
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* Auth card hover effects */
-.auth-card {
-  transition: all 0.2s ease;
+/* ===== MOBILE LAYOUT ===== */
+@media (max-width: 640px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .mobile-card-padding {
+    padding: 1.25rem !important;
+  }
+
+  .sticky-bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    background: var(--card-bg);
+    border-top: 1px solid var(--card-border);
+    z-index: 40;
+  }
 }
 
-.auth-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(13, 148, 136, 0.1);
-}
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .has-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 
-/* ===== ADMIN AMBER THEME SCOPE ===== */
-[data-admin] {
-  --accent: #D97706;
-  --accent-soft: #B45309;
-  --accent-hover: #F59E0B;
-  --accent-bg: #FFFBEB;
-  --accent-lt: #FEF3C7;
-}
-
-[data-theme="dark"][data-admin],
-[data-theme="dark"] [data-admin] {
-  --accent: #fbbf24;
-  --accent-soft: #f59e0b;
-  --accent-hover: #fcd34d;
-  --accent-bg: rgba(251, 191, 36, 0.1);
-  --accent-lt: rgba(251, 191, 36, 0.2);
+  @media (max-width: 640px) {
+    .sticky-bottom-bar {
+      padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
+  }
 }

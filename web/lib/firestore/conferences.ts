@@ -1,512 +1,337 @@
-// Conference-related Firestore operations
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
-  db,
-  conferencesCollection,
-  savedConferencesCollection,
-  conferenceRegistrationsCollection,
-  conferenceFingerprintHistoryCollection,
-  checkFirebase,
-} from "./shared";
-import type { Conference, ConferenceRegistration, ConferenceVisibilityTier, TimestampLike } from "@/lib/types";
-import { MOCK_CONFERENCES } from "../mockData";
-import { toDate } from "./timestamps";
+/**
+ * Conference Firestore operations (server-side, firebase-admin).
+ *
+ * Collection: "conferences"
+ *
+ * All functions use the Firebase Admin SDK and are intended for use
+ * in Next.js API routes and server components.
+ */
 
-// Constants for visibility system
-export const FREE_VISIBILITY_DAYS = 45;
-export const FAR_FUTURE_EVENT_DAYS = 90; // Show warning for events more than 90 days out
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue, type Timestamp } from "firebase-admin/firestore";
 
-// Check if a conference has ended based on endDate
-export function isConferenceExpired(conference: Conference): boolean {
+// ============================================
+// COLLECTION NAME
+// ============================================
+
+const CONFERENCES_COLLECTION = "conferences";
+
+// ============================================
+// TYPES
+// ============================================
+
+/**
+ * A flexible timestamp type covering Firestore Timestamps,
+ * serialized timestamps, Date objects, and ISO strings.
+ */
+type TimestampLike =
+  | { _seconds: number; _nanoseconds?: number }
+  | { seconds: number; nanoseconds?: number }
+  | { toDate: () => Date }
+  | Date
+  | string;
+
+export type ConferenceVisibilityTier = "standard" | "demoted" | "featured";
+
+export interface ConferenceVenue {
+  name: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+  mapUrl?: string;
+  parkingInfo?: string;
+  transitInfo?: string;
+  accessibilityInfo?: string;
+  nearbyHotels?: string;
+}
+
+export interface ConferenceSpeaker {
+  id: string;
+  name: string;
+  title?: string;
+  organization?: string;
+  nation?: string;
+  bio?: string;
+  photoUrl?: string;
+}
+
+export interface ConferenceSponsor {
+  id: string;
+  name: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  tier?: "platinum" | "gold" | "silver" | "bronze" | "community";
+}
+
+export interface Conference {
+  id: string;
+  employerId: string;
+  employerName?: string;
+  organizerName?: string;
+  title: string;
+  description: string;
+  location: string;
+  startDate: Timestamp | string | null;
+  endDate: Timestamp | string | null;
+  registrationLink?: string;
+  registrationUrl?: string;
+  cost?: string;
+  format?: string;
+  active: boolean;
+  createdAt?: Timestamp | null;
+  publishedAt?: Timestamp | Date | string | null;
+  visibilityTier?: ConferenceVisibilityTier;
+  freeVisibilityExpiresAt?: Timestamp | Date | string | null;
+  eventFingerprint?: string;
+  freeVisibilityUsed?: boolean;
+  featured?: boolean;
+  featuredExpiresAt?: Timestamp | Date | string | null;
+  paymentStatus?: "paid" | "pending" | "failed" | "refunded";
+  paymentId?: string;
+  productType?: string;
+  amountPaid?: number;
+  expiresAt?: Timestamp | Date | string | null;
+  viewsCount?: number;
+  imageUrl?: string;
+  bannerImageUrl?: string;
+  coverImageUrl?: string;
+  galleryImageUrls?: string[];
+  promoVideoUrl?: string;
+  venue?: ConferenceVenue;
+  speakers?: ConferenceSpeaker[];
+  sponsors?: ConferenceSponsor[];
+  eventType?: "in-person" | "virtual" | "hybrid";
+  livestreamUrl?: string;
+  expectedAttendees?: string;
+  targetAudience?: string[];
+  topics?: string[];
+  timezone?: string;
+  indigenousFocused?: boolean;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
+export interface ConferenceFilters {
+  /** Only return active conferences. Defaults to true. */
+  activeOnly?: boolean;
+  /** Include expired conferences (past endDate). Defaults to false. */
+  includeExpired?: boolean;
+  /** Include demoted conferences. Defaults to false. */
+  includeDemoted?: boolean;
+  /** Page size */
+  pageSize?: number;
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+/** Convert a TimestampLike value to a plain Date. */
+function toDate(value: TimestampLike | null | undefined): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === "string") {
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+    return value.toDate();
+  }
+  if (typeof value === "object" && "_seconds" in value) {
+    return new Date((value as { _seconds: number })._seconds * 1000);
+  }
+  if (typeof value === "object" && "seconds" in value) {
+    return new Date((value as { seconds: number }).seconds * 1000);
+  }
+  return null;
+}
+
+/** Check if a conference has ended. */
+function isConferenceExpired(conference: Conference): boolean {
   const now = new Date();
-  const endDate = toDate(conference.endDate);
+  const endDate = toDate(conference.endDate as TimestampLike | null);
   if (endDate && endDate < now) return true;
   return false;
 }
 
-// =====================================================
-// VISIBILITY SYSTEM - 45-day free visibility guardrail
-// =====================================================
-
-/**
- * Generate a deterministic fingerprint for duplicate detection.
- * Fingerprint = normalized hash of: orgId + title + startDate + city
- */
-export function generateConferenceFingerprint(
-  employerId: string,
-  title: string,
-  startDate: TimestampLike | null | undefined, // Accept any timestamp format
-  location: string
-): string {
-  // Normalize inputs
-  const normalizedTitle = (title || "").toLowerCase().trim().replace(/\s+/g, " ");
-  const normalizedLocation = (location || "").toLowerCase().trim().replace(/\s+/g, " ");
-
-  // Extract city from location (first part before comma typically)
-  const city = normalizedLocation.split(",")[0].trim();
-
-  // Format date as YYYY-MM-DD
-  let dateStr = "";
-  if (startDate) {
-    const d = toDate(startDate);
-    if (d && !isNaN(d.getTime())) {
-      dateStr = d.toISOString().split("T")[0];
-    }
-  }
-
-  // Create fingerprint string and hash it
-  const fingerprintInput = `${employerId}|${normalizedTitle}|${dateStr}|${city}`;
-
-  // Simple hash function (djb2)
-  let hash = 5381;
-  for (let i = 0; i < fingerprintInput.length; i++) {
-    hash = (hash * 33) ^ fingerprintInput.charCodeAt(i);
-  }
-  return `fp_${(hash >>> 0).toString(16)}`;
-}
-
-/**
- * Compute current visibility tier based on conference data
- */
-export function computeVisibilityTier(conference: Conference): ConferenceVisibilityTier {
+/** Compute the visibility tier for a conference. */
+function computeVisibilityTier(conference: Conference): ConferenceVisibilityTier {
   const now = new Date();
 
-  // Check if actively featured (featured flag true AND not expired)
   if (conference.featured) {
-    const featuredExpires = toDate(conference.featuredExpiresAt);
+    const featuredExpires = toDate(conference.featuredExpiresAt as TimestampLike | null);
     if (!featuredExpires || featuredExpires > now) {
       return "featured";
     }
   }
 
-  // Check if within free visibility window
-  const freeExpires = toDate(conference.freeVisibilityExpiresAt);
+  const freeExpires = toDate(conference.freeVisibilityExpiresAt as TimestampLike | null);
   if (freeExpires && freeExpires > now) {
     return "standard";
   }
 
-  // If published but free visibility expired, it's demoted
-  const publishedAt = toDate(conference.publishedAt);
+  const publishedAt = toDate(conference.publishedAt as TimestampLike | null);
   if (publishedAt) {
     return "demoted";
   }
 
-  // Default to standard for unpublished/new conferences
   return "standard";
 }
 
-/**
- * Check if a conference is visible in standard/featured listings
- * (demoted conferences are NOT included in main listings)
- */
-export function isConferenceVisible(conference: Conference): boolean {
+/** Check if a conference is visible in standard/featured listings. */
+function isConferenceVisible(conference: Conference): boolean {
   if (!conference.active) return false;
   if (isConferenceExpired(conference)) return false;
-
   const tier = computeVisibilityTier(conference);
   return tier === "featured" || tier === "standard";
 }
 
-/**
- * Check if the event start date is far in the future (>90 days)
- */
-export function isEventFarInFuture(startDate: Date | string | null): boolean {
-  if (!startDate) return false;
-  const d = typeof startDate === "string" ? new Date(startDate) : startDate;
-  if (!(d instanceof Date) || isNaN(d.getTime())) return false;
-
-  const now = new Date();
-  const daysUntil = Math.floor((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  return daysUntil > FAR_FUTURE_EVENT_DAYS;
-}
-
-// Fingerprint history entry type
-export interface FingerprintHistoryEntry {
-  employerId: string;
-  fingerprint: string;
-  firstPublishedAt: Date;
-  freeVisibilityExpiresAt: Date;
-  freeVisibilityUsed: boolean;
-  conferenceId: string;
-  title: string;
-}
+// ============================================
+// CRUD FUNCTIONS
+// ============================================
 
 /**
- * Record fingerprint when a conference is first published
+ * List conferences with optional filters and visibility-aware sorting.
+ * Featured conferences appear first, then standard conferences by startDate.
+ * Queries the "conferences" collection.
+ *
+ * @param filters - Optional filter criteria
+ * @returns Array of conferences
  */
-export async function recordFingerprintHistory(
-  employerId: string,
-  fingerprint: string,
-  conferenceId: string,
-  title: string
-): Promise<void> {
-  const firestore = checkFirebase();
-  if (!firestore) return;
+export async function getConferences(
+  filters: ConferenceFilters = {}
+): Promise<Conference[]> {
+  if (!adminDb) return [];
 
-  const docId = `${employerId}_${fingerprint}`;
-  const ref = doc(firestore, conferenceFingerprintHistoryCollection, docId);
-
-  const now = new Date();
-  const expiresAt = new Date(now);
-  expiresAt.setDate(expiresAt.getDate() + FREE_VISIBILITY_DAYS);
-
-  await setDoc(ref, {
-    employerId,
-    fingerprint,
-    firstPublishedAt: now,
-    freeVisibilityExpiresAt: expiresAt,
-    freeVisibilityUsed: true,
-    conferenceId,
-    title,
-  });
-}
-
-/**
- * Check if a fingerprint has already used free visibility
- * Returns the history entry if found and expired, null otherwise
- */
-export async function checkFingerprintHistory(
-  employerId: string,
-  fingerprint: string
-): Promise<FingerprintHistoryEntry | null> {
-  const firestore = checkFirebase();
-  if (!firestore) return null;
-
-  const docId = `${employerId}_${fingerprint}`;
-  const ref = doc(firestore, conferenceFingerprintHistoryCollection, docId);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) return null;
-
-  const data = snap.data() as FingerprintHistoryEntry;
-  const now = new Date();
-  const expiresAt = toDate(data.freeVisibilityExpiresAt);
-
-  // Only return if free visibility has expired (blocking scenario)
-  if (expiresAt && expiresAt <= now && data.freeVisibilityUsed) {
-    return data;
-  }
-
-  return null;
-}
-
-/**
- * Check if publishing this conference would be blocked (duplicate repost)
- * Returns { blocked: true, reason: string } if blocked, { blocked: false } otherwise
- */
-export async function checkPublishBlocked(
-  conference: Conference,
-  willBeFeatured: boolean = false
-): Promise<{ blocked: boolean; reason?: string; existingEntry?: FingerprintHistoryEntry }> {
-  // Featured listings bypass the duplicate check
-  if (willBeFeatured) {
-    return { blocked: false };
-  }
-
-  // Generate fingerprint for this conference
-  const fingerprint = generateConferenceFingerprint(
-    conference.employerId,
-    conference.title,
-    conference.startDate,
-    conference.location
-  );
-
-  // Check fingerprint history
-  const existingEntry = await checkFingerprintHistory(conference.employerId, fingerprint);
-
-  if (existingEntry) {
-    return {
-      blocked: true,
-      reason: "This conference has already received its free 45-day visibility period.",
-      existingEntry,
-    };
-  }
-
-  return { blocked: false };
-}
-
-type ConferenceInput = Omit<
-  Conference,
-  "id" | "createdAt" | "active" | "employerId"
-> & { employerId: string; active?: boolean };
-
-export async function createConference(input: ConferenceInput): Promise<string> {
-  const ref = collection(db!, conferencesCollection);
-  const docRef = await addDoc(ref, {
-    ...input,
-    active: input.active ?? true,
-    createdAt: serverTimestamp(),
-  });
-  await updateDoc(doc(db!, conferencesCollection, docRef.id), {
-    id: docRef.id,
-  });
-  return docRef.id;
-}
-
-export interface ListConferencesOptions {
-  includeExpired?: boolean;
-  includeDemoted?: boolean; // Include demoted conferences (for admin/search)
-}
-
-/**
- * List conferences with visibility-aware filtering and sorting.
- * By default, only shows featured + standard visibility (excludes demoted).
- * Sorting: Featured first (by featuredExpiresAt), then standard (by startDate)
- */
-export async function listConferences(options: ListConferencesOptions = {}): Promise<Conference[]> {
   try {
-    const firestore = checkFirebase();
-    if (!firestore) {
-      let conferences = [...MOCK_CONFERENCES];
-      if (!options.includeExpired) {
-        conferences = conferences.filter(c => c.active !== false && !isConferenceExpired(c));
-      }
-      return conferences;
-    }
-    const ref = collection(firestore, conferencesCollection);
-    const q = query(ref, where("active", "==", true), orderBy("startDate", "asc"));
-    const snap = await getDocs(q);
-    let conferences = snap.docs.map((docSnap) => docSnap.data() as Conference);
+    let ref: FirebaseFirestore.Query = adminDb.collection(CONFERENCES_COLLECTION);
 
-    // Client-side filtering for expired conferences (safety net)
-    if (!options.includeExpired) {
-      conferences = conferences.filter(c => !isConferenceExpired(c));
+    if (filters.activeOnly !== false) {
+      ref = ref.where("active", "==", true);
     }
 
-    // Apply visibility filtering (exclude demoted unless explicitly requested)
-    if (!options.includeDemoted) {
-      conferences = conferences.filter(c => isConferenceVisible(c));
+    ref = ref.orderBy("startDate", "asc");
+
+    if (filters.pageSize) {
+      ref = ref.limit(filters.pageSize);
     }
 
-    // Sort: Featured first (newest featured first), then standard (by start date)
+    const snap = await ref.get();
+
+    let conferences = snap.docs.map((doc) => doc.data() as Conference);
+
+    // Client-side expired filtering
+    if (!filters.includeExpired) {
+      conferences = conferences.filter((c) => !isConferenceExpired(c));
+    }
+
+    // Visibility filtering (exclude demoted unless requested)
+    if (!filters.includeDemoted) {
+      conferences = conferences.filter((c) => isConferenceVisible(c));
+    }
+
+    // Sort: featured first, then by startDate
     conferences.sort((a, b) => {
       const aTier = computeVisibilityTier(a);
       const bTier = computeVisibilityTier(b);
 
-      // Featured conferences come first
       if (aTier === "featured" && bTier !== "featured") return -1;
       if (bTier === "featured" && aTier !== "featured") return 1;
 
-      // Among featured, sort by featuredExpiresAt (soonest ending first) or createdAt
       if (aTier === "featured" && bTier === "featured") {
-        const aExpires = toDate(a.featuredExpiresAt)?.getTime() || Number.MAX_SAFE_INTEGER;
-        const bExpires = toDate(b.featuredExpiresAt)?.getTime() || Number.MAX_SAFE_INTEGER;
+        const aExpires = toDate(a.featuredExpiresAt as TimestampLike | null)?.getTime() || Number.MAX_SAFE_INTEGER;
+        const bExpires = toDate(b.featuredExpiresAt as TimestampLike | null)?.getTime() || Number.MAX_SAFE_INTEGER;
         return aExpires - bExpires;
       }
 
-      // Standard conferences: by start date (soonest first)
-      const aStart = toDate(a.startDate)?.getTime() || Number.MAX_SAFE_INTEGER;
-      const bStart = toDate(b.startDate)?.getTime() || Number.MAX_SAFE_INTEGER;
+      const aStart = toDate(a.startDate as TimestampLike | null)?.getTime() || Number.MAX_SAFE_INTEGER;
+      const bStart = toDate(b.startDate as TimestampLike | null)?.getTime() || Number.MAX_SAFE_INTEGER;
       return aStart - bStart;
     });
 
     return conferences;
-  } catch {
+  } catch (error) {
+    console.error("[getConferences] Error:", error);
     return [];
   }
 }
 
-export async function listEmployerConferences(
-  employerId: string
-): Promise<Conference[]> {
-  const ref = collection(db!, conferencesCollection);
-  const q = query(
-    ref,
-    where("employerId", "==", employerId),
-    orderBy("createdAt", "desc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => docSnap.data() as Conference);
-}
+/**
+ * Get a single conference by its document ID.
+ * Queries the "conferences" collection.
+ *
+ * @param id - Conference document ID
+ * @returns The conference or null if not found
+ */
+export async function getConferenceById(
+  id: string
+): Promise<Conference | null> {
+  if (!adminDb) return null;
 
-export async function getConference(id: string): Promise<Conference | null> {
-  const firestore = checkFirebase();
-  if (!firestore) {
-    return MOCK_CONFERENCES.find(c => c.id === id) || null;
+  try {
+    const snap = await adminDb
+      .collection(CONFERENCES_COLLECTION)
+      .doc(id)
+      .get();
+
+    if (!snap.exists) return null;
+    return snap.data() as Conference;
+  } catch (error) {
+    console.error("[getConferenceById] Error:", error);
+    return null;
   }
-  const ref = doc(firestore, conferencesCollection, id);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
-  return snap.data() as Conference;
-}
-
-export async function updateConference(
-  id: string,
-  data: Partial<Conference>
-) {
-  const ref = doc(db!, conferencesCollection, id);
-  await updateDoc(ref, data);
-}
-
-export async function deleteConference(id: string) {
-  // Note: Fingerprint history is preserved in separate collection
-  // to prevent delete-and-repost abuse
-  const ref = doc(db!, conferencesCollection, id);
-  await deleteDoc(ref);
 }
 
 /**
- * Publish a conference - sets publishedAt, freeVisibilityExpiresAt, fingerprint
- * Returns { success: true } or { success: false, reason: string }
+ * Create a new conference document in the "conferences" collection.
+ *
+ * @param data - Conference data (excluding id, createdAt)
+ * @returns The new document ID
  */
-export async function publishConference(
-  conferenceId: string,
-  willBeFeatured: boolean = false
-): Promise<{ success: boolean; reason?: string }> {
-  const firestore = checkFirebase();
-  if (!firestore) {
-    return { success: false, reason: "Database not available" };
-  }
-
-  // Get the conference
-  const conference = await getConference(conferenceId);
-  if (!conference) {
-    return { success: false, reason: "Conference not found" };
-  }
-
-  // Check if already published
-  if (conference.publishedAt) {
-    // Already published - just reactivate
-    await updateConference(conferenceId, { active: true });
-    return { success: true };
-  }
-
-  // Generate fingerprint
-  const fingerprint = generateConferenceFingerprint(
-    conference.employerId,
-    conference.title,
-    conference.startDate,
-    conference.location
-  );
-
-  // Check for duplicate (blocked repost)
-  const blockCheck = await checkPublishBlocked(conference, willBeFeatured);
-  if (blockCheck.blocked) {
-    return { success: false, reason: blockCheck.reason };
-  }
-
-  // Set visibility fields
-  const now = new Date();
-  const freeVisibilityExpiresAt = new Date(now);
-  freeVisibilityExpiresAt.setDate(freeVisibilityExpiresAt.getDate() + FREE_VISIBILITY_DAYS);
-
-  // Update conference with visibility fields
-  await updateConference(conferenceId, {
-    active: true,
-    publishedAt: now,
-    freeVisibilityExpiresAt,
-    eventFingerprint: fingerprint,
-    freeVisibilityUsed: true,
-    visibilityTier: willBeFeatured ? "featured" : "standard",
-  });
-
-  // Record fingerprint history (for anti-repost after delete)
-  await recordFingerprintHistory(
-    conference.employerId,
-    fingerprint,
-    conferenceId,
-    conference.title
-  );
-
-  return { success: true };
-}
-
-// Saved Conferences
-export type SavedConference = {
-  id?: string;
-  memberId: string;
-  conferenceId: string;
-  createdAt?: TimestampLike | null;
-  conference?: Conference | null;
-};
-
-export async function toggleSavedConference(
-  memberId: string,
-  conferenceId: string,
-  shouldSave: boolean
-) {
-  const snapshot = await getDocs(
-    query(
-      collection(db!, savedConferencesCollection),
-      where("memberId", "==", memberId),
-      where("conferenceId", "==", conferenceId)
-    )
-  );
-
-  if (shouldSave) {
-    if (snapshot.empty) {
-      await addDoc(collection(db!, savedConferencesCollection), {
-        memberId,
-        conferenceId,
-        createdAt: serverTimestamp(),
-      });
-    }
-  } else {
-    await Promise.all(snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref)));
-  }
-}
-
-export async function listSavedConferences(
-  memberId: string
-): Promise<SavedConference[]> {
-  const ref = collection(db!, savedConferencesCollection);
-  const q = query(
-    ref,
-    where("memberId", "==", memberId),
-    orderBy("createdAt", "desc")
-  );
-  const snap = await getDocs(q);
-
-  const results: SavedConference[] = [];
-  for (const docSnap of snap.docs) {
-    const data = docSnap.data() as SavedConference;
-    const conference = await getConference(data.conferenceId);
-    results.push({
-      ...data,
-      id: docSnap.id,
-      conference,
-    });
-  }
-  return results;
-}
-
-export async function listSavedConferenceIds(memberId: string): Promise<string[]> {
-  const ref = collection(db!, savedConferencesCollection);
-  const q = query(ref, where("memberId", "==", memberId));
-  const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => {
-    const data = docSnap.data() as SavedConference;
-    return data.conferenceId;
-  });
-}
-
-// Conference Registration
-type ConferenceRegistrationInput = Omit<
-  ConferenceRegistration,
-  "id" | "createdAt"
->;
-
-export async function createConferenceRegistration(
-  input: ConferenceRegistrationInput
+export async function createConference(
+  data: Omit<Conference, "id" | "createdAt">
 ): Promise<string> {
-  const ref = collection(db!, conferenceRegistrationsCollection);
-  const docRef = await addDoc(ref, {
-    ...input,
-    createdAt: serverTimestamp(),
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+
+  const ref = await adminDb.collection(CONFERENCES_COLLECTION).add({
+    ...data,
+    active: data.active ?? true,
+    createdAt: FieldValue.serverTimestamp(),
   });
-  await updateDoc(doc(db!, conferenceRegistrationsCollection, docRef.id), {
-    id: docRef.id,
-  });
-  return docRef.id;
+
+  // Update with own ID (matching v1 pattern)
+  await adminDb
+    .collection(CONFERENCES_COLLECTION)
+    .doc(ref.id)
+    .update({ id: ref.id });
+
+  return ref.id;
+}
+
+/**
+ * Update fields on an existing conference.
+ * Queries the "conferences" collection.
+ *
+ * @param id - Conference document ID
+ * @param data - Partial fields to update
+ */
+export async function updateConference(
+  id: string,
+  data: Partial<Conference>
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+
+  // Filter out undefined values
+  const cleanData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      cleanData[key] = value;
+    }
+  }
+
+  await adminDb
+    .collection(CONFERENCES_COLLECTION)
+    .doc(id)
+    .update(cleanData);
 }

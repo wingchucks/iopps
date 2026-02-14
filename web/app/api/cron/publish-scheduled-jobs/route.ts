@@ -1,119 +1,121 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import { verifyCronSecret } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
-// This endpoint is called by Vercel Cron to publish scheduled jobs
-// Runs every 15 minutes (configured in vercel.json)
-export async function GET(request: NextRequest) {
+// ---------------------------------------------------------------------------
+// GET /api/cron/publish-scheduled-jobs
+// Runs every 15 minutes. Publishes jobs that have a scheduledPublishAt in the past,
+// creates a notification for the employer.
+// ---------------------------------------------------------------------------
+
+function verifyCronSecret(request: NextRequest): boolean {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ") || !process.env.CRON_SECRET) return false;
+  const token = authHeader.substring(7);
   try {
-    // Verify cron secret - REQUIRED in all environments
-    const authError = verifyCronSecret(request);
-    if (authError) return authError;
+    return crypto.timingSafeEqual(
+      Buffer.from(token),
+      Buffer.from(process.env.CRON_SECRET),
+    );
+  } catch {
+    return false;
+  }
+}
 
-    if (!db) {
-      return NextResponse.json({ error: "Database not available" }, { status: 503 });
-    }
+interface ScheduledJobData {
+  employerId: string;
+  title: string;
+  scheduledPublishAt: FirebaseFirestore.Timestamp | Date;
+}
 
+export async function GET(request: NextRequest) {
+  if (!verifyCronSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!adminDb) {
+    console.error("[cron/publish-scheduled-jobs] Firebase Admin not initialized");
+    return NextResponse.json(
+      { error: "Database not configured" },
+      { status: 503 },
+    );
+  }
+
+  try {
+    console.log("[cron/publish-scheduled-jobs] Starting scheduled job publishing...");
     const now = new Date();
-    let publishedCount = 0;
+    let published = 0;
     const errors: string[] = [];
 
-    // Find jobs that are:
-    // 1. Not active (draft/scheduled)
-    // 2. Have a scheduledPublishAt date in the past
-    // 3. Have paid status or free posting enabled
-    const scheduledJobsSnapshot = await db
+    const snap = await adminDb
       .collection("jobs")
       .where("active", "==", false)
       .where("scheduledPublishAt", "<=", now)
       .get();
 
-    if (scheduledJobsSnapshot.empty) {
+    if (snap.empty) {
       return NextResponse.json({
-        success: true,
-        message: "No scheduled jobs to publish",
-        publishedCount: 0,
+        published: 0,
+        timestamp: now.toISOString(),
       });
     }
 
-    const batch = db.batch();
+    const batch = adminDb.batch();
 
-    for (const doc of scheduledJobsSnapshot.docs) {
+    for (const doc of snap.docs) {
       try {
-        const jobData = doc.data();
+        const data = doc.data() as ScheduledJobData;
 
-        // Verify the job can be published (paid or free posting)
-        const canPublish =
-          jobData.paymentStatus === "paid" ||
-          jobData.freePostingEnabled === true;
-
-        if (!canPublish) {
-          // Check if employer has free posting grant
-          const employerDoc = await db
-            .collection("employers")
-            .doc(jobData.employerId)
-            .get();
-
-          if (employerDoc.exists) {
-            const employerData = employerDoc.data();
-            const hasFreePosting =
-              employerData?.freePostingEnabled ||
-              (employerData?.freePostingGrant?.active &&
-                employerData?.freePostingGrant?.remainingCredits > 0);
-
-            if (!hasFreePosting) {
-              errors.push(
-                `Job ${doc.id} cannot be published: no payment or free posting`
-              );
-              continue;
-            }
-          }
-        }
-
-        // Publish the job
+        // Publish the job and clear the scheduled date
         batch.update(doc.ref, {
           active: true,
           publishedAt: FieldValue.serverTimestamp(),
-          scheduledPublishAt: null, // Clear the scheduled date
+          scheduledPublishAt: FieldValue.delete(),
+          updatedAt: FieldValue.serverTimestamp(),
         });
 
-        publishedCount++;
-
-        // Create notification for employer
-        const notificationRef = db.collection("notifications").doc();
+        // Create notification for the employer
+        const notificationRef = adminDb.collection("notifications").doc();
         batch.set(notificationRef, {
-          userId: jobData.employerId,
+          userId: data.employerId,
           type: "job_published",
-          title: "Job Published",
-          message: `Your job "${jobData.title}" has been automatically published as scheduled.`,
-          relatedEntityType: "job",
-          relatedEntityId: doc.id,
+          title: "Your job is now live",
+          message: `${data.title} has been published`,
+          jobId: doc.id,
           read: false,
           createdAt: FieldValue.serverTimestamp(),
         });
+
+        published++;
       } catch (err) {
-        errors.push(`Error processing job ${doc.id}: ${err}`);
+        const msg = `Error processing job ${doc.id}: ${err instanceof Error ? err.message : String(err)}`;
+        console.error(`[cron/publish-scheduled-jobs] ${msg}`);
+        errors.push(msg);
       }
     }
 
-    if (publishedCount > 0) {
+    if (published > 0) {
       await batch.commit();
     }
 
+    console.log(`[cron/publish-scheduled-jobs] Complete. Published: ${published}`);
+
     return NextResponse.json({
-      success: true,
-      publishedCount,
-      errors: errors.length > 0 ? errors : undefined,
+      published,
+      ...(errors.length > 0 && { errors }),
+      timestamp: now.toISOString(),
     });
   } catch (error) {
-    console.error("Error publishing scheduled jobs:", error);
+    console.error("[cron/publish-scheduled-jobs] Fatal error:", error);
     return NextResponse.json(
-      { error: "Failed to publish scheduled jobs" },
-      { status: 500 }
+      {
+        error: "Failed to publish scheduled jobs",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
     );
   }
 }

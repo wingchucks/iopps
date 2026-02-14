@@ -1,108 +1,106 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { verifyCronSecret } from "@/lib/cron-auth";
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
-// Mark this route as dynamic to prevent static analysis
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+
+// ---------------------------------------------------------------------------
+// GET /api/cron/expire-scholarships
+// Runs daily at 2 AM. Expires scholarships past their deadline.
+// Respects admin overrides (forcePublished).
+// ---------------------------------------------------------------------------
+
+function verifyCronSecret(request: NextRequest): boolean {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ") || !process.env.CRON_SECRET) return false;
+  const token = authHeader.substring(7);
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(token),
+      Buffer.from(process.env.CRON_SECRET),
+    );
+  } catch {
+    return false;
+  }
+}
+
+interface ScholarshipData {
+  active: boolean;
+  deadline: FirebaseFirestore.Timestamp | Date;
+  adminOverride?: {
+    forcePublished?: boolean;
+  };
+}
 
 export async function GET(request: NextRequest) {
-  // Verify CRON_SECRET for security - REQUIRED in all environments
-  const authError = verifyCronSecret(request);
-  if (authError) return authError;
+  if (!verifyCronSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  // Check if Firebase Admin is initialized
-  if (!db) {
-    console.error("Firebase Admin not initialized");
+  if (!adminDb) {
+    console.error("[cron/expire-scholarships] Firebase Admin not initialized");
     return NextResponse.json(
       { error: "Database not configured" },
-      { status: 503 }
+      { status: 503 },
     );
   }
 
   try {
-    console.log("Starting scholarship expiration cron job...");
-
+    console.log("[cron/expire-scholarships] Starting scholarship expiration cron...");
     const now = new Date();
-    let expiredCount = 0;
-    let alreadyExpiredCount = 0;
 
-    // Query scholarships where deadline <= current date AND active = true
-    // AND not force-published by admin
-    const expiredSnapshot = await db
+    let expired = 0;
+    let skippedOverrides = 0;
+
+    const snap = await adminDb
       .collection("scholarships")
       .where("active", "==", true)
-      .where("deadline", "<=", Timestamp.fromDate(now))
+      .where("deadline", "<=", now)
       .get();
 
-    if (!expiredSnapshot.empty) {
-      for (const scholarshipDoc of expiredSnapshot.docs) {
-        const data = scholarshipDoc.data();
+    for (const doc of snap.docs) {
+      const data = doc.data() as ScholarshipData;
 
-        // Skip if admin has force-published this scholarship
-        if (data.adminOverride?.forcePublished === true) {
-          continue;
-        }
-
-        try {
-          await db.collection("scholarships").doc(scholarshipDoc.id).update({
-            active: false,
-            expiredAt: FieldValue.serverTimestamp(),
-            expirationReason: "deadline_passed",
-            updatedAt: FieldValue.serverTimestamp(),
-          });
-          expiredCount++;
-        } catch (error) {
-          console.error(`Error updating scholarship ${scholarshipDoc.id}:`, error);
-        }
+      // Respect admin override -- do not expire force-published scholarships
+      if (data.adminOverride?.forcePublished === true) {
+        skippedOverrides++;
+        continue;
       }
-    }
 
-    // Also check for scholarships that were already inactive but need expiration metadata
-
-    const inactiveSnapshot = await db
-      .collection("scholarships")
-      .where("active", "==", false)
-      .where("deadline", "<=", Timestamp.fromDate(now))
-      .get();
-
-    for (const scholarshipDoc of inactiveSnapshot.docs) {
-      const data = scholarshipDoc.data();
-
-      // Add expiration metadata if missing
-      if (!data.expiredAt && !data.expirationReason) {
-        try {
-          await db.collection("scholarships").doc(scholarshipDoc.id).update({
-            expiredAt: FieldValue.serverTimestamp(),
-            expirationReason: "deadline_passed",
-          });
-          alreadyExpiredCount++;
-        } catch (error) {
-          console.error(`Error updating scholarship metadata ${scholarshipDoc.id}:`, error);
-        }
+      try {
+        await doc.ref.update({
+          active: false,
+          expiredAt: FieldValue.serverTimestamp(),
+          expirationReason: "Deadline passed",
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        expired++;
+      } catch (err) {
+        console.error(
+          `[cron/expire-scholarships] Error expiring scholarship ${doc.id}:`,
+          err,
+        );
       }
     }
 
     console.log(
-      `Scholarship expiration cron completed. Newly expired: ${expiredCount}, Metadata updated: ${alreadyExpiredCount}`
+      `[cron/expire-scholarships] Complete. Expired: ${expired}, Skipped overrides: ${skippedOverrides}`,
     );
 
     return NextResponse.json({
-      success: true,
-      scholarshipsExpired: expiredCount,
-      metadataUpdated: alreadyExpiredCount,
+      expired,
+      skippedOverrides,
       timestamp: now.toISOString(),
-      message: `Successfully expired ${expiredCount} scholarship(s) and updated metadata for ${alreadyExpiredCount} scholarship(s)`,
     });
   } catch (error) {
-    console.error("Scholarship expiration cron error:", error);
+    console.error("[cron/expire-scholarships] Fatal error:", error);
     return NextResponse.json(
       {
         error: "Failed to process scholarship expiration",
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

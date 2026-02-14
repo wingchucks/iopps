@@ -3,7 +3,6 @@ const CACHE_VERSION = 'v1';
 const CACHE_NAME = `iopps-cache-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
-// Assets to cache immediately on install
 const PRECACHE_ASSETS = [
   '/',
   '/offline',
@@ -11,72 +10,48 @@ const PRECACHE_ASSETS = [
   '/manifest.json',
 ];
 
-// Install event - cache essential assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
   );
-  // Activate immediately
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
         cacheNames
-          .filter((cacheName) => {
-            return cacheName.startsWith('iopps-cache-') && cacheName !== CACHE_NAME;
-          })
-          .map((cacheName) => {
-            return caches.delete(cacheName);
-          })
-      );
-    })
+          .filter((name) => name.startsWith('iopps-cache-') && name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      )
+    )
   );
-  // Take control immediately
   self.clients.claim();
 });
 
-// Fetch event - implement caching strategies
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip cross-origin requests
-  if (url.origin !== location.origin) {
-    return;
-  }
+  if (url.origin !== location.origin) return;
+  if (request.method !== 'GET') return;
 
-  // Skip non-GET requests (Cache API only supports GET)
-  if (request.method !== 'GET') {
-    return;
-  }
-
-  // API requests - Network-first strategy
+  // API requests - Network-first
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_next/data/')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Clone the response and cache it
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           return response;
         })
-        .catch(() => {
-          // Return cached version if network fails
-          return caches.match(request);
-        })
+        .catch(() => caches.match(request))
     );
     return;
   }
 
-  // Static assets - Cache-first strategy
+  // Static assets - Cache-first
   if (
     url.pathname.startsWith('/_next/static/') ||
     url.pathname.endsWith('.js') ||
@@ -89,16 +64,11 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('.woff2')
   ) {
     event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
         return fetch(request).then((response) => {
-          // Cache the fetched response
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           return response;
         });
       })
@@ -106,49 +76,34 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML pages - Network-first with offline fallback
+  // Navigation - Network-first with offline fallback
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Cache successful navigation responses
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           return response;
         })
-        .catch(() => {
-          // Try to return cached version
-          return caches.match(request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // Return offline page as fallback
-            return caches.match(OFFLINE_URL);
-          });
-        })
+        .catch(() =>
+          caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL))
+        )
     );
     return;
   }
 
-  // Default - try network first, fall back to cache
+  // Default - Network-first
   event.respondWith(
     fetch(request)
       .then((response) => {
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, responseToCache);
-        });
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         return response;
       })
-      .catch(() => {
-        return caches.match(request);
-      })
+      .catch(() => caches.match(request))
   );
 });
 
-// Handle messages from clients
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();

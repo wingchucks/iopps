@@ -1,342 +1,327 @@
-// Job-related Firestore operations
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  documentId,
-  getDoc,
-  getDocs,
-  increment,
-  limit,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  startAfter,
-  updateDoc,
-  where,
-  writeBatch,
-  db,
-  jobsCollection,
-  savedJobsCollection,
-  checkFirebase,
-  type QueryDocumentSnapshot,
-  type DocumentData,
-} from "./shared";
-import type { JobPosting, SavedJob, JobVideo } from "@/lib/types";
-import { MOCK_JOBS } from "../mockData";
-import { toDate } from "./timestamps";
+/**
+ * Job-related Firestore operations (server-side, firebase-admin).
+ *
+ * Collection: "jobs"
+ *
+ * All functions use the Firebase Admin SDK and are intended for use
+ * in Next.js API routes and server components.
+ */
 
-// Check if a job has expired based on closingDate or expiresAt
-export function isJobExpired(job: JobPosting): boolean {
-  const now = new Date();
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue, type Timestamp } from "firebase-admin/firestore";
 
-  const closingDate = toDate(job.closingDate);
-  if (closingDate && closingDate < now) return true;
+// ============================================
+// COLLECTION NAME
+// ============================================
 
-  const expiresAt = toDate(job.expiresAt);
-  if (expiresAt && expiresAt < now) return true;
+const JOBS_COLLECTION = "jobs";
 
-  return false;
-}
-
-type JobInput = Omit<
-  JobPosting,
-  "id" | "createdAt" | "active" | "employerId"
-> & { employerId: string; active?: boolean };
-
-export async function createJobPosting(data: JobInput): Promise<string> {
-  const ref = collection(db!, jobsCollection);
-  const docRef = doc(ref);
-
-  await setDoc(docRef, {
-    ...data,
-    id: docRef.id,
-    active: data.active ?? true,
-    viewsCount: 0,
-    applicationsCount: 0,
-    createdAt: serverTimestamp(),
-  });
-
-  return docRef.id;
-}
+// ============================================
+// TYPES
+// ============================================
 
 /**
- * Clear the pendingEmployerApproval flag from jobs when an employer is approved.
- * This allows the employer to activate their jobs.
- * Note: Does NOT automatically activate jobs - employer decides when to publish.
+ * A flexible timestamp type covering Firestore Timestamps,
+ * serialized timestamps, Date objects, and ISO strings.
  */
-export async function clearPendingEmployerApprovalFlag(employerId: string): Promise<number> {
-  const firestore = checkFirebase();
-  if (!firestore) return 0;
+type TimestampLike =
+  | { _seconds: number; _nanoseconds?: number }
+  | { seconds: number; nanoseconds?: number }
+  | { toDate: () => Date }
+  | Date
+  | string;
 
-  try {
-    const jobsRef = collection(firestore, jobsCollection);
-    const q = query(
-      jobsRef,
-      where("employerId", "==", employerId),
-      where("pendingEmployerApproval", "==", true)
-    );
-
-    const snapshot = await getDocs(q);
-
-    if (snapshot.empty) return 0;
-
-    const batch = writeBatch(firestore);
-    for (const docSnapshot of snapshot.docs) {
-      batch.update(docSnapshot.ref, { pendingEmployerApproval: false });
-    }
-    await batch.commit();
-
-    return snapshot.size;
-  } catch (error) {
-    console.error("[clearPendingEmployerApprovalFlag] Error:", error);
-    return 0;
-  }
+/** Mirrors the v1 JobPosting interface with relevant fields. */
+export interface JobPosting {
+  id: string;
+  employerId: string;
+  employerName?: string;
+  title: string;
+  location: string;
+  employmentType: string;
+  remoteFlag?: boolean;
+  indigenousPreference?: boolean;
+  description: string;
+  responsibilities?: string[];
+  qualifications?: string[];
+  requirements?: string;
+  benefits?: string;
+  salaryRange?:
+    | {
+        min?: number;
+        max?: number;
+        currency?: string;
+        period?: string;
+        disclosed?: boolean;
+      }
+    | string;
+  applicationLink?: string;
+  applicationEmail?: string;
+  createdAt?: Timestamp | null;
+  closingDate?: Timestamp | string | null;
+  active: boolean;
+  viewsCount?: number;
+  applicationsCount?: number;
+  quickApplyEnabled?: boolean;
+  companyLogoUrl?: string;
+  cpicRequired?: boolean;
+  willTrain?: boolean;
+  driversLicense?: boolean;
+  jobVideo?: {
+    videoUrl: string;
+    videoProvider?: "youtube" | "vimeo" | "custom";
+    videoId?: string;
+    title?: string;
+    description?: string;
+    isIOPPSInterview?: boolean;
+  };
+  paymentStatus?: "paid" | "pending" | "failed" | "refunded";
+  paymentId?: string;
+  productType?: string;
+  amountPaid?: number;
+  expiresAt?: Timestamp | Date | string | null;
+  scheduledPublishAt?: Timestamp | Date | string | null;
+  publishedAt?: Timestamp | Date | null;
+  importedFrom?: string;
+  originalUrl?: string;
+  originalApplicationLink?: string;
+  noIndex?: boolean;
+  category?: string;
+  locationType?: "onsite" | "remote" | "hybrid";
+  applicationMethod?: "email" | "url" | "quickApply";
+  featured?: boolean;
+  companyName?: string;
+  pendingEmployerApproval?: boolean;
+  updatedAt?: Timestamp | null;
 }
 
-type JobFilters = {
+export interface JobFilters {
+  /** Filter by employment type (e.g. "Full-time", "Part-time") */
   employmentType?: string;
+  /** Only remote jobs */
   remoteOnly?: boolean;
+  /** Only jobs with indigenousPreference */
   indigenousOnly?: boolean;
+  /** Whether to only return active jobs. Defaults to true. */
   activeOnly?: boolean;
+  /** Filter by active/paused status */
   status?: "active" | "paused" | "all";
+  /** Filter by job category */
+  category?: string;
+  /** Filter by location (client-side substring match) */
+  location?: string;
+  /** Search term (client-side match against title/description) */
+  search?: string;
+  /** Page size for pagination */
   pageSize?: number;
-  startAfterDoc?: QueryDocumentSnapshot<DocumentData>;
-};
+  /** Firestore document ID to start after (for cursor pagination) */
+  startAfterId?: string;
+}
 
 export interface PaginatedJobsResult {
   jobs: JobPosting[];
-  lastDoc: QueryDocumentSnapshot<DocumentData> | null;
+  lastDocId: string | null;
   hasMore: boolean;
 }
 
-export async function listJobPostings(
-  filters: JobFilters = {}
-): Promise<JobPosting[]> {
-  const result = await listJobPostingsPaginated(filters);
-  return result.jobs;
+type JobCreateInput = Omit<
+  JobPosting,
+  "id" | "createdAt" | "active" | "viewsCount" | "applicationsCount"
+> & { active?: boolean };
+
+// ============================================
+// HELPERS
+// ============================================
+
+/** Convert a Firestore Timestamp-like value to a plain Date. */
+function toDate(value: TimestampLike | null | undefined): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === "string") {
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+    return value.toDate();
+  }
+  if (typeof value === "object" && "_seconds" in value) {
+    return new Date((value as { _seconds: number })._seconds * 1000);
+  }
+  if (typeof value === "object" && "seconds" in value) {
+    return new Date((value as { seconds: number }).seconds * 1000);
+  }
+  return null;
 }
 
-export async function listJobPostingsPaginated(
+/** Check if a job has expired based on closingDate or expiresAt. */
+function isJobExpired(job: JobPosting): boolean {
+  const now = new Date();
+  const closingDate = toDate(job.closingDate as TimestampLike | null);
+  if (closingDate && closingDate < now) return true;
+  const expiresAt = toDate(job.expiresAt as TimestampLike | null);
+  if (expiresAt && expiresAt < now) return true;
+  return false;
+}
+
+// ============================================
+// CRUD FUNCTIONS
+// ============================================
+
+/**
+ * Query jobs with optional filters and cursor-based pagination.
+ * Queries the "jobs" collection.
+ *
+ * @param filters - Optional filter criteria and pagination params
+ * @returns Paginated result with jobs array, last document ID, and hasMore flag
+ */
+export async function getJobs(
   filters: JobFilters = {}
 ): Promise<PaginatedJobsResult> {
+  if (!adminDb) {
+    return { jobs: [], lastDocId: null, hasMore: false };
+  }
+
   try {
-    const firestore = checkFirebase();
-    const pageSize = filters.pageSize || 50; // Default page size
+    const pageSize = filters.pageSize || 50;
+    let ref: FirebaseFirestore.Query = adminDb.collection(JOBS_COLLECTION);
 
-    if (!firestore) {
-      let jobs = [...MOCK_JOBS];
-
-      if (filters.activeOnly !== false) {
-        jobs = jobs.filter(j => j.active && !isJobExpired(j));
-      }
-      if (filters.employmentType) {
-        jobs = jobs.filter(j => j.employmentType === filters.employmentType);
-      }
-      if (filters.remoteOnly) {
-        jobs = jobs.filter(j => j.remoteFlag);
-      }
-      if (filters.indigenousOnly) {
-        jobs = jobs.filter(j => j.indigenousPreference);
-      }
-
-      return { jobs: jobs.slice(0, pageSize), lastDoc: null, hasMore: jobs.length > pageSize };
-    }
-    const ref = collection(firestore, jobsCollection);
-    const constraints = [];
+    // Active-only filter (default: true)
     if (filters.activeOnly !== false) {
-      constraints.push(where("active", "==", true));
+      ref = ref.where("active", "==", true);
     }
-    if (filters.employmentType) {
-      constraints.push(where("employmentType", "==", filters.employmentType));
-    }
-    if (filters.remoteOnly) {
-      constraints.push(where("remoteFlag", "==", true));
-    }
-    if (filters.indigenousOnly) {
-      constraints.push(where("indigenousPreference", "==", true));
-    }
+
     if (filters.status && filters.status !== "all") {
       const value = filters.status === "active";
-      constraints.push(where("active", "==", value));
-    }
-    constraints.push(orderBy("createdAt", "desc"));
-    constraints.push(limit(pageSize + 1)); // Fetch one extra to check if there's more
-
-    if (filters.startAfterDoc) {
-      constraints.push(startAfter(filters.startAfterDoc));
+      ref = ref.where("active", "==", value);
     }
 
-    const q = query(ref, ...constraints);
-    const snap = await getDocs(q);
+    if (filters.employmentType) {
+      ref = ref.where("employmentType", "==", filters.employmentType);
+    }
 
+    if (filters.remoteOnly) {
+      ref = ref.where("remoteFlag", "==", true);
+    }
+
+    if (filters.indigenousOnly) {
+      ref = ref.where("indigenousPreference", "==", true);
+    }
+
+    if (filters.category) {
+      ref = ref.where("category", "==", filters.category);
+    }
+
+    ref = ref.orderBy("createdAt", "desc");
+
+    // Cursor pagination
+    if (filters.startAfterId) {
+      const startAfterDoc = await adminDb
+        .collection(JOBS_COLLECTION)
+        .doc(filters.startAfterId)
+        .get();
+      if (startAfterDoc.exists) {
+        ref = ref.startAfter(startAfterDoc);
+      }
+    }
+
+    // Fetch one extra to detect hasMore
+    ref = ref.limit(pageSize + 1);
+
+    const snap = await ref.get();
     const hasMore = snap.docs.length > pageSize;
     const docs = hasMore ? snap.docs.slice(0, pageSize) : snap.docs;
-    const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
+    const lastDocId = docs.length > 0 ? docs[docs.length - 1].id : null;
 
-    let jobs = docs.map((docSnapshot) => {
-      const data = docSnapshot.data() as JobPosting;
-      return {
-        ...data,
-        id: docSnapshot.id,
-      };
-    });
+    let jobs: JobPosting[] = docs.map((doc) => ({
+      ...(doc.data() as JobPosting),
+      id: doc.id,
+    }));
 
-    // Client-side filtering for expired jobs (safety net for jobs not yet processed by cron)
+    // Client-side filtering for expired jobs (safety net)
     if (filters.activeOnly !== false) {
       jobs = jobs.filter((job) => !isJobExpired(job));
     }
 
-    return { jobs, lastDoc, hasMore };
-  } catch {
-    return { jobs: [], lastDoc: null, hasMore: false };
-  }
-}
+    // Client-side search filter (Firestore doesn't support full-text search)
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      jobs = jobs.filter(
+        (job) =>
+          job.title?.toLowerCase().includes(searchLower) ||
+          job.description?.toLowerCase().includes(searchLower)
+      );
+    }
 
-export async function getJobPosting(jobId: string): Promise<JobPosting | null> {
-  const firestore = checkFirebase();
-  if (!firestore) {
-    return MOCK_JOBS.find(j => j.id === jobId) || null;
+    // Client-side location filter
+    if (filters.location) {
+      const locationLower = filters.location.toLowerCase();
+      jobs = jobs.filter((job) =>
+        job.location?.toLowerCase().includes(locationLower)
+      );
+    }
+
+    return { jobs, lastDocId, hasMore };
+  } catch (error) {
+    console.error("[getJobs] Error:", error);
+    return { jobs: [], lastDocId: null, hasMore: false };
   }
-  const ref = doc(db!, jobsCollection, jobId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
-  const data = snap.data() as JobPosting;
-  return {
-    ...data,
-    id: jobId,
-  };
 }
 
 /**
- * Duplicate an existing job posting
- * Creates a new inactive copy with "(Copy)" appended to title
- * Resets views, applications, and dates
+ * Get a single job posting by its document ID.
+ * Queries the "jobs" collection.
+ *
+ * @param id - Firestore document ID
+ * @returns The job posting or null if not found
  */
-export async function duplicateJobPosting(
-  jobId: string,
-  employerId: string
-): Promise<string | null> {
-  const firestore = checkFirebase();
-  if (!firestore) return null;
+export async function getJobById(id: string): Promise<JobPosting | null> {
+  if (!adminDb) return null;
 
   try {
-    // Get the original job
-    const originalRef = doc(firestore, jobsCollection, jobId);
-    const originalSnap = await getDoc(originalRef);
-    
-    if (!originalSnap.exists()) {
-      console.error("[duplicateJobPosting] Original job not found:", jobId);
-      return null;
-    }
-
-    const originalData = originalSnap.data() as JobPosting;
-
-    // Verify ownership
-    if (originalData.employerId !== employerId) {
-      console.error("[duplicateJobPosting] Employer mismatch");
-      return null;
-    }
-
-    // Create new job with copied data
-    const newJobRef = doc(collection(firestore, jobsCollection));
-    const newJobData = {
-      ...originalData,
-      id: newJobRef.id,
-      title: `${originalData.title} (Copy)`,
-      active: false, // Start as inactive/draft
-      viewsCount: 0,
-      applicationsCount: 0,
-      createdAt: serverTimestamp(),
-      publishedAt: null,
-      closingDate: null, // Clear deadline - user should set new one
-      expiresAt: null,
-      scheduledPublishAt: null,
-      // Clear payment info - new job needs new payment
-      paymentStatus: undefined,
-      paymentId: undefined,
-      productType: undefined,
-      amountPaid: undefined,
-      // Clear import fields
-      importedFrom: undefined,
-      originalUrl: undefined,
-      originalApplicationLink: undefined,
-    };
-
-    await setDoc(newJobRef, newJobData);
-    
-    return newJobRef.id;
+    const snap = await adminDb.collection(JOBS_COLLECTION).doc(id).get();
+    if (!snap.exists) return null;
+    return { ...(snap.data() as JobPosting), id: snap.id };
   } catch (error) {
-    console.error("[duplicateJobPosting] Error:", error);
+    console.error("[getJobById] Error:", error);
     return null;
   }
 }
 
-export async function listEmployerJobs(
-  employerId: string
-): Promise<JobPosting[]> {
-  const ref = collection(db!, jobsCollection);
-  const q = query(
-    ref,
-    where("employerId", "==", employerId),
-    orderBy("createdAt", "desc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((docSnapshot) => {
-    const data = docSnapshot.data() as JobPosting;
-    return {
-      ...data,
-      id: docSnapshot.id,
-    };
+/**
+ * Create a new job posting document in the "jobs" collection.
+ *
+ * @param data - Job posting data (employerId required)
+ * @returns The new document ID
+ */
+export async function createJob(data: JobCreateInput): Promise<string> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+
+  const ref = adminDb.collection(JOBS_COLLECTION).doc();
+  await ref.set({
+    ...data,
+    id: ref.id,
+    active: data.active ?? true,
+    viewsCount: 0,
+    applicationsCount: 0,
+    createdAt: FieldValue.serverTimestamp(),
   });
+
+  return ref.id;
 }
 
 /**
- * Update job active status (publish/unpublish/archive)
+ * Update fields on an existing job posting in the "jobs" collection.
  *
- * IMPORTANT: After calling this, trigger visibility recompute!
- * Use: triggerVisibilityRecompute(employerId) from '@/lib/visibility-client'
- *
- * @returns The employerId of the job for visibility recompute
+ * @param id - Document ID of the job to update
+ * @param data - Partial fields to update
  */
-export async function updateJobStatus(jobId: string, active: boolean): Promise<string | null> {
-  const ref = doc(db!, jobsCollection, jobId);
+export async function updateJob(
+  id: string,
+  data: Partial<Omit<JobPosting, "id" | "createdAt">>
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
 
-  // Get employerId before updating (for visibility recompute)
-  const snap = await getDoc(ref);
-  const employerId = snap.exists() ? (snap.data() as JobPosting).employerId : null;
-
-  await updateDoc(ref, {
-    active,
-    // Set publishedAt when activating (if not already set)
-    ...(active && !snap.data()?.publishedAt ? { publishedAt: serverTimestamp() } : {}),
-    updatedAt: serverTimestamp(),
-  });
-
-  return employerId;
-}
-
-/**
- * Update job posting fields
- *
- * IMPORTANT: If updating 'active' or 'featured', trigger visibility recompute!
- * Use: triggerVisibilityRecompute(employerId) from '@/lib/visibility-client'
- *
- * @returns The employerId of the job for visibility recompute
- */
-export async function updateJobPosting(
-  jobId: string,
-  data: Partial<Omit<JobPosting, "id" | "createdAt" | "employerId">>
-): Promise<string | null> {
-  const ref = doc(db!, jobsCollection, jobId);
-
-  // Get employerId (for visibility recompute)
-  const snap = await getDoc(ref);
-  const employerId = snap.exists() ? (snap.data() as JobPosting).employerId : null;
-
-  // Filter out undefined values - Firestore doesn't accept undefined
+  // Filter out undefined values -- Firestore rejects them
   const cleanData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     if (value !== undefined) {
@@ -344,267 +329,72 @@ export async function updateJobPosting(
     }
   }
 
-  await updateDoc(ref, {
-    ...cleanData,
-    updatedAt: serverTimestamp(),
-  });
-
-  return employerId;
-}
-
-export async function incrementJobViews(jobId: string) {
-  const ref = doc(db!, jobsCollection, jobId);
-  await updateDoc(ref, {
-    viewsCount: increment(1),
-  });
+  await adminDb
+    .collection(JOBS_COLLECTION)
+    .doc(id)
+    .update({
+      ...cleanData,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
 }
 
 /**
- * Delete a job posting
+ * Delete a job posting document from the "jobs" collection.
  *
- * IMPORTANT: After calling this, trigger visibility recompute!
- * Use: triggerVisibilityRecompute(employerId) from '@/lib/visibility-client'
- *
- * @returns The employerId of the deleted job for visibility recompute
+ * @param id - Document ID of the job to delete
  */
-export async function deleteJobPosting(id: string): Promise<string | null> {
-  const ref = doc(db!, jobsCollection, id);
+export async function deleteJob(id: string): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
 
-  // Get employerId before deleting (for visibility recompute)
-  const snap = await getDoc(ref);
-  const employerId = snap.exists() ? (snap.data() as JobPosting).employerId : null;
-
-  await deleteDoc(ref);
-
-  return employerId;
+  await adminDb.collection(JOBS_COLLECTION).doc(id).delete();
 }
 
-// Job-specific Video functions
-export async function setJobVideo(
-  jobId: string,
-  videoData: JobVideo
-) {
-  const ref = doc(db!, jobsCollection, jobId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error("Job posting not found");
+/**
+ * Get all jobs posted by a specific employer.
+ * Queries the "jobs" collection by employerId field.
+ *
+ * @param employerId - The employer's user ID
+ * @returns Array of job postings
+ */
+export async function getJobsByEmployer(
+  employerId: string
+): Promise<JobPosting[]> {
+  if (!adminDb) return [];
 
-  await updateDoc(ref, {
-    jobVideo: videoData,
-    updatedAt: serverTimestamp(),
-  });
-}
+  try {
+    const snap = await adminDb
+      .collection(JOBS_COLLECTION)
+      .where("employerId", "==", employerId)
+      .orderBy("createdAt", "desc")
+      .get();
 
-export async function removeJobVideo(jobId: string) {
-  const ref = doc(db!, jobsCollection, jobId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error("Job posting not found");
-
-  await updateDoc(ref, {
-    jobVideo: null,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-// Saved Jobs
-export async function toggleSavedJob(
-  memberId: string,
-  jobId: string,
-  shouldSave: boolean
-) {
-  const snapshot = await getDocs(
-    query(
-      collection(db!, savedJobsCollection),
-      where("memberId", "==", memberId),
-      where("jobId", "==", jobId)
-    )
-  );
-
-  if (shouldSave) {
-    if (snapshot.empty) {
-      await addDoc(collection(db!, savedJobsCollection), {
-        memberId,
-        jobId,
-        createdAt: serverTimestamp(),
-      });
-    }
-  } else {
-    await Promise.all(snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref)));
-  }
-}
-
-export async function listSavedJobs(
-  memberId: string
-): Promise<SavedJob[]> {
-  const ref = collection(db!, savedJobsCollection);
-  const q = query(
-    ref,
-    where("memberId", "==", memberId),
-    orderBy("createdAt", "desc"),
-    limit(100) // Limit saved jobs to prevent large queries
-  );
-  const snap = await getDocs(q);
-
-  if (snap.empty) {
+    return snap.docs.map((doc) => ({
+      ...(doc.data() as JobPosting),
+      id: doc.id,
+    }));
+  } catch (error) {
+    console.error("[getJobsByEmployer] Error:", error);
     return [];
   }
-
-  // Collect all job IDs
-  const jobIds = snap.docs.map((docSnap) => (docSnap.data() as SavedJob).jobId);
-
-  // Batch fetch jobs to avoid N+1 queries
-  // Firestore 'in' query supports max 30 items, so we batch
-  const jobsMap = new Map<string, JobPosting>();
-  const batchSize = 30;
-
-  for (let i = 0; i < jobIds.length; i += batchSize) {
-    const batchIds = jobIds.slice(i, i + batchSize);
-    if (batchIds.length > 0) {
-      const jobsRef = collection(db!, jobsCollection);
-      const jobsQuery = query(jobsRef, where(documentId(), "in", batchIds));
-      const jobsSnap = await getDocs(jobsQuery);
-      jobsSnap.docs.forEach((jobDoc) => {
-        jobsMap.set(jobDoc.id, { ...jobDoc.data() as JobPosting, id: jobDoc.id });
-      });
-    }
-  }
-
-  // Build results with fetched jobs
-  const results: SavedJob[] = snap.docs.map((docSnap) => {
-    const data = docSnap.data() as SavedJob;
-    return {
-      ...data,
-      id: docSnap.id,
-      job: jobsMap.get(data.jobId) || null,
-    };
-  });
-
-  return results;
-}
-
-export async function listSavedJobIds(memberId: string): Promise<string[]> {
-  const ref = collection(db!, savedJobsCollection);
-  const q = query(ref, where("memberId", "==", memberId));
-  const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => {
-    const data = docSnap.data() as SavedJob;
-    return data.jobId;
-  });
-}
-
-export async function isJobSaved(memberId: string, jobId: string): Promise<boolean> {
-  const snapshot = await getDocs(
-    query(
-      collection(db!, savedJobsCollection),
-      where("memberId", "==", memberId),
-      where("jobId", "==", jobId),
-      limit(1)
-    )
-  );
-  return !snapshot.empty;
-}
-export function getSavedJobsQuery(memberId: string) {
-  return query(
-    collection(db!, savedJobsCollection),
-    where("memberId", "==", memberId)
-  );
-}
-
-// ============================================
-// JOB TEMPLATE HELPERS
-// (Core template functions are in jobTemplates.ts)
-// ============================================
-
-import { createJobTemplate as createTemplate, getJobTemplate } from "./jobTemplates";
-import type { JobTemplate } from "@/lib/types";
-
-/**
- * Save an existing job as a template
- * Helper that extracts job data and creates a template
- */
-export async function saveJobAsTemplate(
-  jobId: string,
-  employerId: string,
-  templateName: string,
-  templateDescription?: string
-): Promise<string | null> {
-  const firestore = checkFirebase();
-  if (!firestore) return null;
-
-  // Get the job
-  const job = await getJobPosting(jobId);
-  if (!job || job.employerId !== employerId) {
-    console.error("[saveJobAsTemplate] Job not found or access denied");
-    return null;
-  }
-
-  // Create template from job using the core function
-  const templateData: Omit<JobTemplate, "id" | "createdAt" | "updatedAt" | "usageCount"> = {
-    employerId,
-    name: templateName,
-    description: templateDescription,
-    title: job.title,
-    location: job.location,
-    employmentType: job.employmentType,
-    remoteFlag: job.remoteFlag,
-    indigenousPreference: job.indigenousPreference,
-    jobDescription: job.description,
-    responsibilities: job.responsibilities,
-    qualifications: job.qualifications,
-    requirements: job.requirements,
-    benefits: job.benefits,
-    salaryRange: job.salaryRange,
-    category: job.category,
-    locationType: job.locationType,
-    cpicRequired: job.cpicRequired,
-    willTrain: job.willTrain,
-    driversLicense: job.driversLicense,
-    quickApplyEnabled: job.quickApplyEnabled,
-  };
-
-  return createTemplate(templateData);
 }
 
 /**
- * Create a job from a template
- * Returns the new job ID (job is created as inactive/draft)
+ * Search jobs by matching a query string against title and description.
+ * Fetches active jobs and filters client-side (Firestore has no full-text search).
+ * Queries the "jobs" collection.
+ *
+ * @param queryStr - Search term
+ * @param filters - Optional additional filters
+ * @returns Matching job postings
  */
-export async function createJobFromTemplate(
-  templateId: string,
-  employerId: string,
-  employerName?: string
-): Promise<string | null> {
-  const firestore = checkFirebase();
-  if (!firestore) return null;
-
-  const template = await getJobTemplate(templateId);
-  if (!template || template.employerId !== employerId) {
-    console.error("[createJobFromTemplate] Template not found or access denied");
-    return null;
-  }
-
-  // Create job from template
-  const jobData: JobInput = {
-    employerId,
-    employerName,
-    title: template.title || "Untitled Position",
-    location: template.location || "",
-    employmentType: template.employmentType || "Full-time",
-    remoteFlag: template.remoteFlag,
-    indigenousPreference: template.indigenousPreference,
-    description: template.jobDescription || "",
-    responsibilities: template.responsibilities,
-    qualifications: template.qualifications,
-    requirements: template.requirements,
-    benefits: template.benefits,
-    salaryRange: template.salaryRange,
-    category: template.category,
-    locationType: template.locationType,
-    cpicRequired: template.cpicRequired,
-    willTrain: template.willTrain,
-    driversLicense: template.driversLicense,
-    quickApplyEnabled: template.quickApplyEnabled,
-    active: false, // Start as draft
-  };
-
-  return createJobPosting(jobData);
+export async function searchJobs(
+  queryStr: string,
+  filters: Omit<JobFilters, "search"> = {}
+): Promise<JobPosting[]> {
+  const result = await getJobs({
+    ...filters,
+    search: queryStr,
+    activeOnly: filters.activeOnly ?? true,
+  });
+  return result.jobs;
 }

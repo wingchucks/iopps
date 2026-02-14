@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, JOB_POSTING_PRODUCTS, JobPostingProductType } from "@/lib/stripe";
-import { auth, db } from "@/lib/firebase-admin";
-import { rateLimiters, getRateLimitHeaders } from "@/lib/rate-limit";
+import { adminAuth, adminDb } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-    // Rate limiting
-    const rateLimitResult = rateLimiters.standard(request);
-    if (!rateLimitResult.success) {
-        return NextResponse.json(
-            { error: "Too many requests", retryAfter: rateLimitResult.retryAfter },
-            { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
-        );
-    }
-
     try {
         // Check if Firebase Admin is initialized
-        if (!auth || !db) {
+        if (!adminAuth || !adminDb) {
             console.error("Firebase Admin not initialized - check environment variables");
             return NextResponse.json(
                 { error: "Server configuration error" },
@@ -33,7 +23,7 @@ export async function POST(request: NextRequest) {
         }
 
         const idToken = authHeader.split("Bearer ")[1];
-        const decodedToken = await auth.verifyIdToken(idToken);
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
         const userId = decodedToken.uid;
 
         const body = await request.json();
@@ -97,7 +87,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify the user owns this job
-        const jobDoc = await db.collection("jobs").doc(jobId).get();
+        const jobDoc = await adminDb.collection("jobs").doc(jobId).get();
         if (!jobDoc.exists) {
             return NextResponse.json(
                 { error: "Job not found" },
@@ -133,7 +123,7 @@ export async function POST(request: NextRequest) {
             success_url: returnUrl || `${request.nextUrl.origin}/organization/jobs/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${request.nextUrl.origin}/organization/jobs/new?canceled=true`,
             metadata: {
-                type: "job", // Job posting payment
+                type: "job",
                 productType,
                 userId,
                 jobId,
