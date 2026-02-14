@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://iopps.ca";
 const FROM_ADDRESS = "noreply@iopps.ca";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
 
 // ---------------------------------------------------------------------------
 // Types

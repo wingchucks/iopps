@@ -53,7 +53,8 @@ export default async function PowwowDetailPage({
   }
 
   // Serialize Firestore timestamps for client component
-  const serializedPowwow = JSON.parse(JSON.stringify(powwow)) as typeof powwow;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const serializedPowwow = JSON.parse(JSON.stringify(powwow)) as any;
 
   return <PowwowDetailClient powwow={serializedPowwow} />;
 }

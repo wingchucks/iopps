@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -55,6 +55,14 @@ async function getRedirectPath(uid: string): Promise<string> {
 // ---------------------------------------------------------------------------
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<AuthShell><div className="flex justify-center py-12"><Spinner className="h-8 w-8" /></div></AuthShell>}>
+      <LoginPageInner />
+    </Suspense>
+  );
+}
+
+function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
