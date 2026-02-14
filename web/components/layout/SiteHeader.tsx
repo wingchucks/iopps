@@ -172,7 +172,7 @@ export function SiteHeader() {
           )}
           {!loading && user && (
             <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-              <Button variant="ghost" size="md" href="/member/dashboard" fullWidth onClick={() => setMobileMenuOpen(false)}>
+              <Button variant="ghost" size="md" href="/member/dashboard" fullWidth>
                 Dashboard
               </Button>
               <Button variant="ghost" size="md" fullWidth onClick={() => { setMobileMenuOpen(false); signOut(); }}>
