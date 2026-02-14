@@ -45,7 +45,6 @@ const employerPlans = [
       "Candidate engagement analytics",
       "Standard customer support",
       "Shop Indigenous listing included",
-      "30 days Talent Pool Access included",
     ],
   },
 ];
@@ -70,7 +69,6 @@ const singleJobPosts = [
       "Featured badge",
       "Priority placement",
       "Employer logo & branding",
-      "7 days Talent Pool access",
     ],
   },
 ];
@@ -97,21 +95,6 @@ const additionalProducts = [
     price: "$25",
     period: "/mo",
     description: "Featured listing in the Shop Indigenous marketplace.",
-  },
-  {
-    name: "Talent Pool Access",
-    detail: "Monthly",
-    price: "$99",
-    period: "/mo",
-    description: "Browse and contact Indigenous talent for 30 days.",
-  },
-  {
-    name: "Talent Pool Access",
-    detail: "Annual",
-    price: "$899",
-    period: "/yr",
-    badge: "Save $289",
-    description: "Full year of talent access with priority support.",
   },
   {
     name: "Training Featured",
@@ -357,7 +340,7 @@ export default function PricingPage() {
             Additional Products
           </h2>
           <p className="mt-2 text-[var(--text-secondary)]">
-            Visibility upgrades, marketplace listings, and talent access.
+            Visibility upgrades and marketplace listings.
           </p>
         </div>
 
