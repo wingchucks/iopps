@@ -170,7 +170,7 @@ function EmptyJobState({ tab }: { tab: TabFilter }) {
 // ---------------------------------------------------------------------------
 
 export default function OrganizationJobsPage() {
-  const { userProfile } = useAuth();
+  useAuth(); // Ensures user is within auth context
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
 
   const filteredJobs =
