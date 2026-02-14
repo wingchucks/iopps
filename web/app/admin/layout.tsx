@@ -29,7 +29,6 @@ import {
   NewspaperIcon,
   CheckBadgeIcon,
   DocumentMagnifyingGlassIcon,
-  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { AdminNavGroup, AdminTopBar, type NavItem } from "@/components/admin";
 import { useAdminCounts } from "@/lib/hooks/admin";
@@ -78,7 +77,6 @@ function useNavigationGroups(): NavGroup[] {
           badge: counts.employers.pending > 0 ? counts.employers.pending : undefined,
           badgeVariant: "warning" as const,
         },
-        { name: "Members", href: "/admin/members", icon: UserGroupIcon },
         { name: "Applications", href: "/admin/applications", icon: ClipboardDocumentListIcon },
       ],
       defaultOpen: true,

@@ -1,19 +1,20 @@
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/components/AuthProvider";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
+import { resilientSignIn } from "@/lib/firebase-auth-resilient";
 import {
   AuthLayout,
   GoogleSignInButton,
   AuthDivider,
   AuthInput,
 } from "@/components/auth";
+import { LoginRecovery } from "@/components/auth/LoginRecovery";
 import { getOrganizationByOwner } from "@/lib/firestore/v2-organizations";
 
 // Helper to get redirect path based on user role
@@ -57,6 +58,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const networkErrorCount = useRef(0);
+  const [showRecovery, setShowRecovery] = useState(false);
 
   // When returning from a Google redirect sign-in, auto-navigate once auth resolves
   useEffect(() => {
@@ -83,12 +86,19 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const cred = await resilientSignIn(auth, email, password);
       const redirectPath = redirectTo || await getRedirectPath(cred.user.uid);
       router.push(redirectPath);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
       setError(getAuthErrorMessage(err, "Unable to sign in. Please try again."));
+      const firebaseErr = err as { code?: string };
+      if (firebaseErr?.code === 'auth/network-request-failed') {
+        networkErrorCount.current += 1;
+        if (networkErrorCount.current >= 2) {
+          setShowRecovery(true);
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -140,6 +150,12 @@ export default function LoginPage() {
         </div>
       )}
 
+      {showRecovery && (
+        <div className="mb-6">
+          <LoginRecovery />
+        </div>
+      )}
+
       <GoogleSignInButton
         onClick={handleGoogleSignIn}
         loading={googleLoading}
@@ -157,6 +173,7 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
           autoComplete="email"
+          tabIndex={1}
         />
 
         <AuthInput
@@ -166,10 +183,12 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
+          tabIndex={2}
           rightElement={
             <Link
               href="/forgot-password"
               className="text-xs text-accent hover:underline"
+              tabIndex={4}
             >
               Forgot password?
             </Link>
@@ -179,6 +198,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading || googleLoading}
+          tabIndex={3}
           className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (

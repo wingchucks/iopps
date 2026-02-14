@@ -121,14 +121,14 @@ export default function MembersDirectoryPage() {
   const hasActiveFilters = searchQuery || selectedLocation || selectedSkills.length > 0 || availableOnly;
 
   return (
-    <FeedLayout activeNav="community" fullWidth>
+    <FeedLayout activeNav="network" fullWidth>
       {/* Header */}
         <div className="container max-w-7xl mx-auto px-4 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-[var(--text-primary)]">Community Directory</h1>
               <p className="text-foreground0 text-sm mt-1">
-                Connect with {members.length}+ Indigenous professionals
+                Connect with Indigenous professionals across Turtle Island
               </p>
             </div>
 

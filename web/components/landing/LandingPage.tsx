@@ -25,8 +25,8 @@ export default function LandingPage() {
   const [feed, setFeed] = useState<FeedItem[]>([]);
 
   useEffect(() => {
-    fetch("/api/stats/public").then(r => r.json()).then(setStats).catch(() => 
-      setStats({ jobs: 50, members: 100, organizations: 20, events: 10 })
+    fetch("/api/stats/public").then(r => r.json()).then(setStats).catch(() =>
+      setStats({ jobs: 0, members: 0, organizations: 0, events: 0 })
     );
     fetch("/api/feed/preview").then(r => r.json()).then(d => setFeed(d.items || [])).catch(() => {});
   }, []);
@@ -120,10 +120,10 @@ export default function LandingPage() {
 
           {/* Animated stats */}
           <div className="mt-20 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 animate-fade-in-up animation-delay-400">
-            <AnimatedStat value={stats.jobs || 50} label="Active Jobs" icon="💼" />
-            <AnimatedStat value={stats.members || 100} label="Members" icon="👥" />
-            <AnimatedStat value={stats.organizations || 20} label="Organizations" icon="🏢" />
-            <AnimatedStat value={stats.events || 10} label="Events" icon="📅" />
+            <AnimatedStat value={stats.jobs} label="Active Jobs" icon="💼" />
+            <AnimatedStat value={stats.members} label="Members" icon="👥" />
+            <AnimatedStat value={stats.organizations} label="Organizations" icon="🏢" />
+            <AnimatedStat value={stats.events} label="Events" icon="📅" />
           </div>
         </div>
 
@@ -233,11 +233,13 @@ export default function LandingPage() {
           <p className="text-center text-slate-500 text-sm font-medium uppercase tracking-wider mb-8">
             Trusted by Indigenous organizations across Turtle Island
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-12">
+          <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6">
             {["SIIT", "Saskatoon Tribal Council", "SIGA", "Indspire", "NVIT", "FNUC"].map((org) => (
-              <span key={org} className="text-lg sm:text-xl font-bold text-slate-500 hover:text-slate-300 transition-colors cursor-default">
-                {org}
-              </span>
+              <div key={org} className="flex items-center justify-center h-14 px-6 rounded-xl border border-slate-700 bg-slate-800/50 hover:border-slate-600 hover:bg-slate-800 transition-all">
+                <span className="text-sm sm:text-base font-bold tracking-wide text-slate-400 hover:text-slate-300 transition-colors">
+                  {org}
+                </span>
+              </div>
             ))}
           </div>
         </div>
@@ -256,7 +258,9 @@ export default function LandingPage() {
             Ready to find your<br />next opportunity?
           </h2>
           <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
-            Join thousands of Indigenous professionals and organizations already connecting on IOPPS.
+            {stats.members > 0
+              ? `Join ${stats.members.toLocaleString()} Indigenous professionals and organizations already connecting on IOPPS.`
+              : "Join Indigenous professionals and organizations connecting on IOPPS."}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

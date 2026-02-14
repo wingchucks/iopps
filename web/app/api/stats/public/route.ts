@@ -13,11 +13,11 @@ export async function GET() {
   try {
     if (!db) {
       return NextResponse.json({
-        jobs: 50,
-        members: 100,
-        organizations: 20,
-        events: 10,
-        programs: 15,
+        jobs: 0,
+        members: 0,
+        organizations: 0,
+        events: 0,
+        programs: 0,
       });
     }
 
@@ -59,11 +59,11 @@ export async function GET() {
     console.error("Error fetching public stats:", error);
     // Return fallback stats on error
     return NextResponse.json({
-      jobs: 50,
-      members: 100,
-      organizations: 20,
-      events: 10,
-      programs: 15,
+      jobs: 0,
+      members: 0,
+      organizations: 0,
+      events: 0,
+      programs: 0,
     });
   }
 }

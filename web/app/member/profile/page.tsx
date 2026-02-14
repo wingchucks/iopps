@@ -4,16 +4,21 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getMemberProfile, upsertMemberProfile } from "@/lib/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { updateProfile } from "firebase/auth";
 import { storage } from "@/lib/firebase";
 import type { WorkExperience, Education, PortfolioItem } from "@/lib/types";
 import toast from "react-hot-toast";
+import { Camera, Upload } from "lucide-react";
 import { NATIONS, TREATY_TERRITORIES, PRONOUNS } from "@/lib/constants/indigenous";
 
 export default function MemberProfilePage() {
   const { user, role, loading } = useAuth();
   const [saving, setSaving] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoURL, setPhotoURL] = useState(user?.photoURL || "");
 
   // Form states
   const [displayName, setDisplayName] = useState("");
@@ -72,6 +77,9 @@ export default function MemberProfilePage() {
           setAvailability(profile.availableForInterviews || "");
           setQuickApplyEnabled(profile.quickApplyEnabled || false);
           setDefaultCoverLetter(profile.defaultCoverLetter || "");
+          setPhotoURL(profile.photoURL || profile.avatarUrl || user.photoURL || "");
+        } else {
+          setPhotoURL(user.photoURL || "");
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -204,6 +212,48 @@ export default function MemberProfilePage() {
     } catch (error) {
       console.error("Error deleting resume:", error);
       toast.error("Error deleting resume. Please try again.");
+    }
+  };
+
+  // Handle photo upload
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (JPG, PNG, etc.)");
+      return;
+    }
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image size must be less than 2MB");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const photoRef = ref(storage!, `users/${user.uid}/avatar/profile.${ext}`);
+      await uploadBytes(photoRef, file);
+      const url = await getDownloadURL(photoRef);
+
+      // Update Firebase Auth profile
+      await updateProfile(user, { photoURL: url });
+
+      // Update member profile in Firestore
+      await upsertMemberProfile(user.uid, { photoURL: url, avatarUrl: url });
+
+      setPhotoURL(url);
+      toast.success("Profile photo updated!");
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast.error("Error uploading photo. Please try again.");
+    } finally {
+      setUploadingPhoto(false);
+      // Reset file input so re-selecting the same file works
+      if (photoInputRef.current) photoInputRef.current.value = "";
     }
   };
 
@@ -348,6 +398,36 @@ export default function MemberProfilePage() {
             </div>
           )}
         </div>
+
+        {/* Photo upload prompt */}
+        {!photoURL && (
+          <div className="mb-8 rounded-xl border border-teal-200/20 bg-teal-500/10 p-4">
+            <div className="flex items-start gap-3">
+              <Camera className="h-5 w-5 text-teal-400 mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-teal-200">Add a profile photo</p>
+                <p className="text-sm text-teal-300/70 mt-0.5">Profiles with photos get 3x more connections.</p>
+                <button
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-3 py-1.5 text-sm text-white hover:bg-teal-700 transition-colors mt-2 disabled:opacity-50"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  {uploadingPhoto ? "Uploading..." : "Upload Photo"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hidden photo file input */}
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handlePhotoUpload}
+          className="hidden"
+        />
 
         {/* Main Form */}
         <div className="space-y-6">

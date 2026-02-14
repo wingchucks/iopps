@@ -420,7 +420,11 @@ export default function AdminDashboard() {
             <span className="text-xs text-foreground0">Users (Auth)</span>
           </div>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? "-" : counts.users.total.toLocaleString()}
+            {isLoading ? (
+              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
+            ) : (
+              counts.users.total.toLocaleString()
+            )}
           </p>
         </div>
         <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
@@ -429,7 +433,11 @@ export default function AdminDashboard() {
             <span className="text-xs text-foreground0">Total Jobs</span>
           </div>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? "-" : counts.jobs.total.toLocaleString()}
+            {isLoading ? (
+              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
+            ) : (
+              counts.jobs.total.toLocaleString()
+            )}
           </p>
         </div>
         <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
@@ -438,7 +446,11 @@ export default function AdminDashboard() {
             <span className="text-xs text-foreground0">Total Vendors</span>
           </div>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? "-" : counts.vendors.total.toLocaleString()}
+            {isLoading ? (
+              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
+            ) : (
+              counts.vendors.total.toLocaleString()
+            )}
           </p>
         </div>
         <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
@@ -459,7 +471,11 @@ export default function AdminDashboard() {
             <span className="text-xs text-foreground0">Conferences</span>
           </div>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? "-" : counts.conferences.total.toLocaleString()}
+            {isLoading ? (
+              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
+            ) : (
+              counts.conferences.total.toLocaleString()
+            )}
           </p>
         </div>
         <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
@@ -480,7 +496,11 @@ export default function AdminDashboard() {
             <span className="text-xs text-foreground0">Pow Wows</span>
           </div>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? "-" : counts.powwows.total.toLocaleString()}
+            {isLoading ? (
+              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
+            ) : (
+              counts.powwows.total.toLocaleString()
+            )}
           </p>
         </div>
         <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
@@ -489,7 +509,11 @@ export default function AdminDashboard() {
             <span className="text-xs text-foreground0">Total Apps</span>
           </div>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {isLoading ? "-" : counts.applications.total.toLocaleString()}
+            {isLoading ? (
+              <span className="inline-block h-6 w-16 rounded bg-surface animate-pulse" />
+            ) : (
+              counts.applications.total.toLocaleString()
+            )}
           </p>
         </div>
       </div>
