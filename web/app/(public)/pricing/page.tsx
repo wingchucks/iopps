@@ -359,11 +359,6 @@ export default function PricingPage() {
                     {product.detail}
                   </p>
                 </div>
-                {product.badge && (
-                  <span className="shrink-0 rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">
-                    {product.badge}
-                  </span>
-                )}
               </div>
 
               <div className="mt-4 flex items-baseline gap-1">
