@@ -133,11 +133,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (firebaseUser && db) {
         // Subscribe to real-time user profile changes
-        const ref = doc(db, "users", firebaseUser.uid);
+        const userRef = doc(db, "users", firebaseUser.uid);
 
         const unsubscribeSnapshot = onSnapshot(
-          ref,
-          (snap) => {
+          userRef,
+          async (snap) => {
             if (snap.exists()) {
               const data = snap.data();
               // Super admin override from env variable
@@ -151,7 +151,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (isSuperAdmin(firebaseUser.email)) {
                 setRole("admin");
               } else {
-                setRole(null);
+                // Profile bootstrap: auto-create missing user doc
+                // This prevents blank screens when the doc was never created or was deleted
+                try {
+                  await setDoc(userRef, {
+                    id: firebaseUser.uid,
+                    email: firebaseUser.email,
+                    displayName: firebaseUser.displayName || "",
+                    photoURL: firebaseUser.photoURL || "",
+                    role: "community",
+                    createdAt: serverTimestamp(),
+                  });
+                  // onSnapshot will fire again with the new doc — role will be set then
+                } catch (bootstrapErr) {
+                  console.error("Failed to bootstrap user profile:", bootstrapErr);
+                  setRole(null);
+                }
               }
             }
             setLoading(false);
