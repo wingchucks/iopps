@@ -1,0 +1,14 @@
+{
+  "crons": [
+    { "path": "/api/emails/send-job-alerts/instant", "schedule": "*/15 * * * *" },
+    { "path": "/api/emails/send-job-alerts/daily", "schedule": "0 9 * * *" },
+    { "path": "/api/emails/send-job-alerts/weekly", "schedule": "0 9 * * 1" },
+    { "path": "/api/cron/expire-jobs", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/expire-events", "schedule": "0 1 * * *" },
+    { "path": "/api/cron/expire-scholarships", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/publish-scheduled-jobs", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/sync-feeds?frequency=hourly", "schedule": "0 * * * *" },
+    { "path": "/api/cron/sync-feeds?frequency=daily", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/sync-feeds?frequency=weekly", "schedule": "0 7 * * 1" }
+  ]
+}
