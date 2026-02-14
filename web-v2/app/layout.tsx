@@ -1,6 +1,10 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "react-hot-toast";
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { MobileNav } from "@/components/layout/MobileNav";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -35,7 +39,7 @@ export const metadata: Metadata = {
   creator: "IOPPS",
   publisher: "IOPPS",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://iopps.ca"
+    process.env.NEXT_PUBLIC_SITE_URL || "https://iopps.ca",
   ),
   openGraph: {
     type: "website",
@@ -82,23 +86,34 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background text-foreground">
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-white focus:font-medium focus:shadow-lg"
-        >
-          Skip to main content
-        </a>
-        <main id="main-content">{children}</main>
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: "var(--card-bg)",
-              color: "var(--text-primary)",
-              border: "1px solid var(--card-border)",
-            },
-          }}
-        />
+        <AuthProvider>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-white focus:font-medium focus:shadow-lg"
+          >
+            Skip to main content
+          </a>
+
+          <SiteHeader />
+
+          <main id="main-content" className="min-h-screen">
+            {children}
+          </main>
+
+          <SiteFooter />
+          <MobileNav />
+
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: "var(--card-bg)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--card-border)",
+              },
+            }}
+          />
+        </AuthProvider>
       </body>
     </html>
   );
