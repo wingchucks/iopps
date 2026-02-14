@@ -1,106 +1,106 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import { verifyCronSecret } from "@/lib/cron-auth";
 
-// Mark this route as dynamic to prevent static analysis
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+
+// ---------------------------------------------------------------------------
+// GET /api/cron/expire-events
+// Runs daily at 1 AM. Expires pow wows and conferences whose endDate has passed.
+// ---------------------------------------------------------------------------
+
+function verifyCronSecret(request: NextRequest): boolean {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ") || !process.env.CRON_SECRET) return false;
+  const token = authHeader.substring(7);
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(token),
+      Buffer.from(process.env.CRON_SECRET),
+    );
+  } catch {
+    return false;
+  }
+}
 
 export async function GET(request: NextRequest) {
-  // Verify CRON_SECRET for security - REQUIRED in all environments
-  const authError = verifyCronSecret(request);
-  if (authError) return authError;
+  if (!verifyCronSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  if (!db) {
-    console.error("Firebase Admin not initialized");
+  if (!adminDb) {
+    console.error("[cron/expire-events] Firebase Admin not initialized");
     return NextResponse.json(
       { error: "Database not configured" },
-      { status: 503 }
+      { status: 503 },
     );
   }
 
   try {
-    console.log("Starting event expiration cron job...");
-
+    console.log("[cron/expire-events] Starting event expiration cron...");
     const now = new Date();
-    let powwowsExpired = 0;
-    let conferencesExpired = 0;
 
-    // =========================================================================
-    // POW WOW EXPIRATION
-    // Deactivate pow wows where endDate has passed
-    // =========================================================================
-    const expiredPowwowsSnapshot = await db
-      .collection("powwows")
-      .where("active", "==", true)
-      .where("endDate", "<=", now)
-      .get();
-
-    if (!expiredPowwowsSnapshot.empty) {
-      for (const powwowDoc of expiredPowwowsSnapshot.docs) {
-        try {
-          await db.collection("powwows").doc(powwowDoc.id).update({
-            active: false,
-            updatedAt: FieldValue.serverTimestamp(),
-            expiredAt: FieldValue.serverTimestamp(),
-            expirationReason: "endDate passed",
-          });
-          powwowsExpired++;
-        } catch (error) {
-          console.error(`Error updating pow wow ${powwowDoc.id}:`, error);
-        }
-      }
-    }
-
-    // =========================================================================
-    // CONFERENCE EXPIRATION
-    // Deactivate conferences where endDate has passed
-    // =========================================================================
-    const expiredConferencesSnapshot = await db
-      .collection("conferences")
-      .where("active", "==", true)
-      .where("endDate", "<=", now)
-      .get();
-
-    if (!expiredConferencesSnapshot.empty) {
-      for (const conferenceDoc of expiredConferencesSnapshot.docs) {
-        try {
-          await db.collection("conferences").doc(conferenceDoc.id).update({
-            active: false,
-            updatedAt: FieldValue.serverTimestamp(),
-            expiredAt: FieldValue.serverTimestamp(),
-            expirationReason: "endDate passed",
-          });
-          conferencesExpired++;
-        } catch (error) {
-          console.error(
-            `Error updating conference ${conferenceDoc.id}:`,
-            error
-          );
-        }
-      }
-    }
+    // Expire pow wows and conferences in parallel
+    const [powwowsExpired, conferencesExpired] = await Promise.all([
+      expireCollection("powwows", now),
+      expireCollection("conferences", now),
+    ]);
 
     console.log(
-      `Event expiration cron completed. Pow wows expired: ${powwowsExpired}, Conferences expired: ${conferencesExpired}`
+      `[cron/expire-events] Complete. Pow wows: ${powwowsExpired}, Conferences: ${conferencesExpired}`,
     );
 
     return NextResponse.json({
-      success: true,
-      powwowsExpired,
-      conferencesExpired,
+      expired: {
+        powwows: powwowsExpired,
+        conferences: conferencesExpired,
+      },
       timestamp: now.toISOString(),
-      message: `Successfully expired ${powwowsExpired} pow wow(s) and ${conferencesExpired} conference(s)`,
     });
   } catch (error) {
-    console.error("Event expiration cron error:", error);
+    console.error("[cron/expire-events] Fatal error:", error);
     return NextResponse.json(
       {
         error: "Failed to process event expiration",
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Shared helper: expire active documents past their endDate in a collection
+// ---------------------------------------------------------------------------
+async function expireCollection(
+  collectionName: string,
+  now: Date,
+): Promise<number> {
+  let count = 0;
+
+  const snap = await adminDb!
+    .collection(collectionName)
+    .where("active", "==", true)
+    .where("endDate", "<=", now)
+    .get();
+
+  for (const doc of snap.docs) {
+    try {
+      await doc.ref.update({
+        active: false,
+        expiredAt: FieldValue.serverTimestamp(),
+        expirationReason: "End date passed",
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      count++;
+    } catch (err) {
+      console.error(
+        `[cron/expire-events] Error expiring ${collectionName} ${doc.id}:`,
+        err,
+      );
+    }
+  }
+
+  return count;
 }

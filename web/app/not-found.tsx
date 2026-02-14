@@ -1,55 +1,19 @@
-import Link from "next/link";
+// TODO: Implement styled 404 page with navigation links
 
 export default function NotFound() {
-    return (
-        <div className="flex min-h-[60vh] items-center justify-center px-4">
-            <div className="text-center">
-                <div className="inline-flex items-center justify-center rounded-full bg-accent/10 p-6">
-                    <svg
-                        className="h-16 w-16 text-[#14B8A6]"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                </div>
-
-                <h1 className="mt-6 text-6xl font-bold text-foreground">404</h1>
-                <h2 className="mt-4 text-2xl font-semibold text-foreground">
-                    Page Not Found
-                </h2>
-                <p className="mt-4 max-w-md text-[var(--text-muted)]">
-                    Sorry, we couldn&apos;t find the page you&apos;re looking for. The opportunity
-                    you&apos;re seeking might have moved or no longer exists.
-                </p>
-
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                    <Link
-                        href="/"
-                        className="rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
-                    >
-                        Go Home
-                    </Link>
-                    <Link
-                        href="/careers"
-                        className="rounded-full border border-[var(--card-border)] px-6 py-3 font-semibold text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
-                    >
-                        Browse Jobs
-                    </Link>
-                </div>
-
-                <div className="mt-8">
-                    <p className="text-sm text-foreground0">
-                        Need help? <Link href="/contact" className="text-[#14B8A6] hover:underline">Contact us</Link>
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
+      <h1 className="text-6xl font-bold text-accent">404</h1>
+      <h2 className="mt-4 text-2xl font-semibold">Page Not Found</h2>
+      <p className="mt-2 text-text-secondary">
+        The page you&apos;re looking for doesn&apos;t exist or has been moved.
+      </p>
+      <a
+        href="/"
+        className="mt-8 rounded-lg bg-accent px-6 py-3 font-semibold text-white transition hover:bg-accent-hover"
+      >
+        Go Home
+      </a>
+    </div>
+  );
 }

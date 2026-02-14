@@ -1,651 +1,383 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useAuth } from "@/components/AuthProvider";
-import {
-  collection,
-  query,
-  getDocs,
-  where,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { Card, CardContent } from "@/components/ui";
 
-interface AnalyticsData {
-  // User metrics
-  totalUsers: number;
-  communityMembers: number;
-  employers: number;
-  usersByMonth: { month: string; count: number }[];
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-  // Job metrics
-  totalJobs: number;
-  activeJobs: number;
-  jobsByMonth: { month: string; count: number }[];
-  jobsByEmploymentType: { type: string; count: number }[];
-  jobsWithSalary: number;
-
-  // Application metrics
-  totalApplications: number;
-  applicationsByStatus: { status: string; count: number }[];
-  avgApplicationsPerJob: number;
-  applicationRate: number;
-
-  // Content metrics
-  totalConferences: number;
-  activeConferences: number;
-  totalScholarships: number;
-  activeScholarships: number;
-  totalPowwows: number;
-  activePowwows: number;
-  totalVendors: number;
-  activeVendors: number;
-  featuredVendors: number;
-
-  // Employer metrics
-  topEmployers: { name: string; jobCount: number; applicationCount: number }[];
-
-  // Geographic distribution
-  topLocations: { location: string; count: number }[];
+interface StatOverview {
+  label: string;
+  value: string;
+  change: string;
+  trend: "up" | "down" | "neutral";
 }
 
+interface TopEmployer {
+  rank: number;
+  name: string;
+  jobsPosted: number;
+  applicationsReceived: number;
+}
+
+interface TopLocation {
+  rank: number;
+  location: string;
+  jobCount: number;
+}
+
+interface JobTypeBreakdown {
+  type: string;
+  count: number;
+  percentage: number;
+}
+
+// ---------------------------------------------------------------------------
+// Mock Data
+// ---------------------------------------------------------------------------
+
+const STAT_OVERVIEW: StatOverview[] = [
+  { label: "Total Users", value: "12,847", change: "+8.2%", trend: "up" },
+  { label: "Active Jobs", value: "342", change: "+12.5%", trend: "up" },
+  {
+    label: "Total Applications",
+    value: "4,218",
+    change: "+15.3%",
+    trend: "up",
+  },
+  { label: "Revenue", value: "$28,450", change: "+5.1%", trend: "up" },
+];
+
+const TOP_EMPLOYERS: TopEmployer[] = [
+  {
+    rank: 1,
+    name: "First Nations Health Authority",
+    jobsPosted: 28,
+    applicationsReceived: 412,
+  },
+  {
+    rank: 2,
+    name: "Cree Nation Government",
+    jobsPosted: 22,
+    applicationsReceived: 318,
+  },
+  {
+    rank: 3,
+    name: "Indigenous Services Canada",
+    jobsPosted: 19,
+    applicationsReceived: 287,
+  },
+  {
+    rank: 4,
+    name: "Assembly of First Nations",
+    jobsPosted: 15,
+    applicationsReceived: 203,
+  },
+  {
+    rank: 5,
+    name: "Nunavut Tunngavik Inc.",
+    jobsPosted: 12,
+    applicationsReceived: 176,
+  },
+];
+
+const TOP_LOCATIONS: TopLocation[] = [
+  { rank: 1, location: "Ottawa, ON", jobCount: 58 },
+  { rank: 2, location: "Vancouver, BC", jobCount: 45 },
+  { rank: 3, location: "Toronto, ON", jobCount: 41 },
+  { rank: 4, location: "Winnipeg, MB", jobCount: 33 },
+  { rank: 5, location: "Edmonton, AB", jobCount: 27 },
+];
+
+const JOB_TYPE_BREAKDOWN: JobTypeBreakdown[] = [
+  { type: "Full-time", count: 198, percentage: 58 },
+  { type: "Part-time", count: 62, percentage: 18 },
+  { type: "Contract", count: 55, percentage: 16 },
+  { type: "Internship", count: 27, percentage: 8 },
+];
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+/** Overview stat card with trend indicator */
+function OverviewCard({ stat }: { stat: StatOverview }) {
+  return (
+    <div className="rounded-2xl border border-card-border bg-card p-5">
+      <p className="text-sm text-text-muted">{stat.label}</p>
+      <p className="mt-2 text-2xl font-bold text-text-primary">{stat.value}</p>
+      <div className="mt-2 flex items-center gap-1">
+        {stat.trend === "up" ? (
+          <svg
+            className="h-4 w-4 text-success"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"
+            />
+          </svg>
+        ) : stat.trend === "down" ? (
+          <svg
+            className="h-4 w-4 text-error"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.18"
+            />
+          </svg>
+        ) : null}
+        <span
+          className={[
+            "text-xs font-medium",
+            stat.trend === "up"
+              ? "text-success"
+              : stat.trend === "down"
+                ? "text-error"
+                : "text-text-muted",
+          ].join(" ")}
+        >
+          {stat.change}
+        </span>
+        <span className="text-xs text-text-muted">vs last month</span>
+      </div>
+    </div>
+  );
+}
+
+/** Horizontal bar for job type breakdown */
+function HorizontalBar({
+  item,
+  maxPercentage,
+}: {
+  item: JobTypeBreakdown;
+  maxPercentage: number;
+}) {
+  const barWidth = (item.percentage / maxPercentage) * 100;
+
+  return (
+    <div className="flex items-center gap-4">
+      <span className="w-24 flex-shrink-0 text-sm text-text-secondary">
+        {item.type}
+      </span>
+      <div className="flex-1">
+        <div className="h-3 w-full rounded-full bg-surface">
+          <div
+            className="h-3 rounded-full bg-accent transition-all duration-500"
+            style={{ width: `${barWidth}%` }}
+          />
+        </div>
+      </div>
+      <span className="w-20 flex-shrink-0 text-right text-sm text-text-muted">
+        {item.count} ({item.percentage}%)
+      </span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
 export default function AdminAnalyticsPage() {
-  const { user, role, loading: authLoading } = useAuth();
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<"30d" | "90d" | "all">("all");
+  useAuth();
 
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user || !role) {
-      router.push("/");
-      return;
-    }
-
-    // Check authorization with positive comparison for better type narrowing
-    const isAuthorized = role === "admin" || role === "moderator";
-    if (!isAuthorized) {
-      router.push("/");
-      return;
-    }
-
-    loadAnalytics();
-  }, [user, role, authLoading, router]);
-
-  async function loadAnalytics() {
-    try {
-      setLoading(true);
-
-      // Get all users
-      const usersRef = collection(db!, "users");
-      const usersSnap = await getDocs(usersRef);
-      const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-
-      const totalUsers = users.length;
-      const communityMembers = users.filter(u => u.role === "community").length;
-      const employers = users.filter(u => u.role === "employer").length;
-
-      // User growth by month
-      const usersByMonth = aggregateByMonth(users, "createdAt");
-
-      // Get all jobs
-      const jobsRef = collection(db!, "jobs");
-      const jobsSnap = await getDocs(jobsRef);
-      const jobs = jobsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-
-      const totalJobs = jobs.length;
-      const activeJobs = jobs.filter(j => j.active === true).length;
-      const jobsWithSalary = jobs.filter(j => j.salaryRange).length;
-
-      // Jobs by month
-      const jobsByMonth = aggregateByMonth(jobs, "createdAt");
-
-      // Jobs by employment type
-      const employmentTypeCounts = new Map<string, number>();
-      jobs.forEach(job => {
-        const type = job.employmentType || "Unspecified";
-        employmentTypeCounts.set(type, (employmentTypeCounts.get(type) || 0) + 1);
-      });
-      const jobsByEmploymentType = Array.from(employmentTypeCounts.entries())
-        .map(([type, count]) => ({ type, count }))
-        .sort((a, b) => b.count - a.count);
-
-      // Get all applications
-      const applicationsRef = collection(db!, "applications");
-      const applicationsSnap = await getDocs(applicationsRef);
-      const applications = applicationsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-
-      const totalApplications = applications.length;
-
-      // Applications by status
-      const statusCounts = new Map<string, number>();
-      applications.forEach(app => {
-        const status = app.status || "unknown";
-        statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
-      });
-      const applicationsByStatus = Array.from(statusCounts.entries())
-        .map(([status, count]) => ({ status, count }))
-        .sort((a, b) => b.count - a.count);
-
-      // Calculate avg applications per job
-      const avgApplicationsPerJob = totalJobs > 0
-        ? Math.round((totalApplications / totalJobs) * 10) / 10
-        : 0;
-
-      // Calculate application rate (applications per active job)
-      const applicationRate = activeJobs > 0
-        ? Math.round((totalApplications / activeJobs) * 10) / 10
-        : 0;
-
-      // Get conferences
-      const conferencesRef = collection(db!, "conferences");
-      const conferencesSnap = await getDocs(conferencesRef);
-      const conferences = conferencesSnap.docs.map(doc => doc.data()) as any[];
-      const totalConferences = conferences.length;
-      const activeConferences = conferences.filter(c => c.active === true).length;
-
-      // Get scholarships
-      const scholarshipsRef = collection(db!, "scholarships");
-      const scholarshipsSnap = await getDocs(scholarshipsRef);
-      const scholarships = scholarshipsSnap.docs.map(doc => doc.data()) as any[];
-      const totalScholarships = scholarships.length;
-      const activeScholarships = scholarships.filter(s => s.active === true).length;
-
-      // Get powwows
-      const powwowsRef = collection(db!, "powwows");
-      const powwowsSnap = await getDocs(powwowsRef);
-      const powwows = powwowsSnap.docs.map(doc => doc.data()) as any[];
-      const totalPowwows = powwows.length;
-      const activePowwows = powwows.filter(p => p.active === true).length;
-
-      // Get vendors
-      const vendorsRef = collection(db!, "vendors");
-      const vendorsSnap = await getDocs(vendorsRef);
-      const vendors = vendorsSnap.docs.map(doc => doc.data()) as any[];
-      const totalVendors = vendors.length;
-      const activeVendors = vendors.filter(v => v.active === true).length;
-      const featuredVendors = vendors.filter(v => v.featured === true).length;
-
-      // Top employers by job count
-      const employerJobCounts = new Map<string, { name: string; jobCount: number; applicationCount: number }>();
-
-      jobs.forEach(job => {
-        const employerId = job.employerId;
-        const employerName = job.employerName || "Unknown";
-
-        if (!employerJobCounts.has(employerId)) {
-          employerJobCounts.set(employerId, { name: employerName, jobCount: 0, applicationCount: 0 });
-        }
-
-        const employer = employerJobCounts.get(employerId)!;
-        employer.jobCount++;
-      });
-
-      // Add application counts
-      applications.forEach(app => {
-        const employerId = app.employerId;
-        if (employerJobCounts.has(employerId)) {
-          employerJobCounts.get(employerId)!.applicationCount++;
-        }
-      });
-
-      const topEmployers = Array.from(employerJobCounts.values())
-        .sort((a, b) => b.jobCount - a.jobCount)
-        .slice(0, 10);
-
-      // Top locations
-      const locationCounts = new Map<string, number>();
-      jobs.forEach(job => {
-        const location = job.location || "Unspecified";
-        locationCounts.set(location, (locationCounts.get(location) || 0) + 1);
-      });
-      const topLocations = Array.from(locationCounts.entries())
-        .map(([location, count]) => ({ location, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
-
-      setAnalytics({
-        totalUsers,
-        communityMembers,
-        employers,
-        usersByMonth,
-        totalJobs,
-        activeJobs,
-        jobsByMonth,
-        jobsByEmploymentType,
-        jobsWithSalary,
-        totalApplications,
-        applicationsByStatus,
-        avgApplicationsPerJob,
-        applicationRate,
-        totalConferences,
-        activeConferences,
-        totalScholarships,
-        activeScholarships,
-        totalPowwows,
-        activePowwows,
-        totalVendors,
-        activeVendors,
-        featuredVendors,
-        topEmployers,
-        topLocations,
-      });
-    } catch (error) {
-      console.error("Error loading analytics:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function aggregateByMonth(items: any[], dateField: string) {
-    const monthCounts = new Map<string, number>();
-
-    items.forEach(item => {
-      const date = item[dateField];
-      if (!date) return;
-
-      let dateObj: Date;
-      if (date.seconds) {
-        dateObj = new Date(date.seconds * 1000);
-      } else if (typeof date === "string") {
-        dateObj = new Date(date);
-      } else {
-        return;
-      }
-
-      const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
-      monthCounts.set(monthKey, (monthCounts.get(monthKey) || 0) + 1);
-    });
-
-    return Array.from(monthCounts.entries())
-      .map(([month, count]) => ({ month, count }))
-      .sort((a, b) => a.month.localeCompare(b.month))
-      .slice(-12); // Last 12 months
-  }
-
-  async function exportToCSV() {
-    if (!analytics) return;
-
-    const csvData = `IOPPS Platform Analytics Report
-Generated: ${new Date().toLocaleString()}
-
-=== USER METRICS ===
-Total Users,${analytics.totalUsers}
-Community Members,${analytics.communityMembers}
-Employers,${analytics.employers}
-
-=== JOB METRICS ===
-Total Jobs,${analytics.totalJobs}
-Active Jobs,${analytics.activeJobs}
-Jobs with Salary Info,${analytics.jobsWithSalary}
-Avg Applications per Job,${analytics.avgApplicationsPerJob}
-
-=== APPLICATION METRICS ===
-Total Applications,${analytics.totalApplications}
-Application Rate (per active job),${analytics.applicationRate}
-
-=== CONTENT METRICS ===
-Conferences (Total/Active),${analytics.totalConferences}/${analytics.activeConferences}
-Scholarships (Total/Active),${analytics.totalScholarships}/${analytics.activeScholarships}
-Pow Wows (Total/Active),${analytics.totalPowwows}/${analytics.activePowwows}
-Vendors (Total/Active/Featured),${analytics.totalVendors}/${analytics.activeVendors}/${analytics.featuredVendors}
-
-=== TOP EMPLOYERS ===
-${analytics.topEmployers.map(e => `${e.name},${e.jobCount} jobs,${e.applicationCount} applications`).join("\n")}
-
-=== TOP LOCATIONS ===
-${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
-`;
-
-    const blob = new Blob([csvData], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `iopps-analytics-${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  }
-
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-[var(--text-muted)]">Loading analytics...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || (role !== "admin" && role !== "moderator")) {
-    return null;
-  }
-
-  if (!analytics) {
-    return (
-      <div className="min-h-screen bg-background px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-red-400">Failed to load analytics data.</p>
-        </div>
-      </div>
-    );
-  }
+  const maxPercentage = Math.max(...JOB_TYPE_BREAKDOWN.map((j) => j.percentage));
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-[var(--card-border)] bg-surface">
-        <div className="mx-auto max-w-7xl px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Link
-                href="/admin"
-                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
-              >
-                ← Admin Dashboard
-              </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-                Platform Analytics
-              </h1>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
-                Comprehensive platform metrics and insights
-              </p>
-            </div>
-            <button
-              onClick={exportToCSV}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
-            >
-              Export CSV
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 py-8 space-y-8">
-        {/* Key Metrics Overview */}
-        <div>
-          <h2 className="text-xl font-semibold text-foreground mb-4">Overview</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricCard
-              label="Total Users"
-              value={analytics.totalUsers}
-              subtitle={`${analytics.communityMembers} members, ${analytics.employers} employers`}
-              color="blue"
-            />
-            <MetricCard
-              label="Active Jobs"
-              value={analytics.activeJobs}
-              subtitle={`${analytics.totalJobs} total jobs`}
-              color="purple"
-            />
-            <MetricCard
-              label="Applications"
-              value={analytics.totalApplications}
-              subtitle={`${analytics.avgApplicationsPerJob} avg per job`}
-              color="orange"
-            />
-            <MetricCard
-              label="Application Rate"
-              value={analytics.applicationRate}
-              subtitle="per active job"
-              color="green"
-            />
-          </div>
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-text-primary sm:text-3xl">
+            Platform Analytics
+          </h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            Overview of platform performance and usage metrics.
+          </p>
         </div>
 
-        {/* User Growth */}
-        <div>
-          <h2 className="text-xl font-semibold text-foreground mb-4">User Growth (Last 12 Months)</h2>
-          <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
-            <div className="space-y-3">
-              {analytics.usersByMonth.map((month) => (
-                <div key={month.month} className="flex items-center gap-4">
-                  <div className="w-24 text-sm text-[var(--text-muted)]">{month.month}</div>
-                  <div className="flex-1">
-                    <div className="h-8 rounded-lg bg-surface overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all"
-                        style={{
-                          width: `${Math.min((month.count / Math.max(...analytics.usersByMonth.map(m => m.count))) * 100, 100)}%`
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="w-16 text-right text-sm font-semibold text-foreground">
-                    {month.count}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Stats Overview */}
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {STAT_OVERVIEW.map((stat) => (
+            <OverviewCard key={stat.label} stat={stat} />
+          ))}
         </div>
 
-        {/* Job Posting Trends */}
-        <div>
-          <h2 className="text-xl font-semibold text-foreground mb-4">Job Postings (Last 12 Months)</h2>
-          <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
-            <div className="space-y-3">
-              {analytics.jobsByMonth.map((month) => (
-                <div key={month.month} className="flex items-center gap-4">
-                  <div className="w-24 text-sm text-[var(--text-muted)]">{month.month}</div>
-                  <div className="flex-1">
-                    <div className="h-8 rounded-lg bg-surface overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all"
-                        style={{
-                          width: `${Math.min((month.count / Math.max(...analytics.jobsByMonth.map(m => m.count))) * 100, 100)}%`
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="w-16 text-right text-sm font-semibold text-foreground">
-                    {month.count}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Two Column Layout */}
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Employment Types */}
-          <div>
-            <h2 className="text-xl font-semibold text-foreground mb-4">Jobs by Employment Type</h2>
-            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
-              <div className="space-y-4">
-                {analytics.jobsByEmploymentType.map((item) => (
-                  <div key={item.type}>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-[var(--text-secondary)]">{item.type}</span>
-                      <span className="font-semibold text-foreground">
-                        {item.count} ({Math.round((item.count / analytics.totalJobs) * 100)}%)
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-surface overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-[#14B8A6] to-[#0D9488]"
-                        style={{
-                          width: `${(item.count / analytics.totalJobs) * 100}%`
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
+        {/* User Growth Chart Placeholder */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold text-text-primary">
+              User Growth
+            </h2>
+            <p className="mt-1 text-sm text-text-muted">
+              Monthly active users over time
+            </p>
+            <div className="mt-6 flex h-64 items-center justify-center rounded-xl border border-dashed border-card-border bg-surface">
+              <div className="text-center">
+                <svg
+                  className="mx-auto h-10 w-10 text-text-muted"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+                  />
+                </svg>
+                <p className="mt-3 text-sm font-medium text-text-primary">
+                  Chart coming soon
+                </p>
+                <p className="mt-1 text-xs text-text-muted">
+                  Connect analytics API for live data
+                </p>
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Application Status Breakdown */}
-          <div>
-            <h2 className="text-xl font-semibold text-foreground mb-4">Applications by Status</h2>
-            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
-              <div className="space-y-4">
-                {analytics.applicationsByStatus.map((item) => {
-                  const colors: Record<string, string> = {
-                    submitted: "from-blue-500 to-blue-600",
-                    reviewed: "from-purple-500 to-purple-600",
-                    shortlisted: "from-yellow-500 to-yellow-600",
-                    hired: "from-green-500 to-green-600",
-                    rejected: "from-red-500 to-red-600",
-                    withdrawn: "from-slate-500 to-slate-600",
-                  };
-                  const color = colors[item.status] || "from-slate-500 to-slate-600";
-
-                  return (
-                    <div key={item.status}>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-[var(--text-secondary)] capitalize">{item.status}</span>
-                        <span className="font-semibold text-foreground">
-                          {item.count} ({Math.round((item.count / analytics.totalApplications) * 100)}%)
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-surface overflow-hidden">
-                        <div
-                          className={`h-full bg-gradient-to-r ${color}`}
-                          style={{
-                            width: `${(item.count / analytics.totalApplications) * 100}%`
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Content Metrics */}
-        <div>
-          <h2 className="text-xl font-semibold text-foreground mb-4">Content Metrics</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <ContentMetricCard
-              label="Conferences"
-              total={analytics.totalConferences}
-              active={analytics.activeConferences}
-            />
-            <ContentMetricCard
-              label="Scholarships"
-              total={analytics.totalScholarships}
-              active={analytics.activeScholarships}
-            />
-            <ContentMetricCard
-              label="Pow Wows"
-              total={analytics.totalPowwows}
-              active={analytics.activePowwows}
-            />
-            <ContentMetricCard
-              label="Vendors"
-              total={analytics.totalVendors}
-              active={analytics.activeVendors}
-              featured={analytics.featuredVendors}
-            />
-          </div>
-        </div>
-
-        {/* Two Column Layout */}
-        <div className="grid gap-8 lg:grid-cols-2">
+        {/* Two-column layout: Top Employers + Top Locations */}
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Top Employers */}
-          <div>
-            <h2 className="text-xl font-semibold text-foreground mb-4">Top Employers</h2>
-            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
-              <div className="space-y-4">
-                {analytics.topEmployers.map((employer, index) => (
-                  <div key={employer.name} className="flex items-center gap-4">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-sm font-bold text-[var(--text-primary)]">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-foreground">{employer.name}</div>
-                      <div className="text-xs text-foreground0">
-                        {employer.jobCount} jobs • {employer.applicationCount} applications
-                      </div>
-                    </div>
-                  </div>
-                ))}
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="mb-4 text-lg font-semibold text-text-primary">
+                Top Employers
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-card-border text-left">
+                      <th className="pb-3 pr-4 font-medium text-text-muted">
+                        Rank
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-text-muted">
+                        Organization
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-text-muted text-right">
+                        Jobs
+                      </th>
+                      <th className="pb-3 font-medium text-text-muted text-right">
+                        Applications
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {TOP_EMPLOYERS.map((emp) => (
+                      <tr
+                        key={emp.rank}
+                        className="border-b border-[var(--card-border)]/50 transition-colors hover:bg-[var(--card-bg)]/50"
+                      >
+                        <td className="py-3 pr-4">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
+                            {emp.rank}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4 font-medium text-text-primary">
+                          {emp.name}
+                        </td>
+                        <td className="py-3 pr-4 text-right text-text-secondary">
+                          {emp.jobsPosted}
+                        </td>
+                        <td className="py-3 text-right text-text-secondary">
+                          {emp.applicationsReceived}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Top Locations */}
-          <div>
-            <h2 className="text-xl font-semibold text-foreground mb-4">Top Job Locations</h2>
-            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
-              <div className="space-y-4">
-                {analytics.topLocations.map((location, index) => (
-                  <div key={location.location} className="flex items-center gap-4">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-sm font-bold text-white">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-foreground">{location.location}</div>
-                      <div className="text-xs text-foreground0">{location.count} jobs</div>
-                    </div>
-                  </div>
-                ))}
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="mb-4 text-lg font-semibold text-text-primary">
+                Top Locations
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-card-border text-left">
+                      <th className="pb-3 pr-4 font-medium text-text-muted">
+                        Rank
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-text-muted">
+                        Location
+                      </th>
+                      <th className="pb-3 font-medium text-text-muted text-right">
+                        Job Count
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {TOP_LOCATIONS.map((loc) => (
+                      <tr
+                        key={loc.rank}
+                        className="border-b border-[var(--card-border)]/50 transition-colors hover:bg-[var(--card-bg)]/50"
+                      >
+                        <td className="py-3 pr-4">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
+                            {loc.rank}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4 font-medium text-text-primary">
+                          {loc.location}
+                        </td>
+                        <td className="py-3 text-right text-text-secondary">
+                          {loc.jobCount}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Content Breakdown: Jobs by Type */}
+        <Card>
+          <CardContent className="p-6">
+            <h2 className="mb-1 text-lg font-semibold text-text-primary">
+              Content Breakdown
+            </h2>
+            <p className="mb-6 text-sm text-text-muted">
+              Distribution of jobs by employment type
+            </p>
+            <div className="space-y-4">
+              {JOB_TYPE_BREAKDOWN.map((item) => (
+                <HorizontalBar
+                  key={item.type}
+                  item={item}
+                  maxPercentage={maxPercentage}
+                />
+              ))}
             </div>
-          </div>
+          </CardContent>
+        </Card>
+
+        {/* Mock data notice */}
+        <div className="mt-6 rounded-lg border border-info/20 bg-info/5 p-3 text-xs text-info">
+          All data shown is placeholder. Connect analytics API for live data.
         </div>
-      </div>
-    </div>
-  );
-}
-
-interface MetricCardProps {
-  label: string;
-  value: number;
-  subtitle?: string;
-  color: "blue" | "purple" | "orange" | "green";
-}
-
-function MetricCard({ label, value, subtitle, color }: MetricCardProps) {
-  const colors = {
-    blue: "from-blue-500 to-blue-600",
-    purple: "from-purple-500 to-purple-600",
-    orange: "from-orange-500 to-orange-600",
-    green: "from-green-500 to-green-600",
-  };
-
-  return (
-    <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
-      <p className="text-sm font-medium text-[var(--text-muted)]">{label}</p>
-      <p className={`mt-2 text-4xl font-bold bg-gradient-to-r ${colors[color]} bg-clip-text text-transparent`}>
-        {value}
-      </p>
-      {subtitle && <p className="mt-1 text-xs text-foreground0">{subtitle}</p>}
-    </div>
-  );
-}
-
-interface ContentMetricCardProps {
-  label: string;
-  total: number;
-  active: number;
-  featured?: number;
-}
-
-function ContentMetricCard({ label, total, active, featured }: ContentMetricCardProps) {
-  const activePercentage = total > 0 ? Math.round((active / total) * 100) : 0;
-
-  return (
-    <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
-      <p className="text-sm font-medium text-[var(--text-muted)]">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-foreground">{total}</p>
-      <div className="mt-3 space-y-1">
-        <div className="flex justify-between text-xs">
-          <span className="text-green-400">Active: {active}</span>
-          <span className="text-foreground0">{activePercentage}%</span>
-        </div>
-        {featured !== undefined && (
-          <div className="text-xs text-yellow-400">Featured: {featured}</div>
-        )}
       </div>
     </div>
   );

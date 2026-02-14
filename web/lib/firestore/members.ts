@@ -1,219 +1,210 @@
-// Member-related Firestore operations
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
-  db,
-  memberCollection,
-  checkFirebase,
-} from "./shared";
-import type { MemberProfile } from "@/lib/types";
-import { MOCK_MEMBERS } from "../mockData";
-
-export async function getMemberProfile(
-  userId: string
-): Promise<MemberProfile | null> {
-  const ref = doc(db!, memberCollection, userId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
-  return snap.data() as MemberProfile;
-}
-
-export async function upsertMemberProfile(
-  userId: string,
-  data: Omit<MemberProfile, "id" | "userId" | "createdAt" | "updatedAt">
-) {
-  const ref = doc(db!, memberCollection, userId);
-  // Only include fields that are explicitly provided to avoid overwriting
-  // existing data with empty strings on partial updates.
-  const base: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data)) {
-    if (value !== undefined) {
-      base[key] = value;
-    }
-  }
-
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
-    await updateDoc(ref, {
-      ...base,
-      updatedAt: serverTimestamp(),
-    });
-  } else {
-    await setDoc(ref, {
-      id: userId,
-      userId,
-      ...base,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  }
-}
-
-export async function searchMembers(
-  filters: {
-    skills?: string[];
-    availableOnly?: boolean;
-    limit?: number;
-  } = {}
-): Promise<MemberProfile[]> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return MOCK_MEMBERS;
-
-    const ref = collection(firestore, memberCollection);
-    const constraints = [];
-
-    if (filters.availableOnly) {
-      constraints.push(where("availableForInterviews", "==", true));
-    }
-
-    if (filters.skills && filters.skills.length > 0) {
-      constraints.push(where("skills", "array-contains-any", filters.skills.slice(0, 10)));
-    }
-
-    constraints.push(limit(filters.limit || 20));
-
-    const q = query(ref, ...constraints);
-    const snap = await getDocs(q);
-
-    return snap.docs.map(doc => ({
-      ...doc.data(),
-      id: doc.id
-    } as MemberProfile));
-
-  } catch (error) {
-    console.error("Error searching members:", error);
-    return [];
-  }
-}
-
 /**
- * Search members by display name (prefix search)
+ * Member profile Firestore operations (server-side, firebase-admin).
+ *
+ * Collection: "memberProfiles"
+ *
+ * All functions use the Firebase Admin SDK and are intended for use
+ * in Next.js API routes and server components.
  */
-export async function searchMembersByName(
-  searchQuery: string,
-  maxResults: number = 10
-): Promise<MemberProfile[]> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return [];
 
-    const ref = collection(firestore, memberCollection);
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue, type Timestamp } from "firebase-admin/firestore";
 
-    if (!searchQuery.trim()) {
-      // Return recent members when no query
-      const q = query(ref, limit(maxResults));
-      const snap = await getDocs(q);
-      return snap.docs
-        .map(doc => ({ ...doc.data(), id: doc.id } as MemberProfile))
-        .filter(m => m.displayName && m.displayName.trim().length > 0);
-    }
+// ============================================
+// COLLECTION NAME
+// ============================================
 
-    // Firestore prefix search on displayName
-    const searchTerm = searchQuery.trim();
-    const q = query(
-      ref,
-      where("displayName", ">=", searchTerm),
-      where("displayName", "<=", searchTerm + "\uf8ff"),
-      limit(maxResults)
-    );
+const MEMBER_COLLECTION = "memberProfiles";
 
-    const snap = await getDocs(q);
-    return snap.docs
-      .map(doc => ({ ...doc.data(), id: doc.id } as MemberProfile))
-      .filter(m => m.displayName && m.displayName.trim().length > 0);
-  } catch (error) {
-    console.error("Error searching members by name:", error);
-    return [];
-  }
+// ============================================
+// TYPES
+// ============================================
+
+export interface WorkExperience {
+  id: string;
+  company: string;
+  position: string;
+  location?: string;
+  startDate: string;
+  endDate?: string;
+  current: boolean;
+  description: string;
 }
 
-export interface ListMembersOptions {
-  searchQuery?: string;
+export interface Education {
+  id: string;
+  institution: string;
+  degree: string;
+  fieldOfStudy?: string;
+  startDate: string;
+  endDate?: string;
+  current: boolean;
+  description?: string;
+}
+
+export interface PortfolioItem {
+  id: string;
+  title: string;
+  description: string;
+  url?: string;
+  imageUrl?: string;
+  tags?: string[];
+}
+
+export interface MemberProfile {
+  id: string;
+  userId: string;
+  displayName?: string;
+  avatarUrl?: string;
+  coverPhotoUrl?: string;
+  photoURL?: string;
+  tagline?: string;
+  bio?: string;
   location?: string;
   skills?: string[];
-  availableOnly?: boolean;
-  limit?: number;
-  startAfterDoc?: unknown;
+  experience?: WorkExperience[];
+  experienceSummary?: string;
+  education?: Education[];
+  educationSummary?: string;
+  portfolio?: PortfolioItem[];
+  resumeUrl?: string;
+  coverLetterTemplate?: string;
+  indigenousAffiliation?: string;
+  availableForInterviews?: string;
+  messagingHandle?: string;
+  nation?: string;
+  territory?: string;
+  band?: string;
+  pronouns?: string;
+  memberType?: "jobSeeker" | "professional" | "communityMember";
+  openToWork?: boolean;
+  jobTypes?: string[];
+  preferredLocations?: string[];
+  willingToRelocate?: boolean;
+  experienceLevel?: "student" | "entry" | "mid" | "senior" | "executive";
+  industry?: string;
+  quickApplyEnabled?: boolean;
+  defaultCoverLetter?: string;
+  wizardDismissed?: boolean;
+  email?: string;
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
+// ============================================
+// CRUD FUNCTIONS
+// ============================================
+
+/**
+ * Get a member profile by user ID (document ID).
+ * Queries the "memberProfiles" collection.
+ *
+ * @param uid - The user's Firebase UID (used as document ID)
+ * @returns The member profile or null if not found
+ */
+export async function getMemberProfile(
+  uid: string
+): Promise<MemberProfile | null> {
+  if (!adminDb) return null;
+
+  try {
+    const snap = await adminDb.collection(MEMBER_COLLECTION).doc(uid).get();
+    if (!snap.exists) return null;
+    return snap.data() as MemberProfile;
+  } catch (error) {
+    console.error("[getMemberProfile] Error:", error);
+    return null;
+  }
 }
 
 /**
- * List members for the community directory
- * Only returns members who have public profiles
+ * Create a new member profile document.
+ * Uses the UID as the document ID in the "memberProfiles" collection.
+ *
+ * @param uid - The user's Firebase UID
+ * @param data - Profile fields (excluding id, userId, timestamps)
  */
-export async function listMembersForDirectory(
-  options: ListMembersOptions = {}
-): Promise<{ members: MemberProfile[]; hasMore: boolean }> {
+export async function createMemberProfile(
+  uid: string,
+  data: Omit<MemberProfile, "id" | "userId" | "createdAt" | "updatedAt">
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+
+  // Filter out undefined values
+  const cleanData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      cleanData[key] = value;
+    }
+  }
+
+  await adminDb
+    .collection(MEMBER_COLLECTION)
+    .doc(uid)
+    .set({
+      id: uid,
+      userId: uid,
+      ...cleanData,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * Update fields on an existing member profile.
+ * Queries the "memberProfiles" collection by document ID.
+ *
+ * @param uid - The user's Firebase UID
+ * @param data - Partial fields to update
+ */
+export async function updateMemberProfile(
+  uid: string,
+  data: Partial<Omit<MemberProfile, "id" | "userId" | "createdAt">>
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+
+  // Filter out undefined values
+  const cleanData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      cleanData[key] = value;
+    }
+  }
+
+  await adminDb
+    .collection(MEMBER_COLLECTION)
+    .doc(uid)
+    .update({
+      ...cleanData,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * Find a member profile by email field.
+ * Queries the "memberProfiles" collection using a where clause on the email field.
+ *
+ * @param email - The email address to search for
+ * @returns The matching member profile or null
+ */
+export async function getMemberByEmail(
+  email: string
+): Promise<MemberProfile | null> {
+  if (!adminDb) return null;
+
   try {
-    const firestore = checkFirebase();
-    if (!firestore) {
-      return { members: MOCK_MEMBERS.slice(0, options.limit || 20), hasMore: false };
-    }
+    const snap = await adminDb
+      .collection(MEMBER_COLLECTION)
+      .where("email", "==", email)
+      .limit(1)
+      .get();
 
-    const ref = collection(firestore, memberCollection);
-    const constraints = [];
+    if (snap.empty) return null;
 
-    // Filter by availability if requested
-    if (options.availableOnly) {
-      constraints.push(where("availableForInterviews", "in", ["yes", "maybe"]));
-    }
-
-    // Filter by skills if provided
-    if (options.skills && options.skills.length > 0) {
-      constraints.push(where("skills", "array-contains-any", options.skills.slice(0, 10)));
-    }
-
-    // Add limit (+1 to check if there are more)
-    const queryLimit = (options.limit || 20) + 1;
-    constraints.push(limit(queryLimit));
-
-    const q = query(ref, ...constraints);
-    const snap = await getDocs(q);
-
-    let members = snap.docs.map(doc => ({
-      ...doc.data(),
-      id: doc.id
-    } as MemberProfile));
-
-    // Check if there are more results
-    const hasMore = members.length > (options.limit || 20);
-    if (hasMore) {
-      members = members.slice(0, options.limit || 20);
-    }
-
-    // Client-side filtering for search query and location
-    // (Firestore doesn't support full-text search)
-    if (options.searchQuery) {
-      const searchLower = options.searchQuery.toLowerCase();
-      members = members.filter(m =>
-        m.displayName?.toLowerCase().includes(searchLower) ||
-        m.bio?.toLowerCase().includes(searchLower) ||
-        m.indigenousAffiliation?.toLowerCase().includes(searchLower) ||
-        m.skills?.some(s => s.toLowerCase().includes(searchLower))
-      );
-    }
-
-    if (options.location) {
-      const locationLower = options.location.toLowerCase();
-      members = members.filter(m =>
-        m.location?.toLowerCase().includes(locationLower)
-      );
-    }
-
-    // Filter out members without display names (incomplete profiles)
-    members = members.filter(m => m.displayName && m.displayName.trim().length > 0);
-
-    return { members, hasMore };
+    const doc = snap.docs[0];
+    return { ...(doc.data() as MemberProfile), id: doc.id };
   } catch (error) {
-    console.error("Error listing members for directory:", error);
-    return { members: [], hasMore: false };
+    console.error("[getMemberByEmail] Error:", error);
+    return null;
   }
 }

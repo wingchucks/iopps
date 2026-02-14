@@ -1,96 +1,100 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { NextResponse, type NextRequest } from "next/server";
+import { adminDb } from "@/lib/firebase-admin";
 import { verifyAdminToken } from "@/lib/api-auth";
-import type { Firestore, Query, WhereFilterOp } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
-async function getCollectionCount(
-  firestore: Firestore,
-  collectionName: string,
-  conditions?: { field: string; op: WhereFilterOp; value: unknown }[]
-): Promise<number> {
-  try {
-    let ref: Query = firestore.collection(collectionName);
-    if (conditions) {
-      for (const c of conditions) {
-        ref = ref.where(c.field, c.op, c.value);
-      }
-    }
-    const snapshot = await ref.count().get();
-    return snapshot.data().count;
-  } catch (error) {
-    console.error("Error counting " + collectionName + ":", error);
-    return 0;
-  }
-}
+// ---------------------------------------------------------------------------
+// GET /api/admin/counts
+// ---------------------------------------------------------------------------
 
+/**
+ * Returns aggregate KPI counts across all major platform collections.
+ *
+ * All counts are fetched in parallel using Firestore `.count()` aggregation
+ * for efficiency -- no documents are actually downloaded.
+ */
 export async function GET(request: NextRequest) {
+  const auth = await verifyAdminToken(request);
+  if (!auth.success) return auth.response;
+
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Firestore not initialized" },
+      { status: 500 }
+    );
+  }
+
   try {
-    // Verify admin authentication
-    const authResult = await verifyAdminToken(request);
-    if ("error" in authResult) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: 401 }
-      );
-    }
-
-    if (!db) {
-      return NextResponse.json(
-        { error: "Database not initialized" },
-        { status: 500 }
-      );
-    }
-
-    // Query all counts in parallel using Admin SDK (bypasses security rules)
     const [
-      totalUsers,
-      totalMembers,
-      totalEmployers,
-      totalVendors,
-      totalJobs,
-      activeJobs,
-      totalEvents,
-      totalApplications,
-      totalPowwows,
-      totalFlags,
-      pendingVerifications,
-      pendingEmployers,
+      usersSnap,
+      memberProfilesSnap,
+      employersTotalSnap,
+      employersPendingSnap,
+      vendorsSnap,
+      jobsTotalSnap,
+      jobsActiveSnap,
+      conferencesSnap,
+      applicationsSnap,
+      powwowsSnap,
+      contentFlagsSnap,
+      verificationsPendingSnap,
     ] = await Promise.all([
-      getCollectionCount(db, "users"),
-      getCollectionCount(db, "memberProfiles"),
-      getCollectionCount(db, "employers"),
-      getCollectionCount(db, "vendors"),
-      getCollectionCount(db, "jobs"),
-      getCollectionCount(db, "jobs", [{ field: "status", op: "==", value: "active" }]),
-      getCollectionCount(db, "conferences"),
-      getCollectionCount(db, "applications"),
-      getCollectionCount(db, "powwows"),
-      getCollectionCount(db, "contentFlags"),
-      getCollectionCount(db, "verificationRequests", [{ field: "status", op: "==", value: "pending" }]),
-      getCollectionCount(db, "employers", [{ field: "status", op: "==", value: "pending" }]),
+      adminDb.collection("users").count().get(),
+      adminDb.collection("memberProfiles").count().get(),
+      adminDb.collection("employers").count().get(),
+      adminDb
+        .collection("employers")
+        .where("status", "==", "pending")
+        .count()
+        .get(),
+      adminDb.collection("vendors").count().get(),
+      adminDb.collection("jobs").count().get(),
+      adminDb
+        .collection("jobs")
+        .where("status", "==", "active")
+        .count()
+        .get(),
+      adminDb.collection("conferences").count().get(),
+      adminDb.collection("applications").count().get(),
+      adminDb.collection("powwows").count().get(),
+      adminDb.collection("contentFlags").count().get(),
+      adminDb
+        .collection("verificationRequests")
+        .where("status", "==", "pending")
+        .count()
+        .get(),
     ]);
 
-    return NextResponse.json({
-      counts: {
-        users: { total: totalUsers },
-        members: { total: totalMembers },
-        employers: { total: totalEmployers, pending: pendingEmployers },
-        vendors: { total: totalVendors },
-        jobs: { total: totalJobs, active: activeJobs },
-        events: { total: totalEvents },
-        applications: { total: totalApplications },
-        powwows: { total: totalPowwows },
-        flags: { total: totalFlags },
-        verifications: { pending: pendingVerifications },
+    const counts = {
+      users: usersSnap.data().count,
+      memberProfiles: memberProfilesSnap.data().count,
+      employers: {
+        total: employersTotalSnap.data().count,
+        pending: employersPendingSnap.data().count,
       },
+      vendors: vendorsSnap.data().count,
+      jobs: {
+        total: jobsTotalSnap.data().count,
+        active: jobsActiveSnap.data().count,
+      },
+      conferences: conferencesSnap.data().count,
+      applications: applicationsSnap.data().count,
+      powwows: powwowsSnap.data().count,
+      contentFlags: contentFlagsSnap.data().count,
+      verificationRequests: {
+        pending: verificationsPendingSnap.data().count,
+      },
+    };
+
+    return NextResponse.json({
+      counts,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Admin counts API error:", error);
+    console.error("[GET /api/admin/counts] Error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch admin counts" },
+      { error: "Failed to fetch counts" },
       { status: 500 }
     );
   }
