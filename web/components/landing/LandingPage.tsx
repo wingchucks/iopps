@@ -26,7 +26,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     fetch("/api/stats/public").then(r => r.json()).then(setStats).catch(() => 
-      setStats({ jobs: 127, members: 2847, organizations: 58, events: 34 })
+      setStats({ jobs: 50, members: 100, organizations: 20, events: 10 })
     );
     fetch("/api/feed/preview").then(r => r.json()).then(d => setFeed(d.items || [])).catch(() => {});
   }, []);
@@ -120,10 +120,10 @@ export default function LandingPage() {
 
           {/* Animated stats */}
           <div className="mt-20 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 animate-fade-in-up animation-delay-400">
-            <AnimatedStat value={stats.jobs || 127} label="Active Jobs" icon="💼" />
-            <AnimatedStat value={stats.members || 2847} label="Members" icon="👥" />
-            <AnimatedStat value={stats.organizations || 58} label="Organizations" icon="🏢" />
-            <AnimatedStat value={stats.events || 34} label="Events" icon="📅" />
+            <AnimatedStat value={stats.jobs || 50} label="Active Jobs" icon="💼" />
+            <AnimatedStat value={stats.members || 100} label="Members" icon="👥" />
+            <AnimatedStat value={stats.organizations || 20} label="Organizations" icon="🏢" />
+            <AnimatedStat value={stats.events || 10} label="Events" icon="📅" />
           </div>
         </div>
 

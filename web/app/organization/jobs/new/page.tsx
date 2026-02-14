@@ -836,7 +836,7 @@ function NewJobPageContent() {
               </div>
               <h3 className="text-xl font-bold text-foreground">Job Posting Pricing</h3>
               <p className="text-sm text-[var(--text-muted)] mt-2">
-                Reach thousands of Indigenous professionals across Canada
+                Connect with Indigenous professionals across Canada
               </p>
             </div>
 

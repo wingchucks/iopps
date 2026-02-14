@@ -61,7 +61,7 @@ export default function MediaFeaturesPage() {
     ];
 
     const benefits = [
-        "Reach thousands of Indigenous job seekers",
+        "Connect with Indigenous job seekers across Canada",
         "Showcase your workplace culture authentically",
         "Build your employer brand in Indigenous communities",
         "Support reconciliation through meaningful visibility",

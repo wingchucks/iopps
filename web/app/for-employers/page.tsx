@@ -64,7 +64,7 @@ export default function ForEmployersPage() {
             Hire Indigenous Talent
           </h1>
           <p className="mt-4 text-lg opacity-90 sm:text-xl">
-            Reach thousands of Indigenous professionals across Canada. Post jobs, build your employer brand, and advance reconciliation.
+            Connect with Indigenous professionals across Canada. Post jobs, build your employer brand, and advance reconciliation.
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link

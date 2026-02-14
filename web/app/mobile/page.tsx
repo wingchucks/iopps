@@ -256,7 +256,7 @@ export default function MobileAppPage() {
                         Stay connected to your community
                     </h2>
                     <p className="mt-4 text-lg text-[var(--text-secondary)]">
-                        Join thousands of Indigenous community members and employers already using IOPPS.
+                        Join Indigenous community members and employers already using IOPPS.
                     </p>
 
                     <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
