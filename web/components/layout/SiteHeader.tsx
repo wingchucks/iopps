@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
@@ -21,9 +22,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-
-  // TODO: Replace with actual auth state from Firebase context
-  const user = null as { displayName: string; photoURL?: string } | null;
+  const { user, userProfile, loading, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-card/80 backdrop-blur-md">
@@ -62,16 +61,16 @@ export function SiteHeader() {
           <ThemeToggle />
 
           {/* Auth section */}
-          {user ? (
+          {loading ? null : user ? (
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-border-lt"
               >
                 <Avatar
-                  src={user.photoURL}
-                  alt={user.displayName}
-                  fallback={user.displayName}
+                  src={userProfile?.photoURL}
+                  alt={userProfile?.displayName || "User"}
+                  fallback={userProfile?.displayName || user.displayName || "User"}
                   size="sm"
                 />
                 <ChevronDown className="hidden h-4 w-4 text-text-muted sm:block" />
@@ -97,7 +96,7 @@ export function SiteHeader() {
                       className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-border-lt hover:text-text-primary"
                       onClick={() => {
                         setUserMenuOpen(false);
-                        // TODO: Sign out
+                        signOut();
                       }}
                     >
                       <LogOut className="h-4 w-4" />
@@ -161,13 +160,23 @@ export function SiteHeader() {
             })}
           </div>
 
-          {!user && (
+          {!loading && !user && (
             <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
               <Button variant="ghost" size="md" href="/login" fullWidth>
                 Log In
               </Button>
               <Button variant="primary" size="md" href="/signup" fullWidth>
                 Sign Up
+              </Button>
+            </div>
+          )}
+          {!loading && user && (
+            <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
+              <Button variant="ghost" size="md" href="/member/dashboard" fullWidth onClick={() => setMobileMenuOpen(false)}>
+                Dashboard
+              </Button>
+              <Button variant="ghost" size="md" fullWidth onClick={() => { setMobileMenuOpen(false); signOut(); }}>
+                Sign Out
               </Button>
             </div>
           )}
