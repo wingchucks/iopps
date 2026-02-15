@@ -1,348 +1,362 @@
 "use client";
 
-import { useAuth } from "@/components/AuthProvider";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import {
-  ShieldCheckIcon,
-  UsersIcon,
-  BriefcaseIcon,
-  ChartBarIcon,
-  ChartBarSquareIcon,
-  ArrowLeftOnRectangleIcon,
-  ArrowRightOnRectangleIcon,
-  ArrowDownTrayIcon,
-  VideoCameraIcon,
-  SparklesIcon,
-  BuildingOfficeIcon,
-  BuildingStorefrontIcon,
-  Cog6ToothIcon,
-  DocumentTextIcon,
-  EnvelopeIcon,
-  InboxIcon,
-  Bars3Icon,
-  XMarkIcon,
-  AcademicCapIcon,
-  ClipboardDocumentListIcon,
-  FlagIcon,
-  NewspaperIcon,
-  CheckBadgeIcon,
-  DocumentMagnifyingGlassIcon,
-} from "@heroicons/react/24/outline";
-import { AdminNavGroup, AdminTopBar, type NavItem } from "@/components/admin";
-import { useAdminCounts } from "@/lib/hooks/admin";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { cn } from "@/lib/utils";
 
-// ============================================================================
-// Navigation Groups Configuration
-// ============================================================================
+// ---------------------------------------------------------------------------
+// Navigation structure
+// ---------------------------------------------------------------------------
+
+interface NavItem {
+  label: string;
+  href: string;
+  /** Unicode icon displayed beside the label */
+  icon: string;
+}
 
 interface NavGroup {
-  label: string;
+  title: string;
   items: NavItem[];
-  defaultOpen?: boolean;
-  collapsible?: boolean;
 }
 
-function useNavigationGroups(): NavGroup[] {
-  const { counts, loading } = useAdminCounts();
+const NAV_GROUPS: NavGroup[] = [
+  {
+    title: "Overview",
+    items: [
+      { label: "Dashboard", href: "/admin", icon: "\u25A3" },
+      { label: "Analytics", href: "/admin/analytics", icon: "\u2630" },
+    ],
+  },
+  {
+    title: "People",
+    items: [
+      { label: "Users", href: "/admin/users", icon: "\u2603" },
+      { label: "Employers", href: "/admin/employers", icon: "\u2616" },
+    ],
+  },
+  {
+    title: "Content",
+    items: [
+      { label: "Jobs", href: "/admin/jobs", icon: "\u2601" },
+      { label: "Conferences", href: "/admin/conferences", icon: "\u2609" },
+      { label: "Scholarships", href: "/admin/scholarships", icon: "\u2605" },
+    ],
+  },
+  {
+    title: "Settings",
+    items: [
+      { label: "Platform Settings", href: "/admin/settings", icon: "\u2699" },
+    ],
+  },
+];
 
-  // Calculate pending counts for badges
-  const pendingApprovals = loading ? 0 : counts.employers.pending + counts.vendors.pending;
+// ---------------------------------------------------------------------------
+// Inline SVG icons (no external library)
+// ---------------------------------------------------------------------------
 
-  return [
-    {
-      label: "Overview",
-      items: [
-        {
-          name: "Dashboard",
-          href: "/admin",
-          icon: ChartBarIcon,
-          badge: pendingApprovals > 0 ? pendingApprovals : undefined,
-          badgeVariant: "warning" as const,
-        },
-        { name: "Analytics", href: "/admin/analytics", icon: ChartBarSquareIcon },
-      ],
-      defaultOpen: true,
-      collapsible: false,
-    },
-    {
-      label: "People",
-      items: [
-        { name: "Users", href: "/admin/users", icon: UsersIcon },
-        {
-          name: "Employers",
-          href: "/admin/employers",
-          icon: BriefcaseIcon,
-          badge: counts.employers.pending > 0 ? counts.employers.pending : undefined,
-          badgeVariant: "warning" as const,
-        },
-        { name: "Applications", href: "/admin/applications", icon: ClipboardDocumentListIcon },
-      ],
-      defaultOpen: true,
-    },
-    {
-      label: "Moderation",
-      items: [
-        { name: "V2 Approvals", href: "/admin/approvals", icon: CheckBadgeIcon },
-        { name: "Flagged Content", href: "/admin/moderation", icon: FlagIcon },
-        { name: "Verification", href: "/admin/verification", icon: ShieldCheckIcon },
-      ],
-      defaultOpen: true,
-    },
-    {
-      label: "Content",
-      items: [
-        { name: "Jobs", href: "/admin/jobs", icon: DocumentTextIcon },
-        { name: "Scholarships", href: "/admin/scholarships", icon: AcademicCapIcon },
-        { name: "Conferences", href: "/admin/conferences", icon: BuildingOfficeIcon },
-        { name: "Pow Wows", href: "/admin/powwows", icon: SparklesIcon },
-        { name: "News", href: "/admin/news", icon: NewspaperIcon },
-        { name: "Contact Messages", href: "/admin/content", icon: InboxIcon },
-      ],
-      defaultOpen: true,
-    },
-    {
-      label: "Marketplace",
-      items: [
-        {
-          name: "Vendors",
-          href: "/admin/vendors",
-          icon: BuildingStorefrontIcon,
-          badge: counts.vendors.pending > 0 ? counts.vendors.pending : undefined,
-          badgeVariant: "warning" as const,
-        },
-      ],
-      defaultOpen: true,
-    },
-    {
-      label: "Media",
-      items: [{ name: "Videos", href: "/admin/videos", icon: VideoCameraIcon }],
-      defaultOpen: false,
-    },
-    {
-      label: "Automation",
-      items: [
-        { name: "Job Auto Import", href: "/admin/feeds", icon: ArrowDownTrayIcon },
-        { name: "Email Campaigns", href: "/admin/emails", icon: EnvelopeIcon },
-      ],
-      defaultOpen: false,
-    },
-    {
-      label: "Settings",
-      items: [
-        { name: "Platform Settings", href: "/admin/settings", icon: Cog6ToothIcon },
-        { name: "Audit Log", href: "/admin/audit", icon: DocumentMagnifyingGlassIcon },
-      ],
-      defaultOpen: false,
-    },
-  ];
+function MenuIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
 }
 
-// ============================================================================
-// Mobile Navigation
-// ============================================================================
-
-interface MobileNavProps {
-  isOpen: boolean;
-  onClose: () => void;
-  groups: NavGroup[];
+function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
 }
 
-function MobileNav({ isOpen, onClose, groups }: MobileNavProps) {
-  const { logout } = useAuth();
-  const router = useRouter();
+function ArrowLeftIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
+  );
+}
 
-  if (!isOpen) return null;
+function LogOutIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
 
-  const handleSignOut = async () => {
-    onClose();
-    router.push("/");
-    await logout();
+// ---------------------------------------------------------------------------
+// Sidebar content (shared between desktop and mobile drawer)
+// ---------------------------------------------------------------------------
+
+function SidebarContent({
+  pathname,
+  onNavigate,
+  onSignOut,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+  onSignOut: () => void;
+}) {
+  /** Check if a nav item is the "active" route */
+  const isActive = (href: string) => {
+    if (href === "/admin") return pathname === "/admin";
+    return pathname.startsWith(href);
   };
 
   return (
-    <div className="fixed inset-0 z-50 md:hidden">
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/60" onClick={onClose} />
+    <div className="flex h-full flex-col">
+      {/* Logo / title area */}
+      <div className="flex h-16 items-center gap-2.5 border-b border-[var(--card-border)] px-5">
+        <span className="text-lg font-bold text-accent">IOPPS</span>
+        <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+          Admin
+        </span>
+      </div>
 
-      {/* Drawer */}
-      <div className="fixed inset-y-0 left-0 w-72 bg-surface shadow-xl">
-        <div className="flex h-16 items-center justify-between border-b border-[var(--card-border)] px-4">
-          <Link href="/discover" className="flex items-center gap-2 font-bold text-foreground" onClick={onClose}>
-            <ShieldCheckIcon className="h-6 w-6 text-accent" />
-            <span>IOPPS Admin</span>
-          </Link>
-          <button
-            onClick={onClose}
-            className="rounded-md p-2 text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
-            aria-label="Close navigation"
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </button>
-        </div>
+      {/* Navigation groups */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Admin navigation">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.title} className="mb-5">
+            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+              {group.title}
+            </p>
+            <ul className="space-y-0.5">
+              {group.items.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onNavigate}
+                      className={cn(
+                        "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
+                        active
+                          ? "border-l-[3px] border-accent bg-accent/10 text-accent"
+                          : "border-l-[3px] border-transparent text-[var(--text-muted)] hover:bg-[var(--card-bg)] hover:text-foreground",
+                      )}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      <span className="text-base leading-none" aria-hidden="true">
+                        {item.icon}
+                      </span>
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {groups.map((group) => (
-            <AdminNavGroup
-              key={group.label}
-              label={group.label}
-              items={group.items}
-              defaultOpen={group.defaultOpen}
-              collapsible={group.collapsible}
-            />
-          ))}
-        </nav>
-
-        <div className="border-t border-[var(--card-border)] p-4 space-y-1">
-          <Link
-            href="/discover"
-            className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
-            onClick={onClose}
-          >
-            <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-[var(--text-muted)] group-hover:text-foreground" />
-            Back to Site
-          </Link>
-          <button
-            onClick={() => void handleSignOut()}
-            className="group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-400"
-          >
-            <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-[var(--text-muted)] group-hover:text-red-400" />
-            Sign Out
-          </button>
-        </div>
+      {/* Footer actions */}
+      <div className="border-t border-[var(--card-border)] p-3 space-y-1">
+        <Link
+          href="/"
+          onClick={onNavigate}
+          className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--card-bg)] hover:text-foreground"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Back to Site
+        </Link>
+        <button
+          onClick={() => {
+            onNavigate?.();
+            onSignOut();
+          }}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-muted)] transition-colors hover:bg-error/10 hover:text-error"
+        >
+          <LogOutIcon className="h-4 w-4" />
+          Sign Out
+        </button>
       </div>
     </div>
   );
 }
 
-// ============================================================================
-// Main Layout
-// ============================================================================
+// ---------------------------------------------------------------------------
+// Loading spinner
+// ---------------------------------------------------------------------------
+
+function LoadingSpinner() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-3">
+        <svg
+          className="h-8 w-8 animate-spin text-accent"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-label="Loading"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
+        </svg>
+        <p className="text-sm text-[var(--text-muted)]">Loading admin panel...</p>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main layout
+// ---------------------------------------------------------------------------
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, role, loading, logout } = useAuth();
+  const { user, role, loading, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const navGroups = useNavigationGroups();
-
-  const handleLogout = async () => {
-    router.push("/");
-    await logout();
-  };
-
-  // Close mobile nav on route change
+  // Close mobile drawer on route change
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: sync UI with route change
-    setMobileNavOpen(false);
+    setDrawerOpen(false);
   }, [pathname]);
 
+  // Lock body scroll when drawer is open
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push("/login");
-      } else if (role !== "moderator" && role !== "admin") {
-        router.push("/");
-      }
+    if (drawerOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
     }
-  }, [user, role, loading, router]);
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [drawerOpen]);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-[var(--text-muted)]" data-admin>
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--card-border)] border-t-accent" />
-          <span>Loading admin panel...</span>
-        </div>
-      </div>
-    );
-  }
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
-  if (!user || (role !== "moderator" && role !== "admin")) {
-    return null; // Will redirect via useEffect
+  // Auth guard: redirect when auth resolves
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+    if (role !== "admin" && role !== "moderator") {
+      router.replace("/");
+    }
+  }, [loading, user, role, router]);
+
+  // While loading or unauthorized, show spinner
+  if (loading || !user || (role !== "admin" && role !== "moderator")) {
+    return <LoadingSpinner />;
   }
 
   return (
-    <div className="min-h-screen bg-background" data-admin>
-      <div className="flex h-screen overflow-hidden">
-        {/* Desktop Sidebar */}
-        <div className="hidden w-64 flex-col border-r border-[var(--card-border)] bg-surface md:flex">
-          {/* Logo */}
-          <div className="flex h-16 items-center border-b border-[var(--card-border)] px-6">
-            <Link href="/discover" className="flex items-center gap-2 font-bold text-foreground">
-              <ShieldCheckIcon className="h-6 w-6 text-accent" />
-              <span>IOPPS Admin</span>
-            </Link>
-          </div>
+    <div data-admin className="flex h-screen bg-background">
+      {/* ---- Desktop sidebar ---- */}
+      <aside className="hidden w-64 shrink-0 border-r border-[var(--card-border)] bg-surface lg:block">
+        <SidebarContent
+          pathname={pathname}
+          onSignOut={signOut}
+        />
+      </aside>
 
-          {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-2">
-            {navGroups.map((group) => (
-              <AdminNavGroup
-                key={group.label}
-                label={group.label}
-                items={group.items}
-                defaultOpen={group.defaultOpen}
-                collapsible={group.collapsible}
-              />
-            ))}
-          </nav>
-
-          {/* Footer */}
-          <div className="border-t border-[var(--card-border)] p-4 space-y-1">
-            <Link
-              href="/discover"
-              className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
-            >
-              <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-[var(--text-muted)] group-hover:text-foreground" />
-              Back to Site
-            </Link>
-            <button
-              onClick={() => void handleLogout()}
-              className="group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-400"
-            >
-              <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-[var(--text-muted)] group-hover:text-red-400" />
-              Sign Out
-            </button>
-          </div>
+      {/* ---- Mobile drawer overlay ---- */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 animate-fade-in"
+            onClick={closeDrawer}
+            aria-hidden="true"
+          />
+          {/* Drawer panel */}
+          <aside className="relative z-50 h-full w-72 bg-surface shadow-xl animate-slide-in-left">
+            <SidebarContent
+              pathname={pathname}
+              onNavigate={closeDrawer}
+              onSignOut={signOut}
+            />
+          </aside>
         </div>
+      )}
 
-        {/* Main Content Area */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Mobile Header */}
-          <header className="flex h-16 items-center justify-between border-b border-[var(--card-border)] bg-surface px-4 md:hidden">
-            <button
-              onClick={() => setMobileNavOpen(true)}
-              className="rounded-md p-2 text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
-              aria-label="Open navigation"
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-            <div className="flex items-center gap-2 font-bold text-foreground">
-              <ShieldCheckIcon className="h-6 w-6 text-accent" />
-              <span>Admin</span>
-            </div>
-            <div className="w-10" /> {/* Spacer for centering */}
-          </header>
+      {/* ---- Main content column ---- */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Mobile header */}
+        <header className="flex h-14 items-center gap-3 border-b border-[var(--card-border)] bg-surface px-4 lg:hidden">
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="rounded-lg p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--card-bg)] hover:text-foreground"
+            aria-label="Open navigation menu"
+          >
+            <MenuIcon className="h-5 w-5" />
+          </button>
+          <span className="text-sm font-bold text-accent">IOPPS</span>
+          <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+            Admin
+          </span>
+        </header>
 
-          {/* Desktop Top Bar */}
-          <div className="hidden md:block">
-            <AdminTopBar />
-          </div>
-
-          {/* Page Content */}
-          <main className="flex-1 overflow-y-auto bg-background p-6">{children}</main>
-        </div>
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto bg-background p-6">
+          {children}
+        </main>
       </div>
-
-      {/* Mobile Navigation Drawer */}
-      <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} groups={navGroups} />
     </div>
   );
 }

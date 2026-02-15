@@ -1,370 +1,208 @@
-// School-related Firestore operations for the Education Pillar
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-  limit,
-  db,
-  schoolsCollection,
-  studentInquiriesCollection,
-  savedSchoolsCollection,
-  checkFirebase,
-} from "./shared";
-import type { QueryConstraint } from "./shared";
-import type {
-  School,
-  StudentInquiry,
-  SavedSchool,
-} from "@/lib/types";
+/**
+ * School Firestore operations (server-side, firebase-admin).
+ *
+ * Collection: "schools"
+ *
+ * All functions use the Firebase Admin SDK and are intended for use
+ * in Next.js API routes and server components.
+ */
+
+import { adminDb } from "@/lib/firebase-admin";
+import { type Timestamp } from "firebase-admin/firestore";
 
 // ============================================
-// SCHOOL CRUD OPERATIONS
+// COLLECTION NAME
 // ============================================
 
-type SchoolInput = Omit<School, "id" | "createdAt" | "updatedAt" | "isPublished"> & {
-  isPublished?: boolean;
-};
-
-export async function createSchool(input: SchoolInput): Promise<string> {
-  const ref = collection(db!, schoolsCollection);
-  // Filter out undefined values - Firestore doesn't accept them
-  const cleanInput = Object.fromEntries(
-    Object.entries(input).filter(([, v]) => v !== undefined)
-  );
-  const docRef = await addDoc(ref, {
-    ...cleanInput,
-    isPublished: input.isPublished ?? false,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  // Update the document with its own ID
-  await updateDoc(doc(db!, schoolsCollection, docRef.id), {
-    id: docRef.id,
-  });
-  return docRef.id;
-}
-
-export async function getSchool(id: string): Promise<School | null> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return null;
-    const ref = doc(firestore, schoolsCollection, id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return null;
-    return snap.data() as School;
-  } catch {
-    return null;
-  }
-}
-
-export async function getSchoolBySlug(slug: string): Promise<School | null> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return null;
-    const ref = collection(firestore, schoolsCollection);
-    const q = query(ref, where("slug", "==", slug), where("isPublished", "==", true), limit(1));
-    const snap = await getDocs(q);
-    if (snap.empty) return null;
-    return snap.docs[0].data() as School;
-  } catch {
-    return null;
-  }
-}
-
-export async function getSchoolByEmployerId(employerId: string): Promise<School | null> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return null;
-    const ref = collection(firestore, schoolsCollection);
-    const q = query(ref, where("employerId", "==", employerId), limit(1));
-    const snap = await getDocs(q);
-    if (snap.empty) return null;
-    return snap.docs[0].data() as School;
-  } catch {
-    return null;
-  }
-}
-
-export async function updateSchool(id: string, data: Partial<School>): Promise<void> {
-  const ref = doc(db!, schoolsCollection, id);
-  await updateDoc(ref, {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-export async function deleteSchool(id: string): Promise<void> {
-  const ref = doc(db!, schoolsCollection, id);
-  await deleteDoc(ref);
-}
+const SCHOOLS_COLLECTION = "schools";
 
 // ============================================
-// SCHOOL LISTING OPERATIONS
+// TYPES
 // ============================================
 
-export interface ListSchoolsOptions {
-  type?: string;
+export interface SchoolCampus {
+  id: string;
+  name: string;
+  address?: string;
+  city?: string;
   province?: string;
+  postalCode?: string;
+  phone?: string;
+  email?: string;
+  isPrimary?: boolean;
+}
+
+export interface SchoolStats {
+  totalStudents?: number;
+  indigenousStudentPercentage?: number;
+  graduationRate?: number;
+  employmentRate?: number;
+  averageClassSize?: number;
+  studentFacultyRatio?: string;
+  viewsCount?: number;
+}
+
+export interface SchoolVerification {
+  isVerified?: boolean;
   indigenousControlled?: boolean;
+  verifiedAt?: Timestamp | null;
+  verifiedBy?: string;
+}
+
+export interface School {
+  id: string;
+  employerId: string;
+  name: string;
+  slug?: string;
+  type?: string;
+  description?: string;
+  mission?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  headOffice?: {
+    address?: string;
+    city?: string;
+    province?: string;
+    postalCode?: string;
+    phone?: string;
+    email?: string;
+  };
+  campuses?: SchoolCampus[];
+  website?: string;
+  socialLinks?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+    youtube?: string;
+  };
+  stats?: SchoolStats;
+  verification?: SchoolVerification;
+  accreditations?: string[];
+  specializations?: string[];
+  supportServices?: string[];
+  nation?: string;
+  territory?: string;
+  isPublished?: boolean;
+  featured?: boolean;
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
+export interface SchoolFilters {
+  /** Filter by school type */
+  type?: string;
+  /** Filter by province */
+  province?: string;
+  /** Filter by indigenous-controlled status */
+  indigenousControlled?: boolean;
+  /** Only return published schools. Defaults to true. */
   publishedOnly?: boolean;
+  /** Limit the number of results */
   limitCount?: number;
 }
 
-export async function listSchools(options: ListSchoolsOptions = {}): Promise<School[]> {
+// ============================================
+// CRUD FUNCTIONS
+// ============================================
+
+/**
+ * List schools with optional filters.
+ * Queries the "schools" collection.
+ * Results are sorted by name client-side (to avoid composite index requirements).
+ *
+ * @param filters - Optional filter criteria
+ * @returns Array of schools sorted alphabetically by name
+ */
+export async function getSchools(
+  filters: SchoolFilters = {}
+): Promise<School[]> {
+  if (!adminDb) return [];
+
   try {
-    const firestore = checkFirebase();
-    if (!firestore) return [];
+    let ref: FirebaseFirestore.Query = adminDb.collection(SCHOOLS_COLLECTION);
 
-    const ref = collection(firestore, schoolsCollection);
-    const constraints: QueryConstraint[] = [];
-
-    if (options.publishedOnly !== false) {
-      constraints.push(where("isPublished", "==", true));
+    if (filters.publishedOnly !== false) {
+      ref = ref.where("isPublished", "==", true);
     }
 
-    if (options.type) {
-      constraints.push(where("type", "==", options.type));
+    if (filters.type) {
+      ref = ref.where("type", "==", filters.type);
     }
 
-    if (options.province) {
-      constraints.push(where("headOffice.province", "==", options.province));
+    if (filters.province) {
+      ref = ref.where("headOffice.province", "==", filters.province);
     }
 
-    if (options.indigenousControlled !== undefined) {
-      constraints.push(where("verification.indigenousControlled", "==", options.indigenousControlled));
+    if (filters.indigenousControlled !== undefined) {
+      ref = ref.where(
+        "verification.indigenousControlled",
+        "==",
+        filters.indigenousControlled
+      );
     }
 
-    // Note: orderBy removed to avoid composite index requirement
-    // Sorting done client-side instead
-    if (options.limitCount) {
-      constraints.push(limit(options.limitCount));
+    if (filters.limitCount) {
+      ref = ref.limit(filters.limitCount);
     }
 
-    const q = query(ref, ...constraints);
-    const snap = await getDocs(q);
-    const schools = snap.docs.map((docSnap) => docSnap.data() as School);
-    // Sort by name client-side
-    return schools.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  } catch {
+    const snap = await ref.get();
+
+    const schools = snap.docs.map((doc) => doc.data() as School);
+
+    // Sort by name client-side (matching v1 pattern)
+    return schools.sort((a, b) =>
+      (a.name || "").localeCompare(b.name || "")
+    );
+  } catch (error) {
+    console.error("[getSchools] Error:", error);
     return [];
-  }
-}
-
-export async function listFeaturedSchools(limitCount: number = 4): Promise<School[]> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return [];
-
-    const ref = collection(firestore, schoolsCollection);
-    const q = query(
-      ref,
-      where("isPublished", "==", true),
-      where("verification.isVerified", "==", true),
-      orderBy("stats.indigenousStudentPercentage", "desc"),
-      limit(limitCount)
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((docSnap) => docSnap.data() as School);
-  } catch {
-    return [];
-  }
-}
-
-// ============================================
-// STUDENT INQUIRIES
-// ============================================
-
-type StudentInquiryInput = Omit<StudentInquiry, "id" | "createdAt" | "updatedAt" | "status">;
-
-export async function createStudentInquiry(input: StudentInquiryInput): Promise<string> {
-  const ref = collection(db!, studentInquiriesCollection);
-  const docRef = await addDoc(ref, {
-    ...input,
-    status: "new",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  return docRef.id;
-}
-
-export async function listSchoolInquiries(schoolId: string): Promise<StudentInquiry[]> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return [];
-
-    const ref = collection(firestore, studentInquiriesCollection);
-    const q = query(
-      ref,
-      where("schoolId", "==", schoolId),
-      orderBy("createdAt", "desc")
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as StudentInquiry));
-  } catch {
-    return [];
-  }
-}
-
-export async function updateInquiryStatus(
-  inquiryId: string,
-  status: StudentInquiry["status"]
-): Promise<void> {
-  const ref = doc(db!, studentInquiriesCollection, inquiryId);
-  await updateDoc(ref, {
-    status,
-    updatedAt: serverTimestamp(),
-    ...(status === "replied" ? { repliedAt: serverTimestamp() } : {}),
-  });
-}
-
-export async function getUnreadInquiryCount(schoolId: string): Promise<number> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return 0;
-
-    const ref = collection(firestore, studentInquiriesCollection);
-    const q = query(
-      ref,
-      where("schoolId", "==", schoolId),
-      where("status", "==", "new")
-    );
-    const snap = await getDocs(q);
-    return snap.size;
-  } catch {
-    return 0;
-  }
-}
-
-// ============================================
-// SAVED SCHOOLS (Members)
-// ============================================
-
-export async function saveSchool(memberId: string, schoolId: string): Promise<void> {
-  const ref = collection(db!, savedSchoolsCollection);
-  await addDoc(ref, {
-    memberId,
-    schoolId,
-    createdAt: serverTimestamp(),
-  });
-}
-
-export async function unsaveSchool(memberId: string, schoolId: string): Promise<void> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return;
-
-    const ref = collection(firestore, savedSchoolsCollection);
-    const q = query(
-      ref,
-      where("memberId", "==", memberId),
-      where("schoolId", "==", schoolId)
-    );
-    const snap = await getDocs(q);
-    for (const docSnap of snap.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-  } catch {
-    // Silently fail
-  }
-}
-
-export async function isSchoolSaved(memberId: string, schoolId: string): Promise<boolean> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return false;
-
-    const ref = collection(firestore, savedSchoolsCollection);
-    const q = query(
-      ref,
-      where("memberId", "==", memberId),
-      where("schoolId", "==", schoolId),
-      limit(1)
-    );
-    const snap = await getDocs(q);
-    return !snap.empty;
-  } catch {
-    return false;
-  }
-}
-
-export async function listSavedSchools(memberId: string): Promise<SavedSchool[]> {
-  try {
-    const firestore = checkFirebase();
-    if (!firestore) return [];
-
-    const ref = collection(firestore, savedSchoolsCollection);
-    const q = query(
-      ref,
-      where("memberId", "==", memberId),
-      orderBy("createdAt", "desc")
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as SavedSchool));
-  } catch {
-    return [];
-  }
-}
-
-export async function listSavedSchoolIds(memberId: string): Promise<string[]> {
-  try {
-    const saved = await listSavedSchools(memberId);
-    return saved.map((s) => s.schoolId);
-  } catch {
-    return [];
-  }
-}
-
-// ============================================
-// SCHOOL ANALYTICS
-// ============================================
-
-export async function incrementSchoolViews(schoolId: string): Promise<void> {
-  try {
-    const ref = doc(db!, schoolsCollection, schoolId);
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      const currentViews = snap.data().stats?.viewsCount || 0;
-      await updateDoc(ref, {
-        "stats.viewsCount": currentViews + 1,
-      });
-    }
-  } catch {
-    // Silently fail - analytics shouldn't break the page
   }
 }
 
 /**
- * Set school published status
+ * Get a single school by its document ID.
+ * Queries the "schools" collection.
+ *
+ * @param id - School document ID
+ * @returns The school or null if not found
  */
-export async function setSchoolPublished(schoolId: string, isPublished: boolean): Promise<void> {
-  const ref = doc(db!, schoolsCollection, schoolId);
-  await updateDoc(ref, {
-    isPublished,
-    updatedAt: serverTimestamp(),
-  });
+export async function getSchoolById(id: string): Promise<School | null> {
+  if (!adminDb) return null;
+
+  try {
+    const snap = await adminDb.collection(SCHOOLS_COLLECTION).doc(id).get();
+    if (!snap.exists) return null;
+    return snap.data() as School;
+  } catch (error) {
+    console.error("[getSchoolById] Error:", error);
+    return null;
+  }
 }
 
-// ============================================
-// ALIASES (for backward compatibility)
-// ============================================
+/**
+ * Get a school by its slug field.
+ * Only returns published schools.
+ * Queries the "schools" collection.
+ *
+ * @param slug - The URL-friendly slug
+ * @returns The school or null if not found
+ */
+export async function getSchoolBySlug(slug: string): Promise<School | null> {
+  if (!adminDb) return null;
 
-// Alias for getSchoolByEmployerId (some files use organizationId terminology)
-export const getSchoolByOrganizationId = getSchoolByEmployerId;
+  try {
+    const snap = await adminDb
+      .collection(SCHOOLS_COLLECTION)
+      .where("slug", "==", slug)
+      .where("isPublished", "==", true)
+      .limit(1)
+      .get();
 
-// Alias for createStudentInquiry (some files use createSchoolInquiry)
-export const createSchoolInquiry = createStudentInquiry;
-export function getStudentInquiriesQuery(schoolId: string) {
-  return query(
-    collection(db!, studentInquiriesCollection),
-    where("schoolId", "==", schoolId),
-    where("status", "==", "new")
-  );
+    if (snap.empty) return null;
+    return snap.docs[0].data() as School;
+  } catch (error) {
+    console.error("[getSchoolBySlug] Error:", error);
+    return null;
+  }
 }

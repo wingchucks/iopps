@@ -14,15 +14,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         "/education/schools",
         "/education/programs",
         "/education/scholarships",
-        "/education/events",
-        "/business",
-        "/business/directory",
-        "/business/products",
-        "/business/services",
         "/conferences",
         "/community",
         "/pricing",
-        "/mobile",
     ];
 
     const staticRoutes = staticPages.map((route) => ({
@@ -33,12 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     // Auth pages
-    const authPages = [
-        "/login",
-        "/signup",
-    ];
-
-    const authRoutes = authPages.map((route) => ({
+    const authRoutes = ["/login", "/signup"].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
         changeFrequency: "monthly" as const,

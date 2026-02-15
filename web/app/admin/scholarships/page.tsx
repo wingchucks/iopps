@@ -1,623 +1,489 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/components/AuthProvider";
-import {
-  collection,
-  query,
-  getDocs,
-  orderBy,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import type { Scholarship } from "@/lib/types";
-import toast from "react-hot-toast";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { Card, CardContent, Badge } from "@/components/ui";
 
-interface ScholarshipWithEmployer extends Scholarship {
-  employerLogoUrl?: string;
-  expiredAt?: Timestamp | null;
-  expirationReason?: string;
-  deletedAt?: Timestamp | null;
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type ScholarshipStatus = "active" | "expired" | "flagged";
+type TabFilter = "all" | ScholarshipStatus;
+
+interface Scholarship {
+  id: string;
+  title: string;
+  provider: string;
+  amount: string;
+  deadline: string;
+  status: ScholarshipStatus;
 }
 
-type AdminAction =
-  | "force_publish"
-  | "force_unpublish"
-  | "mark_expired"
-  | "reopen"
-  | "flag_spam"
-  | "unflag_spam"
-  | "delete"
-  | "restore";
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
 
-import { Suspense } from "react";
+const TABS: { label: string; value: TabFilter }[] = [
+  { label: "All", value: "all" },
+  { label: "Active", value: "active" },
+  { label: "Expired", value: "expired" },
+  { label: "Flagged", value: "flagged" },
+];
 
-function AdminScholarshipsContent() {
-  const { user, role, loading: authLoading } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const statusFilter = searchParams.get("status");
+const STATUS_BADGE: Record<
+  ScholarshipStatus,
+  { label: string; variant: "success" | "error" | "warning" }
+> = {
+  active: { label: "Active", variant: "success" },
+  expired: { label: "Expired", variant: "error" },
+  flagged: { label: "Flagged", variant: "warning" },
+};
 
-  const [loading, setLoading] = useState(true);
-  const [scholarships, setScholarships] = useState<ScholarshipWithEmployer[]>([]);
-  type FilterType = "all" | "active" | "inactive" | "expired" | "spam" | "deleted";
-  const [filter, setFilter] = useState<FilterType>(
-    (statusFilter as FilterType) || "all"
-  );
-  const [processing, setProcessing] = useState<string | null>(null);
-  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
-  const [reasonModalOpen, setReasonModalOpen] = useState<{ scholarshipId: string; action: AdminAction } | null>(null);
-  const [reason, setReason] = useState("");
+// Mock data -- replace with API when scholarship admin endpoint is available
+const MOCK_SCHOLARSHIPS: Scholarship[] = [
+  {
+    id: "sch-1",
+    title: "Indigenous STEM Leaders Scholarship",
+    provider: "Indspire",
+    amount: "$10,000",
+    deadline: "2026-08-31",
+    status: "active",
+  },
+  {
+    id: "sch-2",
+    title: "First Nations Education Award",
+    provider: "National Indigenous Scholarship Foundation",
+    amount: "$5,000",
+    deadline: "2026-05-15",
+    status: "active",
+  },
+  {
+    id: "sch-3",
+    title: "Metis Nation Post-Secondary Bursary",
+    provider: "Metis National Council",
+    amount: "$3,500",
+    deadline: "2025-12-01",
+    status: "expired",
+  },
+  {
+    id: "sch-4",
+    title: "Northern Communities Scholarship",
+    provider: "Arctic Co-operatives Limited",
+    amount: "$7,500",
+    deadline: "2026-10-15",
+    status: "flagged",
+  },
+  {
+    id: "sch-5",
+    title: "Indigenous Business Leadership Award",
+    provider: "Canadian Council for Aboriginal Business",
+    amount: "$15,000",
+    deadline: "2026-03-01",
+    status: "active",
+  },
+];
 
-  // Helper to check if scholarship deadline has passed
-  const isExpired = (scholarship: ScholarshipWithEmployer): boolean => {
-    if (!scholarship.deadline) return false;
-    const deadline = scholarship.deadline instanceof Timestamp
-      ? scholarship.deadline.toDate()
-      : typeof scholarship.deadline === "object" && "seconds" in scholarship.deadline
-        ? new Date((scholarship.deadline as { seconds: number }).seconds * 1000)
-        : new Date(scholarship.deadline as string);
-    return deadline < new Date();
-  };
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-  // Perform admin action via API
-  async function performAdminAction(scholarshipId: string, action: AdminAction, actionReason?: string) {
-    if (!user) return;
-
-    try {
-      setProcessing(scholarshipId);
-      const token = await user.getIdToken();
-      if (!token) {
-        toast.error("Authentication error. Please try again.");
-        return;
-      }
-
-      const response = await fetch(`/api/admin/scholarships/${scholarshipId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ action, reason: actionReason }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to perform action");
-      }
-
-      toast.success(`Successfully performed ${action.replace("_", " ")}`);
-      await loadScholarships();
-    } catch (error) {
-      console.error("Error performing admin action:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to perform action");
-    } finally {
-      setProcessing(null);
-      setActionMenuOpen(null);
-      setReasonModalOpen(null);
-      setReason("");
-    }
-  }
-
-  // Handle action that may require reason
-  function handleAction(scholarshipId: string, action: AdminAction) {
-    if (action === "flag_spam" || action === "delete" || action === "mark_expired") {
-      setReasonModalOpen({ scholarshipId, action });
-    } else {
-      performAdminAction(scholarshipId, action);
-    }
-  }
-
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user || (role !== "admin" && role !== "moderator")) {
-      router.push("/");
-      return;
-    }
-
-    loadScholarships();
-  }, [user, role, authLoading, router]);
-
-  async function loadScholarships() {
-    try {
-      setLoading(true);
-
-      // Get all scholarships
-      const scholarshipsRef = collection(db!, "scholarships");
-      const scholarshipsSnap = await getDocs(
-        query(scholarshipsRef, orderBy("createdAt", "desc"))
-      );
-
-      // Get employer info
-      const employersRef = collection(db!, "employers");
-      const employersSnap = await getDocs(employersRef);
-      const employerMap = new Map<string, { name: string; logoUrl?: string }>();
-      employersSnap.forEach((doc) => {
-        const data = doc.data();
-        employerMap.set(doc.id, {
-          name: data.organizationName,
-          logoUrl: data.logoUrl,
-        });
-      });
-
-      const scholarshipsList: ScholarshipWithEmployer[] = scholarshipsSnap.docs.map(
-        (doc) => {
-          const data = doc.data() as Scholarship;
-          const employer = employerMap.get(data.employerId);
-          return {
-            ...data,
-            id: doc.id,
-            employerName: employer?.name || data.employerName || "Unknown Employer",
-            employerLogoUrl: employer?.logoUrl,
-          };
-        }
-      );
-
-      setScholarships(scholarshipsList);
-    } catch (error) {
-      console.error("Error loading scholarships:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-[var(--text-muted)]">Loading scholarships...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || (role !== "admin" && role !== "moderator")) {
-    return null;
-  }
-
-  const filteredScholarships = scholarships.filter((scholarship) => {
-    // Always exclude permanently deleted unless viewing deleted
-    if (scholarship.deletedAt && filter !== "deleted") return false;
-
-    switch (filter) {
-      case "all":
-        return !scholarship.deletedAt;
-      case "active":
-        return scholarship.active === true && !scholarship.adminOverride?.flaggedAsSpam;
-      case "inactive":
-        return scholarship.active === false && !scholarship.adminOverride?.flaggedAsSpam && !scholarship.deletedAt;
-      case "expired":
-        return isExpired(scholarship) || scholarship.expiredAt != null;
-      case "spam":
-        return scholarship.adminOverride?.flaggedAsSpam === true;
-      case "deleted":
-        return scholarship.deletedAt != null;
-      default:
-        return true;
-    }
+function formatDeadline(dateStr: string): string {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString("en-CA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
+}
 
-  const activeCount = scholarships.filter((s) => s.active === true && !s.adminOverride?.flaggedAsSpam && !s.deletedAt).length;
-  const inactiveCount = scholarships.filter((s) => s.active === false && !s.adminOverride?.flaggedAsSpam && !s.deletedAt).length;
-  const expiredCount = scholarships.filter((s) => isExpired(s) || s.expiredAt != null).length;
-  const spamCount = scholarships.filter((s) => s.adminOverride?.flaggedAsSpam === true).length;
-  const deletedCount = scholarships.filter((s) => s.deletedAt != null).length;
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function ConfirmDialog({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onCancel,
+}: {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!isOpen) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-[var(--card-border)] bg-surface">
-        <div className="mx-auto max-w-7xl px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Link
-                href="/admin"
-                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
-              >
-                ← Admin Dashboard
-              </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-                Scholarships Moderation
-              </h1>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
-                {filteredScholarships.length} scholarship
-                {filteredScholarships.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-            <Link
-              href="/organization/scholarships/new"
-              className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-accent/90"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create New
-            </Link>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 bg-black/60 animate-fade-in"
+        onClick={onCancel}
+        aria-hidden="true"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className="relative z-10 w-full max-w-md rounded-xl border border-card-border bg-card p-6 shadow-xl animate-scale-in"
+      >
+        <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
+        <p className="mt-2 text-sm text-text-secondary">{message}</p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-card-border bg-card px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="rounded-lg bg-error/10 border border-error/50 px-4 py-2 text-sm font-medium text-error transition-colors hover:bg-error/20"
+          >
+            Delete
+          </button>
         </div>
       </div>
-
-      {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        {/* Filters */}
-        <div className="mb-6 flex flex-wrap gap-3">
-          <button
-            onClick={() => setFilter("all")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-              ? "bg-accent text-[var(--text-primary)]"
-              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
-              }`}
-          >
-            All ({scholarships.filter(s => !s.deletedAt).length})
-          </button>
-          <button
-            onClick={() => setFilter("active")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
-              ? "bg-green-500 text-[var(--text-primary)]"
-              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
-              }`}
-          >
-            Active ({activeCount})
-          </button>
-          <button
-            onClick={() => setFilter("inactive")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
-              ? "bg-slate-500 text-[var(--text-primary)]"
-              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
-              }`}
-          >
-            Inactive ({inactiveCount})
-          </button>
-          <button
-            onClick={() => setFilter("expired")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "expired"
-              ? "bg-amber-500 text-[var(--text-primary)]"
-              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500"
-              }`}
-          >
-            Expired ({expiredCount})
-          </button>
-          {spamCount > 0 && (
-            <button
-              onClick={() => setFilter("spam")}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "spam"
-                ? "bg-red-500 text-white"
-                : "border border-red-500/50 text-red-400 hover:border-red-500"
-                }`}
-            >
-              Spam ({spamCount})
-            </button>
-          )}
-          {deletedCount > 0 && (
-            <button
-              onClick={() => setFilter("deleted")}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "deleted"
-                ? "bg-slate-600 text-white"
-                : "border border-[var(--card-border)] text-[var(--text-muted)] hover:border-slate-500"
-                }`}
-            >
-              Deleted ({deletedCount})
-            </button>
-          )}
-        </div>
-
-        {/* Scholarships List */}
-        <div className="space-y-4">
-          {filteredScholarships.length === 0 ? (
-            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-12 text-center">
-              <p className="text-[var(--text-muted)]">
-                No scholarships found for this filter.
-              </p>
-            </div>
-          ) : (
-            filteredScholarships.map((scholarship) => {
-              const isProcessing = processing === scholarship.id;
-              const isActive = scholarship.active === true;
-
-              return (
-                <div
-                  key={scholarship.id}
-                  className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6 transition hover:border-[var(--card-border)]"
-                >
-                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                    {/* Scholarship Info */}
-                    <div className="flex-1">
-                      <div className="flex items-start gap-4">
-                        {scholarship.employerLogoUrl && (
-                          <img
-                            src={scholarship.employerLogoUrl}
-                            alt={scholarship.employerName}
-                            className="h-16 w-16 rounded-lg border border-[var(--card-border)] object-cover"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <h3 className="text-xl font-semibold text-foreground">
-                                {scholarship.title}
-                              </h3>
-                              <p className="mt-1 text-sm text-[var(--text-muted)]">
-                                {scholarship.provider || scholarship.employerName}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <span
-                                className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
-                                  ? "bg-green-500/10 text-green-400"
-                                  : "bg-slate-500/10 text-[var(--text-muted)]"
-                                  }`}
-                              >
-                                {isActive ? "Active" : "Inactive"}
-                              </span>
-                              {isExpired(scholarship) && (
-                                <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400">
-                                  Expired
-                                </span>
-                              )}
-                              {scholarship.adminOverride?.flaggedAsSpam && (
-                                <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400">
-                                  Spam
-                                </span>
-                              )}
-                              {scholarship.adminOverride?.forcePublished && (
-                                <span className="rounded-full bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-400">
-                                  Force Published
-                                </span>
-                              )}
-                              {scholarship.deletedAt && (
-                                <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
-                                  Deleted
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="mt-2 flex flex-wrap gap-3 text-sm text-[var(--text-muted)]">
-                            {scholarship.amount && (
-                              <span className="font-medium text-green-400">
-                                {scholarship.amount}
-                              </span>
-                            )}
-                            <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-400">
-                              {scholarship.level}
-                            </span>
-                            <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs text-blue-400">
-                              {scholarship.type}
-                            </span>
-                            {scholarship.region && (
-                              <span className="text-xs text-foreground0">
-                                {scholarship.region}
-                              </span>
-                            )}
-                          </div>
-
-                          {scholarship.description && (
-                            <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
-                              {scholarship.description}
-                            </p>
-                          )}
-
-                          <div className="mt-3 flex gap-4 text-xs text-foreground0">
-                            {scholarship.deadline && (
-                              <span>
-                                Deadline:{" "}
-                                {typeof scholarship.deadline === "string"
-                                  ? scholarship.deadline
-                                  : (scholarship.deadline && typeof scholarship.deadline === "object" && "seconds" in scholarship.deadline)
-                                    ? new Date((scholarship.deadline as any).seconds * 1000).toLocaleDateString()
-                                    : scholarship.deadline
-                                      ? new Date(scholarship.deadline as any).toLocaleDateString()
-                                      : ""}
-                              </span>
-                            )}
-                            {scholarship.createdAt && (
-                              <span>
-                                Posted:{" "}
-                                {new Date(
-                                  scholarship.createdAt.seconds * 1000
-                                ).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2 lg:flex-col relative">
-                      <Link
-                        href={`/education/scholarships/${scholarship.id}`}
-                        className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
-                      >
-                        View
-                      </Link>
-
-                      {/* Quick Actions */}
-                      {!scholarship.deletedAt && (
-                        <>
-                          {isActive ? (
-                            <button
-                              onClick={() => handleAction(scholarship.id, "force_unpublish")}
-                              disabled={isProcessing}
-                              className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-muted)] transition hover:bg-surface disabled:opacity-50"
-                            >
-                              {isProcessing ? "..." : "Unpublish"}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleAction(scholarship.id, "force_publish")}
-                              disabled={isProcessing}
-                              className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500 disabled:opacity-50"
-                            >
-                              {isProcessing ? "..." : "Publish"}
-                            </button>
-                          )}
-                        </>
-                      )}
-
-                      {/* More Actions Dropdown */}
-                      <div className="relative">
-                        <button
-                          onClick={() => setActionMenuOpen(actionMenuOpen === scholarship.id ? null : scholarship.id)}
-                          className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-secondary)] transition hover:border-[var(--card-border)]"
-                        >
-                          More ▼
-                        </button>
-
-                        {actionMenuOpen === scholarship.id && (
-                          <div className="absolute right-0 top-full mt-1 z-10 w-48 rounded-lg border border-[var(--card-border)] bg-surface py-1 shadow-lg">
-                            {!scholarship.deletedAt && (
-                              <>
-                                {isExpired(scholarship) && !scholarship.adminOverride?.forcePublished && (
-                                  <button
-                                    onClick={() => handleAction(scholarship.id, "reopen")}
-                                    className="w-full px-4 py-2 text-left text-sm text-[var(--text-secondary)] hover:bg-surface"
-                                  >
-                                    🔓 Reopen Scholarship
-                                  </button>
-                                )}
-                                {!isExpired(scholarship) && (
-                                  <button
-                                    onClick={() => handleAction(scholarship.id, "mark_expired")}
-                                    className="w-full px-4 py-2 text-left text-sm text-amber-400 hover:bg-surface"
-                                  >
-                                    ⏰ Mark as Expired
-                                  </button>
-                                )}
-                                {scholarship.adminOverride?.flaggedAsSpam ? (
-                                  <button
-                                    onClick={() => handleAction(scholarship.id, "unflag_spam")}
-                                    className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-surface"
-                                  >
-                                    ✓ Remove Spam Flag
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => handleAction(scholarship.id, "flag_spam")}
-                                    className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-surface"
-                                  >
-                                    🚩 Flag as Spam
-                                  </button>
-                                )}
-                                <hr className="my-1 border-[var(--card-border)]" />
-                                <button
-                                  onClick={() => handleAction(scholarship.id, "delete")}
-                                  className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10"
-                                >
-                                  🗑️ Delete
-                                </button>
-                              </>
-                            )}
-                            {scholarship.deletedAt && (
-                              <button
-                                onClick={() => handleAction(scholarship.id, "restore")}
-                                className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-surface"
-                              >
-                                ↩️ Restore
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-
-      {/* Reason Modal */}
-      {reasonModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-2xl border border-[var(--card-border)] bg-surface p-6">
-            <h3 className="text-lg font-semibold text-white">
-              {reasonModalOpen.action === "flag_spam" && "Flag as Spam"}
-              {reasonModalOpen.action === "delete" && "Delete Scholarship"}
-              {reasonModalOpen.action === "mark_expired" && "Mark as Expired"}
-            </h3>
-            <p className="mt-2 text-sm text-[var(--text-muted)]">
-              {reasonModalOpen.action === "flag_spam" &&
-                "This will hide the scholarship and flag it for review."}
-              {reasonModalOpen.action === "delete" &&
-                "This will soft-delete the scholarship. It can be restored later."}
-              {reasonModalOpen.action === "mark_expired" &&
-                "This will mark the scholarship as expired and hide it from listings."}
-            </p>
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-[var(--text-secondary)]">
-                Reason (optional)
-              </label>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                rows={3}
-                placeholder="Enter reason for this action..."
-                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
-              />
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setReasonModalOpen(null);
-                  setReason("");
-                }}
-                className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-surface"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() =>
-                  performAdminAction(
-                    reasonModalOpen.scholarshipId,
-                    reasonModalOpen.action,
-                    reason
-                  )
-                }
-                disabled={processing === reasonModalOpen.scholarshipId}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
-                  reasonModalOpen.action === "delete" || reasonModalOpen.action === "flag_spam"
-                    ? "bg-red-600 text-white hover:bg-red-500"
-                    : "bg-amber-600 text-white hover:bg-amber-500"
-                }`}
-              >
-                {processing ? "Processing..." : "Confirm"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Click outside to close action menu */}
-      {actionMenuOpen && (
-        <div
-          className="fixed inset-0 z-0"
-          onClick={() => setActionMenuOpen(null)}
-        />
-      )}
     </div>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
 export default function AdminScholarshipsPage() {
+  useAuth();
+
+  const [scholarships, setScholarships] =
+    useState<Scholarship[]>(MOCK_SCHOLARSHIPS);
+  const [activeTab, setActiveTab] = useState<TabFilter>("all");
+  const [deleteTarget, setDeleteTarget] = useState<Scholarship | null>(null);
+
+  // Filter
+  const filteredScholarships =
+    activeTab === "all"
+      ? scholarships
+      : scholarships.filter((s) => s.status === activeTab);
+
+  // Toggle publish / unpublish
+  const togglePublish = (scholarship: Scholarship) => {
+    setScholarships((prev) =>
+      prev.map((s) => {
+        if (s.id !== scholarship.id) return s;
+        const newStatus: ScholarshipStatus =
+          s.status === "expired" ? "active" : "expired";
+        return { ...s, status: newStatus };
+      }),
+    );
+  };
+
+  // Toggle flag / unflag
+  const toggleFlag = (scholarship: Scholarship) => {
+    setScholarships((prev) =>
+      prev.map((s) => {
+        if (s.id !== scholarship.id) return s;
+        const newStatus: ScholarshipStatus =
+          s.status === "flagged" ? "active" : "flagged";
+        return { ...s, status: newStatus };
+      }),
+    );
+  };
+
+  // Delete
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    setScholarships((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+    setDeleteTarget(null);
+  };
+
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-[var(--text-muted)]">Loading scholarships...</p>
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-text-primary sm:text-3xl">
+            Scholarship Management
+          </h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            Review and manage scholarship listings.
+          </p>
         </div>
+
+        {/* Tabs + Table */}
+        <Card>
+          <CardContent className="p-6">
+            {/* Tab filters */}
+            <div className="mb-6 flex gap-1 overflow-x-auto rounded-lg bg-surface p-1">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => setActiveTab(tab.value)}
+                  className={[
+                    "flex-shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-all duration-200",
+                    activeTab === tab.value
+                      ? "bg-card text-text-primary shadow-sm"
+                      : "text-text-muted hover:text-text-primary",
+                  ].join(" ")}
+                  aria-pressed={activeTab === tab.value}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Empty state */}
+            {filteredScholarships.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-card-border py-16 text-center">
+                <svg
+                  className="mx-auto h-10 w-10 text-text-muted"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
+                  />
+                </svg>
+                <p className="mt-3 text-sm font-medium text-text-primary">
+                  No scholarships found
+                </p>
+                <p className="mt-1 text-xs text-text-muted">
+                  Scholarships will appear here once they are submitted.
+                </p>
+              </div>
+            ) : (
+              /* Scholarship Table */
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-card-border text-left">
+                      <th className="pb-3 pr-4 font-medium text-text-muted">
+                        Title
+                      </th>
+                      <th className="hidden pb-3 pr-4 font-medium text-text-muted sm:table-cell">
+                        Amount
+                      </th>
+                      <th className="hidden pb-3 pr-4 font-medium text-text-muted md:table-cell">
+                        Deadline
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-text-muted">
+                        Status
+                      </th>
+                      <th className="pb-3 font-medium text-text-muted text-right">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredScholarships.map((sch) => {
+                      const badge = STATUS_BADGE[sch.status];
+                      return (
+                        <tr
+                          key={sch.id}
+                          className="group border-b border-[var(--card-border)]/50 transition-colors hover:bg-[var(--card-bg)]/50"
+                        >
+                          <td className="py-4 pr-4">
+                            <p className="font-medium text-text-primary group-hover:text-accent transition-colors">
+                              {sch.title}
+                            </p>
+                            <p className="mt-0.5 text-xs text-text-muted">
+                              {sch.provider}
+                            </p>
+                          </td>
+                          <td className="hidden py-4 pr-4 text-text-secondary sm:table-cell">
+                            {sch.amount}
+                          </td>
+                          <td className="hidden py-4 pr-4 text-text-secondary md:table-cell">
+                            {formatDeadline(sch.deadline)}
+                          </td>
+                          <td className="py-4 pr-4">
+                            <Badge variant={badge.variant}>
+                              {badge.label}
+                            </Badge>
+                          </td>
+                          <td className="py-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              {/* View */}
+                              <Link
+                                href={`/education/scholarships/${sch.id}`}
+                                className="rounded-lg p-2 text-text-muted transition-colors hover:bg-surface hover:text-text-primary"
+                                title="View"
+                                aria-label={`View ${sch.title}`}
+                              >
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  />
+                                </svg>
+                              </Link>
+
+                              {/* Publish / Unpublish */}
+                              <button
+                                type="button"
+                                onClick={() => togglePublish(sch)}
+                                className={[
+                                  "rounded-lg p-2 transition-colors",
+                                  sch.status === "expired"
+                                    ? "text-success hover:bg-success/10"
+                                    : "text-warning hover:bg-warning/10",
+                                ].join(" ")}
+                                title={
+                                  sch.status === "expired"
+                                    ? "Publish"
+                                    : "Unpublish"
+                                }
+                                aria-label={
+                                  sch.status === "expired"
+                                    ? `Publish ${sch.title}`
+                                    : `Unpublish ${sch.title}`
+                                }
+                              >
+                                {sch.status === "expired" ? (
+                                  // Publish (arrow up)
+                                  <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                                    />
+                                  </svg>
+                                ) : (
+                                  // Unpublish (arrow down)
+                                  <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                                    />
+                                  </svg>
+                                )}
+                              </button>
+
+                              {/* Flag / Unflag */}
+                              <button
+                                type="button"
+                                onClick={() => toggleFlag(sch)}
+                                className={[
+                                  "rounded-lg p-2 transition-colors",
+                                  sch.status === "flagged"
+                                    ? "text-warning hover:bg-warning/10"
+                                    : "text-text-muted hover:bg-surface hover:text-warning",
+                                ].join(" ")}
+                                title={
+                                  sch.status === "flagged"
+                                    ? "Unflag"
+                                    : "Flag"
+                                }
+                                aria-label={
+                                  sch.status === "flagged"
+                                    ? `Unflag ${sch.title}`
+                                    : `Flag ${sch.title}`
+                                }
+                              >
+                                <svg
+                                  className="h-4 w-4"
+                                  fill={
+                                    sch.status === "flagged"
+                                      ? "currentColor"
+                                      : "none"
+                                  }
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5"
+                                  />
+                                </svg>
+                              </button>
+
+                              {/* Delete */}
+                              <button
+                                type="button"
+                                onClick={() => setDeleteTarget(sch)}
+                                className="rounded-lg p-2 text-text-muted transition-colors hover:bg-error/10 hover:text-error"
+                                title="Delete"
+                                aria-label={`Delete ${sch.title}`}
+                              >
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Mock data notice */}
+            <div className="mt-6 rounded-lg border border-info/20 bg-info/5 p-3 text-xs text-info">
+              Using mock data. Connect the scholarships admin API for live data.
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    }>
-      <AdminScholarshipsContent />
-    </Suspense>
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Delete Scholarship"
+        message={`Are you sure you want to delete "${deleteTarget?.title ?? ""}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </div>
   );
 }

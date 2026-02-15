@@ -1,138 +1,138 @@
-import { initializeApp, getApps, cert } from "firebase-admin/app";
+import { initializeApp, getApps, cert, applicationDefault } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
-import "./env-validation"; // Validate environment on startup
+import { getStorage } from "firebase-admin/storage";
 
-// Helper to parse the private key from various formats
-function parsePrivateKey(key: string | undefined): string | null {
-    if (!key) return null;
+/**
+ * Parse a private key string from various env-var formats.
+ * Handles quoted values, escaped newlines, and base64-encoded keys.
+ */
+function parsePrivateKey(raw: string | undefined): string | null {
+  if (!raw) return null;
 
-    let parsedKey = key.trim();
+  let key = raw.trim();
 
-    // Remove surrounding quotes if present (single, double, or backticks)
-    if ((parsedKey.startsWith('"') && parsedKey.endsWith('"')) ||
-        (parsedKey.startsWith("'") && parsedKey.endsWith("'")) ||
-        (parsedKey.startsWith('`') && parsedKey.endsWith('`'))) {
-        parsedKey = parsedKey.slice(1, -1);
-    }
+  // Strip surrounding quotes (single, double, or backtick)
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'")) ||
+    (key.startsWith("`") && key.endsWith("`"))
+  ) {
+    key = key.slice(1, -1);
+  }
 
-    // Handle double-escaped newlines (\\\\n -> \\n -> \n)
-    parsedKey = parsedKey.replace(/\\\\n/g, "\\n");
+  // Normalise escaped newlines
+  key = key.replace(/\\\\n/g, "\\n").replace(/\\n/g, "\n").replace(/\r\n/g, "\n");
 
-    // Replace literal \n with actual newlines
-    parsedKey = parsedKey.replace(/\\n/g, "\n");
-
-    // Handle Windows-style line endings
-    parsedKey = parsedKey.replace(/\r\n/g, "\n");
-
-    // Try to decode from base64 if it doesn't look like a PEM key
-    if (!parsedKey.includes("-----BEGIN")) {
-        try {
-            const decoded = Buffer.from(parsedKey, "base64").toString("utf-8");
-            if (decoded.includes("-----BEGIN")) {
-                parsedKey = decoded;
-            }
-        } catch {
-            // Not base64, continue with original
-        }
-    }
-
-    // Final validation - must contain BEGIN PRIVATE KEY
-    if (!parsedKey.includes("-----BEGIN PRIVATE KEY-----")) {
-        console.error("Private key does not contain valid PEM header. First 50 chars:", parsedKey.substring(0, 50));
-        return null;
-    }
-
-    return parsedKey;
-}
-
-// Try to parse service account from JSON string (alternative method)
-// Supports both raw JSON and base64-encoded JSON
-function tryParseServiceAccountJson(): { projectId?: string; clientEmail?: string; privateKey?: string } | null {
-    // Try base64-encoded version first (most reliable for Vercel)
-    const base64Str = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
-    if (base64Str) {
-        try {
-            const jsonStr = Buffer.from(base64Str, "base64").toString("utf-8");
-            const parsed = JSON.parse(jsonStr);
-            console.log("✅ Parsed Firebase credentials from base64");
-            return {
-                projectId: parsed.project_id,
-                clientEmail: parsed.client_email,
-                privateKey: parsed.private_key,
-            };
-        } catch (e) {
-            console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_BASE64:", e);
-        }
-    }
-
-    // Fall back to raw JSON
-    const jsonStr = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    if (!jsonStr) return null;
-
+  // If it does not look like PEM, try base64 decode
+  if (!key.includes("-----BEGIN")) {
     try {
-        const parsed = JSON.parse(jsonStr);
-        return {
-            projectId: parsed.project_id,
-            clientEmail: parsed.client_email,
-            privateKey: parsed.private_key,
-        };
+      const decoded = Buffer.from(key, "base64").toString("utf-8");
+      if (decoded.includes("-----BEGIN")) {
+        key = decoded;
+      }
     } catch {
-        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON");
-        return null;
+      // Not base64 - continue with original
     }
+  }
+
+  if (!key.includes("-----BEGIN PRIVATE KEY-----")) {
+    return null;
+  }
+
+  return key;
 }
 
-export async function initAdmin() {
-    if (!getApps().length) {
-        try {
-            // Connect to emulators if enabled
-            if (process.env.NEXT_PUBLIC_USE_EMULATORS === "true") {
-                process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
-                process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
-                process.env.FIREBASE_STORAGE_EMULATOR_HOST = "localhost:9199";
-                console.log("🔧 Firebase Admin using Emulators");
-
-                initializeApp({
-                    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-iopps",
-                });
-            } else {
-                // Try JSON service account first (most reliable)
-                const serviceAccount = tryParseServiceAccountJson();
-
-                // Fall back to individual env vars
-                const projectId = serviceAccount?.projectId || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-                const clientEmail = serviceAccount?.clientEmail || process.env.FIREBASE_CLIENT_EMAIL;
-                const privateKey = serviceAccount?.privateKey || parsePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
-
-                // Only attempt to initialize with cert if we have credentials
-                if (projectId && clientEmail && privateKey) {
-                    initializeApp({
-                        credential: cert({
-                            projectId,
-                            clientEmail,
-                            privateKey,
-                        }),
-                    });
-                    console.log("✅ Firebase Admin initialized successfully");
-                } else {
-                    // Log which credentials are missing
-                    const missing = [];
-                    if (!projectId) missing.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
-                    if (!clientEmail) missing.push("FIREBASE_CLIENT_EMAIL");
-                    if (!privateKey) missing.push("FIREBASE_PRIVATE_KEY");
-                    console.warn(`Firebase Admin credentials missing: ${missing.join(", ")}. API routes requiring auth will fail.`);
-                }
-            }
-        } catch (error) {
-            console.error("Firebase Admin initialization error:", error);
-        }
+/**
+ * Attempt to read a full service-account JSON from env (base64 or raw).
+ */
+function tryParseServiceAccountJson(): {
+  projectId?: string;
+  clientEmail?: string;
+  privateKey?: string;
+} | null {
+  // Prefer base64-encoded (most reliable for Vercel / CI)
+  const base64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+  if (base64) {
+    try {
+      const json = JSON.parse(Buffer.from(base64, "base64").toString("utf-8"));
+      return {
+        projectId: json.project_id,
+        clientEmail: json.client_email,
+        privateKey: json.private_key,
+      };
+    } catch {
+      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_BASE64");
     }
+  }
+
+  // Fallback: raw JSON string
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (raw) {
+    try {
+      const json = JSON.parse(raw);
+      return {
+        projectId: json.project_id,
+        clientEmail: json.client_email,
+        privateKey: json.private_key,
+      };
+    } catch {
+      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON");
+    }
+  }
+
+  return null;
 }
 
-// Initialize on module load
+/**
+ * Initialise the Firebase Admin SDK.
+ *
+ * Credential resolution order:
+ * 1. FIREBASE_SERVICE_ACCOUNT_BASE64 / FIREBASE_SERVICE_ACCOUNT_JSON
+ * 2. Individual FIREBASE_* env vars (PROJECT_ID, CLIENT_EMAIL, PRIVATE_KEY)
+ * 3. applicationDefault() (GCP environments / GOOGLE_APPLICATION_CREDENTIALS)
+ */
+function initAdmin(): void {
+  if (getApps().length) return; // already initialised
+
+  // Emulator mode
+  if (process.env.NEXT_PUBLIC_USE_EMULATORS === "true") {
+    process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
+    process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
+    process.env.FIREBASE_STORAGE_EMULATOR_HOST = "localhost:9199";
+
+    initializeApp({
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-iopps",
+    });
+    return;
+  }
+
+  // Try JSON-based service account first
+  const sa = tryParseServiceAccountJson();
+
+  const projectId =
+    sa?.projectId || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const clientEmail = sa?.clientEmail || process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey =
+    sa?.privateKey || parsePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
+
+  if (projectId && clientEmail && privateKey) {
+    initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
+    return;
+  }
+
+  // Last resort: application default credentials (GCP / local gcloud auth)
+  try {
+    initializeApp({ credential: applicationDefault() });
+  } catch (err) {
+    console.error("Firebase Admin could not initialise:", err);
+  }
+}
+
+// Initialise on module load
 initAdmin();
 
-// Export auth and db - they may be null if initialization failed
-export const db = getApps().length ? getFirestore() : null;
-export const auth = getApps().length ? getAuth() : null;
+// Exports - safe to call even if init failed (getApps().length === 0 guard)
+export const adminAuth = getApps().length ? getAuth() : null;
+export const adminDb = getApps().length ? getFirestore() : null;
+export const adminStorage = getApps().length ? getStorage() : null;

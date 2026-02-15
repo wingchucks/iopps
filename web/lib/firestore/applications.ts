@@ -1,26 +1,84 @@
-// Application-related Firestore operations
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  increment,
-  limit,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-  db,
-  applicationsCollection,
-  jobsCollection,
-} from "./shared";
-import type { JobApplication, ApplicationStatus, ApplicantNote, ApplicationStageEntry } from "@/lib/types";
-import { arrayUnion, arrayRemove } from "firebase/firestore";
-import { createNotification } from "./notifications";
+/**
+ * Job application Firestore operations (server-side, firebase-admin).
+ *
+ * Collection: "applications"
+ *
+ * All functions use the Firebase Admin SDK and are intended for use
+ * in Next.js API routes and server components.
+ */
 
-type ApplicationInput = {
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue, type Timestamp } from "firebase-admin/firestore";
+
+// ============================================
+// COLLECTION NAME
+// ============================================
+
+const APPLICATIONS_COLLECTION = "applications";
+const JOBS_COLLECTION = "jobs";
+
+// ============================================
+// TYPES
+// ============================================
+
+export type ApplicationStatus =
+  | "submitted"
+  | "reviewed"
+  | "shortlisted"
+  | "interviewing"
+  | "offered"
+  | "rejected"
+  | "hired"
+  | "withdrawn";
+
+export interface ApplicationStageEntry {
+  status: ApplicationStatus;
+  timestamp: Timestamp | Date;
+  changedBy?: string;
+  note?: string;
+}
+
+export interface ApplicantNote {
+  id: string;
+  content: string;
+  createdBy: string;
+  createdByName?: string;
+  createdAt: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
+export interface JobApplication {
+  id: string;
+  jobId: string;
+  employerId: string;
+  memberId: string;
+  memberEmail?: string;
+  memberDisplayName?: string;
+  status: ApplicationStatus;
+  resumeUrl?: string;
+  coverLetter?: string;
+  note?: string;
+  employerNotes?: ApplicantNote[];
+  stageHistory?: ApplicationStageEntry[];
+  coverLetterType?: "text" | "file";
+  coverLetterContent?: string;
+  coverLetterUrl?: string;
+  coverLetterPath?: string;
+  portfolioUrls?: string[];
+  certificationUrls?: string[];
+  additionalDocuments?: {
+    name: string;
+    url: string;
+    type: string;
+    path: string;
+  }[];
+  rating?: number;
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  jobTitle?: string;
+}
+
+type ApplicationCreateInput = {
   jobId: string;
   employerId: string;
   memberId: string;
@@ -29,7 +87,7 @@ type ApplicationInput = {
   resumeUrl?: string;
   coverLetter?: string;
   note?: string;
-  coverLetterType?: 'text' | 'file';
+  coverLetterType?: "text" | "file";
   coverLetterContent?: string;
   coverLetterUrl?: string;
   coverLetterPath?: string;
@@ -43,288 +101,155 @@ type ApplicationInput = {
   }[];
 };
 
+// ============================================
+// CRUD FUNCTIONS
+// ============================================
+
 /**
- * Get a single job application by ID
+ * Get all applications for a specific job.
+ * Queries the "applications" collection by jobId.
+ *
+ * @param jobId - The job posting ID
+ * @returns Array of job applications, ordered by createdAt desc
  */
-export async function getJobApplication(applicationId: string): Promise<JobApplication | null> {
-  const ref = doc(db!, applicationsCollection, applicationId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as JobApplication;
-}
-
-export async function checkExistingApplication(
-  memberId: string,
+export async function getApplicationsByJob(
   jobId: string
-): Promise<boolean> {
-  const ref = collection(db!, applicationsCollection);
-  const q = query(
-    ref,
-    where("memberId", "==", memberId),
-    where("jobId", "==", jobId),
-    limit(1)
-  );
-  const snap = await getDocs(q);
-  return !snap.empty;
-}
-
-export async function createJobApplication(
-  input: ApplicationInput
-): Promise<string> {
-  const existingApplication = await checkExistingApplication(
-    input.memberId,
-    input.jobId
-  );
-
-  if (existingApplication) {
-    throw new Error("You have already applied to this job");
-  }
-
-  const ref = collection(db!, applicationsCollection);
-  const docRef = await addDoc(ref, {
-    ...input,
-    status: "submitted" as ApplicationStatus,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-
-  const jobRef = doc(db!, jobsCollection, input.jobId);
-  await updateDoc(jobRef, {
-    applicationsCount: increment(1),
-  });
+): Promise<JobApplication[]> {
+  if (!adminDb) return [];
 
   try {
-    const jobSnap = await getDoc(jobRef);
-    const jobData = jobSnap.data();
-    const jobTitle = jobData?.title || "your job posting";
-    const applicantName = input.memberEmail || "A candidate";
+    const snap = await adminDb
+      .collection(APPLICATIONS_COLLECTION)
+      .where("jobId", "==", jobId)
+      .orderBy("createdAt", "desc")
+      .get();
 
-    await createNotification({
-      userId: input.employerId,
-      type: "new_application",
-      title: "New Application Received",
-      message: `${applicantName} applied to "${jobTitle}"`,
-      link: `/organization/jobs/${input.jobId}/applications`,
-      relatedJobId: input.jobId,
-      relatedApplicationId: docRef.id,
-    });
+    return snap.docs.map((doc) => ({
+      ...(doc.data() as JobApplication),
+      id: doc.id,
+    }));
   } catch (error) {
-    console.error("Failed to send application notification:", error);
+    console.error("[getApplicationsByJob] Error:", error);
+    return [];
+  }
+}
+
+/**
+ * Get all applications submitted by a specific member.
+ * Queries the "applications" collection by memberId.
+ *
+ * @param uid - The member's Firebase UID
+ * @returns Array of job applications, ordered by createdAt desc
+ */
+export async function getApplicationsByMember(
+  uid: string
+): Promise<JobApplication[]> {
+  if (!adminDb) return [];
+
+  try {
+    const snap = await adminDb
+      .collection(APPLICATIONS_COLLECTION)
+      .where("memberId", "==", uid)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    return snap.docs.map((doc) => ({
+      ...(doc.data() as JobApplication),
+      id: doc.id,
+    }));
+  } catch (error) {
+    console.error("[getApplicationsByMember] Error:", error);
+    return [];
+  }
+}
+
+/**
+ * Get a single application by its document ID.
+ * Queries the "applications" collection.
+ *
+ * @param id - Application document ID
+ * @returns The application or null if not found
+ */
+export async function getApplicationById(
+  id: string
+): Promise<JobApplication | null> {
+  if (!adminDb) return null;
+
+  try {
+    const snap = await adminDb
+      .collection(APPLICATIONS_COLLECTION)
+      .doc(id)
+      .get();
+
+    if (!snap.exists) return null;
+    return { ...(snap.data() as JobApplication), id: snap.id };
+  } catch (error) {
+    console.error("[getApplicationById] Error:", error);
+    return null;
+  }
+}
+
+/**
+ * Create a new job application document.
+ * Also increments the applicationsCount on the related job document.
+ * Writes to the "applications" collection.
+ *
+ * @param data - Application data
+ * @returns The new application document ID
+ */
+export async function createApplication(
+  data: ApplicationCreateInput
+): Promise<string> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+
+  const ref = await adminDb.collection(APPLICATIONS_COLLECTION).add({
+    ...data,
+    status: "submitted" as ApplicationStatus,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  // Increment the application count on the job
+  try {
+    await adminDb
+      .collection(JOBS_COLLECTION)
+      .doc(data.jobId)
+      .update({
+        applicationsCount: FieldValue.increment(1),
+      });
+  } catch (error) {
+    console.error("[createApplication] Failed to increment job applications count:", error);
   }
 
-  return docRef.id;
+  return ref.id;
 }
 
-export async function listMemberApplications(
-  memberId: string
-): Promise<JobApplication[]> {
-  const ref = collection(db!, applicationsCollection);
-  const q = query(
-    ref,
-    where("memberId", "==", memberId),
-    orderBy("createdAt", "desc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((docSnapshot) => {
-    const data = docSnapshot.data() as JobApplication;
-    return { ...data, id: docSnapshot.id };
-  });
-}
-
-export async function listJobApplications(
-  jobId: string
-): Promise<JobApplication[]> {
-  const ref = collection(db!, applicationsCollection);
-  const q = query(
-    ref,
-    where("jobId", "==", jobId),
-    orderBy("createdAt", "desc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((docSnapshot) => {
-    const data = docSnapshot.data() as JobApplication;
-    return { ...data, id: docSnapshot.id };
-  });
-}
-
-export async function listEmployerApplications(
-  employerId: string
-): Promise<JobApplication[]> {
-  const ref = collection(db!, applicationsCollection);
-  const q = query(
-    ref,
-    where("employerId", "==", employerId),
-    orderBy("createdAt", "desc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((docSnapshot) => {
-    const data = docSnapshot.data() as JobApplication;
-    return { ...data, id: docSnapshot.id };
-  });
-}
-
+/**
+ * Update the status of a job application.
+ * Queries the "applications" collection.
+ *
+ * Valid statuses: submitted, reviewed, shortlisted, interviewing, offered, rejected, hired, withdrawn
+ *
+ * @param id - Application document ID
+ * @param status - New application status
+ */
 export async function updateApplicationStatus(
-  applicationId: string,
-  status: ApplicationStatus,
-  options?: { changedBy?: string; note?: string }
-) {
-  const ref = doc(db!, applicationsCollection, applicationId);
-  const appSnap = await getDoc(ref);
-  const appData = appSnap.data();
+  id: string,
+  status: ApplicationStatus
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
 
-  // Create stage history entry
   const stageEntry: ApplicationStageEntry = {
     status,
     timestamp: new Date(),
-    changedBy: options?.changedBy,
-    note: options?.note,
   };
 
-  await updateDoc(ref, {
-    status,
-    stageHistory: arrayUnion(stageEntry),
-    updatedAt: serverTimestamp(),
-  });
-
-  if (appData && appData.memberId) {
-    try {
-      let jobTitle = "your application";
-      if (appData.jobId) {
-        const jobSnap = await getDoc(doc(db!, jobsCollection, appData.jobId));
-        const jobData = jobSnap.data();
-        if (jobData?.title) {
-          jobTitle = jobData.title;
-        }
-      }
-
-      const statusMessages: Record<ApplicationStatus, string> = {
-        submitted: "has been submitted",
-        reviewed: "is being reviewed",
-        shortlisted: "has been shortlisted!",
-        interviewing: "is moving to the interview stage!",
-        offered: "has received an offer!",
-        rejected: "was not selected to move forward",
-        hired: "was successful - Congratulations!",
-        withdrawn: "has been withdrawn",
-      };
-
-      const message = statusMessages[status] || `status changed to ${status}`;
-
-      await createNotification({
-        userId: appData.memberId,
-        type: "application_status",
-        title: "Application Update",
-        message: `Your application for "${jobTitle}" ${message}`,
-        link: "/member/applications",
-        relatedJobId: appData.jobId,
-        relatedApplicationId: applicationId,
-      });
-    } catch (error) {
-      console.error("Failed to send status notification:", error);
-    }
-  }
-}
-
-export async function withdrawJobApplication(applicationId: string) {
-  const ref = doc(db!, applicationsCollection, applicationId);
-  await updateDoc(ref, {
-    status: "withdrawn" as ApplicationStatus,
-    updatedAt: serverTimestamp(),
-  });
-}
-export function getOrganizationApplicationsQuery(employerId: string) {
-  return query(
-    collection(db!, applicationsCollection),
-    where("employerId", "==", employerId),
-    where("status", "==", "submitted")
-  );
-}
-
-// ============================================
-// APPLICANT NOTES
-// ============================================
-
-export async function addApplicantNote(
-  applicationId: string,
-  note: { content: string; createdBy: string; createdByName?: string }
-): Promise<ApplicantNote> {
-  const noteId = `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const newNote: ApplicantNote = {
-    id: noteId,
-    content: note.content,
-    createdBy: note.createdBy,
-    createdByName: note.createdByName,
-    createdAt: null, // Will be set by serverTimestamp in the update
-  };
-
-  const ref = doc(db!, applicationsCollection, applicationId);
-
-  // We need to manually set the timestamp since arrayUnion doesn't support serverTimestamp
-  const noteWithTimestamp = {
-    ...newNote,
-    createdAt: new Date(),
-  };
-
-  await updateDoc(ref, {
-    employerNotes: arrayUnion(noteWithTimestamp),
-    updatedAt: serverTimestamp(),
-  });
-
-  return noteWithTimestamp as unknown as ApplicantNote;
-}
-
-export async function updateApplicantNote(
-  applicationId: string,
-  noteId: string,
-  content: string
-): Promise<void> {
-  const ref = doc(db!, applicationsCollection, applicationId);
-  const snap = await getDoc(ref);
-  const data = snap.data() as JobApplication;
-
-  if (!data.employerNotes) return;
-
-  const updatedNotes = data.employerNotes.map((note) =>
-    note.id === noteId
-      ? { ...note, content, updatedAt: new Date() }
-      : note
-  );
-
-  await updateDoc(ref, {
-    employerNotes: updatedNotes,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-export async function deleteApplicantNote(
-  applicationId: string,
-  noteId: string
-): Promise<void> {
-  const ref = doc(db!, applicationsCollection, applicationId);
-  const snap = await getDoc(ref);
-  const data = snap.data() as JobApplication;
-
-  if (!data.employerNotes) return;
-
-  const noteToRemove = data.employerNotes.find((note) => note.id === noteId);
-  if (!noteToRemove) return;
-
-  await updateDoc(ref, {
-    employerNotes: arrayRemove(noteToRemove),
-    updatedAt: serverTimestamp(),
-  });
-}
-
-/**
- * Update applicant rating (1-5 stars)
- */
-export async function updateApplicantRating(
-  applicationId: string,
-  rating: number
-): Promise<void> {
-  const ref = doc(db!, applicationsCollection, applicationId);
-  await updateDoc(ref, {
-    rating: Math.min(5, Math.max(1, rating)),
-    updatedAt: serverTimestamp(),
-  });
+  await adminDb
+    .collection(APPLICATIONS_COLLECTION)
+    .doc(id)
+    .update({
+      status,
+      stageHistory: FieldValue.arrayUnion(stageEntry),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
 }
