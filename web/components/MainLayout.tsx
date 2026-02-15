@@ -15,6 +15,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isFeedRoute =
     pathname === "/" ||
     pathname?.startsWith("/signup") ||
+    pathname?.startsWith("/login") ||
+    pathname?.startsWith("/register") ||
+    pathname?.startsWith("/forgot-password") ||
     pathname?.startsWith("/onboarding") ||
     pathname?.startsWith("/welcome") ||
     pathname?.startsWith("/discover") ||

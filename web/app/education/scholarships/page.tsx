@@ -9,6 +9,19 @@ import type { Scholarship } from "@/lib/types";
 import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import { SectionHeader } from "@/components/opportunity-graph";
 
+const SCHOLARSHIP_TYPE_LABELS: Record<string, string> = {
+  merit: "Merit-Based",
+  need_based: "Need-Based",
+  indigenous: "Indigenous-Specific",
+  field_specific: "Field-Specific",
+  community: "Community Service",
+  athletic: "Athletic",
+  other: "Other",
+};
+function formatScholarshipType(type: string): string {
+  return SCHOLARSHIP_TYPE_LABELS[type] || type;
+}
+
 const AWARD_TYPES = ["All", "Scholarship", "Grant", "Bursary"] as const;
 const EDUCATION_LEVELS = ["All", "High School", "Post-secondary", "Graduate", "Community"] as const;
 const DEADLINE_RANGES = [
@@ -485,7 +498,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
         {/* Type Badge */}
         <div className="mt-2">
           <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${getTypeColor(scholarship.type)}`}>
-            {scholarship.type}
+            {formatScholarshipType(scholarship.type)}
           </span>
         </div>
       </div>

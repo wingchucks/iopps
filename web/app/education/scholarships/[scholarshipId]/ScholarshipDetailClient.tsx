@@ -15,6 +15,19 @@ import {
 } from "@/lib/firestore/scholarship-analytics";
 import type { Scholarship, MemberProfile } from "@/lib/types";
 
+const SCHOLARSHIP_TYPE_LABELS: Record<string, string> = {
+  merit: "Merit-Based",
+  need_based: "Need-Based",
+  indigenous: "Indigenous-Specific",
+  field_specific: "Field-Specific",
+  community: "Community Service",
+  athletic: "Athletic",
+  other: "Other",
+};
+function formatScholarshipType(type: string): string {
+  return SCHOLARSHIP_TYPE_LABELS[type] || type;
+}
+
 interface ScholarshipDetailClientProps {
   scholarship: Scholarship;
 }
@@ -144,7 +157,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
         <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center rounded-full border border-[#14B8A6]/30 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#14B8A6]">
-              {scholarship.type}
+              {formatScholarshipType(scholarship.type)}
             </span>
             <span className="inline-flex items-center rounded-lg border border-[var(--border)] bg-surface px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
               {scholarship.level}
@@ -266,7 +279,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
 
         {/* Description */}
         <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
-          <h2 className="text-xl font-bold text-[var(--text-primary)]">About This {scholarship.type}</h2>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">About This {formatScholarshipType(scholarship.type)}</h2>
           <div className="mt-4 space-y-4 text-[var(--text-secondary)]">
             {scholarship.description.split("\n").map((paragraph, i) => (
               <p key={i} className="leading-relaxed">
@@ -293,7 +306,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
           isCommunityMember && user ? (
             <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
               <h2 className="text-xl font-bold text-[var(--text-primary)]">
-                Apply for this {scholarship.type}
+                Apply for this {formatScholarshipType(scholarship.type)}
               </h2>
 
               {isExpired ? (
@@ -335,7 +348,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                       Personal Statement / Essay <span className="text-red-600">*</span>
                     </label>
                     <p className="mt-1 text-xs text-foreground0">
-                      Share your goals, achievements, community involvement, and why you should be selected for this {scholarship.type.toLowerCase()}.
+                      Share your goals, achievements, community involvement, and why you should be selected for this {formatScholarshipType(scholarship.type).toLowerCase()}.
                     </p>
                     <textarea
                       required
@@ -369,7 +382,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                 Sign in to apply
               </h3>
               <p className="mt-2 text-foreground0">
-                Create a community member account to apply for this {scholarship.type.toLowerCase()}.
+                Create a community member account to apply for this {formatScholarshipType(scholarship.type).toLowerCase()}.
               </p>
               <div className="mt-6 flex justify-center gap-3">
                 <Link
