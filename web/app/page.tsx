@@ -1,13 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Briefcase, GraduationCap, Users, Building2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 
-const stats = [
-  { label: "Jobs Posted", value: "2,500+" },
-  { label: "Organizations", value: "850+" },
-  { label: "Members", value: "15,000+" },
-];
+interface Stats {
+  jobs: number;
+  members: number;
+  organizations: number;
+  events: number;
+}
 
 const features = [
   {
@@ -41,20 +45,35 @@ const features = [
 ];
 
 export default function HomePage() {
+  const [stats, setStats] = useState<Stats>({ jobs: 0, members: 0, organizations: 0, events: 0 });
+
+  useEffect(() => {
+    fetch("/api/stats/public")
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(() => {});
+  }, []);
+
+  const statItems = [
+    { label: "Active Jobs", value: stats.jobs },
+    { label: "Organizations", value: stats.organizations },
+    { label: "Members", value: stats.members },
+    { label: "Events", value: stats.events },
+  ];
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-background px-4 py-20 sm:py-28 lg:py-32">
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-5xl lg:text-6xl">
-            <span className="text-accent">Indigenous</span> Opportunities
+            <span className="text-accent">IOPPS.CA</span>
             <br />
-            &amp; Partnerships Platform
+            Empowering Indigenous Success
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-text-secondary">
             Canada&apos;s hub for Indigenous jobs, conferences, scholarships, pow
-            wows, business directories, and live streams. Empowering Indigenous
-            success.
+            wows, business directories, and live streams.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button variant="primary" size="lg" href="/careers">
@@ -82,10 +101,12 @@ export default function HomePage() {
 
       {/* Stats Section */}
       <section className="border-y border-border bg-surface px-4 py-12">
-        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
-          {stats.map((stat) => (
+        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-8 sm:grid-cols-4">
+          {statItems.map((stat) => (
             <div key={stat.label} className="text-center">
-              <p className="text-3xl font-bold text-accent">{stat.value}</p>
+              <p className="text-3xl font-bold text-accent">
+                {stat.value > 0 ? stat.value.toLocaleString() : "--"}
+              </p>
               <p className="mt-1 text-sm text-text-muted">{stat.label}</p>
             </div>
           ))}
@@ -135,8 +156,9 @@ export default function HomePage() {
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold">Ready to Get Started?</h2>
           <p className="mt-3 text-white/80">
-            Join thousands of Indigenous professionals and organizations already
-            using IOPPS to connect and grow.
+            {stats.members > 0
+              ? `Join ${stats.members.toLocaleString()} Indigenous professionals and organizations already using IOPPS to connect and grow.`
+              : "Join Indigenous professionals and organizations already using IOPPS to connect and grow."}
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button

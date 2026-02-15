@@ -45,7 +45,6 @@ const employerPlans = [
       "Candidate engagement analytics",
       "Standard customer support",
       "Shop Indigenous listing included",
-      "30 days Talent Pool Access included",
     ],
   },
 ];
@@ -70,7 +69,6 @@ const singleJobPosts = [
       "Featured badge",
       "Priority placement",
       "Employer logo & branding",
-      "7 days Talent Pool access",
     ],
   },
 ];
@@ -99,21 +97,6 @@ const additionalProducts = [
     description: "Featured listing in the Shop Indigenous marketplace.",
   },
   {
-    name: "Talent Pool Access",
-    detail: "Monthly",
-    price: "$99",
-    period: "/mo",
-    description: "Browse and contact Indigenous talent for 30 days.",
-  },
-  {
-    name: "Talent Pool Access",
-    detail: "Annual",
-    price: "$899",
-    period: "/yr",
-    badge: "Save $289",
-    description: "Full year of talent access with priority support.",
-  },
-  {
     name: "Training Featured",
     detail: "60 days",
     price: "$150",
@@ -131,11 +114,9 @@ const additionalProducts = [
 
 const schoolPartner = {
   name: "School Partner",
-  price: "$4,500",
-  period: "/year",
-  href: "/signup?plan=SCHOOL",
-  description: "Complete school partnership with unlimited everything.",
-  trialBadge: "90-day free trial available",
+  href: "mailto:nathan.arias@iopps.ca?subject=School%20Partnership%20Inquiry",
+  description: "Complete school partnership with unlimited everything. Contact us for custom pricing.",
+  trialBadge: "Custom pricing",
   features: [
     "Full school profile page",
     "Unlimited job postings",
@@ -357,7 +338,7 @@ export default function PricingPage() {
             Additional Products
           </h2>
           <p className="mt-2 text-[var(--text-secondary)]">
-            Visibility upgrades, marketplace listings, and talent access.
+            Visibility upgrades and marketplace listings.
           </p>
         </div>
 
@@ -376,11 +357,6 @@ export default function PricingPage() {
                     {product.detail}
                   </p>
                 </div>
-                {product.badge && (
-                  <span className="shrink-0 rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">
-                    {product.badge}
-                  </span>
-                )}
               </div>
 
               <div className="mt-4 flex items-baseline gap-1">
@@ -453,21 +429,13 @@ export default function PricingPage() {
               </ul>
             </div>
 
-            {/* Right: price + CTA */}
+            {/* Right: CTA */}
             <div className="flex shrink-0 flex-col items-center text-center md:items-end md:text-right">
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-bold text-foreground">
-                  {schoolPartner.price}
-                </span>
-                <span className="text-sm text-[var(--text-muted)]">
-                  {schoolPartner.period} CAD
-                </span>
-              </div>
               <Link
                 href={schoolPartner.href}
-                className="mt-4 inline-block rounded-lg bg-accent px-6 py-3 font-medium text-white transition-colors hover:bg-accent/90"
+                className="inline-block rounded-lg bg-accent px-6 py-3 font-medium text-white transition-colors hover:bg-accent/90"
               >
-                Get Started
+                Contact Us
               </Link>
             </div>
           </div>
