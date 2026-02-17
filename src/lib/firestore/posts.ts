@@ -62,9 +62,13 @@ export interface Post {
   // Program fields
   duration?: string;
   credential?: string;
+  programUrl?: string;
   // Story fields
   quote?: string;
   community?: string;
+  author?: string;
+  featuredImage?: string;
+  excerpt?: string;
   // Common
   badges?: string[];
   createdAt: unknown;

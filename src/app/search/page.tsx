@@ -652,9 +652,9 @@ function SearchResultCard({ post }: { post: Post }) {
     job: { label: "Job", color: "var(--blue)", bg: "var(--blue-soft)", href: `/jobs/${slug}` },
     event: { label: "Event", color: "var(--gold)", bg: "var(--gold-soft)", href: `/events/${slug}` },
     scholarship: { label: "Scholarship", color: "var(--green)", bg: "var(--green-soft)", href: `/scholarships/${slug}` },
-    program: { label: "Program", color: "var(--teal)", bg: "var(--teal-soft)", href: `/feed` },
-    spotlight: { label: "Spotlight", color: "var(--gold)", bg: "var(--gold-soft)", href: post.orgId ? `/org/${post.orgId}` : `/feed` },
-    story: { label: "Story", color: "var(--green)", bg: "var(--green-soft)", href: `/feed` },
+    program: { label: "Program", color: "var(--teal)", bg: "var(--teal-soft)", href: `/programs/${slug}` },
+    spotlight: { label: "Spotlight", color: "var(--gold)", bg: "var(--gold-soft)", href: `/stories/${slug}` },
+    story: { label: "Story", color: "var(--green)", bg: "var(--green-soft)", href: `/stories/${slug}` },
   };
 
   const config = typeConfig[post.type] || { label: post.type, color: "var(--text-sec)", bg: "var(--border)", href: "#" };

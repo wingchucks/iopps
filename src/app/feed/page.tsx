@@ -420,57 +420,60 @@ function FeedCard({ post }: { post: Post }) {
 
   if (post.type === "program") {
     return (
-      <Card>
-        <div style={{ padding: "16px 20px" }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Badge text="Program" color="var(--blue)" bg="var(--blue-soft)" small icon={<span>&#128218;</span>} />
-            {post.badges?.includes("Education Partner") && (
-              <Badge text="&#127891; Education Partner" color="var(--teal)" bg="var(--teal-soft)" small />
-            )}
+      <Link href={`/programs/${slug}`} className="no-underline">
+        <Card>
+          <div style={{ padding: "16px 20px" }}>
+            <div className="flex items-center gap-1.5 mb-2">
+              <Badge text="Program" color="var(--blue)" bg="var(--blue-soft)" small icon={<span>&#128218;</span>} />
+              {post.badges?.includes("Education Partner") && (
+                <Badge text="&#127891; Education Partner" color="var(--teal)" bg="var(--teal-soft)" small />
+              )}
+            </div>
+            <h3 className="text-base font-bold text-text mb-1.5">{post.title}</h3>
+            <span className="text-sm text-teal font-semibold">{post.orgName}</span>
+            <div className="flex gap-3 text-[13px] text-text-sec mt-1.5">
+              {post.location && <span>&#128205; {post.location}</span>}
+              {post.duration && <span>{post.duration}</span>}
+              {post.credential && <span>{post.credential}</span>}
+            </div>
           </div>
-          <h3 className="text-base font-bold text-text mb-1.5">{post.title}</h3>
-          <span className="text-sm text-teal font-semibold">{post.orgName}</span>
-          <div className="flex gap-3 text-[13px] text-text-sec mt-1.5">
-            {post.location && <span>&#128205; {post.location}</span>}
-            {post.duration && <span>{post.duration}</span>}
-            {post.credential && <span>{post.credential}</span>}
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </Link>
     );
   }
 
   if (post.type === "spotlight") {
     return (
-      <div
-        className="rounded-2xl"
-        style={{
-          padding: 20,
-          border: "1.5px solid rgba(217,119,6,.19)",
-          background: `linear-gradient(135deg, var(--gold-soft), var(--spotlight-bg))`,
-        }}
-      >
-        <div className="flex justify-between items-center mb-3">
-          <p className="text-[11px] font-bold text-gold tracking-[1px] m-0">PARTNER SPOTLIGHT</p>
-          <p className="text-gold tracking-[1.5px] m-0 opacity-50" style={{ fontSize: 8, fontWeight: 800 }}>
-            EMPOWERING INDIGENOUS SUCCESS
-          </p>
-        </div>
-        <div className="flex gap-3.5 items-center">
-          <Avatar name={post.orgShort || ""} size={52} gradient="linear-gradient(135deg, rgba(217,119,6,.25), rgba(15,43,76,.19))" />
-          <div>
-            <h3 className="text-base font-bold text-text mb-1">{post.title}</h3>
-            <p className="text-[13px] text-text-sec mb-2">{post.description}</p>
-            {post.orgId && (
-              <Link href={`/org/${post.orgId}`}>
-                <Button small primary style={{ background: "var(--gold)", padding: "6px 14px", fontSize: 12 }}>
-                  View Profile →
-                </Button>
-              </Link>
-            )}
+      <Link href={`/stories/${slug}`} className="no-underline">
+        <div
+          className="rounded-2xl cursor-pointer"
+          style={{
+            padding: 20,
+            border: "1.5px solid rgba(217,119,6,.19)",
+            background: `linear-gradient(135deg, var(--gold-soft), var(--spotlight-bg))`,
+          }}
+        >
+          <div className="flex justify-between items-center mb-3">
+            <p className="text-[11px] font-bold text-gold tracking-[1px] m-0">PARTNER SPOTLIGHT</p>
+            <p className="text-gold tracking-[1.5px] m-0 opacity-50" style={{ fontSize: 8, fontWeight: 800 }}>
+              EMPOWERING INDIGENOUS SUCCESS
+            </p>
+          </div>
+          <div className="flex gap-3.5 items-center">
+            <Avatar name={post.orgShort || ""} size={52} gradient="linear-gradient(135deg, rgba(217,119,6,.25), rgba(15,43,76,.19))" />
+            <div>
+              <h3 className="text-base font-bold text-text mb-1">{post.title}</h3>
+              <p className="text-[13px] text-text-sec mb-2">{post.description}</p>
+              <span
+                className="inline-block text-xs font-semibold rounded-lg"
+                style={{ background: "var(--gold)", color: "#fff", padding: "6px 14px" }}
+              >
+                Read More &#8594;
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </Link>
     );
   }
 
@@ -529,23 +532,25 @@ function FeedCard({ post }: { post: Post }) {
 
   if (post.type === "story") {
     return (
-      <Card>
-        <div style={{ padding: 20, background: "linear-gradient(135deg, rgba(5,150,105,.04), rgba(13,148,136,.03))" }}>
-          <Badge text="&#127775; Success Story" color="var(--green)" bg="var(--green-soft)" small />
-          <div className="flex gap-3.5 mt-3 items-center">
-            <Avatar name={post.title} size={52} />
-            <div>
-              <p className="text-base font-bold m-0 text-text">{post.title}</p>
-              {post.community && <p className="text-xs text-teal font-semibold mt-0.5">{post.community}</p>}
+      <Link href={`/stories/${slug}`} className="no-underline">
+        <Card className="cursor-pointer">
+          <div style={{ padding: 20, background: "linear-gradient(135deg, rgba(5,150,105,.04), rgba(13,148,136,.03))" }}>
+            <Badge text="&#127775; Success Story" color="var(--green)" bg="var(--green-soft)" small />
+            <div className="flex gap-3.5 mt-3 items-center">
+              <Avatar name={post.title} size={52} />
+              <div>
+                <p className="text-base font-bold m-0 text-text">{post.title}</p>
+                {post.community && <p className="text-xs text-teal font-semibold mt-0.5">{post.community}</p>}
+              </div>
             </div>
+            {post.quote && (
+              <p className="text-[15px] font-semibold italic text-text mt-3.5 leading-relaxed">
+                &quot;{post.quote}&quot;
+              </p>
+            )}
           </div>
-          {post.quote && (
-            <p className="text-[15px] font-semibold italic text-text mt-3.5 leading-relaxed">
-              &quot;{post.quote}&quot;
-            </p>
-          )}
-        </div>
-      </Card>
+        </Card>
+      </Link>
     );
   }
 
