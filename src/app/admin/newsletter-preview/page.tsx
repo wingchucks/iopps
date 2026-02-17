@@ -45,7 +45,7 @@ function NewsletterPreviewContent() {
       </div>
 
       {/* Email Preview Container */}
-      <div className="rounded-2xl" style={{ background: "#E8ECEF", padding: 24 }}>
+      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--border) 60%, var(--bg))", padding: 24 }}>
         <div
           className="max-w-[600px] mx-auto rounded-xl overflow-hidden"
           style={{ background: "var(--card)", boxShadow: "0 2px 12px rgba(0,0,0,.08)" }}
@@ -112,7 +112,7 @@ function NewsletterPreviewContent() {
                         ? "var(--gold-soft)"
                         : job.badge.includes("Education")
                           ? "var(--teal-soft)"
-                          : "#F1F5F9"
+                          : "var(--border)"
                     }
                     small
                   />
@@ -209,7 +209,7 @@ function NewsletterPreviewContent() {
           {/* Email Footer */}
           <div
             className="text-center border-t border-border"
-            style={{ background: "#F8FAFC", padding: "20px 32px" }}
+            style={{ background: "var(--bg)", padding: "20px 32px" }}
           >
             <p className="text-lg font-black text-navy tracking-[2px] mb-1.5">IOPPS</p>
             <p className="text-teal mb-2.5 opacity-60" style={{ fontSize: 8, fontWeight: 800, letterSpacing: 2 }}>
@@ -223,7 +223,7 @@ function NewsletterPreviewContent() {
               <span> &middot; </span>
               <span className="text-teal cursor-pointer">Unsubscribe</span>
             </p>
-            <p className="text-[10px] m-0" style={{ color: "#CBD5E1" }}>
+            <p className="text-[10px] text-text-muted m-0" style={{ opacity: 0.6 }}>
               IOPPS &middot; Saskatchewan, Canada
             </p>
           </div>

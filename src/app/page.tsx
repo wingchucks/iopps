@@ -2,6 +2,7 @@ import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const partners = [
   { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium" as const },
@@ -31,6 +32,11 @@ export default function LandingPage() {
           padding: "clamp(48px, 8vw, 100px) clamp(20px, 6vw, 80px) clamp(48px, 6vw, 80px)",
         }}
       >
+        {/* Theme toggle */}
+        <div className="absolute top-4 right-4 z-10">
+          <ThemeToggle />
+        </div>
+
         {/* Decorative circles */}
         <div
           className="absolute rounded-full"
