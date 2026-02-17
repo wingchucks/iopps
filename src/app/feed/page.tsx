@@ -15,6 +15,7 @@ import { getOrganizations, type Organization } from "@/lib/firestore/organizatio
 import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
 import { getApplications, type Application } from "@/lib/firestore/applications";
 import ProfileCompleteness from "@/components/ProfileCompleteness";
+import InstallPrompt from "@/components/InstallPrompt";
 
 const tabs = ["All", "Jobs", "Events", "Scholarships", "Businesses", "Schools", "Livestreams", "Stories"];
 
@@ -33,6 +34,7 @@ export default function FeedPage() {
       <div className="min-h-screen bg-bg">
         <NavBar />
         <FeedContent />
+        <InstallPrompt />
       </div>
     </ProtectedRoute>
   );

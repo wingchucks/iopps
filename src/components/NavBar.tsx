@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import Avatar from "./Avatar";
 import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
+import ChatButton from "./ChatButton";
 
 const navLinks = [
   { href: "/feed", label: "Home" },
@@ -88,12 +89,7 @@ export default function NavBar() {
             <span style={{ color: "rgba(255,255,255,.3)", fontSize: 13 }}>Search IOPPS...</span>
           </Link>
           <NotificationBell />
-          <button
-            className="w-10 h-10 rounded-[10px] border-none cursor-pointer text-lg text-white"
-            style={{ background: "rgba(255,255,255,.08)" }}
-          >
-            &#128172;
-          </button>
+          <ChatButton />
           <ThemeToggle />
           <Link href="/profile">
             <Avatar name={displayName} size={36} />
