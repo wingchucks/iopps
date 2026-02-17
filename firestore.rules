@@ -162,6 +162,19 @@ service cloud.firestore {
       allow write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin', 'moderator'];
     }
 
+    // Training programs: public read, admin/moderator write
+    match /training_programs/{programId} {
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Training enrollments: users can read/create/update their own, admin/moderator can read all
+    match /training_enrollments/{enrollmentId} {
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin', 'moderator']);
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
     // Default: deny all
     match /{document=**} {
       allow read, write: if false;
