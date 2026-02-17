@@ -39,11 +39,11 @@ export default function AdminPage() {
 
 function AdminContent() {
   return (
-    <div className="max-w-[1000px] mx-auto" style={{ padding: "32px 40px" }}>
+    <div className="max-w-[1000px] mx-auto px-4 py-6 md:px-10 md:py-8">
       <h2 className="text-2xl font-extrabold text-text mb-5">Admin Panel</h2>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-4 gap-4 mb-7">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-7">
         {topStats.map((s, i) => (
           <Card key={i} style={{ padding: 20 }}>
             <div className="flex justify-between mb-1.5">
@@ -57,7 +57,7 @@ function AdminContent() {
       </div>
 
       {/* Menu Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {menuItems.map((item, i) => {
           const inner = (
             <Card key={i} className="cursor-pointer">

@@ -36,9 +36,9 @@ function FeedContent() {
   const displayName = user?.displayName || user?.email?.split("@")[0] || "User";
 
   return (
-    <div className="flex gap-6 max-w-[1200px] mx-auto" style={{ padding: "24px 40px" }}>
+    <div className="flex gap-6 max-w-[1200px] mx-auto px-4 py-4 md:px-10 md:py-6">
       {/* ═══ Left Sidebar ═══ */}
-      <div className="w-[260px] shrink-0">
+      <div className="hidden lg:block w-[260px] shrink-0">
         {/* Profile card */}
         <Card className="mb-4" style={{ padding: 20 }}>
           <div className="flex items-center gap-2.5 mb-3">
@@ -130,7 +130,7 @@ function FeedContent() {
       </div>
 
       {/* ═══ Center Feed ═══ */}
-      <div className="flex-1 max-w-[580px] min-w-0">
+      <div className="flex-1 max-w-full lg:max-w-[580px] min-w-0">
         {/* LIVE banner */}
         <div
           className="flex items-center gap-3 rounded-[14px] mb-3 cursor-pointer"
@@ -350,7 +350,7 @@ function FeedContent() {
       </div>
 
       {/* ═══ Right Sidebar ═══ */}
-      <div className="w-[260px] shrink-0">
+      <div className="hidden xl:block w-[260px] shrink-0">
         {/* Your Applications */}
         <Card className="mb-4" style={{ padding: 16 }}>
           <p className="text-xs font-bold text-text-muted mb-2.5 tracking-[1px]">YOUR APPLICATIONS</p>

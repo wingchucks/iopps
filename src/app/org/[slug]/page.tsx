@@ -42,25 +42,25 @@ function OrgProfileContent() {
         className="rounded-b-3xl"
         style={{
           background: "linear-gradient(160deg, var(--navy), #0D3B66 60%, var(--teal))",
-          padding: "40px 48px",
+          padding: "clamp(24px, 4vw, 40px) clamp(16px, 4vw, 48px)",
         }}
       >
-        <div className="flex gap-5 items-center">
-          <Avatar name="SIGA" size={80} />
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start sm:items-center">
+          <Avatar name="SIGA" size={64} />
           <div className="flex-1">
-            <h1 className="text-[28px] font-extrabold text-white mb-1.5">
+            <h1 className="text-xl sm:text-[28px] font-extrabold text-white mb-1.5">
               Saskatchewan Indian Gaming Authority
             </h1>
             <p className="text-[15px] mb-2.5" style={{ color: "rgba(255,255,255,.7)" }}>
               &#128205; Saskatoon, SK &bull; siga.ca
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Badge text="&#10003; Premium Partner" color="#F5D78E" bg="rgba(245,215,142,.15)" small />
               <Badge text="&#10003; Verified" color="#6EE7B7" bg="rgba(110,231,183,.15)" small />
               <Badge text="Indigenous-Owned" color="#F5D78E" bg="rgba(245,215,142,.15)" small />
             </div>
           </div>
-          <div className="flex gap-2.5">
+          <div className="flex gap-2.5 mt-2 sm:mt-0">
             <Button small style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)" }}>
               &#128172; Message
             </Button>
@@ -75,9 +75,9 @@ function OrgProfileContent() {
       </div>
 
       {/* Content */}
-      <div style={{ padding: "24px 48px" }}>
+      <div className="px-4 py-6 md:px-12">
         {/* Stats Row */}
-        <div className="grid grid-cols-4 gap-4 mb-7">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-7">
           {stats.map((s, i) => (
             <div key={i} className="p-4 bg-bg rounded-[14px] text-center">
               <span className="text-[22px]">{s.icon}</span>
@@ -98,7 +98,7 @@ function OrgProfileContent() {
 
         {/* Open Positions */}
         <h3 className="text-lg font-bold text-text mb-3">Open Positions</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {jobs.map((j, i) => (
             <Card key={i} className="cursor-pointer">
               <div className="flex justify-between items-center" style={{ padding: "14px 16px" }}>

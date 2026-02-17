@@ -53,29 +53,29 @@ function SchoolProfileContent() {
         className="rounded-b-3xl"
         style={{
           background: "linear-gradient(160deg, var(--navy), #0D3B66 60%, var(--teal))",
-          padding: "40px 48px",
+          padding: "clamp(24px, 4vw, 40px) clamp(16px, 4vw, 48px)",
         }}
       >
-        <div className="flex gap-5 items-center">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start sm:items-center">
           <Avatar
             name="FNUniv"
-            size={80}
+            size={64}
             gradient="linear-gradient(135deg, var(--teal), var(--blue))"
           />
           <div className="flex-1">
-            <h1 className="text-[28px] font-extrabold text-white mb-1.5">
+            <h1 className="text-xl sm:text-[28px] font-extrabold text-white mb-1.5">
               First Nations University of Canada
             </h1>
             <p className="text-[15px] mb-2.5" style={{ color: "rgba(255,255,255,.7)" }}>
               &#128205; Regina, SK &bull; fnuniv.ca
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Badge text="&#127891; Education Partner" color="#fff" bg="rgba(255,255,255,.15)" small />
               <Badge text="&#10003; Verified" color="#6EE7B7" bg="rgba(110,231,183,.15)" small />
               <Badge text="Indigenous-Owned" color="#F5D78E" bg="rgba(245,215,142,.15)" small />
             </div>
           </div>
-          <div className="flex gap-2.5">
+          <div className="flex gap-2.5 mt-2 sm:mt-0">
             <Button
               small
               style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)" }}
@@ -96,9 +96,9 @@ function SchoolProfileContent() {
       </div>
 
       {/* Content */}
-      <div style={{ padding: "24px 48px" }}>
+      <div className="px-4 py-6 md:px-12">
         {/* Stats Row */}
-        <div className="grid grid-cols-4 gap-4 mb-7">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-7">
           {stats.map((s, i) => (
             <div key={i} className="p-4 bg-bg rounded-[14px] text-center">
               <span className="text-[22px]">{s.icon}</span>
@@ -109,7 +109,7 @@ function SchoolProfileContent() {
         </div>
 
         {/* Two Column Layout */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column */}
           <div>
             <h3 className="text-lg font-bold text-text mb-2.5">About</h3>

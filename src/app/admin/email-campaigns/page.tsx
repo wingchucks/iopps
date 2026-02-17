@@ -35,7 +35,7 @@ export default function EmailCampaignsPage() {
 
 function EmailCampaignsContent() {
   return (
-    <div className="max-w-[1000px] mx-auto" style={{ padding: "32px 40px" }}>
+    <div className="max-w-[1000px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -48,7 +48,7 @@ function EmailCampaignsContent() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-4 gap-4 mb-7">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-7">
         {topStats.map((s, i) => (
           <Card key={i} style={{ padding: 20 }}>
             <span className="text-[22px]">{s.icon}</span>
@@ -87,7 +87,7 @@ function EmailCampaignsContent() {
                   Preview &#8599;
                 </Link>
               </div>
-              <div className="flex gap-6 mt-2.5">
+              <div className="flex flex-wrap gap-4 md:gap-6 mt-2.5">
                 {[
                   { label: "Sent", value: c.total.toLocaleString() },
                   { label: "Opened", value: c.opened.toLocaleString() },

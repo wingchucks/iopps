@@ -28,7 +28,7 @@ export default function LandingPage() {
         className="relative overflow-hidden text-center"
         style={{
           background: "linear-gradient(160deg, var(--navy-deep) 0%, var(--navy) 40%, #0D3B66 70%, var(--teal) 100%)",
-          padding: "100px 80px 80px",
+          padding: "clamp(48px, 8vw, 100px) clamp(20px, 6vw, 80px) clamp(48px, 6vw, 80px)",
         }}
       >
         {/* Decorative circles */}
@@ -41,7 +41,7 @@ export default function LandingPage() {
           style={{ bottom: -60, left: -60, width: 300, height: 300, background: "rgba(217,119,6,.04)" }}
         />
 
-        <h1 className="relative text-white font-black tracking-[4px] mb-4" style={{ fontSize: 72 }}>
+        <h1 className="relative text-white font-black tracking-[4px] mb-4 text-4xl md:text-6xl lg:text-[72px]">
           IOPPS
         </h1>
 
@@ -56,7 +56,7 @@ export default function LandingPage() {
           EMPOWERING INDIGENOUS SUCCESS
         </p>
 
-        <h2 className="relative text-white text-[28px] font-semibold mx-auto mb-4 leading-snug max-w-[600px]">
+        <h2 className="relative text-white text-xl md:text-[28px] font-semibold mx-auto mb-4 leading-snug max-w-[600px]">
           Where Indigenous Communities Connect with Opportunities
         </h2>
 
@@ -64,7 +64,7 @@ export default function LandingPage() {
           Jobs, events, scholarships, businesses, schools, and livestreams — all in one place for Indigenous people across North America.
         </p>
 
-        <div className="relative flex gap-4 justify-center">
+        <div className="relative flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
           <Link href="/signup">
             <Button
               primary
@@ -96,7 +96,7 @@ export default function LandingPage() {
       </section>
 
       {/* Partner Strip */}
-      <section className="border-b border-border" style={{ padding: "32px 80px" }}>
+      <section className="border-b border-border px-5 md:px-10 lg:px-20 py-8">
         <div className="flex justify-between items-center mb-5">
           <p className="text-xs font-bold text-text-muted tracking-[2px] m-0">OUR PARTNERS</p>
           <p className="text-text-muted tracking-[2.5px] m-0 opacity-50" style={{ fontSize: 9, fontWeight: 800 }}>
@@ -141,9 +141,9 @@ export default function LandingPage() {
       </section>
 
       {/* What's on IOPPS */}
-      <section style={{ padding: "48px 80px" }}>
+      <section className="px-5 md:px-10 lg:px-20 py-8 md:py-12">
         <h3 className="text-2xl font-extrabold text-text mb-8 text-center">What&apos;s on IOPPS</h3>
-        <div className="grid grid-cols-3 gap-5 max-w-[900px] mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 max-w-[900px] mx-auto">
           {categories.map((item, i) => (
             <div
               key={i}
@@ -159,8 +159,8 @@ export default function LandingPage() {
       </section>
 
       {/* Stats Footer */}
-      <section className="text-center border-t border-border" style={{ padding: "40px 80px 48px" }}>
-        <p className="text-5xl font-black text-navy mb-2">84,200+</p>
+      <section className="text-center border-t border-border px-5 md:px-10 lg:px-20 py-10 md:py-12">
+        <p className="text-3xl md:text-5xl font-black text-navy mb-2">84,200+</p>
         <p className="text-base text-text-sec mb-5">Community members and growing</p>
         <p className="text-teal m-0" style={{ fontSize: 11, fontWeight: 800, letterSpacing: 4 }}>
           EMPOWERING INDIGENOUS SUCCESS

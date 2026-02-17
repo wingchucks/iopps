@@ -33,7 +33,7 @@ function PartnersContent() {
   const [filter, setFilter] = useState("All");
 
   return (
-    <div className="max-w-[1000px] mx-auto" style={{ padding: "32px 40px" }}>
+    <div className="max-w-[1000px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Header */}
       <div className="mb-7">
         <h2 className="text-[28px] font-extrabold text-text mb-1">Organizations on IOPPS</h2>
@@ -65,22 +65,22 @@ function PartnersContent() {
 
       {/* Featured School Card */}
       <Card className="mb-5" style={{ border: "2px solid rgba(13,148,136,.15)" }}>
-        <div className="flex gap-5" style={{ padding: 24 }}>
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 p-4 sm:p-6">
           <Avatar
             name="SP"
             size={72}
             gradient="linear-gradient(135deg, var(--teal), var(--blue))"
           />
           <div className="flex-1">
-            <div className="flex items-center gap-2.5 mb-1.5">
-              <h3 className="text-xl font-extrabold text-text m-0">Saskatchewan Polytechnic</h3>
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <h3 className="text-lg sm:text-xl font-extrabold text-text m-0">Saskatchewan Polytechnic</h3>
               <Badge text="&#127891; Education Partner" color="var(--teal)" bg="var(--teal-soft)" small />
               <Badge text="&#10003; Verified" color="var(--green)" bg="var(--green-soft)" small />
             </div>
             <p className="text-sm text-text-sec mb-3 leading-relaxed">
               Leading polytechnic in Saskatchewan offering diploma and certificate programs with strong Indigenous student support services.
             </p>
-            <div className="flex gap-5 text-[13px] text-text-sec mb-2.5">
+            <div className="flex flex-wrap gap-3 md:gap-5 text-[13px] text-text-sec mb-2.5">
               <span>&#128205; Saskatoon, SK</span>
               <span>&#128218; 5 active programs</span>
               <span>&#128188; 3 open jobs</span>
@@ -105,7 +105,7 @@ function PartnersContent() {
       </Card>
 
       {/* Org Cards Grid */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {orgs.map((org, i) => (
           <Card key={i} className="cursor-pointer">
             <div style={{ padding: 20 }}>
