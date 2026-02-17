@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
@@ -12,7 +12,7 @@ import Card from "@/components/Card";
 import { getPost, type Post } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost } from "@/lib/firestore/savedItems";
-import { applyToPost, hasApplied } from "@/lib/firestore/applications";
+import { hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
 import ReportButton from "@/components/ReportButton";
 
@@ -78,18 +78,7 @@ function JobDetailContent() {
     }
   };
 
-  const handleApply = async () => {
-    if (!user || !post || applied) return;
-    setActionLoading("apply");
-    try {
-      await applyToPost(user.uid, post.id, post.title, post.orgName || "");
-      setApplied(true);
-    } catch (err) {
-      console.error("Apply failed:", err);
-    } finally {
-      setActionLoading("");
-    }
-  };
+  const router = useRouter();
 
   if (loading) {
     return (
@@ -280,7 +269,9 @@ function JobDetailContent() {
               <Button
                 primary
                 full
-                onClick={handleApply}
+                onClick={() => {
+                  if (!applied) router.push(`/jobs/${slug}/apply`);
+                }}
                 style={{
                   background: applied ? "var(--green)" : "var(--teal)",
                   padding: "14px 24px",
@@ -288,10 +279,10 @@ function JobDetailContent() {
                   fontSize: 16,
                   fontWeight: 700,
                   marginBottom: 12,
-                  opacity: actionLoading === "apply" ? 0.7 : 1,
+                  cursor: applied ? "default" : "pointer",
                 }}
               >
-                {applied ? "✓ Applied" : actionLoading === "apply" ? "Applying..." : "Apply Now"}
+                {applied ? "\u2713 Applied" : "Apply Now"}
               </Button>
               <Button
                 full

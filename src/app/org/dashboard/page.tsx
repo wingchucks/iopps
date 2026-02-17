@@ -457,7 +457,13 @@ export default function OrgDashboardPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-wrap">
+                  <Link href="/org/dashboard/profile">
+                    <Button small>Edit Profile</Button>
+                  </Link>
+                  <Link href="/org/dashboard/analytics">
+                    <Button small>Analytics</Button>
+                  </Link>
                   <Link href="/org/dashboard/applications">
                     <Button small>View Applications</Button>
                   </Link>
