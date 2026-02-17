@@ -245,6 +245,14 @@ function ProfileContent() {
                   small
                 />
               )}
+              {profile?.openToWork && (
+                <Badge
+                  text="Open to Work"
+                  color="var(--green)"
+                  bg="rgba(34,197,94,.15)"
+                  small
+                />
+              )}
             </div>
           </div>
           <div className="flex gap-2.5 mt-2 sm:mt-0">
@@ -466,6 +474,151 @@ function ProfileContent() {
                 </Card>
               </div>
             </div>
+
+            {/* Open to Work Banner */}
+            {profile?.openToWork && (
+              <div
+                className="mt-6 rounded-2xl p-4 flex items-center justify-between"
+                style={{
+                  background: "rgba(34,197,94,.06)",
+                  border: "1.5px solid rgba(34,197,94,.15)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className="flex items-center justify-center rounded-full flex-shrink-0"
+                    style={{ width: 40, height: 40, background: "rgba(34,197,94,.12)" }}
+                  >
+                    <span className="text-lg">&#9989;</span>
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold m-0" style={{ color: "var(--green)" }}>
+                      Open to Work
+                    </p>
+                    <p className="text-xs text-text-muted m-0">
+                      Employers can see you&apos;re looking for opportunities
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/settings/career"
+                  className="text-xs font-semibold no-underline hover:underline"
+                  style={{ color: "var(--teal)" }}
+                >
+                  Edit &#8594;
+                </Link>
+              </div>
+            )}
+
+            {/* Looking For Section */}
+            {profile?.openToWork && (profile?.targetRoles?.length || profile?.salaryRange || profile?.workPreference) && (
+              <div className="mt-6">
+                <h3 className="text-lg font-bold text-text mb-3">Looking For</h3>
+                <Card>
+                  <div style={{ padding: 16 }} className="flex flex-col gap-3">
+                    {profile.targetRoles && profile.targetRoles.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold text-text-muted mb-2 tracking-[1px]">
+                          TARGET ROLES
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {profile.targetRoles.map((role) => (
+                            <span
+                              key={role}
+                              className="rounded-full px-3 py-1 text-xs font-semibold"
+                              style={{
+                                background: "rgba(13,148,136,.08)",
+                                color: "var(--teal)",
+                                border: "1px solid rgba(13,148,136,.15)",
+                              }}
+                            >
+                              {role}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {profile.salaryRange && (
+                      <div>
+                        <p className="text-xs font-bold text-text-muted mb-1 tracking-[1px]">
+                          SALARY RANGE
+                        </p>
+                        <p className="text-sm text-text m-0">
+                          ${profile.salaryRange.min.toLocaleString()} &ndash; ${profile.salaryRange.max.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                    {profile.workPreference && (
+                      <div>
+                        <p className="text-xs font-bold text-text-muted mb-1 tracking-[1px]">
+                          WORK PREFERENCE
+                        </p>
+                        <span
+                          className="rounded-full px-3 py-1 text-xs font-semibold capitalize"
+                          style={{
+                            background: "var(--navy)",
+                            color: "#fff",
+                          }}
+                        >
+                          {profile.workPreference}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Skills Section */}
+            {profile?.skills && profile.skills.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-bold text-text mb-3">Skills</h3>
+                <div className="flex flex-wrap gap-2">
+                  {profile.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-full px-3 py-1 text-xs font-semibold"
+                      style={{
+                        background: "rgba(13,148,136,.08)",
+                        color: "var(--teal)",
+                        border: "1px solid rgba(13,148,136,.15)",
+                      }}
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Education Section */}
+            {profile?.education && profile.education.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-bold text-text mb-3">Education</h3>
+                <div className="flex flex-col gap-2">
+                  {profile.education.map((edu, i) => (
+                    <Card key={i}>
+                      <div style={{ padding: 14 }} className="flex items-center gap-3">
+                        <div
+                          className="flex items-center justify-center rounded-xl flex-shrink-0"
+                          style={{ width: 40, height: 40, background: "rgba(13,148,136,.08)" }}
+                        >
+                          <span className="text-base">&#127891;</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-text mb-0.5 truncate">
+                            {edu.degree} in {edu.field}
+                          </p>
+                          <p className="text-xs text-text-muted m-0">
+                            {edu.school} &middot; {edu.year}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* My Applications Section */}
             <div className="mt-8">

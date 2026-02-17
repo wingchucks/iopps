@@ -175,6 +175,19 @@ service cloud.firestore {
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
+    // Endorsements: public read, authenticated create (own endorserId, can't self-endorse),
+    // endorser or target can delete
+    match /endorsements/{endorsementId} {
+      allow read: if true;
+      allow create: if request.auth != null &&
+        request.resource.data.endorserId == request.auth.uid &&
+        request.resource.data.endorserId != request.resource.data.targetUserId;
+      allow delete: if request.auth != null && (
+        resource.data.endorserId == request.auth.uid ||
+        resource.data.targetUserId == request.auth.uid
+      );
+    }
+
     // Default: deny all
     match /{document=**} {
       allow read, write: if false;

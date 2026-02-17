@@ -12,8 +12,15 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import { getMemberProfile, type MemberProfile } from "@/lib/firestore/members";
 import { getFollowerCount, getFollowingCount } from "@/lib/firestore/connections";
+import {
+  getEndorsements,
+  calculateTrustScore,
+  type Endorsement,
+} from "@/lib/firestore/endorsements";
+import EndorsementCard from "@/components/EndorsementCard";
 import FollowButton from "@/components/FollowButton";
 import ReportButton from "@/components/ReportButton";
+import Toast from "@/components/Toast";
 
 const interestLabels: Record<string, { icon: string; label: string }> = {
   jobs: { icon: "\u{1F4BC}", label: "Jobs & Careers" },
@@ -43,18 +50,28 @@ function MemberProfileContent() {
   const [loading, setLoading] = useState(true);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [endorsements, setEndorsements] = useState<Endorsement[]>([]);
+  const [trustScore, setTrustScore] = useState(0);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const [data, followers, following] = await Promise.all([
+        const [data, followers, following, endorse, score] = await Promise.all([
           getMemberProfile(uid),
           getFollowerCount(uid),
           getFollowingCount(uid),
+          getEndorsements(uid),
+          calculateTrustScore(uid),
         ]);
         setProfile(data);
         setFollowerCount(followers);
         setFollowingCount(following);
+        setEndorsements(endorse);
+        setTrustScore(score);
       } catch (err) {
         console.error("Failed to load member profile:", err);
       } finally {
@@ -116,9 +133,32 @@ function MemberProfileContent() {
             src={profile.photoURL}
           />
           <div className="flex-1">
-            <h1 className="text-xl sm:text-[28px] font-extrabold text-white mb-1">
-              {profile.displayName}
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-[28px] font-extrabold text-white mb-1">
+                {profile.displayName}
+              </h1>
+              {trustScore > 0 && (
+                <span
+                  className="flex items-center gap-1 text-xs font-bold rounded-lg"
+                  style={{
+                    padding: "4px 10px",
+                    background: "rgba(217,119,6,.2)",
+                    color: "#FBBF24",
+                    border: "1px solid rgba(217,119,6,.3)",
+                  }}
+                >
+                  &#9733; {trustScore.toFixed(1)}
+                </span>
+              )}
+              {profile.openToWork && (
+                <Badge
+                  text="Open to Work"
+                  color="#22C55E"
+                  bg="rgba(34,197,94,.2)"
+                  small
+                />
+              )}
+            </div>
             <div className="flex flex-wrap gap-2 mt-2">
               <Badge
                 text="Community Member"
@@ -313,7 +353,203 @@ function MemberProfileContent() {
             </Card>
           </div>
         </div>
+
+        {/* Looking For Section (visible if openToWork) */}
+        {profile.openToWork && (profile.targetRoles?.length || profile.workPreference) && (
+          <div className="mt-6">
+            <h3 className="text-lg font-bold text-text mb-3">Looking For</h3>
+            <Card>
+              <div style={{ padding: 16 }} className="flex flex-col gap-3">
+                {profile.targetRoles && profile.targetRoles.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold text-text-muted mb-2 tracking-[1px]">
+                      TARGET ROLES
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.targetRoles.map((role) => (
+                        <span
+                          key={role}
+                          className="rounded-full px-3 py-1 text-xs font-semibold"
+                          style={{
+                            background: "rgba(13,148,136,.08)",
+                            color: "var(--teal)",
+                            border: "1px solid rgba(13,148,136,.15)",
+                          }}
+                        >
+                          {role}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {profile.workPreference && (
+                  <div>
+                    <p className="text-xs font-bold text-text-muted mb-1 tracking-[1px]">
+                      WORK PREFERENCE
+                    </p>
+                    <span
+                      className="rounded-full px-3 py-1 text-xs font-semibold capitalize"
+                      style={{
+                        background: "var(--navy)",
+                        color: "#fff",
+                      }}
+                    >
+                      {profile.workPreference}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Skills & Expertise */}
+        {profile.skills && profile.skills.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-lg font-bold text-text mb-3">Skills &amp; Expertise</h3>
+            <div className="flex flex-wrap gap-2">
+              {profile.skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-full px-3 py-1 text-xs font-semibold"
+                  style={{
+                    background: "rgba(13,148,136,.08)",
+                    color: "var(--teal)",
+                    border: "1px solid rgba(13,148,136,.15)",
+                  }}
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Education */}
+        {profile.education && profile.education.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-lg font-bold text-text mb-3">Education</h3>
+            <div className="flex flex-col gap-2">
+              {profile.education.map((edu, i) => (
+                <Card key={i}>
+                  <div style={{ padding: 14 }} className="flex items-center gap-3">
+                    <div
+                      className="flex items-center justify-center rounded-xl flex-shrink-0"
+                      style={{ width: 40, height: 40, background: "rgba(13,148,136,.08)" }}
+                    >
+                      <span className="text-base">&#127891;</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-text mb-0.5 truncate">
+                        {edu.degree} in {edu.field}
+                      </p>
+                      <p className="text-xs text-text-muted m-0">
+                        {edu.school} &middot; {edu.year}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Endorsements Section */}
+        {(endorsements.length > 0 || isOwnProfile) && (
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-text">Endorsements</h3>
+              {endorsements.length > 0 && (
+                <Link
+                  href={`/members/${profile.uid}/endorsements`}
+                  className="text-sm font-semibold no-underline hover:underline"
+                  style={{ color: "#D97706" }}
+                >
+                  View All ({endorsements.length})
+                </Link>
+              )}
+            </div>
+
+            {endorsements.length === 0 && isOwnProfile ? (
+              <Card>
+                <div style={{ padding: 24 }} className="text-center">
+                  <p className="text-2xl mb-2" style={{ color: "#D97706" }}>
+                    &#9733;
+                  </p>
+                  <p className="text-sm font-bold text-text mb-1">
+                    Get your first endorsement
+                  </p>
+                  <p className="text-xs text-text-muted mb-3">
+                    Share your profile link with colleagues to receive
+                    endorsements
+                  </p>
+                  <Button
+                    small
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `${window.location.origin}/members/${profile.uid}/endorsements`
+                      );
+                      setToast({
+                        message: "Link copied!",
+                        type: "success",
+                      });
+                    }}
+                    style={{
+                      background: "rgba(217,119,6,.1)",
+                      color: "#D97706",
+                      border: "1.5px solid rgba(217,119,6,.2)",
+                    }}
+                  >
+                    Request Endorsement
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <>
+                <div className="flex flex-col gap-3">
+                  {endorsements.slice(0, 3).map((e) => (
+                    <EndorsementCard key={e.id} endorsement={e} />
+                  ))}
+                </div>
+                {isOwnProfile && (
+                  <div className="mt-3 text-center">
+                    <Button
+                      small
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          `${window.location.origin}/members/${profile.uid}/endorsements`
+                        );
+                        setToast({
+                          message: "Link copied!",
+                          type: "success",
+                        });
+                      }}
+                      style={{
+                        background: "rgba(217,119,6,.1)",
+                        color: "#D97706",
+                        border: "1.5px solid rgba(217,119,6,.2)",
+                      }}
+                    >
+                      Request Endorsement
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        </div>
+      )}
     </div>
   );
 }

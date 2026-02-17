@@ -12,6 +12,20 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
+export type WorkPreference = "remote" | "in-person" | "hybrid" | "any";
+
+export interface Education {
+  school: string;
+  degree: string;
+  field: string;
+  year: number;
+}
+
+export interface SalaryRange {
+  min: number;
+  max: number;
+}
+
 export interface MemberProfile {
   uid: string;
   displayName: string;
@@ -25,6 +39,12 @@ export interface MemberProfile {
   photoURL?: string;
   orgId?: string;
   orgRole?: "owner" | "admin" | "member";
+  openToWork?: boolean;
+  targetRoles?: string[];
+  salaryRange?: SalaryRange | null;
+  workPreference?: WorkPreference;
+  skills?: string[];
+  education?: Education[];
 }
 
 export async function getMemberProfile(
@@ -74,6 +94,23 @@ export async function getAllMembers(): Promise<MemberProfile[]> {
     query(collection(db, "members"), orderBy("displayName"))
   );
   return snap.docs.map((d) => d.data() as MemberProfile);
+}
+
+export async function updateCareerPreferences(
+  uid: string,
+  data: {
+    openToWork?: boolean;
+    targetRoles?: string[];
+    salaryRange?: SalaryRange | null;
+    workPreference?: WorkPreference;
+    skills?: string[];
+    education?: Education[];
+  }
+): Promise<void> {
+  await updateDoc(doc(db, "members", uid), {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export async function deleteMemberProfile(uid: string): Promise<void> {

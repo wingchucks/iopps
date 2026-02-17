@@ -9,6 +9,12 @@ import { useOnboarding } from "@/lib/onboarding-context";
 
 const settingsLinks = [
   {
+    href: "/settings/career",
+    icon: "\u{1F4BC}",
+    title: "Career Preferences",
+    desc: "Set your open-to-work status, target roles, skills, and education",
+  },
+  {
     href: "/settings/privacy",
     icon: "\u{1F512}",
     title: "Privacy & Visibility",
