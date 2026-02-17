@@ -47,6 +47,7 @@ function AdminContent() {
     { icon: "\u{1F465}", label: "Members", sub: "View and manage community members", href: "/admin/members" },
     { icon: "\u{1F3E2}", label: "Organizations", sub: `${orgCount} organizations`, href: "/admin/organizations" },
     { icon: "\u{1F4CB}", label: "All Posts", sub: `${postCount} active across all types`, href: "/admin/posts" },
+    { icon: "\u{1F4E8}", label: "Applications", sub: "Review and manage job applications", href: "/admin/applications" },
     { icon: "\u{1F31F}", label: "Success Stories", sub: "Create and manage stories" },
     { icon: "\u{1F504}", label: "Feed Sync", sub: "External feed sources" },
     { icon: "\u{1F91D}", label: "Partner Showcase", sub: "Partners displayed on site" },

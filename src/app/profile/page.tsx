@@ -12,7 +12,11 @@ import {
   type MemberProfile,
 } from "@/lib/firestore/members";
 import { getSavedItems } from "@/lib/firestore/savedItems";
-import { getApplications } from "@/lib/firestore/applications";
+import {
+  getApplications,
+  type Application,
+  type ApplicationStatus,
+} from "@/lib/firestore/applications";
 import { getUserRSVPs, type RSVP } from "@/lib/firestore/rsvps";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
@@ -28,6 +32,19 @@ const interestLabels: Record<string, { icon: string; label: string }> = {
   businesses: { icon: "\u{1F3EA}", label: "Indigenous Businesses" },
   schools: { icon: "\u{1F4DA}", label: "Schools & Programs" },
   livestreams: { icon: "\u{1F4FA}", label: "Livestreams & Stories" },
+};
+
+const appStatusConfig: Record<
+  ApplicationStatus,
+  { label: string; color: string; bg: string }
+> = {
+  submitted: { label: "Submitted", color: "var(--blue)", bg: "var(--blue-soft)" },
+  reviewing: { label: "Reviewing", color: "var(--gold)", bg: "var(--gold-soft)" },
+  shortlisted: { label: "Shortlisted", color: "var(--teal)", bg: "rgba(13,148,136,.12)" },
+  interview: { label: "Interview", color: "#8B5CF6", bg: "rgba(139,92,246,.12)" },
+  offered: { label: "Offered", color: "var(--green)", bg: "var(--green-soft)" },
+  rejected: { label: "Rejected", color: "var(--red)", bg: "var(--red-soft)" },
+  withdrawn: { label: "Withdrawn", color: "var(--text-muted)", bg: "rgba(128,128,128,.1)" },
 };
 
 export default function ProfilePage() {
@@ -57,7 +74,7 @@ function ProfileContent() {
   const [saving, setSaving] = useState(false);
 
   // Activity stats
-  const [appCount, setAppCount] = useState(0);
+  const [apps, setApps] = useState<Application[]>([]);
   const [savedCount, setSavedCount] = useState(0);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
 
@@ -72,12 +89,12 @@ function ProfileContent() {
         setBio(data.bio);
       }
       // Load activity stats and RSVPs
-      const [apps, saved, userRsvps] = await Promise.all([
+      const [userApps, saved, userRsvps] = await Promise.all([
         getApplications(user.uid),
         getSavedItems(user.uid),
         getUserRSVPs(user.uid),
       ]);
-      setAppCount(apps.length);
+      setApps(userApps);
       setSavedCount(saved.length);
       setRsvps(userRsvps);
     } catch (err) {
@@ -378,7 +395,7 @@ function ProfileContent() {
                     </p>
                     <div className="grid grid-cols-3 gap-3 text-center">
                       <div>
-                        <p className="text-xl font-extrabold text-text mb-0">{appCount}</p>
+                        <p className="text-xl font-extrabold text-text mb-0">{apps.length}</p>
                         <p className="text-[11px] text-text-muted m-0">Applications</p>
                       </div>
                       <div>
@@ -393,6 +410,79 @@ function ProfileContent() {
                   </div>
                 </Card>
               </div>
+            </div>
+
+            {/* My Applications Section */}
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-text m-0">My Applications</h3>
+                {apps.length > 0 && (
+                  <Link
+                    href="/applications"
+                    className="text-xs text-teal font-semibold no-underline hover:underline"
+                  >
+                    View All &#8594;
+                  </Link>
+                )}
+              </div>
+              {apps.length === 0 ? (
+                <Card>
+                  <div style={{ padding: 24 }} className="text-center">
+                    <p className="text-3xl mb-2">&#128188;</p>
+                    <p className="text-sm text-text-muted">
+                      No applications yet. Browse the{" "}
+                      <Link href="/feed" className="text-teal font-semibold no-underline hover:underline">
+                        feed
+                      </Link>{" "}
+                      to find job opportunities.
+                    </p>
+                  </div>
+                </Card>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {apps.slice(0, 3).map((app) => {
+                    const cfg = appStatusConfig[app.status] || appStatusConfig.submitted;
+                    return (
+                      <Link key={app.id} href="/applications" className="no-underline">
+                        <Card className="hover:border-teal transition-colors">
+                          <div style={{ padding: 14 }} className="flex items-center gap-3">
+                            <div
+                              className="flex items-center justify-center rounded-xl flex-shrink-0"
+                              style={{
+                                width: 40,
+                                height: 40,
+                                background: "rgba(13,148,136,.08)",
+                              }}
+                            >
+                              <span className="text-base">&#128188;</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-text mb-0.5 truncate">
+                                {app.postTitle}
+                              </p>
+                              <p className="text-xs text-text-muted m-0">{app.orgName}</p>
+                            </div>
+                            <Badge
+                              text={cfg.label}
+                              color={cfg.color}
+                              bg={cfg.bg}
+                              small
+                            />
+                          </div>
+                        </Card>
+                      </Link>
+                    );
+                  })}
+                  {apps.length > 3 && (
+                    <Link
+                      href="/applications"
+                      className="text-xs text-teal font-semibold no-underline hover:underline text-center py-2"
+                    >
+                      +{apps.length - 3} more applications
+                    </Link>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* My Events Section */}
