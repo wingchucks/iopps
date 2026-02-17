@@ -8,6 +8,7 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
+import Link from "next/link";
 
 const tabs = ["All", "Jobs", "Events", "Scholarships", "Businesses", "Schools", "Livestreams", "Stories"];
 
@@ -227,28 +228,30 @@ function FeedContent() {
               style={{ padding: "10px 20px", background: "#FAFBFC" }}
             >
               <span className="text-xs text-text-muted cursor-pointer">&#128278; Save</span>
-              <Button small primary>View Job →</Button>
+              <Link href="/jobs/executive-director-siga"><Button small primary>View Job →</Button></Link>
             </div>
           </Card>
 
           {/* Feed-synced job */}
-          <Card>
-            <div style={{ padding: "16px 20px" }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
-                <span className="text-[11px] text-text-muted italic">via STC Careers</span>
+          <Link href="/jobs/community-health-nurse-stc" className="no-underline">
+            <Card>
+              <div style={{ padding: "16px 20px" }}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
+                  <span className="text-[11px] text-text-muted italic">via STC Careers</span>
+                </div>
+                <h3 className="text-base font-bold text-text mb-1.5">Community Health Nurse</h3>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="text-sm text-teal font-semibold">Saskatoon Tribal Council</span>
+                  <Badge text="&#10003; Verified" color="var(--green)" bg="var(--green-soft)" small />
+                </div>
+                <div className="flex gap-3 text-[13px] text-text-sec">
+                  <span>&#128205; Saskatoon, SK</span>
+                  <span>Full-time</span>
+                </div>
               </div>
-              <h3 className="text-base font-bold text-text mb-1.5">Community Health Nurse</h3>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <span className="text-sm text-teal font-semibold">Saskatoon Tribal Council</span>
-                <Badge text="&#10003; Verified" color="var(--green)" bg="var(--green-soft)" small />
-              </div>
-              <div className="flex gap-3 text-[13px] text-text-sec">
-                <span>&#128205; Saskatoon, SK</span>
-                <span>Full-time</span>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
 
           {/* School program */}
           <Card>
@@ -297,23 +300,25 @@ function FeedContent() {
           </div>
 
           {/* Event */}
-          <Card>
-            <div
-              className="h-[100px] flex items-center justify-center text-5xl"
-              style={{ background: "linear-gradient(135deg, rgba(15,43,76,.06), rgba(217,119,6,.06))" }}
-            >
-              &#129718;
-            </div>
-            <div style={{ padding: "14px 20px" }}>
-              <Badge text="Pow Wow" color="var(--gold)" bg="var(--gold-soft)" small />
-              <h3 className="text-base font-bold text-text mt-2 mb-1">Back to Batoche Days</h3>
-              <div className="flex gap-3 text-[13px] text-text-sec">
-                <span>&#128197; Jul 18-20</span>
-                <span>&#128205; Batoche, SK</span>
-                <span>&#127915; Free</span>
+          <Link href="/events/back-to-batoche-days" className="no-underline">
+            <Card>
+              <div
+                className="h-[100px] flex items-center justify-center text-5xl"
+                style={{ background: "linear-gradient(135deg, rgba(15,43,76,.06), rgba(217,119,6,.06))" }}
+              >
+                &#129718;
               </div>
-            </div>
-          </Card>
+              <div style={{ padding: "14px 20px" }}>
+                <Badge text="Pow Wow" color="var(--gold)" bg="var(--gold-soft)" small />
+                <h3 className="text-base font-bold text-text mt-2 mb-1">Back to Batoche Days</h3>
+                <div className="flex gap-3 text-[13px] text-text-sec">
+                  <span>&#128197; Jul 18-20</span>
+                  <span>&#128205; Batoche, SK</span>
+                  <span>&#127915; Free</span>
+                </div>
+              </div>
+            </Card>
+          </Link>
 
           {/* Success Story */}
           <Card>
@@ -333,19 +338,21 @@ function FeedContent() {
           </Card>
 
           {/* Regular job */}
-          <Card>
-            <div style={{ padding: "16px 20px" }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
+          <Link href="/jobs/youth-program-coordinator-mltc" className="no-underline">
+            <Card>
+              <div style={{ padding: "16px 20px" }}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
+                </div>
+                <h3 className="text-base font-bold text-text mb-1.5">Youth Program Coordinator</h3>
+                <span className="text-sm text-teal font-semibold">Meadow Lake Tribal Council</span>
+                <div className="flex gap-3 text-[13px] text-text-sec mt-1.5">
+                  <span>&#128205; Meadow Lake, SK</span>
+                  <span>Contract</span>
+                </div>
               </div>
-              <h3 className="text-base font-bold text-text mb-1.5">Youth Program Coordinator</h3>
-              <span className="text-sm text-teal font-semibold">Meadow Lake Tribal Council</span>
-              <div className="flex gap-3 text-[13px] text-text-sec mt-1.5">
-                <span>&#128205; Meadow Lake, SK</span>
-                <span>Contract</span>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         </div>
       </div>
 

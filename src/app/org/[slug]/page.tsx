@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import Avatar from "@/components/Avatar";
@@ -99,17 +100,22 @@ function OrgProfileContent() {
         {/* Open Positions */}
         <h3 className="text-lg font-bold text-text mb-3">Open Positions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {jobs.map((j, i) => (
-            <Card key={i} className="cursor-pointer">
-              <div className="flex justify-between items-center" style={{ padding: "14px 16px" }}>
-                <div>
-                  <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
-                  <p className="text-sm font-bold text-text mt-1 mb-0">{j}</p>
-                </div>
-                <span className="text-text-muted">&#8250;</span>
-              </div>
-            </Card>
-          ))}
+          {jobs.map((j, i) => {
+            const slug = j.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-siga";
+            return (
+              <Link key={i} href={`/jobs/${slug}`} className="no-underline">
+                <Card className="cursor-pointer">
+                  <div className="flex justify-between items-center" style={{ padding: "14px 16px" }}>
+                    <div>
+                      <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
+                      <p className="text-sm font-bold text-text mt-1 mb-0">{j}</p>
+                    </div>
+                    <span className="text-text-muted">&#8250;</span>
+                  </div>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
