@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 const employerPlans = [
   {
-    name: "Growth",
+    name: "Standard",
     price: "$1,250",
     period: "/year",
     href: "/signup?plan=TIER1",
@@ -21,16 +21,14 @@ const employerPlans = [
     description:
       "For organizations beginning their Indigenous recruitment journey.",
     features: [
-      "15 job postings per year",
-      "Standard placement",
+      "15 job postings per year (30 days each)",
       "Basic organization profile page",
-      "Access to posting analytics",
-      "15 Featured Job Listings included",
-      "Logo on homepage Partner Carousel",
+      "Verified badge on profile and posts",
+      "Must upgrade to Premium at 15-post limit",
     ],
   },
   {
-    name: "Unlimited",
+    name: "Premium",
     price: "$2,500",
     period: "/year",
     href: "/signup?plan=TIER2",
@@ -38,28 +36,29 @@ const employerPlans = [
     description:
       "For teams that hire often and want maximum reach across the platform.",
     features: [
-      "Everything in Growth",
-      "Unlimited job postings for 12 months",
-      "Organization branding on postings",
-      "Rotating featured listings on homepage & job board",
-      "Candidate engagement analytics",
-      "Standard customer support",
-      "Shop Indigenous listing included",
+      "Everything in Standard",
+      "Unlimited job postings (30 days each)",
+      "4 Featured Job slots per year (45 days, pinned)",
+      "4 business promotion posts per year",
+      "Premium Partner badge on profile and all posts",
+      "Analytics dashboard (views, applications, engagement)",
+      "Talent Search: browse members by skill & location",
+      "Shop Indigenous marketplace listing included",
     ],
   },
 ];
 
 const singleJobPosts = [
   {
-    name: "Single Job Post",
+    name: "Standard Job Post",
     price: "$125",
     period: "",
     description: "1 job posting live for 30 days with standard placement.",
     features: ["1 job posting", "30-day listing", "Standard placement"],
   },
   {
-    name: "Featured Job Ad",
-    price: "$300",
+    name: "Featured Job Post",
+    price: "$200",
     period: "",
     description:
       "Maximum visibility with featured badge and priority placement.",
@@ -67,67 +66,60 @@ const singleJobPosts = [
       "1 job posting",
       "45-day listing",
       "Featured badge",
-      "Priority placement",
-      "Employer logo & branding",
+      "Pinned to top of All tab",
     ],
+  },
+  {
+    name: "School Program Listing",
+    price: "$50",
+    period: "",
+    description: "List a training program or course for 30 days.",
+    features: ["1 program listing", "30-day listing", "Standard placement"],
   },
 ];
 
-const additionalProducts = [
+const contentCosts = [
   {
-    name: "Conference Featured",
-    detail: "90 days",
-    price: "$250",
-    period: "",
-    description: "Featured badge and priority placement for 90 days.",
+    name: "Events",
+    detail: "Free",
+    description: "Organizations post for free. Community members submit for admin approval.",
   },
   {
-    name: "Conference Featured",
-    detail: "365 days",
-    price: "$400",
-    period: "",
-    description:
-      "Homepage spotlight and top positioning for a full year.",
+    name: "Scholarships & Grants",
+    detail: "Free",
+    description: "Organizations post for free. Community members submit for admin approval.",
   },
   {
-    name: "Shop Indigenous",
-    detail: "Monthly",
-    price: "$25",
-    period: "/mo",
-    description: "Featured listing in the Shop Indigenous marketplace.",
+    name: "Shop Indigenous Listing",
+    detail: "Free",
+    description: "Free listing in the Shop Indigenous marketplace for any verified organization.",
   },
   {
-    name: "Training Featured",
-    detail: "60 days",
-    price: "$150",
-    period: "",
-    description: "Featured badge and priority placement for 60 days.",
-  },
-  {
-    name: "Training Featured",
-    detail: "90 days",
-    price: "$225",
-    period: "",
-    description: "Featured badge and top positioning for 90 days.",
+    name: "Business Promotions",
+    detail: "Included",
+    description: "4 per year, included with Premium and School Tier subscriptions only.",
   },
 ];
 
 const schoolPartner = {
-  name: "School Partner",
-  href: "mailto:nathan.arias@iopps.ca?subject=School%20Partnership%20Inquiry",
-  description: "Complete school partnership with unlimited everything. Contact us for custom pricing.",
-  trialBadge: "Custom pricing",
+  name: "School Tier",
+  price: "$5,500",
+  period: "/year",
+  href: "/signup?plan=SCHOOL",
+  description: "A complete solution for post-secondary institutions looking to recruit Indigenous students and showcase their programs.",
+  trialBadge: "Education Partner",
   features: [
-    "Full school profile page",
-    "Unlimited job postings",
-    "Unlimited program listings",
-    "Unlimited scholarship listings",
-    "Unlimited training program listings",
-    "Featured placement in school directory",
-    "Homepage carousel rotation",
-    "Recruitment event listings",
+    "20 program listings (30 days each, additional at $50 each)",
+    "Unlimited job postings (30 days each)",
+    "6 Featured Job slots (45 days, pinned)",
+    "6 Featured Program slots (60 days, pinned)",
+    "4 business promotion posts per year",
+    "Enhanced school profile page",
+    "Education Partner badge on profile and all posts",
     "Analytics dashboard",
-    "Priority support",
+    "Talent Search: browse members by skill & location",
+    "Shop Indigenous marketplace listing included",
+    "Homepage logo strip placement (displayed first)",
   ],
 };
 
@@ -140,7 +132,12 @@ const faqs = [
   {
     question: "Can I switch plans later?",
     answer:
-      "Absolutely. You can upgrade from Growth to Unlimited at any time. We will prorate the difference for the remainder of your billing period so you only pay the difference.",
+      "Absolutely. You can upgrade from Standard to Premium at any time. We will prorate the difference for the remainder of your billing period so you only pay the difference.",
+  },
+  {
+    question: "What happens if my subscription expires?",
+    answer:
+      "Your active posts stay up until their individual expiry dates, but you won't be able to create new posts until you renew. Your organization profile stays visible. No refunds on annual subscriptions.",
   },
   {
     question: "Is there a free option for community members?",
@@ -179,10 +176,10 @@ export default function PricingPage() {
           className="mt-8 flex flex-wrap items-center justify-center gap-2"
         >
           {[
-            { label: "Employers", anchor: "#employers" },
-            { label: "Single Jobs", anchor: "#jobs" },
-            { label: "Add-Ons", anchor: "#add-ons" },
-            { label: "Schools", anchor: "#schools" },
+            { label: "Employer Plans", anchor: "#employers" },
+            { label: "One-Off Posts", anchor: "#jobs" },
+            { label: "Free Content", anchor: "#free-content" },
+            { label: "School Tier", anchor: "#schools" },
             { label: "FAQ", anchor: "#faq" },
           ].map((item) => (
             <a
@@ -274,19 +271,19 @@ export default function PricingPage() {
       </section>
 
       {/* ============================================================ */}
-      {/*  SINGLE JOB POSTS                                            */}
+      {/*  ONE-OFF POSTS                                               */}
       {/* ============================================================ */}
       <section id="jobs" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-12 sm:px-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
-            Single Job Posts
+            One-Off Posts
           </h2>
           <p className="mt-2 text-[var(--text-secondary)]">
-            One-time postings when you have an individual role to fill.
+            Individual postings without a subscription.
           </p>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-3xl gap-8 md:grid-cols-2">
+        <div className="mx-auto mt-10 grid max-w-4xl gap-8 md:grid-cols-3">
           {singleJobPosts.map((post) => (
             <div
               key={post.name}
@@ -330,49 +327,37 @@ export default function PricingPage() {
       </section>
 
       {/* ============================================================ */}
-      {/*  ADDITIONAL PRODUCTS                                         */}
+      {/*  FREE CONTENT                                                */}
       {/* ============================================================ */}
-      <section id="add-ons" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-12 sm:px-6">
+      <section id="free-content" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-12 sm:px-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
-            Additional Products
+            Free to Post
           </h2>
           <p className="mt-2 text-[var(--text-secondary)]">
-            Visibility upgrades and marketplace listings.
+            Not everything costs money. These content types are free for verified organizations.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {additionalProducts.map((product, index) => (
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {contentCosts.map((item, index) => (
             <div
-              key={`${product.name}-${product.detail}-${index}`}
+              key={`${item.name}-${index}`}
               className="flex flex-col rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6"
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-bold text-foreground">
-                    {product.name}
+                    {item.name}
                   </h3>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    {product.detail}
-                  </p>
+                  <span className="inline-block mt-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+                    {item.detail}
+                  </span>
                 </div>
               </div>
 
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-foreground">
-                  {product.price}
-                </span>
-                {product.period && (
-                  <span className="text-sm text-[var(--text-muted)]">
-                    {product.period}
-                  </span>
-                )}
-                <span className="text-sm text-[var(--text-muted)]">CAD</span>
-              </div>
-
               <p className="mt-3 flex-1 text-sm text-[var(--text-secondary)]">
-                {product.description}
+                {item.description}
               </p>
             </div>
           ))}
@@ -431,11 +416,19 @@ export default function PricingPage() {
 
             {/* Right: CTA */}
             <div className="flex shrink-0 flex-col items-center text-center md:items-end md:text-right">
+              <div className="mb-4 flex items-baseline gap-1">
+                <span className="text-4xl font-bold text-foreground">
+                  {schoolPartner.price}
+                </span>
+                <span className="text-sm text-[var(--text-muted)]">
+                  {schoolPartner.period} CAD
+                </span>
+              </div>
               <Link
                 href={schoolPartner.href}
                 className="inline-block rounded-lg bg-accent px-6 py-3 font-medium text-white transition-colors hover:bg-accent/90"
               >
-                Contact Us
+                Get Started
               </Link>
             </div>
           </div>
