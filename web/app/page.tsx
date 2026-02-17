@@ -110,7 +110,7 @@ export default function HomePage() {
           &ldquo;I wanted to create a space where our people could find every opportunity in one
           place — jobs, education, events, and community — without barriers.&rdquo;
           <footer className="mt-2 text-sm font-semibold text-[var(--text-primary)] not-italic">
-            — Nathan Brugh, Founder
+            — Nathan Arias, Founder
           </footer>
         </blockquote>
       </section>
