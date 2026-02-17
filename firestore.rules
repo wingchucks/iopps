@@ -65,6 +65,18 @@ service cloud.firestore {
         request.resource.data.senderId == request.auth.uid;
     }
 
+    // Member settings: users can read/write their own settings
+    match /member_settings/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Notification preferences: users can read/write their own preferences
+    match /notification_preferences/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+    }
+
     // Default: deny all
     match /{document=**} {
       allow read, write: if false;
