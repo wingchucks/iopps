@@ -15,6 +15,8 @@ import { getOrganizations, type Organization } from "@/lib/firestore/organizatio
 import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
 import { getApplications, type Application } from "@/lib/firestore/applications";
 import ProfileCompleteness from "@/components/ProfileCompleteness";
+import FeedSidebar from "@/components/FeedSidebar";
+import FeedRightSidebar from "@/components/FeedRightSidebar";
 import InstallPrompt from "@/components/InstallPrompt";
 import OnboardingTour from "@/components/OnboardingTour";
 
@@ -51,7 +53,6 @@ function FeedContent() {
   const [loading, setLoading] = useState(true);
   const { user, signOut } = useAuth();
   const router = useRouter();
-  const displayName = user?.displayName || user?.email?.split("@")[0] || "User";
 
   useEffect(() => {
     async function load() {
@@ -92,112 +93,17 @@ function FeedContent() {
   const closingSoon = posts.filter((p) => p.closingSoon || p.featured).slice(0, 3);
 
   return (
-    <div className="flex gap-6 max-w-[1200px] mx-auto px-4 py-4 md:px-10 md:py-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_260px] gap-6 max-w-[1200px] mx-auto px-4 py-4 md:px-10 md:py-6">
       {/* ═══ Left Sidebar ═══ */}
-      <div className="hidden lg:block w-[260px] shrink-0">
-        {/* Profile card */}
-        <Card className="mb-4" style={{ padding: 20 }}>
-          <div className="flex items-center gap-2.5 mb-3">
-            <Avatar name={displayName} size={44} />
-            <div>
-              <p className="text-[15px] font-bold text-text m-0">{displayName}</p>
-              <p className="text-xs text-teal-light m-0">Community Member</p>
-            </div>
-          </div>
-          <Button small full onClick={handleSignOut} style={{ fontSize: 12 }}>
-            Sign Out
-          </Button>
-        </Card>
-
-        {/* Featured Partners */}
-        <Card className="mb-4">
-          <div className="border-b border-border" style={{ padding: "14px 16px" }}>
-            <p className="text-xs font-bold text-text-muted m-0 tracking-[1px]">FEATURED PARTNERS</p>
-          </div>
-          {featuredPartners.map((p, i, arr) => (
-            <Link key={p.id} href={`/${p.type === "school" ? "schools" : "org"}/${p.id}`} className="no-underline">
-              <div
-                className="flex gap-2.5 items-center cursor-pointer hover:bg-bg transition-colors"
-                style={{
-                  padding: "10px 16px",
-                  borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none",
-                }}
-              >
-                <Avatar
-                  name={p.shortName}
-                  size={32}
-                  gradient={p.tier === "school" ? "linear-gradient(135deg, var(--teal), var(--blue))" : undefined}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-text m-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {p.name}
-                  </p>
-                  <p className="text-[11px] text-teal m-0">{p.openJobs} open roles</p>
-                </div>
-              </div>
-            </Link>
-          ))}
-          <div style={{ padding: "10px 16px" }}>
-            <Link href="/partners" className="text-xs text-teal font-semibold cursor-pointer no-underline hover:underline">
-              View all partners →
-            </Link>
-          </div>
-        </Card>
-
-        {/* Closing Soon */}
-        {closingSoon.length > 0 && (
-          <Card className="mb-4">
-            <div className="border-b border-border" style={{ padding: "14px 16px" }}>
-              <p className="text-xs font-bold text-red m-0 tracking-[1px]">&#9200; CLOSING SOON</p>
-            </div>
-            {closingSoon.map((j, i) => {
-              const slug = j.id.replace(/^job-/, "");
-              return (
-                <Link key={j.id} href={`/jobs/${slug}`} className="no-underline">
-                  <div
-                    className="cursor-pointer hover:bg-bg transition-colors"
-                    style={{
-                      padding: "10px 16px",
-                      borderBottom: i < closingSoon.length - 1 ? "1px solid var(--border)" : "none",
-                    }}
-                  >
-                    <p className="text-xs font-semibold text-text m-0">{j.title} — {j.orgShort}</p>
-                    <p className="text-[11px] text-red m-0">{3 + i} days left</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </Card>
-        )}
-
-        {/* Upcoming Events */}
-        {events.length > 0 && (
-          <Card>
-            <div className="border-b border-border" style={{ padding: "14px 16px" }}>
-              <p className="text-xs font-bold text-text-muted m-0 tracking-[1px]">UPCOMING EVENTS</p>
-            </div>
-            {events.map((e, i) => {
-              const eSlug = e.id.replace(/^event-/, "");
-              return (
-                <Link key={e.id} href={`/events/${eSlug}`} className="no-underline">
-                  <div
-                    className="cursor-pointer hover:bg-bg transition-colors"
-                    style={{
-                      padding: "10px 16px",
-                      borderBottom: i < events.length - 1 ? "1px solid var(--border)" : "none",
-                    }}
-                  >
-                    <p className="text-xs font-semibold text-text m-0">{e.title} — {e.dates}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </Card>
-        )}
-      </div>
+      <FeedSidebar
+        featuredPartners={featuredPartners}
+        closingSoon={closingSoon}
+        events={events}
+        onSignOut={handleSignOut}
+      />
 
       {/* ═══ Center Feed ═══ */}
-      <div className="flex-1 max-w-full lg:max-w-[580px] min-w-0" data-tour-step="feed">
+      <div className="min-w-0" data-tour-step="feed">
         {/* Profile completeness */}
         <ProfileCompleteness />
 
@@ -298,60 +204,10 @@ function FeedContent() {
       </div>
 
       {/* ═══ Right Sidebar ═══ */}
-      <div className="hidden xl:block w-[260px] shrink-0">
-        {/* Your Applications */}
-        <Card className="mb-4" style={{ padding: 16 }}>
-          <p className="text-xs font-bold text-text-muted mb-2.5 tracking-[1px]">YOUR APPLICATIONS</p>
-          {applications.length === 0 ? (
-            <p className="text-xs text-text-muted">No applications yet. Apply to jobs to track them here.</p>
-          ) : (
-            applications.slice(0, 5).map((a, i) => {
-              const statusColor: Record<string, string> = {
-                applied: "var(--teal)",
-                under_review: "var(--gold)",
-                viewed: "var(--blue)",
-                interview: "var(--purple)",
-                accepted: "var(--green)",
-                rejected: "var(--red)",
-              };
-              const color = statusColor[a.status] || "var(--text-sec)";
-              const label = a.status.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
-              return (
-                <div key={a.id} className="py-2" style={{ borderBottom: i < Math.min(applications.length, 5) - 1 ? "1px solid var(--border)" : "none" }}>
-                  <p className="text-xs font-semibold text-text mb-0.5">{a.postTitle}{a.orgName ? ` — ${a.orgName}` : ""}</p>
-                  <Badge text={label} color={color} bg={`color-mix(in srgb, ${color} 8%, transparent)`} small />
-                </div>
-              );
-            })
-          )}
-        </Card>
-
-        {/* Trending */}
-        <Card className="mb-4" style={{ padding: 16 }}>
-          <p className="text-xs font-bold text-text-muted mb-2.5 tracking-[1px]">TRENDING THIS WEEK</p>
-          {["SIGA hiring surge: 12 new positions", "Treaty 6 Career Fair announced", "New nursing scholarship posted"].map(
-            (t, i) => (
-              <div key={i} className="py-2" style={{ borderBottom: i < 2 ? "1px solid var(--border)" : "none" }}>
-                <p className="text-xs font-semibold text-text m-0">{t}</p>
-              </div>
-            )
-          )}
-        </Card>
-
-        {/* Saved Items */}
-        <Card style={{ padding: 16 }}>
-          <p className="text-xs font-bold text-text-muted mb-2.5 tracking-[1px]">SAVED ITEMS</p>
-          {savedItems.length === 0 ? (
-            <p className="text-xs text-text-muted">No saved items yet. Save jobs and events to find them here.</p>
-          ) : (
-            savedItems.slice(0, 5).map((s, i) => (
-              <div key={s.id} className="py-2" style={{ borderBottom: i < Math.min(savedItems.length, 5) - 1 ? "1px solid var(--border)" : "none" }}>
-                <p className="text-xs font-semibold text-text m-0">&#128278; {s.postTitle}</p>
-              </div>
-            ))
-          )}
-        </Card>
-      </div>
+      <FeedRightSidebar
+        applications={applications}
+        savedItems={savedItems}
+      />
     </div>
   );
 }

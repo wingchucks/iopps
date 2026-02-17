@@ -188,6 +188,23 @@ service cloud.firestore {
       );
     }
 
+    // Livestreams: public read, admin write
+    match /livestreams/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin'];
+    }
+
+    // Feed sources: admin only
+    match /feed_sources/{docId} {
+      allow read, write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin'];
+    }
+
+    // Partner showcase: public read, admin write
+    match /partner_showcase/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin'];
+    }
+
     // Default: deny all
     match /{document=**} {
       allow read, write: if false;
