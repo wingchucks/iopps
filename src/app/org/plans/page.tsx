@@ -99,13 +99,13 @@ function PlanCard({
 /* ── Tab content renderers ── */
 function Subscriptions() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <PlanCard
-        title="Essential"
+        title="Standard"
         price="$1,250"
         period="/year"
         features={[
-          "10 job posts per year",
+          "15 job posts per year",
           "Basic analytics",
           "Email support",
           "Standard listing visibility",
@@ -114,21 +114,34 @@ function Subscriptions() {
         href="/org/checkout?plan=tier1"
       />
       <PlanCard
-        title="Professional"
+        title="Premium"
         price="$2,500"
         period="/year"
         badge="Most Popular"
         gold
         features={[
           "Unlimited job posts",
-          "Advanced analytics dashboard",
+          "4 featured listings",
           "Talent search access",
+          "Advanced analytics dashboard",
           "Priority support",
-          "Featured listings",
-          "Conference hosting",
         ]}
         cta="Select Plan"
         href="/org/checkout?plan=tier2"
+      />
+      <PlanCard
+        title="School"
+        price="$5,500"
+        period="/year"
+        features={[
+          "20 program listings",
+          "Unlimited job posts",
+          "6 featured listings",
+          "Dedicated account manager",
+          "Custom branding",
+        ]}
+        cta="Select Plan"
+        href="/org/checkout?plan=tier3"
       />
     </div>
   );
@@ -136,13 +149,13 @@ function Subscriptions() {
 
 function PayPerPost() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <PlanCard
-        title="Standard Post"
+        title="Standard Job Post"
         price="$125"
         period="/post"
         features={[
-          "30-day listing",
+          "45-day listing",
           "Basic visibility",
           "Application tracking",
         ]}
@@ -150,13 +163,13 @@ function PayPerPost() {
         href="/org/checkout?plan=standard-post"
       />
       <PlanCard
-        title="Featured Post"
-        price="$300"
+        title="Featured Job Post"
+        price="$200"
         period="/post"
         badge="Best Value"
         gold
         features={[
-          "60-day listing",
+          "45-day listing",
           "Homepage featured placement",
           "Highlighted in search",
           "Priority in feed",
@@ -164,74 +177,105 @@ function PayPerPost() {
         cta="Post Now"
         href="/org/checkout?plan=featured-post"
       />
+      <PlanCard
+        title="Program Post"
+        price="$50"
+        period="/post"
+        features={[
+          "45-day listing",
+          "Program directory placement",
+          "Application tracking",
+        ]}
+        cta="Post Now"
+        href="/org/checkout?plan=program-post"
+      />
     </div>
   );
 }
 
 function Conferences() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <PlanCard
-        title="Standard"
-        price="$250"
-        period="/event"
-        features={[
-          "Event listing",
-          "RSVP management",
-          "Basic analytics",
-        ]}
-        cta="Book Conference"
-        href="/org/checkout?plan=conference-standard"
-      />
-      <PlanCard
-        title="Premium"
-        price="$400"
-        period="/event"
-        badge="Featured"
-        gold
-        features={[
-          "Featured placement",
-          "Livestream integration",
-          "Extended 90-day visibility",
-          "Sponsor showcase",
-        ]}
-        cta="Book Conference"
-        href="/org/checkout?plan=conference-premium"
-      />
-    </div>
+    <Card className="relative flex flex-col">
+      <div style={{ padding: "32px 24px" }} className="text-center">
+        <span
+          className="inline-block text-xs font-bold rounded-full mb-4"
+          style={{
+            padding: "4px 14px",
+            background: "var(--green-soft)",
+            color: "var(--green)",
+            border: "1px solid var(--green)",
+          }}
+        >
+          100% FREE
+        </span>
+        <h3 className="text-2xl font-extrabold text-text mb-2">
+          Events &amp; Conferences
+        </h3>
+        <p className="text-sm text-text-sec max-w-md mx-auto mb-5">
+          List your events, conferences, and gatherings at no cost. IOPPS is
+          committed to supporting Indigenous community events.
+        </p>
+        <ul className="list-none p-0 m-0 flex flex-col sm:flex-row flex-wrap gap-4 justify-center mb-6">
+          {["Event listing", "RSVP management", "Community visibility", "Unlimited events"].map((f) => (
+            <li key={f} className="flex items-center gap-2 text-sm text-text-sec">
+              <Check />
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+        <Link href="/org/dashboard" className="no-underline">
+          <button
+            className="px-8 py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
+            style={{ background: "var(--teal)", color: "#fff" }}
+          >
+            Create Event &mdash; It&apos;s Free
+          </button>
+        </Link>
+      </div>
+    </Card>
   );
 }
 
 function ShopIndigenous() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <PlanCard
-        title="Monthly"
-        price="$50"
-        period="/month"
-        features={[
-          "Vendor profile",
-          "Product listings",
-          "Basic analytics",
-        ]}
-        cta="Get Started"
-        href="/org/checkout?plan=shop-monthly"
-      />
-      <PlanCard
-        title="Annual"
-        price="$400"
-        period="/year"
-        badge="Save 33%"
-        gold
-        features={[
-          "All monthly features",
-          "Featured vendor placement",
-          "Priority search ranking",
-        ]}
-        cta="Get Started"
-        href="/org/checkout?plan=shop-annual"
-      />
-    </div>
+    <Card className="relative flex flex-col">
+      <div style={{ padding: "32px 24px" }} className="text-center">
+        <span
+          className="inline-block text-xs font-bold rounded-full mb-4"
+          style={{
+            padding: "4px 14px",
+            background: "var(--green-soft)",
+            color: "var(--green)",
+            border: "1px solid var(--green)",
+          }}
+        >
+          100% FREE
+        </span>
+        <h3 className="text-2xl font-extrabold text-text mb-2">
+          Shop Indigenous
+        </h3>
+        <p className="text-sm text-text-sec max-w-md mx-auto mb-5">
+          Showcase and sell Indigenous products, art, and services at no cost.
+          Our marketplace is free for all Indigenous vendors.
+        </p>
+        <ul className="list-none p-0 m-0 flex flex-col sm:flex-row flex-wrap gap-4 justify-center mb-6">
+          {["Vendor profile", "Product listings", "Order management", "Analytics dashboard"].map((f) => (
+            <li key={f} className="flex items-center gap-2 text-sm text-text-sec">
+              <Check />
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+        <Link href="/org/dashboard" className="no-underline">
+          <button
+            className="px-8 py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
+            style={{ background: "var(--teal)", color: "#fff" }}
+          >
+            Open Shop &mdash; It&apos;s Free
+          </button>
+        </Link>
+      </div>
+    </Card>
   );
 }
 

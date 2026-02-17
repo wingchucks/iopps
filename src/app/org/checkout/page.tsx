@@ -18,14 +18,12 @@ interface PlanConfig {
 }
 
 const plans: Record<string, PlanConfig> = {
-  tier1: { name: "Essential", price: 1250, billingCycle: "annual", period: "/year" },
-  tier2: { name: "Professional", price: 2500, billingCycle: "annual", period: "/year" },
-  "standard-post": { name: "Standard Post", price: 125, billingCycle: "one-time", period: "/post" },
-  "featured-post": { name: "Featured Post", price: 300, billingCycle: "one-time", period: "/post" },
-  "conference-standard": { name: "Conference Standard", price: 250, billingCycle: "one-time", period: "/event" },
-  "conference-premium": { name: "Conference Premium", price: 400, billingCycle: "one-time", period: "/event" },
-  "shop-monthly": { name: "Shop Indigenous Monthly", price: 50, billingCycle: "monthly", period: "/month" },
-  "shop-annual": { name: "Shop Indigenous Annual", price: 400, billingCycle: "annual", period: "/year" },
+  tier1: { name: "Standard", price: 1250, billingCycle: "annual", period: "/year" },
+  tier2: { name: "Premium", price: 2500, billingCycle: "annual", period: "/year" },
+  tier3: { name: "School", price: 5500, billingCycle: "annual", period: "/year" },
+  "standard-post": { name: "Standard Job Post", price: 125, billingCycle: "one-time", period: "/post" },
+  "featured-post": { name: "Featured Job Post", price: 200, billingCycle: "one-time", period: "/post" },
+  "program-post": { name: "Program Post", price: 50, billingCycle: "one-time", period: "/post" },
 };
 
 const GST_RATE = 0.05;
