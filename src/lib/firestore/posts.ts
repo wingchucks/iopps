@@ -1,6 +1,7 @@
 import {
   collection,
   getDocs,
+  getDoc,
   setDoc,
   doc,
   query,
@@ -69,6 +70,12 @@ export async function getPostsByOrg(orgId: string): Promise<Post[]> {
     query(col, where("orgId", "==", orgId), orderBy("order", "asc"))
   );
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Post);
+}
+
+export async function getPost(id: string): Promise<Post | null> {
+  const snap = await getDoc(doc(db, "posts", id));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as Post;
 }
 
 export async function setPost(

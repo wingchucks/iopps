@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
@@ -7,43 +9,8 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
-
-const job = {
-  title: "Executive Director",
-  org: "Saskatchewan Indian Gaming Authority",
-  orgShort: "SIGA",
-  location: "Saskatoon, SK",
-  type: "Full-time",
-  salary: "$95,000 - $120,000",
-  deadline: "March 15, 2026",
-  posted: "February 10, 2026",
-  description: `SIGA is seeking an experienced Executive Director to lead strategic planning, operations oversight, and community engagement initiatives across our seven casino properties in Saskatchewan.
-
-The Executive Director will report directly to the Board of Directors and will be responsible for ensuring the organization's mission of Indigenous economic self-sufficiency is advanced through effective leadership and operational excellence.`,
-  responsibilities: [
-    "Lead strategic planning and organizational development",
-    "Oversee operations across all seven casino properties",
-    "Build and maintain relationships with First Nations communities",
-    "Manage annual budget of $200M+ and ensure fiscal responsibility",
-    "Represent SIGA in government and industry consultations",
-    "Drive Indigenous employment and community development initiatives",
-  ],
-  qualifications: [
-    "10+ years of senior leadership experience",
-    "Experience in gaming, hospitality, or related industries",
-    "Strong understanding of Indigenous governance and culture",
-    "MBA or equivalent advanced degree preferred",
-    "Proven track record in strategic planning and execution",
-    "Excellent communication and stakeholder management skills",
-  ],
-  benefits: [
-    "Comprehensive health & dental benefits",
-    "Pension plan with employer matching",
-    "Professional development funding",
-    "Relocation assistance available",
-    "Cultural leave days",
-  ],
-};
+import { getPost, type Post } from "@/lib/firestore/posts";
+import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 
 export default function JobDetailPage() {
   return (
@@ -57,6 +24,65 @@ export default function JobDetailPage() {
 }
 
 function JobDetailContent() {
+  const params = useParams();
+  const slug = params.slug as string;
+  const [post, setPost] = useState<Post | null>(null);
+  const [org, setOrg] = useState<Organization | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const postData = await getPost(`job-${slug}`);
+        setPost(postData);
+        if (postData?.orgId) {
+          const orgData = await getOrganization(postData.orgId);
+          setOrg(orgData);
+        }
+      } catch (err) {
+        console.error("Failed to load job:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
+        <div className="skeleton h-4 w-24 rounded mb-4" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <div className="skeleton h-6 w-48 rounded mb-3" />
+            <div className="skeleton h-10 w-80 rounded mb-3" />
+            <div className="skeleton h-[200px] rounded-2xl mb-6" />
+            <div className="skeleton h-[150px] rounded-2xl" />
+          </div>
+          <div>
+            <div className="skeleton h-[280px] rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="max-w-[600px] mx-auto px-4 py-20 text-center">
+        <p className="text-5xl mb-4">💼</p>
+        <h2 className="text-2xl font-extrabold text-text mb-2">Job Not Found</h2>
+        <p className="text-text-sec mb-6">This job posting doesn&apos;t exist or may have been removed.</p>
+        <Link href="/feed">
+          <Button primary>Back to Feed →</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const orgLink = org ? `/org/${org.id}` : "#";
+  const isPremium = org?.tier === "premium";
+
   return (
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Back link */}
@@ -73,74 +99,82 @@ function JobDetailContent() {
           {/* Header */}
           <div className="mb-6">
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
-              <Badge text="Closing Soon" color="var(--red)" bg="var(--red-soft)" small />
-              <Badge text="Full-time" color="var(--blue)" bg="var(--blue-soft)" small />
+              {post.featured && (
+                <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
+              )}
+              {post.closingSoon && (
+                <Badge text="Closing Soon" color="var(--red)" bg="var(--red-soft)" small />
+              )}
+              {post.jobType && (
+                <Badge text={post.jobType} color="var(--blue)" bg="var(--blue-soft)" small />
+              )}
+              {post.badges?.filter(b => b !== "Featured" && b !== "Closing Soon").map((b) => (
+                <Badge key={b} text={b} color="var(--green)" bg="var(--green-soft)" small />
+              ))}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-text mb-3">{job.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-text mb-3">{post.title}</h1>
             <div className="flex items-center gap-3 mb-3">
-              <Avatar name={job.orgShort} size={40} gradient="linear-gradient(135deg, var(--navy), var(--teal))" />
+              <Avatar
+                name={post.orgShort || ""}
+                size={40}
+                gradient={isPremium ? "linear-gradient(135deg, var(--navy), var(--teal))" : undefined}
+              />
               <div>
-                <Link href="/org/siga" className="text-[15px] text-teal font-bold no-underline hover:underline">
-                  {job.org}
+                <Link href={orgLink} className="text-[15px] text-teal font-bold no-underline hover:underline">
+                  {post.orgName}
                 </Link>
                 <div className="flex items-center gap-1.5">
-                  <Badge text="&#10003; Premium Partner" color="var(--gold)" bg="var(--gold-soft)" small />
+                  {isPremium && (
+                    <Badge text="&#10003; Premium Partner" color="var(--gold)" bg="var(--gold-soft)" small />
+                  )}
                 </div>
               </div>
             </div>
             <div className="flex flex-wrap gap-3 text-sm text-text-sec">
-              <span>&#128205; {job.location}</span>
-              <span>&#128176; {job.salary}</span>
-              <span>&#128197; Deadline: {job.deadline}</span>
+              {post.location && <span>&#128205; {post.location}</span>}
+              {post.salary && <span>&#128176; {post.salary}</span>}
+              {post.deadline && <span>&#128197; Deadline: {post.deadline}</span>}
             </div>
           </div>
 
           {/* Description */}
-          <h3 className="text-lg font-bold text-text mb-2">About This Role</h3>
-          <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-            {job.description}
-          </p>
+          {post.description && (
+            <>
+              <h3 className="text-lg font-bold text-text mb-2">About This Role</h3>
+              <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
+                {post.description}
+              </p>
+            </>
+          )}
 
-          {/* Responsibilities */}
-          <h3 className="text-lg font-bold text-text mb-2">Responsibilities</h3>
-          <ul className="mb-6 pl-0 list-none">
-            {job.responsibilities.map((r, i) => (
-              <li key={i} className="flex gap-2 items-start mb-2">
-                <span className="text-teal text-sm mt-0.5">&#10003;</span>
-                <span className="text-sm text-text-sec">{r}</span>
-              </li>
-            ))}
-          </ul>
+          {/* Organization Info */}
+          {org && (
+            <>
+              <h3 className="text-lg font-bold text-text mb-2">About {org.shortName}</h3>
+              <p className="text-sm text-text-sec leading-relaxed mb-6">
+                {org.description}
+              </p>
+            </>
+          )}
 
-          {/* Qualifications */}
-          <h3 className="text-lg font-bold text-text mb-2">Qualifications</h3>
-          <ul className="mb-6 pl-0 list-none">
-            {job.qualifications.map((q, i) => (
-              <li key={i} className="flex gap-2 items-start mb-2">
-                <span className="text-blue text-sm mt-0.5">&#9679;</span>
-                <span className="text-sm text-text-sec">{q}</span>
-              </li>
-            ))}
-          </ul>
-
-          {/* Benefits */}
-          <h3 className="text-lg font-bold text-text mb-2">Benefits</h3>
-          <div className="flex flex-wrap gap-2 mb-6">
-            {job.benefits.map((b, i) => (
-              <span
-                key={i}
-                className="rounded-xl text-[13px] font-semibold text-teal"
-                style={{
-                  padding: "8px 14px",
-                  background: "rgba(13,148,136,.06)",
-                  border: "1.5px solid rgba(13,148,136,.1)",
-                }}
-              >
-                {b}
-              </span>
-            ))}
-          </div>
+          {/* Tags */}
+          {org && org.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {org.tags.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-xl text-[13px] font-semibold text-teal"
+                  style={{
+                    padding: "8px 14px",
+                    background: "rgba(13,148,136,.06)",
+                    border: "1.5px solid rgba(13,148,136,.1)",
+                  }}
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -177,50 +211,69 @@ function JobDetailContent() {
               <div className="border-t border-border pt-4">
                 <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">JOB DETAILS</p>
                 <div className="flex flex-col gap-2.5">
-                  <div className="flex justify-between">
-                    <span className="text-xs text-text-muted">Type</span>
-                    <span className="text-xs font-semibold text-text">{job.type}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-xs text-text-muted">Salary</span>
-                    <span className="text-xs font-semibold text-text">{job.salary}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-xs text-text-muted">Location</span>
-                    <span className="text-xs font-semibold text-text">{job.location}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-xs text-text-muted">Posted</span>
-                    <span className="text-xs font-semibold text-text">{job.posted}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-xs text-text-muted">Deadline</span>
-                    <span className="text-xs font-semibold text-red">{job.deadline}</span>
-                  </div>
+                  {post.jobType && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-text-muted">Type</span>
+                      <span className="text-xs font-semibold text-text">{post.jobType}</span>
+                    </div>
+                  )}
+                  {post.salary && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-text-muted">Salary</span>
+                      <span className="text-xs font-semibold text-text">{post.salary}</span>
+                    </div>
+                  )}
+                  {post.location && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-text-muted">Location</span>
+                      <span className="text-xs font-semibold text-text">{post.location}</span>
+                    </div>
+                  )}
+                  {post.deadline && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-text-muted">Deadline</span>
+                      <span className="text-xs font-semibold text-red">{post.deadline}</span>
+                    </div>
+                  )}
+                  {post.source && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-text-muted">Source</span>
+                      <span className="text-xs font-semibold text-text">{post.source}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </Card>
 
           {/* Company Card */}
-          <Card>
-            <div style={{ padding: 16 }}>
-              <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">ABOUT THE COMPANY</p>
-              <div className="flex gap-2.5 items-center mb-2.5">
-                <Avatar name={job.orgShort} size={36} gradient="linear-gradient(135deg, var(--navy), var(--teal))" />
-                <div>
-                  <p className="text-sm font-bold text-text m-0">{job.orgShort}</p>
-                  <p className="text-[11px] text-text-muted m-0">7 casinos &bull; 4,000+ employees</p>
+          {org && (
+            <Card>
+              <div style={{ padding: 16 }}>
+                <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">ABOUT THE COMPANY</p>
+                <div className="flex gap-2.5 items-center mb-2.5">
+                  <Avatar
+                    name={org.shortName}
+                    size={36}
+                    gradient={isPremium ? "linear-gradient(135deg, var(--navy), var(--teal))" : undefined}
+                  />
+                  <div>
+                    <p className="text-sm font-bold text-text m-0">{org.shortName}</p>
+                    <p className="text-[11px] text-text-muted m-0">
+                      {org.openJobs} open jobs
+                      {org.employees && <> &bull; {org.employees} employees</>}
+                    </p>
+                  </div>
                 </div>
+                <p className="text-xs text-text-sec leading-relaxed mb-3">
+                  {org.description.length > 120 ? org.description.slice(0, 120) + "..." : org.description}
+                </p>
+                <Link href={orgLink} className="text-xs text-teal font-semibold no-underline hover:underline">
+                  View Company Profile &#8594;
+                </Link>
               </div>
-              <p className="text-xs text-text-sec leading-relaxed mb-3">
-                Saskatchewan&apos;s largest employer of Indigenous people, operating seven casinos province-wide.
-              </p>
-              <Link href="/org/siga" className="text-xs text-teal font-semibold no-underline hover:underline">
-                View Company Profile &#8594;
-              </Link>
-            </div>
-          </Card>
+            </Card>
+          )}
         </div>
       </div>
     </div>

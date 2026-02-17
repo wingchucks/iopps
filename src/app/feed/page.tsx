@@ -160,9 +160,9 @@ function FeedContent() {
               <p className="text-xs font-bold text-text-muted m-0 tracking-[1px]">UPCOMING EVENTS</p>
             </div>
             {events.map((e, i) => {
-              const slug = e.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+              const eSlug = e.id.replace(/^event-/, "");
               return (
-                <Link key={e.id} href={`/events/${slug}`} className="no-underline">
+                <Link key={e.id} href={`/events/${eSlug}`} className="no-underline">
                   <div
                     className="cursor-pointer hover:bg-bg transition-colors"
                     style={{
@@ -434,9 +434,8 @@ function FeedCard({ post }: { post: Post }) {
   }
 
   if (post.type === "event") {
-    const eventSlug = post.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     return (
-      <Link href={`/events/${eventSlug}`} className="no-underline">
+      <Link href={`/events/${slug}`} className="no-underline">
         <Card>
           <div
             className="h-[100px] flex items-center justify-center text-5xl"
