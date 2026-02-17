@@ -15,6 +15,10 @@ const baseNavLinks = [
   { href: "/search", label: "Search" },
   { href: "/partners", label: "Partners" },
   { href: "/members", label: "Members" },
+  { href: "/training", label: "Training" },
+  { href: "/mentorship", label: "Mentorship" },
+  { href: "/shop", label: "Shop" },
+  { href: "/spotlight", label: "Spotlight" },
 ];
 
 export default function NavBar() {

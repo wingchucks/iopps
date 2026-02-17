@@ -64,7 +64,7 @@ function AdminContent() {
     { icon: "\u{1F4CB}", label: "All Posts", sub: `${postCount} active across all types`, href: "/admin/posts" },
     { icon: "\u{1F4E8}", label: "Applications", sub: "Review and manage job applications", href: "/admin/applications" },
     { icon: "\u{1F6E1}\uFE0F", label: "Moderation", sub: pendingReports > 0 ? `${pendingReports} pending reports` : "Content moderation queue", href: "/admin/moderation" },
-    { icon: "\u{1F31F}", label: "Success Stories", sub: "Create and manage stories" },
+    { icon: "\u{1F31F}", label: "Success Stories", sub: "Create and manage stories", href: "/admin/stories" },
     { icon: "\u{1F3A5}", label: "Livestreams", sub: "Manage video livestreams", href: "/admin/livestreams" },
     { icon: "\u{1F504}", label: "Feed Sync", sub: "External feed sources", href: "/admin/feed-sync" },
     { icon: "\u2B50", label: "Partner Showcase", sub: "Partners displayed on site", href: "/admin/partner-showcase" },

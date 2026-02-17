@@ -10,8 +10,9 @@ import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import { getPosts, type Post } from "@/lib/firestore/posts";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
+import { getVendors, type ShopVendor } from "@/lib/firestore/shop";
 
-const typeFilters = ["All", "Jobs", "Events", "Scholarships", "Programs", "Organizations", "Stories"];
+const typeFilters = ["All", "Jobs", "Events", "Scholarships", "Programs", "Organizations", "Businesses", "Stories"];
 
 const salaryRanges = [
   { label: "Any salary", value: "any" },
@@ -77,6 +78,7 @@ function SearchContent() {
   const [typeFilter, setTypeFilter] = useState(searchParams.get("type") || "All");
   const [posts, setPosts] = useState<Post[]>([]);
   const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [vendors, setVendors] = useState<ShopVendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -94,9 +96,10 @@ function SearchContent() {
   useEffect(() => {
     async function load() {
       try {
-        const [p, o] = await Promise.all([getPosts(), getOrganizations()]);
+        const [p, o, v] = await Promise.all([getPosts(), getOrganizations(), getVendors()]);
         setPosts(p);
         setOrgs(o);
+        setVendors(v);
       } catch (err) {
         console.error("Failed to load search data:", err);
       } finally {
@@ -182,6 +185,10 @@ function SearchContent() {
     let result = textFilteredPosts;
 
     // Type filter
+    if (typeFilter === "Businesses") {
+      // Businesses tab shows only vendors, no posts
+      return [];
+    }
     if (typeFilter !== "All" && typeFilter !== "Organizations") {
       const typeMap: Record<string, string> = {
         Jobs: "job",
@@ -275,8 +282,30 @@ function SearchContent() {
     return result;
   }, [textFilteredOrgs, location, orgFilter]);
 
+  // Text-matched vendors
+  const filteredVendors = useMemo(() => {
+    if (!q) return [];
+    let result = vendors.filter((v) => {
+      const text = [v.name, v.category, v.description, v.location?.city, v.location?.province]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return text.includes(q);
+    });
+    if (location.trim()) {
+      const loc = location.toLowerCase().trim();
+      result = result.filter(
+        (v) =>
+          v.location?.city?.toLowerCase().includes(loc) ||
+          v.location?.province?.toLowerCase().includes(loc)
+      );
+    }
+    return result;
+  }, [vendors, q, location]);
+
   const showOrgs = typeFilter === "All" || typeFilter === "Organizations";
-  const totalResults = sortedPosts.length + (showOrgs ? filteredOrgs.length : 0);
+  const showVendors = typeFilter === "All" || typeFilter === "Businesses";
+  const totalResults = sortedPosts.length + (showOrgs ? filteredOrgs.length : 0) + (showVendors ? filteredVendors.length : 0);
 
   // Count active filters (not counting type filter or sort)
   const activeFilterCount = [
@@ -622,6 +651,49 @@ function SearchContent() {
                     </Card>
                   </Link>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Business/Vendor Results */}
+          {showVendors && filteredVendors.length > 0 && (
+            <div className="mb-6">
+              <p className="text-xs font-bold text-text-muted tracking-[1px] mb-3">BUSINESSES</p>
+              <div className="flex flex-col gap-2">
+                {filteredVendors.map((vendor) => {
+                  const initial = vendor.name?.charAt(0)?.toUpperCase() || "?";
+                  const loc = vendor.location
+                    ? `${vendor.location.city}, ${vendor.location.province}`
+                    : null;
+                  return (
+                    <Link key={vendor.id} href={`/shop/${vendor.slug}`} className="no-underline">
+                      <Card className="cursor-pointer">
+                        <div className="flex gap-3 items-center" style={{ padding: "14px 16px" }}>
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                            style={{ background: "linear-gradient(135deg, var(--gold), #B45309)" }}
+                          >
+                            {initial}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <h3 className="text-sm font-bold text-text m-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                                {vendor.name}
+                              </h3>
+                              <Badge text={vendor.category} color="var(--gold)" bg="var(--gold-soft)" small />
+                            </div>
+                            {loc && (
+                              <p className="text-xs text-text-sec m-0">&#128205; {loc}</p>
+                            )}
+                          </div>
+                          <span className="text-xs font-semibold" style={{ color: "var(--gold)" }}>
+                            Visit &#8594;
+                          </span>
+                        </div>
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}

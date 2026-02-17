@@ -14,6 +14,7 @@ import { getPosts, type Post } from "@/lib/firestore/posts";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
 import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
 import { getApplications, type Application } from "@/lib/firestore/applications";
+import { getVendors, type ShopVendor } from "@/lib/firestore/shop";
 import ProfileCompleteness from "@/components/ProfileCompleteness";
 import FeedSidebar from "@/components/FeedSidebar";
 import FeedRightSidebar from "@/components/FeedRightSidebar";
@@ -28,7 +29,7 @@ const typeToTab: Record<string, string> = {
   scholarship: "Scholarships",
   program: "Schools",
   story: "Stories",
-  spotlight: "Businesses",
+  spotlight: "Livestreams",
 };
 
 export default function FeedPage() {
@@ -48,6 +49,7 @@ function FeedContent() {
   const [tab, setTab] = useState("All");
   const [posts, setPosts] = useState<Post[]>([]);
   const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [vendors, setVendors] = useState<ShopVendor[]>([]);
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,9 +59,10 @@ function FeedContent() {
   useEffect(() => {
     async function load() {
       try {
-        const [p, o] = await Promise.all([getPosts(), getOrganizations()]);
+        const [p, o, v] = await Promise.all([getPosts(), getOrganizations(), getVendors()]);
         setPosts(p);
         setOrgs(o);
+        setVendors(v);
         if (user) {
           const [s, a] = await Promise.all([
             getSavedItems(user.uid).catch(() => []),
@@ -184,6 +187,20 @@ function FeedContent() {
               <div key={i} className="skeleton h-[140px] rounded-2xl" />
             ))}
           </div>
+        ) : tab === "Businesses" ? (
+          vendors.length === 0 ? (
+            <Card style={{ padding: 40, textAlign: "center" }}>
+              <p className="text-3xl mb-2">&#127978;</p>
+              <p className="text-sm font-bold text-text mb-1">No businesses found</p>
+              <p className="text-sm text-text-muted">Indigenous businesses will be featured here soon.</p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {vendors.map((vendor) => (
+                <VendorCard key={vendor.id} vendor={vendor} />
+              ))}
+            </div>
+          )
         ) : filtered.length === 0 ? (
           <Card style={{ padding: 40, textAlign: "center" }}>
             <p className="text-3xl mb-2">&#128269;</p>
@@ -413,4 +430,41 @@ function FeedCard({ post }: { post: Post }) {
   }
 
   return null;
+}
+
+function VendorCard({ vendor }: { vendor: ShopVendor }) {
+  const initial = vendor.name?.charAt(0)?.toUpperCase() || "?";
+  const locationStr = vendor.location
+    ? `${vendor.location.city}, ${vendor.location.province}`
+    : null;
+
+  return (
+    <Link href={`/shop/${vendor.slug}`} className="no-underline">
+      <Card className="cursor-pointer">
+        <div style={{ padding: "16px 20px" }}>
+          <div className="flex items-center gap-3 mb-2">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, var(--gold), #B45309)" }}
+            >
+              {initial}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-text truncate m-0">{vendor.name}</p>
+              <Badge text={vendor.category} color="var(--gold)" bg="var(--gold-soft)" small />
+            </div>
+          </div>
+          {locationStr && (
+            <p className="text-xs text-text-muted mb-2">&#128205; {locationStr}</p>
+          )}
+          <span
+            className="text-xs font-semibold"
+            style={{ color: "var(--gold)" }}
+          >
+            Visit &#8594;
+          </span>
+        </div>
+      </Card>
+    </Link>
+  );
 }
