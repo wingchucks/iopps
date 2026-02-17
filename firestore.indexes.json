@@ -215,7 +215,7 @@
         { "fieldPath": "targetUserId", "order": "ASCENDING" },
         { "fieldPath": "type", "order": "ASCENDING" }
       ]
-    }
+    },
     {
       "collectionGroup": "mentor_profiles",
       "queryScope": "COLLECTION",
