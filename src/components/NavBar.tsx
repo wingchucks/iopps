@@ -75,8 +75,9 @@ export default function NavBar() {
 
         {/* Right: search + actions + avatar (desktop) */}
         <div className="hidden md:flex items-center gap-3">
-          <div
-            className="flex items-center gap-2 px-4 py-2 rounded-[10px] w-60"
+          <Link
+            href="/search"
+            className="flex items-center gap-2 px-4 py-2 rounded-[10px] w-60 no-underline transition-all hover:bg-white/[.12]"
             style={{
               background: "rgba(255,255,255,.08)",
               border: "1px solid rgba(255,255,255,.1)",
@@ -84,7 +85,7 @@ export default function NavBar() {
           >
             <span style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>&#128269;</span>
             <span style={{ color: "rgba(255,255,255,.3)", fontSize: 13 }}>Search IOPPS...</span>
-          </div>
+          </Link>
           <button
             className="relative w-10 h-10 rounded-[10px] border-none cursor-pointer text-lg text-white"
             style={{ background: "rgba(255,255,255,.08)" }}
@@ -141,8 +142,10 @@ export default function NavBar() {
               </Link>
             );
           })}
-          <div
-            className="mx-4 mt-2 flex items-center gap-2 px-4 py-2.5 rounded-[10px]"
+          <Link
+            href="/search"
+            onClick={() => setMenuOpen(false)}
+            className="mx-4 mt-2 flex items-center gap-2 px-4 py-2.5 rounded-[10px] no-underline"
             style={{
               background: "rgba(255,255,255,.08)",
               border: "1px solid rgba(255,255,255,.1)",
@@ -150,7 +153,7 @@ export default function NavBar() {
           >
             <span style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>&#128269;</span>
             <span style={{ color: "rgba(255,255,255,.3)", fontSize: 13 }}>Search IOPPS...</span>
-          </div>
+          </Link>
           <div className="mx-4 mt-2 flex items-center gap-2">
             <ThemeToggle />
             <button

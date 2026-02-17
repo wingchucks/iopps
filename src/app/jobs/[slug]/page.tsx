@@ -147,6 +147,58 @@ function JobDetailContent() {
             </>
           )}
 
+          {/* Responsibilities */}
+          {post.responsibilities && post.responsibilities.length > 0 && (
+            <>
+              <h3 className="text-lg font-bold text-text mb-2">Responsibilities</h3>
+              <ul className="mb-6 pl-0 list-none">
+                {post.responsibilities.map((r, i) => (
+                  <li key={i} className="flex gap-2 items-start mb-2">
+                    <span className="text-teal text-sm mt-0.5">&#10003;</span>
+                    <span className="text-sm text-text-sec">{r}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {/* Qualifications */}
+          {post.qualifications && post.qualifications.length > 0 && (
+            <>
+              <h3 className="text-lg font-bold text-text mb-2">Qualifications</h3>
+              <ul className="mb-6 pl-0 list-none">
+                {post.qualifications.map((q, i) => (
+                  <li key={i} className="flex gap-2 items-start mb-2">
+                    <span className="text-blue text-sm mt-0.5">&#9679;</span>
+                    <span className="text-sm text-text-sec">{q}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {/* Benefits */}
+          {post.benefits && post.benefits.length > 0 && (
+            <>
+              <h3 className="text-lg font-bold text-text mb-2">Benefits</h3>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {post.benefits.map((b, i) => (
+                  <span
+                    key={i}
+                    className="rounded-xl text-[13px] font-semibold text-teal"
+                    style={{
+                      padding: "8px 14px",
+                      background: "rgba(13,148,136,.06)",
+                      border: "1.5px solid rgba(13,148,136,.1)",
+                    }}
+                  >
+                    {b}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+
           {/* Organization Info */}
           {org && (
             <>

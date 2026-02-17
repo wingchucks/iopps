@@ -123,6 +123,50 @@ function EventDetailContent() {
             </>
           )}
 
+          {/* Highlights */}
+          {post.highlights && post.highlights.length > 0 && (
+            <>
+              <h3 className="text-lg font-bold text-text mb-2">Highlights</h3>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {post.highlights.map((h, i) => (
+                  <span
+                    key={i}
+                    className="rounded-xl text-[13px] font-semibold text-gold"
+                    style={{
+                      padding: "8px 14px",
+                      background: "rgba(217,119,6,.06)",
+                      border: "1.5px solid rgba(217,119,6,.1)",
+                    }}
+                  >
+                    {h}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Schedule */}
+          {post.schedule && post.schedule.length > 0 && (
+            <>
+              <h3 className="text-lg font-bold text-text mb-3">Schedule</h3>
+              <div className="flex flex-col gap-3 mb-6">
+                {post.schedule.map((day, i) => (
+                  <Card key={i}>
+                    <div style={{ padding: 16 }}>
+                      <p className="text-sm font-bold text-teal mb-2.5">{day.day}</p>
+                      {day.items.map((item, j) => (
+                        <div key={j} className="flex gap-2 items-center mb-1.5">
+                          <span className="text-xs text-teal">&#9679;</span>
+                          <span className="text-[13px] text-text-sec">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+
           {/* Event Info Cards */}
           <div className="flex flex-col gap-3">
             {post.dates && (

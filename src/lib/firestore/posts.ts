@@ -36,10 +36,16 @@ export interface Post {
   featured?: boolean;
   closingSoon?: boolean;
   source?: string;
+  responsibilities?: string[];
+  qualifications?: string[];
+  benefits?: string[];
   // Event fields
   dates?: string;
   price?: string;
   eventType?: string;
+  organizer?: string;
+  schedule?: { day: string; items: string[] }[];
+  highlights?: string[];
   // Program fields
   duration?: string;
   credential?: string;
