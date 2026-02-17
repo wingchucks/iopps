@@ -5,8 +5,10 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
+import { useAuth } from "@/lib/auth-context";
 import { setOrganization } from "@/lib/firestore/organizations";
 import { setPost } from "@/lib/firestore/posts";
+import { addNotification } from "@/lib/firestore/notifications";
 import { serverTimestamp } from "firebase/firestore";
 
 const orgs = [
@@ -583,8 +585,57 @@ export default function SeedPage() {
 }
 
 function SeedContent() {
+  const { user } = useAuth();
   const [status, setStatus] = useState("");
   const [seeding, setSeeding] = useState(false);
+  const [seedingNotifs, setSeedingNotifs] = useState(false);
+
+  const handleSeedNotifications = async () => {
+    if (!user) return;
+    setSeedingNotifs(true);
+    setStatus("Seeding notifications...");
+    try {
+      const notifs = [
+        {
+          type: "welcome" as const,
+          title: "Welcome to IOPPS!",
+          body: "Your account is set up. Complete your profile to get personalized job and event recommendations.",
+          link: "/profile",
+        },
+        {
+          type: "job_match" as const,
+          title: "New job match: Casino Host",
+          body: "SIGA posted a Casino Host position in Saskatoon that matches your interests.",
+          link: "/jobs/casino-host-siga",
+        },
+        {
+          type: "event_reminder" as const,
+          title: "Back to Batoche Days is coming up",
+          body: "Don\u2019t miss the annual cultural celebration \u2014 Jul 18-20 at Batoche National Historic Site.",
+          link: "/events/batoche",
+        },
+        {
+          type: "new_post" as const,
+          title: "FNUniv posted 2 new positions",
+          body: "Indigenous Studies Instructor and Student Recruitment Coordinator roles are now open.",
+          link: "/search",
+        },
+        {
+          type: "system" as const,
+          title: "IOPPS platform update",
+          body: "We\u2019ve added dark mode, notifications, and profile photo uploads. Check out the new features!",
+        },
+      ];
+      for (const n of notifs) {
+        await addNotification(user.uid, n);
+      }
+      setStatus(`Done! Seeded ${notifs.length} notifications for your account.`);
+    } catch (err) {
+      setStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setSeedingNotifs(false);
+    }
+  };
 
   const handleSeed = async () => {
     setSeeding(true);
@@ -642,6 +693,27 @@ function SeedContent() {
         {status && (
           <p className="text-sm text-teal mt-4 font-medium">{status}</p>
         )}
+      </Card>
+
+      <Card style={{ padding: 20 }} className="mt-4">
+        <p className="text-sm text-text-sec mb-1">
+          <strong>Sample Notifications</strong>
+        </p>
+        <p className="text-xs text-text-muted mb-4">
+          Creates 5 sample notifications for your account (welcome, job match, event reminder, etc.)
+        </p>
+        <Button
+          primary
+          onClick={handleSeedNotifications}
+          style={{
+            background: "var(--purple)",
+            borderRadius: 14,
+            padding: "12px 24px",
+            opacity: seedingNotifs ? 0.7 : 1,
+          }}
+        >
+          {seedingNotifs ? "Seeding..." : "Seed Notifications"}
+        </Button>
       </Card>
     </div>
   );

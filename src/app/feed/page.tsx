@@ -14,6 +14,7 @@ import { getPosts, type Post } from "@/lib/firestore/posts";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
 import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
 import { getApplications, type Application } from "@/lib/firestore/applications";
+import ProfileCompleteness from "@/components/ProfileCompleteness";
 
 const tabs = ["All", "Jobs", "Events", "Scholarships", "Businesses", "Schools", "Livestreams", "Stories"];
 
@@ -193,6 +194,9 @@ function FeedContent() {
 
       {/* ═══ Center Feed ═══ */}
       <div className="flex-1 max-w-full lg:max-w-[580px] min-w-0">
+        {/* Profile completeness */}
+        <ProfileCompleteness />
+
         {/* LIVE banner */}
         <div
           className="flex items-center gap-3 rounded-[14px] mb-3 cursor-pointer"
