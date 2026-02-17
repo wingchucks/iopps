@@ -32,7 +32,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signUp(name, email, password);
-      router.push("/feed");
+      router.push("/setup");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to create account";
       if (msg.includes("email-already-in-use")) {
