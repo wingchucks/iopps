@@ -32,9 +32,19 @@ export default function LandingPage() {
           padding: "clamp(48px, 8vw, 100px) clamp(20px, 6vw, 80px) clamp(48px, 6vw, 80px)",
         }}
       >
-        {/* Theme toggle */}
-        <div className="absolute top-4 right-4 z-10">
-          <ThemeToggle />
+        {/* Top nav */}
+        <div className="relative flex items-center justify-between mb-0 z-10">
+          <div />
+          <div className="flex items-center gap-4">
+            <Link
+              href="/pricing"
+              className="text-sm font-semibold no-underline"
+              style={{ color: "rgba(255,255,255,.7)" }}
+            >
+              Pricing
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Decorative circles */}

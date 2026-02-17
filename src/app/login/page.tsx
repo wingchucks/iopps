@@ -125,6 +125,12 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
+
+          <p className="text-center text-sm text-text-muted mt-3">
+            <Link href="/org/signup" className="text-teal no-underline hover:underline">
+              Register your organization &rarr;
+            </Link>
+          </p>
         </form>
       </div>
     </div>
