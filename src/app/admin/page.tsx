@@ -1,30 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
 import Link from "next/link";
-
-const topStats = [
-  { label: "Total Users", value: "2,847", trend: "+12%", icon: "\u{1F465}" },
-  { label: "Organizations", value: "84", trend: "+8%", icon: "\u{1F3E2}" },
-  { label: "Active Posts", value: "142", trend: "+23%", icon: "\u{1F4DD}" },
-  { label: "Revenue (Mo)", value: "$4,250", trend: "+15%", icon: "\u{1F4B0}" },
-];
-
-const menuItems = [
-  { icon: "\u{1F465}", label: "User Management", sub: "2,847 community members" },
-  { icon: "\u{1F3E2}", label: "Organizations", sub: "3 pending verification" },
-  { icon: "\u{1F4DD}", label: "Content Moderation", sub: "2 items pending" },
-  { icon: "\u{1F4CB}", label: "All Posts", sub: "142 active across all types" },
-  { icon: "\u{1F31F}", label: "Success Stories", sub: "Create and manage stories" },
-  { icon: "\u{1F4FA}", label: "Livestreams", sub: "12 archived videos" },
-  { icon: "\u{1F504}", label: "Feed Sync", sub: "2 active — SIGA, STC" },
-  { icon: "\u{1F91D}", label: "Partner Showcase", sub: "5 partners displayed" },
-  { icon: "\u{1F4E7}", label: "Email Campaigns", sub: "1,842 subscribers \u2022 68% open rate", href: "/admin/email-campaigns" },
-  { icon: "\u{1F4B0}", label: "Payments & Revenue", sub: "$4,250 this month" },
-  { icon: "\u{1F4CA}", label: "Reports & Analytics", sub: "Growth, engagement, trends" },
-];
+import { getPosts } from "@/lib/firestore/posts";
+import { getOrganizations } from "@/lib/firestore/organizations";
 
 export default function AdminPage() {
   return (
@@ -38,6 +20,40 @@ export default function AdminPage() {
 }
 
 function AdminContent() {
+  const [postCount, setPostCount] = useState(0);
+  const [orgCount, setOrgCount] = useState(0);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [posts, orgs] = await Promise.all([getPosts(), getOrganizations()]);
+        setPostCount(posts.length);
+        setOrgCount(orgs.length);
+      } catch (err) {
+        console.error("Failed to load admin stats:", err);
+      }
+    }
+    load();
+  }, []);
+
+  const topStats = [
+    { label: "Total Users", value: "\u2014", trend: "", icon: "\u{1F465}" },
+    { label: "Organizations", value: String(orgCount), trend: "", icon: "\u{1F3E2}" },
+    { label: "Active Posts", value: String(postCount), trend: "", icon: "\u{1F4DD}" },
+    { label: "Revenue (Mo)", value: "$0", trend: "", icon: "\u{1F4B0}" },
+  ];
+
+  const menuItems = [
+    { icon: "\u{1F3E2}", label: "Organizations", sub: `${orgCount} organizations`, href: "/admin/organizations" },
+    { icon: "\u{1F4CB}", label: "All Posts", sub: `${postCount} active across all types`, href: "/admin/posts" },
+    { icon: "\u{1F31F}", label: "Success Stories", sub: "Create and manage stories" },
+    { icon: "\u{1F504}", label: "Feed Sync", sub: "External feed sources" },
+    { icon: "\u{1F91D}", label: "Partner Showcase", sub: "Partners displayed on site" },
+    { icon: "\u{1F4E7}", label: "Email Campaigns", sub: "Newsletter management", href: "/admin/email-campaigns" },
+    { icon: "\u{1F9EA}", label: "Seed Database", sub: "Populate sample data", href: "/admin/seed" },
+    { icon: "\u{1F4CA}", label: "Reports & Analytics", sub: "Growth, engagement, trends" },
+  ];
+
   return (
     <div className="max-w-[1000px] mx-auto px-4 py-6 md:px-10 md:py-8">
       <h2 className="text-2xl font-extrabold text-text mb-5">Admin Panel</h2>
@@ -48,7 +64,6 @@ function AdminContent() {
           <Card key={i} style={{ padding: 20 }}>
             <div className="flex justify-between mb-1.5">
               <span className="text-2xl">{s.icon}</span>
-              <span className="text-xs text-teal font-bold">&#8593; {s.trend}</span>
             </div>
             <p className="text-2xl font-extrabold text-text mb-0.5">{s.value}</p>
             <p className="text-xs text-text-muted m-0">{s.label}</p>
@@ -60,7 +75,7 @@ function AdminContent() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {menuItems.map((item, i) => {
           const inner = (
-            <Card key={i} className="cursor-pointer">
+            <Card className="cursor-pointer">
               <div className="flex gap-3.5 items-center" style={{ padding: 16 }}>
                 <span className="text-[22px]">{item.icon}</span>
                 <div className="flex-1">

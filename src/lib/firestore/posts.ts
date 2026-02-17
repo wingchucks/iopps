@@ -3,6 +3,7 @@ import {
   getDocs,
   getDoc,
   setDoc,
+  deleteDoc,
   doc,
   query,
   orderBy,
@@ -89,4 +90,8 @@ export async function setPost(
   data: Omit<Post, "id">
 ): Promise<void> {
   await setDoc(doc(db, "posts", id), data);
+}
+
+export async function deletePost(id: string): Promise<void> {
+  await deleteDoc(doc(db, "posts", id));
 }

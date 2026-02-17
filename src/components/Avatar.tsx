@@ -2,14 +2,32 @@ interface AvatarProps {
   name: string;
   size?: number;
   gradient?: string;
+  src?: string;
 }
 
-export default function Avatar({ name, size = 40, gradient }: AvatarProps) {
+export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) {
   const initials = name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .slice(0, 2);
+
+  const radius = size > 48 ? 16 : "50%";
+
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className="shrink-0 object-cover"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: radius,
+        }}
+      />
+    );
+  }
 
   return (
     <div
@@ -17,7 +35,7 @@ export default function Avatar({ name, size = 40, gradient }: AvatarProps) {
       style={{
         width: size,
         height: size,
-        borderRadius: size > 48 ? 16 : "50%",
+        borderRadius: radius,
         background: gradient || "linear-gradient(135deg, var(--teal), var(--navy))",
         fontSize: size * 0.32,
       }}

@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  deleteDoc,
   query,
   orderBy,
 } from "firebase/firestore";
@@ -45,4 +46,8 @@ export async function setOrganization(
   data: Omit<Organization, "id">
 ): Promise<void> {
   await setDoc(doc(db, "organizations", id), data);
+}
+
+export async function deleteOrganization(id: string): Promise<void> {
+  await deleteDoc(doc(db, "organizations", id));
 }

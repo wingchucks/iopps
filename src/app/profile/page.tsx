@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import {
   getMemberProfile,
   updateMemberProfile,
   type MemberProfile,
 } from "@/lib/firestore/members";
+import { getSavedItems } from "@/lib/firestore/savedItems";
+import { getApplications } from "@/lib/firestore/applications";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import Avatar from "@/components/Avatar";
@@ -41,12 +45,18 @@ function ProfileContent() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Edit form state
   const [community, setCommunity] = useState("");
   const [location, setLocation] = useState("");
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Activity stats
+  const [appCount, setAppCount] = useState(0);
+  const [savedCount, setSavedCount] = useState(0);
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -58,6 +68,13 @@ function ProfileContent() {
         setLocation(data.location);
         setBio(data.bio);
       }
+      // Load activity stats
+      const [apps, saved] = await Promise.all([
+        getApplications(user.uid),
+        getSavedItems(user.uid),
+      ]);
+      setAppCount(apps.length);
+      setSavedCount(saved.length);
     } catch (err) {
       console.error("Failed to load profile:", err);
     } finally {
@@ -86,6 +103,33 @@ function ProfileContent() {
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be under 5MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const storageRef = ref(storage, `avatars/${user.uid}.${ext}`);
+      await uploadBytes(storageRef, file);
+      const photoURL = await getDownloadURL(storageRef);
+      await updateMemberProfile(user.uid, { photoURL });
+      setProfile((prev) => (prev ? { ...prev, photoURL } : prev));
+    } catch (err) {
+      console.error("Failed to upload photo:", err);
+      alert("Failed to upload photo. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -105,7 +149,28 @@ function ProfileContent() {
         }}
       >
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start sm:items-center">
-          <Avatar name={displayName} size={72} />
+          {/* Avatar with upload */}
+          <div className="relative group">
+            <Avatar name={displayName} size={72} src={profile?.photoURL} />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              style={{ borderRadius: 16 }}
+            >
+              <span className="text-white text-xs font-semibold">
+                {uploading ? "..." : "Edit"}
+              </span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              className="hidden"
+            />
+          </div>
+
           <div className="flex-1">
             <h1 className="text-xl sm:text-[28px] font-extrabold text-white mb-1">
               {displayName}
@@ -303,11 +368,11 @@ function ProfileContent() {
                   </p>
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
-                      <p className="text-xl font-extrabold text-text mb-0">0</p>
+                      <p className="text-xl font-extrabold text-text mb-0">{appCount}</p>
                       <p className="text-[11px] text-text-muted m-0">Applications</p>
                     </div>
                     <div>
-                      <p className="text-xl font-extrabold text-text mb-0">0</p>
+                      <p className="text-xl font-extrabold text-text mb-0">{savedCount}</p>
                       <p className="text-[11px] text-text-muted m-0">Saved</p>
                     </div>
                     <div>
