@@ -1,221 +1,105 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description:
-    "Privacy Policy for IOPPS.ca — how we collect, use, and protect your personal information under PIPEDA.",
+  title: "Privacy Policy — IOPPS.ca",
+  description: "IOPPS.ca privacy policy. How we collect, use, and protect your personal information under PIPEDA and CASL.",
 };
 
 export default function PrivacyPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16">
-      <h1 className="text-3xl font-bold">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-text-secondary">
-        Last updated: February 17, 2026
-      </p>
+    <div className="py-16 px-4 max-w-3xl mx-auto">
+      <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">Privacy Policy</h1>
+      <p className="text-[var(--text-muted)] mb-10">Last updated: February 2025</p>
 
-      <div className="mt-8 space-y-8 text-text-secondary leading-relaxed">
+      <div className="prose prose-slate max-w-none space-y-8 text-[var(--text-secondary)]">
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            1. Introduction
-          </h2>
-          <p className="mt-2">
-            IOPPS (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;)
-            operates IOPPS.ca, Canada&rsquo;s Indigenous Opportunities &amp;
-            Partnerships Platform. We are committed to protecting your privacy
-            in accordance with the Personal Information Protection and Electronic
-            Documents Act (PIPEDA) and applicable provincial privacy
-            legislation.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">1. Introduction</h2>
+          <p>IOPPS.ca (&quot;IOPPS&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is committed to protecting your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information in compliance with the Personal Information Protection and Electronic Documents Act (PIPEDA) and Canada&apos;s Anti-Spam Legislation (CASL).</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            2. Information We Collect
-          </h2>
-          <p className="mt-2">We may collect the following personal information:</p>
-          <ul className="mt-2 list-disc space-y-1 pl-6">
-            <li>
-              <strong>Account information:</strong> name, email address, and
-              password when you create an account
-            </li>
-            <li>
-              <strong>Profile information:</strong> organization name, job
-              title, location, and other details you choose to provide
-            </li>
-            <li>
-              <strong>Payment information:</strong> billing details processed
-              securely through Stripe (we do not store your full payment card
-              details)
-            </li>
-            <li>
-              <strong>Usage data:</strong> pages visited, features used, device
-              information, IP address, and browser type
-            </li>
-            <li>
-              <strong>Communications:</strong> messages you send through the
-              Platform or to our support team
-            </li>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">2. Information We Collect</h2>
+          <p>We collect information you provide directly, including:</p>
+          <ul className="list-disc pl-6 space-y-1">
+            <li>Name, email address, and profile information</li>
+            <li>Nation/Band/Community affiliation</li>
+            <li>Resume and employment information (if provided)</li>
+            <li>Organization details (for employer accounts)</li>
+            <li>Payment information (processed securely by Stripe — we do not store card details)</li>
+          </ul>
+          <p className="mt-3">We automatically collect:</p>
+          <ul className="list-disc pl-6 space-y-1">
+            <li>Usage data (pages visited, features used)</li>
+            <li>Device and browser information</li>
+            <li>IP address and approximate location</li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            3. How We Use Your Information
-          </h2>
-          <ul className="mt-2 list-disc space-y-1 pl-6">
-            <li>To provide, maintain, and improve the Platform</li>
-            <li>To process transactions and manage subscriptions</li>
-            <li>To send service-related communications and updates</li>
-            <li>To personalize your experience and recommend opportunities</li>
-            <li>To ensure security and prevent fraud</li>
-            <li>To comply with legal obligations</li>
-            <li>To analyse usage trends and improve our services</li>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">3. How We Use Your Information</h2>
+          <ul className="list-disc pl-6 space-y-1">
+            <li>To provide and maintain our platform</li>
+            <li>To match you with relevant opportunities</li>
+            <li>To process payments via Stripe</li>
+            <li>To send email digests and notifications (with your consent, per CASL)</li>
+            <li>To verify organizations and maintain platform integrity</li>
+            <li>To improve our services through aggregated analytics</li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            4. Cookies &amp; Tracking Technologies
-          </h2>
-          <p className="mt-2">
-            We use cookies and similar technologies to maintain your session,
-            remember your preferences, and understand how the Platform is used.
-            You can control cookie settings through your browser. Disabling
-            cookies may limit certain Platform features.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">4. Data Storage &amp; Security</h2>
+          <p>Your data is stored securely using Google Firebase (Cloud Firestore) and Google Cloud Platform. We implement industry-standard security measures including encryption in transit and at rest. Payment processing is handled entirely by Stripe, which is PCI DSS Level 1 compliant.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            5. Third-Party Services
-          </h2>
-          <p className="mt-2">We use the following third-party services:</p>
-          <ul className="mt-2 list-disc space-y-1 pl-6">
-            <li>
-              <strong>Firebase (Google):</strong> authentication and database
-              services
-            </li>
-            <li>
-              <strong>Stripe:</strong> payment processing
-            </li>
-            <li>
-              <strong>Vercel:</strong> hosting and analytics
-            </li>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">5. Third-Party Sharing</h2>
+          <p>We do not sell, rent, or trade your personal information. We share data only with:</p>
+          <ul className="list-disc pl-6 space-y-1">
+            <li><strong>Stripe</strong> — for payment processing</li>
+            <li><strong>Google Firebase</strong> — for data storage and authentication</li>
+            <li><strong>Employers</strong> — only your application information, and only when you apply to a job</li>
           </ul>
-          <p className="mt-2">
-            These providers have their own privacy policies governing their use
-            of your data. We encourage you to review them.
-          </p>
+          <p className="mt-3">We will never share your information with third-party advertisers or data brokers.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            6. Data Sharing &amp; Disclosure
-          </h2>
-          <p className="mt-2">
-            We do not sell your personal information. We may share data with:
-          </p>
-          <ul className="mt-2 list-disc space-y-1 pl-6">
-            <li>Service providers who assist in operating the Platform</li>
-            <li>
-              Law enforcement or regulatory bodies when required by law or to
-              protect our rights
-            </li>
-            <li>
-              Other parties with your explicit consent
-            </li>
-          </ul>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">6. CASL Compliance</h2>
+          <p>We comply with Canada&apos;s Anti-Spam Legislation. We will only send you commercial electronic messages (emails) with your express or implied consent. Every email includes an unsubscribe mechanism. You can manage your email preferences in your account settings.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            7. Data Retention
-          </h2>
-          <p className="mt-2">
-            We retain your personal information for as long as your account is
-            active or as needed to provide services. If you delete your account,
-            we will remove your personal data within a reasonable timeframe,
-            except where retention is required by law or for legitimate business
-            purposes.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            8. Your Rights Under PIPEDA
-          </h2>
-          <p className="mt-2">You have the right to:</p>
-          <ul className="mt-2 list-disc space-y-1 pl-6">
-            <li>Access the personal information we hold about you</li>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">7. Your Rights Under PIPEDA</h2>
+          <p>You have the right to:</p>
+          <ul className="list-disc pl-6 space-y-1">
+            <li>Access your personal information</li>
             <li>Request correction of inaccurate information</li>
-            <li>Withdraw consent for the collection or use of your data</li>
-            <li>Request deletion of your personal information</li>
-            <li>
-              File a complaint with the Office of the Privacy Commissioner of
-              Canada
-            </li>
+            <li>Withdraw consent for data collection</li>
+            <li>Request deletion of your account and data</li>
+            <li>File a complaint with the Office of the Privacy Commissioner of Canada</li>
           </ul>
-          <p className="mt-2">
-            To exercise any of these rights, please contact us at the address
-            below.
-          </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            9. Data Security
-          </h2>
-          <p className="mt-2">
-            We implement appropriate technical and organizational measures to
-            protect your personal information against unauthorized access,
-            alteration, disclosure, or destruction. However, no method of
-            transmission over the Internet is 100% secure.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">8. Cookies</h2>
+          <p>We use essential cookies for authentication and session management. We do not use third-party tracking cookies or advertising cookies.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            10. Children&rsquo;s Privacy
-          </h2>
-          <p className="mt-2">
-            The Platform is not directed at children under the age of 13. We do
-            not knowingly collect personal information from children. If you
-            believe we have collected such information, please contact us
-            immediately.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">9. Children&apos;s Privacy</h2>
+          <p>IOPPS is not intended for children under 13. We do not knowingly collect personal information from children under 13.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            11. Changes to This Policy
-          </h2>
-          <p className="mt-2">
-            We may update this Privacy Policy from time to time. We will post
-            the revised policy on this page with an updated date. Continued use
-            of the Platform constitutes acceptance of the updated policy.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">10. Changes to This Policy</h2>
+          <p>We may update this Privacy Policy from time to time. We will notify you of significant changes via email or platform notification.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            12. Contact Us
-          </h2>
-          <p className="mt-2">
-            For privacy-related inquiries or to exercise your rights, please
-            contact us at:
-          </p>
-          <p className="mt-2">
-            <strong>IOPPS Privacy Officer</strong>
-            <br />
-            Email:{" "}
-            <a
-              href="mailto:privacy@iopps.ca"
-              className="text-accent hover:underline"
-            >
-              privacy@iopps.ca
-            </a>
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">11. Contact Us</h2>
+          <p>If you have questions about this Privacy Policy or wish to exercise your rights, contact us at:</p>
+          <p className="mt-2"><strong>Email:</strong> privacy@iopps.ca</p>
+          <p><strong>Website:</strong> iopps.ca/contact</p>
         </section>
       </div>
     </div>

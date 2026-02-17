@@ -1,27 +1,18 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { verifyIdToken } from "@/lib/auth";
-import { getApplicationsByMember } from "@/lib/firestore/applications";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuthToken } from "@/lib/api-auth";
+import { adminDb } from "@/lib/firebase-admin";
 
-/**
- * GET /api/member/applications
- *
- * Authenticated endpoint -- returns all job applications submitted by the
- * currently authenticated member, ordered by most recent first.
- */
 export async function GET(request: NextRequest) {
-  try {
-    const authResult = await verifyIdToken(request);
-    if (!authResult.success) return authResult.response;
+  const authResult = await verifyAuthToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-    const { uid } = authResult.decodedToken;
-    const applications = await getApplicationsByMember(uid);
+  const snapshot = await adminDb.collection("applications")
+    .where("applicantUid", "==", authResult.decodedToken.uid)
+    .orderBy("createdAt", "desc")
+    .limit(50)
+    .get();
 
-    return NextResponse.json({ applications });
-  } catch (error) {
-    console.error("[GET /api/member/applications] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch applications" },
-      { status: 500 },
-    );
-  }
+  const applications = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return NextResponse.json({ applications });
 }

@@ -1,105 +1,68 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { verifyIdToken } from "@/lib/auth";
-import {
-  getSavedJobs,
-  saveJob,
-  unsaveJob,
-} from "@/lib/firestore/savedJobs";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuthToken } from "@/lib/api-auth";
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
-/**
- * GET /api/member/saved-jobs
- *
- * Authenticated -- returns the member's saved jobs with attached job data.
- */
 export async function GET(request: NextRequest) {
-  try {
-    const authResult = await verifyIdToken(request);
-    if (!authResult.success) return authResult.response;
+  const authResult = await verifyAuthToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-    const { uid } = authResult.decodedToken;
-    const savedJobs = await getSavedJobs(uid);
+  const snapshot = await adminDb.collection("bookmarks")
+    .where("uid", "==", authResult.decodedToken.uid)
+    .orderBy("createdAt", "desc")
+    .limit(100)
+    .get();
 
-    return NextResponse.json({ savedJobs });
-  } catch (error) {
-    console.error("[GET /api/member/saved-jobs] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch saved jobs" },
-      { status: 500 },
-    );
-  }
+  const bookmarks = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return NextResponse.json({ bookmarks });
 }
 
-/**
- * POST /api/member/saved-jobs
- *
- * Authenticated -- saves a job for the member.
- *
- * Body (JSON): { jobId: string }
- */
 export async function POST(request: NextRequest) {
-  try {
-    const authResult = await verifyIdToken(request);
-    if (!authResult.success) return authResult.response;
+  const authResult = await verifyAuthToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-    const { uid } = authResult.decodedToken;
-    const body = (await request.json()) as Record<string, unknown>;
+  const { postId, postType } = await request.json();
+  if (!postId) return NextResponse.json({ error: "postId required" }, { status: 400 });
 
-    const jobId = typeof body.jobId === "string" ? body.jobId : null;
+  // Check duplicate
+  const existing = await adminDb.collection("bookmarks")
+    .where("uid", "==", authResult.decodedToken.uid)
+    .where("postId", "==", postId)
+    .limit(1).get();
+  if (!existing.empty) return NextResponse.json({ error: "Already saved" }, { status: 409 });
 
-    if (!jobId) {
-      return NextResponse.json(
-        { error: "jobId is required" },
-        { status: 400 },
-      );
-    }
+  const ref = await adminDb.collection("bookmarks").add({
+    uid: authResult.decodedToken.uid,
+    postId,
+    postType: postType || "job",
+    createdAt: FieldValue.serverTimestamp(),
+  });
 
-    await saveJob(uid, jobId);
+  // Increment save count
+  await adminDb.collection("posts").doc(postId).update({ saveCount: FieldValue.increment(1) });
 
-    return NextResponse.json(
-      { message: "Job saved successfully" },
-      { status: 201 },
-    );
-  } catch (error) {
-    console.error("[POST /api/member/saved-jobs] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to save job" },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json({ id: ref.id }, { status: 201 });
 }
 
-/**
- * DELETE /api/member/saved-jobs
- *
- * Authenticated -- removes a saved job for the member.
- *
- * Body (JSON): { jobId: string }
- */
 export async function DELETE(request: NextRequest) {
-  try {
-    const authResult = await verifyIdToken(request);
-    if (!authResult.success) return authResult.response;
+  const authResult = await verifyAuthToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-    const { uid } = authResult.decodedToken;
-    const body = (await request.json()) as Record<string, unknown>;
+  const { postId } = await request.json();
+  if (!postId) return NextResponse.json({ error: "postId required" }, { status: 400 });
 
-    const jobId = typeof body.jobId === "string" ? body.jobId : null;
+  const snapshot = await adminDb.collection("bookmarks")
+    .where("uid", "==", authResult.decodedToken.uid)
+    .where("postId", "==", postId)
+    .limit(1).get();
 
-    if (!jobId) {
-      return NextResponse.json(
-        { error: "jobId is required" },
-        { status: 400 },
-      );
-    }
+  if (snapshot.empty) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    await unsaveJob(uid, jobId);
+  await snapshot.docs[0].ref.delete();
+  await adminDb.collection("posts").doc(postId).update({ saveCount: FieldValue.increment(-1) });
 
-    return NextResponse.json({ message: "Job unsaved successfully" });
-  } catch (error) {
-    console.error("[DELETE /api/member/saved-jobs] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to unsave job" },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json({ success: true });
 }

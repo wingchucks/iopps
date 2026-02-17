@@ -1,153 +1,50 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAdminToken } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import { verifyAdminToken } from "@/lib/api-auth";
 
-export const dynamic = "force-dynamic";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-type UserRole = "community" | "employer" | "moderator" | "admin";
-
-const VALID_ROLES: ReadonlySet<string> = new Set([
-  "community",
-  "employer",
-  "moderator",
-  "admin",
-]);
-
-interface UpdateUserRoleBody {
-  userId: string;
-  role: UserRole;
-}
-
-// ---------------------------------------------------------------------------
-// GET /api/admin/users
-// ---------------------------------------------------------------------------
-
-/**
- * List users with optional role filter.
- *
- * Query params:
- *   role - "community" | "employer" | "moderator" | "admin" (optional)
- */
 export async function GET(request: NextRequest) {
-  const auth = await verifyAdminToken(request);
-  if (!auth.success) return auth.response;
+  const authResult = await verifyAdminToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-  if (!adminDb) {
-    return NextResponse.json(
-      { error: "Firestore not initialized" },
-      { status: 500 }
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
+  const role = searchParams.get("role");
+  const search = searchParams.get("search");
+
+  let query: FirebaseFirestore.Query = adminDb.collection("users");
+  if (role) query = query.where("role", "==", role);
+  query = query.orderBy("createdAt", "desc").offset((page - 1) * limit).limit(limit);
+
+  const snapshot = await query.get();
+  let users = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
+
+  if (search) {
+    const q = search.toLowerCase();
+    users = users.filter((u: Record<string, unknown>) =>
+      (u.displayName as string)?.toLowerCase().includes(q) ||
+      (u.email as string)?.toLowerCase().includes(q) ||
+      (u.firstName as string)?.toLowerCase().includes(q) ||
+      (u.lastName as string)?.toLowerCase().includes(q)
     );
   }
 
-  try {
-    const { searchParams } = request.nextUrl;
-    const role = searchParams.get("role") as UserRole | null;
-
-    let query = adminDb
-      .collection("users")
-      .orderBy("createdAt", "desc")
-      .limit(100);
-
-    if (role) {
-      if (!VALID_ROLES.has(role)) {
-        return NextResponse.json(
-          { error: "Invalid role filter. Must be: community, employer, moderator, or admin" },
-          { status: 400 }
-        );
-      }
-
-      query = adminDb
-        .collection("users")
-        .where("role", "==", role)
-        .orderBy("createdAt", "desc")
-        .limit(100);
-    }
-
-    const snapshot = await query.get();
-    const users = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    return NextResponse.json({ users });
-  } catch (error) {
-    console.error("[GET /api/admin/users] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch users" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({ users });
 }
 
-// ---------------------------------------------------------------------------
-// POST /api/admin/users
-// ---------------------------------------------------------------------------
+export async function PATCH(request: NextRequest) {
+  const authResult = await verifyAdminToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-/**
- * Update a user's role.
- *
- * Body:
- *   userId - the document ID of the user
- *   role   - the new role to assign
- */
-export async function POST(request: NextRequest) {
-  const auth = await verifyAdminToken(request);
-  if (!auth.success) return auth.response;
+  const body = await request.json();
+  const { uid, ...updates } = body;
+  if (!uid) return NextResponse.json({ error: "uid required" }, { status: 400 });
 
-  if (!adminDb) {
-    return NextResponse.json(
-      { error: "Firestore not initialized" },
-      { status: 500 }
-    );
-  }
+  updates.updatedAt = FieldValue.serverTimestamp();
+  await adminDb.collection("users").doc(uid).update(updates);
 
-  try {
-    const body = (await request.json()) as UpdateUserRoleBody;
-
-    if (!body.userId || typeof body.userId !== "string") {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!body.role || !VALID_ROLES.has(body.role)) {
-      return NextResponse.json(
-        { error: "role must be one of: community, employer, moderator, admin" },
-        { status: 400 }
-      );
-    }
-
-    const userRef = adminDb.collection("users").doc(body.userId);
-    const userSnap = await userRef.get();
-
-    if (!userSnap.exists) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    await userRef.update({
-      role: body.role,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-
-    return NextResponse.json({
-      success: true,
-      userId: body.userId,
-      role: body.role,
-    });
-  } catch (error) {
-    console.error("[POST /api/admin/users] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to update user role" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({ success: true });
 }

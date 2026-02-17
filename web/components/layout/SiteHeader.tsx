@@ -1,186 +1,154 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, X, ChevronDown, User, LogOut } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { Button } from "@/components/ui/Button";
-import { Avatar } from "@/components/ui/Avatar";
 
-const navLinks = [
-  { label: "Careers", href: "/careers" },
-  { label: "Education", href: "/education" },
-  { label: "Community", href: "/community" },
-  { label: "Business", href: "/business" },
-  { label: "Pricing", href: "/pricing" },
+const NAV_LINKS = [
+  { href: "/jobs", label: "Jobs" },
+  { href: "/events", label: "Events" },
+  { href: "/education", label: "Education" },
+  { href: "/business", label: "Business" },
+  { href: "/schools", label: "Schools" },
 ];
 
 export function SiteHeader() {
-  const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { user, userProfile, loading, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-card/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 bg-[var(--navy)] border-b border-[var(--navy-light)]">
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-xl font-bold text-accent"
-        >
+        <Link href="/" className="text-white font-bold text-2xl tracking-wide">
           IOPPS
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-accent-bg text-accent"
-                    : "text-text-secondary hover:bg-border-lt hover:text-text-primary",
-                )}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-6">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-white/80 hover:text-white text-sm font-medium transition-colors"
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-
-          {/* Auth section */}
-          {loading ? null : user ? (
-            <div className="relative">
-              <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-border-lt"
-              >
-                <Avatar
-                  src={userProfile?.photoURL}
-                  alt={userProfile?.displayName || "User"}
-                  fallback={userProfile?.displayName || user.displayName || "User"}
-                  size="sm"
-                />
-                <ChevronDown className="hidden h-4 w-4 text-text-muted sm:block" />
-              </button>
-
-              {/* User dropdown */}
-              {userMenuOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setUserMenuOpen(false)}
-                  />
-                  <div className="absolute right-0 top-full z-20 mt-2 w-48 rounded-lg border border-card-border bg-card p-1 shadow-lg">
-                    <Link
-                      href="/member/dashboard"
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-border-lt hover:text-text-primary"
-                      onClick={() => setUserMenuOpen(false)}
-                    >
-                      <User className="h-4 w-4" />
-                      Dashboard
+        <div className="hidden md:flex items-center gap-3">
+          {loading ? (
+            <div className="w-20 h-8 rounded bg-white/10 animate-pulse" />
+          ) : user ? (
+            <>
+              {/* Bell */}
+              <Link href="/notifications" className="text-white/70 hover:text-white p-2">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </Link>
+              {/* Profile dropdown */}
+              <div ref={profileRef} className="relative">
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="w-8 h-8 rounded-full bg-[var(--teal)] text-white flex items-center justify-center text-sm font-semibold"
+                >
+                  {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "U"}
+                </button>
+                {profileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg shadow-lg py-1 z-50">
+                    <Link href="/profile" className="block px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--surface-raised)]">
+                      Profile
                     </Link>
+                    <Link href="/saved" className="block px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--surface-raised)]">
+                      Saved
+                    </Link>
+                    <Link href="/settings" className="block px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--surface-raised)]">
+                      Settings
+                    </Link>
+                    <hr className="my-1 border-[var(--card-border)]" />
                     <button
-                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-border-lt hover:text-text-primary"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        signOut();
-                      }}
+                      onClick={() => { signOut(); setProfileOpen(false); }}
+                      className="block w-full text-left px-4 py-2 text-sm text-[var(--danger)] hover:bg-[var(--surface-raised)]"
                     >
-                      <LogOut className="h-4 w-4" />
                       Sign Out
                     </button>
                   </div>
-                </>
-              )}
-            </div>
+                )}
+              </div>
+            </>
           ) : (
-            <div className="hidden items-center gap-2 sm:flex">
-              <Button variant="ghost" size="sm" href="/login">
-                Log In
-              </Button>
-              <Button variant="primary" size="sm" href="/signup">
+            <>
+              <Link
+                href="/login"
+                className="text-white/90 hover:text-white text-sm font-medium px-4 py-2"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                className="bg-[var(--teal)] hover:bg-[var(--teal-dark)] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+              >
                 Sign Up
-              </Button>
-            </div>
+              </Link>
+            </>
           )}
-
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="inline-flex items-center justify-center rounded-lg p-2 text-text-secondary transition-colors hover:bg-border-lt md:hidden"
-            aria-label="Toggle menu"
-            aria-expanded={mobileMenuOpen}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </button>
         </div>
+
+        {/* Mobile hamburger */}
+        <button
+          className="md:hidden text-white p-2"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle menu"
+        >
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            {menuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
       </div>
 
       {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <nav
-          className="border-t border-border bg-card px-4 pb-4 pt-2 md:hidden"
-          aria-label="Mobile"
-        >
-          <div className="flex flex-col gap-1">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-accent-bg text-accent"
-                      : "text-text-secondary hover:bg-border-lt hover:text-text-primary",
-                  )}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </div>
-
+      {menuOpen && (
+        <div className="md:hidden bg-[var(--navy)] border-t border-[var(--navy-light)] px-4 pb-4">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className="block py-3 text-white/80 hover:text-white text-sm font-medium border-b border-white/10"
+            >
+              {link.label}
+            </Link>
+          ))}
           {!loading && !user && (
-            <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-              <Button variant="ghost" size="md" href="/login" fullWidth>
-                Log In
-              </Button>
-              <Button variant="primary" size="md" href="/signup" fullWidth>
+            <div className="flex gap-3 mt-4">
+              <Link href="/login" className="flex-1 text-center text-white border border-white/30 rounded-lg py-2 text-sm">
+                Sign In
+              </Link>
+              <Link href="/signup" className="flex-1 text-center bg-[var(--teal)] text-white rounded-lg py-2 text-sm font-semibold">
                 Sign Up
-              </Button>
+              </Link>
             </div>
           )}
-          {!loading && user && (
-            <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-              <Button variant="ghost" size="md" href="/member/dashboard" fullWidth>
-                Dashboard
-              </Button>
-              <Button variant="ghost" size="md" fullWidth onClick={() => { setMobileMenuOpen(false); signOut(); }}>
-                Sign Out
-              </Button>
-            </div>
-          )}
-        </nav>
+        </div>
       )}
     </header>
   );

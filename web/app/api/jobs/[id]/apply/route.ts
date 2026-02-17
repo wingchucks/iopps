@@ -1,110 +1,58 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { verifyIdToken } from "@/lib/auth";
-import { getJobById } from "@/lib/firestore/jobs";
-import { createApplication } from "@/lib/firestore/applications";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuthToken } from "@/lib/api-auth";
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
-/**
- * POST /api/jobs/:id/apply
- *
- * Authenticated endpoint -- submits a job application for the given job.
- *
- * Requires a valid Firebase ID token in the Authorization header.
- *
- * Body (JSON):
- *   resumeUrl?        - URL to the applicant's resume
- *   coverLetter?      - Text cover letter
- *   note?             - Additional notes / interest statement
- *   memberEmail?      - Applicant email (falls back to token email)
- *   memberDisplayName? - Applicant name (falls back to token name)
- *   portfolioUrls?    - Array of portfolio URLs
- */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    // Authenticate
-    const authResult = await verifyIdToken(request);
-    if (!authResult.success) return authResult.response;
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authResult = await verifyAuthToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-    const { decodedToken } = authResult;
-    const { id: jobId } = await params;
+  const { id: jobId } = await params;
+  const body = await request.json();
+  const { decodedToken } = authResult;
 
-    if (!jobId) {
-      return NextResponse.json(
-        { error: "Job ID is required" },
-        { status: 400 },
-      );
-    }
+  // Verify job exists and is active
+  const jobDoc = await adminDb.collection("posts").doc(jobId).get();
+  if (!jobDoc.exists) return NextResponse.json({ error: "Job not found" }, { status: 404 });
+  const job = jobDoc.data()!;
+  if (job.status !== "active") return NextResponse.json({ error: "Job not accepting applications" }, { status: 400 });
 
-    // Verify the job exists and is active
-    const job = await getJobById(jobId);
+  // Check for duplicate application
+  const existing = await adminDb.collection("applications")
+    .where("jobId", "==", jobId)
+    .where("applicantUid", "==", decodedToken.uid)
+    .limit(1).get();
+  if (!existing.empty) return NextResponse.json({ error: "Already applied" }, { status: 409 });
 
-    if (!job) {
-      return NextResponse.json(
-        { error: "Job not found" },
-        { status: 404 },
-      );
-    }
+  // Get user profile
+  const userDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
+  const user = userDoc.data();
 
-    if (!job.active) {
-      return NextResponse.json(
-        { error: "This job is no longer accepting applications" },
-        { status: 400 },
-      );
-    }
+  const now = FieldValue.serverTimestamp();
+  const application = {
+    jobId,
+    jobTitle: job.title,
+    orgId: job.orgId,
+    orgName: job.orgName,
+    applicantUid: decodedToken.uid,
+    applicantName: user?.displayName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+    applicantEmail: decodedToken.email || "",
+    resumeURL: body.resumeURL || user?.resumeURL || "",
+    coverMessage: body.coverMessage || "",
+    attachments: body.attachments || [],
+    status: "submitted",
+    statusHistory: [{ status: "submitted", at: new Date() }],
+    createdAt: now,
+    updatedAt: now,
+  };
 
-    // Parse and validate request body
-    const body = (await request.json()) as Record<string, unknown>;
+  const ref = await adminDb.collection("applications").add(application);
 
-    const resumeUrl = typeof body.resumeUrl === "string" ? body.resumeUrl : undefined;
-    const coverLetter = typeof body.coverLetter === "string" ? body.coverLetter : undefined;
-    const note = typeof body.note === "string" ? body.note : undefined;
-    const memberEmail =
-      typeof body.memberEmail === "string"
-        ? body.memberEmail
-        : decodedToken.email ?? undefined;
-    const memberDisplayName =
-      typeof body.memberDisplayName === "string"
-        ? body.memberDisplayName
-        : decodedToken.name ?? undefined;
-    const portfolioUrls =
-      Array.isArray(body.portfolioUrls) &&
-      body.portfolioUrls.every((u: unknown) => typeof u === "string")
-        ? (body.portfolioUrls as string[])
-        : undefined;
+  // Increment application count on the job
+  await adminDb.collection("posts").doc(jobId).update({
+    applicationCount: FieldValue.increment(1),
+  });
 
-    // At least a cover letter or resume should be provided
-    if (!resumeUrl && !coverLetter) {
-      return NextResponse.json(
-        { error: "Please provide a resume URL or cover letter" },
-        { status: 400 },
-      );
-    }
-
-    const applicationId = await createApplication({
-      jobId,
-      employerId: job.employerId,
-      memberId: decodedToken.uid,
-      memberEmail,
-      memberDisplayName,
-      resumeUrl,
-      coverLetter,
-      note,
-      coverLetterType: coverLetter ? "text" : undefined,
-      coverLetterContent: coverLetter,
-      portfolioUrls,
-    });
-
-    return NextResponse.json(
-      { id: applicationId, message: "Application submitted successfully" },
-      { status: 201 },
-    );
-  } catch (error) {
-    console.error("[POST /api/jobs/:id/apply] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to submit application" },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json({ id: ref.id }, { status: 201 });
 }

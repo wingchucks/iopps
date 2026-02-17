@@ -1,164 +1,75 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAdminToken } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import { verifyAdminToken } from "@/lib/api-auth";
 
-export const dynamic = "force-dynamic";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-type EmployerStatus = "pending" | "approved" | "rejected";
-type EmployerAction = "approve" | "reject";
-
-interface UpdateEmployerBody {
-  employerId: string;
-  action: EmployerAction;
-  reason?: string;
-}
-
-// ---------------------------------------------------------------------------
-// GET /api/admin/employers
-// ---------------------------------------------------------------------------
-
-/**
- * List employer profiles with optional status filter.
- *
- * Query params:
- *   status - "pending" | "approved" | "rejected" (optional)
- */
 export async function GET(request: NextRequest) {
-  const auth = await verifyAdminToken(request);
-  if (!auth.success) return auth.response;
+  const authResult = await verifyAdminToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-  if (!adminDb) {
-    return NextResponse.json(
-      { error: "Firestore not initialized" },
-      { status: 500 }
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+  const verification = searchParams.get("verification");
+  const search = searchParams.get("search");
+  const feedSync = searchParams.get("feedSync");
+  const tier = searchParams.get("tier");
+  const sort = searchParams.get("sort") || "createdAt_desc";
+
+  // Single org lookup
+  if (id) {
+    const doc = await adminDb.collection("organizations").doc(id).get();
+    if (!doc.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ organizations: [{ id: doc.id, ...doc.data() }] });
+  }
+
+  let query: FirebaseFirestore.Query = adminDb.collection("organizations");
+
+  if (verification) query = query.where("verification", "==", verification);
+  if (feedSync === "true") query = query.where("feedSync.enabled", "==", true);
+  if (tier) {
+    const tiers = tier.split(",");
+    query = query.where("subscription.tier", "in", tiers);
+  }
+
+  const [sortField, sortDir] = sort.split("_");
+  query = query.orderBy(sortField || "createdAt", (sortDir as "asc" | "desc") || "desc");
+  query = query.limit(100);
+
+  const snapshot = await query.get();
+  let orgs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  if (search) {
+    const q = search.toLowerCase();
+    orgs = orgs.filter((o: Record<string, unknown>) =>
+      (o.name as string)?.toLowerCase().includes(q)
     );
   }
 
-  try {
-    const { searchParams } = request.nextUrl;
-    const status = searchParams.get("status") as EmployerStatus | null;
-
-    let query = adminDb
-      .collection("employers")
-      .orderBy("createdAt", "desc")
-      .limit(100);
-
-    if (status) {
-      const validStatuses: ReadonlySet<string> = new Set([
-        "pending",
-        "approved",
-        "rejected",
-      ]);
-
-      if (!validStatuses.has(status)) {
-        return NextResponse.json(
-          { error: "Invalid status filter. Must be: pending, approved, or rejected" },
-          { status: 400 }
-        );
-      }
-
-      query = adminDb
-        .collection("employers")
-        .where("status", "==", status)
-        .orderBy("createdAt", "desc")
-        .limit(100);
-    }
-
-    const snapshot = await query.get();
-    const employers = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    return NextResponse.json({ employers });
-  } catch (error) {
-    console.error("[GET /api/admin/employers] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch employers" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({ organizations: orgs });
 }
 
-// ---------------------------------------------------------------------------
-// POST /api/admin/employers
-// ---------------------------------------------------------------------------
+export async function PATCH(request: NextRequest) {
+  const authResult = await verifyAdminToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-/**
- * Approve or reject an employer.
- *
- * Body:
- *   employerId - the document ID of the employer
- *   action     - "approve" | "reject"
- *   reason     - optional rejection reason (required for reject)
- */
-export async function POST(request: NextRequest) {
-  const auth = await verifyAdminToken(request);
-  if (!auth.success) return auth.response;
+  const body = await request.json();
+  const { id, ...updates } = body;
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  if (!adminDb) {
-    return NextResponse.json(
-      { error: "Firestore not initialized" },
-      { status: 500 }
-    );
+  // Handle nested feedSync updates
+  const flatUpdates: Record<string, unknown> = {};
+  if (updates.feedSync) {
+    for (const [key, value] of Object.entries(updates.feedSync)) {
+      flatUpdates[`feedSync.${key}`] = value;
+    }
+    delete updates.feedSync;
   }
 
-  try {
-    const body = (await request.json()) as UpdateEmployerBody;
+  Object.assign(flatUpdates, updates);
+  flatUpdates.updatedAt = FieldValue.serverTimestamp();
 
-    if (!body.employerId || typeof body.employerId !== "string") {
-      return NextResponse.json(
-        { error: "employerId is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!body.action || !["approve", "reject"].includes(body.action)) {
-      return NextResponse.json(
-        { error: "action must be 'approve' or 'reject'" },
-        { status: 400 }
-      );
-    }
-
-    const employerRef = adminDb.collection("employers").doc(body.employerId);
-    const employerSnap = await employerRef.get();
-
-    if (!employerSnap.exists) {
-      return NextResponse.json(
-        { error: "Employer not found" },
-        { status: 404 }
-      );
-    }
-
-    if (body.action === "approve") {
-      await employerRef.update({
-        status: "approved",
-        approvedAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-    } else {
-      await employerRef.update({
-        status: "rejected",
-        rejectionReason: body.reason ?? "",
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-    }
-
-    return NextResponse.json({
-      success: true,
-      employerId: body.employerId,
-      action: body.action,
-    });
-  } catch (error) {
-    console.error("[POST /api/admin/employers] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to update employer" },
-      { status: 500 }
-    );
-  }
+  await adminDb.collection("organizations").doc(id).update(flatUpdates);
+  return NextResponse.json({ success: true });
 }

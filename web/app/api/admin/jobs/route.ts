@@ -1,171 +1,99 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAdminToken } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import { verifyAdminToken } from "@/lib/api-auth";
 
-export const dynamic = "force-dynamic";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-type JobStatusFilter = "active" | "inactive";
-type JobAction = "activate" | "deactivate" | "delete";
-
-interface UpdateJobBody {
-  jobId: string;
-  action: JobAction;
-}
-
-const VALID_ACTIONS: ReadonlySet<string> = new Set([
-  "activate",
-  "deactivate",
-  "delete",
-]);
-
-// ---------------------------------------------------------------------------
-// GET /api/admin/jobs
-// ---------------------------------------------------------------------------
-
-/**
- * List jobs with optional status filter.
- *
- * Query params:
- *   status - "active" | "inactive" (optional)
- *            Maps to the `active` boolean field on job documents.
- */
 export async function GET(request: NextRequest) {
-  const auth = await verifyAdminToken(request);
-  if (!auth.success) return auth.response;
+  const authResult = await verifyAdminToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-  if (!adminDb) {
-    return NextResponse.json(
-      { error: "Firestore not initialized" },
-      { status: 500 }
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
+  const type = searchParams.get("type");
+  const status = searchParams.get("status");
+  const featured = searchParams.get("featured");
+  const search = searchParams.get("search");
+  const sort = searchParams.get("sort") || "createdAt_desc";
+
+  let query: FirebaseFirestore.Query = adminDb.collection("posts");
+  if (type) query = query.where("type", "==", type);
+  if (status) query = query.where("status", "==", status);
+  if (featured === "true") query = query.where("featured", "==", true);
+
+  const [sortField, sortDir] = sort.split("_");
+  query = query.orderBy(sortField || "createdAt", (sortDir as "asc" | "desc") || "desc");
+  query = query.offset((page - 1) * limit).limit(limit);
+
+  const snapshot = await query.get();
+  let posts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  if (search) {
+    const q = search.toLowerCase();
+    posts = posts.filter((p: Record<string, unknown>) =>
+      (p.title as string)?.toLowerCase().includes(q) ||
+      (p.orgName as string)?.toLowerCase().includes(q)
     );
   }
 
-  try {
-    const { searchParams } = request.nextUrl;
-    const status = searchParams.get("status") as JobStatusFilter | null;
-
-    let query = adminDb
-      .collection("jobs")
-      .orderBy("createdAt", "desc")
-      .limit(100);
-
-    if (status) {
-      if (status !== "active" && status !== "inactive") {
-        return NextResponse.json(
-          { error: "Invalid status filter. Must be: active or inactive" },
-          { status: 400 }
-        );
-      }
-
-      const isActive = status === "active";
-
-      query = adminDb
-        .collection("jobs")
-        .where("active", "==", isActive)
-        .orderBy("createdAt", "desc")
-        .limit(100);
-    }
-
-    const snapshot = await query.get();
-    const jobs = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    return NextResponse.json({ jobs });
-  } catch (error) {
-    console.error("[GET /api/admin/jobs] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch jobs" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({ posts });
 }
 
-// ---------------------------------------------------------------------------
-// POST /api/admin/jobs
-// ---------------------------------------------------------------------------
+export async function PATCH(request: NextRequest) {
+  const authResult = await verifyAdminToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-/**
- * Update a job's status or delete it.
- *
- * Body:
- *   jobId  - the document ID of the job
- *   action - "activate" | "deactivate" | "delete"
- */
-export async function POST(request: NextRequest) {
-  const auth = await verifyAdminToken(request);
-  if (!auth.success) return auth.response;
+  const body = await request.json();
 
-  if (!adminDb) {
-    return NextResponse.json(
-      { error: "Firestore not initialized" },
-      { status: 500 }
-    );
-  }
+  // Create new post (used by admin stories creator)
+  if (body.create) {
+    const { create: _, id: _id, ...postData } = body;
+    const now = FieldValue.serverTimestamp();
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 10); // Stories don't expire
 
-  try {
-    const body = (await request.json()) as UpdateJobBody;
-
-    if (!body.jobId || typeof body.jobId !== "string") {
-      return NextResponse.json(
-        { error: "jobId is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!body.action || !VALID_ACTIONS.has(body.action)) {
-      return NextResponse.json(
-        { error: "action must be one of: activate, deactivate, delete" },
-        { status: 400 }
-      );
-    }
-
-    const jobRef = adminDb.collection("jobs").doc(body.jobId);
-    const jobSnap = await jobRef.get();
-
-    if (!jobSnap.exists) {
-      return NextResponse.json(
-        { error: "Job not found" },
-        { status: 404 }
-      );
-    }
-
-    switch (body.action) {
-      case "activate":
-        await jobRef.update({
-          active: true,
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-        break;
-
-      case "deactivate":
-        await jobRef.update({
-          active: false,
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-        break;
-
-      case "delete":
-        await jobRef.delete();
-        break;
-    }
-
-    return NextResponse.json({
-      success: true,
-      jobId: body.jobId,
-      action: body.action,
+    const ref = await adminDb.collection("posts").add({
+      orgId: "admin",
+      orgName: "IOPPS",
+      orgLogoURL: null,
+      orgTier: "none",
+      location: { city: "", province: "" },
+      featured: false,
+      featuredUntil: null,
+      viewCount: 0,
+      saveCount: 0,
+      expiresAt,
+      createdAt: now,
+      updatedAt: now,
+      ...postData,
     });
-  } catch (error) {
-    console.error("[POST /api/admin/jobs] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to update job" },
-      { status: 500 }
-    );
+    return NextResponse.json({ id: ref.id }, { status: 201 });
   }
+
+  const { id, ...updates } = body;
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  updates.updatedAt = FieldValue.serverTimestamp();
+  await adminDb.collection("posts").doc(id).update(updates);
+
+  return NextResponse.json({ success: true });
+}
+
+export async function DELETE(request: NextRequest) {
+  const authResult = await verifyAdminToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
+
+  const { id } = await request.json();
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  // Soft delete
+  await adminDb.collection("posts").doc(id).update({
+    status: "hidden",
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return NextResponse.json({ success: true });
 }

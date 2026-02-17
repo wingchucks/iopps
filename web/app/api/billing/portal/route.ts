@@ -1,88 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth } from "@/lib/firebase-admin";
-import { getFirestore } from "firebase-admin/firestore";
+import { verifyAuthToken } from "@/lib/api-auth";
+import { adminDb } from "@/lib/firebase-admin";
 import { stripe } from "@/lib/stripe";
 
-export const dynamic = "force-dynamic";
-
 export async function POST(request: NextRequest) {
-    try {
-        // Verify authentication
-        const authHeader = request.headers.get("authorization");
-        if (!authHeader?.startsWith("Bearer ")) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+  const authResult = await verifyAuthToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-        if (!adminAuth) {
-            return NextResponse.json({ error: "Firebase Admin not initialized" }, { status: 500 });
-        }
+  // Find user's org
+  const orgSnap = await adminDb.collection("organizations")
+    .where("teamMemberIds", "array-contains", authResult.decodedToken.uid).limit(1).get();
+  if (orgSnap.empty) return NextResponse.json({ error: "No organization found" }, { status: 404 });
 
-        const token = authHeader.substring(7);
-        const decodedToken = await adminAuth.verifyIdToken(token);
-        const userId = decodedToken.uid;
-        const email = decodedToken.email;
-        const db = getFirestore();
+  const org = orgSnap.docs[0].data();
+  if (!org.subscription?.stripeCustomerId) {
+    return NextResponse.json({ error: "No Stripe customer" }, { status: 400 });
+  }
 
-        // Get or create Stripe customer ID
-        const userRef = db.collection("users").doc(userId);
-        const userDoc = await userRef.get();
-        const userData = userDoc.data();
+  const session = await stripe.billingPortal.sessions.create({
+    customer: org.subscription.stripeCustomerId,
+    return_url: `${request.headers.get("origin") || process.env.NEXT_PUBLIC_BASE_URL}/dashboard/billing`,
+  });
 
-        let customerId = userData?.stripeCustomerId;
-
-        if (!customerId) {
-            // Check employers collection as well
-            const employerRef = db.collection("employers").doc(userId);
-            const employerDoc = await employerRef.get();
-            const employerData = employerDoc.data();
-            customerId = employerData?.stripeCustomerId;
-
-            if (!customerId) {
-                // Search for existing customer by email
-                const existingCustomers = await stripe.customers.list({
-                    email: email || undefined,
-                    limit: 1,
-                });
-
-                if (existingCustomers.data.length > 0) {
-                    customerId = existingCustomers.data[0].id;
-                } else {
-                    // Create new customer
-                    const customer = await stripe.customers.create({
-                        email: email || undefined,
-                        metadata: {
-                            userId,
-                        },
-                    });
-                    customerId = customer.id;
-                }
-
-                // Store customer ID for future use
-                if (userDoc.exists) {
-                    await userRef.update({ stripeCustomerId: customerId });
-                }
-                if (employerDoc.exists) {
-                    await employerRef.update({ stripeCustomerId: customerId });
-                }
-            }
-        }
-
-        // Get the return URL from request body
-        const body = await request.json().catch(() => ({}));
-        const returnUrl = body.returnUrl || `${process.env.NEXT_PUBLIC_SITE_URL}/organization/billing`;
-
-        // Create Customer Portal session
-        const session = await stripe.billingPortal.sessions.create({
-            customer: customerId,
-            return_url: returnUrl,
-        });
-
-        return NextResponse.json({ url: session.url });
-    } catch (error) {
-        console.error("Error creating portal session:", error);
-        return NextResponse.json(
-            { error: "Failed to create billing portal session" },
-            { status: 500 }
-        );
-    }
+  return NextResponse.json({ url: session.url });
 }

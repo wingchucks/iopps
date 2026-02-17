@@ -1,184 +1,146 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Briefcase, GraduationCap, Users, Building2, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
 
-interface Stats {
-  jobs: number;
-  members: number;
-  organizations: number;
-  events: number;
-}
+const PILLARS = [
+  { icon: "💼", title: "Careers", desc: "Find your next opportunity" },
+  { icon: "🎓", title: "Education", desc: "Programs, scholarships & schools" },
+  { icon: "🏪", title: "Business", desc: "Shop Indigenous marketplace" },
+  { icon: "🎤", title: "Conferences", desc: "Professional events & career fairs" },
+  { icon: "🪶", title: "Community", desc: "Pow wows, round dances & gatherings" },
+  { icon: "📡", title: "Live", desc: "IOPPS Spotlight livestreams" },
+];
 
-const features = [
-  {
-    title: "Careers",
-    description:
-      "Browse Indigenous-focused job opportunities from organizations committed to Indigenous employment and reconciliation.",
-    href: "/careers",
-    icon: Briefcase,
-  },
-  {
-    title: "Education",
-    description:
-      "Discover scholarships, conferences, and learning opportunities designed to support Indigenous students and professionals.",
-    href: "/education",
-    icon: GraduationCap,
-  },
-  {
-    title: "Community",
-    description:
-      "Connect with pow wows, cultural events, and community gatherings happening across Canada.",
-    href: "/community",
-    icon: Users,
-  },
-  {
-    title: "Business Directory",
-    description:
-      "Find and support Indigenous-owned businesses, or list your own to reach a wider audience.",
-    href: "/business",
-    icon: Building2,
-  },
+const STATS = [
+  { value: "442+", label: "Active Jobs" },
+  { value: "164+", label: "Organizations" },
+  { value: "756+", label: "Community Members" },
+  { value: "24+", label: "Events" },
 ];
 
 export default function HomePage() {
-  const [stats, setStats] = useState<Stats>({ jobs: 0, members: 0, organizations: 0, events: 0 });
-
-  useEffect(() => {
-    fetch("/api/stats/public")
-      .then((r) => r.json())
-      .then(setStats)
-      .catch(() => {});
-  }, []);
-
-  const statItems = [
-    { label: "Active Jobs", value: stats.jobs },
-    { label: "Organizations", value: stats.organizations },
-    { label: "Members", value: stats.members },
-    { label: "Events", value: stats.events },
-  ];
-
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-background px-4 py-20 sm:py-28 lg:py-32">
-        <div className="mx-auto max-w-4xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-5xl lg:text-6xl">
-            <span className="text-accent">IOPPS.CA</span>
-            <br />
-            Empowering Indigenous Success
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-text-secondary">
-            Canada&apos;s hub for Indigenous jobs, conferences, scholarships, pow
-            wows, business directories, and live streams.
+    <>
+      {/* Hero */}
+      <section className="bg-hero-gradient text-white">
+        <div className="max-w-5xl mx-auto px-4 py-24 md:py-32 text-center">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-wide mb-6">IOPPS</h1>
+          <span className="slogan-pill mb-6 inline-block">EMPOWERING INDIGENOUS SUCCESS</span>
+          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8">
+            The platform where Indigenous opportunities live. Jobs, events, scholarships, education, businesses, and livestreams — all in one place.
           </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button variant="primary" size="lg" href="/careers">
-              Browse Jobs
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button variant="secondary" size="lg" href="/pricing">
-              For Employers
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            <Link
+              href="/signup"
+              className="bg-[var(--teal)] hover:bg-[var(--teal-dark)] text-white font-semibold px-8 py-3 rounded-lg text-lg transition-colors"
+            >
+              Join the Community
+            </Link>
+            <Link
+              href="/login"
+              className="border border-white/40 hover:border-white text-white font-semibold px-8 py-3 rounded-lg text-lg transition-colors"
+            >
+              Sign In
+            </Link>
           </div>
+          <p className="text-white/50 text-sm">84,200+ community members across Canada</p>
         </div>
-
-        {/* Decorative gradient orbs */}
-        <div
-          className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full opacity-20 blur-3xl"
-          style={{ background: "var(--accent)" }}
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-10 blur-3xl"
-          style={{ background: "var(--info)" }}
-          aria-hidden="true"
-        />
       </section>
 
-      {/* Stats Section */}
-      <section className="border-y border-border bg-surface px-4 py-12">
-        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-8 sm:grid-cols-4">
-          {statItems.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-3xl font-bold text-accent">
-                {stat.value > 0 ? stat.value.toLocaleString() : "0"}
-              </p>
-              <p className="mt-1 text-sm text-text-muted">{stat.label}</p>
+      {/* Six Pillars */}
+      <section className="max-w-6xl mx-auto px-4 py-20">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-[var(--text-primary)]">
+          Everything in One Place
+        </h2>
+        <p className="text-center text-[var(--text-secondary)] mb-12 max-w-xl mx-auto">
+          Six pillars of Indigenous opportunity — curated for community, by community.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          {PILLARS.map((p) => (
+            <div
+              key={p.title}
+              className="card-interactive bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-6 text-center"
+            >
+              <span className="text-4xl mb-3 block">{p.icon}</span>
+              <h3 className="font-semibold text-lg text-[var(--text-primary)] mb-1">{p.title}</h3>
+              <p className="text-sm text-[var(--text-secondary)]">{p.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="px-4 py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold text-text-primary">
-              Everything You Need
-            </h2>
-            <p className="mt-3 text-text-secondary">
-              A comprehensive platform built for Indigenous communities and their
-              allies.
-            </p>
-          </div>
+      {/* Stats */}
+      <section className="bg-[var(--surface-raised)] py-16">
+        <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          {STATS.map((s) => (
+            <div key={s.label}>
+              <div className="text-3xl md:text-4xl font-bold text-[var(--teal)]">{s.value}</div>
+              <div className="text-sm text-[var(--text-secondary)] mt-1">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <Link key={feature.href} href={feature.href} className="group">
-                  <Card className="h-full transition-all duration-200 hover:-translate-y-1 hover:border-card-border-hover hover:shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="mb-4 inline-flex rounded-lg bg-accent-bg p-3">
-                        <Icon className="h-6 w-6 text-accent" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-text-primary group-hover:text-accent">
-                        {feature.title}
-                      </h3>
-                      <p className="mt-2 text-sm text-text-muted">
-                        {feature.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
+      {/* Origin Story */}
+      <section className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <h2 className="text-3xl font-bold mb-6 text-[var(--text-primary)]">Our Story</h2>
+        <p className="text-[var(--text-secondary)] leading-relaxed mb-8 max-w-2xl mx-auto">
+          Started in 2012 as a Facebook group sharing Indigenous job opportunities. Grew into
+          Canada&apos;s leading Indigenous opportunity platform — from careers and education to
+          livestreaming pow wows and hockey tournaments.
+        </p>
+        <blockquote className="border-l-4 border-[var(--teal)] pl-6 text-left max-w-xl mx-auto italic text-[var(--text-secondary)]">
+          &ldquo;I wanted to create a space where our people could find every opportunity in one
+          place — jobs, education, events, and community — without barriers.&rdquo;
+          <footer className="mt-2 text-sm font-semibold text-[var(--text-primary)] not-italic">
+            — Nathan Brugh, Founder
+          </footer>
+        </blockquote>
+      </section>
+
+      {/* Partner Logo Strip */}
+      <section className="bg-[var(--surface-raised)] py-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+              Our Partners
+            </h3>
+            <span className="slogan text-[var(--teal)] text-xs opacity-60 hidden md:block">
+              EMPOWERING INDIGENOUS SUCCESS
+            </span>
+          </div>
+          <div className="h-20 rounded-lg border border-dashed border-[var(--card-border)] flex items-center justify-center text-[var(--text-muted)] text-sm">
+            Partner logos coming soon
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="bg-accent px-4 py-16 text-white">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold">Ready to Get Started?</h2>
-          <p className="mt-3 text-white/80">
-            {stats.members > 0
-              ? `Join ${stats.members.toLocaleString()} Indigenous professionals and organizations already using IOPPS to connect and grow.`
-              : "Join Indigenous professionals and organizations already using IOPPS to connect and grow."}
+      {/* For Employers CTA */}
+      <section className="max-w-5xl mx-auto px-4 py-20">
+        <div className="bg-[var(--navy)] rounded-2xl p-8 md:p-12 text-center text-white">
+          <h2 className="text-3xl font-bold mb-4">Reach Indigenous Talent Across Canada</h2>
+          <p className="text-white/70 mb-8 max-w-lg mx-auto">
+            Post jobs, promote programs, and connect with Indigenous professionals and communities.
+            Plans start at $125/post.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button
-              variant="navy"
-              size="lg"
-              href="/signup"
-            >
-              Create Free Account
-            </Button>
-            <Button
-              variant="ghost"
-              size="lg"
-              href="/about"
-              className="text-white hover:bg-white/10 hover:text-white"
-            >
-              Learn More
-            </Button>
-          </div>
+          <Link
+            href="/pricing"
+            className="inline-block bg-[var(--teal)] hover:bg-[var(--teal-dark)] text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+          >
+            View Plans
+          </Link>
         </div>
       </section>
-    </div>
+
+      {/* Final CTA */}
+      <section className="bg-[var(--teal)] py-16 text-center text-white">
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Join?</h2>
+        <p className="text-white/80 mb-8">Free for Indigenous community members — always.</p>
+        <Link
+          href="/signup"
+          className="inline-block bg-white text-[var(--teal-dark)] font-semibold px-8 py-3 rounded-lg hover:bg-white/90 transition-colors"
+        >
+          Sign Up Now
+        </Link>
+      </section>
+    </>
   );
 }

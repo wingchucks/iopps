@@ -1,49 +1,59 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { getJobById } from "@/lib/firestore/jobs";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuthToken } from "@/lib/api-auth";
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
-/**
- * GET /api/jobs/:id
- *
- * Public endpoint -- returns a single job posting by document ID.
- * Returns 404 if the job does not exist or is inactive.
- */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
+  const { id } = await params;
+  const doc = await adminDb.collection("posts").doc(id).get();
+  if (!doc.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    if (!id) {
-      return NextResponse.json(
-        { error: "Job ID is required" },
-        { status: 400 },
-      );
+  // Increment view count
+  await adminDb.collection("posts").doc(id).update({ viewCount: FieldValue.increment(1) });
+
+  return NextResponse.json({ id: doc.id, ...doc.data() });
+}
+
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authResult = await verifyAuthToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
+
+  const { id } = await params;
+  const body = await request.json();
+  const doc = await adminDb.collection("posts").doc(id).get();
+  if (!doc.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Verify ownership or admin
+  const postData = doc.data()!;
+  const isAdmin = authResult.decodedToken.admin === true || authResult.decodedToken.role === "admin";
+  if (!isAdmin && postData.orgId) {
+    const orgSnap = await adminDb.collection("organizations").doc(postData.orgId).get();
+    const orgData = orgSnap.data();
+    if (!orgData?.teamMemberIds?.includes(authResult.decodedToken.uid)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
-    const job = await getJobById(id);
-
-    if (!job) {
-      return NextResponse.json(
-        { error: "Job not found" },
-        { status: 404 },
-      );
-    }
-
-    // Only return active jobs through the public API
-    if (!job.active) {
-      return NextResponse.json(
-        { error: "Job not found" },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json({ job });
-  } catch (error) {
-    console.error("[GET /api/jobs/:id] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch job" },
-      { status: 500 },
-    );
   }
+
+  const { id: _id, ...updates } = body;
+  updates.updatedAt = FieldValue.serverTimestamp();
+
+  await adminDb.collection("posts").doc(id).update(updates);
+  return NextResponse.json({ success: true });
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authResult = await verifyAuthToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
+
+  const { id } = await params;
+  // Soft delete
+  await adminDb.collection("posts").doc(id).update({
+    status: "hidden",
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return NextResponse.json({ success: true });
 }

@@ -1,202 +1,93 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service",
-  description:
-    "Terms of Service for IOPPS.ca — Canada's Indigenous Opportunities & Partnerships Platform.",
+  title: "Terms of Service — IOPPS.ca",
+  description: "IOPPS.ca terms of service. Rules for using our platform, account types, content guidelines, and refund policy.",
 };
 
 export default function TermsPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16">
-      <h1 className="text-3xl font-bold">Terms of Service</h1>
-      <p className="mt-2 text-sm text-text-secondary">
-        Last updated: February 17, 2026
-      </p>
+    <div className="py-16 px-4 max-w-3xl mx-auto">
+      <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">Terms of Service</h1>
+      <p className="text-[var(--text-muted)] mb-10">Last updated: February 2025</p>
 
-      <div className="mt-8 space-y-8 text-text-secondary leading-relaxed">
+      <div className="prose prose-slate max-w-none space-y-8 text-[var(--text-secondary)]">
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            1. Acceptance of Terms
-          </h2>
-          <p className="mt-2">
-            By accessing or using IOPPS.ca (the &ldquo;Platform&rdquo;),
-            operated by IOPPS (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or
-            &ldquo;our&rdquo;), you agree to be bound by these Terms of
-            Service. If you do not agree, please do not use the Platform.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">1. Acceptance of Terms</h2>
+          <p>By accessing or using IOPPS.ca (&quot;the Platform&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not use the Platform.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            2. About the Platform
-          </h2>
-          <p className="mt-2">
-            IOPPS is Canada&rsquo;s Indigenous Opportunities &amp; Partnerships
-            Platform. We connect Indigenous peoples and communities with jobs,
-            scholarships, conferences, pow wows, and Indigenous-owned businesses
-            across Canada.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">2. Account Types</h2>
+          <p><strong>Community Members:</strong> Free accounts for individuals. Access to browse, save, and apply to opportunities. Must complete a profile to access all features.</p>
+          <p className="mt-2"><strong>Organizations:</strong> Paid accounts for employers, schools, and businesses. Must verify their organization to post content. Subject to subscription terms.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            3. User Accounts
-          </h2>
-          <p className="mt-2">
-            To access certain features, you may need to create an account. You
-            are responsible for maintaining the confidentiality of your account
-            credentials and for all activities that occur under your account. You
-            agree to provide accurate and complete information and to update it
-            as necessary. We reserve the right to suspend or terminate accounts
-            that violate these Terms.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">3. Subscription Terms &amp; No Refunds</h2>
+          <p>All subscription plans (Standard, Premium, School Tier) are billed annually. <strong>All sales are final. No refunds will be issued.</strong></p>
+          <p className="mt-2">If you wish to cancel, your subscription will remain active until the end of the current billing period. Your posts will be hidden if you do not renew.</p>
+          <p className="mt-2">You may upgrade from Standard to Premium at any time. You will be credited for the remaining time on your current plan.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            4. Acceptable Use
-          </h2>
-          <p className="mt-2">You agree not to:</p>
-          <ul className="mt-2 list-disc space-y-1 pl-6">
-            <li>
-              Post false, misleading, or fraudulent content, including job
-              listings or business profiles
-            </li>
-            <li>
-              Use the Platform to harass, discriminate against, or harm any
-              individual or community
-            </li>
-            <li>
-              Misrepresent your identity or Indigenous affiliation
-            </li>
-            <li>
-              Attempt to gain unauthorized access to the Platform or its systems
-            </li>
-            <li>
-              Use automated tools to scrape or collect data from the Platform
-              without written consent
-            </li>
-            <li>
-              Violate any applicable local, provincial, or federal law
-            </li>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">4. Content Guidelines</h2>
+          <p>All content posted to IOPPS must:</p>
+          <ul className="list-disc pl-6 space-y-1">
+            <li>Be relevant to Indigenous communities (jobs, events, scholarships, education, business)</li>
+            <li>Be accurate and not misleading</li>
+            <li>Not contain hate speech, discrimination, or harassment</li>
+            <li>Not contain spam, scams, or fraudulent content</li>
+            <li>Not violate any applicable laws</li>
+          </ul>
+          <p className="mt-3">We reserve the right to remove any content that violates these guidelines without notice or refund.</p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">5. Intellectual Property</h2>
+          <p>You retain ownership of content you post. By posting, you grant IOPPS a non-exclusive, royalty-free license to display your content on the Platform. IOPPS branding, design, and code are our intellectual property.</p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">6. User Conduct</h2>
+          <p>You agree not to:</p>
+          <ul className="list-disc pl-6 space-y-1">
+            <li>Use the Platform for any unlawful purpose</li>
+            <li>Impersonate another person or organization</li>
+            <li>Scrape, crawl, or harvest data from the Platform</li>
+            <li>Attempt to bypass security measures or access restrictions</li>
+            <li>Post content that is defamatory, obscene, or harmful</li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            5. Employer &amp; Organization Accounts
-          </h2>
-          <p className="mt-2">
-            Organizations posting job listings or claiming business profiles
-            represent and warrant that their postings are accurate, comply with
-            applicable employment laws, and do not discriminate unlawfully. Paid
-            subscription plans are governed by the terms presented at the time of
-            purchase.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">7. Account Termination</h2>
+          <p>We may suspend or terminate accounts that violate these Terms. You may delete your account at any time through your account settings. Deletion is permanent and cannot be undone.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            6. Intellectual Property
-          </h2>
-          <p className="mt-2">
-            All content, design, trademarks, and intellectual property on the
-            Platform are owned by IOPPS or its licensors. You may not reproduce,
-            distribute, or create derivative works from our content without
-            written permission. Content you submit remains yours, but you grant
-            IOPPS a non-exclusive, royalty-free licence to use it in connection
-            with the Platform.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">8. Limitation of Liability</h2>
+          <p>IOPPS is provided &quot;as is&quot; without warranties of any kind. We are not liable for any damages arising from your use of the Platform, including but not limited to lost data, lost profits, or employment decisions made based on Platform content.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            7. Third-Party Links &amp; Services
-          </h2>
-          <p className="mt-2">
-            The Platform may contain links to third-party websites or services.
-            We are not responsible for the content, policies, or practices of
-            third-party services. Your use of such services is at your own risk.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">9. Privacy</h2>
+          <p>Your use of IOPPS is also governed by our <a href="/privacy" className="text-[var(--accent)] hover:underline">Privacy Policy</a>.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            8. Limitation of Liability
-          </h2>
-          <p className="mt-2">
-            To the fullest extent permitted by law, IOPPS and its directors,
-            officers, employees, and agents shall not be liable for any
-            indirect, incidental, special, consequential, or punitive damages
-            arising out of your use of or inability to use the Platform. Our
-            total liability shall not exceed the amount you paid to us, if any,
-            in the twelve (12) months preceding the claim.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">10. Governing Law</h2>
+          <p>These Terms are governed by the laws of the Province of Saskatchewan, Canada.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            9. Disclaimer of Warranties
-          </h2>
-          <p className="mt-2">
-            The Platform is provided &ldquo;as is&rdquo; and &ldquo;as
-            available&rdquo; without warranties of any kind, whether express or
-            implied. We do not guarantee the accuracy, completeness, or
-            reliability of any content, including job listings or business
-            profiles posted by third parties.
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">11. Changes to Terms</h2>
+          <p>We may update these Terms from time to time. Continued use of the Platform after changes constitutes acceptance.</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            10. Termination
-          </h2>
-          <p className="mt-2">
-            We may suspend or terminate your access to the Platform at any time,
-            with or without cause, and with or without notice. Upon termination,
-            your right to use the Platform ceases immediately.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            11. Changes to These Terms
-          </h2>
-          <p className="mt-2">
-            We may update these Terms from time to time. We will notify users of
-            material changes by posting the updated Terms on this page with a
-            revised date. Continued use of the Platform after changes constitutes
-            acceptance of the new Terms.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            12. Governing Law
-          </h2>
-          <p className="mt-2">
-            These Terms are governed by and construed in accordance with the laws
-            of the Province of Saskatchewan and the federal laws of Canada
-            applicable therein. Any disputes shall be resolved in the courts of
-            Saskatchewan, Canada.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold text-text-primary">
-            13. Contact Us
-          </h2>
-          <p className="mt-2">
-            If you have questions about these Terms, please contact us at{" "}
-            <a
-              href="mailto:support@iopps.ca"
-              className="text-accent hover:underline"
-            >
-              support@iopps.ca
-            </a>
-            .
-          </p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">12. Contact</h2>
+          <p>Questions? Contact us at <strong>legal@iopps.ca</strong> or visit <a href="/contact" className="text-[var(--accent)] hover:underline">iopps.ca/contact</a>.</p>
         </section>
       </div>
     </div>

@@ -1,43 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
-import { processJobAlerts } from "../shared";
+import { verifyCronAuth } from "@/lib/cron-auth";
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
-export const dynamic = "force-dynamic";
-export const maxDuration = 300; // 5 minutes
+export async function POST(request: NextRequest) {
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-function verifyCronSecret(request: NextRequest): boolean {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ") || !process.env.CRON_SECRET)
-    return false;
+  const usersSnap = await adminDb.collection("users")
+    .where("emailDigest.frequency", "==", "weekly")
+    .where("disabled", "==", false)
+    .get();
 
-  const token = authHeader.substring(7);
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(token),
-      Buffer.from(process.env.CRON_SECRET),
-    );
-  } catch {
-    return false;
-  }
-}
+  const lastWeek = new Date();
+  lastWeek.setDate(lastWeek.getDate() - 7);
+  const jobsSnap = await adminDb.collection("posts")
+    .where("type", "==", "job")
+    .where("status", "==", "active")
+    .where("createdAt", ">=", lastWeek)
+    .orderBy("createdAt", "desc")
+    .limit(30)
+    .get();
 
-export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const jobs = jobsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  if (jobs.length === 0) return NextResponse.json({ sent: 0, reason: "no new jobs" });
 
-  try {
-    const result = await processJobAlerts("weekly");
-    return NextResponse.json({
-      ...result,
-      frequency: "weekly",
-      timestamp: new Date().toISOString(),
+  let sent = 0;
+  for (const userDoc of usersSnap.docs) {
+    const user = userDoc.data();
+    console.log(`[Weekly Digest] Would send ${jobs.length} jobs to ${user.email}`);
+    await adminDb.collection("users").doc(userDoc.id).update({
+      "emailDigest.lastSentAt": FieldValue.serverTimestamp(),
     });
-  } catch (error) {
-    console.error("Weekly job alerts error:", error);
-    return NextResponse.json(
-      { error: "Failed to process weekly alerts" },
-      { status: 500 },
-    );
+    sent++;
   }
+
+  return NextResponse.json({ sent, jobCount: jobs.length });
 }

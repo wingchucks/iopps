@@ -1,56 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth } from "@/lib/firebase-admin";
-import { getFirestore } from "firebase-admin/firestore";
-
-export const dynamic = "force-dynamic";
+import { verifyAuthToken } from "@/lib/api-auth";
+import { adminDb } from "@/lib/firebase-admin";
 
 export async function GET(request: NextRequest) {
-    try {
-        // Verify authentication
-        const authHeader = request.headers.get("authorization");
-        if (!authHeader?.startsWith("Bearer ")) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+  const authResult = await verifyAuthToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-        if (!adminAuth) {
-            return NextResponse.json({ error: "Firebase Admin not initialized" }, { status: 500 });
-        }
+  // Find user's org
+  const orgSnap = await adminDb.collection("organizations")
+    .where("teamMemberIds", "array-contains", authResult.decodedToken.uid).limit(1).get();
+  if (orgSnap.empty) return NextResponse.json({ error: "No organization found" }, { status: 404 });
 
-        const token = authHeader.substring(7);
-        const decodedToken = await adminAuth.verifyIdToken(token);
-        const userId = decodedToken.uid;
-        const db = getFirestore();
+  const orgId = orgSnap.docs[0].id;
+  const paymentsSnap = await adminDb.collection("payments")
+    .where("orgId", "==", orgId)
+    .orderBy("createdAt", "desc")
+    .limit(50)
+    .get();
 
-        // Fetch payments for this user
-        const paymentsSnapshot = await db
-            .collection("payments")
-            .where("userId", "==", userId)
-            .orderBy("createdAt", "desc")
-            .limit(50)
-            .get();
-
-        const payments = paymentsSnapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                type: data.type,
-                description: data.description,
-                amount: data.amount,
-                currency: data.currency || "cad",
-                status: data.status,
-                createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-                receiptUrl: data.receiptUrl || null,
-                invoiceUrl: data.invoiceUrl || null,
-                metadata: data.metadata || {},
-            };
-        });
-
-        return NextResponse.json({ payments });
-    } catch (error) {
-        console.error("Error fetching payment history:", error);
-        return NextResponse.json(
-            { error: "Failed to fetch payment history" },
-            { status: 500 }
-        );
-    }
+  const payments = paymentsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return NextResponse.json({ payments });
 }

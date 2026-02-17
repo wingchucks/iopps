@@ -1,64 +1,120 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { getJobs, type JobFilters } from "@/lib/firestore/jobs";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuthToken } from "@/lib/api-auth";
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
-/**
- * GET /api/jobs
- *
- * Public endpoint -- lists active jobs with optional filtering and
- * cursor-based pagination.
- *
- * Query params:
- *   q         - search term (matched against title / description)
- *   category  - job category filter
- *   location  - location substring filter
- *   type      - employment type (e.g. "Full-time")
- *   remote    - "true" to filter remote-only jobs
- *   indigenous - "true" to filter indigenous-preference jobs
- *   limit     - page size (default 20, max 100)
- *   cursor    - Firestore doc ID to start after (cursor pagination)
- */
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = request.nextUrl;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
-    const q = searchParams.get("q") ?? undefined;
-    const category = searchParams.get("category") ?? undefined;
-    const location = searchParams.get("location") ?? undefined;
-    const employmentType = searchParams.get("type") ?? undefined;
-    const remoteOnly = searchParams.get("remote") === "true";
-    const indigenousOnly = searchParams.get("indigenous") === "true";
-    const cursor = searchParams.get("cursor") ?? undefined;
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
+  const type = searchParams.get("type");
+  const status = searchParams.get("status") || "active";
+  const search = searchParams.get("search");
+  const orgId = searchParams.get("orgId");
+  const featured = searchParams.get("featured");
+  const sort = searchParams.get("sort") || "createdAt_desc";
 
-    const rawLimit = parseInt(searchParams.get("limit") ?? "20", 10);
-    const pageSize = Math.min(Math.max(rawLimit, 1), 100);
+  let query: FirebaseFirestore.Query = adminDb.collection("posts");
 
-    const filters: JobFilters = {
-      search: q,
-      category: category || undefined,
-      location: location || undefined,
-      employmentType: employmentType || undefined,
-      remoteOnly: remoteOnly || undefined,
-      indigenousOnly: indigenousOnly || undefined,
-      pageSize,
-      startAfterId: cursor || undefined,
-      activeOnly: true,
-    };
+  if (type) query = query.where("type", "==", type);
+  else query = query.where("type", "==", "job");
+  if (status) query = query.where("status", "==", status);
+  if (orgId) query = query.where("orgId", "==", orgId);
+  if (featured === "true") query = query.where("featured", "==", true);
 
-    const result = await getJobs(filters);
+  const [sortField, sortDir] = sort.split("_");
+  query = query.orderBy(sortField || "createdAt", (sortDir as "asc" | "desc") || "desc");
+  query = query.offset((page - 1) * limit).limit(limit);
 
-    return NextResponse.json({
-      jobs: result.jobs,
-      pagination: {
-        cursor: result.lastDocId,
-        hasMore: result.hasMore,
-        pageSize,
-      },
-    });
-  } catch (error) {
-    console.error("[GET /api/jobs] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch jobs" },
-      { status: 500 },
-    );
-  }
+  const snapshot = await query.get();
+  const posts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  // Basic client-side search filter (Firestore doesn't support full-text)
+  const filtered = search
+    ? posts.filter((p: Record<string, unknown>) =>
+        (p.title as string)?.toLowerCase().includes(search.toLowerCase()) ||
+        (p.orgName as string)?.toLowerCase().includes(search.toLowerCase())
+      )
+    : posts;
+
+  return NextResponse.json({ posts: filtered });
+}
+
+export async function POST(request: NextRequest) {
+  const authResult = await verifyAuthToken(request);
+  if (!authResult.success) return authResult.response;
+  if (!adminDb) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
+
+  const body = await request.json();
+  const { decodedToken } = authResult;
+
+  // Fetch the user's org
+  const userDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
+  const userData = userDoc.data();
+  if (!userData) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+  // Find org where user is a team member
+  const orgSnap = await adminDb.collection("organizations")
+    .where("teamMemberIds", "array-contains", decodedToken.uid).limit(1).get();
+
+  if (orgSnap.empty) return NextResponse.json({ error: "No organization found" }, { status: 403 });
+
+  const org = { id: orgSnap.docs[0].id, ...orgSnap.docs[0].data() } as Record<string, unknown>;
+
+  const now = FieldValue.serverTimestamp();
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 30);
+
+  const post = {
+    type: body.type || "job",
+    status: body.status || "active",
+    orgId: org.id,
+    orgName: org.name,
+    orgLogoURL: org.logoURL || null,
+    orgTier: (org.subscription as Record<string, unknown>)?.tier || "none",
+    title: body.title || "",
+    description: body.description || "",
+    location: body.location || { city: "", province: "" },
+    featured: false,
+    featuredUntil: null,
+    createdAt: now,
+    updatedAt: now,
+    expiresAt,
+    viewCount: 0,
+    saveCount: 0,
+    // Job-specific
+    ...(body.type === "job" || !body.type ? {
+      salary: body.salary || "",
+      employmentType: body.employmentType || "full-time",
+      workMode: body.workMode || "on-site",
+      deadline: body.deadline || null,
+      requirements: body.requirements || "",
+      howToApply: body.howToApply || "",
+      externalUrl: body.externalUrl || "",
+      contactEmail: body.contactEmail || "",
+      source: "manual",
+      applicationCount: 0,
+    } : {}),
+    // Event-specific
+    ...(body.type === "event" ? {
+      eventCategory: body.eventCategory || "",
+      startDate: body.startDate || null,
+      endDate: body.endDate || null,
+      venue: body.venue || "",
+      rsvpLink: body.rsvpLink || "",
+      admissionCost: body.admissionCost || "",
+      coverImage: body.coverImage || "",
+    } : {}),
+    // Scholarship-specific
+    ...(body.type === "scholarship" ? {
+      awardAmount: body.awardAmount || "",
+      eligibility: body.eligibility || "",
+      scholarshipCategory: body.scholarshipCategory || "",
+    } : {}),
+  };
+
+  const ref = await adminDb.collection("posts").add(post);
+  return NextResponse.json({ id: ref.id }, { status: 201 });
 }
