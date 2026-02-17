@@ -82,7 +82,7 @@ function EmailCampaignsContent() {
                 <Link
                   href="/admin/newsletter-preview"
                   className="no-underline px-3 py-1 rounded-lg text-xs font-semibold text-teal"
-                  style={{ background: "#F1F5F9" }}
+                  style={{ background: "var(--border)" }}
                 >
                   Preview &#8599;
                 </Link>
@@ -106,7 +106,7 @@ function EmailCampaignsContent() {
                 ))}
                 {/* Mini progress bar */}
                 <div className="flex-1 flex items-center">
-                  <div className="flex-1 h-1.5 rounded-full" style={{ background: "#E2E8F0" }}>
+                  <div className="flex-1 h-1.5 rounded-full" style={{ background: "var(--border)" }}>
                     <div
                       className="h-full rounded-full"
                       style={{

@@ -158,7 +158,7 @@ function FeedContent() {
               onClick={() => setTab(t)}
               className="px-4 py-2 rounded-full border-none whitespace-nowrap font-semibold text-[13px] cursor-pointer transition-colors"
               style={{
-                background: tab === t ? "var(--navy)" : "#E2E8F0",
+                background: tab === t ? "var(--navy)" : "var(--border)",
                 color: tab === t ? "#fff" : "var(--text-sec)",
               }}
             >
@@ -225,7 +225,7 @@ function FeedContent() {
             </div>
             <div
               className="flex justify-between items-center border-t border-border"
-              style={{ padding: "10px 20px", background: "#FAFBFC" }}
+              style={{ padding: "10px 20px", background: "color-mix(in srgb, var(--bg) 50%, var(--card))" }}
             >
               <span className="text-xs text-text-muted cursor-pointer">&#128278; Save</span>
               <Link href="/jobs/executive-director-siga"><Button small primary>View Job →</Button></Link>

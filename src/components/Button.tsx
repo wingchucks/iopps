@@ -27,7 +27,7 @@ export default function Button({
         padding: small ? "8px 16px" : "12px 24px",
         borderRadius: 12,
         border: primary ? "none" : "1.5px solid var(--border)",
-        background: primary ? "var(--navy)" : "#fff",
+        background: primary ? "var(--navy)" : "var(--card)",
         color: primary ? "#fff" : "var(--text)",
         fontSize: small ? 13 : 15,
         ...style,

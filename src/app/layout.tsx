@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
+import { ThemeProvider } from "@/lib/theme-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -9,9 +10,26 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "IOPPS — Empowering Indigenous Success",
+  title: {
+    default: "IOPPS — Empowering Indigenous Success",
+    template: "%s | IOPPS",
+  },
   description:
     "Jobs, events, scholarships, businesses, schools, and livestreams — all in one place for Indigenous people across North America.",
+  metadataBase: new URL("https://iopps.vercel.app"),
+  openGraph: {
+    title: "IOPPS — Empowering Indigenous Success",
+    description:
+      "Jobs, events, scholarships, businesses, schools, and livestreams for Indigenous communities.",
+    siteName: "IOPPS",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "IOPPS — Empowering Indigenous Success",
+    description:
+      "Jobs, events, scholarships, businesses, schools, and livestreams for Indigenous communities.",
+  },
 };
 
 export default function RootLayout({
@@ -22,7 +40,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} antialiased`}>
-        <AuthProvider>{children}</AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

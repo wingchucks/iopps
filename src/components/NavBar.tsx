@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import Avatar from "./Avatar";
+import ThemeToggle from "./ThemeToggle";
 
 const navLinks = [
   { href: "/feed", label: "Home" },
@@ -92,6 +93,7 @@ export default function NavBar() {
           >
             &#128172;
           </button>
+          <ThemeToggle />
           <Link href="/profile">
             <Avatar name={displayName} size={36} />
           </Link>

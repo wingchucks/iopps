@@ -54,7 +54,7 @@ function PartnersContent() {
             className="px-5 py-2 rounded-full text-[13px] font-semibold cursor-pointer transition-colors"
             style={{
               border: filter === f ? "none" : "1.5px solid var(--border)",
-              background: filter === f ? "var(--navy)" : "#fff",
+              background: filter === f ? "var(--navy)" : "var(--card)",
               color: filter === f ? "#fff" : "var(--text-sec)",
             }}
           >
