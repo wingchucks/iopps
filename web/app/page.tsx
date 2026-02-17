@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const PILLARS = [
@@ -9,14 +12,30 @@ const PILLARS = [
   { icon: "📡", title: "Live", desc: "IOPPS Spotlight livestreams" },
 ];
 
-const STATS = [
-  { value: "442+", label: "Active Jobs" },
-  { value: "164+", label: "Organizations" },
-  { value: "756+", label: "Community Members" },
-  { value: "24+", label: "Events" },
-];
+interface Stats {
+  jobCount: number;
+  orgCount: number;
+  memberCount: number;
+  eventCount: number;
+}
 
 export default function HomePage() {
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  useEffect(() => {
+    fetch("/api/stats/public")
+      .then((r) => r.json())
+      .then((data) => setStats(data))
+      .catch(() => {});
+  }, []);
+
+  const STATS = [
+    { value: stats ? `${stats.jobCount.toLocaleString()}+` : "—", label: "Active Jobs" },
+    { value: stats ? `${stats.orgCount.toLocaleString()}+` : "—", label: "Organizations" },
+    { value: stats ? `${stats.memberCount.toLocaleString()}+` : "—", label: "Community Members" },
+    { value: stats ? `${stats.eventCount.toLocaleString()}+` : "—", label: "Events" },
+  ];
+
   return (
     <>
       {/* Hero */}

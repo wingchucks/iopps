@@ -16,7 +16,7 @@ export default function PublicOrgPage() {
       try {
         const [orgRes, postsRes] = await Promise.all([
           fetch(`/api/org/${orgId}`),
-          fetch(`/api/posts?orgId=${orgId}`),
+          fetch(`/api/jobs?orgId=${orgId}&status=active`),
         ]);
         if (orgRes.ok) setOrg((await orgRes.json()).org);
         if (postsRes.ok) setPosts((await postsRes.json()).posts || []);

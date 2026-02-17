@@ -1,255 +1,271 @@
-# IOPPS Website Rebuild Plan (web-v2)
+# SmartJobBoard-Style Job Posting Editor Implementation Plan
 
-Full rebuild of the IOPPS web application from scratch. Same Firebase project, same data, same URLs — completely new codebase with cleaner architecture, fresh design, and a leaner feature set.
+## Overview
+
+Add a professional job posting editor to iopps.ca with features matching SmartJobBoard:
+- Rich text editor for descriptions
+- Structured salary range inputs
+- Location type selection (Onsite/Remote/Hybrid)
+- Job categories
+- Application method toggle (Email/URL/Quick Apply)
+- Posting and expiration date pickers
+- Featured job toggle
 
 ---
 
-## Guiding Principles
+## Phase 1: Database Schema Updates
 
-1. **Same Firebase project** (`iopps-c2224`) — all user accounts, Firestore data, and Storage files stay untouched
-2. **Same URLs** — every public-facing route stays the same so bookmarks, Google rankings, and Stripe webhooks keep working
-3. **Build lean** — launch with core features only, add the rest incrementally
-4. **Reference, don't copy** — use the old codebase as a reference for business logic, but write everything fresh
-5. **Same env vars** — same API keys, same Stripe config, same Resend/Sentry keys
+**File: `/web/lib/types.ts`**
 
----
+Add new types and extend JobPosting interface:
 
-## Step 1: Scaffold the new project
+```typescript
+export type LocationType = 'onsite' | 'remote' | 'hybrid';
+export type ApplicationMethod = 'email' | 'url' | 'quickApply';
+export type SalaryPeriod = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
-Create `web-v2/` alongside the existing `web/` directory. Initialize a fresh Next.js 16 project with:
+export const JOB_CATEGORIES = [
+  'Accounting & Finance',
+  'Administration',
+  'Arts & Culture',
+  'Construction & Trades',
+  'Education & Training',
+  'Engineering',
+  'Environmental',
+  'Government',
+  'Healthcare',
+  'Human Resources',
+  'Information Technology',
+  'Legal',
+  'Management',
+  'Marketing & Communications',
+  'Natural Resources',
+  'Operations',
+  'Sales',
+  'Social Services',
+  'Transportation',
+  'Other',
+] as const;
 
-- Next.js 16 + React 19 + TypeScript 5
-- Tailwind CSS 4 (CSS-first config)
-- Path alias `@/*` mapping to `./web-v2/*`
-- Same `.env` variables (copy from existing `.env.example`)
-- ESLint + strict TypeScript config
-- Sentry error monitoring (same DSN)
-
-**New directory structure:**
+// Add to JobPosting interface:
+category?: string;
+locationType?: LocationType;
+applicationMethod?: ApplicationMethod;
+salaryRange?: {
+  min?: number;
+  max?: number;
+  currency?: string;
+  period?: SalaryPeriod;
+  disclosed?: boolean;
+};
+postedAt?: Timestamp | null;
+featured?: boolean;
 ```
-web-v2/
-├── app/
-│   ├── layout.tsx              # Root layout (clean)
-│   ├── page.tsx                # Landing page
-│   ├── (auth)/                 # Auth routes group
-│   ├── (public)/               # Public pages group
-│   ├── (member)/               # Member routes group
-│   ├── (organization)/         # Org dashboard group
-│   ├── (admin)/                # Admin panel group
-│   └── api/                    # API routes
-├── components/
-│   ├── ui/                     # Design system primitives
-│   ├── layout/                 # Header, footer, nav, shells
-│   └── [feature]/              # Feature-specific components
-├── lib/
-│   ├── firebase.ts             # Client Firebase init
-│   ├── firebase-admin.ts       # Server Firebase Admin init
-│   ├── stripe.ts               # Stripe config
-│   ├── auth.ts                 # Auth utilities
-│   ├── firestore/              # Firestore data layer (lean)
-│   └── utils.ts                # Shared utilities
-├── public/                     # Static assets
-├── package.json
-├── tsconfig.json
-├── postcss.config.mjs
-└── next.config.ts
+
+---
+
+## Phase 2: Install Rich Text Editor
+
+**Recommended: TipTap** (modern, extensible, React-friendly)
+
+```bash
+npm install @tiptap/react @tiptap/starter-kit @tiptap/extension-link @tiptap/extension-image @tiptap/extension-text-align @tiptap/extension-underline @tiptap/extension-table @tiptap/extension-table-row @tiptap/extension-table-cell @tiptap/extension-table-header
 ```
 
-**Files to create:**
-- `web-v2/package.json` — fresh dependencies (only what's needed)
-- `web-v2/tsconfig.json` — strict TypeScript config
-- `web-v2/next.config.ts` — image optimization, security headers, same redirects
-- `web-v2/postcss.config.mjs` — Tailwind v4
-- `web-v2/app/layout.tsx` — clean root layout
-- `web-v2/lib/firebase.ts` — client Firebase init (same config as current)
-- `web-v2/lib/firebase-admin.ts` — server Firebase Admin init (same config)
-- `web-v2/lib/stripe.ts` — Stripe product config (same prices/products)
-- `web-v2/lib/auth.ts` — token verification helpers
+---
+
+## Phase 3: Create New Form Components
+
+### 1. Rich Text Editor
+**File: `/web/components/forms/RichTextEditor.tsx`**
+
+Features:
+- Bold, Italic, Underline buttons
+- Text alignment (left, center, right, justify)
+- Bullet and numbered lists
+- Links with URL input modal
+- Image insertion via URL
+- Tables
+- Heading levels
+- Clear formatting button
+
+### 2. Salary Range Input
+**File: `/web/components/forms/SalaryRangeInput.tsx`**
+
+Features:
+- Currency dropdown (CAD, USD)
+- Min/Max number inputs with $ prefix
+- Period dropdown (hourly, yearly, etc.)
+- "Don't disclose salary" checkbox
+
+### 3. Location Type Selector
+**File: `/web/components/forms/LocationTypeSelector.tsx`**
+
+Features:
+- Radio buttons: Onsite, Remote, Hybrid
+- Text input for address (shown when Onsite or Hybrid)
+
+### 4. Application Method Selector
+**File: `/web/components/forms/ApplicationMethodSelector.tsx`**
+
+Features:
+- Radio buttons: By Email, By URL, Quick Apply (IOPPS)
+- Conditional input field based on selection
+
+### 5. Category Dropdown
+**File: `/web/components/forms/CategorySelect.tsx`**
+
+Features:
+- Dropdown with all job categories
+- Optional multi-select support
 
 ---
 
-## Step 2: Core infrastructure
+## Phase 4: Create Admin Job Editor Page
 
-Set up the foundational pieces that every feature depends on.
+**File: `/web/app/admin/jobs/new/page.tsx`** (new)
+**File: `/web/app/admin/jobs/[jobId]/edit/page.tsx`** (enhance)
 
-**Auth system:**
-- `AuthProvider` context (connects to existing Firebase Auth — same users just work)
-- `ProtectedRoute` wrapper component with role checking
-- Login page (`/login`) — email/password + Google sign-in
-- Register pages (`/signup/member`, `/signup/organization`)
-- `verifyAuthToken()` and `verifyAdminToken()` server helpers for API routes
+Admin-specific features:
+1. **Employer Dropdown** - Select from existing employers
+2. **Product Selection** - Pricing tier (Single, Featured, Subscription)
+3. **Featured Checkbox** - Mark job as featured
 
-**Design system:**
-- CSS variables for theming (light + dark mode via `data-theme`)
-- Base UI components: Button, Input, Select, Modal, Tag, Avatar, Card, Skeleton, EmptyState
-- Layout components: SiteHeader, SiteFooter, MobileBottomNav, PageShell
-- Toast notifications (react-hot-toast)
-
-**Firestore data layer:**
-- `lib/firestore/members.ts` — read/write member profiles (same `users` collection)
-- `lib/firestore/jobs.ts` — CRUD for jobs (same `jobs` collection)
-- `lib/firestore/organizations.ts` — org operations (same `employers` / `v2_organizations` collections)
-- Additional collection files added as features are built
-
-**Shared API patterns:**
-- Auth middleware pattern for API routes
-- Cron secret verification for scheduled jobs
-- Standard JSON response helpers
+Full form fields:
+- Job Title
+- Job Description (RichTextEditor)
+- Job Type (Full-time, Part-time, Contract, etc.)
+- Category (dropdown)
+- Location Type (Onsite/Remote/Hybrid)
+- Location Address
+- Salary Range (structured input)
+- Application Method (Email/URL/Quick Apply)
+- Posting Date
+- Expiration Date
+- Indigenous Preference checkbox
+- CPIC Required checkbox
+- Will Train checkbox
+- Driver's License Required checkbox
 
 ---
 
-## Step 3: Core features — Member experience
+## Phase 5: Update Employer Job Editor
 
-Build the member-facing features that make up the core value prop.
+**File: `/web/app/organization/jobs/new/page.tsx`** (enhance)
+**File: `/web/app/organization/jobs/[jobId]/edit/page.tsx`** (enhance)
 
-**Landing / Home page** (`/`)
-- Hero section, value props, stats, CTA
-
-**Careers hub** (`/careers`)
-- Job listings with filters (location, category, type)
-- Job detail page (`/careers/[jobId]`)
-- Job application flow (`/careers/[jobId]/apply`)
-- Job alerts API (`/api/emails/send-job-alerts/*`)
-
-**Education hub** (`/education`)
-- Scholarships listing (`/education/scholarships`)
-- Scholarship detail (`/education/scholarships/[id]`)
-- Schools directory (`/education/schools`)
-- Programs listing (`/education/programs`)
-
-**Community hub** (`/community`)
-- Pow wow listings and detail pages
-- Conference listings (`/conferences`, `/conferences/[id]`)
-
-**Member profile & dashboard:**
-- `/member/dashboard` — overview of applications, saved items
-- `/member/profile` — edit profile (reads/writes same `users` collection)
-- `/member/applications` — track job applications
-- `/member/settings` — notification preferences, privacy, data export
-- `/saved` — saved jobs, scholarships, events
-
-**Public pages:**
-- `/about`, `/contact`, `/terms`, `/privacy`
-- `/pricing`, `/for-employers`
-- `/search` — unified search
-- `/discover` — discovery feed
+Same form as admin but without:
+- Employer selection (auto-filled)
+- Product override (determined by payment)
 
 ---
 
-## Step 4: Core features — Organization dashboard
+## Phase 6: Display Updates
 
-Build the employer/organization management experience.
+**File: `/web/app/jobs-training/[jobId]/JobDetailClient.tsx`**
 
-**Organization dashboard** (`/organization/...`)
-- Dashboard home with analytics overview
-- Job management: create, edit, list, import (`/organization/hire/jobs/*`)
-- Application tracking (`/organization/hire/applications/*`)
-- Scholarship management (`/organization/scholarships/*`)
-- Conference management (`/organization/conferences/*`)
-- Event/powwow management (`/organization/events/*`)
-- Organization profile & settings
-- Team management (`/organization/team`)
-- Billing & subscription (`/organization/billing`)
-
-**Stripe integration:**
-- Checkout flows: single job, featured job, subscription tiers
-- Webhook handler (`/api/stripe/webhook`) — same endpoint URL
-- Billing portal (`/api/billing/portal`)
-- Credit system for job postings
+Add display for:
+- Job category badge
+- Location type indicator (Remote/Onsite/Hybrid badge)
+- Structured salary display ($70,000 - $100,000/year)
 
 ---
 
-## Step 5: Admin panel
+## File Changes Summary
 
-Build the admin dashboard for platform management.
-
-**Admin routes** (`/admin/...`)
-- Dashboard with platform stats (`/api/admin/counts`, `/api/stats`)
-- User management (`/admin/users`)
-- Employer management (`/admin/employers`)
-- Job moderation (`/admin/jobs`)
-- Scholarship management (`/admin/scholarships`)
-- Conference management (`/admin/conferences`)
-- Content moderation (`/admin/moderation`)
-- Verification workflows (`/admin/verification`)
-
----
-
-## Step 6: Cron jobs & email system
-
-Recreate the scheduled tasks and email infrastructure.
-
-**Cron endpoints** (same URLs, same `vercel.json` schedule):
-- `/api/cron/expire-jobs` — daily job expiration
-- `/api/cron/expire-events` — daily event expiration
-- `/api/cron/expire-scholarships` — daily scholarship expiration
-- `/api/cron/publish-scheduled-jobs` — every 15 min
-- `/api/cron/sync-feeds` — RSS feed syncing
-- `/api/cron/expire-directory-visibility` — daily
-
-**Email endpoints** (Resend integration):
-- Job alerts (instant/daily/weekly)
-- Conference, powwow, training, vendor alerts
-- Weekly digest
-- Unsubscribe flow with HMAC tokens
-
-**`web-v2/vercel.json`** — same cron schedule as current
+| File | Action | Description |
+|------|--------|-------------|
+| `web/lib/types.ts` | Modify | Add new types and extend JobPosting |
+| `web/package.json` | Modify | Add TipTap dependencies |
+| `web/components/forms/RichTextEditor.tsx` | Create | Rich text editor |
+| `web/components/forms/SalaryRangeInput.tsx` | Create | Salary input |
+| `web/components/forms/LocationTypeSelector.tsx` | Create | Location type selector |
+| `web/components/forms/ApplicationMethodSelector.tsx` | Create | Application method |
+| `web/components/forms/CategorySelect.tsx` | Create | Category dropdown |
+| `web/app/admin/jobs/new/page.tsx` | Create | Admin job creation |
+| `web/app/admin/jobs/[jobId]/edit/page.tsx` | Modify | Enhance admin editor |
+| `web/app/organization/jobs/new/page.tsx` | Modify | Enhance employer form |
+| `web/app/organization/jobs/[jobId]/edit/page.tsx` | Modify | Enhance employer form |
+| `web/lib/firestore/jobs.ts` | Modify | Handle new fields |
+| `web/app/jobs-training/[jobId]/JobDetailClient.tsx` | Modify | Display new fields |
 
 ---
 
-## Step 7: Secondary features (add incrementally)
+## Implementation Order
 
-These can be added after the core is live:
-
-- Business directory & vendor shop (`/business/*`)
-- Live streams (`/live/*`)
-- Messaging system
-- Social features (follows, endorsements, leaderboard)
-- Map view (`/map`)
-- AI tools (job description generator, poster analyzer)
-- News/RSS feed display (`/news`)
-- Training programs
-- Talent pool search
-- Notification center
-- Network/radar features
-- Passport system
+1. **Schema First**: Update types.ts with new fields
+2. **Install Dependencies**: Add TipTap packages
+3. **Build Components**: Create form components
+4. **Admin Editor**: Build complete admin job editor
+5. **Employer Editor**: Update employer-facing forms
+6. **Display Updates**: Update job detail pages
+7. **Testing**: Test full flow
 
 ---
 
-## Step 8: Swap deployment
+## Styling
 
-When web-v2 is ready for production:
-
-1. Deploy `web-v2` to Vercel on a staging URL (e.g., `v2.iopps.ca`)
-2. Test against production Firebase data — all existing data should show up
-3. Verify Stripe webhooks work at the new deployment
-4. Verify cron jobs fire correctly
-5. Repoint `iopps.ca` domain from old Vercel project → new Vercel project
-6. Update Stripe webhook URL if needed (or keep same domain, it just works)
-7. Monitor for 48 hours
-8. Archive old `web/` directory (or delete it)
+Follow existing dark theme patterns:
+- Background: `bg-slate-900`, `bg-slate-800`
+- Borders: `border-slate-700`, `border-slate-800`
+- Text: `text-slate-100`, `text-slate-300`
+- Accent: `#14B8A6` (teal)
+- Rounded: `rounded-xl`, `rounded-2xl`
+- Focus: `focus:border-[#14B8A6] focus:outline-none`
 
 ---
 
-## Step 9: Mobile rebuild (after web is stable)
+# Jobs & Training Hub Redesign (NEW)
 
-Create `mobile-v2/` with fresh React Native + Expo:
-- Same Firebase project connection
-- Matches new design system from web-v2
-- Core screens: jobs, education, community, profile
-- Push notifications via Firebase Cloud Messaging
+## The Problem
 
----
+When users click "Jobs & Training", they expect to see jobs. Instead:
+- They land on a hub page with action cards
+- "Featured Jobs coming soon!" appears when no featured jobs exist
+- Extra clicks required to reach actual content
+- The hub creates friction instead of delivering value
 
-## What This Plan Produces
+## The Solution
 
-| Before | After |
-|--------|-------|
-| 208 pages, many unused/redundant | ~60 focused pages at launch |
-| 110 API routes, many are admin/fix scripts | ~40 clean API routes |
-| 229 components, inconsistent patterns | ~80 components with consistent design system |
-| Legacy + V2 route duplication | Single clean route structure |
-| 53 Firestore service files | ~20 service files (same collections, cleaner code) |
-| Accumulated tech debt | Fresh, maintainable codebase |
+Transform `/jobs-training` into a **tabbed content page** that shows jobs immediately.
 
-**Zero data loss. Zero downtime. Same URLs. Better everything else.**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  OceanWaveHero (simplified)                                 │
+│  "Find Your Next Opportunity"                               │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐                         │
+│  │   ● Jobs     │  │   Training   │    ← Tabs (Jobs default)│
+│  └──────────────┘  └──────────────┘                         │
+├─────────────────────────────────────────────────────────────┤
+│  [Search] [Filters]                                         │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
+│  │  Job Card   │ │  Job Card   │ │  Job Card   │           │
+│  └─────────────┘ └─────────────┘ └─────────────┘           │
+│  ... actual listings ...                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Implementation
+
+### Files to Create
+
+1. `web/components/jobs-training/JobsTabContent.tsx`
+   - Self-contained component with all jobs search/filter/listing UI
+
+2. `web/components/jobs-training/TrainingTabContent.tsx`
+   - Self-contained component with all training search/filter/listing UI
+
+### Files to Modify
+
+1. `web/app/jobs-training/page.tsx`
+   - Replace hub design with tabbed interface
+   - Jobs tab active by default
+   - URL param sync: `?tab=jobs` or `?tab=training`
+
+## Behavior
+
+- Default: Jobs tab active, shows all jobs with search/filter
+- Click Training tab: Shows all programs with search/filter
+- URL updates: `/jobs-training?tab=training`
+- Existing pages remain: `/jobs-training/jobs` and `/jobs-training/programs` still work

@@ -1,5 +1,7 @@
+export const dynamic = 'force-dynamic';
 import type { Metadata } from "next";
 import Link from "next/link";
+import { adminDb } from "@/lib/firebase-admin";
 
 export const metadata: Metadata = {
   title: "Shop Indigenous — Indigenous Business Directory | IOPPS.ca",
@@ -7,15 +9,20 @@ export const metadata: Metadata = {
   keywords: ["shop Indigenous", "Indigenous businesses", "Indigenous-owned", "First Nations businesses", "buy Indigenous Canada"],
 };
 
-const teasers = [
-  { title: "Beadwork & Traditional Art Studio", category: "Arts & Crafts", location: "MB" },
-  { title: "Indigenous Catering & Event Services", category: "Food & Beverage", location: "ON" },
-  { title: "Northern Consulting Group", category: "Professional Services", location: "AB" },
-  { title: "Traditional Medicine & Wellness", category: "Health & Wellness", location: "BC" },
-  { title: "Indigenous Digital Media Agency", category: "Technology", location: "SK" },
-];
+async function getBusinesses() {
+  if (!adminDb) return [];
+  const snap = await adminDb.collection("posts")
+    .where("type", "==", "business")
+    .where("status", "==", "active")
+    .orderBy("createdAt", "desc")
+    .limit(10)
+    .get();
+  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Array<Record<string, unknown>>;
+}
 
-export default function ShopIndigenousPage() {
+export default async function ShopIndigenousPage() {
+  const businesses = await getBusinesses();
+
   return (
     <div>
       <section className="bg-hero-gradient text-white py-20 px-4 text-center">
@@ -28,10 +35,13 @@ export default function ShopIndigenousPage() {
         <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Indigenous Businesses</h2>
         <p className="text-[var(--text-secondary)] mb-8">Sign up to see full business profiles, contact info, and more.</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          {teasers.map((b, i) => (
-            <div key={i} className="border border-[var(--card-border)] rounded-xl p-5 bg-[var(--card-bg)] card-interactive">
-              <h3 className="font-semibold text-[var(--text-primary)]">{b.title}</h3>
-              <p className="text-sm text-[var(--text-secondary)]">{b.category} · {b.location}</p>
+          {businesses.length === 0 && (
+            <p className="text-[var(--text-muted)] text-center py-8 col-span-2">No businesses listed yet. Check back soon!</p>
+          )}
+          {businesses.map((b) => (
+            <div key={b.id as string} className="border border-[var(--card-border)] rounded-xl p-5 bg-[var(--card-bg)] card-interactive">
+              <h3 className="font-semibold text-[var(--text-primary)]">{b.title as string}</h3>
+              <p className="text-sm text-[var(--text-secondary)]">{(b.businessCategory as string) || ""} · {(b.location as Record<string, string>)?.province || ""}</p>
               <div className="mt-3 h-6 bg-gradient-to-r from-[var(--surface-raised)] to-transparent rounded blur-sm" />
             </div>
           ))}

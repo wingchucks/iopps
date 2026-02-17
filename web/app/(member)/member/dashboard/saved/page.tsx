@@ -28,8 +28,20 @@ export default function SavedItemsPage() {
       if (!user) { router.push('/login'); return; }
       try {
         const token = await user.getIdToken();
-        const res = await fetch('/api/bookmarks', { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) { const data = await res.json(); setSavedPosts(data.posts || []); }
+        const res = await fetch('/api/member/saved-jobs', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          const bookmarks = data.bookmarks || [];
+          // Fetch post details for each bookmark
+          if (bookmarks.length > 0) {
+            const postPromises = bookmarks.map((b: { postId: string }) =>
+              fetch(`/api/jobs/${b.postId}`).then(r => r.ok ? r.json() : null).catch(() => null)
+            );
+            const postResults = await Promise.all(postPromises);
+            const posts = postResults.filter(Boolean).map((p: Record<string, unknown>) => p as unknown as Post);
+            setSavedPosts(posts);
+          }
+        }
       } catch { /* TODO */ }
       setLoading(false);
     });
@@ -38,9 +50,17 @@ export default function SavedItemsPage() {
 
   const filtered = activeTab === 'all' ? savedPosts : savedPosts.filter(p => p.type === activeTab);
 
-  const handleRemove = (id: string) => {
-    setSavedPosts(prev => prev.filter(p => p.id !== id));
-    // TODO: API call to remove bookmark
+  const handleRemove = async (id: string) => {
+    if (!auth?.currentUser) return;
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await fetch('/api/member/saved-jobs', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: id }),
+      });
+      setSavedPosts(prev => prev.filter(p => p.id !== id));
+    } catch { /* failed to remove */ }
   };
 
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" /></div>;

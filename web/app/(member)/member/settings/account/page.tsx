@@ -16,9 +16,17 @@ export default function AccountSettingsPage() {
 
   useEffect(() => {
     if (!auth) return;
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) { router.push('/login'); return; }
       setEmail(user.email || '');
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch('/api/member/profile', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.emailDigest?.frequency) setDigestFreq(data.emailDigest.frequency);
+        }
+      } catch { /* failed to load profile */ }
       setLoading(false);
     });
     return unsub;

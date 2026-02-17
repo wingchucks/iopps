@@ -12,7 +12,7 @@ export default function PublicProfilePage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`/api/profile/${userId}`);
+        const res = await fetch(`/api/users/${userId}`);
         if (res.ok) { const data = await res.json(); setProfile(data.profile); }
       } catch { /* TODO */ }
       setLoading(false);

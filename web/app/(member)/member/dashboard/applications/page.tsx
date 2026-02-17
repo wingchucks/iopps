@@ -26,7 +26,7 @@ export default function ApplicationsPage() {
       if (!user) { router.push('/login'); return; }
       try {
         const token = await user.getIdToken();
-        const res = await fetch('/api/applications', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch('/api/member/applications', { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) { const data = await res.json(); setApplications(data.applications || []); }
       } catch { /* TODO */ }
       setLoading(false);

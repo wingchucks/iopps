@@ -1,5 +1,7 @@
+export const dynamic = 'force-dynamic';
 import type { Metadata } from "next";
 import Link from "next/link";
+import { adminDb } from "@/lib/firebase-admin";
 
 export const metadata: Metadata = {
   title: "Indigenous Jobs in Canada — Find Employment Opportunities | IOPPS.ca",
@@ -16,15 +18,20 @@ export const metadata: Metadata = {
   ],
 };
 
-const teaserJobs = [
-  { title: "Health Director", org: "First Nation Health Authority", location: "BC", type: "Full-Time" },
-  { title: "Community Economic Development Officer", org: "Tribal Council", location: "MB", type: "Full-Time" },
-  { title: "Indigenous Liaison Coordinator", org: "Provincial Government", location: "ON", type: "Contract" },
-  { title: "Social Worker — Child & Family Services", org: "Indigenous Services Org", location: "SK", type: "Full-Time" },
-  { title: "Environmental Monitor", org: "Resource Company", location: "AB", type: "Seasonal" },
-];
+async function getJobs() {
+  if (!adminDb) return [];
+  const snap = await adminDb.collection("posts")
+    .where("type", "==", "job")
+    .where("status", "==", "active")
+    .orderBy("createdAt", "desc")
+    .limit(10)
+    .get();
+  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Array<Record<string, unknown>>;
+}
 
-export default function IndigenousJobsPage() {
+export default async function IndigenousJobsPage() {
+  const jobs = await getJobs();
+
   return (
     <div>
       <section className="bg-hero-gradient text-white py-20 px-4 text-center">
@@ -46,22 +53,25 @@ export default function IndigenousJobsPage() {
         </p>
 
         <div className="space-y-4">
-          {teaserJobs.map((job, i) => (
+          {jobs.length === 0 && (
+            <p className="text-[var(--text-muted)] text-center py-8">No active jobs right now. Check back soon!</p>
+          )}
+          {jobs.map((job) => (
             <div
-              key={i}
+              key={job.id as string}
               className="border border-[var(--card-border)] rounded-xl p-5 bg-[var(--card-bg)] card-interactive"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-semibold text-[var(--text-primary)]">
-                    {job.title}
+                    {job.title as string}
                   </h3>
                   <p className="text-sm text-[var(--text-secondary)]">
-                    {job.org} · {job.location}
+                    {job.orgName as string} · {(job.location as Record<string, string>)?.province || ""}
                   </p>
                 </div>
-                <span className="text-xs bg-[var(--accent-light)] text-[var(--accent)] px-3 py-1 rounded-full font-medium">
-                  {job.type}
+                <span className="text-xs bg-[var(--accent-light)] text-[var(--accent)] px-3 py-1 rounded-full font-medium capitalize">
+                  {((job.employmentType as string) || "full-time").replace("-", " ")}
                 </span>
               </div>
               <div className="mt-3 h-8 bg-gradient-to-r from-[var(--surface-raised)] to-transparent rounded blur-sm" />

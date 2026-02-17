@@ -1,5 +1,6 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
 import type { Metadata } from "next";
 import { useState } from "react";
 import Link from "next/link";

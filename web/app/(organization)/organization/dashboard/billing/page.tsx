@@ -36,7 +36,7 @@ export default function BillingPage() {
     if (!auth?.currentUser) return;
     try {
       const token = await auth.currentUser.getIdToken();
-      const res = await fetch('/api/stripe/portal', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/api/billing/portal', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { const data = await res.json(); window.location.href = data.url; }
     } catch { /* TODO */ }
   };

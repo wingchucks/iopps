@@ -1,5 +1,7 @@
+export const dynamic = 'force-dynamic';
 import type { Metadata } from "next";
 import Link from "next/link";
+import { adminDb } from "@/lib/firebase-admin";
 
 export const metadata: Metadata = {
   title: "Indigenous Scholarships & Bursaries in Canada | IOPPS.ca",
@@ -7,14 +9,20 @@ export const metadata: Metadata = {
   keywords: ["Indigenous scholarships", "First Nations bursaries", "Aboriginal scholarships Canada", "Métis scholarships", "Indigenous education funding"],
 };
 
-const teasers = [
-  { title: "Indigenous Leadership Scholarship", org: "National Foundation", amount: "$5,000" },
-  { title: "First Nations Health Sciences Bursary", org: "Health Authority", amount: "$3,000" },
-  { title: "Métis Student Achievement Award", org: "Métis Nation", amount: "$2,500" },
-  { title: "Indigenous Women in STEM Scholarship", org: "Tech Company", amount: "$10,000" },
-];
+async function getScholarships() {
+  if (!adminDb) return [];
+  const snap = await adminDb.collection("posts")
+    .where("type", "==", "scholarship")
+    .where("status", "==", "active")
+    .orderBy("createdAt", "desc")
+    .limit(10)
+    .get();
+  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Array<Record<string, unknown>>;
+}
 
-export default function IndigenousScholarshipsPage() {
+export default async function IndigenousScholarshipsPage() {
+  const scholarships = await getScholarships();
+
   return (
     <div>
       <section className="bg-hero-gradient text-white py-20 px-4 text-center">
@@ -27,14 +35,17 @@ export default function IndigenousScholarshipsPage() {
         <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Available Scholarships</h2>
         <p className="text-[var(--text-secondary)] mb-8">Sign up to see full eligibility details and apply.</p>
         <div className="space-y-4">
-          {teasers.map((s, i) => (
-            <div key={i} className="border border-[var(--card-border)] rounded-xl p-5 bg-[var(--card-bg)] card-interactive">
+          {scholarships.length === 0 && (
+            <p className="text-[var(--text-muted)] text-center py-8">No active scholarships right now. Check back soon!</p>
+          )}
+          {scholarships.map((s) => (
+            <div key={s.id as string} className="border border-[var(--card-border)] rounded-xl p-5 bg-[var(--card-bg)] card-interactive">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-semibold text-[var(--text-primary)]">{s.title}</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">{s.org}</p>
+                  <h3 className="font-semibold text-[var(--text-primary)]">{s.title as string}</h3>
+                  <p className="text-sm text-[var(--text-secondary)]">{s.orgName as string}</p>
                 </div>
-                <span className="text-sm font-bold text-[var(--accent)]">{s.amount}</span>
+                <span className="text-sm font-bold text-[var(--accent)]">{s.awardAmount as string || ""}</span>
               </div>
               <div className="mt-3 h-8 bg-gradient-to-r from-[var(--surface-raised)] to-transparent rounded blur-sm" />
             </div>

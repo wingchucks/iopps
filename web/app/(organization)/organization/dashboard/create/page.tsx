@@ -43,10 +43,14 @@ export default function CreateContentPage() {
     setSubmitting(true);
     try {
       const token = await auth.currentUser.getIdToken();
-      await fetch('/api/posts', {
+      await fetch('/api/jobs', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: selectedType, ...form }),
+        body: JSON.stringify({
+          type: selectedType,
+          ...form,
+          location: { city: form.city || '', province: form.province || '' },
+        }),
       });
       router.push('/dashboard/posts');
     } catch { /* TODO */ }

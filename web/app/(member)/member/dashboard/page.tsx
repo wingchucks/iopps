@@ -13,11 +13,33 @@ export default function MemberDashboard() {
 
   useEffect(() => {
     if (!auth) return;
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) { router.push('/login'); return; }
-      // TODO: fetch actual stats from API
-      setStats({ savedCount: 3, applicationCount: 1, profileComplete: 65 });
-      setResumeUploaded(false);
+      try {
+        const token = await user.getIdToken();
+        const headers = { Authorization: `Bearer ${token}` };
+        const [profileRes, appsRes, savedRes] = await Promise.all([
+          fetch('/api/member/profile', { headers }),
+          fetch('/api/member/applications', { headers }),
+          fetch('/api/member/saved-jobs', { headers }),
+        ]);
+        const profileData = profileRes.ok ? await profileRes.json() : null;
+        const appsData = appsRes.ok ? await appsRes.json() : { applications: [] };
+        const savedData = savedRes.ok ? await savedRes.json() : { bookmarks: [] };
+
+        // Calculate profile completeness
+        const fields = ['firstName', 'lastName', 'headline', 'nation', 'province', 'city', 'bio'];
+        const filled = profileData ? fields.filter(f => profileData[f]).length : 0;
+        const hasSkills = profileData?.skills?.length > 0 ? 1 : 0;
+        const profileComplete = Math.round(((filled + hasSkills) / (fields.length + 1)) * 100);
+
+        setStats({
+          savedCount: savedData.bookmarks?.length || 0,
+          applicationCount: appsData.applications?.length || 0,
+          profileComplete,
+        });
+        setResumeUploaded(!!profileData?.resumeURL);
+      } catch { /* failed to load stats */ }
       setLoading(false);
     });
     return unsub;

@@ -19,11 +19,11 @@ export default function ResumePage() {
       if (!user) { router.push('/login'); return; }
       try {
         const token = await user.getIdToken();
-        const res = await fetch('/api/profile', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch('/api/member/profile', { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
-          setResumeURL(data.profile?.resumeURL || null);
-          setResumeName(data.profile?.resumeURL ? 'resume.pdf' : null);
+          setResumeURL(data.resumeURL || null);
+          setResumeName(data.resumeURL ? 'resume.pdf' : null);
         }
       } catch { /* TODO */ }
       setLoading(false);

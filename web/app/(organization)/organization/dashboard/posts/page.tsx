@@ -48,7 +48,7 @@ export default function ManagePostsPage() {
     const newStatus = currentStatus === 'hidden' ? 'active' : 'hidden';
     try {
       const token = await auth.currentUser.getIdToken();
-      await fetch(`/api/posts/${postId}`, {
+      await fetch(`/api/jobs/${postId}`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),

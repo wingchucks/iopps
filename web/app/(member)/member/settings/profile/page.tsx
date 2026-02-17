@@ -21,8 +21,8 @@ export default function EditProfilePage() {
       if (!user) { router.push('/login'); return; }
       try {
         const token = await user.getIdToken();
-        const res = await fetch('/api/profile', { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) { const data = await res.json(); setProfile(data.profile || {}); }
+        const res = await fetch('/api/member/profile', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) { const data = await res.json(); setProfile(data || {}); }
       } catch { /* TODO */ }
       setLoading(false);
     });
@@ -34,8 +34,8 @@ export default function EditProfilePage() {
     setSaving(true);
     try {
       const token = await auth.currentUser.getIdToken();
-      await fetch('/api/profile', {
-        method: 'PUT',
+      await fetch('/api/member/profile', {
+        method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(profile),
       });
