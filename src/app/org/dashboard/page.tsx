@@ -458,6 +458,17 @@ export default function OrgDashboardPage() {
                   </div>
                 </div>
                 <div className="flex gap-3 flex-wrap">
+                  <Link href="/org/dashboard/talent">
+                    <Button small>
+                      <span className="inline-flex items-center gap-1.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="8" />
+                          <path d="M21 21l-4.35-4.35" />
+                        </svg>
+                        Talent Search
+                      </span>
+                    </Button>
+                  </Link>
                   <Link href="/org/dashboard/profile">
                     <Button small>Edit Profile</Button>
                   </Link>
@@ -617,8 +628,18 @@ export default function OrgDashboardPage() {
                               color: "var(--teal)",
                             }}
                           >
-                            Edit
+                            Quick Edit
                           </button>
+                          <Link
+                            href={`/org/dashboard/jobs/${post.id}/edit`}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline"
+                            style={{
+                              background: "rgba(30,64,175,.1)",
+                              color: "var(--navy)",
+                            }}
+                          >
+                            Full Edit
+                          </Link>
                           <button
                             onClick={() => handleDelete(post.id)}
                             className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
