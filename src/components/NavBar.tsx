@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import Avatar from "./Avatar";
 import ThemeToggle from "./ThemeToggle";
@@ -17,8 +17,15 @@ const navLinks = [
 export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
   const displayName = user?.displayName || user?.email || "U";
+
+  const handleSignOut = async () => {
+    setMenuOpen(false);
+    await signOut();
+    router.push("/");
+  };
 
   return (
     <nav
@@ -144,8 +151,15 @@ export default function NavBar() {
             <span style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>&#128269;</span>
             <span style={{ color: "rgba(255,255,255,.3)", fontSize: 13 }}>Search IOPPS...</span>
           </div>
-          <div className="mx-4 mt-2">
+          <div className="mx-4 mt-2 flex items-center gap-2">
             <ThemeToggle />
+            <button
+              onClick={handleSignOut}
+              className="flex-1 py-2.5 rounded-[10px] border-none cursor-pointer text-sm font-semibold"
+              style={{ background: "rgba(220,38,38,.15)", color: "#DC2626" }}
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       )}

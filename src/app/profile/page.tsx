@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
   getMemberProfile,
@@ -35,7 +36,8 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const router = useRouter();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -135,6 +137,13 @@ function ProfileContent() {
               style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)" }}
             >
               {editing ? "Cancel" : "Edit Profile"}
+            </Button>
+            <Button
+              small
+              onClick={async () => { await signOut(); router.push("/"); }}
+              style={{ color: "#DC2626", borderColor: "rgba(220,38,38,.3)", background: "rgba(220,38,38,.1)" }}
+            >
+              Sign Out
             </Button>
           </div>
         </div>
