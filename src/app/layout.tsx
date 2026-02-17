@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
@@ -17,6 +17,12 @@ export const metadata: Metadata = {
   description:
     "Jobs, events, scholarships, businesses, schools, and livestreams — all in one place for Indigenous people across North America.",
   metadataBase: new URL("https://iopps.vercel.app"),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "IOPPS",
+  },
   openGraph: {
     title: "IOPPS — Empowering Indigenous Success",
     description:
@@ -30,6 +36,10 @@ export const metadata: Metadata = {
     description:
       "Jobs, events, scholarships, businesses, schools, and livestreams for Indigenous communities.",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0F2B4C",
 };
 
 export default function RootLayout({

@@ -12,6 +12,8 @@ import Card from "@/components/Card";
 import Link from "next/link";
 import { getPosts, type Post } from "@/lib/firestore/posts";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
+import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
+import { getApplications, type Application } from "@/lib/firestore/applications";
 
 const tabs = ["All", "Jobs", "Events", "Scholarships", "Businesses", "Schools", "Livestreams", "Stories"];
 
@@ -39,6 +41,8 @@ function FeedContent() {
   const [tab, setTab] = useState("All");
   const [posts, setPosts] = useState<Post[]>([]);
   const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, signOut } = useAuth();
   const router = useRouter();
@@ -50,6 +54,14 @@ function FeedContent() {
         const [p, o] = await Promise.all([getPosts(), getOrganizations()]);
         setPosts(p);
         setOrgs(o);
+        if (user) {
+          const [s, a] = await Promise.all([
+            getSavedItems(user.uid).catch(() => []),
+            getApplications(user.uid).catch(() => []),
+          ]);
+          setSavedItems(s);
+          setApplications(a);
+        }
       } catch (err) {
         console.error("Failed to load feed data:", err);
       } finally {
@@ -57,7 +69,7 @@ function FeedContent() {
       }
     }
     load();
-  }, []);
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -276,15 +288,28 @@ function FeedContent() {
         {/* Your Applications */}
         <Card className="mb-4" style={{ padding: 16 }}>
           <p className="text-xs font-bold text-text-muted mb-2.5 tracking-[1px]">YOUR APPLICATIONS</p>
-          {[
-            { title: "Project Manager — STC", status: "Under Review", color: "var(--gold)" },
-            { title: "IT Support — SIGA", status: "Viewed", color: "var(--blue)" },
-          ].map((a, i) => (
-            <div key={i} className="py-2" style={{ borderBottom: i < 1 ? "1px solid var(--border)" : "none" }}>
-              <p className="text-xs font-semibold text-text mb-0.5">{a.title}</p>
-              <Badge text={a.status} color={a.color} bg={`color-mix(in srgb, ${a.color} 8%, transparent)`} small />
-            </div>
-          ))}
+          {applications.length === 0 ? (
+            <p className="text-xs text-text-muted">No applications yet. Apply to jobs to track them here.</p>
+          ) : (
+            applications.slice(0, 5).map((a, i) => {
+              const statusColor: Record<string, string> = {
+                applied: "var(--teal)",
+                under_review: "var(--gold)",
+                viewed: "var(--blue)",
+                interview: "var(--purple)",
+                accepted: "var(--green)",
+                rejected: "var(--red)",
+              };
+              const color = statusColor[a.status] || "var(--text-sec)";
+              const label = a.status.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+              return (
+                <div key={a.id} className="py-2" style={{ borderBottom: i < Math.min(applications.length, 5) - 1 ? "1px solid var(--border)" : "none" }}>
+                  <p className="text-xs font-semibold text-text mb-0.5">{a.postTitle}{a.orgName ? ` — ${a.orgName}` : ""}</p>
+                  <Badge text={label} color={color} bg={`color-mix(in srgb, ${color} 8%, transparent)`} small />
+                </div>
+              );
+            })
+          )}
         </Card>
 
         {/* Trending */}
@@ -302,11 +327,15 @@ function FeedContent() {
         {/* Saved Items */}
         <Card style={{ padding: 16 }}>
           <p className="text-xs font-bold text-text-muted mb-2.5 tracking-[1px]">SAVED ITEMS</p>
-          {["Executive Director — SIGA", "FNUniv Scholarship", "Back to Batoche Days"].map((s, i) => (
-            <div key={i} className="py-2" style={{ borderBottom: i < 2 ? "1px solid var(--border)" : "none" }}>
-              <p className="text-xs font-semibold text-text m-0">&#128278; {s}</p>
-            </div>
-          ))}
+          {savedItems.length === 0 ? (
+            <p className="text-xs text-text-muted">No saved items yet. Save jobs and events to find them here.</p>
+          ) : (
+            savedItems.slice(0, 5).map((s, i) => (
+              <div key={s.id} className="py-2" style={{ borderBottom: i < Math.min(savedItems.length, 5) - 1 ? "1px solid var(--border)" : "none" }}>
+                <p className="text-xs font-semibold text-text m-0">&#128278; {s.postTitle}</p>
+              </div>
+            ))
+          )}
         </Card>
       </div>
     </div>

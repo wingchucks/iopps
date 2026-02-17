@@ -11,6 +11,9 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import { getPost, type Post } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
+import { savePost, unsavePost } from "@/lib/firestore/savedItems";
+import { applyToPost, hasApplied } from "@/lib/firestore/applications";
+import { useAuth } from "@/lib/auth-context";
 
 export default function JobDetailPage() {
   return (
@@ -29,6 +32,10 @@ function JobDetailContent() {
   const [post, setPost] = useState<Post | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const [applied, setApplied] = useState(false);
+  const [actionLoading, setActionLoading] = useState("");
+  const { user } = useAuth();
 
   useEffect(() => {
     async function load() {
@@ -39,6 +46,10 @@ function JobDetailContent() {
           const orgData = await getOrganization(postData.orgId);
           setOrg(orgData);
         }
+        if (postData && user) {
+          const alreadyApplied = await hasApplied(user.uid, postData.id);
+          setApplied(alreadyApplied);
+        }
       } catch (err) {
         console.error("Failed to load job:", err);
       } finally {
@@ -46,7 +57,38 @@ function JobDetailContent() {
       }
     }
     load();
-  }, [slug]);
+  }, [slug, user]);
+
+  const handleSave = async () => {
+    if (!user || !post) return;
+    setActionLoading("save");
+    try {
+      if (saved) {
+        await unsavePost(user.uid, post.id);
+        setSaved(false);
+      } else {
+        await savePost(user.uid, post.id, post.title, post.type);
+        setSaved(true);
+      }
+    } catch (err) {
+      console.error("Save failed:", err);
+    } finally {
+      setActionLoading("");
+    }
+  };
+
+  const handleApply = async () => {
+    if (!user || !post || applied) return;
+    setActionLoading("apply");
+    try {
+      await applyToPost(user.uid, post.id, post.title, post.orgName || "");
+      setApplied(true);
+    } catch (err) {
+      console.error("Apply failed:", err);
+    } finally {
+      setActionLoading("");
+    }
+  };
 
   if (loading) {
     return (
@@ -237,27 +279,31 @@ function JobDetailContent() {
               <Button
                 primary
                 full
+                onClick={handleApply}
                 style={{
-                  background: "var(--teal)",
+                  background: applied ? "var(--green)" : "var(--teal)",
                   padding: "14px 24px",
                   borderRadius: 14,
                   fontSize: 16,
                   fontWeight: 700,
                   marginBottom: 12,
+                  opacity: actionLoading === "apply" ? 0.7 : 1,
                 }}
               >
-                Apply Now
+                {applied ? "✓ Applied" : actionLoading === "apply" ? "Applying..." : "Apply Now"}
               </Button>
               <Button
                 full
+                onClick={handleSave}
                 style={{
                   borderRadius: 14,
                   padding: "12px 24px",
                   fontSize: 14,
                   marginBottom: 16,
+                  opacity: actionLoading === "save" ? 0.7 : 1,
                 }}
               >
-                &#128278; Save Job
+                {saved ? "✓ Saved" : "&#128278; Save Job"}
               </Button>
 
               <div className="border-t border-border pt-4">

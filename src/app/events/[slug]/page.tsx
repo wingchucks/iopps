@@ -9,6 +9,9 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import { getPost, type Post } from "@/lib/firestore/posts";
+import { savePost, unsavePost } from "@/lib/firestore/savedItems";
+import { applyToPost, hasApplied } from "@/lib/firestore/applications";
+import { useAuth } from "@/lib/auth-context";
 
 export default function EventDetailPage() {
   return (
@@ -26,12 +29,20 @@ function EventDetailContent() {
   const slug = params.slug as string;
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const [rsvpd, setRsvpd] = useState(false);
+  const [actionLoading, setActionLoading] = useState("");
+  const { user } = useAuth();
 
   useEffect(() => {
     async function load() {
       try {
         const postData = await getPost(`event-${slug}`);
         setPost(postData);
+        if (postData && user) {
+          const alreadyRsvpd = await hasApplied(user.uid, postData.id);
+          setRsvpd(alreadyRsvpd);
+        }
       } catch (err) {
         console.error("Failed to load event:", err);
       } finally {
@@ -39,7 +50,38 @@ function EventDetailContent() {
       }
     }
     load();
-  }, [slug]);
+  }, [slug, user]);
+
+  const handleSave = async () => {
+    if (!user || !post) return;
+    setActionLoading("save");
+    try {
+      if (saved) {
+        await unsavePost(user.uid, post.id);
+        setSaved(false);
+      } else {
+        await savePost(user.uid, post.id, post.title, post.type);
+        setSaved(true);
+      }
+    } catch (err) {
+      console.error("Save failed:", err);
+    } finally {
+      setActionLoading("");
+    }
+  };
+
+  const handleRsvp = async () => {
+    if (!user || !post || rsvpd) return;
+    setActionLoading("rsvp");
+    try {
+      await applyToPost(user.uid, post.id, post.title, post.organizer || "");
+      setRsvpd(true);
+    } catch (err) {
+      console.error("RSVP failed:", err);
+    } finally {
+      setActionLoading("");
+    }
+  };
 
   if (loading) {
     return (
@@ -196,27 +238,31 @@ function EventDetailContent() {
               <Button
                 primary
                 full
+                onClick={handleRsvp}
                 style={{
-                  background: "var(--teal)",
+                  background: rsvpd ? "var(--green)" : "var(--teal)",
                   padding: "14px 24px",
                   borderRadius: 14,
                   fontSize: 16,
                   fontWeight: 700,
                   marginBottom: 12,
+                  opacity: actionLoading === "rsvp" ? 0.7 : 1,
                 }}
               >
-                RSVP{post.price ? ` — ${post.price}` : ""}
+                {rsvpd ? "✓ RSVP'd" : actionLoading === "rsvp" ? "Saving..." : `RSVP${post.price ? ` — ${post.price}` : ""}`}
               </Button>
               <Button
                 full
+                onClick={handleSave}
                 style={{
                   borderRadius: 14,
                   padding: "12px 24px",
                   fontSize: 14,
                   marginBottom: 16,
+                  opacity: actionLoading === "save" ? 0.7 : 1,
                 }}
               >
-                &#128278; Save Event
+                {saved ? "✓ Saved" : "&#128278; Save Event"}
               </Button>
 
               <div className="border-t border-border pt-4">
