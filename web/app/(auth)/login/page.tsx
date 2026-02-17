@@ -78,11 +78,12 @@ function LoginPageInner() {
   // Auto-redirect when returning from a Google redirect flow
   useEffect(() => {
     if (!redirectLoading && user) {
-      if (redirectTo) {
-        router.push(redirectTo);
-      } else {
-        getRedirectPath(user.uid).then((path) => router.push(path));
-      }
+      // Always compute role-based path; only honor redirectTo if it's a known valid route
+      getRedirectPath(user.uid).then((rolePath) => {
+        const SAFE_PREFIXES = ["/member", "/admin", "/org", "/organization", "/me", "/home"];
+        const safe = redirectTo && SAFE_PREFIXES.some(p => redirectTo.startsWith(p));
+        router.push(safe ? redirectTo : rolePath);
+      });
     }
   }, [redirectLoading, user, router, redirectTo]);
 
@@ -99,8 +100,10 @@ function LoginPageInner() {
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      const path = redirectTo || (await getRedirectPath(cred.user.uid));
-      router.push(path);
+      const rolePath = await getRedirectPath(cred.user.uid);
+      const SAFE_PREFIXES = ["/member", "/admin", "/org", "/organization", "/me", "/home"];
+      const safe = redirectTo && SAFE_PREFIXES.some(p => redirectTo.startsWith(p));
+      router.push(safe ? redirectTo : rolePath);
     } catch (err) {
       console.error(err);
       setError(getErrorMessage(err, "Unable to sign in. Please try again."));
@@ -117,7 +120,10 @@ function LoginPageInner() {
     try {
       await signInWithGoogle();
 
-      if (redirectTo) {
+      const SAFE_PREFIXES = ["/member", "/admin", "/org", "/organization", "/me", "/home"];
+      const safe = redirectTo && SAFE_PREFIXES.some(p => redirectTo.startsWith(p));
+
+      if (safe) {
         router.push(redirectTo);
       } else if (auth?.currentUser) {
         const path = await getRedirectPath(auth.currentUser.uid);

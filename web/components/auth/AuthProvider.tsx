@@ -71,6 +71,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [redirectLoading, setRedirectLoading] = useState(false);
   const redirectHandled = useRef(false);
 
+  // Safety timeout: if loading stays true for >10s, force it to false
+  // Prevents infinite spinner if Firestore snapshot never resolves
+  useEffect(() => {
+    if (!loading) return;
+    const timeout = setTimeout(() => {
+      console.warn("[AuthProvider] Loading timeout (10s). Forcing loading=false.");
+      setLoading(false);
+    }, 10000);
+    return () => clearTimeout(timeout);
+  }, [loading]);
+
   // ---- Ensure a Firestore user doc exists after Google sign-in ----
   const ensureUserDoc = async (
     fbUser: FirebaseUser
