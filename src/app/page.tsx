@@ -13,12 +13,12 @@ const partners = [
 ];
 
 const categories = [
-  { icon: "\u{1F4BC}", title: "Jobs & Careers", count: "112", desc: "Active Indigenous-focused job postings" },
-  { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: "28", desc: "Pow wows, hockey, career fairs, round dances" },
-  { icon: "\u{1F393}", title: "Scholarships & Grants", count: "15", desc: "Funding for students & entrepreneurs" },
-  { icon: "\u{1F3EA}", title: "Shop Indigenous", count: "42", desc: "Indigenous-owned businesses" },
-  { icon: "\u{1F4DA}", title: "Schools & Programs", count: "18", desc: "Training and education programs" },
-  { icon: "\u{1F4FA}", title: "IOPPS Spotlight", count: "50+", desc: "Live streams, interviews, stories" },
+  { icon: "\u{1F4BC}", title: "Jobs & Careers", count: "112", desc: "Active Indigenous-focused job postings", href: "/jobs" },
+  { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: "28", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
+  { icon: "\u{1F393}", title: "Scholarships & Grants", count: "15", desc: "Funding for students & entrepreneurs", href: "/scholarships" },
+  { icon: "\u{1F3EA}", title: "Shop Indigenous", count: "42", desc: "Indigenous-owned businesses", href: "/shop" },
+  { icon: "\u{1F4DA}", title: "Schools & Programs", count: "18", desc: "Training and education programs", href: "/schools" },
+  { icon: "\u{1F4FA}", title: "IOPPS Spotlight", count: "50+", desc: "Live streams, interviews, stories", href: "/stories" },
 ];
 
 export default function LandingPage() {
@@ -161,15 +161,16 @@ export default function LandingPage() {
         <h3 className="text-2xl font-extrabold text-text mb-8 text-center">What&apos;s on IOPPS</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 max-w-[900px] mx-auto">
           {categories.map((item, i) => (
-            <div
+            <Link
               key={i}
-              className="p-6 rounded-2xl bg-card text-center transition-all duration-200 border border-border hover:shadow-md"
+              href={item.href}
+              className="p-6 rounded-2xl bg-card text-center transition-all duration-200 border border-border hover:shadow-md no-underline"
             >
               <span className="text-4xl block mb-2">{item.icon}</span>
               <p className="text-base font-bold text-text mb-1">{item.title}</p>
               <p className="text-[28px] font-black text-teal mb-1">{item.count}</p>
               <p className="text-[13px] text-text-sec m-0">{item.desc}</p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
