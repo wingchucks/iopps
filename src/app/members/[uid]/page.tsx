@@ -11,6 +11,8 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import { getMemberProfile, type MemberProfile } from "@/lib/firestore/members";
+import { getFollowerCount, getFollowingCount } from "@/lib/firestore/connections";
+import FollowButton from "@/components/FollowButton";
 import ReportButton from "@/components/ReportButton";
 
 const interestLabels: Record<string, { icon: string; label: string }> = {
@@ -39,12 +41,20 @@ function MemberProfileContent() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await getMemberProfile(uid);
+        const [data, followers, following] = await Promise.all([
+          getMemberProfile(uid),
+          getFollowerCount(uid),
+          getFollowingCount(uid),
+        ]);
         setProfile(data);
+        setFollowerCount(followers);
+        setFollowingCount(following);
       } catch (err) {
         console.error("Failed to load member profile:", err);
       } finally {
@@ -152,15 +162,14 @@ function MemberProfileContent() {
                     Send Message
                   </Button>
                 </Link>
-                <Button
+                <FollowButton
+                  targetUserId={profile.uid}
+                  targetUserName={profile.displayName}
                   small
-                  style={{
-                    color: "#fff",
-                    borderColor: "rgba(255,255,255,.25)",
-                  }}
-                >
-                  Connect
-                </Button>
+                  onCountChange={(delta) =>
+                    setFollowerCount((c) => Math.max(0, c + delta))
+                  }
+                />
               </>
             )}
           </div>
@@ -255,13 +264,42 @@ function MemberProfileContent() {
               </p>
             )}
 
-            {/* Activity placeholder */}
+            {/* Connections */}
+            <Card className="mb-5">
+              <div style={{ padding: 16 }}>
+                <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">
+                  CONNECTIONS
+                </p>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <Link
+                    href={`/members/${profile.uid}/followers`}
+                    className="no-underline hover:opacity-80 transition-opacity"
+                  >
+                    <p className="text-xl font-extrabold text-text mb-0">
+                      {followerCount}
+                    </p>
+                    <p className="text-[11px] text-text-muted m-0">Followers</p>
+                  </Link>
+                  <Link
+                    href={`/members/${profile.uid}/following`}
+                    className="no-underline hover:opacity-80 transition-opacity"
+                  >
+                    <p className="text-xl font-extrabold text-text mb-0">
+                      {followingCount}
+                    </p>
+                    <p className="text-[11px] text-text-muted m-0">Following</p>
+                  </Link>
+                </div>
+              </div>
+            </Card>
+
+            {/* Activity */}
             <Card>
               <div style={{ padding: 16 }}>
                 <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">
                   ACTIVITY
                 </p>
-                <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="grid grid-cols-2 gap-3 text-center">
                   <div>
                     <p className="text-xl font-extrabold text-text mb-0">--</p>
                     <p className="text-[11px] text-text-muted m-0">Posts</p>
@@ -269,12 +307,6 @@ function MemberProfileContent() {
                   <div>
                     <p className="text-xl font-extrabold text-text mb-0">--</p>
                     <p className="text-[11px] text-text-muted m-0">Events</p>
-                  </div>
-                  <div>
-                    <p className="text-xl font-extrabold text-text mb-0">--</p>
-                    <p className="text-[11px] text-text-muted m-0">
-                      Connections
-                    </p>
                   </div>
                 </div>
               </div>

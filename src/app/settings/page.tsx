@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
+import { useOnboarding } from "@/lib/onboarding-context";
 
 const settingsLinks = [
   {
@@ -27,6 +29,15 @@ const settingsLinks = [
 ];
 
 export default function SettingsPage() {
+  const { resetTour } = useOnboarding();
+  const router = useRouter();
+
+  const handleRestartTour = () => {
+    router.push("/feed");
+    // Small delay so the feed page mounts before tour starts
+    setTimeout(() => resetTour(), 300);
+  };
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-bg">
@@ -62,6 +73,25 @@ export default function SettingsPage() {
                 </Card>
               </Link>
             ))}
+
+            {/* Restart Tour */}
+            <Card className="hover:border-teal/30 transition-colors">
+              <button
+                onClick={handleRestartTour}
+                className="flex items-center gap-4 p-4 w-full bg-transparent border-none cursor-pointer text-left"
+              >
+                <span className="text-2xl">&#127919;</span>
+                <div className="flex-1">
+                  <h3 className="text-[15px] font-bold text-text mb-0.5">
+                    Restart Tour
+                  </h3>
+                  <p className="text-sm text-text-muted m-0">
+                    Replay the onboarding walkthrough to rediscover features
+                  </p>
+                </div>
+                <span className="text-text-muted text-lg">&rsaquo;</span>
+              </button>
+            </Card>
           </div>
         </div>
       </div>

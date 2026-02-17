@@ -16,6 +16,7 @@ import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
 import { getApplications, type Application } from "@/lib/firestore/applications";
 import ProfileCompleteness from "@/components/ProfileCompleteness";
 import InstallPrompt from "@/components/InstallPrompt";
+import OnboardingTour from "@/components/OnboardingTour";
 
 const tabs = ["All", "Jobs", "Events", "Scholarships", "Businesses", "Schools", "Livestreams", "Stories"];
 
@@ -35,6 +36,7 @@ export default function FeedPage() {
         <NavBar />
         <FeedContent />
         <InstallPrompt />
+        <OnboardingTour />
       </div>
     </ProtectedRoute>
   );
@@ -195,7 +197,7 @@ function FeedContent() {
       </div>
 
       {/* ═══ Center Feed ═══ */}
-      <div className="flex-1 max-w-full lg:max-w-[580px] min-w-0">
+      <div className="flex-1 max-w-full lg:max-w-[580px] min-w-0" data-tour-step="feed">
         {/* Profile completeness */}
         <ProfileCompleteness />
 

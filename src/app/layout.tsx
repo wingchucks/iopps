@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { ToastProvider } from "@/lib/toast-context";
+import { OnboardingProvider } from "@/lib/onboarding-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -58,7 +59,9 @@ export default function RootLayout({
       <body className={`${geistSans.variable} antialiased`}>
         <ThemeProvider>
           <AuthProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              <OnboardingProvider>{children}</OnboardingProvider>
+            </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
