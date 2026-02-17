@@ -1,38 +1,16 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
-
-const stats = [
-  { label: "Programs", value: "18", icon: "\u{1F4DA}" },
-  { label: "Open Jobs", value: "3", icon: "\u{1F4BC}" },
-  { label: "Students", value: "3,200+", icon: "\u{1F465}" },
-  { label: "Campuses", value: "3", icon: "\u{1F3DB}\u{FE0F}" },
-];
-
-const programs = [
-  { name: "Indigenous Business Administration", dur: "4 years", cred: "Bachelor's", featured: true },
-  { name: "Indigenous Social Work", dur: "4 years", cred: "Bachelor's", featured: true },
-  { name: "Indigenous Health Studies", dur: "2 years", cred: "Certificate", featured: false },
-  { name: "Cree Language & Culture", dur: "1 year", cred: "Certificate", featured: false },
-];
-
-const supports = [
-  "Elders-in-Residence program",
-  "Indigenous student advisors",
-  "Cultural ceremonies & events",
-  "Treaty education integrated curriculum",
-  "Indigenous language courses (Cree, Saulteaux, Dakota)",
-];
-
-const openPositions = [
-  "Indigenous Studies Instructor — Full-time",
-  "Student Recruitment Coordinator — Full-time",
-];
+import { getOrganization, type Organization } from "@/lib/firestore/organizations";
+import { getPostsByOrg, type Post } from "@/lib/firestore/posts";
 
 export default function SchoolProfilePage() {
   return (
@@ -46,6 +24,67 @@ export default function SchoolProfilePage() {
 }
 
 function SchoolProfileContent() {
+  const params = useParams();
+  const slug = params.slug as string;
+  const [org, setOrg] = useState<Organization | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const orgData = await getOrganization(slug);
+        setOrg(orgData);
+        if (orgData) {
+          const orgPosts = await getPostsByOrg(slug);
+          setPosts(orgPosts);
+        }
+      } catch (err) {
+        console.error("Failed to load school:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="max-w-[900px] mx-auto">
+        <div className="skeleton h-[200px] rounded-b-3xl" />
+        <div className="px-4 py-6 md:px-12">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
+            {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-[80px] rounded-[14px]" />)}
+          </div>
+          <div className="skeleton h-[100px] rounded-[14px] mb-6" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!org) {
+    return (
+      <div className="max-w-[600px] mx-auto px-4 py-20 text-center">
+        <p className="text-5xl mb-4">🏫</p>
+        <h2 className="text-2xl font-extrabold text-text mb-2">School Not Found</h2>
+        <p className="text-text-sec mb-6">This school doesn&apos;t exist or hasn&apos;t been added yet.</p>
+        <Link href="/partners">
+          <Button primary>Browse Partners →</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const programs = posts.filter((p) => p.type === "program");
+  const jobs = posts.filter((p) => p.type === "job");
+
+  const stats = [
+    { label: "Programs", value: String(programs.length || "–"), icon: "📚" },
+    { label: "Open Jobs", value: String(org.openJobs), icon: "💼" },
+    ...(org.employees ? [{ label: "Staff", value: org.employees, icon: "👥" }] : []),
+    { label: "Since", value: org.since, icon: "📅" },
+  ];
+
   return (
     <div className="max-w-[900px] mx-auto">
       {/* Hero Header */}
@@ -58,33 +97,37 @@ function SchoolProfileContent() {
       >
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start sm:items-center">
           <Avatar
-            name="FNUniv"
+            name={org.shortName}
             size={64}
             gradient="linear-gradient(135deg, var(--teal), var(--blue))"
           />
           <div className="flex-1">
             <h1 className="text-xl sm:text-[28px] font-extrabold text-white mb-1.5">
-              First Nations University of Canada
+              {org.name}
             </h1>
             <p className="text-[15px] mb-2.5" style={{ color: "rgba(255,255,255,.7)" }}>
-              &#128205; Regina, SK &bull; fnuniv.ca
+              &#128205; {org.location}
+              {org.website && <> &bull; {org.website}</>}
             </p>
             <div className="flex flex-wrap gap-2">
               <Badge text="&#127891; Education Partner" color="#fff" bg="rgba(255,255,255,.15)" small />
-              <Badge text="&#10003; Verified" color="#6EE7B7" bg="rgba(110,231,183,.15)" small />
-              <Badge text="Indigenous-Owned" color="#F5D78E" bg="rgba(245,215,142,.15)" small />
+              {org.verified && (
+                <Badge text="&#10003; Verified" color="#6EE7B7" bg="rgba(110,231,183,.15)" small />
+              )}
+              {org.tags.filter((t) => t === "Indigenous-Owned").map((tag) => (
+                <Badge key={tag} text={tag} color="#F5D78E" bg="rgba(245,215,142,.15)" small />
+              ))}
             </div>
           </div>
           <div className="flex gap-2.5 mt-2 sm:mt-0">
-            <Button
-              small
-              style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)" }}
-            >
+            <Button small style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)" }}>
               &#128172; Message
             </Button>
-            <Button small primary style={{ background: "var(--teal)" }}>
-              Visit Website
-            </Button>
+            {org.website && (
+              <Button small primary style={{ background: "var(--teal)" }}>
+                Visit Website
+              </Button>
+            )}
           </div>
         </div>
         <p
@@ -113,69 +156,84 @@ function SchoolProfileContent() {
           {/* Left Column */}
           <div>
             <h3 className="text-lg font-bold text-text mb-2.5">About</h3>
-            <p className="text-sm text-text-sec leading-relaxed mb-5">
-              First Nations University of Canada is a First Nations-controlled university
-              with a mandate to enhance the quality of life and preserve, protect, and
-              interpret the history, language, culture, and artistic heritage of First
-              Nations peoples.
-            </p>
+            <p className="text-sm text-text-sec leading-relaxed mb-5">{org.description}</p>
 
-            {/* Indigenous Student Support */}
-            <div
-              className="rounded-[14px] mb-5"
-              style={{
-                padding: 16,
-                background: "rgba(13,148,136,.04)",
-                border: "1.5px solid rgba(13,148,136,.09)",
-              }}
-            >
-              <p className="text-sm font-bold text-teal mb-2.5">
-                &#129718; Indigenous Student Support
-              </p>
-              {supports.map((s, i) => (
-                <div key={i} className="flex gap-2 items-center mb-1">
-                  <span className="text-xs text-teal">&#10003;</span>
-                  <span className="text-[13px] text-text-sec">{s}</span>
-                </div>
-              ))}
-            </div>
+            {/* Tags */}
+            {org.tags.length > 0 && (
+              <div
+                className="rounded-[14px] mb-5"
+                style={{
+                  padding: 16,
+                  background: "rgba(13,148,136,.04)",
+                  border: "1.5px solid rgba(13,148,136,.09)",
+                }}
+              >
+                <p className="text-sm font-bold text-teal mb-2.5">
+                  &#129718; Focus Areas
+                </p>
+                {org.tags.map((tag) => (
+                  <div key={tag} className="flex gap-2 items-center mb-1">
+                    <span className="text-xs text-teal">&#10003;</span>
+                    <span className="text-[13px] text-text-sec">{tag}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Column */}
           <div>
-            <h3 className="text-lg font-bold text-text mb-3">Programs</h3>
-            {programs.map((p, i) => (
-              <Card
-                key={i}
-                className="mb-2.5"
-                style={{
-                  border: p.featured
-                    ? "1.5px solid rgba(13,148,136,.15)"
-                    : "1px solid var(--border)",
-                }}
-              >
-                <div style={{ padding: "12px 14px" }}>
-                  <div className="flex gap-1.5 mb-1">
-                    <Badge text={p.cred} color="var(--blue)" bg="var(--blue-soft)" small />
-                    {p.featured && (
-                      <Badge text="&#11088; Featured" color="var(--gold)" bg="var(--gold-soft)" small />
-                    )}
-                  </div>
-                  <h4 className="text-sm font-bold text-text mt-1 mb-1">{p.name}</h4>
-                  <span className="text-xs text-text-sec">&#9201;&#65039; {p.dur}</span>
-                </div>
-              </Card>
-            ))}
+            {/* Programs */}
+            {programs.length > 0 && (
+              <>
+                <h3 className="text-lg font-bold text-text mb-3">Programs</h3>
+                {programs.map((p) => (
+                  <Card
+                    key={p.id}
+                    className="mb-2.5"
+                    style={{
+                      border: p.badges?.includes("Education Partner")
+                        ? "1.5px solid rgba(13,148,136,.15)"
+                        : "1px solid var(--border)",
+                    }}
+                  >
+                    <div style={{ padding: "12px 14px" }}>
+                      <div className="flex gap-1.5 mb-1">
+                        {p.credential && (
+                          <Badge text={p.credential} color="var(--blue)" bg="var(--blue-soft)" small />
+                        )}
+                      </div>
+                      <h4 className="text-sm font-bold text-text mt-1 mb-1">{p.title}</h4>
+                      {p.duration && (
+                        <span className="text-xs text-text-sec">&#9201;&#65039; {p.duration}</span>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </>
+            )}
 
-            <h3 className="text-lg font-bold text-text mt-5 mb-3">Open Positions</h3>
-            {openPositions.map((j, i) => (
-              <Card key={i} className="mb-2.5">
-                <div style={{ padding: "12px 14px" }}>
-                  <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
-                  <p className="text-sm font-bold text-text mt-1 mb-0">{j}</p>
-                </div>
-              </Card>
-            ))}
+            {/* Open Positions */}
+            {jobs.length > 0 && (
+              <>
+                <h3 className="text-lg font-bold text-text mt-5 mb-3">Open Positions</h3>
+                {jobs.map((j) => {
+                  const jobSlug = j.id.replace(/^job-/, "");
+                  return (
+                    <Link key={j.id} href={`/jobs/${jobSlug}`} className="no-underline">
+                      <Card className="mb-2.5 cursor-pointer">
+                        <div style={{ padding: "12px 14px" }}>
+                          <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
+                          <p className="text-sm font-bold text-text mt-1 mb-0">
+                            {j.title}{j.jobType ? ` — ${j.jobType}` : ""}
+                          </p>
+                        </div>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </>
+            )}
           </div>
         </div>
       </div>
