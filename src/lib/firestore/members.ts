@@ -1,8 +1,13 @@
 import {
+  collection,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -60,4 +65,15 @@ export async function updateMemberProfile(
     ...data,
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function getAllMembers(): Promise<MemberProfile[]> {
+  const snap = await getDocs(
+    query(collection(db, "members"), orderBy("displayName"))
+  );
+  return snap.docs.map((d) => d.data() as MemberProfile);
+}
+
+export async function deleteMemberProfile(uid: string): Promise<void> {
+  await deleteDoc(doc(db, "members", uid));
 }

@@ -166,7 +166,7 @@ export default function LandingPage() {
 
       {/* Stats Footer */}
       <section className="text-center border-t border-border px-5 md:px-10 lg:px-20 py-10 md:py-12">
-        <p className="text-3xl md:text-5xl font-black text-navy mb-2">84,200+</p>
+        <p className="text-3xl md:text-5xl font-black mb-2" style={{ color: "var(--hero-stat)" }}>84,200+</p>
         <p className="text-base text-text-sec mb-5">Community members and growing</p>
         <p className="text-teal m-0" style={{ fontSize: 11, fontWeight: 800, letterSpacing: 4 }}>
           EMPOWERING INDIGENOUS SUCCESS

@@ -10,7 +10,7 @@ export default function NotFound() {
         >
           &#128270;
         </div>
-        <h1 className="text-6xl font-black text-navy tracking-[3px] mb-2">404</h1>
+        <h1 className="text-6xl font-black tracking-[3px] mb-2" style={{ color: "var(--hero-stat)" }}>404</h1>
         <h2 className="text-xl font-bold text-text mb-3">Page Not Found</h2>
         <p className="text-sm text-text-sec mb-8 leading-relaxed">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.

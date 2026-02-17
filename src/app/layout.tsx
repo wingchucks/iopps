@@ -42,13 +42,18 @@ export const viewport: Viewport = {
   themeColor: "#0F2B4C",
 };
 
+const themeScript = `(function(){try{var t=localStorage.getItem("iopps-theme");if(t==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}})()`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={`${geistSans.variable} antialiased`}>
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>

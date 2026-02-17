@@ -44,6 +44,7 @@ function AdminContent() {
   ];
 
   const menuItems = [
+    { icon: "\u{1F465}", label: "Members", sub: "View and manage community members", href: "/admin/members" },
     { icon: "\u{1F3E2}", label: "Organizations", sub: `${orgCount} organizations`, href: "/admin/organizations" },
     { icon: "\u{1F4CB}", label: "All Posts", sub: `${postCount} active across all types`, href: "/admin/posts" },
     { icon: "\u{1F31F}", label: "Success Stories", sub: "Create and manage stories" },

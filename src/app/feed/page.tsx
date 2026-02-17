@@ -237,23 +237,23 @@ function FeedContent() {
                   className="flex-none flex items-center gap-2 rounded-xl cursor-pointer"
                   style={{
                     padding: "8px 14px",
-                    background: "color-mix(in srgb, var(--navy) 4%, transparent)",
-                    border: "1.5px solid color-mix(in srgb, var(--navy) 8%, transparent)",
+                    background: "color-mix(in srgb, var(--teal) 6%, var(--card))",
+                    border: "1.5px solid var(--border)",
                   }}
                 >
                   <div
                     className="w-7 h-7 rounded-lg flex items-center justify-center font-extrabold"
                     style={{
                       fontSize: 9,
-                      background: "color-mix(in srgb, var(--navy) 8%, transparent)",
-                      color: "var(--navy)",
+                      background: "color-mix(in srgb, var(--teal) 12%, transparent)",
+                      color: "var(--teal)",
                     }}
                   >
                     {org.name.slice(0, 2)}
                   </div>
                   <div>
                     <p className="text-xs font-bold text-text m-0">{org.name}</p>
-                    <p className="m-0 font-semibold text-navy" style={{ fontSize: 10 }}>
+                    <p className="m-0 font-semibold text-teal" style={{ fontSize: 10 }}>
                       {org.count} open roles
                     </p>
                   </div>
@@ -435,7 +435,7 @@ function FeedCard({ post }: { post: Post }) {
         style={{
           padding: 20,
           border: "1.5px solid rgba(217,119,6,.19)",
-          background: "linear-gradient(135deg, var(--gold-soft), #FFFBEB)",
+          background: `linear-gradient(135deg, var(--gold-soft), var(--spotlight-bg))`,
         }}
       >
         <div className="flex justify-between items-center mb-3">
