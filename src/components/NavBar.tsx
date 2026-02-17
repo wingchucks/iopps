@@ -1,28 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { getMemberProfile } from "@/lib/firestore/members";
 import Avatar from "./Avatar";
 import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import ChatButton from "./ChatButton";
 
-const navLinks = [
+const baseNavLinks = [
   { href: "/feed", label: "Home" },
   { href: "/search", label: "Search" },
   { href: "/partners", label: "Partners" },
   { href: "/members", label: "Members" },
-  { href: "/profile", label: "Profile" },
 ];
 
 export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hasOrg, setHasOrg] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
   const displayName = user?.displayName || user?.email || "U";
+
+  useEffect(() => {
+    if (!user) return;
+    getMemberProfile(user.uid).then((profile) => {
+      if (profile?.orgId) setHasOrg(true);
+    });
+  }, [user]);
+
+  const navLinks = [
+    ...baseNavLinks,
+    ...(hasOrg ? [{ href: "/org/dashboard", label: "Dashboard" }] : []),
+    { href: "/profile", label: "Profile" },
+  ];
 
   const handleSignOut = async () => {
     setMenuOpen(false);
@@ -115,6 +129,7 @@ export default function NavBar() {
           </Link>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle navigation menu"
             className="w-10 h-10 rounded-[10px] border-none cursor-pointer text-xl text-white flex items-center justify-center"
             style={{ background: "rgba(255,255,255,.08)" }}
           >

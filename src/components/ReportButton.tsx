@@ -89,6 +89,9 @@ export default function ReportButton({
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOpen(false);
+          }}
         >
           <div
             className="bg-card rounded-2xl w-full max-w-md mx-4"

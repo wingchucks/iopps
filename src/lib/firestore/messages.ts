@@ -14,6 +14,8 @@ import {
   type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { queueEmail } from "./emailQueue";
+import { newMessageEmail } from "../email-templates";
 
 export interface Conversation {
   id: string;
@@ -104,6 +106,30 @@ export async function sendMessage(
     lastSenderId: senderId,
     unreadBy: recipientId,
   });
+
+  // Queue email notification for the recipient
+  try {
+    const [recipientSnap, senderSnap] = await Promise.all([
+      getDoc(doc(db, "members", recipientId)),
+      getDoc(doc(db, "members", senderId)),
+    ]);
+    if (recipientSnap.exists()) {
+      const recipient = recipientSnap.data();
+      const recipientEmail = recipient.email as string | undefined;
+      const recipientName = (recipient.displayName || recipient.name || "Member") as string;
+      const senderName = senderSnap.exists()
+        ? ((senderSnap.data().displayName || senderSnap.data().name || "Someone") as string)
+        : "Someone";
+
+      // Only queue if recipient has an email on file
+      if (recipientEmail) {
+        const html = newMessageEmail(recipientName, senderName);
+        await queueEmail(recipientEmail, `New message from ${senderName}`, html);
+      }
+    }
+  } catch (err) {
+    console.error("Failed to queue message notification email:", err);
+  }
 }
 
 // Mark conversation as read

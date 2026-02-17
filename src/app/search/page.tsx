@@ -228,9 +228,9 @@ function SearchResultCard({ post }: { post: Post }) {
   const typeConfig: Record<string, { label: string; color: string; bg: string; href: string }> = {
     job: { label: "Job", color: "var(--blue)", bg: "var(--blue-soft)", href: `/jobs/${slug}` },
     event: { label: "Event", color: "var(--gold)", bg: "var(--gold-soft)", href: `/events/${slug}` },
-    program: { label: "Program", color: "var(--teal)", bg: "var(--teal-soft)", href: "#" },
-    spotlight: { label: "Spotlight", color: "var(--gold)", bg: "var(--gold-soft)", href: post.orgId ? `/org/${post.orgId}` : "#" },
-    story: { label: "Story", color: "var(--green)", bg: "var(--green-soft)", href: "#" },
+    program: { label: "Program", color: "var(--teal)", bg: "var(--teal-soft)", href: `/feed` },
+    spotlight: { label: "Spotlight", color: "var(--gold)", bg: "var(--gold-soft)", href: post.orgId ? `/org/${post.orgId}` : `/feed` },
+    story: { label: "Story", color: "var(--green)", bg: "var(--green-soft)", href: `/feed` },
   };
 
   const config = typeConfig[post.type] || { label: post.type, color: "var(--text-sec)", bg: "var(--border)", href: "#" };

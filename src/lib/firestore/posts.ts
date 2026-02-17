@@ -3,12 +3,14 @@ import {
   getDocs,
   getDoc,
   setDoc,
+  updateDoc,
   deleteDoc,
   doc,
   query,
   orderBy,
   where,
   limit,
+  serverTimestamp,
   type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -21,10 +23,14 @@ export type PostType =
   | "story"
   | "spotlight";
 
+export type PostStatus = "draft" | "active" | "closed";
+
 export interface Post {
   id: string;
   type: PostType;
   title: string;
+  slug?: string;
+  status?: PostStatus;
   orgId?: string;
   orgName?: string;
   orgShort?: string;
@@ -34,6 +40,7 @@ export interface Post {
   salary?: string;
   jobType?: string;
   deadline?: string;
+  closingDate?: string;
   featured?: boolean;
   closingSoon?: boolean;
   source?: string;
@@ -94,4 +101,37 @@ export async function setPost(
 
 export async function deletePost(id: string): Promise<void> {
   await deleteDoc(doc(db, "posts", id));
+}
+
+export async function getOrgPosts(orgId: string): Promise<Post[]> {
+  const snap = await getDocs(
+    query(col, where("orgId", "==", orgId), orderBy("createdAt", "desc"))
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Post);
+}
+
+export async function createPost(
+  data: Omit<Post, "id" | "createdAt" | "order">
+): Promise<string> {
+  const id =
+    data.slug ||
+    data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  await setDoc(doc(db, "posts", id), {
+    ...data,
+    createdAt: serverTimestamp(),
+    order: Date.now(),
+  });
+  return id;
+}
+
+export async function updatePost(
+  id: string,
+  data: Partial<Omit<Post, "id">>
+): Promise<void> {
+  const existing = await getDoc(doc(db, "posts", id));
+  if (!existing.exists()) throw new Error("Post not found");
+  await updateDoc(doc(db, "posts", id), data);
 }

@@ -12,6 +12,8 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { queueEmail } from "./emailQueue";
+import { applicationStatusEmail } from "../email-templates";
 
 export type ApplicationStatus =
   | "submitted"
@@ -120,6 +122,22 @@ export async function updateApplicationStatus(
     statusHistory: history,
     updatedAt: serverTimestamp(),
   });
+
+  // Queue email notification for application status change
+  try {
+    const memberSnap = await getDoc(doc(db, "members", data.userId));
+    if (memberSnap.exists()) {
+      const member = memberSnap.data();
+      const email = member.email as string | undefined;
+      const name = (member.displayName || member.name || "Applicant") as string;
+      if (email) {
+        const html = applicationStatusEmail(name, data.postTitle || "a position", status);
+        await queueEmail(email, `Application Update: ${status.charAt(0).toUpperCase() + status.slice(1)}`, html);
+      }
+    }
+  } catch (err) {
+    console.error("Failed to queue application status email:", err);
+  }
 }
 
 export async function withdrawApplication(appId: string): Promise<void> {

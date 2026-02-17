@@ -23,6 +23,8 @@ export interface MemberProfile {
   joinedAt: unknown;
   updatedAt: unknown;
   photoURL?: string;
+  orgId?: string;
+  orgRole?: "owner" | "admin" | "member";
 }
 
 export async function getMemberProfile(
