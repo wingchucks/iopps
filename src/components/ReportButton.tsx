@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import { submitReport, type ContentReport } from "@/lib/firestore/reports";
 import Button from "./Button";
 
@@ -25,6 +26,7 @@ export default function ReportButton({
   targetTitle,
 }: ReportButtonProps) {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<ContentReport["reason"] | "">("");
   const [details, setDetails] = useState("");
@@ -53,6 +55,7 @@ export default function ReportButton({
       }, 1500);
     } catch (err) {
       console.error("Failed to submit report:", err);
+      showToast("Failed to submit report. Please try again.", "error");
     } finally {
       setSubmitting(false);
     }

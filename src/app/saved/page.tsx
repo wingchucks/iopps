@@ -8,6 +8,7 @@ import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import {
   getSavedItems,
   unsavePost,
@@ -106,6 +107,7 @@ export default function SavedPage() {
 
 function SavedContent() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [items, setItems] = useState<SavedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("All");
@@ -125,8 +127,10 @@ function SavedContent() {
     try {
       await unsavePost(user.uid, item.postId);
       setItems((prev) => prev.filter((i) => i.postId !== item.postId));
+      showToast("Item removed from saved");
     } catch (err) {
       console.error("Failed to unsave:", err);
+      showToast("Failed to remove item. Please try again.", "error");
     } finally {
       setRemoving(null);
     }

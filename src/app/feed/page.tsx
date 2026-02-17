@@ -278,7 +278,13 @@ function FeedContent() {
           </div>
         ) : filtered.length === 0 ? (
           <Card style={{ padding: 40, textAlign: "center" }}>
-            <p className="text-text-muted text-sm">No posts found for this category.</p>
+            <p className="text-3xl mb-2">&#128269;</p>
+            <p className="text-sm font-bold text-text mb-1">No {tab === "All" ? "posts" : tab.toLowerCase()} found</p>
+            <p className="text-sm text-text-muted">
+              {tab === "All"
+                ? "Check back soon for new opportunities and updates."
+                : "Try a different category or check back later."}
+            </p>
           </Card>
         ) : (
           <div className="flex flex-col gap-3">

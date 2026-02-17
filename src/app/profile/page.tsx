@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import {
   getMemberProfile,
   updateMemberProfile,
@@ -60,6 +61,7 @@ export default function ProfilePage() {
 
 function ProfileContent() {
   const { user, signOut } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,8 +120,10 @@ function ProfileContent() {
       await updateMemberProfile(user.uid, { community, location, bio });
       setProfile((prev) => (prev ? { ...prev, community, location, bio } : prev));
       setEditing(false);
+      showToast("Profile updated");
     } catch (err) {
       console.error("Failed to update profile:", err);
+      showToast("Failed to update profile. Please try again.", "error");
     } finally {
       setSaving(false);
     }
@@ -132,7 +136,7 @@ function ProfileContent() {
     // Validate file
     if (!file.type.startsWith("image/")) return;
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image must be under 5MB");
+      showToast("Image must be under 5MB", "error");
       return;
     }
 
@@ -144,9 +148,10 @@ function ProfileContent() {
       const photoURL = await getDownloadURL(storageRef);
       await updateMemberProfile(user.uid, { photoURL });
       setProfile((prev) => (prev ? { ...prev, photoURL } : prev));
+      showToast("Photo updated");
     } catch (err) {
       console.error("Failed to upload photo:", err);
-      alert("Failed to upload photo. Please try again.");
+      showToast("Failed to upload photo. Please try again.", "error");
     } finally {
       setUploading(false);
     }
@@ -158,8 +163,22 @@ function ProfileContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-text-muted text-sm">Loading profile...</p>
+      <div className="max-w-[900px] mx-auto">
+        <div className="skeleton h-[200px] rounded-b-3xl mb-6" />
+        <div className="px-4 md:px-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-3">
+              <div className="skeleton h-6 w-24 rounded" />
+              <div className="skeleton h-16 rounded-xl" />
+              <div className="skeleton h-[120px] rounded-2xl" />
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="skeleton h-6 w-24 rounded" />
+              <div className="skeleton h-10 w-3/4 rounded-xl" />
+              <div className="skeleton h-[100px] rounded-2xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

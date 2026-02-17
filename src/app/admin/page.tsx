@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
+import PageSkeleton from "@/components/PageSkeleton";
 import Link from "next/link";
 import { getPosts } from "@/lib/firestore/posts";
 import { getOrganizations } from "@/lib/firestore/organizations";
@@ -24,6 +25,7 @@ function AdminContent() {
   const [postCount, setPostCount] = useState(0);
   const [orgCount, setOrgCount] = useState(0);
   const [pendingReports, setPendingReports] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -38,10 +40,16 @@ function AdminContent() {
         setPendingReports(reportCount);
       } catch (err) {
         console.error("Failed to load admin stats:", err);
+      } finally {
+        setLoading(false);
       }
     }
     load();
   }, []);
+
+  if (loading) {
+    return <PageSkeleton variant="grid" />;
+  }
 
   const topStats = [
     { label: "Total Users", value: "\u2014", trend: "", icon: "\u{1F465}" },

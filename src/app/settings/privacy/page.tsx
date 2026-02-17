@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import {
   getMemberSettings,
   updatePrivacySettings,
@@ -12,6 +13,7 @@ import {
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
+import PageSkeleton from "@/components/PageSkeleton";
 
 const visibilityOptions: { value: FieldVisibility; label: string }[] = [
   { value: "everyone", label: "Everyone" },
@@ -58,10 +60,10 @@ export default function PrivacySettingsPage() {
 
 function PrivacyContent() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [settings, setSettings] = useState<MemberSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   const loadSettings = useCallback(async () => {
     if (!user) return;
@@ -90,21 +92,17 @@ function PrivacyContent() {
         allowDirectMessages: settings.allowDirectMessages,
         showInDirectory: settings.showInDirectory,
       });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      showToast("Privacy settings saved");
     } catch (err) {
       console.error("Failed to save privacy settings:", err);
+      showToast("Failed to save settings. Please try again.", "error");
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-text-muted text-sm">Loading settings...</p>
-      </div>
-    );
+    return <PageSkeleton variant="list" />;
   }
 
   if (!settings) return null;
@@ -263,11 +261,6 @@ function PrivacyContent() {
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
-        {saved && (
-          <span className="text-sm font-semibold text-green">
-            Settings saved!
-          </span>
-        )}
       </div>
     </div>
   );

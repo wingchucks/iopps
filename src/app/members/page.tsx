@@ -132,10 +132,16 @@ function MembersContent() {
         </div>
       ) : filtered.length === 0 ? (
         <Card style={{ padding: 40, textAlign: "center" }}>
-          <p className="text-text-muted text-sm">
+          <p className="text-3xl mb-2">&#128100;</p>
+          <p className="text-sm font-bold text-text mb-1">
             {search || activeFilter !== "All"
-              ? "No members found matching your search."
-              : "No members have joined yet."}
+              ? "No members found"
+              : "No members yet"}
+          </p>
+          <p className="text-sm text-text-muted">
+            {search || activeFilter !== "All"
+              ? "Try adjusting your search or filter to find community members."
+              : "Be the first to join the IOPPS community!"}
           </p>
         </Card>
       ) : (

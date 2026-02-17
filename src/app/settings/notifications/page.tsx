@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
@@ -12,6 +13,7 @@ import {
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
+import PageSkeleton from "@/components/PageSkeleton";
 
 const categoryLabels: Record<NotificationCategory, { icon: string; title: string; desc: string }> = {
   applications: {
@@ -60,10 +62,10 @@ export default function NotificationSettingsPage() {
 
 function NotificationContent() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   const loadPrefs = useCallback(async () => {
     if (!user) return;
@@ -89,10 +91,10 @@ function NotificationContent() {
         categories: prefs.categories,
         quietHours: prefs.quietHours,
       });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      showToast("Notification preferences saved");
     } catch (err) {
       console.error("Failed to save notification preferences:", err);
+      showToast("Failed to save preferences. Please try again.", "error");
     } finally {
       setSaving(false);
     }
@@ -117,11 +119,7 @@ function NotificationContent() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-text-muted text-sm">Loading preferences...</p>
-      </div>
-    );
+    return <PageSkeleton variant="list" />;
   }
 
   if (!prefs) return null;
@@ -301,11 +299,6 @@ function NotificationContent() {
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
-        {saved && (
-          <span className="text-sm font-semibold text-green">
-            Preferences saved!
-          </span>
-        )}
       </div>
     </div>
   );

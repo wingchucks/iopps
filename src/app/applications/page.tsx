@@ -8,6 +8,7 @@ import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import {
   getApplications,
   withdrawApplication,
@@ -52,6 +53,7 @@ export default function ApplicationsPage() {
 
 function ApplicationsContent() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<ApplicationStatus | "all">("all");
@@ -80,8 +82,10 @@ function ApplicationsContent() {
       setApplications((prev) =>
         prev.map((a) => (a.id === appId ? { ...a, status: "withdrawn" as ApplicationStatus } : a))
       );
+      showToast("Application withdrawn");
     } catch (err) {
       console.error("Failed to withdraw:", err);
+      showToast("Failed to withdraw application. Please try again.", "error");
     } finally {
       setWithdrawing(null);
     }

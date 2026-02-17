@@ -11,6 +11,7 @@ import {
   deleteUser,
 } from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import { updateMemberProfile, deleteMemberProfile } from "@/lib/firestore/members";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
@@ -30,12 +31,12 @@ export default function AccountSettingsPage() {
 
 function AccountContent() {
   const { user, signOut } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
 
   // Display name
   const [displayName, setDisplayName] = useState(user?.displayName || "");
   const [savingName, setSavingName] = useState(false);
-  const [nameSaved, setNameSaved] = useState(false);
 
   // Password change
   const [currentPassword, setCurrentPassword] = useState("");
@@ -43,7 +44,6 @@ function AccountContent() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
-  const [passwordSaved, setPasswordSaved] = useState(false);
 
   // Delete account
   const [showDelete, setShowDelete] = useState(false);
@@ -59,10 +59,10 @@ function AccountContent() {
       await updateMemberProfile(user.uid, {
         displayName: displayName.trim(),
       });
-      setNameSaved(true);
-      setTimeout(() => setNameSaved(false), 2000);
+      showToast("Display name updated");
     } catch (err) {
       console.error("Failed to update display name:", err);
+      showToast("Failed to update name. Please try again.", "error");
     } finally {
       setSavingName(false);
     }
@@ -92,8 +92,7 @@ function AccountContent() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setPasswordSaved(true);
-      setTimeout(() => setPasswordSaved(false), 2000);
+      showToast("Password changed successfully");
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to change password.";
@@ -171,11 +170,6 @@ function AccountContent() {
             >
               {savingName ? "Saving..." : "Update Name"}
             </button>
-            {nameSaved && (
-              <span className="text-sm font-semibold text-green">
-                Name updated!
-              </span>
-            )}
           </div>
         </div>
       </Card>
@@ -250,11 +244,6 @@ function AccountContent() {
             >
               {savingPassword ? "Changing..." : "Change Password"}
             </button>
-            {passwordSaved && (
-              <span className="text-sm font-semibold text-green">
-                Password changed!
-              </span>
-            )}
           </div>
         </div>
       </Card>
