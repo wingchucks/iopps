@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
@@ -64,29 +65,33 @@ export default function LandingPage() {
         </p>
 
         <div className="relative flex gap-4 justify-center">
-          <Button
-            primary
-            style={{
-              background: "var(--teal)",
-              fontSize: 17,
-              padding: "16px 40px",
-              borderRadius: 14,
-              fontWeight: 700,
-            }}
-          >
-            Join the Community
-          </Button>
-          <Button
-            style={{
-              color: "#fff",
-              borderColor: "rgba(255,255,255,.25)",
-              fontSize: 17,
-              padding: "16px 40px",
-              borderRadius: 14,
-            }}
-          >
-            Sign In
-          </Button>
+          <Link href="/signup">
+            <Button
+              primary
+              style={{
+                background: "var(--teal)",
+                fontSize: 17,
+                padding: "16px 40px",
+                borderRadius: 14,
+                fontWeight: 700,
+              }}
+            >
+              Join the Community
+            </Button>
+          </Link>
+          <Link href="/login">
+            <Button
+              style={{
+                color: "#fff",
+                borderColor: "rgba(255,255,255,.25)",
+                fontSize: 17,
+                padding: "16px 40px",
+                borderRadius: 14,
+              }}
+            >
+              Sign In
+            </Button>
+          </Link>
         </div>
       </section>
 
