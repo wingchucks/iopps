@@ -81,6 +81,27 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
+  // ---- Auth guards for protected routes ----
+  const protectedPrefixes = ["/admin", "/member", "/organization"];
+  const isProtected = protectedPrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+  );
+
+  if (isProtected) {
+    // Check for Firebase auth session cookie or token
+    const hasSession =
+      request.cookies.has("__session") ||
+      request.cookies.has("session") ||
+      request.headers.get("authorization");
+
+    if (!hasSession) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url, 307);
+    }
+  }
+
   return NextResponse.next();
 }
 

@@ -276,17 +276,7 @@ function LoginPageInner() {
 
 function AuthShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background)]">
-      <header className="border-b border-[var(--border)] bg-[var(--card-bg)]">
-        <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
-          <Link
-            href="/"
-            className="text-xl font-black tracking-tight text-[var(--accent)]"
-          >
-            IOPPS
-          </Link>
-        </div>
-      </header>
+    <div className="flex min-h-[60vh] flex-col bg-[var(--background)]">
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-12 sm:py-20">
         <div className="w-full max-w-md">{children}</div>
       </main>

@@ -105,7 +105,7 @@ export default function HomePage() {
           {statItems.map((stat) => (
             <div key={stat.label} className="text-center">
               <p className="text-3xl font-bold text-accent">
-                {stat.value > 0 ? stat.value.toLocaleString() : "--"}
+                {stat.value > 0 ? stat.value.toLocaleString() : "0"}
               </p>
               <p className="mt-1 text-sm text-text-muted">{stat.label}</p>
             </div>
