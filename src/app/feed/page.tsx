@@ -349,7 +349,7 @@ function FeedContent() {
 }
 
 function FeedCard({ post }: { post: Post }) {
-  const slug = post.id.replace(/^(job|event|program|spotlight|story)-/, "");
+  const slug = post.id.replace(/^(job|event|scholarship|program|spotlight|story)-/, "");
 
   if (post.type === "job" && post.featured) {
     return (
@@ -485,6 +485,35 @@ function FeedCard({ post }: { post: Post }) {
               {post.dates && <span>&#128197; {post.dates}</span>}
               {post.location && <span>&#128205; {post.location}</span>}
               {post.price && <span>&#127915; {post.price}</span>}
+            </div>
+          </div>
+        </Card>
+      </Link>
+    );
+  }
+
+  if (post.type === "scholarship") {
+    return (
+      <Link href={`/scholarships/${slug}`} className="no-underline">
+        <Card>
+          <div style={{ padding: "16px 20px" }}>
+            <div className="flex items-center gap-1.5 mb-2">
+              <Badge text="Scholarship" color="var(--green)" bg="var(--green-soft)" small icon={<span>&#127891;</span>} />
+              {post.featured && (
+                <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
+              )}
+              {post.closingSoon && (
+                <Badge text="Closing Soon" color="var(--red)" bg="var(--red-soft)" small />
+              )}
+            </div>
+            <h3 className="text-base font-bold text-text mb-1.5">{post.title}</h3>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="text-sm text-teal font-semibold">{post.orgName}</span>
+            </div>
+            <div className="flex gap-3 text-[13px] text-text-sec">
+              {post.amount && <span>&#128176; {post.amount}</span>}
+              {post.deadline && <span>&#128197; {post.deadline}</span>}
+              {post.location && <span>&#128205; {post.location}</span>}
             </div>
           </div>
         </Card>

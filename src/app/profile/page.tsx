@@ -398,10 +398,10 @@ function ProfileContent() {
                         <p className="text-xl font-extrabold text-text mb-0">{apps.length}</p>
                         <p className="text-[11px] text-text-muted m-0">Applications</p>
                       </div>
-                      <div>
+                      <Link href="/saved" className="no-underline hover:opacity-80 transition-opacity">
                         <p className="text-xl font-extrabold text-text mb-0">{savedCount}</p>
                         <p className="text-[11px] text-text-muted m-0">Saved</p>
-                      </div>
+                      </Link>
                       <div>
                         <p className="text-xl font-extrabold text-text mb-0">{eventCount}</p>
                         <p className="text-[11px] text-text-muted m-0">Events</p>

@@ -68,7 +68,7 @@ function JobDetailContent() {
         await unsavePost(user.uid, post.id);
         setSaved(false);
       } else {
-        await savePost(user.uid, post.id, post.title, post.type);
+        await savePost(user.uid, post.id, post.title, post.type, post.orgName);
         setSaved(true);
       }
     } catch (err) {

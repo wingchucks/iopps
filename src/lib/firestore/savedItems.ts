@@ -6,6 +6,7 @@ import {
   doc,
   query,
   where,
+  orderBy,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -16,13 +17,16 @@ export interface SavedItem {
   postId: string;
   postTitle: string;
   postType: string;
+  postOrgName?: string;
   savedAt: unknown;
 }
 
 const col = collection(db, "saved_items");
 
 export async function getSavedItems(userId: string): Promise<SavedItem[]> {
-  const snap = await getDocs(query(col, where("userId", "==", userId)));
+  const snap = await getDocs(
+    query(col, where("userId", "==", userId), orderBy("savedAt", "desc"))
+  );
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as SavedItem);
 }
 
@@ -41,7 +45,8 @@ export async function savePost(
   userId: string,
   postId: string,
   postTitle: string,
-  postType: string
+  postType: string,
+  postOrgName?: string
 ): Promise<void> {
   const docId = `${userId}_${postId}`;
   await setDoc(doc(db, "saved_items", docId), {
@@ -49,6 +54,7 @@ export async function savePost(
     postId,
     postTitle,
     postType,
+    ...(postOrgName ? { postOrgName } : {}),
     savedAt: serverTimestamp(),
   });
 }

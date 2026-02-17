@@ -54,6 +54,11 @@ export interface Post {
   organizer?: string;
   schedule?: { day: string; items: string[] }[];
   highlights?: string[];
+  // Scholarship fields
+  amount?: string;
+  eligibility?: string;
+  requirements?: string[];
+  applicationUrl?: string;
   // Program fields
   duration?: string;
   credential?: string;

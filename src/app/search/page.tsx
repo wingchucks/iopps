@@ -11,7 +11,7 @@ import Card from "@/components/Card";
 import { getPosts, type Post } from "@/lib/firestore/posts";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
 
-const typeFilters = ["All", "Jobs", "Events", "Programs", "Organizations", "Stories"];
+const typeFilters = ["All", "Jobs", "Events", "Scholarships", "Programs", "Organizations", "Stories"];
 
 export default function SearchPage() {
   return (
@@ -78,7 +78,7 @@ function SearchContent() {
 
   const typeFilteredPosts = useMemo(() => {
     if (typeFilter === "All" || typeFilter === "Organizations") return filteredPosts;
-    const typeMap: Record<string, string> = { Jobs: "job", Events: "event", Programs: "program", Stories: "story" };
+    const typeMap: Record<string, string> = { Jobs: "job", Events: "event", Scholarships: "scholarship", Programs: "program", Stories: "story" };
     const t = typeMap[typeFilter];
     return t ? filteredPosts.filter((p) => p.type === t) : filteredPosts;
   }, [filteredPosts, typeFilter]);
@@ -223,11 +223,12 @@ function SearchContent() {
 }
 
 function SearchResultCard({ post }: { post: Post }) {
-  const slug = post.id.replace(/^(job|event|program|spotlight|story)-/, "");
+  const slug = post.id.replace(/^(job|event|scholarship|program|spotlight|story)-/, "");
 
   const typeConfig: Record<string, { label: string; color: string; bg: string; href: string }> = {
     job: { label: "Job", color: "var(--blue)", bg: "var(--blue-soft)", href: `/jobs/${slug}` },
     event: { label: "Event", color: "var(--gold)", bg: "var(--gold-soft)", href: `/events/${slug}` },
+    scholarship: { label: "Scholarship", color: "var(--green)", bg: "var(--green-soft)", href: `/scholarships/${slug}` },
     program: { label: "Program", color: "var(--teal)", bg: "var(--teal-soft)", href: `/feed` },
     spotlight: { label: "Spotlight", color: "var(--gold)", bg: "var(--gold-soft)", href: post.orgId ? `/org/${post.orgId}` : `/feed` },
     story: { label: "Story", color: "var(--green)", bg: "var(--green-soft)", href: `/feed` },
@@ -252,7 +253,9 @@ function SearchResultCard({ post }: { post: Post }) {
               {post.location && <span>&#128205; {post.location}</span>}
               {post.jobType && <span>{post.jobType}</span>}
               {post.salary && <span>{post.salary}</span>}
+              {post.amount && <span>&#128176; {post.amount}</span>}
               {post.dates && <span>&#128197; {post.dates}</span>}
+              {post.deadline && <span>&#128197; {post.deadline}</span>}
               {post.duration && <span>{post.duration}</span>}
             </div>
           </div>

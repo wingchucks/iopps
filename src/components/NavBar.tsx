@@ -105,6 +105,16 @@ export default function NavBar() {
           </Link>
           <NotificationBell />
           <ChatButton />
+          <Link
+            href="/saved"
+            className="flex items-center justify-center w-10 h-10 rounded-[10px] no-underline transition-all hover:bg-white/[.12]"
+            style={{ background: "rgba(255,255,255,.08)", color: "rgba(255,255,255,.85)" }}
+            title="Saved Items"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+          </Link>
           <ThemeToggle />
           <Link
             href="/settings"
@@ -169,6 +179,17 @@ export default function NavBar() {
           >
             <span style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>&#128269;</span>
             <span style={{ color: "rgba(255,255,255,.3)", fontSize: 13 }}>Search IOPPS...</span>
+          </Link>
+          <Link
+            href="/saved"
+            onClick={() => setMenuOpen(false)}
+            className="block px-4 py-3 font-semibold text-sm no-underline transition-all"
+            style={{
+              color: pathname === "/saved" ? "#fff" : "rgba(255,255,255,.6)",
+              background: pathname === "/saved" ? "rgba(255,255,255,.08)" : "transparent",
+            }}
+          >
+            Saved Items
           </Link>
           <Link
             href="/settings"
