@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import {
-  getConversations,
-  getMessages,
+  onConversations,
+  onMessages,
   sendMessage,
   markConversationRead,
   getOrCreateConversation,
@@ -48,54 +48,51 @@ function MessagesContent() {
   const [loadingMembers, setLoadingMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load conversations
-  const loadConversations = useCallback(async () => {
+  // Real-time conversations listener
+  useEffect(() => {
     if (!user) return;
-    try {
-      const convs = await getConversations(user.uid);
+    const unsub = onConversations(user.uid, async (convs) => {
       setConversations(convs);
+      setLoading(false);
 
-      // Load profiles for all participants
+      // Load profiles for new participants
       const uids = new Set<string>();
       convs.forEach((c) => c.participants.forEach((p) => uids.add(p)));
       uids.delete(user.uid);
 
-      const profileMap: Record<string, MemberProfile> = {};
-      for (const uid of uids) {
-        const p = await getMemberProfile(uid);
-        if (p) profileMap[uid] = p;
-      }
-      setProfiles(profileMap);
-    } catch (err) {
-      console.error("Failed to load conversations:", err);
-    } finally {
-      setLoading(false);
-    }
+      setProfiles((prev) => {
+        const missing = [...uids].filter((uid) => !prev[uid]);
+        if (missing.length > 0) {
+          // Load missing profiles in the background
+          Promise.all(missing.map((uid) => getMemberProfile(uid))).then(
+            (results) => {
+              const newProfiles: Record<string, MemberProfile> = {};
+              results.forEach((p, i) => {
+                if (p) newProfiles[missing[i]] = p;
+              });
+              setProfiles((current) => ({ ...current, ...newProfiles }));
+            }
+          );
+        }
+        return prev;
+      });
+    });
+    return unsub;
   }, [user]);
 
-  useEffect(() => {
-    loadConversations();
-  }, [loadConversations]);
-
-  // Load messages when active conversation changes
+  // Real-time messages listener for active conversation
   useEffect(() => {
     if (!activeConvId || !user) return;
-    async function loadMessages() {
-      const msgs = await getMessages(activeConvId!);
+    const unsub = onMessages(activeConvId, (msgs) => {
       setMessages(msgs);
-      // Mark as read
-      const conv = conversations.find((c) => c.id === activeConvId);
-      if (conv?.unreadBy === user!.uid) {
-        await markConversationRead(activeConvId!);
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === activeConvId ? { ...c, unreadBy: "" } : c
-          )
-        );
-      }
+    });
+    // Mark as read when opening a conversation
+    const conv = conversations.find((c) => c.id === activeConvId);
+    if (conv?.unreadBy === user.uid) {
+      markConversationRead(activeConvId);
     }
-    loadMessages();
-  }, [activeConvId, user, conversations]);
+    return unsub;
+  }, [activeConvId, user]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -117,11 +114,7 @@ function MessagesContent() {
     try {
       await sendMessage(activeConvId, user.uid, newMessage.trim(), recipientId);
       setNewMessage("");
-      // Reload messages
-      const msgs = await getMessages(activeConvId);
-      setMessages(msgs);
-      // Update conversation list
-      await loadConversations();
+      // Real-time listeners will auto-update messages and conversations
     } catch (err) {
       console.error("Failed to send:", err);
     } finally {
@@ -138,7 +131,7 @@ function MessagesContent() {
         const p = await getMemberProfile(targetUid);
         if (p) setProfiles((prev) => ({ ...prev, [targetUid]: p }));
       }
-      await loadConversations();
+      // Real-time listener will pick up the new conversation
       setActiveConvId(convId);
       setShowNewChat(false);
       setMemberSearch("");

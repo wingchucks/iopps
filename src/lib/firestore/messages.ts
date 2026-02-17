@@ -10,6 +10,7 @@ import {
   orderBy,
   limit,
   serverTimestamp,
+  onSnapshot,
   type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -122,4 +123,48 @@ export async function getUnreadConversationCount(
     query(convCol, where("unreadBy", "==", userId))
   );
   return snap.size;
+}
+
+// --- Real-time listeners (return unsubscribe functions) ---
+
+// Listen to conversations for a user in real time
+export function onConversations(
+  userId: string,
+  callback: (convs: Conversation[]) => void
+): () => void {
+  const q = query(
+    convCol,
+    where("participants", "array-contains", userId),
+    orderBy("lastMessageAt", "desc")
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Conversation));
+  });
+}
+
+// Listen to messages in a conversation in real time
+export function onMessages(
+  conversationId: string,
+  callback: (msgs: Message[]) => void
+): () => void {
+  const q = query(
+    msgCol,
+    where("conversationId", "==", conversationId),
+    orderBy("createdAt", "asc"),
+    limit(50)
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Message));
+  });
+}
+
+// Listen to unread conversation count in real time
+export function onUnreadCount(
+  userId: string,
+  callback: (count: number) => void
+): () => void {
+  const q = query(convCol, where("unreadBy", "==", userId));
+  return onSnapshot(q, (snap) => {
+    callback(snap.size);
+  });
 }

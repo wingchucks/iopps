@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -12,6 +13,7 @@ import {
 } from "@/lib/firestore/members";
 import { getSavedItems } from "@/lib/firestore/savedItems";
 import { getApplications } from "@/lib/firestore/applications";
+import { getUserRSVPs, type RSVP } from "@/lib/firestore/rsvps";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import Avatar from "@/components/Avatar";
@@ -57,6 +59,7 @@ function ProfileContent() {
   // Activity stats
   const [appCount, setAppCount] = useState(0);
   const [savedCount, setSavedCount] = useState(0);
+  const [rsvps, setRsvps] = useState<RSVP[]>([]);
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -68,13 +71,15 @@ function ProfileContent() {
         setLocation(data.location);
         setBio(data.bio);
       }
-      // Load activity stats
-      const [apps, saved] = await Promise.all([
+      // Load activity stats and RSVPs
+      const [apps, saved, userRsvps] = await Promise.all([
         getApplications(user.uid),
         getSavedItems(user.uid),
+        getUserRSVPs(user.uid),
       ]);
       setAppCount(apps.length);
       setSavedCount(saved.length);
+      setRsvps(userRsvps);
     } catch (err) {
       console.error("Failed to load profile:", err);
     } finally {
@@ -129,6 +134,10 @@ function ProfileContent() {
       setUploading(false);
     }
   };
+
+  // Filter RSVPs to going/interested for the My Events section
+  const activeRsvps = rsvps.filter((r) => r.status === "going" || r.status === "interested");
+  const eventCount = activeRsvps.length;
 
   if (loading) {
     return (
@@ -222,7 +231,7 @@ function ProfileContent() {
       {/* Content */}
       <div className="px-4 py-6 md:px-12">
         {editing ? (
-          /* ── Edit Mode ── */
+          /* -- Edit Mode -- */
           <div>
             <h3 className="text-lg font-bold text-text mb-4">Edit Profile</h3>
 
@@ -287,101 +296,171 @@ function ProfileContent() {
             </div>
           </div>
         ) : (
-          /* ── View Mode ── */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left Column */}
-            <div>
-              <h3 className="text-lg font-bold text-text mb-2.5">About</h3>
-              {profile?.bio ? (
-                <p className="text-sm text-text-sec leading-relaxed mb-5">
-                  {profile.bio}
-                </p>
-              ) : (
-                <p className="text-sm text-text-muted italic mb-5">
-                  No bio added yet. Click &quot;Edit Profile&quot; to add one.
-                </p>
-              )}
-
-              {/* Details */}
-              <Card className="mb-5">
-                <div style={{ padding: 16 }}>
-                  <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">
-                    DETAILS
+          /* -- View Mode -- */
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div>
+                <h3 className="text-lg font-bold text-text mb-2.5">About</h3>
+                {profile?.bio ? (
+                  <p className="text-sm text-text-sec leading-relaxed mb-5">
+                    {profile.bio}
                   </p>
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex gap-2 items-center">
-                      <span className="text-sm">&#128205;</span>
-                      <span className="text-sm text-text-sec">
-                        {profile?.location || "No location set"}
-                      </span>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <span className="text-sm">&#127963;&#65039;</span>
-                      <span className="text-sm text-text-sec">
-                        {profile?.community || "No community set"}
-                      </span>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <span className="text-sm">&#128231;</span>
-                      <span className="text-sm text-text-sec">{email}</span>
+                ) : (
+                  <p className="text-sm text-text-muted italic mb-5">
+                    No bio added yet. Click &quot;Edit Profile&quot; to add one.
+                  </p>
+                )}
+
+                {/* Details */}
+                <Card className="mb-5">
+                  <div style={{ padding: 16 }}>
+                    <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">
+                      DETAILS
+                    </p>
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex gap-2 items-center">
+                        <span className="text-sm">&#128205;</span>
+                        <span className="text-sm text-text-sec">
+                          {profile?.location || "No location set"}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <span className="text-sm">&#127963;&#65039;</span>
+                        <span className="text-sm text-text-sec">
+                          {profile?.community || "No community set"}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <span className="text-sm">&#128231;</span>
+                        <span className="text-sm text-text-sec">{email}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </div>
+
+              {/* Right Column */}
+              <div>
+                <h3 className="text-lg font-bold text-text mb-3">Interests</h3>
+                {profile?.interests && profile.interests.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    {profile.interests.map((id) => {
+                      const info = interestLabels[id];
+                      if (!info) return null;
+                      return (
+                        <span
+                          key={id}
+                          className="flex items-center gap-1.5 rounded-xl text-[13px] font-semibold text-teal"
+                          style={{
+                            padding: "8px 14px",
+                            background: "rgba(13,148,136,.06)",
+                            border: "1.5px solid rgba(13,148,136,.1)",
+                          }}
+                        >
+                          <span>{info.icon}</span>
+                          {info.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-text-muted italic mb-5">
+                    No interests selected yet.
+                  </p>
+                )}
+
+                {/* Quick Stats */}
+                <Card>
+                  <div style={{ padding: 16 }}>
+                    <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">
+                      ACTIVITY
+                    </p>
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div>
+                        <p className="text-xl font-extrabold text-text mb-0">{appCount}</p>
+                        <p className="text-[11px] text-text-muted m-0">Applications</p>
+                      </div>
+                      <div>
+                        <p className="text-xl font-extrabold text-text mb-0">{savedCount}</p>
+                        <p className="text-[11px] text-text-muted m-0">Saved</p>
+                      </div>
+                      <div>
+                        <p className="text-xl font-extrabold text-text mb-0">{eventCount}</p>
+                        <p className="text-[11px] text-text-muted m-0">Events</p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
             </div>
 
-            {/* Right Column */}
-            <div>
-              <h3 className="text-lg font-bold text-text mb-3">Interests</h3>
-              {profile?.interests && profile.interests.length > 0 ? (
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {profile.interests.map((id) => {
-                    const info = interestLabels[id];
-                    if (!info) return null;
+            {/* My Events Section */}
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-text mb-3">My Events</h3>
+              {activeRsvps.length === 0 ? (
+                <Card>
+                  <div style={{ padding: 24 }} className="text-center">
+                    <p className="text-3xl mb-2">&#127914;</p>
+                    <p className="text-sm text-text-muted">
+                      No upcoming events yet. Browse the{" "}
+                      <Link href="/feed" className="text-teal font-semibold no-underline hover:underline">
+                        feed
+                      </Link>{" "}
+                      to find events to attend.
+                    </p>
+                  </div>
+                </Card>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {activeRsvps.map((rsvp) => {
+                    // Build slug from postId (remove "event-" prefix)
+                    const slug = rsvp.postId.startsWith("event-")
+                      ? rsvp.postId.slice(6)
+                      : rsvp.postId;
                     return (
-                      <span
-                        key={id}
-                        className="flex items-center gap-1.5 rounded-xl text-[13px] font-semibold text-teal"
-                        style={{
-                          padding: "8px 14px",
-                          background: "rgba(13,148,136,.06)",
-                          border: "1.5px solid rgba(13,148,136,.1)",
-                        }}
+                      <Link
+                        key={rsvp.id}
+                        href={`/events/${slug}`}
+                        className="no-underline"
                       >
-                        <span>{info.icon}</span>
-                        {info.label}
-                      </span>
+                        <Card className="hover:border-teal transition-colors">
+                          <div
+                            style={{ padding: 16 }}
+                            className="flex items-center gap-4"
+                          >
+                            <div
+                              className="flex items-center justify-center rounded-xl flex-shrink-0"
+                              style={{
+                                width: 48,
+                                height: 48,
+                                background: "rgba(13,148,136,.08)",
+                              }}
+                            >
+                              <span className="text-xl">&#127914;</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-text mb-0.5 truncate">
+                                {rsvp.postTitle}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
+                                {rsvp.postDate && <span>&#128197; {rsvp.postDate}</span>}
+                                {rsvp.postLocation && <span>&#128205; {rsvp.postLocation}</span>}
+                              </div>
+                            </div>
+                            <Badge
+                              text={rsvp.status === "going" ? "Going" : "Interested"}
+                              color={rsvp.status === "going" ? "var(--green)" : "var(--gold)"}
+                              bg={rsvp.status === "going" ? "var(--green-soft)" : "var(--gold-soft)"}
+                              small
+                            />
+                          </div>
+                        </Card>
+                      </Link>
                     );
                   })}
                 </div>
-              ) : (
-                <p className="text-sm text-text-muted italic mb-5">
-                  No interests selected yet.
-                </p>
               )}
-
-              {/* Quick Stats */}
-              <Card>
-                <div style={{ padding: 16 }}>
-                  <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">
-                    ACTIVITY
-                  </p>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                      <p className="text-xl font-extrabold text-text mb-0">{appCount}</p>
-                      <p className="text-[11px] text-text-muted m-0">Applications</p>
-                    </div>
-                    <div>
-                      <p className="text-xl font-extrabold text-text mb-0">{savedCount}</p>
-                      <p className="text-[11px] text-text-muted m-0">Saved</p>
-                    </div>
-                    <div>
-                      <p className="text-xl font-extrabold text-text mb-0">0</p>
-                      <p className="text-[11px] text-text-muted m-0">Events</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
             </div>
           </div>
         )}

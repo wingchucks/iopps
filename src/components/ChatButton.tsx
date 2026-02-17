@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { getUnreadConversationCount } from "@/lib/firestore/messages";
+import { onUnreadCount } from "@/lib/firestore/messages";
 
 export default function ChatButton() {
   const { user } = useAuth();
@@ -11,9 +11,8 @@ export default function ChatButton() {
 
   useEffect(() => {
     if (!user) return;
-    getUnreadConversationCount(user.uid)
-      .then(setUnread)
-      .catch(() => {});
+    const unsub = onUnreadCount(user.uid, setUnread);
+    return unsub;
   }, [user]);
 
   return (

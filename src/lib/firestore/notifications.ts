@@ -7,8 +7,10 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
   writeBatch,
+  onSnapshot,
   type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -80,4 +82,39 @@ export async function markAllAsRead(userId: string): Promise<void> {
   const batch = writeBatch(db);
   unread.docs.forEach((d) => batch.update(d.ref, { read: true }));
   await batch.commit();
+}
+
+// --- Real-time listeners (return unsubscribe functions) ---
+
+// Listen to notifications for a user in real time (latest 20)
+export function onNotifications(
+  userId: string,
+  callback: (notifications: Notification[]) => void
+): () => void {
+  const q = query(
+    col,
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc"),
+    limit(20)
+  );
+  return onSnapshot(q, (snap) => {
+    callback(
+      snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Notification)
+    );
+  });
+}
+
+// Listen to unread notification count in real time
+export function onUnreadNotificationCount(
+  userId: string,
+  callback: (count: number) => void
+): () => void {
+  const q = query(
+    col,
+    where("userId", "==", userId),
+    where("read", "==", false)
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.size);
+  });
 }

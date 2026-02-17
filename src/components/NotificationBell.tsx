@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import {
-  getNotifications,
+  onNotifications,
   markAsRead,
   markAllAsRead,
   type Notification,
@@ -29,9 +29,8 @@ export default function NotificationBell() {
 
   useEffect(() => {
     if (!user) return;
-    getNotifications(user.uid)
-      .then(setNotifications)
-      .catch(() => {});
+    const unsub = onNotifications(user.uid, setNotifications);
+    return unsub;
   }, [user]);
 
   // Close on click outside

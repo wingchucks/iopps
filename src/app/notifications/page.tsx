@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import {
-  getNotifications,
+  onNotifications,
   markAsRead,
   markAllAsRead,
   type Notification,
@@ -41,12 +41,11 @@ function NotificationsContent() {
 
   useEffect(() => {
     if (!user) return;
-    getNotifications(user.uid)
-      .then((data) => {
-        setNotifications(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    const unsub = onNotifications(user.uid, (data) => {
+      setNotifications(data);
+      setLoading(false);
+    });
+    return unsub;
   }, [user]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;

@@ -10,7 +10,13 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import { getPost, type Post } from "@/lib/firestore/posts";
 import { savePost, unsavePost } from "@/lib/firestore/savedItems";
-import { applyToPost, hasApplied } from "@/lib/firestore/applications";
+import {
+  getRSVP,
+  setRSVP,
+  removeRSVP,
+  getEventRSVPCount,
+  type RSVPStatus,
+} from "@/lib/firestore/rsvps";
 import { useAuth } from "@/lib/auth-context";
 
 export default function EventDetailPage() {
@@ -24,13 +30,52 @@ export default function EventDetailPage() {
   );
 }
 
+function generateICS(post: Post): string {
+  const now = new Date();
+  const formatDate = (d: Date) =>
+    d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const uid = `${post.id}@iopps.ca`;
+  // Use the post dates string as the description since we don't have parsed dates
+  const start = formatDate(now);
+  const end = formatDate(new Date(now.getTime() + 2 * 60 * 60 * 1000));
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//IOPPS//Event//EN",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${post.title}`,
+    `DESCRIPTION:${post.dates || ""} - ${post.description?.substring(0, 200) || ""}`,
+    `LOCATION:${post.location || ""}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ];
+  return lines.join("\r\n");
+}
+
+function downloadICS(post: Post) {
+  const ics = generateICS(post);
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${post.title.replace(/[^a-zA-Z0-9]/g, "_")}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function EventDetailContent() {
   const params = useParams();
   const slug = params.slug as string;
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
-  const [rsvpd, setRsvpd] = useState(false);
+  const [rsvpStatus, setRsvpStatus] = useState<RSVPStatus | null>(null);
+  const [goingCount, setGoingCount] = useState(0);
   const [actionLoading, setActionLoading] = useState("");
   const { user } = useAuth();
 
@@ -40,8 +85,14 @@ function EventDetailContent() {
         const postData = await getPost(`event-${slug}`);
         setPost(postData);
         if (postData && user) {
-          const alreadyRsvpd = await hasApplied(user.uid, postData.id);
-          setRsvpd(alreadyRsvpd);
+          const [existingRsvp, count] = await Promise.all([
+            getRSVP(user.uid, postData.id),
+            getEventRSVPCount(postData.id),
+          ]);
+          if (existingRsvp) {
+            setRsvpStatus(existingRsvp.status);
+          }
+          setGoingCount(count);
         }
       } catch (err) {
         console.error("Failed to load event:", err);
@@ -70,12 +121,30 @@ function EventDetailContent() {
     }
   };
 
-  const handleRsvp = async () => {
-    if (!user || !post || rsvpd) return;
-    setActionLoading("rsvp");
+  const handleRsvp = async (status: RSVPStatus) => {
+    if (!user || !post) return;
+    setActionLoading(`rsvp-${status}`);
     try {
-      await applyToPost(user.uid, post.id, post.title, post.organizer || "");
-      setRsvpd(true);
+      // If clicking the same status, remove RSVP
+      if (rsvpStatus === status) {
+        await removeRSVP(user.uid, post.id);
+        if (status === "going") setGoingCount((c) => Math.max(0, c - 1));
+        setRsvpStatus(null);
+      } else {
+        const wasGoing = rsvpStatus === "going";
+        await setRSVP({
+          userId: user.uid,
+          postId: post.id,
+          postTitle: post.title,
+          postDate: post.dates,
+          postLocation: post.location,
+          status,
+        });
+        // Update going count
+        if (status === "going" && !wasGoing) setGoingCount((c) => c + 1);
+        if (status !== "going" && wasGoing) setGoingCount((c) => Math.max(0, c - 1));
+        setRsvpStatus(status);
+      }
     } catch (err) {
       console.error("RSVP failed:", err);
     } finally {
@@ -114,6 +183,12 @@ function EventDetailContent() {
   }
 
   const emoji = post.eventType === "Pow Wow" ? "🪶" : post.eventType === "Career Fair" ? "💼" : post.eventType === "Round Dance" ? "💃" : "🎪";
+
+  const rsvpButtons: { status: RSVPStatus; label: string; icon: string }[] = [
+    { status: "going", label: "Going", icon: "\u2714" },
+    { status: "interested", label: "Interested", icon: "\u2606" },
+    { status: "not_going", label: "Can't Go", icon: "\u2716" },
+  ];
 
   return (
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
@@ -235,22 +310,57 @@ function EventDetailContent() {
           {/* RSVP Card */}
           <Card className="mb-4" style={{ position: "sticky", top: 80 }}>
             <div style={{ padding: 20 }}>
+              {/* RSVP Buttons */}
+              <div className="flex gap-2 mb-3">
+                {rsvpButtons.map(({ status, label, icon }) => {
+                  const isActive = rsvpStatus === status;
+                  const isLoading = actionLoading === `rsvp-${status}`;
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => handleRsvp(status)}
+                      disabled={actionLoading !== ""}
+                      className="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer transition-all duration-150 hover:opacity-90"
+                      style={{
+                        background: isActive
+                          ? status === "going"
+                            ? "var(--green)"
+                            : status === "interested"
+                              ? "var(--gold)"
+                              : "var(--red, #DC2626)"
+                          : "var(--card)",
+                        color: isActive ? "#fff" : "var(--text-sec)",
+                        border: isActive ? "none" : "1.5px solid var(--border)",
+                        opacity: isLoading ? 0.7 : 1,
+                      }}
+                    >
+                      <span className="block text-base mb-0.5">{icon}</span>
+                      <span className="text-[11px]">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Going count */}
+              <p className="text-xs text-text-muted text-center mb-4">
+                {goingCount} {goingCount === 1 ? "person" : "people"} going
+              </p>
+
+              {/* Add to Calendar */}
               <Button
-                primary
                 full
-                onClick={handleRsvp}
+                onClick={() => downloadICS(post)}
                 style={{
-                  background: rsvpd ? "var(--green)" : "var(--teal)",
-                  padding: "14px 24px",
                   borderRadius: 14,
-                  fontSize: 16,
-                  fontWeight: 700,
+                  padding: "12px 24px",
+                  fontSize: 14,
                   marginBottom: 12,
-                  opacity: actionLoading === "rsvp" ? 0.7 : 1,
                 }}
               >
-                {rsvpd ? "✓ RSVP'd" : actionLoading === "rsvp" ? "Saving..." : `RSVP${post.price ? ` — ${post.price}` : ""}`}
+                &#128197; Add to Calendar
               </Button>
+
+              {/* Save */}
               <Button
                 full
                 onClick={handleSave}
@@ -262,7 +372,7 @@ function EventDetailContent() {
                   opacity: actionLoading === "save" ? 0.7 : 1,
                 }}
               >
-                {saved ? "✓ Saved" : "&#128278; Save Event"}
+                {saved ? "\u2714 Saved" : "&#128278; Save Event"}
               </Button>
 
               <div className="border-t border-border pt-4">
