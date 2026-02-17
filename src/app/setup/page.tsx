@@ -117,7 +117,7 @@ function SetupWizard() {
                 type="text"
                 value={community}
                 onChange={(e) => setCommunity(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text text-sm outline-none transition-all focus:border-teal"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                 placeholder="e.g. Muskoday First Nation"
               />
             </label>
@@ -128,7 +128,7 @@ function SetupWizard() {
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text text-sm outline-none transition-all focus:border-teal"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                 placeholder="e.g. Saskatoon, SK"
               />
             </label>
@@ -141,7 +141,7 @@ function SetupWizard() {
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text text-sm outline-none transition-all focus:border-teal resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal resize-none"
                 placeholder="A few words about yourself..."
               />
             </label>
@@ -180,7 +180,7 @@ function SetupWizard() {
                     className="flex items-center gap-3 rounded-2xl border-none cursor-pointer text-left transition-all"
                     style={{
                       padding: "16px",
-                      background: selected ? "rgba(13,148,136,.08)" : "white",
+                      background: selected ? "rgba(13,148,136,.08)" : "var(--card)",
                       border: selected
                         ? "2px solid var(--teal)"
                         : "2px solid var(--border)",

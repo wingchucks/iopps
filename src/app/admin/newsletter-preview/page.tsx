@@ -48,7 +48,7 @@ function NewsletterPreviewContent() {
       <div className="rounded-2xl" style={{ background: "#E8ECEF", padding: 24 }}>
         <div
           className="max-w-[600px] mx-auto rounded-xl overflow-hidden"
-          style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,.08)" }}
+          style={{ background: "var(--card)", boxShadow: "0 2px 12px rgba(0,0,0,.08)" }}
         >
           {/* Email Header */}
           <div

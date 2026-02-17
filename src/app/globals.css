@@ -74,11 +74,6 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
-/* Dark mode overrides for elements using bg-white */
-[data-theme="dark"] .bg-white {
-  background: var(--card) !important;
-}
-
 input, textarea, select {
   color-scheme: light;
 }

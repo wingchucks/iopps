@@ -114,7 +114,7 @@ export default function LandingPage() {
                   p.tier === "school"
                     ? "1.5px solid rgba(13,148,136,.19)"
                     : "1.5px solid var(--border)",
-                background: p.tier === "school" ? "rgba(13,148,136,.02)" : "#fff",
+                background: p.tier === "school" ? "rgba(13,148,136,.02)" : "var(--card)",
               }}
             >
               <Avatar
@@ -147,7 +147,7 @@ export default function LandingPage() {
           {categories.map((item, i) => (
             <div
               key={i}
-              className="p-6 rounded-2xl bg-white text-center transition-all duration-200 border border-border hover:shadow-md"
+              className="p-6 rounded-2xl bg-card text-center transition-all duration-200 border border-border hover:shadow-md"
             >
               <span className="text-4xl block mb-2">{item.icon}</span>
               <p className="text-base font-bold text-text mb-1">{item.title}</p>

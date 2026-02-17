@@ -144,6 +144,9 @@ export default function NavBar() {
             <span style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>&#128269;</span>
             <span style={{ color: "rgba(255,255,255,.3)", fontSize: 13 }}>Search IOPPS...</span>
           </div>
+          <div className="mx-4 mt-2">
+            <ThemeToggle />
+          </div>
         </div>
       )}
     </nav>

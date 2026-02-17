@@ -192,7 +192,7 @@ function EventDetailContent() {
               <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">SHARE EVENT</p>
               <div className="flex gap-2">
                 <button
-                  className="flex-1 py-2.5 rounded-xl border border-border bg-white text-sm font-semibold text-text-sec cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-border bg-card text-sm font-semibold text-text-sec cursor-pointer"
                 >
                   &#128279; Copy Link
                 </button>

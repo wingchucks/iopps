@@ -85,7 +85,7 @@ export default function SignupPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text text-sm outline-none transition-all focus:border-teal"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
               placeholder="Your full name"
             />
           </label>
@@ -97,7 +97,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text text-sm outline-none transition-all focus:border-teal"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
               placeholder="you@example.com"
             />
           </label>
@@ -109,7 +109,7 @@ export default function SignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text text-sm outline-none transition-all focus:border-teal"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
               placeholder="At least 6 characters"
             />
           </label>
@@ -121,7 +121,7 @@ export default function SignupPage() {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text text-sm outline-none transition-all focus:border-teal"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
               placeholder="Re-enter your password"
             />
           </label>

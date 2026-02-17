@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
@@ -34,7 +35,13 @@ export default function FeedPage() {
 function FeedContent() {
   const [tab, setTab] = useState("All");
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const displayName = user?.displayName || user?.email?.split("@")[0] || "User";
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/");
+  };
 
   return (
     <div className="flex gap-6 max-w-[1200px] mx-auto px-4 py-4 md:px-10 md:py-6">
@@ -49,7 +56,7 @@ function FeedContent() {
               <p className="text-xs text-teal-light m-0">Community Member</p>
             </div>
           </div>
-          <Button small full onClick={signOut} style={{ fontSize: 12 }}>
+          <Button small full onClick={handleSignOut} style={{ fontSize: 12 }}>
             Sign Out
           </Button>
         </Card>
