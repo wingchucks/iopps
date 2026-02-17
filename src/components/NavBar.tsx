@@ -10,7 +10,7 @@ const navLinks = [
   { href: "/feed", label: "Home" },
   { href: "/search", label: "Search" },
   { href: "/partners", label: "Partners" },
-  { href: "/schools", label: "Schools" },
+  { href: "/profile", label: "Profile" },
 ];
 
 export default function NavBar() {
@@ -92,12 +92,16 @@ export default function NavBar() {
           >
             &#128172;
           </button>
-          <Avatar name={displayName} size={36} />
+          <Link href="/profile">
+            <Avatar name={displayName} size={36} />
+          </Link>
         </div>
 
         {/* Mobile: avatar + hamburger */}
         <div className="flex md:hidden items-center gap-2">
-          <Avatar name={displayName} size={32} />
+          <Link href="/profile">
+            <Avatar name={displayName} size={32} />
+          </Link>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="w-10 h-10 rounded-[10px] border-none cursor-pointer text-xl text-white flex items-center justify-center"

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { createMemberProfile } from "@/lib/firestore/members";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Avatar from "@/components/Avatar";
 import Button from "@/components/Button";
@@ -40,8 +41,23 @@ function SetupWizard() {
     );
   };
 
-  const handleFinish = () => {
-    // TODO: Save profile data to Firestore
+  const [saving, setSaving] = useState(false);
+
+  const handleFinish = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await createMemberProfile(user.uid, {
+        displayName: user.displayName || "",
+        email: user.email || "",
+        community,
+        location,
+        bio,
+        interests,
+      });
+    } catch (err) {
+      console.error("Failed to save profile:", err);
+    }
     router.push("/feed");
   };
 
@@ -233,9 +249,10 @@ function SetupWizard() {
                 fontWeight: 700,
                 maxWidth: 320,
                 margin: "0 auto",
+                opacity: saving ? 0.7 : 1,
               }}
             >
-              Go to My Feed
+              {saving ? "Saving..." : "Go to My Feed"}
             </Button>
           </div>
         )}
