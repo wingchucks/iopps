@@ -11,6 +11,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import { getMemberProfile, type MemberProfile } from "@/lib/firestore/members";
+import ReportButton from "@/components/ReportButton";
 
 const interestLabels: Record<string, { icon: string; label: string }> = {
   jobs: { icon: "\u{1F4BC}", label: "Jobs & Careers" },
@@ -163,6 +164,15 @@ function MemberProfileContent() {
               </>
             )}
           </div>
+          {!isOwnProfile && (
+            <div className="mt-2 sm:mt-0 ml-auto" style={{ color: "rgba(255,255,255,.6)" }}>
+              <ReportButton
+                targetType="member"
+                targetId={profile.uid}
+                targetTitle={profile.displayName}
+              />
+            </div>
+          )}
         </div>
         {profile.location && (
           <p

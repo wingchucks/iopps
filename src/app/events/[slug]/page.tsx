@@ -18,6 +18,7 @@ import {
   type RSVPStatus,
 } from "@/lib/firestore/rsvps";
 import { useAuth } from "@/lib/auth-context";
+import ReportButton from "@/components/ReportButton";
 
 export default function EventDetailPage() {
   return (
@@ -420,6 +421,15 @@ function EventDetailContent() {
               </div>
             </div>
           </Card>
+
+          {/* Report */}
+          <div className="mt-3 text-center">
+            <ReportButton
+              targetType="post"
+              targetId={post.id}
+              targetTitle={post.title}
+            />
+          </div>
         </div>
       </div>
     </div>

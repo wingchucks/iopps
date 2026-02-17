@@ -7,6 +7,7 @@ import Card from "@/components/Card";
 import Link from "next/link";
 import { getPosts } from "@/lib/firestore/posts";
 import { getOrganizations } from "@/lib/firestore/organizations";
+import { getPendingReportCount } from "@/lib/firestore/reports";
 
 export default function AdminPage() {
   return (
@@ -22,13 +23,19 @@ export default function AdminPage() {
 function AdminContent() {
   const [postCount, setPostCount] = useState(0);
   const [orgCount, setOrgCount] = useState(0);
+  const [pendingReports, setPendingReports] = useState(0);
 
   useEffect(() => {
     async function load() {
       try {
-        const [posts, orgs] = await Promise.all([getPosts(), getOrganizations()]);
+        const [posts, orgs, reportCount] = await Promise.all([
+          getPosts(),
+          getOrganizations(),
+          getPendingReportCount(),
+        ]);
         setPostCount(posts.length);
         setOrgCount(orgs.length);
+        setPendingReports(reportCount);
       } catch (err) {
         console.error("Failed to load admin stats:", err);
       }
@@ -48,12 +55,13 @@ function AdminContent() {
     { icon: "\u{1F3E2}", label: "Organizations", sub: `${orgCount} organizations`, href: "/admin/organizations" },
     { icon: "\u{1F4CB}", label: "All Posts", sub: `${postCount} active across all types`, href: "/admin/posts" },
     { icon: "\u{1F4E8}", label: "Applications", sub: "Review and manage job applications", href: "/admin/applications" },
+    { icon: "\u{1F6E1}\uFE0F", label: "Moderation", sub: pendingReports > 0 ? `${pendingReports} pending reports` : "Content moderation queue", href: "/admin/moderation" },
     { icon: "\u{1F31F}", label: "Success Stories", sub: "Create and manage stories" },
     { icon: "\u{1F504}", label: "Feed Sync", sub: "External feed sources" },
     { icon: "\u{1F91D}", label: "Partner Showcase", sub: "Partners displayed on site" },
     { icon: "\u{1F4E7}", label: "Email Campaigns", sub: "Newsletter management", href: "/admin/email-campaigns" },
     { icon: "\u{1F9EA}", label: "Seed Database", sub: "Populate sample data", href: "/admin/seed" },
-    { icon: "\u{1F4CA}", label: "Reports & Analytics", sub: "Growth, engagement, trends" },
+    { icon: "\u{1F4CA}", label: "Reports & Analytics", sub: "Growth, engagement, trends", href: "/admin/analytics" },
   ];
 
   return (

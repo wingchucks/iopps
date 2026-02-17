@@ -14,6 +14,7 @@ import { getOrganization, type Organization } from "@/lib/firestore/organization
 import { savePost, unsavePost } from "@/lib/firestore/savedItems";
 import { applyToPost, hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
+import ReportButton from "@/components/ReportButton";
 
 export default function JobDetailPage() {
   return (
@@ -372,6 +373,15 @@ function JobDetailContent() {
               </div>
             </Card>
           )}
+
+          {/* Report */}
+          <div className="mt-3 text-center">
+            <ReportButton
+              targetType="post"
+              targetId={post.id}
+              targetTitle={post.title}
+            />
+          </div>
         </div>
       </div>
     </div>
