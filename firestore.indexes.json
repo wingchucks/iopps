@@ -153,6 +153,14 @@
       ]
     },
     {
+      "collectionGroup": "shop_listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "active", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "shop_vendors",
       "queryScope": "COLLECTION",
       "fields": [

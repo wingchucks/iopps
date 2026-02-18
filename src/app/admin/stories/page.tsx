@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -52,12 +52,12 @@ const emptyForm = {
 
 export default function AdminStoriesPage() {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
         <StoriesManager />
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 }
 

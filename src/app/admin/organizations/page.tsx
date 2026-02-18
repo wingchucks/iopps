@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -30,13 +30,31 @@ const emptyOrg: Omit<Organization, "id"> = {
 
 export default function AdminOrganizationsPage() {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
         <OrgManager />
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
+}
+
+/** Safely convert a location field to a display string. Firestore may store it as an object {city, province} or a plain string. */
+function displayLocation(loc: unknown): string {
+  if (!loc) return "";
+  if (typeof loc === "string") return loc;
+  if (typeof loc === "object" && loc !== null) {
+    const obj = loc as Record<string, unknown>;
+    const parts = [obj.city, obj.province].filter(Boolean).map(String);
+    return parts.join(", ");
+  }
+  return String(loc);
+}
+
+/** Safely convert a tags field to a string array. Firestore may return undefined or a non-array value. */
+function ensureTagsArray(tags: unknown): string[] {
+  if (Array.isArray(tags)) return tags.map(String);
+  return [];
 }
 
 function OrgManager() {
@@ -66,7 +84,8 @@ function OrgManager() {
     setEditing(org.id);
     setFormId(org.id);
     const { id, ...rest } = org;
-    setForm(rest);
+    // Normalize location to string for the form (Firestore may store as object)
+    setForm({ ...rest, location: displayLocation(rest.location) as string, tags: ensureTagsArray(rest.tags) });
   };
 
   const startNew = () => {
@@ -277,7 +296,7 @@ function OrgManager() {
                 </span>
                 <input
                   type="text"
-                  value={form.tags.join(", ")}
+                  value={ensureTagsArray(form.tags).join(", ")}
                   onChange={(e) =>
                     updateField(
                       "tags",
@@ -371,7 +390,7 @@ function OrgManager() {
                     )}
                   </div>
                   <p className="text-xs text-text-muted m-0">
-                    {org.type} &middot; {org.tier} &middot; {org.location}
+                    {org.type} &middot; {org.tier} &middot; {displayLocation(org.location)}
                     {org.openJobs > 0 && ` \u00B7 ${org.openJobs} open jobs`}
                   </p>
                 </div>

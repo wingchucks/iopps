@@ -13,12 +13,12 @@ const partners = [
 ];
 
 const categories = [
-  { icon: "\u{1F4BC}", title: "Jobs & Careers", count: "112", desc: "Active Indigenous-focused job postings", href: "/jobs" },
-  { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: "28", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
-  { icon: "\u{1F393}", title: "Scholarships & Grants", count: "15", desc: "Funding for students & entrepreneurs", href: "/scholarships" },
-  { icon: "\u{1F3EA}", title: "Shop Indigenous", count: "42", desc: "Indigenous-owned businesses", href: "/shop" },
-  { icon: "\u{1F4DA}", title: "Schools & Programs", count: "18", desc: "Training and education programs", href: "/schools" },
-  { icon: "\u{1F4FA}", title: "IOPPS Spotlight", count: "50+", desc: "Live streams, interviews, stories", href: "/stories" },
+  { icon: "\u{1F4BC}", title: "Jobs & Careers", cta: "Browse Jobs", desc: "Indigenous-focused job postings and career opportunities", href: "/jobs" },
+  { icon: "\u{1FAB6}", title: "Events & Pow Wows", cta: "Browse Events", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
+  { icon: "\u{1F393}", title: "Scholarships & Grants", cta: "Browse Scholarships", desc: "Funding for students and entrepreneurs", href: "/scholarships" },
+  { icon: "\u{1F3EA}", title: "Shop Indigenous", cta: "Browse Shops", desc: "Support Indigenous-owned businesses", href: "/shop" },
+  { icon: "\u{1F4DA}", title: "Schools & Programs", cta: "Browse Schools", desc: "Training and education programs", href: "/schools" },
+  { icon: "\u{1F4FA}", title: "IOPPS Spotlight", cta: "Watch Now", desc: "Live streams, interviews, and stories", href: "/stories" },
 ];
 
 export default function LandingPage() {
@@ -36,6 +36,34 @@ export default function LandingPage() {
         <div className="relative flex items-center justify-between mb-0 z-10">
           <div />
           <div className="flex items-center gap-4">
+            <Link
+              href="/jobs"
+              className="text-sm font-semibold no-underline hidden sm:inline"
+              style={{ color: "rgba(255,255,255,.7)" }}
+            >
+              Jobs
+            </Link>
+            <Link
+              href="/events"
+              className="text-sm font-semibold no-underline hidden sm:inline"
+              style={{ color: "rgba(255,255,255,.7)" }}
+            >
+              Events
+            </Link>
+            <Link
+              href="/shop"
+              className="text-sm font-semibold no-underline hidden sm:inline"
+              style={{ color: "rgba(255,255,255,.7)" }}
+            >
+              Shop
+            </Link>
+            <Link
+              href="/scholarships"
+              className="text-sm font-semibold no-underline hidden sm:inline"
+              style={{ color: "rgba(255,255,255,.7)" }}
+            >
+              Scholarships
+            </Link>
             <Link
               href="/pricing"
               className="text-sm font-semibold no-underline"
@@ -168,18 +196,34 @@ export default function LandingPage() {
             >
               <span className="text-4xl block mb-2">{item.icon}</span>
               <p className="text-base font-bold text-text mb-1">{item.title}</p>
-              <p className="text-[28px] font-black text-teal mb-1">{item.count}</p>
-              <p className="text-[13px] text-text-sec m-0">{item.desc}</p>
+              <p className="text-[13px] text-text-sec mb-3">{item.desc}</p>
+              <span className="text-sm font-bold text-teal">{item.cta} &rarr;</span>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Stats Footer */}
+      {/* CTA Footer */}
       <section className="text-center border-t border-border px-5 md:px-10 lg:px-20 py-10 md:py-12">
-        <p className="text-3xl md:text-5xl font-black mb-2" style={{ color: "var(--hero-stat)" }}>84,200+</p>
-        <p className="text-base text-text-sec mb-5">Community members and growing</p>
-        <p className="text-teal m-0" style={{ fontSize: 11, fontWeight: 800, letterSpacing: 4 }}>
+        <p className="text-2xl md:text-3xl font-extrabold text-text mb-2">Join Our Growing Community</p>
+        <p className="text-base text-text-sec mb-6 max-w-[480px] mx-auto">
+          Connect with Indigenous professionals, organizations, and opportunities across North America.
+        </p>
+        <Link href="/signup">
+          <Button
+            primary
+            style={{
+              background: "var(--teal)",
+              fontSize: 16,
+              padding: "14px 36px",
+              borderRadius: 14,
+              fontWeight: 700,
+            }}
+          >
+            Get Started
+          </Button>
+        </Link>
+        <p className="text-teal mt-6 mb-0" style={{ fontSize: 11, fontWeight: 800, letterSpacing: 4 }}>
           EMPOWERING INDIGENOUS SUCCESS
         </p>
       </section>

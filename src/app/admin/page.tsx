@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
 import PageSkeleton from "@/components/PageSkeleton";
@@ -12,12 +12,12 @@ import { getPendingReportCount } from "@/lib/firestore/reports";
 
 export default function AdminPage() {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
         <AdminContent />
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 }
 

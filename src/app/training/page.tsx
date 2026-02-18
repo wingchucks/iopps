@@ -85,9 +85,9 @@ export default function TrainingPage() {
       items = items.filter(
         (p) =>
           p.title.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          p.instructor.name.toLowerCase().includes(q) ||
-          p.skills.some((s) => s.toLowerCase().includes(q))
+          (p.description || "").toLowerCase().includes(q) ||
+          ((typeof p.instructor === "object" && p.instructor?.name) || "").toLowerCase().includes(q) ||
+          (Array.isArray(p.skills) ? p.skills : []).some((s) => s.toLowerCase().includes(q))
       );
     }
     return items;
@@ -297,7 +297,7 @@ function ProgramCard({
               small
             />
             <Badge
-              text={program.format === "in-person" ? "In-Person" : program.format.charAt(0).toUpperCase() + program.format.slice(1)}
+              text={program.format === "in-person" ? "In-Person" : (program.format || "").charAt(0).toUpperCase() + (program.format || "").slice(1)}
               color={fmtStyle.color}
               bg={fmtStyle.bg}
               small
@@ -319,7 +319,7 @@ function ProgramCard({
 
           {/* Instructor */}
           <p className="text-xs text-text-sec mb-3">
-            {program.instructor.name}
+            {typeof program.instructor === "object" && program.instructor?.name ? program.instructor.name : ""}
           </p>
 
           {/* Duration badge */}

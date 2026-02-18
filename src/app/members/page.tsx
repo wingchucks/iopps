@@ -12,7 +12,7 @@ import { getAllMembers, type MemberProfile } from "@/lib/firestore/members";
 const communityFilters = [
   "All",
   "First Nations",
-  "Metis",
+  "M\u00e9tis",
   "Inuit",
   "Non-Indigenous Ally",
 ];

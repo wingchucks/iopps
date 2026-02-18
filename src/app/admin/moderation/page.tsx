@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -58,12 +58,12 @@ function getTargetHref(report: ContentReport): string | null {
 
 export default function ModerationPage() {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
         <ModerationContent />
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 }
 

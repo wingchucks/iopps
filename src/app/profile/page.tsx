@@ -259,7 +259,7 @@ function ProfileContent() {
             <Button
               small
               onClick={() => setEditing(!editing)}
-              style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)" }}
+              style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)", background: "rgba(255,255,255,.12)" }}
             >
               {editing ? "Cancel" : "Edit Profile"}
             </Button>

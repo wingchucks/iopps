@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import NavBar from "@/components/NavBar";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
@@ -575,12 +575,12 @@ const posts = [
 
 export default function SeedPage() {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
         <SeedContent />
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 }
 

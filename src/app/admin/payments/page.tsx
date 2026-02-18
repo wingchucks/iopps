@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
@@ -18,12 +18,12 @@ import type { Subscription } from "@/lib/firestore/subscriptions";
 
 export default function AdminPaymentsPage() {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
         <PaymentsDashboard />
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 }
 

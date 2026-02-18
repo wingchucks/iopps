@@ -1,6 +1,6 @@
 "use client";
 
-import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import NavBar from "@/components/NavBar";
 import Badge from "@/components/Badge";
 import Link from "next/link";
@@ -21,12 +21,12 @@ const emailEvents = [
 
 export default function NewsletterPreviewPage() {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
         <NewsletterPreviewContent />
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 }
 

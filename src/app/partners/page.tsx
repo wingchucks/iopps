@@ -19,6 +19,24 @@ const filterMap: Record<string, string | undefined> = {
   Businesses: "business",
 };
 
+/** Safely convert a location field to a display string. Firestore may store it as an object {city, province} or a plain string. */
+function displayLocation(loc: unknown): string {
+  if (!loc) return "";
+  if (typeof loc === "string") return loc;
+  if (typeof loc === "object" && loc !== null) {
+    const obj = loc as Record<string, unknown>;
+    const parts = [obj.city, obj.province].filter(Boolean).map(String);
+    return parts.join(", ");
+  }
+  return String(loc);
+}
+
+/** Safely convert a tags field to a string array. */
+function ensureTagsArray(tags: unknown): string[] {
+  if (Array.isArray(tags)) return tags.map(String);
+  return [];
+}
+
 export default function PartnersPage() {
   return (
     <ProtectedRoute>
@@ -61,9 +79,9 @@ function PartnersContent() {
       list = list.filter(
         (o) =>
           o.name.toLowerCase().includes(q) ||
-          o.location.toLowerCase().includes(q) ||
-          o.description.toLowerCase().includes(q) ||
-          o.tags.some((t) => t.toLowerCase().includes(q))
+          displayLocation(o.location).toLowerCase().includes(q) ||
+          (o.description || "").toLowerCase().includes(q) ||
+          ensureTagsArray(o.tags).some((t) => t.toLowerCase().includes(q))
       );
     }
     return list;
@@ -166,14 +184,14 @@ function PartnersContent() {
                       {featuredSchool.description}
                     </p>
                     <div className="flex flex-wrap gap-3 md:gap-5 text-[13px] text-text-sec mb-2.5">
-                      <span>&#128205; {featuredSchool.location}</span>
+                      <span>&#128205; {displayLocation(featuredSchool.location)}</span>
                       <span>&#128188; {featuredSchool.openJobs} open jobs</span>
                       {featuredSchool.employees && <span>&#128101; {featuredSchool.employees}</span>}
                       <span>Since {featuredSchool.since}</span>
                     </div>
-                    {featuredSchool.tags.length > 0 && (
+                    {ensureTagsArray(featuredSchool.tags).length > 0 && (
                       <div className="flex gap-2 flex-wrap">
-                        {featuredSchool.tags.map((t) => (
+                        {ensureTagsArray(featuredSchool.tags).map((t) => (
                           <span
                             key={t}
                             className="rounded-full text-xs text-teal font-semibold"
@@ -254,13 +272,13 @@ function PartnersContent() {
                           {org.description}
                         </p>
                         <div className="flex flex-wrap gap-2.5 text-xs text-text-muted mb-3">
-                          <span>&#128205; {org.location}</span>
+                          <span>&#128205; {displayLocation(org.location)}</span>
                           <span>&#128188; {org.openJobs} open</span>
                           <span>Since {org.since}</span>
                         </div>
-                        {org.tags.length > 0 && (
+                        {ensureTagsArray(org.tags).length > 0 && (
                           <div className="flex gap-1.5 flex-wrap">
-                            {org.tags.slice(0, 3).map((t) => (
+                            {ensureTagsArray(org.tags).slice(0, 3).map((t) => (
                               <span
                                 key={t}
                                 className="rounded-full text-[11px] font-semibold text-teal"
@@ -269,9 +287,9 @@ function PartnersContent() {
                                 {t}
                               </span>
                             ))}
-                            {org.tags.length > 3 && (
+                            {ensureTagsArray(org.tags).length > 3 && (
                               <span className="text-[11px] text-text-muted font-semibold self-center">
-                                +{org.tags.length - 3} more
+                                +{ensureTagsArray(org.tags).length - 3} more
                               </span>
                             )}
                           </div>

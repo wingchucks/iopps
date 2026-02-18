@@ -3,186 +3,87 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Members collection: any authenticated user can read profiles,
-    // users can write their own, admins can write any
-    match /members/{userId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && (
-        request.auth.uid == userId ||
-        request.auth.token.admin == true
-      );
-      allow delete: if request.auth != null && request.auth.token.admin == true;
+    // ── Helper functions ──
+
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Organizations: any authenticated user can read,
-    // org owner (uid == orgId) can create/update, admin can write any
-    match /organizations/{orgId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == orgId;
-      allow update: if request.auth != null && (
-        request.auth.uid == orgId ||
-        request.auth.token.admin == true
-      );
-      allow delete: if request.auth != null && request.auth.token.admin == true;
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
     }
 
-    // Posts: any authenticated user can read, admin can write,
-    // org members (owner/admin role) can create/update posts for their org
+    function memberData() {
+      return get(/databases/$(database)/documents/members/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         memberData().role in ['admin'])
+      );
+    }
+
+    function isAdminOrMod() {
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         memberData().role in ['admin', 'moderator'])
+      );
+    }
+
+    // ── Public content collections ──
+
+    // Posts (jobs, events, scholarships, programs, stories, spotlights):
+    // Public read. Admin or org owner/admin can write.
     match /posts/{postId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.token.admin == true;
-      allow create: if request.auth != null &&
+      allow read: if true;
+      allow write: if isAdmin();
+      allow create: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/members/$(request.auth.uid)).data.orgId == request.resource.data.orgId &&
-        get(/databases/$(database)/documents/members/$(request.auth.uid)).data.orgRole in ["owner", "admin"];
-      allow update: if request.auth != null &&
+        memberData().orgId == request.resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"];
+      allow update: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/members/$(request.auth.uid)).data.orgId == resource.data.orgId &&
-        get(/databases/$(database)/documents/members/$(request.auth.uid)).data.orgRole in ["owner", "admin"];
+        memberData().orgId == resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"];
     }
 
-    // Saved items: users can read/write their own saves
-    match /saved_items/{itemId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-
-    // Applications: users can read/create/update their own, admin can read/update all,
-    // org members can read/update applications for posts belonging to their org
-    match /applications/{appId} {
-      allow read: if request.auth != null && (
-        resource.data.userId == request.auth.uid ||
-        request.auth.token.admin == true ||
-        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/members/$(request.auth.uid)).data.orgRole in ["owner", "admin"])
-      );
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && (
-        resource.data.userId == request.auth.uid ||
-        request.auth.token.admin == true ||
-        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/members/$(request.auth.uid)).data.orgRole in ["owner", "admin"])
-      );
-    }
-
-    // Notifications: users can read/update/create their own
-    match /notifications/{notifId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-
-    // Conversations: participants can read/create/update
-    match /conversations/{convId} {
-      allow read: if request.auth != null &&
-        request.auth.uid in resource.data.participants;
-      allow create: if request.auth != null &&
-        request.auth.uid in request.resource.data.participants;
-      allow update: if request.auth != null &&
-        request.auth.uid in resource.data.participants;
-    }
-
-    // Messages: only conversation participants can read,
-    // authenticated users can create messages in their conversations
-    match /messages/{msgId} {
-      allow read: if request.auth != null &&
-        request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
-      allow create: if request.auth != null &&
-        request.resource.data.senderId == request.auth.uid;
-    }
-
-    // Member settings: users can read/write their own settings
-    match /member_settings/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Notification preferences: users can read/write their own preferences
-    match /notification_preferences/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Event RSVPs: authenticated users can read (for count queries),
-    // users can create/update/delete their own RSVPs
-    match /event_rsvps/{rsvpId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-
-    // Content reports: authenticated users can create (own reporterId),
-    // users can read their own reports, admin can read/update all
-    match /content_reports/{reportId} {
-      allow read: if request.auth != null && (
-        resource.data.reporterId == request.auth.uid ||
-        request.auth.token.admin == true
-      );
-      allow create: if request.auth != null &&
-        request.resource.data.reporterId == request.auth.uid;
-      allow update: if request.auth != null && request.auth.token.admin == true;
-    }
-
-    // Mail queue: authenticated users can create (queue emails),
-    // only admin can read (view queue and stats)
-    match /mail/{mailId} {
-      allow read: if request.auth != null && request.auth.token.admin == true;
-      allow create: if request.auth != null;
-    }
-
-    // Connections (follow system): authenticated users can read all,
-    // users can create/delete connections where followerId matches their uid
-    match /connections/{connectionId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null &&
-        request.resource.data.followerId == request.auth.uid;
-      allow delete: if request.auth != null &&
-        resource.data.followerId == request.auth.uid;
-    }
-
-    // Subscriptions: org owner can read/create, admin/mod can read/update
-    match /subscriptions/{subId} {
-      allow read: if request.auth != null && (resource.data.orgId == request.auth.uid || get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin', 'moderator']);
-      allow create: if request.auth != null && request.resource.data.orgId == request.auth.uid;
-      allow update: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    // Organizations: public read, org owner can create/update, admin can write any
+    match /organizations/{orgId} {
+      allow read: if true;
+      allow create: if isOwner(orgId);
+      allow update: if isOwner(orgId) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     // Shop vendors: public read, admin/moderator write
     match /shop_vendors/{vendorId} {
       allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+      allow write: if isAdminOrMod();
     }
 
     // Shop listings: public read, admin/moderator write
     match /shop_listings/{listingId} {
       allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+      allow write: if isAdminOrMod();
     }
 
     // Training programs: public read, admin/moderator write
     match /training_programs/{programId} {
       allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin', 'moderator'];
-    }
-
-    // Training enrollments: users can read/create/update their own, admin/moderator can read all
-    match /training_enrollments/{enrollmentId} {
-      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin', 'moderator']);
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if isAdminOrMod();
     }
 
     // Endorsements: public read, authenticated create (own endorserId, can't self-endorse),
     // endorser or target can delete
     match /endorsements/{endorsementId} {
       allow read: if true;
-      allow create: if request.auth != null &&
+      allow create: if isSignedIn() &&
         request.resource.data.endorserId == request.auth.uid &&
         request.resource.data.endorserId != request.resource.data.targetUserId;
-      allow delete: if request.auth != null && (
+      allow delete: if isSignedIn() && (
         resource.data.endorserId == request.auth.uid ||
         resource.data.targetUserId == request.auth.uid
       );
@@ -191,33 +92,167 @@ service cloud.firestore {
     // Livestreams: public read, admin write
     match /livestreams/{docId} {
       allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin'];
-    }
-
-    // Feed sources: admin only
-    match /feed_sources/{docId} {
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin'];
+      allow write: if isAdmin();
     }
 
     // Partner showcase: public read, admin write
     match /partner_showcase/{docId} {
       allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role in ['admin'];
+      allow write: if isAdmin();
     }
 
     // Mentor profiles: public read, users can create/update their own profile
     match /mentor_profiles/{docId} {
       allow read: if true;
-      allow create: if request.auth != null && request.auth.uid == docId;
-      allow update: if request.auth != null && request.auth.uid == docId;
+      allow create: if isOwner(docId);
+      allow update: if isOwner(docId);
+    }
+
+    // ── Authenticated collections ──
+
+    // Members: authenticated read (profile directory), users write own, admin writes any
+    match /members/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Saved items: users can read/write their own saves
+    match /saved_items/{itemId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Applications: users can read/create/update their own, admin can read/update all,
+    // org owner/admin can read/update applications for their org's posts
+    match /applications/{appId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         memberData().orgRole in ["owner", "admin"])
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         memberData().orgRole in ["owner", "admin"])
+      );
+    }
+
+    // Notifications: users can read/update/create their own
+    match /notifications/{notifId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Conversations: participants can read/create/update
+    match /conversations/{convId} {
+      allow read: if isSignedIn() &&
+        request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn() &&
+        request.auth.uid in request.resource.data.participants;
+      allow update: if isSignedIn() &&
+        request.auth.uid in resource.data.participants;
+    }
+
+    // Messages: only conversation participants can read,
+    // authenticated users can create messages in their conversations
+    match /messages/{msgId} {
+      allow read: if isSignedIn() &&
+        request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
+      allow create: if isSignedIn() &&
+        request.resource.data.senderId == request.auth.uid;
+    }
+
+    // Member settings: users can read/write their own settings
+    match /member_settings/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId);
+    }
+
+    // Notification preferences: users can read/write their own preferences
+    match /notification_preferences/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId);
+    }
+
+    // Event RSVPs: authenticated users can read (for count queries),
+    // users can create/update/delete their own RSVPs
+    match /event_rsvps/{rsvpId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Content reports: authenticated users can create (own reporterId),
+    // users can read their own reports, admin can read/update all
+    match /content_reports/{reportId} {
+      allow read: if isSignedIn() && (
+        resource.data.reporterId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn() &&
+        request.resource.data.reporterId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    // Mail queue: authenticated users can create (queue emails),
+    // only admin can read (view queue and stats)
+    match /mail/{mailId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+    }
+
+    // Connections (follow system): authenticated users can read all,
+    // users can create/delete connections where followerId matches their uid
+    match /connections/{connectionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.followerId == request.auth.uid;
+      allow delete: if isSignedIn() &&
+        resource.data.followerId == request.auth.uid;
+    }
+
+    // Subscriptions: org owner can read/create, admin/mod can read/update
+    match /subscriptions/{subId} {
+      allow read: if isSignedIn() && (
+        resource.data.orgId == request.auth.uid ||
+        isAdminOrMod()
+      );
+      allow create: if isSignedIn() && request.resource.data.orgId == request.auth.uid;
+      allow update: if isAdminOrMod();
+    }
+
+    // Training enrollments: users can read/create/update their own, admin/moderator can read all
+    match /training_enrollments/{enrollmentId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdminOrMod()
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Feed sources: admin only
+    match /feed_sources/{docId} {
+      allow read, write: if isAdmin();
     }
 
     // Mentorship requests: mentor and mentee can read their own,
     // mentee can create, mentor can update (accept/decline)
     match /mentorship_requests/{reqId} {
-      allow read: if request.auth != null && (resource.data.mentorId == request.auth.uid || resource.data.menteeId == request.auth.uid);
-      allow create: if request.auth != null && request.resource.data.menteeId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.mentorId == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.mentorId == request.auth.uid ||
+        resource.data.menteeId == request.auth.uid
+      );
+      allow create: if isSignedIn() && request.resource.data.menteeId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.mentorId == request.auth.uid;
     }
 
     // Default: deny all

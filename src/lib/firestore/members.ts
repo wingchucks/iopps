@@ -39,6 +39,7 @@ export interface MemberProfile {
   photoURL?: string;
   orgId?: string;
   orgRole?: "owner" | "admin" | "member";
+  role?: "admin" | "moderator";
   openToWork?: boolean;
   targetRoles?: string[];
   salaryRange?: SalaryRange | null;

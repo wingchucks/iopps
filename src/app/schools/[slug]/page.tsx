@@ -12,6 +12,24 @@ import Card from "@/components/Card";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { getPostsByOrg, type Post } from "@/lib/firestore/posts";
 
+/** Safely convert a location field to a display string. */
+function displayLocation(loc: unknown): string {
+  if (!loc) return "";
+  if (typeof loc === "string") return loc;
+  if (typeof loc === "object" && loc !== null) {
+    const obj = loc as Record<string, unknown>;
+    const parts = [obj.city, obj.province].filter(Boolean).map(String);
+    return parts.join(", ");
+  }
+  return String(loc);
+}
+
+/** Safely convert a tags field to a string array. */
+function ensureTagsArray(tags: unknown): string[] {
+  if (Array.isArray(tags)) return tags.map(String);
+  return [];
+}
+
 export default function SchoolProfilePage() {
   return (
     <ProtectedRoute>
@@ -106,7 +124,7 @@ function SchoolProfileContent() {
               {org.name}
             </h1>
             <p className="text-[15px] mb-2.5" style={{ color: "rgba(255,255,255,.7)" }}>
-              &#128205; {org.location}
+              &#128205; {displayLocation(org.location)}
               {org.website && <> &bull; {org.website}</>}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -114,7 +132,7 @@ function SchoolProfileContent() {
               {org.verified && (
                 <Badge text="&#10003; Verified" color="#6EE7B7" bg="rgba(110,231,183,.15)" small />
               )}
-              {org.tags.filter((t) => t === "Indigenous-Owned").map((tag) => (
+              {ensureTagsArray(org.tags).filter((t) => t === "Indigenous-Owned").map((tag) => (
                 <Badge key={tag} text={tag} color="#F5D78E" bg="rgba(245,215,142,.15)" small />
               ))}
             </div>

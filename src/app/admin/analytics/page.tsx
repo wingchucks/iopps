@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
 import Link from "next/link";
@@ -22,12 +22,12 @@ interface AnalyticsData {
 
 export default function AnalyticsPage() {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
         <AnalyticsContent />
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 }
 

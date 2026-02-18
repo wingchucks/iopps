@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -51,12 +51,12 @@ const tierColors: Record<string, string> = {
 
 export default function AdminPartnerShowcasePage() {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
         <PartnerManager />
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 }
 

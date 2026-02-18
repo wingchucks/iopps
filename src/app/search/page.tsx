@@ -58,6 +58,24 @@ function getPostTimestamp(post: Post): number {
   return 0;
 }
 
+/** Safely convert a location field to a display string. Firestore may store it as an object {city, province} or a plain string. */
+function displayLocation(loc: unknown): string {
+  if (!loc) return "";
+  if (typeof loc === "string") return loc;
+  if (typeof loc === "object" && loc !== null) {
+    const obj = loc as Record<string, unknown>;
+    const parts = [obj.city, obj.province].filter(Boolean).map(String);
+    return parts.join(", ");
+  }
+  return String(loc);
+}
+
+/** Safely convert a tags field to a string array. */
+function ensureTagsArray(tags: unknown): string[] {
+  if (Array.isArray(tags)) return tags.map(String);
+  return [];
+}
+
 export default function SearchPage() {
   return (
     <ProtectedRoute>
@@ -173,7 +191,8 @@ function SearchContent() {
   const textFilteredOrgs = useMemo(() => {
     if (!q) return [];
     return orgs.filter((o) => {
-      const text = [o.name, o.shortName, o.location, o.description, ...o.tags]
+      const text = [o.name, o.shortName, displayLocation(o.location), o.description, ...ensureTagsArray(o.tags)]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return text.includes(q);
@@ -274,7 +293,7 @@ function SearchContent() {
     let result = textFilteredOrgs;
     if (location.trim()) {
       const loc = location.toLowerCase().trim();
-      result = result.filter((o) => o.location.toLowerCase().includes(loc));
+      result = result.filter((o) => displayLocation(o.location).toLowerCase().includes(loc));
     }
     if (orgFilter) {
       result = result.filter((o) => o.id === orgFilter);
@@ -643,7 +662,7 @@ function SearchContent() {
                             />
                           </div>
                           <p className="text-xs text-text-sec m-0">
-                            &#128205; {org.location} &bull; {org.openJobs} open jobs
+                            &#128205; {displayLocation(org.location)} &bull; {org.openJobs} open jobs
                           </p>
                         </div>
                         <span className="text-text-muted">&#8250;</span>

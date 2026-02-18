@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import NavBar from "@/components/NavBar";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
@@ -16,12 +16,12 @@ import {
 
 export default function EmailCampaignsPage() {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
         <EmailCampaignsContent />
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 }
 

@@ -12,6 +12,18 @@ import Card from "@/components/Card";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { getPostsByOrg, type Post } from "@/lib/firestore/posts";
 
+/** Safely convert a location field to a display string. */
+function displayLocation(loc: unknown): string {
+  if (!loc) return "";
+  if (typeof loc === "string") return loc;
+  if (typeof loc === "object" && loc !== null) {
+    const obj = loc as Record<string, unknown>;
+    const parts = [obj.city, obj.province].filter(Boolean).map(String);
+    return parts.join(", ");
+  }
+  return String(loc);
+}
+
 export default function OrgProfilePage() {
   return (
     <ProtectedRoute>
@@ -124,7 +136,7 @@ function OrgProfileContent() {
               />
             </div>
             <p className="text-[15px] mb-2.5" style={{ color: "rgba(255,255,255,.7)" }}>
-              &#128205; {org.location}
+              &#128205; {displayLocation(org.location)}
               {org.website && (
                 <>
                   {" "}&bull;{" "}
@@ -287,7 +299,7 @@ function OrgProfileContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2.5 text-text-sec">
                 <span>&#128205;</span>
-                <span>{org.location}</span>
+                <span>{displayLocation(org.location)}</span>
               </div>
               {org.website && (
                 <div className="flex items-center gap-2.5 text-text-sec">
