@@ -46,6 +46,11 @@ export interface MemberProfile {
   workPreference?: WorkPreference;
   skills?: string[];
   education?: Education[];
+  nation?: string;
+  territory?: string;
+  languages?: string;
+  headline?: string;
+  skillsText?: string;
 }
 
 export async function getMemberProfile(
@@ -80,7 +85,17 @@ export async function updateMemberProfile(
   data: Partial<
     Pick<
       MemberProfile,
-      "displayName" | "community" | "location" | "bio" | "interests" | "photoURL"
+      | "displayName"
+      | "community"
+      | "location"
+      | "bio"
+      | "interests"
+      | "photoURL"
+      | "nation"
+      | "territory"
+      | "languages"
+      | "headline"
+      | "skillsText"
     >
   >
 ): Promise<void> {

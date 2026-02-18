@@ -122,6 +122,40 @@ function PrivacyContent() {
         Control who can see your profile and personal information.
       </p>
 
+      {/* Indigenous Data Sovereignty */}
+      <Card className="mb-5" style={{ borderColor: "var(--teal)", borderWidth: 2 }}>
+        <div className="p-5">
+          <h3 className="text-[15px] font-bold text-teal mb-3 flex items-center gap-2">
+            <span className="flex items-center justify-center w-7 h-7 rounded-lg" style={{ background: "rgba(13,148,136,.1)" }}>
+              &#9878;
+            </span>
+            Indigenous Data Sovereignty
+          </h3>
+
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-text mb-1">OCAP Principles</p>
+            <p className="text-sm text-text-sec leading-relaxed m-0">
+              IOPPS respects First Nations data sovereignty through the OCAP principles:
+              <strong> Ownership</strong> — communities own their cultural knowledge and data;
+              <strong> Control</strong> — communities control how information is collected and used;
+              <strong> Access</strong> — communities have the right to access their own data;
+              <strong> Possession</strong> — data must be physically held within Nation-controlled infrastructure.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-text mb-1">CARE Principles</p>
+            <p className="text-sm text-text-sec leading-relaxed m-0">
+              We also follow the CARE principles for Indigenous data governance:
+              <strong> Collective Benefit</strong> — data should enable inclusive development;
+              <strong> Authority to Control</strong> — Indigenous peoples have the right to govern their data;
+              <strong> Responsibility</strong> — those working with Indigenous data must respect its context and origins;
+              <strong> Ethics</strong> — Indigenous rights and wellbeing must be the primary concern.
+            </p>
+          </div>
+        </div>
+      </Card>
+
       {/* Profile Visibility */}
       <Card className="mb-4">
         <div className="p-5">

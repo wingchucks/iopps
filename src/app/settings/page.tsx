@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
+import Footer from "@/components/Footer";
 import Card from "@/components/Card";
 import { useOnboarding } from "@/lib/onboarding-context";
 
@@ -46,9 +47,9 @@ export default function SettingsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-bg">
+      <div className="min-h-screen bg-bg flex flex-col">
         <NavBar />
-        <div className="max-w-[700px] mx-auto px-4 py-8 md:px-10">
+        <div className="max-w-[700px] mx-auto px-4 py-8 md:px-10 flex-1">
           <Link
             href="/profile"
             className="text-sm text-teal font-semibold no-underline hover:underline mb-4 inline-block"
@@ -100,6 +101,7 @@ export default function SettingsPage() {
             </Card>
           </div>
         </div>
+        <Footer />
       </div>
     </ProtectedRoute>
   );

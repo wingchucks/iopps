@@ -22,6 +22,7 @@ import { getUserRSVPs, type RSVP } from "@/lib/firestore/rsvps";
 import { getFollowerCount, getFollowingCount } from "@/lib/firestore/connections";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
+import Footer from "@/components/Footer";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
@@ -52,9 +53,10 @@ const appStatusConfig: Record<
 export default function ProfilePage() {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-bg">
+      <div className="min-h-screen bg-bg flex flex-col">
         <NavBar />
         <ProfileContent />
+        <Footer />
       </div>
     </ProtectedRoute>
   );
@@ -74,6 +76,11 @@ function ProfileContent() {
   const [community, setCommunity] = useState("");
   const [location, setLocation] = useState("");
   const [bio, setBio] = useState("");
+  const [nation, setNation] = useState("");
+  const [territory, setTerritory] = useState("");
+  const [languages, setLanguages] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [skillsText, setSkillsText] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Activity stats
@@ -92,6 +99,11 @@ function ProfileContent() {
         setCommunity(data.community);
         setLocation(data.location);
         setBio(data.bio);
+        setNation(data.nation || "");
+        setTerritory(data.territory || "");
+        setLanguages(data.languages || "");
+        setHeadline(data.headline || "");
+        setSkillsText(data.skillsText || "");
       }
       // Load activity stats, RSVPs, and connection counts
       const [userApps, saved, userRsvps, followers, following] = await Promise.all([
@@ -124,8 +136,21 @@ function ProfileContent() {
     if (!user) return;
     setSaving(true);
     try {
-      await updateMemberProfile(user.uid, { community, location, bio });
-      setProfile((prev) => (prev ? { ...prev, community, location, bio } : prev));
+      await updateMemberProfile(user.uid, {
+        community,
+        location,
+        bio,
+        nation,
+        territory,
+        languages,
+        headline,
+        skillsText,
+      });
+      setProfile((prev) =>
+        prev
+          ? { ...prev, community, location, bio, nation, territory, languages, headline, skillsText }
+          : prev
+      );
       setEditing(false);
       showToast("Profile updated");
     } catch (err) {
@@ -227,9 +252,14 @@ function ProfileContent() {
             <h1 className="text-xl sm:text-[28px] font-extrabold text-white mb-1">
               {displayName}
             </h1>
-            <p className="text-[15px] mb-2" style={{ color: "rgba(255,255,255,.7)" }}>
+            <p className="text-[15px] mb-1" style={{ color: "rgba(255,255,255,.7)" }}>
               {email}
             </p>
+            {profile?.headline && (
+              <p className="text-sm mb-2" style={{ color: "rgba(255,255,255,.55)" }}>
+                {profile.headline}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               <Badge
                 text="Community Member"
@@ -312,7 +342,7 @@ function ProfileContent() {
               />
             </label>
 
-            <label className="block mb-6">
+            <label className="block mb-4">
               <span className="text-sm font-semibold text-text-sec mb-1.5 block">
                 Bio
               </span>
@@ -322,6 +352,71 @@ function ProfileContent() {
                 rows={4}
                 className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal resize-none"
                 placeholder="A few words about yourself..."
+              />
+            </label>
+
+            <label className="block mb-4">
+              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                Nation / People
+              </span>
+              <input
+                type="text"
+                value={nation}
+                onChange={(e) => setNation(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                placeholder="e.g., Cree, Anishinaabe, M&eacute;tis"
+              />
+            </label>
+
+            <label className="block mb-4">
+              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                Territory / Homeland
+              </span>
+              <input
+                type="text"
+                value={territory}
+                onChange={(e) => setTerritory(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                placeholder="e.g., Treaty 6, M&eacute;tis Nation Region 3"
+              />
+            </label>
+
+            <label className="block mb-4">
+              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                Languages Spoken
+              </span>
+              <input
+                type="text"
+                value={languages}
+                onChange={(e) => setLanguages(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                placeholder="e.g., Cree, Michif, English, French"
+              />
+            </label>
+
+            <label className="block mb-4">
+              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                Professional Headline
+              </span>
+              <input
+                type="text"
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                placeholder="e.g., Software Developer | Treaty 6"
+              />
+            </label>
+
+            <label className="block mb-6">
+              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                Skills
+              </span>
+              <input
+                type="text"
+                value={skillsText}
+                onChange={(e) => setSkillsText(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                placeholder="e.g., Project Management, Web Development, Cree Language"
               />
             </label>
 
@@ -386,6 +481,30 @@ function ProfileContent() {
                         <span className="text-sm">&#128231;</span>
                         <span className="text-sm text-text-sec">{email}</span>
                       </div>
+                      {profile?.nation && (
+                        <div className="flex gap-2 items-center">
+                          <span className="text-sm">&#127758;</span>
+                          <span className="text-sm text-text-sec">{profile.nation}</span>
+                        </div>
+                      )}
+                      {profile?.territory && (
+                        <div className="flex gap-2 items-center">
+                          <span className="text-sm">&#128506;&#65039;</span>
+                          <span className="text-sm text-text-sec">{profile.territory}</span>
+                        </div>
+                      )}
+                      {profile?.languages && (
+                        <div className="flex gap-2 items-center">
+                          <span className="text-sm">&#128172;</span>
+                          <span className="text-sm text-text-sec">{profile.languages}</span>
+                        </div>
+                      )}
+                      {profile?.skillsText && (
+                        <div className="flex gap-2 items-center">
+                          <span className="text-sm">&#128736;&#65039;</span>
+                          <span className="text-sm text-text-sec">{profile.skillsText}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Card>

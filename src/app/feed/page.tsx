@@ -2,19 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
+import Footer from "@/components/Footer";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Link from "next/link";
 import { getPosts, type Post } from "@/lib/firestore/posts";
-import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
+import { getOrganizations, type Organization, getOrganization } from "@/lib/firestore/organizations";
 import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
 import { getApplications, type Application } from "@/lib/firestore/applications";
 import { getVendors, type ShopVendor } from "@/lib/firestore/shop";
+import { getMemberProfile } from "@/lib/firestore/members";
 import ProfileCompleteness from "@/components/ProfileCompleteness";
 import FeedSidebar from "@/components/FeedSidebar";
 import FeedRightSidebar from "@/components/FeedRightSidebar";
@@ -35,14 +39,21 @@ const typeToTab: Record<string, string> = {
 export default function FeedPage() {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-bg">
+      <div className="min-h-screen bg-bg flex flex-col">
         <NavBar />
         <FeedContent />
         <InstallPrompt />
         <OnboardingTour />
+        <Footer />
       </div>
     </ProtectedRoute>
   );
+}
+
+interface Livestream {
+  id: string;
+  title: string;
+  status: string;
 }
 
 function FeedContent() {
@@ -53,6 +64,8 @@ function FeedContent() {
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [livestream, setLivestream] = useState<Livestream | null>(null);
+  const [orgPending, setOrgPending] = useState(false);
   const { user, signOut } = useAuth();
   const router = useRouter();
 
@@ -63,6 +76,38 @@ function FeedContent() {
         setPosts(p);
         setOrgs(o);
         setVendors(v);
+
+        // Fetch active livestream
+        try {
+          const liveQ = query(
+            collection(db, "livestreams"),
+            where("status", "==", "live"),
+            limit(1)
+          );
+          const liveSnap = await getDocs(liveQ);
+          if (!liveSnap.empty) {
+            const doc = liveSnap.docs[0];
+            setLivestream({ id: doc.id, ...doc.data() } as Livestream);
+          } else {
+            // Fallback: get most recent livestream
+            const recentQ = query(
+              collection(db, "livestreams"),
+              orderBy("createdAt", "desc"),
+              limit(1)
+            );
+            const recentSnap = await getDocs(recentQ);
+            if (!recentSnap.empty) {
+              const doc = recentSnap.docs[0];
+              const data = doc.data();
+              if (data.status === "live") {
+                setLivestream({ id: doc.id, ...data } as Livestream);
+              }
+            }
+          }
+        } catch {
+          // livestreams collection may not exist yet — silently ignore
+        }
+
         if (user) {
           const [s, a] = await Promise.all([
             getSavedItems(user.uid).catch(() => []),
@@ -70,6 +115,19 @@ function FeedContent() {
           ]);
           setSavedItems(s);
           setApplications(a);
+
+          // Check if user's org is pending
+          try {
+            const profile = await getMemberProfile(user.uid);
+            if (profile?.orgId) {
+              const org = await getOrganization(profile.orgId);
+              if (org && (org as unknown as Record<string, unknown>).status === "pending") {
+                setOrgPending(true);
+              }
+            }
+          } catch {
+            // ignore — user may not have org
+          }
         }
       } catch (err) {
         console.error("Failed to load feed data:", err);
@@ -110,23 +168,48 @@ function FeedContent() {
         {/* Profile completeness */}
         <ProfileCompleteness />
 
-        {/* LIVE banner */}
-        <div
-          className="flex items-center gap-3 rounded-[14px] mb-3 cursor-pointer"
-          style={{
-            padding: "12px 16px",
-            background: "linear-gradient(135deg, var(--red), #991B1B)",
-          }}
-        >
-          <span
-            className="text-[11px] text-white font-bold rounded-full"
-            style={{ background: "rgba(255,255,255,.2)", padding: "4px 12px" }}
+        {/* Pending org banner */}
+        {orgPending && (
+          <div
+            className="flex items-center gap-3 rounded-[14px] mb-3"
+            style={{
+              padding: "12px 16px",
+              background: "var(--gold-soft)",
+              border: "1.5px solid rgba(217,119,6,.25)",
+            }}
           >
-            ● LIVE
-          </span>
-          <span className="text-white text-sm font-semibold">IOPPS Spotlight: Interview with Chief Stone</span>
-          <span className="ml-auto text-xs" style={{ color: "rgba(255,255,255,.7)" }}>Watch →</span>
-        </div>
+            <span
+              className="flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0"
+              style={{ background: "rgba(217,119,6,.15)" }}
+            >
+              &#9432;
+            </span>
+            <p className="text-sm text-text m-0">
+              <strong style={{ color: "var(--gold)" }}>Your organization is under review.</strong>{" "}
+              We&apos;ll notify you once approved. In the meantime, you can explore the community.
+            </p>
+          </div>
+        )}
+
+        {/* LIVE banner — only shown when an active livestream exists */}
+        {livestream && (
+          <div
+            className="flex items-center gap-3 rounded-[14px] mb-3 cursor-pointer"
+            style={{
+              padding: "12px 16px",
+              background: "linear-gradient(135deg, var(--red), #991B1B)",
+            }}
+          >
+            <span
+              className="text-[11px] text-white font-bold rounded-full"
+              style={{ background: "rgba(255,255,255,.2)", padding: "4px 12px" }}
+            >
+              &#9679; LIVE
+            </span>
+            <span className="text-white text-sm font-semibold">{livestream.title}</span>
+            <span className="ml-auto text-xs" style={{ color: "rgba(255,255,255,.7)" }}>Watch &#8594;</span>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex gap-1.5 mb-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
