@@ -30,35 +30,64 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/** Sync Firebase ID token to httpOnly session cookie */
+async function syncSessionCookie(user: User | null) {
+  if (user) {
+    try {
+      const idToken = await user.getIdToken();
+      await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+    } catch {
+      // Cookie sync failed — middleware will redirect on next protected navigation
+    }
+  } else {
+    try {
+      await fetch("/api/auth/session", { method: "DELETE" });
+    } catch {
+      // Best effort
+    }
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
       setLoading(false);
+      await syncSessionCookie(firebaseUser);
     });
     return unsubscribe;
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    return await signInWithEmailAndPassword(auth, email, password);
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    await syncSessionCookie(cred.user);
+    return cred;
   };
 
   const signUp = async (name: string, email: string, password: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
     await sendEmailVerification(cred.user);
+    await syncSessionCookie(cred.user);
   };
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
-    return await signInWithPopup(auth, provider);
+    const cred = await signInWithPopup(auth, provider);
+    await syncSessionCookie(cred.user);
+    return cred;
   };
 
   const signOut = async () => {
+    await fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
     await firebaseSignOut(auth);
   };
 
@@ -76,6 +105,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (auth.currentUser) {
       await auth.currentUser.reload();
       setUser(auth.currentUser);
+      // Re-sync cookie after reload to update email_verified claim
+      await syncSessionCookie(auth.currentUser);
     }
   };
 

@@ -1,15 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { getMemberProfile } from "@/lib/firestore/members";
 
+const REASON_MESSAGES: Record<string, string> = {
+  timeout: "You were signed out due to inactivity.",
+  expired: "Your session has expired. Please sign in again.",
+};
+
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const { user, loading: authLoading, signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
+  const reason = searchParams.get("reason");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,10 +33,15 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user) router.replace("/feed");
-  }, [user, authLoading, router]);
+    if (!authLoading && user) router.replace(redirectTo || "/feed");
+  }, [user, authLoading, router, redirectTo]);
 
   if (authLoading || user) return null;
+
+  const navigateAfterAuth = async (uid: string) => {
+    const profile = await getMemberProfile(uid);
+    router.push(redirectTo || (profile ? "/feed" : "/setup"));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,8 +49,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const cred = await signIn(email, password);
-      const profile = await getMemberProfile(cred.user.uid);
-      router.push(profile ? "/feed" : "/setup");
+      await navigateAfterAuth(cred.user.uid);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (msg.includes("user-not-found") || msg.includes("wrong-password") || msg.includes("invalid-credential"))
@@ -47,8 +67,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const cred = await signInWithGoogle();
-      const profile = await getMemberProfile(cred.user.uid);
-      router.push(profile ? "/feed" : "/setup");
+      await navigateAfterAuth(cred.user.uid);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (!msg.includes("popup-closed")) setError(msg);
@@ -116,6 +135,22 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
+
+          {/* Reason banner (timeout, expired session) */}
+          {reason && REASON_MESSAGES[reason] && (
+            <div
+              className="text-sm font-medium mb-4"
+              style={{
+                padding: "12px 16px",
+                borderRadius: 10,
+                background: "var(--gold-soft)",
+                color: "var(--gold)",
+                border: "1px solid rgba(217,119,6,.15)",
+              }}
+            >
+              {REASON_MESSAGES[reason]}
+            </div>
+          )}
 
           {/* Google button */}
           <button

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -342,10 +342,7 @@ export default function OrgDashboardPage() {
     if (!user) return;
     (async () => {
       const memberProfile = await getMemberProfile(user.uid);
-      if (!memberProfile?.orgId) {
-        router.replace("/feed");
-        return;
-      }
+      if (!memberProfile?.orgId) return;
       setProfile(memberProfile);
       const [organization, orgPosts] = await Promise.all([
         getOrganization(memberProfile.orgId),
@@ -416,7 +413,7 @@ export default function OrgDashboardPage() {
   };
 
   return (
-    <ProtectedRoute>
+    <OrgRoute>
       <AppShell>
       <div className="min-h-screen bg-bg">
         <div className="max-w-[1100px] mx-auto px-4 py-8 md:px-10">
@@ -662,6 +659,6 @@ export default function OrgDashboardPage() {
         </div>
       </div>
     </AppShell>
-    </ProtectedRoute>
+    </OrgRoute>
   );
 }

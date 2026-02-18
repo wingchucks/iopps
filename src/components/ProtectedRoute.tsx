@@ -3,17 +3,28 @@
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import Link from "next/link";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+
+  const isUnverifiedPassword =
+    user &&
+    !user.emailVerified &&
+    user.providerData?.[0]?.providerId === "password";
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
     }
   }, [user, loading, router]);
+
+  // Hard redirect to /verify-email for unverified password users
+  useEffect(() => {
+    if (!loading && isUnverifiedPassword) {
+      router.replace("/verify-email");
+    }
+  }, [loading, isUnverifiedPassword, router]);
 
   if (loading) {
     return (
@@ -72,33 +83,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  if (!user) return null;
+  if (!user || isUnverifiedPassword) return null;
 
-  const showVerifyBanner = user && !user.emailVerified && user.providerData?.[0]?.providerId === "password";
-
-  return (
-    <>
-      {showVerifyBanner && (
-        <div
-          className="text-center text-sm font-medium"
-          style={{
-            padding: "10px 16px",
-            background: "var(--gold-soft)",
-            color: "var(--gold)",
-            borderBottom: "1px solid rgba(217,119,6,.15)",
-          }}
-        >
-          Your email is not verified.{" "}
-          <Link
-            href="/verify-email"
-            className="font-bold no-underline hover:underline"
-            style={{ color: "var(--teal)" }}
-          >
-            Verify now
-          </Link>
-        </div>
-      )}
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

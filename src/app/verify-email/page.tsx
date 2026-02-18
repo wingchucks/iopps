@@ -138,7 +138,7 @@ export default function VerifyEmailPage() {
             {resent ? "Email sent!" : resending ? "Sending..." : "Resend verification email"}
           </button>
 
-          <div className="mt-8 flex flex-col gap-2">
+          <div className="mt-8">
             <button
               onClick={signOut}
               className="text-text-muted text-sm font-medium cursor-pointer hover:underline"
@@ -146,9 +146,6 @@ export default function VerifyEmailPage() {
             >
               Sign out and try a different email
             </button>
-            <Link href="/setup" className="text-teal text-sm font-semibold no-underline hover:underline">
-              Skip for now
-            </Link>
           </div>
         </div>
       </div>

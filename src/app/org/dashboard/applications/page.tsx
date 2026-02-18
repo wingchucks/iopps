@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
@@ -50,10 +50,7 @@ export default function OrgApplicationsPage() {
     if (!user) return;
     (async () => {
       const profile = await getMemberProfile(user.uid);
-      if (!profile?.orgId) {
-        router.replace("/feed");
-        return;
-      }
+      if (!profile?.orgId) return;
 
       const posts = await getOrgPosts(profile.orgId);
       const grouped: GroupedApplications[] = await Promise.all(
@@ -98,7 +95,7 @@ export default function OrgApplicationsPage() {
   const totalApps = groups.reduce((sum, g) => sum + g.applications.length, 0);
 
   return (
-    <ProtectedRoute>
+    <OrgRoute>
       <AppShell>
       <div className="min-h-screen bg-bg">
         <div className="max-w-[1100px] mx-auto px-4 py-8 md:px-10">
@@ -239,6 +236,6 @@ export default function OrgApplicationsPage() {
         </div>
       </div>
     </AppShell>
-    </ProtectedRoute>
+    </OrgRoute>
   );
 }
