@@ -9,13 +9,6 @@ import { useAuth } from "@/lib/auth-context";
 export default function SignupPage() {
   const { user, loading: authLoading, signUp, signInWithGoogle } = useAuth();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!authLoading && user) router.replace("/feed");
-  }, [user, authLoading, router]);
-
-  if (authLoading || user) return null;
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,6 +16,12 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) router.replace("/feed");
+  }, [user, authLoading, router]);
+
+  if (authLoading || user) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

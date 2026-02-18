@@ -10,18 +10,17 @@ import { getMemberProfile } from "@/lib/firestore/members";
 export default function LoginPage() {
   const { user, loading: authLoading, signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user) router.replace("/feed");
   }, [user, authLoading, router]);
 
   if (authLoading || user) return null;
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPw, setShowPw] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
