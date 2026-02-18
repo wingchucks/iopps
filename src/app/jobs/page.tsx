@@ -298,9 +298,9 @@ export default function JobsPage() {
                           </h3>
                           <p className="text-sm text-teal font-semibold m-0">
                             {job.orgName || job.orgShort}
-                            {(job as Record<string, unknown>).source && (
+                            {String((job as unknown as Record<string, unknown>).source || "") !== "" && (
                               <span className="text-xs text-text-muted ml-2 font-normal">
-                                via {(job as Record<string, unknown>).source as string}
+                                via {String((job as unknown as Record<string, unknown>).source)}
                               </span>
                             )}
                           </p>
@@ -337,7 +337,7 @@ export default function JobsPage() {
                           <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
                         )}
                         {(() => {
-                          const deadline = (job as Record<string, unknown>).deadline ?? (job as Record<string, unknown>).closingDate;
+                          const deadline = (job as unknown as Record<string, unknown>).deadline ?? (job as unknown as Record<string, unknown>).closingDate;
                           if (!deadline) return null;
                           const deadlineDate = new Date(deadline as string);
                           if (isNaN(deadlineDate.getTime())) return null;
