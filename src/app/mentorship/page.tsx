@@ -40,6 +40,7 @@ export default function MentorshipPage() {
   const { showToast } = useToast();
   const [mentors, setMentors] = useState<MentorProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [nameSearch, setNameSearch] = useState("");
   const [selectedExpertise, setSelectedExpertise] = useState<string[]>([]);
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("");
@@ -59,6 +60,15 @@ export default function MentorshipPage() {
 
   const filtered = useMemo(() => {
     let items = mentors;
+    if (nameSearch.trim()) {
+      const q = nameSearch.toLowerCase();
+      items = items.filter(
+        (m) =>
+          m.name.toLowerCase().includes(q) ||
+          (m.bio || "").toLowerCase().includes(q) ||
+          (m.expertise || []).some((e) => e.toLowerCase().includes(q))
+      );
+    }
     if (selectedExpertise.length > 0) {
       items = items.filter((m) =>
         (m.expertise || []).some((e) =>
@@ -74,7 +84,7 @@ export default function MentorshipPage() {
       items = items.filter((m) => m.location.toLowerCase().includes(q));
     }
     return items;
-  }, [mentors, selectedExpertise, availabilityFilter, locationFilter]);
+  }, [mentors, nameSearch, selectedExpertise, availabilityFilter, locationFilter]);
 
   const toggleExpertise = (exp: string) => {
     setSelectedExpertise((prev) =>
@@ -151,6 +161,18 @@ export default function MentorshipPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-10 py-8">
+        {/* Search bar */}
+        <div className="mb-6">
+          <input
+            type="text"
+            value={nameSearch}
+            onChange={(e) => setNameSearch(e.target.value)}
+            placeholder="Search mentors by name, expertise, or bio..."
+            className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-purple"
+            style={{ maxWidth: 520 }}
+          />
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters sidebar - desktop */}
           <aside className="hidden lg:block w-64 shrink-0">

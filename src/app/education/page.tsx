@@ -110,13 +110,13 @@ export default function EducationPage() {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             {[
-              { value: "50+", label: "Partner Schools" },
-              { value: "200+", label: "Programs" },
-              { value: "100+", label: "Scholarships" },
-              { value: "1,000+", label: "Learners Connected" },
+              { icon: "\u{1F3EB}", label: "Partner Schools" },
+              { icon: "\u{1F4DA}", label: "Training Programs" },
+              { icon: "\u{1F393}", label: "Scholarships" },
+              { icon: "\u{1F91D}", label: "Learners Connected" },
             ].map((stat) => (
               <div key={stat.label}>
-                <p className="text-2xl font-extrabold text-teal-light m-0">{stat.value}</p>
+                <p className="text-2xl m-0">{stat.icon}</p>
                 <p className="text-xs text-white/50 m-0 mt-1">{stat.label}</p>
               </div>
             ))}

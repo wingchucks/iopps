@@ -21,6 +21,7 @@ export default function OrgSignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { signUp, user, loading: authLoading } = useAuth();
@@ -38,6 +39,10 @@ export default function OrgSignupPage() {
     e.preventDefault();
     setError("");
 
+    if (!acceptTerms) {
+      setError("You must accept the Terms of Service to continue.");
+      return;
+    }
     if (password !== confirm) {
       setError("Passwords don't match.");
       return;
@@ -175,7 +180,7 @@ export default function OrgSignupPage() {
             />
           </label>
 
-          <label className="block mb-6">
+          <label className="block mb-4">
             <span className="text-sm font-semibold text-text-sec mb-1.5 block">Confirm Password</span>
             <input
               type="password"
@@ -185,6 +190,25 @@ export default function OrgSignupPage() {
               className={inputClass}
               placeholder="Re-enter your password"
             />
+          </label>
+
+          <label className="flex items-start gap-3 mb-6 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={acceptTerms}
+              onChange={(e) => setAcceptTerms(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-teal cursor-pointer"
+            />
+            <span className="text-sm text-text-sec leading-relaxed">
+              I agree to the{" "}
+              <Link href="/terms" className="text-teal font-semibold no-underline hover:underline">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/terms" className="text-teal font-semibold no-underline hover:underline">
+                Privacy Policy
+              </Link>
+            </span>
           </label>
 
           <Button

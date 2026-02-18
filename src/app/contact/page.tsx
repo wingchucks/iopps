@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import ContactForm from "./ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -109,8 +110,16 @@ export default function ContactPage() {
           </div>
         </div>
 
+        {/* Contact Form */}
+        <div className="mt-10">
+          <h2 className="text-xl font-extrabold text-text mb-4 text-center">
+            Send Us a Message
+          </h2>
+          <ContactForm />
+        </div>
+
         {/* Additional info */}
-        <div className="mt-10 text-center">
+        <div className="mt-8 text-center">
           <p className="text-text-muted text-sm leading-relaxed">
             We typically respond within 1&ndash;2 business days. For urgent
             matters, please include &ldquo;Urgent&rdquo; in your email subject

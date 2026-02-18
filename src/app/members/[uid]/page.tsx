@@ -334,22 +334,15 @@ function MemberProfileContent() {
               </div>
             </Card>
 
-            {/* Activity */}
+            {/* Member Since */}
             <Card>
               <div style={{ padding: 16 }}>
-                <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">
-                  ACTIVITY
+                <p className="text-xs font-bold text-text-muted mb-2 tracking-[1px]">
+                  MEMBER INFO
                 </p>
-                <div className="grid grid-cols-2 gap-3 text-center">
-                  <div>
-                    <p className="text-xl font-extrabold text-text mb-0">--</p>
-                    <p className="text-[11px] text-text-muted m-0">Posts</p>
-                  </div>
-                  <div>
-                    <p className="text-xl font-extrabold text-text mb-0">--</p>
-                    <p className="text-[11px] text-text-muted m-0">Events</p>
-                  </div>
-                </div>
+                <p className="text-sm text-text-sec m-0">
+                  Community member on IOPPS
+                </p>
               </div>
             </Card>
           </div>

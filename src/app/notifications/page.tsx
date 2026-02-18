@@ -35,10 +35,13 @@ export default function NotificationsPage() {
   );
 }
 
+const filterTabs = ["All", "Unread"] as const;
+
 function NotificationsContent() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>("All");
 
   useEffect(() => {
     if (!user) return;
@@ -84,7 +87,7 @@ function NotificationsContent() {
 
   return (
     <div className="max-w-[700px] mx-auto px-4 py-6 md:px-10 md:py-8">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-extrabold text-text">Notifications</h2>
         {unreadCount > 0 && (
           <Button small onClick={handleMarkAllRead}>
@@ -92,6 +95,29 @@ function NotificationsContent() {
           </Button>
         )}
       </div>
+
+      {/* Filter tabs */}
+      {notifications.length > 0 && (
+        <div className="flex gap-2 mb-5">
+          {filterTabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="px-4 py-2 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all"
+              style={{
+                background: activeTab === tab ? "var(--navy)" : "var(--card)",
+                color: activeTab === tab ? "#fff" : "var(--text-sec)",
+                border: activeTab === tab ? "none" : "1px solid var(--border)",
+              }}
+            >
+              {tab}
+              {tab === "Unread" && unreadCount > 0 && (
+                <span className="ml-1.5 text-xs opacity-70">({unreadCount})</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">
@@ -109,7 +135,7 @@ function NotificationsContent() {
         </Card>
       ) : (
         <div className="space-y-2">
-          {notifications.map((n) => {
+          {(activeTab === "Unread" ? notifications.filter((n) => !n.read) : notifications).map((n) => {
             const content = (
               <Card
                 key={n.id}
