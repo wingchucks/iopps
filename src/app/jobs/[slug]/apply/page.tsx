@@ -177,8 +177,8 @@ function ApplyWizard() {
       <div className="max-w-[600px] mx-auto px-4 py-20 text-center">
         <h2 className="text-2xl font-extrabold text-text mb-2">Job Not Found</h2>
         <p className="text-text-sec mb-6">This job posting doesn&apos;t exist or may have been removed.</p>
-        <Link href="/feed">
-          <Button primary>Back to Feed</Button>
+        <Link href="/jobs">
+          <Button primary>Browse Jobs</Button>
         </Link>
       </div>
     );

@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 interface AvatarProps {
   name: string;
   size?: number;
@@ -6,6 +10,8 @@ interface AvatarProps {
 }
 
 export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) {
+  const [imgError, setImgError] = useState(false);
+
   const initials = (name || "")
     .split(" ")
     .map((n) => n[0])
@@ -14,7 +20,7 @@ export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) 
 
   const radius = size > 48 ? 16 : "50%";
 
-  if (src) {
+  if (src && !imgError) {
     return (
       <img
         src={src}
@@ -25,6 +31,7 @@ export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) 
           height: size,
           borderRadius: radius,
         }}
+        onError={() => setImgError(true)}
       />
     );
   }

@@ -178,8 +178,8 @@ function EventDetailContent() {
         <p className="text-5xl mb-4">🎪</p>
         <h2 className="text-2xl font-extrabold text-text mb-2">Event Not Found</h2>
         <p className="text-text-sec mb-6">This event doesn&apos;t exist or may have been removed.</p>
-        <Link href="/feed">
-          <Button primary>Back to Feed →</Button>
+        <Link href="/events">
+          <Button primary>Browse Events →</Button>
         </Link>
       </div>
     );
@@ -197,10 +197,10 @@ function EventDetailContent() {
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Back link */}
       <Link
-        href="/feed"
+        href="/events"
         className="inline-flex items-center gap-1 text-sm text-text-muted no-underline hover:text-teal mb-4"
       >
-        &#8592; Back to Feed
+        &#8592; Back to Events
       </Link>
 
       {/* Hero Banner */}

@@ -128,8 +128,8 @@ function StoryDetailContent() {
         <p className="text-5xl mb-4">&#128214;</p>
         <h2 className="text-2xl font-extrabold text-text mb-2">Story Not Found</h2>
         <p className="text-text-sec mb-6">This story doesn&apos;t exist or may have been removed.</p>
-        <Link href="/feed">
-          <Button primary>Back to Feed &#8594;</Button>
+        <Link href="/stories">
+          <Button primary>Browse Stories &#8594;</Button>
         </Link>
       </div>
     );
@@ -143,10 +143,10 @@ function StoryDetailContent() {
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Back link */}
       <Link
-        href="/feed"
+        href="/stories"
         className="inline-flex items-center gap-1 text-sm text-text-muted no-underline hover:text-teal mb-4"
       >
-        &#8592; Back to Feed
+        &#8592; Back to Stories
       </Link>
 
       {/* Hero Banner */}

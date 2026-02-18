@@ -107,8 +107,8 @@ function JobDetailContent() {
         <p className="text-5xl mb-4">💼</p>
         <h2 className="text-2xl font-extrabold text-text mb-2">Job Not Found</h2>
         <p className="text-text-sec mb-6">This job posting doesn&apos;t exist or may have been removed.</p>
-        <Link href="/feed">
-          <Button primary>Back to Feed →</Button>
+        <Link href="/jobs">
+          <Button primary>Browse Jobs →</Button>
         </Link>
       </div>
     );
@@ -121,10 +121,10 @@ function JobDetailContent() {
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Back link */}
       <Link
-        href="/feed"
+        href="/jobs"
         className="inline-flex items-center gap-1 text-sm text-text-muted no-underline hover:text-teal mb-4"
       >
-        &#8592; Back to Feed
+        &#8592; Back to Jobs
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
