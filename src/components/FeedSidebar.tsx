@@ -13,6 +13,15 @@ interface FeedSidebarProps {
   closingSoon: Post[];
   events: Post[];
   onSignOut: () => void;
+  userRole?: string;
+  orgRole?: string;
+}
+
+function getRoleLabel(role?: string, orgRole?: string) {
+  if (role === "admin") return "Admin";
+  if (role === "moderator") return "Moderator";
+  if (orgRole === "owner" || orgRole === "admin") return "Organization";
+  return "Community Member";
 }
 
 export default function FeedSidebar({
@@ -20,6 +29,8 @@ export default function FeedSidebar({
   closingSoon,
   events,
   onSignOut,
+  userRole,
+  orgRole,
 }: FeedSidebarProps) {
   const { user } = useAuth();
   const displayName =
@@ -33,7 +44,7 @@ export default function FeedSidebar({
           <Avatar name={displayName} size={44} />
           <div>
             <p className="text-[15px] font-bold text-text m-0">{displayName}</p>
-            <p className="text-xs text-teal-light m-0">Community Member</p>
+            <p className="text-xs text-teal-light m-0">{getRoleLabel(userRole, orgRole)}</p>
           </div>
         </div>
         <div className="mb-3">

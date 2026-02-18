@@ -66,6 +66,8 @@ function FeedContent() {
   const [loading, setLoading] = useState(true);
   const [livestream, setLivestream] = useState<Livestream | null>(null);
   const [orgPending, setOrgPending] = useState(false);
+  const [userRole, setUserRole] = useState<string | undefined>();
+  const [userOrgRole, setUserOrgRole] = useState<string | undefined>();
   const { user, signOut } = useAuth();
   const router = useRouter();
 
@@ -119,6 +121,8 @@ function FeedContent() {
           // Check if user's org is pending
           try {
             const profile = await getMemberProfile(user.uid);
+            if (profile?.role) setUserRole(profile.role);
+            if (profile?.orgRole) setUserOrgRole(profile.orgRole);
             if (profile?.orgId) {
               const org = await getOrganization(profile.orgId);
               if (org && (org as unknown as Record<string, unknown>).status === "pending") {
@@ -161,6 +165,8 @@ function FeedContent() {
         closingSoon={closingSoon}
         events={events}
         onSignOut={handleSignOut}
+        userRole={userRole}
+        orgRole={userOrgRole}
       />
 
       {/* ═══ Center Feed ═══ */}

@@ -161,9 +161,9 @@ function MemberProfileContent() {
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               <Badge
-                text="Community Member"
-                color="#6EE7B7"
-                bg="rgba(110,231,183,.15)"
+                text={profile.role === "admin" ? "Admin" : profile.role === "moderator" ? "Moderator" : profile.orgRole === "owner" || profile.orgRole === "admin" ? "Organization" : "Community Member"}
+                color={profile.role === "admin" ? "#F59E0B" : profile.role === "moderator" ? "#8B5CF6" : "#6EE7B7"}
+                bg={profile.role === "admin" ? "rgba(245,158,11,.15)" : profile.role === "moderator" ? "rgba(139,92,246,.15)" : "rgba(110,231,183,.15)"}
                 small
               />
               {profile.community && (
