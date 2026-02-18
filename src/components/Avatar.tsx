@@ -6,7 +6,7 @@ interface AvatarProps {
 }
 
 export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) {
-  const initials = name
+  const initials = (name || "")
     .split(" ")
     .map((n) => n[0])
     .join("")

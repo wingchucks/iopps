@@ -20,6 +20,9 @@ export const metadata: Metadata = {
     "Jobs, events, scholarships, businesses, schools, and livestreams — all in one place for Indigenous people across North America.",
   metadataBase: new URL("https://iopps.vercel.app"),
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
