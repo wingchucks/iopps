@@ -6,6 +6,7 @@ import {
   setDoc,
   addDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -169,4 +170,11 @@ export async function acceptMentorshipRequest(
   });
 
   return conversationId;
+}
+
+/** Cancel a pending mentorship request (mentee only) */
+export async function cancelMentorshipRequest(
+  requestId: string
+): Promise<void> {
+  await deleteDoc(doc(db, "mentorship_requests", requestId));
 }

@@ -419,6 +419,47 @@ function MemberProfileContent() {
           </div>
         )}
 
+        {/* Resume */}
+        {profile.resumeUrl && (
+          <div className="mt-6">
+            <h3 className="text-lg font-bold text-text mb-3">Resume</h3>
+            <Card>
+              <div style={{ padding: 16 }} className="flex items-center gap-3">
+                <div
+                  className="flex items-center justify-center rounded-xl flex-shrink-0"
+                  style={{ width: 40, height: 40, background: "rgba(13,148,136,.08)" }}
+                >
+                  <span className="text-base">&#128196;</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-text mb-0.5 truncate">
+                    {profile.resumeFileName || "Resume"}
+                  </p>
+                  <p className="text-xs text-text-muted m-0">
+                    Available for download
+                  </p>
+                </div>
+                <a
+                  href={profile.resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="no-underline"
+                >
+                  <Button
+                    small
+                    style={{
+                      background: "var(--teal)",
+                      color: "#fff",
+                    }}
+                  >
+                    Download
+                  </Button>
+                </a>
+              </div>
+            </Card>
+          </div>
+        )}
+
         {/* Education */}
         {profile.education && profile.education.length > 0 && (
           <div className="mt-6">

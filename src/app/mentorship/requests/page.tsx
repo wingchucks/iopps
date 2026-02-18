@@ -13,6 +13,7 @@ import {
   getMyMentorRequests,
   updateRequestStatus,
   acceptMentorshipRequest,
+  cancelMentorshipRequest,
   type MentorshipRequest,
 } from "@/lib/firestore/mentorship";
 
@@ -81,6 +82,20 @@ export default function MentorshipRequestsPage() {
     } catch (err) {
       console.error("Failed to accept request:", err);
       showToast("Failed to accept request.", "error");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleCancel = async (requestId: string) => {
+    setUpdating(requestId);
+    try {
+      await cancelMentorshipRequest(requestId);
+      setSent((prev) => prev.filter((r) => r.id !== requestId));
+      showToast("Request cancelled.");
+    } catch (err) {
+      console.error("Failed to cancel request:", err);
+      showToast("Failed to cancel request.", "error");
     } finally {
       setUpdating(null);
     }
@@ -348,6 +363,21 @@ export default function MentorshipRequestsPage() {
                           />
                         ))}
                       </div>
+                    )}
+
+                    {req.status === "pending" && (
+                      <button
+                        onClick={() => handleCancel(req.id)}
+                        disabled={updating === req.id}
+                        className="w-full py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+                        style={{
+                          border: "1px solid var(--border)",
+                          color: "var(--text-sec)",
+                          background: "transparent",
+                        }}
+                      >
+                        {updating === req.id ? "..." : "Cancel Request"}
+                      </button>
                     )}
 
                     {req.status === "accepted" && (

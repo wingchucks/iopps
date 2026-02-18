@@ -326,22 +326,26 @@ export default function MentorshipPage() {
                     <Card key={mentor.id} className="p-5 flex flex-col">
                       <div className="flex items-start gap-3 mb-3">
                         {/* Avatar */}
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0"
-                          style={{
-                            background:
-                              "linear-gradient(135deg, var(--purple), #5B21B6)",
-                          }}
-                        >
-                          {mentor.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3
-                            className="font-bold text-sm truncate"
-                            style={{ color: "var(--text)" }}
+                        <Link href={`/members/${mentor.userId}`} className="no-underline">
+                          <div
+                            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0 hover:opacity-80 transition-opacity"
+                            style={{
+                              background:
+                                "linear-gradient(135deg, var(--purple), #5B21B6)",
+                            }}
                           >
-                            {mentor.name}
-                          </h3>
+                            {mentor.name.charAt(0).toUpperCase()}
+                          </div>
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/members/${mentor.userId}`} className="no-underline">
+                            <h3
+                              className="font-bold text-sm truncate hover:text-purple transition-colors cursor-pointer"
+                              style={{ color: "var(--text)" }}
+                            >
+                              {mentor.name}
+                            </h3>
+                          </Link>
                           <p
                             className="text-xs truncate"
                             style={{ color: "var(--text-sec)" }}

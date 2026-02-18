@@ -8,7 +8,10 @@ import {
   deleteDoc,
   query,
   orderBy,
+  limit,
+  startAfter,
   serverTimestamp,
+  type QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -51,6 +54,9 @@ export interface MemberProfile {
   languages?: string;
   headline?: string;
   skillsText?: string;
+  resumeUrl?: string;
+  resumeFileName?: string;
+  resumeUploadedAt?: string;
 }
 
 export async function getMemberProfile(
@@ -99,10 +105,15 @@ export async function updateMemberProfile(
     >
   >
 ): Promise<void> {
-  await updateDoc(doc(db, "members", uid), {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
+  // When skillsText is updated, also parse it into a skills array
+  const updates: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
+  if (data.skillsText !== undefined) {
+    updates.skills = data.skillsText
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  await updateDoc(doc(db, "members", uid), updates);
 }
 
 export async function getAllMembers(): Promise<MemberProfile[]> {
@@ -110,6 +121,22 @@ export async function getAllMembers(): Promise<MemberProfile[]> {
     query(collection(db, "members"), orderBy("displayName"))
   );
   return snap.docs.map((d) => d.data() as MemberProfile);
+}
+
+const PAGE_SIZE = 30;
+
+export async function getMembersPaginated(
+  cursor?: QueryDocumentSnapshot
+): Promise<{ members: MemberProfile[]; lastDoc: QueryDocumentSnapshot | null }> {
+  const constraints = [
+    orderBy("displayName"),
+    limit(PAGE_SIZE),
+    ...(cursor ? [startAfter(cursor)] : []),
+  ];
+  const snap = await getDocs(query(collection(db, "members"), ...constraints));
+  const members = snap.docs.map((d) => d.data() as MemberProfile);
+  const lastDoc = snap.docs.length === PAGE_SIZE ? snap.docs[snap.docs.length - 1] : null;
+  return { members, lastDoc };
 }
 
 export async function updateCareerPreferences(

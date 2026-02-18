@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Card from "@/components/Card";
-import { getAllMembers, type MemberProfile } from "@/lib/firestore/members";
+import Button from "@/components/Button";
+import { getMembersPaginated, type MemberProfile } from "@/lib/firestore/members";
+import type { QueryDocumentSnapshot } from "firebase/firestore";
 
 const communityFilters = [
   "All",
@@ -32,15 +34,20 @@ export default function MembersPage() {
 function MembersContent() {
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const { user } = useAuth();
+  const cursorRef = useRef<QueryDocumentSnapshot | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await getAllMembers();
+        const { members: data, lastDoc } = await getMembersPaginated();
         setMembers(data);
+        cursorRef.current = lastDoc;
+        setHasMore(lastDoc !== null);
       } catch (err) {
         console.error("Failed to load members:", err);
       } finally {
@@ -49,6 +56,21 @@ function MembersContent() {
     }
     load();
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || !cursorRef.current) return;
+    setLoadingMore(true);
+    try {
+      const { members: data, lastDoc } = await getMembersPaginated(cursorRef.current);
+      setMembers((prev) => [...prev, ...data]);
+      cursorRef.current = lastDoc;
+      setHasMore(lastDoc !== null);
+    } catch (err) {
+      console.error("Failed to load more members:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore]);
 
   const filtered = useMemo(() => {
     let result = members;
@@ -154,11 +176,30 @@ function MembersContent() {
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((member) => (
-            <MemberCard key={member.uid} member={member} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((member) => (
+              <MemberCard key={member.uid} member={member} />
+            ))}
+          </div>
+
+          {/* Load More */}
+          {hasMore && !search && activeFilter === "All" && (
+            <div className="text-center mt-6">
+              <Button
+                onClick={loadMore}
+                style={{
+                  background: "var(--card)",
+                  color: "var(--text-sec)",
+                  border: "1px solid var(--border)",
+                  opacity: loadingMore ? 0.6 : 1,
+                }}
+              >
+                {loadingMore ? "Loading..." : "Load More Members"}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
