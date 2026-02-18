@@ -52,6 +52,27 @@ export default function LandingPage() {
               Events
             </Link>
             <Link
+              href="/partners"
+              className="text-sm font-semibold no-underline hidden sm:inline"
+              style={{ color: "rgba(255,255,255,.7)" }}
+            >
+              Partners
+            </Link>
+            <Link
+              href="/schools"
+              className="text-sm font-semibold no-underline hidden sm:inline"
+              style={{ color: "rgba(255,255,255,.7)" }}
+            >
+              Schools
+            </Link>
+            <Link
+              href="/stories"
+              className="text-sm font-semibold no-underline hidden sm:inline"
+              style={{ color: "rgba(255,255,255,.7)" }}
+            >
+              Stories
+            </Link>
+            <Link
               href="/shop"
               className="text-sm font-semibold no-underline hidden sm:inline"
               style={{ color: "rgba(255,255,255,.7)" }}
@@ -59,15 +80,8 @@ export default function LandingPage() {
               Shop
             </Link>
             <Link
-              href="/scholarships"
-              className="text-sm font-semibold no-underline hidden sm:inline"
-              style={{ color: "rgba(255,255,255,.7)" }}
-            >
-              Scholarships
-            </Link>
-            <Link
               href="/pricing"
-              className="text-sm font-semibold no-underline"
+              className="text-sm font-semibold no-underline hidden md:inline"
               style={{ color: "rgba(255,255,255,.7)" }}
             >
               Pricing
@@ -160,15 +174,15 @@ export default function LandingPage() {
           </p>
         </div>
         <div
-          className="flex gap-6 flex-nowrap overflow-x-auto pb-2"
+          className="partner-strip flex gap-6 flex-nowrap overflow-x-auto pb-2"
           style={{ scrollbarWidth: "none" }}
         >
-          <style>{`.partner-scroll::-webkit-scrollbar{display:none}`}</style>
+          <style>{`.partner-strip::-webkit-scrollbar{display:none}`}</style>
           {partners.map((p, i) => (
             <Link
               key={i}
               href="/partners"
-              className="partner-scroll flex items-center gap-3 rounded-xl transition-all duration-150 min-w-[180px] shrink-0 no-underline hover:shadow-md"
+              className="flex items-center gap-3 rounded-xl transition-all duration-150 min-w-[180px] shrink-0 no-underline hover:shadow-md"
               style={{
                 padding: "12px 20px",
                 border:

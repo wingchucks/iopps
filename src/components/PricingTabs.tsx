@@ -345,6 +345,14 @@ export default function PricingTabs({
                 q: "What happens when my subscription expires?",
                 a: "When your subscription ends, your active job and program listings are archived. They won't appear in search results, but all your data is preserved and listings are restored when you renew.",
               },
+              {
+                q: "Are events free?",
+                a: "Yes! Community events are always free to post and attend on IOPPS.",
+              },
+              {
+                q: "Is Shop Indigenous free?",
+                a: "Yes! Shop Indigenous listings are always free for Indigenous vendors.",
+              },
             ] as { q: string; a: string }[]).map((faq, i) => (
               <button
                 key={i}

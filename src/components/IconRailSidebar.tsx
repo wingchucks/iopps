@@ -109,6 +109,38 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
       );
+    case "search":
+      return (
+        <svg {...p}>
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      );
+    case "handshake":
+      return (
+        <svg {...p}>
+          <path d="M20.5 11H3.5" />
+          <path d="M11.5 3l-4 8 6 2-4 8" />
+          <path d="M3.5 11l3.5-3.5L11 11" />
+          <path d="M20.5 11l-3.5-3.5L13 11" />
+          <path d="M7 7.5L11 11l-2 4" />
+          <path d="M17 7.5L13 11l2 4" />
+        </svg>
+      );
+    case "video":
+      return (
+        <svg {...p}>
+          <polygon points="23 7 16 12 23 17 23 7" />
+          <rect x="1" y="5" width="15" height="14" rx="2" />
+        </svg>
+      );
+    case "plus":
+      return (
+        <svg {...p}>
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -116,16 +148,19 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
 
 /* ── Nav item definitions ── */
 const navItems = [
+  { href: "/search", label: "Search", icon: "search" },
   { href: "/feed", label: "Feed", icon: "home" },
   { href: "/jobs", label: "Jobs", icon: "briefcase" },
   { href: "/events", label: "Events", icon: "calendar" },
   { href: "/scholarships", label: "Scholarships", icon: "award" },
   { href: "/schools", label: "Schools", icon: "building" },
+  { href: "/partners", label: "Partners", icon: "handshake" },
   { href: "/shop", label: "Shop", icon: "shopping" },
   { href: "/stories", label: "Stories", icon: "book" },
   { href: "/messages", label: "Messages", icon: "message" },
   { href: "/saved", label: "Saved", icon: "bookmark" },
   { href: "/notifications", label: "Notifications", icon: "bell" },
+  { href: "/livestreams", label: "Live", icon: "video" },
 ];
 
 export default function IconRailSidebar() {
@@ -177,6 +212,23 @@ export default function IconRailSidebar() {
         </span>
       </Link>
 
+      {/* Create button — auth only */}
+      {user && (
+        <Link href="/feed?compose=true" className="no-underline shrink-0 px-2 pt-2">
+          <div
+            className="flex items-center gap-3 h-10 px-3 rounded-lg transition-colors"
+            style={{ background: "var(--teal)", color: "#fff" }}
+          >
+            <span className="w-5 h-5 shrink-0 flex items-center justify-center">
+              <NavIcon name="plus" size={20} />
+            </span>
+            <span className="opacity-0 group-hover/rail:opacity-100 text-sm font-bold whitespace-nowrap transition-opacity duration-200">
+              Create
+            </span>
+          </div>
+        </Link>
+      )}
+
       {/* Separator */}
       <div
         className="h-px mx-3 shrink-0"
@@ -192,6 +244,7 @@ export default function IconRailSidebar() {
           const active =
             pathname === href ||
             (href !== "/feed" && pathname.startsWith(href + "/"));
+          const isLive = href === "/livestreams";
           return (
             <Link key={href} href={href} className="no-underline">
               <div
@@ -206,8 +259,17 @@ export default function IconRailSidebar() {
                   color: active ? "var(--teal)" : "var(--text-muted)",
                 }}
               >
-                <span className="w-5 h-5 shrink-0 flex items-center justify-center">
+                <span className="w-5 h-5 shrink-0 flex items-center justify-center relative">
                   <NavIcon name={icon} size={20} />
+                  {isLive && (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full"
+                      style={{
+                        background: "#DC2626",
+                        animation: "pulse-dot 2s ease-in-out infinite",
+                      }}
+                    />
+                  )}
                 </span>
                 <span
                   className="opacity-0 group-hover/rail:opacity-100 text-sm font-medium whitespace-nowrap transition-opacity duration-200"
@@ -301,6 +363,12 @@ export default function IconRailSidebar() {
           </div>
         </div>
       </div>
+      <style>{`
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.3); }
+        }
+      `}</style>
     </aside>
   );
 }

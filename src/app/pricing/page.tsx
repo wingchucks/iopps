@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
 import PricingTabs from "@/components/PricingTabs";
@@ -36,9 +37,10 @@ export default function PricingPage() {
         <div className="relative flex items-center justify-between mb-10">
           <Link
             href="/"
-            className="text-white font-black text-xl tracking-[2px] no-underline"
+            className="flex items-center gap-2 no-underline"
           >
-            IOPPS
+            <Image src="/logo.png" alt="IOPPS" width={32} height={32} />
+            <span className="text-white font-black text-xl tracking-[2px]">IOPPS</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
@@ -58,6 +60,12 @@ export default function PricingPage() {
           </div>
         </div>
 
+        <p
+          className="relative text-xs font-extrabold tracking-[3px] mb-4"
+          style={{ color: "rgba(255,255,255,.45)" }}
+        >
+          EMPOWERING INDIGENOUS SUCCESS
+        </p>
         <h1 className="relative text-white text-3xl md:text-5xl font-extrabold mb-3">
           Simple, Transparent Pricing
         </h1>

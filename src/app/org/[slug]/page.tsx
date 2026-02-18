@@ -3,31 +3,30 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
+import { useAuth } from "@/lib/auth-context";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { getPostsByOrg, type Post } from "@/lib/firestore/posts";
 import { displayLocation } from "@/lib/utils";
 
 export default function OrgProfilePage() {
   return (
-    <ProtectedRoute>
-      <AppShell>
+    <AppShell>
       <div className="min-h-screen bg-bg">
         <OrgProfileContent />
       </div>
     </AppShell>
-    </ProtectedRoute>
   );
 }
 
 function OrgProfileContent() {
   const params = useParams();
   const slug = params.slug as string;
+  const { user } = useAuth();
   const [org, setOrg] = useState<Organization | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -207,8 +206,8 @@ function OrgProfileContent() {
           </div>
         )}
 
-        {/* Open Positions */}
-        {jobs.length > 0 && (
+        {/* Open Positions — auth gated */}
+        {user && jobs.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-bold text-text m-0">Open Positions</h3>
@@ -246,8 +245,8 @@ function OrgProfileContent() {
           </div>
         )}
 
-        {/* Upcoming Events */}
-        {events.length > 0 && (
+        {/* Upcoming Events — auth gated */}
+        {user && events.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-bold text-text m-0">Upcoming Events</h3>
@@ -282,41 +281,58 @@ function OrgProfileContent() {
           </div>
         )}
 
-        {/* Contact & Info */}
-        <Card>
-          <div className="p-5">
-            <h3 className="text-[15px] font-bold text-text mb-3">Contact &amp; Info</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div className="flex items-center gap-2.5 text-text-sec">
-                <span>&#128205;</span>
-                <span>{displayLocation(org.location)}</span>
-              </div>
-              {org.website && (
-                <div className="flex items-center gap-2.5 text-text-sec">
-                  <span>&#127760;</span>
-                  <a
-                    href={org.website.startsWith("http") ? org.website : `https://${org.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-teal hover:underline no-underline"
-                  >
-                    {org.website}
-                  </a>
-                </div>
-              )}
-              <div className="flex items-center gap-2.5 text-text-sec">
-                <span>&#127970;</span>
-                <span>{typeLabel}</span>
-              </div>
-              {org.since && (
-                <div className="flex items-center gap-2.5 text-text-sec">
-                  <span>&#128197;</span>
-                  <span>Established {org.since}</span>
-                </div>
-              )}
+        {/* Sign in prompt for unauthenticated visitors */}
+        {!user && (jobs.length > 0 || events.length > 0) && (
+          <Card className="mb-8">
+            <div className="p-6 text-center">
+              <p className="text-text font-bold mb-1">Sign in to see more</p>
+              <p className="text-text-muted text-sm mb-4">
+                View open positions, events, and contact information.
+              </p>
+              <Link href="/login">
+                <Button primary small>Sign In</Button>
+              </Link>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
+
+        {/* Contact & Info — auth gated */}
+        {user && (
+          <Card>
+            <div className="p-5">
+              <h3 className="text-[15px] font-bold text-text mb-3">Contact &amp; Info</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2.5 text-text-sec">
+                  <span>&#128205;</span>
+                  <span>{displayLocation(org.location)}</span>
+                </div>
+                {org.website && (
+                  <div className="flex items-center gap-2.5 text-text-sec">
+                    <span>&#127760;</span>
+                    <a
+                      href={org.website.startsWith("http") ? org.website : `https://${org.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-teal hover:underline no-underline"
+                    >
+                      {org.website}
+                    </a>
+                  </div>
+                )}
+                <div className="flex items-center gap-2.5 text-text-sec">
+                  <span>&#127970;</span>
+                  <span>{typeLabel}</span>
+                </div>
+                {org.since && (
+                  <div className="flex items-center gap-2.5 text-text-sec">
+                    <span>&#128197;</span>
+                    <span>Established {org.since}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Empty state if no posts */}
         {jobs.length === 0 && events.length === 0 && (

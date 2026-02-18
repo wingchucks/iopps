@@ -14,11 +14,13 @@ const baseNavLinks = [
   { href: "/feed", label: "Home" },
   { href: "/search", label: "Search" },
   { href: "/partners", label: "Partners" },
+  { href: "/schools", label: "Schools" },
+  { href: "/stories", label: "Stories" },
   { href: "/members", label: "Members" },
   { href: "/training", label: "Training" },
   { href: "/mentorship", label: "Mentorship" },
   { href: "/shop", label: "Shop" },
-  { href: "/spotlight", label: "Spotlight" },
+  { href: "/livestreams", label: "Live", dot: true },
 ];
 
 export default function NavBar() {
@@ -38,8 +40,8 @@ export default function NavBar() {
 
   const navLinks = [
     ...baseNavLinks,
-    ...(hasOrg ? [{ href: "/org/dashboard", label: "Dashboard" }] : []),
-    { href: "/profile", label: "Profile" },
+    ...(hasOrg ? [{ href: "/org/dashboard", label: "Dashboard", dot: false }] : []),
+    { href: "/profile", label: "Profile", dot: false },
   ];
 
   const handleSignOut = async () => {
@@ -76,19 +78,28 @@ export default function NavBar() {
             </span>
           </Link>
           <div className="hidden md:flex gap-1">
-            {navLinks.map(({ href, label }) => {
+            {navLinks.map(({ href, label, dot }) => {
               const active = pathname === href;
               return (
                 <Link
                   key={href}
                   href={href}
-                  className="px-4 py-2 rounded-lg border-none font-semibold text-sm transition-all no-underline"
+                  className="px-4 py-2 rounded-lg border-none font-semibold text-sm transition-all no-underline flex items-center gap-1.5"
                   style={{
                     background: active ? "rgba(255,255,255,.12)" : "transparent",
                     color: active ? "#fff" : "rgba(255,255,255,.6)",
                   }}
                 >
                   {label}
+                  {dot && (
+                    <span
+                      className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{
+                        background: "#DC2626",
+                        animation: "pulse-nav-dot 2s ease-in-out infinite",
+                      }}
+                    />
+                  )}
                 </Link>
               );
             })}
@@ -97,6 +108,20 @@ export default function NavBar() {
 
         {/* Right: search + actions + avatar (desktop) */}
         <div className="hidden md:flex items-center gap-3">
+          {user && (
+            <Link
+              href="/feed?compose=true"
+              className="flex items-center justify-center w-9 h-9 rounded-[10px] no-underline transition-all hover:brightness-110"
+              style={{ background: "var(--teal)", color: "#fff" }}
+              title="Create Post"
+              aria-label="Create Post"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </Link>
+          )}
           <Link
             href="/search"
             className="flex items-center gap-2 px-4 py-2 rounded-[10px] w-60 no-underline transition-all hover:bg-white/[.12]"
@@ -158,20 +183,26 @@ export default function NavBar() {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div className="md:hidden border-t border-white/10 pb-3">
-          {navLinks.map(({ href, label }) => {
+          {navLinks.map(({ href, label, dot }) => {
             const active = pathname === href;
             return (
               <Link
                 key={href}
                 href={href}
                 onClick={() => setMenuOpen(false)}
-                className="block px-4 py-3 font-semibold text-sm no-underline transition-all"
+                className="flex items-center gap-2 px-4 py-3 font-semibold text-sm no-underline transition-all"
                 style={{
                   color: active ? "#fff" : "rgba(255,255,255,.6)",
                   background: active ? "rgba(255,255,255,.08)" : "transparent",
                 }}
               >
                 {label}
+                {dot && (
+                  <span
+                    className="inline-block w-1.5 h-1.5 rounded-full"
+                    style={{ background: "#DC2626" }}
+                  />
+                )}
               </Link>
             );
           })}
@@ -221,6 +252,12 @@ export default function NavBar() {
           </div>
         </div>
       )}
+      <style>{`
+        @keyframes pulse-nav-dot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.3); }
+        }
+      `}</style>
     </nav>
   );
 }
