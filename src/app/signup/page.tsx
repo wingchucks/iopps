@@ -1,14 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 
 export default function SignupPage() {
-  const { signUp, signInWithGoogle } = useAuth();
+  const { user, loading: authLoading, signUp, signInWithGoogle } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && user) router.replace("/feed");
+  }, [user, authLoading, router]);
+
+  if (authLoading || user) return null;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
