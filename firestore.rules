@@ -150,10 +150,13 @@ service cloud.firestore {
       allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
-    // Conversations: participants can read/create/update
+    // Conversations: participants can read/create/update.
+    // Also allow read when querying by unreadBy (used for unread count badge).
     match /conversations/{convId} {
-      allow read: if isSignedIn() &&
-        request.auth.uid in resource.data.participants;
+      allow read: if isSignedIn() && (
+        request.auth.uid in resource.data.participants ||
+        resource.data.unreadBy == request.auth.uid
+      );
       allow create: if isSignedIn() &&
         request.auth.uid in request.resource.data.participants;
       allow update: if isSignedIn() &&
