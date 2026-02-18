@@ -174,6 +174,25 @@ function FeedContent() {
 
       {/* ═══ Center Feed ═══ */}
       <div className="min-w-0" data-tour-step="feed">
+        {/* Welcome greeting */}
+        {user && (
+          <div
+            className="rounded-2xl mb-3"
+            style={{
+              padding: "16px 20px",
+              background: "var(--card)",
+              border: "1.5px solid var(--border)",
+            }}
+          >
+            <h2 className="text-lg font-bold m-0" style={{ color: "var(--text)" }}>
+              Welcome back, {user.displayName || "there"}!
+            </h2>
+            <p className="text-sm m-0 mt-1" style={{ color: "var(--text-sec)" }}>
+              Here&apos;s what&apos;s new in your community
+            </p>
+          </div>
+        )}
+
         {/* Profile completeness */}
         <ProfileCompleteness />
 

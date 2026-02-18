@@ -167,6 +167,7 @@ export default function SignupPage() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your full name"
                 required
+                autoComplete="name"
                 className="w-full outline-none transition-all duration-150"
                 style={{
                   padding: "12px 16px",
@@ -189,6 +190,7 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
+                autoComplete="email"
                 className="w-full outline-none transition-all duration-150"
                 style={{
                   padding: "12px 16px",
@@ -213,6 +215,7 @@ export default function SignupPage() {
                   placeholder="At least 8 characters"
                   required
                   minLength={8}
+                  autoComplete="new-password"
                   className="w-full outline-none transition-all duration-150"
                   style={{
                     padding: "12px 16px",
@@ -245,6 +248,7 @@ export default function SignupPage() {
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="Re-enter your password"
                 required
+                autoComplete="new-password"
                 className="w-full outline-none transition-all duration-150"
                 style={{
                   padding: "12px 16px",

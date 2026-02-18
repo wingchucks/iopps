@@ -172,6 +172,7 @@ export default function PricingTabs({
   currentPlan?: string;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("Subscriptions");
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const subHref = (plan: string) =>
     variant === "org" ? `/org/checkout?plan=${plan}` : "/org/signup";
@@ -310,6 +311,65 @@ export default function PricingTabs({
                 Contact Us
               </button>
             </a>
+          </div>
+        </Card>
+      </div>
+
+      {/* FAQ */}
+      <div className="mt-10">
+        <h3 className="text-xl font-extrabold text-text text-center mb-6">Frequently Asked Questions</h3>
+        <Card>
+          <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+            {([
+              {
+                q: "What is the billing cycle?",
+                a: "All subscription plans are billed annually. This keeps pricing simple and gives you uninterrupted access to your plan features for the full year.",
+              },
+              {
+                q: "What is your refund policy?",
+                a: "We offer a 30-day money-back guarantee on all subscription plans. If you're not satisfied within the first 30 days, contact us for a full refund.",
+              },
+              {
+                q: "Can I change my plan?",
+                a: "Yes, you can upgrade or downgrade your plan at any time. When upgrading, you'll be charged the prorated difference. When downgrading, the new rate applies at your next renewal.",
+              },
+              {
+                q: "Is there a free trial?",
+                a: "Conference and Shop Indigenous listings are completely free — no trial needed. For subscription plans, we offer a 30-day money-back guarantee so you can try risk-free.",
+              },
+              {
+                q: "What payment methods do you accept?",
+                a: "We accept all major credit cards. For School plan customers, we also offer invoicing with net-30 payment terms.",
+              },
+              {
+                q: "What happens when my subscription expires?",
+                a: "When your subscription ends, your active job and program listings are archived. They won't appear in search results, but all your data is preserved and listings are restored when you renew.",
+              },
+            ] as { q: string; a: string }[]).map((faq, i) => (
+              <button
+                key={i}
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                className="w-full text-left cursor-pointer bg-transparent border-none"
+                style={{ padding: "16px 24px", borderTop: i === 0 ? "none" : "1px solid var(--border)" }}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+                    {faq.q}
+                  </span>
+                  <span
+                    className="text-lg flex-shrink-0 leading-none"
+                    style={{ color: "var(--text-sec)" }}
+                  >
+                    {openFaq === i ? "\u2212" : "+"}
+                  </span>
+                </div>
+                {openFaq === i && (
+                  <p className="text-sm mt-2 mb-0" style={{ color: "var(--text-sec)", lineHeight: 1.6 }}>
+                    {faq.a}
+                  </p>
+                )}
+              </button>
+            ))}
           </div>
         </Card>
       </div>

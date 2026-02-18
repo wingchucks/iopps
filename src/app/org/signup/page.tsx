@@ -124,6 +124,7 @@ export default function OrgSignupPage() {
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
               required
+              autoComplete="organization"
               className={inputClass}
               placeholder="Your organization's name"
             />
@@ -151,6 +152,7 @@ export default function OrgSignupPage() {
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
               required
+              autoComplete="name"
               className={inputClass}
               placeholder="Primary contact person"
             />
@@ -163,6 +165,7 @@ export default function OrgSignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className={inputClass}
               placeholder="org@example.com"
             />
@@ -175,6 +178,7 @@ export default function OrgSignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="new-password"
               className={inputClass}
               placeholder="At least 6 characters"
             />
@@ -187,6 +191,7 @@ export default function OrgSignupPage() {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               required
+              autoComplete="new-password"
               className={inputClass}
               placeholder="Re-enter your password"
             />

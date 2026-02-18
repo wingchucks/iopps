@@ -29,6 +29,12 @@ interface Livestream {
 
 const categories = ["All", "Interviews", "Community Stories", "Events", "Training"];
 
+function formatViewCount(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  return count.toLocaleString();
+}
+
 function extractEmbedUrl(url: string): string {
   if (!url) return "";
   // YouTube watch URL -> embed
@@ -191,6 +197,7 @@ function SpotlightContent() {
                 )}
                 <div className="flex items-center gap-3 text-xs text-text-muted">
                   {featured.scheduledDate && <span>{featured.scheduledDate}</span>}
+                  {featured.viewCount > 0 && <span>{formatViewCount(featured.viewCount)} views</span>}
                   {featured.category && (
                     <Badge text={featured.category} color="var(--teal)" small />
                   )}
@@ -274,6 +281,7 @@ function SpotlightContent() {
                     </h4>
                     <div className="flex items-center gap-2 text-xs text-text-muted">
                       {s.scheduledDate && <span>{s.scheduledDate}</span>}
+                      {s.viewCount > 0 && <span>{formatViewCount(s.viewCount)} views</span>}
                       {s.category && (
                         <Badge text={s.category} color="var(--teal)" small />
                       )}

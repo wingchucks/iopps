@@ -165,6 +165,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
+                autoComplete="email"
                 className="w-full outline-none transition-all duration-150"
                 style={{
                   padding: "12px 16px",
@@ -193,6 +194,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
+                  autoComplete="current-password"
                   className="w-full outline-none transition-all duration-150"
                   style={{
                     padding: "12px 16px",

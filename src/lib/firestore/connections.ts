@@ -8,8 +8,11 @@ import {
   query,
   where,
   orderBy,
+  limit,
+  startAfter,
   serverTimestamp,
   getCountFromServer,
+  type QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -67,6 +70,40 @@ export async function getFollowing(userId: string): Promise<Connection[]> {
   const q = query(col, where("followerId", "==", userId), orderBy("createdAt", "desc"));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Connection);
+}
+
+const PAGE_SIZE = 30;
+
+export async function getFollowersPaginated(
+  userId: string,
+  cursor?: QueryDocumentSnapshot
+): Promise<{ items: Connection[]; lastDoc: QueryDocumentSnapshot | null }> {
+  const constraints = [
+    where("followingId", "==", userId),
+    orderBy("createdAt", "desc"),
+    limit(PAGE_SIZE),
+    ...(cursor ? [startAfter(cursor)] : []),
+  ];
+  const snap = await getDocs(query(col, ...constraints));
+  const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Connection);
+  const lastDoc = snap.docs.length === PAGE_SIZE ? snap.docs[snap.docs.length - 1] : null;
+  return { items, lastDoc };
+}
+
+export async function getFollowingPaginated(
+  userId: string,
+  cursor?: QueryDocumentSnapshot
+): Promise<{ items: Connection[]; lastDoc: QueryDocumentSnapshot | null }> {
+  const constraints = [
+    where("followerId", "==", userId),
+    orderBy("createdAt", "desc"),
+    limit(PAGE_SIZE),
+    ...(cursor ? [startAfter(cursor)] : []),
+  ];
+  const snap = await getDocs(query(col, ...constraints));
+  const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Connection);
+  const lastDoc = snap.docs.length === PAGE_SIZE ? snap.docs[snap.docs.length - 1] : null;
+  return { items, lastDoc };
 }
 
 export async function getFollowerCount(userId: string): Promise<number> {

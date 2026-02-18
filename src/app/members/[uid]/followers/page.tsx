@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Card from "@/components/Card";
+import Button from "@/components/Button";
 import FollowButton from "@/components/FollowButton";
 import { getMemberProfile, type MemberProfile } from "@/lib/firestore/members";
-import { getFollowers, type Connection } from "@/lib/firestore/connections";
+import { getFollowersPaginated, type Connection } from "@/lib/firestore/connections";
+import type { QueryDocumentSnapshot } from "firebase/firestore";
 
 export default function FollowersPage() {
   return (
@@ -29,18 +31,23 @@ function FollowersContent() {
   const [owner, setOwner] = useState<MemberProfile | null>(null);
   const [followers, setFollowers] = useState<(Connection & { profile?: MemberProfile })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const cursorRef = useRef<QueryDocumentSnapshot | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const [ownerProfile, conns] = await Promise.all([
+        const [ownerProfile, { items, lastDoc }] = await Promise.all([
           getMemberProfile(uid),
-          getFollowers(uid),
+          getFollowersPaginated(uid),
         ]);
         setOwner(ownerProfile);
+        cursorRef.current = lastDoc;
+        setHasMore(lastDoc !== null);
         // Load profiles for each follower
         const enriched = await Promise.all(
-          conns.map(async (c) => {
+          items.map(async (c) => {
             const profile = await getMemberProfile(c.followerId);
             return { ...c, profile: profile || undefined };
           })
@@ -54,6 +61,27 @@ function FollowersContent() {
     }
     if (uid) load();
   }, [uid]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || !cursorRef.current) return;
+    setLoadingMore(true);
+    try {
+      const { items, lastDoc } = await getFollowersPaginated(uid, cursorRef.current);
+      cursorRef.current = lastDoc;
+      setHasMore(lastDoc !== null);
+      const enriched = await Promise.all(
+        items.map(async (c) => {
+          const profile = await getMemberProfile(c.followerId);
+          return { ...c, profile: profile || undefined };
+        })
+      );
+      setFollowers((prev) => [...prev, ...enriched]);
+    } catch (err) {
+      console.error("Failed to load more followers:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [uid, loadingMore, hasMore]);
 
   return (
     <div className="max-w-[700px] mx-auto">
@@ -89,46 +117,64 @@ function FollowersContent() {
             </div>
           </Card>
         ) : (
-          <div className="flex flex-col gap-2">
-            {followers.map((f) => {
-              const name = f.profile?.displayName || f.followerName || "Unknown";
-              const community = f.profile?.community || "";
-              return (
-                <Card key={f.id}>
-                  <div
-                    style={{ padding: 14 }}
-                    className="flex items-center gap-3"
-                  >
-                    <Link href={`/members/${f.followerId}`}>
-                      <Avatar
-                        name={name}
-                        size={44}
-                        src={f.profile?.photoURL}
-                      />
-                    </Link>
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        href={`/members/${f.followerId}`}
-                        className="text-sm font-bold text-text no-underline hover:underline truncate block"
-                      >
-                        {name}
+          <>
+            <div className="flex flex-col gap-2">
+              {followers.map((f) => {
+                const name = f.profile?.displayName || f.followerName || "Unknown";
+                const community = f.profile?.community || "";
+                return (
+                  <Card key={f.id}>
+                    <div
+                      style={{ padding: 14 }}
+                      className="flex items-center gap-3"
+                    >
+                      <Link href={`/members/${f.followerId}`}>
+                        <Avatar
+                          name={name}
+                          size={44}
+                          src={f.profile?.photoURL}
+                        />
                       </Link>
-                      {community && (
-                        <p className="text-xs text-text-muted m-0 truncate">
-                          {community}
-                        </p>
-                      )}
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          href={`/members/${f.followerId}`}
+                          className="text-sm font-bold text-text no-underline hover:underline truncate block"
+                        >
+                          {name}
+                        </Link>
+                        {community && (
+                          <p className="text-xs text-text-muted m-0 truncate">
+                            {community}
+                          </p>
+                        )}
+                      </div>
+                      <FollowButton
+                        targetUserId={f.followerId}
+                        targetUserName={name}
+                        small
+                      />
                     </div>
-                    <FollowButton
-                      targetUserId={f.followerId}
-                      targetUserName={name}
-                      small
-                    />
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {hasMore && (
+              <div className="text-center mt-6">
+                <Button
+                  onClick={loadMore}
+                  style={{
+                    background: "var(--card)",
+                    color: "var(--text-sec)",
+                    border: "1px solid var(--border)",
+                    opacity: loadingMore ? 0.6 : 1,
+                  }}
+                >
+                  {loadingMore ? "Loading..." : "Load More"}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

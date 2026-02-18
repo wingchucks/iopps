@@ -172,6 +172,7 @@ export default function ForgotPasswordPage() {
                     placeholder="you@example.com"
                     required
                     autoFocus
+                    autoComplete="email"
                     className="w-full outline-none transition-all duration-150"
                     style={{
                       padding: "12px 16px",

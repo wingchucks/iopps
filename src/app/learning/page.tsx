@@ -291,12 +291,13 @@ function LearningContent() {
 
                   <div className="flex items-center gap-2 mt-3">
                     <button
-                      onClick={() =>
-                        showToast(
-                          "Certificate download coming soon",
-                          "info"
-                        )
-                      }
+                      onClick={() => {
+                        if (enrollment.certificateUrl) {
+                          window.open(enrollment.certificateUrl, "_blank");
+                        } else {
+                          showToast("Certificate not yet available", "info");
+                        }
+                      }}
                       className="text-xs font-semibold px-3 py-1.5 rounded-lg border-none cursor-pointer transition-all"
                       style={{
                         background: "var(--gold-soft)",
@@ -306,9 +307,12 @@ function LearningContent() {
                       Download Certificate
                     </button>
                     <button
-                      onClick={() =>
-                        showToast("Share feature coming soon", "info")
-                      }
+                      onClick={() => {
+                        const link = `${window.location.origin}/training/${enrollment.programId || enrollment.id}`;
+                        navigator.clipboard.writeText(link).then(() => {
+                          showToast("Link copied!", "success");
+                        });
+                      }}
                       className="text-xs font-semibold px-3 py-1.5 rounded-lg border-none cursor-pointer transition-all"
                       style={{
                         background: "var(--border)",
