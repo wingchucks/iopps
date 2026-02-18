@@ -77,6 +77,19 @@ export interface Post {
 
 const col = collection(db, "posts");
 
+function normalizePost(id: string, data: Record<string, unknown>): Post {
+  const loc = data.location;
+  if (loc && typeof loc === "object" && !Array.isArray(loc)) {
+    const l = loc as Record<string, unknown>;
+    const parts: string[] = [];
+    if (l.city) parts.push(String(l.city));
+    if (l.province) parts.push(String(l.province));
+    if (l.remote) parts.push("Remote");
+    data = { ...data, location: parts.join(", ") || undefined };
+  }
+  return { id, ...data } as Post;
+}
+
 export async function getPosts(opts?: {
   type?: PostType;
   max?: number;
@@ -85,20 +98,20 @@ export async function getPosts(opts?: {
   if (opts?.type) constraints.unshift(where("type", "==", opts.type));
   if (opts?.max) constraints.push(limit(opts.max));
   const snap = await getDocs(query(col, ...constraints));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Post);
+  return snap.docs.map((d) => normalizePost(d.id, d.data()));
 }
 
 export async function getPostsByOrg(orgId: string): Promise<Post[]> {
   const snap = await getDocs(
     query(col, where("orgId", "==", orgId), orderBy("order", "asc"))
   );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Post);
+  return snap.docs.map((d) => normalizePost(d.id, d.data()));
 }
 
 export async function getPost(id: string): Promise<Post | null> {
   const snap = await getDoc(doc(db, "posts", id));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as Post;
+  return normalizePost(snap.id, snap.data());
 }
 
 export async function setPost(
