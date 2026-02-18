@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
@@ -85,6 +86,14 @@ export default function LandingPage() {
           style={{ bottom: -60, left: -60, width: 300, height: 300, background: "rgba(217,119,6,.04)" }}
         />
 
+        <Image
+          src="/logo.png"
+          alt="IOPPS Logo"
+          width={120}
+          height={120}
+          className="relative mx-auto mb-4"
+          priority
+        />
         <h1 className="relative text-white font-black tracking-[4px] mb-4 text-4xl md:text-6xl lg:text-[72px]">
           IOPPS
         </h1>

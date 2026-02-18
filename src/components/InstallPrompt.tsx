@@ -62,14 +62,7 @@ export default function InstallPrompt() {
     >
       <div style={{ padding: "16px 20px" }}>
         <div className="flex items-start gap-3">
-          <div
-            className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-white font-black text-sm"
-            style={{
-              background: "linear-gradient(135deg, var(--teal), var(--navy))",
-            }}
-          >
-            IO
-          </div>
+          <img src="/logo.png" alt="IOPPS" width={44} height={44} className="shrink-0 rounded-xl" />
           <div className="flex-1">
             <p className="text-[15px] font-bold text-white m-0 mb-0.5">
               Install IOPPS

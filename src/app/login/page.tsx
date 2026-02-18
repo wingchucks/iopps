@@ -55,7 +55,8 @@ export default function LoginPage() {
           className="absolute rounded-full"
           style={{ top: -80, right: -80, width: 300, height: 300, background: "rgba(13,148,136,.06)" }}
         />
-        <Link href="/" className="no-underline">
+        <Link href="/" className="no-underline flex flex-col items-center">
+          <img src="/logo.png" alt="IOPPS" width={72} height={72} className="relative mb-3" />
           <h1 className="text-white font-black text-4xl tracking-[3px] mb-2 relative">IOPPS</h1>
         </Link>
         <p className="text-sm relative" style={{ color: "rgba(255,255,255,.6)" }}>

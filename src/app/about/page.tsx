@@ -22,9 +22,10 @@ export default function AboutPage() {
       >
         <Link
           href="/"
-          className="text-white font-black tracking-[4px] text-2xl no-underline hover:opacity-80 transition-opacity"
+          className="flex flex-col items-center no-underline hover:opacity-80 transition-opacity"
         >
-          IOPPS
+          <img src="/logo.png" alt="IOPPS" width={64} height={64} className="mb-3" />
+          <span className="text-white font-black tracking-[4px] text-2xl">IOPPS</span>
         </Link>
         <h1 className="text-white font-extrabold text-3xl md:text-4xl mt-6 mb-3">
           About IOPPS
