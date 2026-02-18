@@ -27,7 +27,8 @@ import OnboardingTour from "@/components/OnboardingTour";
 
 import { displayLocation } from "@/lib/utils";
 
-const tabs = ["All", "Jobs", "Events", "Scholarships", "Businesses", "Schools", "Livestreams", "Stories"];
+const tabs = ["All", "Jobs", "Events", "Scholarships", "Businesses", "Schools", "Stories"];
+const navTabs: Record<string, string> = { Livestreams: "/livestreams" };
 
 const typeToTab: Record<string, string> = {
   job: "Jobs",
@@ -35,7 +36,7 @@ const typeToTab: Record<string, string> = {
   scholarship: "Scholarships",
   program: "Schools",
   story: "Stories",
-  spotlight: "Livestreams",
+  spotlight: "Stories",
 };
 
 export default function FeedPage() {
@@ -240,7 +241,7 @@ function FeedContent() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1.5 mb-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+        <div className="flex flex-wrap gap-1.5 mb-3">
           {tabs.map((t) => (
             <button
               key={t}
@@ -253,6 +254,19 @@ function FeedContent() {
             >
               {t}
             </button>
+          ))}
+          {Object.entries(navTabs).map(([label, href]) => (
+            <Link
+              key={label}
+              href={href}
+              className="px-4 py-2 rounded-full whitespace-nowrap font-semibold text-[13px] no-underline transition-colors"
+              style={{
+                background: "var(--border)",
+                color: "var(--text-sec)",
+              }}
+            >
+              {label}
+            </Link>
           ))}
         </div>
 
