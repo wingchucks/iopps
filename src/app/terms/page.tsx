@@ -154,10 +154,10 @@ export default function TermsPage() {
           <p className="text-text-sec leading-relaxed">
             Questions about these terms? Reach us at{" "}
             <a
-              href="mailto:partnerships@iopps.ca"
+              href="mailto:info@iopps.ca"
               className="text-teal font-semibold no-underline hover:underline"
             >
-              partnerships@iopps.ca
+              info@iopps.ca
             </a>
             .
           </p>

@@ -33,11 +33,11 @@ export default function Footer() {
             </Link>
           ))}
           <a
-            href="mailto:partnerships@iopps.ca"
+            href="mailto:info@iopps.ca"
             className="text-xs font-medium no-underline hover:underline transition-colors"
             style={{ color: "rgba(255,255,255,.55)" }}
           >
-            partnerships@iopps.ca
+            info@iopps.ca
           </a>
         </div>
       </div>

@@ -367,7 +367,7 @@ function PlansContent() {
               campaigns tailored to your organization.
             </p>
             <a
-              href="mailto:partnerships@iopps.ca"
+              href="mailto:partnership@iopps.ca"
               className="no-underline"
             >
               <button

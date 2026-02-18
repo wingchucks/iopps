@@ -50,10 +50,10 @@ export default function ContactPage() {
               offer? Drop us a line.
             </p>
             <a
-              href="mailto:partnerships@iopps.ca"
+              href="mailto:info@iopps.ca"
               className="text-teal font-bold text-sm no-underline hover:underline"
             >
-              partnerships@iopps.ca
+              info@iopps.ca
             </a>
           </div>
 
@@ -67,10 +67,10 @@ export default function ContactPage() {
               communities? Let us know about your organization.
             </p>
             <a
-              href="mailto:partnerships@iopps.ca?subject=Partnership%20Inquiry"
+              href="mailto:partnership@iopps.ca?subject=Partnership%20Inquiry"
               className="text-teal font-bold text-sm no-underline hover:underline"
             >
-              partnerships@iopps.ca
+              partnership@iopps.ca
             </a>
           </div>
 
@@ -84,10 +84,10 @@ export default function ContactPage() {
               platform? We are here to help.
             </p>
             <a
-              href="mailto:partnerships@iopps.ca?subject=Support%20Request"
+              href="mailto:support@iopps.ca?subject=Support%20Request"
               className="text-teal font-bold text-sm no-underline hover:underline"
             >
-              partnerships@iopps.ca
+              support@iopps.ca
             </a>
           </div>
 
