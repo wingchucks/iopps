@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /setup
+Disallow: /verify-email
+Disallow: /org/dashboard
+Disallow: /org/dashboard/*
+Disallow: /org/onboarding
+Disallow: /applications
+
+Sitemap: https://iopps-fresh.vercel.app/sitemap.xml
