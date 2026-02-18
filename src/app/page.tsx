@@ -287,7 +287,7 @@ export default function LandingPage() {
         <div className="flex items-center justify-center gap-6 mt-6">
           {[
             { href: "/about", label: "About" },
-            { href: "/terms", label: "Privacy" },
+            { href: "/privacy", label: "Privacy" },
             { href: "/terms", label: "Terms" },
             { href: "/contact", label: "Contact" },
           ].map((link) => (

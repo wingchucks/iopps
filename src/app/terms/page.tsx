@@ -114,7 +114,7 @@ export default function TermsPage() {
           <h2 className="text-xl font-extrabold text-text mb-4">7. Privacy</h2>
           <p className="text-text-sec leading-relaxed">
             Your use of IOPPS is also governed by our{" "}
-            <Link href="/settings/privacy" className="text-teal font-semibold no-underline hover:underline">
+            <Link href="/privacy" className="text-teal font-semibold no-underline hover:underline">
               Privacy Policy
             </Link>
             , which explains how we collect, use, and protect your information.
