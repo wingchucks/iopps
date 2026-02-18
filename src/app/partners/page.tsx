@@ -8,6 +8,7 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Link from "next/link";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
+import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
 const filters = ["All", "Employers", "Schools", "Businesses"];
 
@@ -17,24 +18,6 @@ const filterMap: Record<string, string | undefined> = {
   Schools: "school",
   Businesses: "business",
 };
-
-/** Safely convert a location field to a display string. Firestore may store it as an object {city, province} or a plain string. */
-function displayLocation(loc: unknown): string {
-  if (!loc) return "";
-  if (typeof loc === "string") return loc;
-  if (typeof loc === "object" && loc !== null) {
-    const obj = loc as Record<string, unknown>;
-    const parts = [obj.city, obj.province].filter(Boolean).map(String);
-    return parts.join(", ");
-  }
-  return String(loc);
-}
-
-/** Safely convert a tags field to a string array. */
-function ensureTagsArray(tags: unknown): string[] {
-  if (Array.isArray(tags)) return tags.map(String);
-  return [];
-}
 
 export default function PartnersPage() {
   return (

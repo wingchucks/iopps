@@ -34,7 +34,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signUp(name.trim(), email, password);
-      router.push("/setup");
+      router.push("/verify-email");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (msg.includes("email-already-in-use")) setError("An account with this email already exists.");

@@ -11,18 +11,7 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { getPostsByOrg, type Post } from "@/lib/firestore/posts";
-
-/** Safely convert a location field to a display string. */
-function displayLocation(loc: unknown): string {
-  if (!loc) return "";
-  if (typeof loc === "string") return loc;
-  if (typeof loc === "object" && loc !== null) {
-    const obj = loc as Record<string, unknown>;
-    const parts = [obj.city, obj.province].filter(Boolean).map(String);
-    return parts.join(", ");
-  }
-  return String(loc);
-}
+import { displayLocation } from "@/lib/utils";
 
 export default function OrgProfilePage() {
   return (

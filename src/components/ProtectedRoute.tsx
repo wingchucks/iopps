@@ -3,6 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -73,5 +74,31 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (!user) return null;
 
-  return <>{children}</>;
+  const showVerifyBanner = user && !user.emailVerified && user.providerData?.[0]?.providerId === "password";
+
+  return (
+    <>
+      {showVerifyBanner && (
+        <div
+          className="text-center text-sm font-medium"
+          style={{
+            padding: "10px 16px",
+            background: "var(--gold-soft)",
+            color: "var(--gold)",
+            borderBottom: "1px solid rgba(217,119,6,.15)",
+          }}
+        >
+          Your email is not verified.{" "}
+          <Link
+            href="/verify-email"
+            className="font-bold no-underline hover:underline"
+            style={{ color: "var(--teal)" }}
+          >
+            Verify now
+          </Link>
+        </div>
+      )}
+      {children}
+    </>
+  );
 }

@@ -137,3 +137,36 @@ export async function updateRequestStatus(
     respondedAt: serverTimestamp(),
   });
 }
+
+/** Accept a mentorship request: update status, create conversation, send welcome message, notify mentee */
+export async function acceptMentorshipRequest(
+  requestId: string,
+  mentorId: string,
+  mentorName: string,
+  menteeId: string,
+  menteeName: string
+): Promise<string> {
+  // Update request status
+  await updateRequestStatus(requestId, "accepted");
+
+  // Create conversation and send welcome message
+  const { getOrCreateConversation, sendMessage } = await import("./messages");
+  const conversationId = await getOrCreateConversation(mentorId, menteeId);
+  await sendMessage(
+    conversationId,
+    mentorId,
+    `Hi ${menteeName}! I've accepted your mentorship request. Looking forward to working together!`,
+    menteeId
+  );
+
+  // Notify mentee
+  const { addNotification } = await import("./notifications");
+  await addNotification(menteeId, {
+    type: "system",
+    title: "Mentorship Request Accepted",
+    body: `${mentorName} has accepted your mentorship request! You can now message them directly.`,
+    link: "/messages",
+  });
+
+  return conversationId;
+}

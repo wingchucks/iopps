@@ -12,6 +12,7 @@ import {
   deleteOrganization,
   type Organization,
 } from "@/lib/firestore/organizations";
+import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
 const emptyOrg: Omit<Organization, "id"> = {
   name: "",
@@ -38,24 +39,6 @@ export default function AdminOrganizationsPage() {
     </AppShell>
     </AdminRoute>
   );
-}
-
-/** Safely convert a location field to a display string. Firestore may store it as an object {city, province} or a plain string. */
-function displayLocation(loc: unknown): string {
-  if (!loc) return "";
-  if (typeof loc === "string") return loc;
-  if (typeof loc === "object" && loc !== null) {
-    const obj = loc as Record<string, unknown>;
-    const parts = [obj.city, obj.province].filter(Boolean).map(String);
-    return parts.join(", ");
-  }
-  return String(loc);
-}
-
-/** Safely convert a tags field to a string array. Firestore may return undefined or a non-array value. */
-function ensureTagsArray(tags: unknown): string[] {
-  if (Array.isArray(tags)) return tags.map(String);
-  return [];
 }
 
 function OrgManager() {

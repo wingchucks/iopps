@@ -7,18 +7,7 @@ import Card from "@/components/Card";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
-
-/** Safely convert a location field to a display string. */
-function displayLocation(loc: unknown): string {
-  if (!loc) return "";
-  if (typeof loc === "string") return loc;
-  if (typeof loc === "object" && loc !== null) {
-    const obj = loc as Record<string, unknown>;
-    const parts = [obj.city, obj.province].filter(Boolean).map(String);
-    return parts.join(", ");
-  }
-  return String(loc);
-}
+import { displayLocation } from "@/lib/utils";
 
 export default function SchoolsPage() {
   const [schools, setSchools] = useState<Organization[]>([]);

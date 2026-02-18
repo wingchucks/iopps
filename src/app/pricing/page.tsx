@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Card from "@/components/Card";
+import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const tabs = ["Subscriptions", "Pay Per Post", "Conferences", "Shop Indigenous"] as const;
@@ -406,6 +407,7 @@ export default function PricingPage() {
           </Card>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

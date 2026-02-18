@@ -11,7 +11,7 @@ import Card from "@/components/Card";
 import { getPosts, type Post } from "@/lib/firestore/posts";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
 import { getVendors, type ShopVendor } from "@/lib/firestore/shop";
-import { displayLocation } from "@/lib/utils";
+import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
 const typeFilters = ["All", "Jobs", "Events", "Scholarships", "Programs", "Organizations", "Businesses", "Stories"];
 
@@ -57,12 +57,6 @@ function getPostTimestamp(post: Post): number {
   }
   if (post.order) return post.order;
   return 0;
-}
-
-/** Safely convert a tags field to a string array. */
-function ensureTagsArray(tags: unknown): string[] {
-  if (Array.isArray(tags)) return tags.map(String);
-  return [];
 }
 
 export default function SearchPage() {

@@ -12,6 +12,7 @@ import {
   getMentorRequests,
   getMyMentorRequests,
   updateRequestStatus,
+  acceptMentorshipRequest,
   type MentorshipRequest,
 } from "@/lib/firestore/mentorship";
 
@@ -62,23 +63,39 @@ export default function MentorshipRequestsPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  const handleUpdateStatus = async (
-    requestId: string,
-    status: "accepted" | "declined"
-  ) => {
+  const handleAccept = async (req: MentorshipRequest) => {
+    if (!user) return;
+    setUpdating(req.id);
+    try {
+      await acceptMentorshipRequest(
+        req.id,
+        user.uid,
+        user.displayName || "Mentor",
+        req.menteeId,
+        req.menteeName
+      );
+      setReceived((prev) =>
+        prev.map((r) => (r.id === req.id ? { ...r, status: "accepted" as const } : r))
+      );
+      showToast("Request accepted! A conversation has been started.");
+    } catch (err) {
+      console.error("Failed to accept request:", err);
+      showToast("Failed to accept request.", "error");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleDecline = async (requestId: string) => {
     setUpdating(requestId);
     try {
-      await updateRequestStatus(requestId, status);
+      await updateRequestStatus(requestId, "declined");
       setReceived((prev) =>
-        prev.map((r) => (r.id === requestId ? { ...r, status } : r))
+        prev.map((r) => (r.id === requestId ? { ...r, status: "declined" as const } : r))
       );
-      showToast(
-        status === "accepted"
-          ? "Request accepted!"
-          : "Request declined."
-      );
+      showToast("Request declined.");
     } catch (err) {
-      console.error("Failed to update request:", err);
+      console.error("Failed to decline request:", err);
       showToast("Failed to update request.", "error");
     } finally {
       setUpdating(null);
@@ -222,9 +239,7 @@ export default function MentorshipRequestsPage() {
                       {req.status === "pending" && (
                         <div className="flex gap-3">
                           <button
-                            onClick={() =>
-                              handleUpdateStatus(req.id, "accepted")
-                            }
+                            onClick={() => handleAccept(req)}
                             disabled={updating === req.id}
                             className="flex-1 py-2 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50"
                             style={{ background: "var(--green)" }}
@@ -232,9 +247,7 @@ export default function MentorshipRequestsPage() {
                             {updating === req.id ? "..." : "Accept"}
                           </button>
                           <button
-                            onClick={() =>
-                              handleUpdateStatus(req.id, "declined")
-                            }
+                            onClick={() => handleDecline(req.id)}
                             disabled={updating === req.id}
                             className="flex-1 py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
                             style={{
@@ -245,6 +258,16 @@ export default function MentorshipRequestsPage() {
                             {updating === req.id ? "..." : "Decline"}
                           </button>
                         </div>
+                      )}
+
+                      {req.status === "accepted" && (
+                        <Link
+                          href="/messages"
+                          className="block text-center py-2 rounded-xl text-sm font-bold text-white no-underline transition-colors hover:opacity-90"
+                          style={{ background: "var(--teal)" }}
+                        >
+                          Message {req.menteeName.split(" ")[0]}
+                        </Link>
                       )}
                     </Card>
                   );
@@ -314,7 +337,7 @@ export default function MentorshipRequestsPage() {
                     </p>
 
                     {(req.goals || []).length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-1.5 mb-3">
                         {(req.goals || []).map((g) => (
                           <Badge
                             key={g}
@@ -325,6 +348,16 @@ export default function MentorshipRequestsPage() {
                           />
                         ))}
                       </div>
+                    )}
+
+                    {req.status === "accepted" && (
+                      <Link
+                        href="/messages"
+                        className="block text-center py-2 rounded-xl text-sm font-bold text-white no-underline transition-colors hover:opacity-90"
+                        style={{ background: "var(--teal)" }}
+                      >
+                        Message {req.mentorName.split(" ")[0]}
+                      </Link>
                     )}
                   </Card>
                 );

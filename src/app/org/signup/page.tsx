@@ -68,7 +68,7 @@ export default function OrgSignupPage() {
         contactEmail: email,
       });
 
-      router.push("/org/onboarding");
+      router.push("/verify-email");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to create account";
       if (msg.includes("email-already-in-use")) {

@@ -10,3 +10,9 @@ export function displayLocation(loc: unknown): string {
   }
   return String(loc);
 }
+
+/** Safely convert a tags field to a string array. */
+export function ensureTagsArray(tags: unknown): string[] {
+  if (Array.isArray(tags)) return tags.map(String);
+  return [];
+}
