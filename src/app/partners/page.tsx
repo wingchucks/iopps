@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -39,13 +38,11 @@ function ensureTagsArray(tags: unknown): string[] {
 
 export default function PartnersPage() {
   return (
-    <ProtectedRoute>
-      <AppShell>
+    <AppShell>
       <div className="min-h-screen bg-bg">
         <PartnersContent />
       </div>
     </AppShell>
-    </ProtectedRoute>
   );
 }
 

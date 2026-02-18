@@ -126,6 +126,7 @@ export default function ReportButton({
                         fontSize: 20,
                         lineHeight: 1,
                       }}
+                      aria-label="Close report dialog"
                     >
                       &#215;
                     </button>

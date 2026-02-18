@@ -77,6 +77,7 @@ export default function NotificationBell() {
         onClick={() => setOpen(!open)}
         className="relative w-10 h-10 rounded-[10px] border-none cursor-pointer text-lg text-white"
         style={{ background: "rgba(255,255,255,.08)" }}
+        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
       >
         &#128276;
         {unreadCount > 0 && (

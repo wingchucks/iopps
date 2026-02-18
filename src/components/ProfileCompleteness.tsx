@@ -95,6 +95,7 @@ export default function ProfileCompleteness() {
       <button
         onClick={handleDismiss}
         className="absolute top-3 right-3 w-6 h-6 rounded-full border-none cursor-pointer text-text-muted text-sm flex items-center justify-center hover:bg-border/40 bg-transparent"
+        aria-label="Dismiss profile completeness banner"
       >
         &times;
       </button>

@@ -234,6 +234,7 @@ export default function IconRailSidebar() {
           className="flex items-center gap-3 h-10 px-3 rounded-lg border-none cursor-pointer transition-colors hover:bg-bg"
           style={{ background: "transparent", color: "var(--text-muted)" }}
           title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >
           <span className="w-5 h-5 shrink-0 flex items-center justify-center text-base">
             {theme === "dark" ? "\u2600\uFE0F" : "\uD83C\uDF19"}
