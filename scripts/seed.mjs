@@ -1,18 +1,16 @@
 /**
  * Seed script — populates Firestore with demo data.
- * Uses Firebase Admin SDK with credentials from Firebase CLI login.
+ * Uses Firestore REST API with Firebase CLI credentials.
  *
  * Usage:  npx firebase login  (if not already logged in)
  *         node scripts/seed.mjs
  */
 
-import { initializeApp, cert } from "firebase-admin/app";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
-// Read the Firebase CLI refresh token and exchange for access token
+// ── Auth: get access token from Firebase CLI refresh token ────────────
 const configPath = join(homedir(), ".config", "configstore", "firebase-tools.json");
 const config = JSON.parse(readFileSync(configPath, "utf8"));
 const refreshToken = config.tokens?.refresh_token;
@@ -21,7 +19,6 @@ if (!refreshToken) {
   process.exit(1);
 }
 
-// Exchange refresh token for access token using Google's OAuth endpoint
 const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
   method: "POST",
   headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -37,18 +34,82 @@ if (!access_token) {
   console.error("Failed to get access token. Try: npx firebase login --reauth");
   process.exit(1);
 }
+console.log("Authenticated with Firebase CLI credentials.");
 
-// Initialize Firebase Admin with the access token via a custom credential
-initializeApp({
-  projectId: "iopps-c2224",
-  credential: {
-    getAccessToken: () =>
-      Promise.resolve({ access_token, expires_in: 3600 }),
-  },
-});
+// ── Firestore REST helpers ───────────────────────────────────────────
+const PROJECT = "iopps-c2224";
+const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
 
-const db = getFirestore();
-const ts = FieldValue.serverTimestamp();
+/** Convert a JS value to a Firestore REST Value object */
+function toFirestoreValue(val) {
+  if (val === null || val === undefined) return { nullValue: null };
+  if (typeof val === "string") return { stringValue: val };
+  if (typeof val === "number") {
+    return Number.isInteger(val) ? { integerValue: String(val) } : { doubleValue: val };
+  }
+  if (typeof val === "boolean") return { booleanValue: val };
+  if (Array.isArray(val)) {
+    return { arrayValue: { values: val.map(toFirestoreValue) } };
+  }
+  if (typeof val === "object") {
+    // Check for our server timestamp sentinel
+    if (val.__type === "serverTimestamp") {
+      return { timestampValue: new Date().toISOString() };
+    }
+    const fields = {};
+    for (const [k, v] of Object.entries(val)) {
+      fields[k] = toFirestoreValue(v);
+    }
+    return { mapValue: { fields } };
+  }
+  return { stringValue: String(val) };
+}
+
+/** Convert a flat JS object to Firestore document fields */
+function toFields(obj) {
+  const fields = {};
+  for (const [k, v] of Object.entries(obj)) {
+    fields[k] = toFirestoreValue(v);
+  }
+  return fields;
+}
+
+/** Write a document at a specific path (creates or overwrites) */
+async function setDoc(collection, docId, data) {
+  const url = `${BASE}/${collection}/${docId}`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ fields: toFields(data) }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed to write ${collection}/${docId}: ${res.status} ${err}`);
+  }
+}
+
+/** Add a document with auto-generated ID */
+async function addDoc(collection, data) {
+  const url = `${BASE}/${collection}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ fields: toFields(data) }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed to add to ${collection}: ${res.status} ${err}`);
+  }
+}
+
+// Sentinel for server timestamp (we'll use current time)
+const ts = { __type: "serverTimestamp" };
 
 // ── Organizations ──────────────────────────────────────────────────────
 const orgs = [
@@ -385,7 +446,7 @@ const posts = [
   {
     id: "job-policy-analyst-fsin",
     type: "job",
-    title: "Policy Analyst — Treaty Rights",
+    title: "Policy Analyst \u2014 Treaty Rights",
     orgId: "fsin",
     orgName: "Federation of Sovereign Indigenous Nations",
     orgShort: "FSIN",
@@ -407,9 +468,9 @@ const posts = [
     dates: "Jul 18-20",
     price: "Free",
     eventType: "Cultural Celebration",
-    organizer: "Métis Nation — Saskatchewan",
+    organizer: "M\u00e9tis Nation \u2014 Saskatchewan",
     description:
-      "An annual gathering that brings together thousands of Métis and Indigenous peoples to celebrate their rich heritage, culture, and history at the Batoche National Historic Site.",
+      "An annual gathering that brings together thousands of M\u00e9tis and Indigenous peoples to celebrate their rich heritage, culture, and history at the Batoche National Historic Site.",
     highlights: [
       "Traditional jigging and fiddle competitions",
       "Cultural workshops and language sessions",
@@ -505,7 +566,7 @@ const posts = [
     orgShort: "Indspire",
     amount: "Up to $10,000",
     deadline: "May 1, 2026",
-    eligibility: "First Nations, Inuit, or Métis students in Canada",
+    eligibility: "First Nations, Inuit, or M\u00e9tis students in Canada",
     description:
       "Indspire's flagship bursary program supports Indigenous students pursuing post-secondary education. Open to all fields of study at accredited institutions.",
     badges: ["National", "All Fields"],
@@ -681,7 +742,7 @@ async function seed() {
   console.log("Seeding organizations...");
   for (const org of orgs) {
     const { id, ...data } = org;
-    await db.doc(`organizations/${id}`).set(data, { merge: true });
+    await setDoc("organizations", id, data);
     process.stdout.write(".");
   }
   console.log(` ${orgs.length} organizations`);
@@ -689,7 +750,7 @@ async function seed() {
   console.log("Seeding posts...");
   for (const post of posts) {
     const { id, ...data } = post;
-    await db.doc(`posts/${id}`).set(data, { merge: true });
+    await setDoc("posts", id, data);
     process.stdout.write(".");
   }
   console.log(` ${posts.length} posts`);
@@ -727,7 +788,7 @@ async function seed() {
     },
   ];
   for (const n of notifs) {
-    await db.collection("notifications").add(n);
+    await addDoc("notifications", n);
     process.stdout.write(".");
   }
   console.log(` ${notifs.length} notifications`);
