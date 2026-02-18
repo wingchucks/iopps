@@ -29,7 +29,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signUp(name.trim(), email, password);
-      router.push("/feed");
+      router.push("/setup");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (msg.includes("email-already-in-use")) setError("An account with this email already exists.");
@@ -45,7 +45,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      router.push("/feed");
+      router.push("/setup");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (!msg.includes("popup-closed")) setError(msg);

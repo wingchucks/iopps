@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
+import { getMemberProfile } from "@/lib/firestore/members";
 
 export default function LoginPage() {
   const { signIn, signInWithGoogle } = useAuth();
@@ -21,8 +22,9 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await signIn(email, password);
-      router.push("/feed");
+      const cred = await signIn(email, password);
+      const profile = await getMemberProfile(cred.user.uid);
+      router.push(profile ? "/feed" : "/setup");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (msg.includes("user-not-found") || msg.includes("wrong-password") || msg.includes("invalid-credential"))
@@ -39,8 +41,9 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await signInWithGoogle();
-      router.push("/feed");
+      const cred = await signInWithGoogle();
+      const profile = await getMemberProfile(cred.user.uid);
+      router.push(profile ? "/feed" : "/setup");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (!msg.includes("popup-closed")) setError(msg);
