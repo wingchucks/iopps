@@ -5,12 +5,12 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import ThemeToggle from "@/components/ThemeToggle";
 
-const partners: { name: string; short: string; tier: string }[] = [
-  { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium" },
-  { name: "Saskatoon Tribal Council", short: "STC", tier: "premium" },
-  { name: "Westland Corp", short: "WC", tier: "premium" },
-  { name: "Saskatchewan Polytechnic", short: "SaskPoly", tier: "school" },
-  { name: "First Nations University of Canada", short: "FNUniv", tier: "school" },
+const partners: { name: string; short: string; tier: string; logo?: string }[] = [
+  { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium", logo: "" },
+  { name: "Saskatoon Tribal Council", short: "STC", tier: "premium", logo: "" },
+  { name: "Westland Corp", short: "WC", tier: "premium", logo: "" },
+  { name: "Saskatchewan Polytechnic", short: "SaskPoly", tier: "school", logo: "" },
+  { name: "First Nations University of Canada", short: "FNUniv", tier: "school", logo: "" },
 ];
 
 const categories = [
@@ -113,8 +113,11 @@ export default function LandingPage() {
           Where Indigenous Communities Connect with Opportunities
         </h2>
 
-        <p className="relative text-base leading-relaxed mx-auto mb-10 max-w-[520px]" style={{ color: "rgba(255,255,255,.65)" }}>
+        <p className="relative text-base leading-relaxed mx-auto mb-3 max-w-[520px]" style={{ color: "rgba(255,255,255,.65)" }}>
           Jobs, events, scholarships, businesses, schools, and livestreams — all in one place for Indigenous people across North America.
+        </p>
+        <p className="relative text-sm font-bold tracking-[2px] mb-10" style={{ color: "rgba(255,255,255,.45)" }}>
+          iopps.ca
         </p>
 
         <div className="relative flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
@@ -156,12 +159,16 @@ export default function LandingPage() {
             EMPOWERING INDIGENOUS SUCCESS
           </p>
         </div>
-        <div className="flex gap-6 justify-center flex-wrap">
+        <div
+          className="flex gap-6 flex-nowrap overflow-x-auto pb-2"
+          style={{ scrollbarWidth: "none" }}
+        >
+          <style>{`.partner-scroll::-webkit-scrollbar{display:none}`}</style>
           {partners.map((p, i) => (
             <Link
               key={i}
               href="/partners"
-              className="flex items-center gap-3 rounded-xl transition-all duration-150 min-w-[180px] no-underline hover:shadow-md"
+              className="partner-scroll flex items-center gap-3 rounded-xl transition-all duration-150 min-w-[180px] shrink-0 no-underline hover:shadow-md"
               style={{
                 padding: "12px 20px",
                 border:
@@ -171,15 +178,24 @@ export default function LandingPage() {
                 background: p.tier === "school" ? "rgba(13,148,136,.02)" : "var(--card)",
               }}
             >
-              <Avatar
-                name={p.short}
-                size={40}
-                gradient={
-                  p.tier === "school"
-                    ? "linear-gradient(135deg, rgba(13,148,136,.13), rgba(37,99,235,.09))"
-                    : "linear-gradient(135deg, rgba(15,43,76,.06), rgba(13,148,136,.05))"
-                }
-              />
+              {p.logo ? (
+                <img
+                  src={p.logo}
+                  alt={p.short}
+                  className="shrink-0 object-contain rounded-lg"
+                  style={{ width: 40, height: 40 }}
+                />
+              ) : (
+                <Avatar
+                  name={p.short}
+                  size={40}
+                  gradient={
+                    p.tier === "school"
+                      ? "linear-gradient(135deg, rgba(13,148,136,.13), rgba(37,99,235,.09))"
+                      : "linear-gradient(135deg, rgba(15,43,76,.06), rgba(13,148,136,.05))"
+                  }
+                />
+              )}
               <div>
                 <p className="text-[13px] font-semibold text-text m-0">{p.name}</p>
                 <Badge
@@ -254,6 +270,22 @@ export default function LandingPage() {
         <p className="text-teal mt-6 mb-0" style={{ fontSize: 11, fontWeight: 800, letterSpacing: 4 }}>
           EMPOWERING INDIGENOUS SUCCESS
         </p>
+        <div className="flex items-center justify-center gap-6 mt-6">
+          {[
+            { href: "/about", label: "About" },
+            { href: "/terms", label: "Privacy" },
+            { href: "/terms", label: "Terms" },
+            { href: "/contact", label: "Contact" },
+          ].map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="text-xs font-medium text-text-muted no-underline hover:underline"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
       </section>
     </div>
   );

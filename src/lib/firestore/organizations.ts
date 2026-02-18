@@ -57,6 +57,8 @@ export interface Organization {
   since: string;
   verified: boolean;
   tags: string[];
+  programCount?: number;
+  programs?: string[];
 }
 
 export async function createOrganization(

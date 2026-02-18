@@ -1,4 +1,5 @@
 "use client";
+// Design: Events pages use purple gradient hero (--color-purple) — intentional per-content-type color scheme
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
@@ -29,7 +30,12 @@ export default function EventsBrowsePage() {
   );
 
   const eventTypes = useMemo(
-    () => [...new Set(posts.map((p) => p.eventType).filter(Boolean))] as string[],
+    () => {
+      const fromPosts = posts.map((p) => p.eventType).filter(Boolean) as string[];
+      const all = new Set(fromPosts);
+      all.add("Pow Wow");
+      return [...all];
+    },
     [posts]
   );
 

@@ -12,11 +12,12 @@ import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
 const filters = ["All", "Employers", "Schools", "Businesses"];
 
-const filterMap: Record<string, string | undefined> = {
+// C-07 & M-16 & M-20: "Businesses" matches anything that's not a school
+const filterMap: Record<string, string | string[] | undefined> = {
   All: undefined,
   Employers: "employer",
   Schools: "school",
-  Businesses: "business",
+  Businesses: ["business", "non-profit", "employer", "government"],
 };
 
 export default function PartnersPage() {
@@ -39,7 +40,11 @@ function PartnersContent() {
     async function load() {
       try {
         const data = await getOrganizations();
-        setOrgs(data);
+        // C-01 & M-21: Only show orgs that completed onboarding or have a tier set
+        const partners = data.filter(
+          (o) => o.onboardingComplete === true || (o.tier && o.tier.length > 0)
+        );
+        setOrgs(partners);
       } catch (err) {
         console.error("Failed to load organizations:", err);
       } finally {
@@ -53,7 +58,11 @@ function PartnersContent() {
     let list = orgs;
     const typeFilter = filterMap[filter];
     if (typeFilter) {
-      list = list.filter((o) => o.type === typeFilter);
+      if (Array.isArray(typeFilter)) {
+        list = list.filter((o) => typeFilter.includes(o.type));
+      } else {
+        list = list.filter((o) => o.type === typeFilter);
+      }
     }
     if (search.trim()) {
       const q = search.toLowerCase().trim();
@@ -69,7 +78,8 @@ function PartnersContent() {
   }, [orgs, filter, search]);
 
   const featuredSchool = orgs.find((o) => o.type === "school" && o.tier === "school");
-  const gridOrgs = filtered.filter((o) => o.id !== featuredSchool?.id || filter !== "All");
+  // C-02: Always exclude featured school from grid to prevent duplicate
+  const gridOrgs = filtered.filter((o) => o.id !== featuredSchool?.id);
 
   return (
     <div className="max-w-[1000px] mx-auto px-4 py-6 md:px-10 md:py-8 pb-24">
@@ -125,7 +135,11 @@ function PartnersContent() {
             {f}
             {!loading && (
               <span className="ml-1.5 opacity-60">
-                {filterMap[f] ? orgs.filter((o) => o.type === filterMap[f]).length : orgs.length}
+                {filterMap[f]
+                  ? Array.isArray(filterMap[f])
+                    ? orgs.filter((o) => (filterMap[f] as string[]).includes(o.type)).length
+                    : orgs.filter((o) => o.type === filterMap[f]).length
+                  : orgs.length}
               </span>
             )}
           </button>
@@ -168,6 +182,10 @@ function PartnersContent() {
                       <span>&#128205; {displayLocation(featuredSchool.location)}</span>
                       <span>&#128188; {featuredSchool.openJobs} open jobs</span>
                       {featuredSchool.employees && <span>&#128101; {featuredSchool.employees}</span>}
+                      {/* L-14: Show program count if available */}
+                      {(featuredSchool.programCount || featuredSchool.programs) && (
+                        <span>&#128218; {featuredSchool.programCount ?? featuredSchool.programs?.length ?? 0} programs</span>
+                      )}
                       <span>Since {featuredSchool.since}</span>
                     </div>
                     {ensureTagsArray(featuredSchool.tags).length > 0 && (
@@ -219,8 +237,7 @@ function PartnersContent() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {gridOrgs.map((org) => {
-                const isSchool = org.type === "school";
-                const typeLabel = isSchool ? "Education" : org.type === "employer" ? "Employer" : "Business";
+                const isSchool = org.type === "school" || org.tier === "school";
                 return (
                   <Link key={org.id} href={`/org/${org.id}`} className="no-underline">
                     <Card className="cursor-pointer h-full hover:shadow-md">
@@ -234,17 +251,22 @@ function PartnersContent() {
                           <div className="flex-1 min-w-0">
                             <h3 className="text-[15px] font-bold text-text mb-1 truncate">{org.name}</h3>
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <Badge
-                                text={typeLabel}
-                                color={isSchool ? "var(--teal)" : "var(--gold)"}
-                                bg={isSchool ? "var(--teal-soft)" : "var(--gold-soft)"}
-                                small
-                              />
-                              {org.tier === "premium" && (
-                                <Badge text="Premium" color="var(--gold)" bg="var(--gold-soft)" small />
+                              {/* C-03 & M-02: Tier/type badge */}
+                              {org.tier === "premium" ? (
+                                <Badge text="Premium Partner" color="var(--gold)" bg="var(--gold-soft)" small />
+                              ) : isSchool ? (
+                                <Badge text="Education Partner" color="var(--teal)" bg="var(--teal-soft)" small />
+                              ) : (
+                                <Badge
+                                  text={org.type === "employer" ? "Employer" : org.type === "non-profit" ? "Non-Profit" : "Business"}
+                                  color="var(--gold)"
+                                  bg="var(--gold-soft)"
+                                  small
+                                />
                               )}
+                              {/* M-14: Verified is always a separate green badge */}
                               {org.verified && (
-                                <Badge text="&#10003;" color="var(--green)" bg="var(--green-soft)" small />
+                                <Badge text="&#10003; Verified" color="var(--green)" bg="var(--green-soft)" small />
                               )}
                             </div>
                           </div>

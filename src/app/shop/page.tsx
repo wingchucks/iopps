@@ -13,7 +13,7 @@ import {
   type ShopVendor,
 } from "@/lib/firestore/shop";
 
-const tabs = ["Products", "Services", "Businesses"] as const;
+const tabs = ["Products", "Services", "Vendors"] as const;
 type Tab = (typeof tabs)[number];
 
 const categoryConfig: Record<string, { emoji: string; color: string; bg: string }> = {
@@ -158,7 +158,7 @@ export default function ShopPage() {
   const isEmpty =
     (activeTab === "Products" && products.length === 0) ||
     (activeTab === "Services" && services.length === 0) ||
-    (activeTab === "Businesses" && filteredVendors.length === 0);
+    (activeTab === "Vendors" && filteredVendors.length === 0);
 
   return (
     <AppShell>
@@ -287,7 +287,7 @@ export default function ShopPage() {
                   ))}
                 </select>
 
-                {activeTab !== "Businesses" && (
+                {activeTab !== "Vendors" && (
                   <>
                     <hr className="my-4 border-border" />
                     <p className="text-xs font-bold text-text-muted tracking-widest mb-3">
@@ -459,8 +459,8 @@ export default function ShopPage() {
                   </div>
                 )}
 
-                {/* Businesses tab */}
-                {activeTab === "Businesses" && (
+                {/* Vendors tab */}
+                {activeTab === "Vendors" && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredVendors.map((vendor) => {
                       const s = getCategoryStyle(vendor.category);

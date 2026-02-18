@@ -1,4 +1,5 @@
 "use client";
+// Design: Jobs pages use blue gradient hero (--color-blue) — intentional per-content-type color scheme
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
@@ -280,7 +281,10 @@ export default function JobsPage() {
               const posted = daysAgo(job);
               return (
                 <Link key={job.id} href={`/jobs/${slug}`} className="no-underline">
-                  <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
+                  <Card
+                    className="cursor-pointer hover:shadow-lg transition-shadow h-full"
+                    style={job.featured ? { borderLeft: '4px solid var(--gold)' } : undefined}
+                  >
                     <div style={{ padding: "18px 20px" }}>
                       <div className="flex items-start gap-3 mb-3">
                         <Avatar
@@ -292,7 +296,14 @@ export default function JobsPage() {
                           <h3 className="text-base font-bold text-text m-0 mb-0.5 line-clamp-2">
                             {job.title}
                           </h3>
-                          <p className="text-sm text-teal font-semibold m-0">{job.orgName || job.orgShort}</p>
+                          <p className="text-sm text-teal font-semibold m-0">
+                            {job.orgName || job.orgShort}
+                            {(job as Record<string, unknown>).source && (
+                              <span className="text-xs text-text-muted ml-2 font-normal">
+                                via {(job as Record<string, unknown>).source as string}
+                              </span>
+                            )}
+                          </p>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2 mb-3">
@@ -321,11 +332,22 @@ export default function JobsPage() {
                           Apply &#8594;
                         </span>
                       </div>
-                      {job.featured && (
-                        <div className="mt-2">
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {job.featured && (
                           <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
-                        </div>
-                      )}
+                        )}
+                        {(() => {
+                          const deadline = (job as Record<string, unknown>).deadline ?? (job as Record<string, unknown>).closingDate;
+                          if (!deadline) return null;
+                          const deadlineDate = new Date(deadline as string);
+                          if (isNaN(deadlineDate.getTime())) return null;
+                          const daysLeft = Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                          if (daysLeft > 0 && daysLeft <= 7) {
+                            return <Badge text="Closing Soon" color="#C2410C" bg="rgba(251,146,60,.15)" small />;
+                          }
+                          return null;
+                        })()}
+                      </div>
                     </div>
                   </Card>
                 </Link>

@@ -18,6 +18,7 @@ const PROTECTED_PREFIXES = [
   "/org/onboarding",
   "/org/checkout",
   "/org/plans",
+  "/org/signup",
   "/admin",
   "/setup",
   "/verify-email",

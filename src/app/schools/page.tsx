@@ -121,11 +121,11 @@ export default function SchoolsPage() {
         {/* Browse all link */}
         <div className="text-center mt-8">
           <Link
-            href="/education"
+            href="/partners?filter=Schools"
             className="text-sm font-semibold no-underline hover:underline"
             style={{ color: "var(--teal)" }}
           >
-            Explore more education resources &#8594;
+            View all education partners &#8594;
           </Link>
         </div>
       </div>

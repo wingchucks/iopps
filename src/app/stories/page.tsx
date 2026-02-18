@@ -85,7 +85,7 @@ export default function StoriesBrowsePage() {
       {/* Filters */}
       <div className="max-w-[1200px] mx-auto px-4 md:px-10 py-6">
         {/* Tabs */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-2">
           {tabs.map(({ key, label }) => (
             <button
               key={key}
@@ -105,6 +105,13 @@ export default function StoriesBrowsePage() {
             </button>
           ))}
         </div>
+        {tab === "story" && (
+          <p className="text-xs text-text-muted mb-4 ml-1">Community voices and narratives</p>
+        )}
+        {tab === "spotlight" && (
+          <p className="text-xs text-text-muted mb-4 ml-1">Featured partner content and videos</p>
+        )}
+        {tab === "all" && <div className="mb-4" />}
 
         <div className="mb-6">
           <input
@@ -188,11 +195,11 @@ export default function StoriesBrowsePage() {
                       style={{
                         height: 140,
                         background: isSpotlight
-                          ? "linear-gradient(135deg, rgba(217,119,6,.12), rgba(15,43,76,.08))"
-                          : "linear-gradient(135deg, rgba(13,148,136,.12), rgba(5,150,105,.08))",
+                          ? "linear-gradient(135deg, var(--gold), #B45309)"
+                          : "linear-gradient(135deg, var(--teal), var(--navy))",
                       }}
                     >
-                      <span className="text-4xl">
+                      <span className="text-2xl" style={{ opacity: 0.9 }}>
                         {isSpotlight ? <>&#127775;</> : <>&#128214;</>}
                       </span>
                       {/* Type badge */}
