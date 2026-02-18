@@ -4,7 +4,7 @@ import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
 import { createSubscription } from "@/lib/firestore/subscriptions";
@@ -65,10 +65,11 @@ export default function CheckoutPage({
   const params = use(searchParams);
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <CheckoutContent planKey={params.plan || "tier1"} />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

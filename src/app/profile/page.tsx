@@ -21,7 +21,7 @@ import {
 import { getUserRSVPs, type RSVP } from "@/lib/firestore/rsvps";
 import { getFollowerCount, getFollowingCount } from "@/lib/firestore/connections";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Footer from "@/components/Footer";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -53,11 +53,12 @@ const appStatusConfig: Record<
 export default function ProfilePage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg flex flex-col">
-        <NavBar />
         <ProfileContent />
         <Footer />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

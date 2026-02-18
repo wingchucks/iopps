@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import AdminRoute from "@/components/AdminRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
@@ -40,10 +40,11 @@ const statusOptions: ApplicationStatus[] = [
 export default function AdminApplicationsPage() {
   return (
     <AdminRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <AdminApplicationsContent />
       </div>
+    </AppShell>
     </AdminRoute>
   );
 }

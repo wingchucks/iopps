@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Card from "@/components/Card";
 import { getAllMembers, type MemberProfile } from "@/lib/firestore/members";
@@ -20,10 +20,11 @@ const communityFilters = [
 export default function MembersPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <MembersContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

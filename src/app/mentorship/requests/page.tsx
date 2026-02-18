@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -87,8 +87,8 @@ export default function MentorshipRequestsPage() {
 
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <div className="max-w-3xl mx-auto px-4 md:px-10 py-8">
           <Link
             href="/mentorship"
@@ -334,6 +334,7 @@ export default function MentorshipRequestsPage() {
         </div>
         <div className="pb-24" />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

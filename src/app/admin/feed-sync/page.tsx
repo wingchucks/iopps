@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import AdminRoute from "@/components/AdminRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import PageSkeleton from "@/components/PageSkeleton";
@@ -43,10 +43,11 @@ const emptyForm = {
 export default function AdminFeedSyncPage() {
   return (
     <AdminRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <FeedSyncManager />
       </div>
+    </AppShell>
     </AdminRoute>
   );
 }

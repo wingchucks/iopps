@@ -11,7 +11,7 @@ import {
   type NotificationCategory,
 } from "@/lib/firestore/notificationPreferences";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import PageSkeleton from "@/components/PageSkeleton";
 
@@ -52,10 +52,11 @@ const channelLabels = {
 export default function NotificationSettingsPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <NotificationContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

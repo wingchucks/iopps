@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
 import { getMemberProfile } from "@/lib/firestore/members";
@@ -99,7 +99,7 @@ export default function OrgApplicationsPage() {
 
   return (
     <ProtectedRoute>
-      <NavBar />
+      <AppShell>
       <div className="min-h-screen bg-bg">
         <div className="max-w-[1100px] mx-auto px-4 py-8 md:px-10">
           {/* Back link */}
@@ -238,6 +238,7 @@ export default function OrgApplicationsPage() {
           )}
         </div>
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

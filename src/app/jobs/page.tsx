@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import Avatar from "@/components/Avatar";
@@ -113,9 +113,8 @@ export default function JobsPage() {
   }, [jobs, search, locationFilter, typeFilter, salaryMin, salaryMax, remoteOnly]);
 
   return (
+    <AppShell>
     <div className="min-h-screen bg-bg">
-      <NavBar />
-
       {/* Hero */}
       <section
         className="text-center"
@@ -336,5 +335,6 @@ export default function JobsPage() {
         )}
       </div>
     </div>
+    </AppShell>
   );
 }

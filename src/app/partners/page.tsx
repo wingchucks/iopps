@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
@@ -40,10 +40,11 @@ function ensureTagsArray(tags: unknown): string[] {
 export default function PartnersPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <PartnersContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

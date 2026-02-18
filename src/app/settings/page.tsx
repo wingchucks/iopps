@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Footer from "@/components/Footer";
 import Card from "@/components/Card";
 import { useOnboarding } from "@/lib/onboarding-context";
@@ -47,8 +47,8 @@ export default function SettingsPage() {
 
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg flex flex-col">
-        <NavBar />
         <div className="max-w-[700px] mx-auto px-4 py-8 md:px-10 flex-1">
           <Link
             href="/profile"
@@ -103,6 +103,7 @@ export default function SettingsPage() {
         </div>
         <Footer />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

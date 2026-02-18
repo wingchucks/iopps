@@ -17,7 +17,7 @@ import {
   type MemberProfile,
 } from "@/lib/firestore/members";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Avatar from "@/components/Avatar";
 import Button from "@/components/Button";
@@ -25,10 +25,11 @@ import Button from "@/components/Button";
 export default function MessagesPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <MessagesContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

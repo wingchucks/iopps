@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import EndorsementCard from "@/components/EndorsementCard";
@@ -21,10 +21,11 @@ import {
 export default function EndorsementsPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <EndorsementsContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

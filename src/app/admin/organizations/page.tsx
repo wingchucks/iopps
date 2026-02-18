@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import AdminRoute from "@/components/AdminRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import {
@@ -31,10 +31,11 @@ const emptyOrg: Omit<Organization, "id"> = {
 export default function AdminOrganizationsPage() {
   return (
     <AdminRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <OrgManager />
       </div>
+    </AppShell>
     </AdminRoute>
   );
 }

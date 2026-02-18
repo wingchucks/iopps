@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import {
@@ -65,7 +65,6 @@ export default function VendorProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
           <div className="skeleton h-4 w-40 rounded mb-6" />
           <div className="skeleton h-48 rounded-2xl mb-6" />
@@ -85,7 +84,6 @@ export default function VendorProfilePage() {
   if (notFound || !vendor) {
     return (
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8 text-center">
           <p className="text-4xl mb-3">{"\uD83C\uDFEA"}</p>
           <h2 className="text-xl font-bold text-text mb-2">Vendor not found</h2>
@@ -108,9 +106,8 @@ export default function VendorProfilePage() {
   const initial = vendor.name?.charAt(0)?.toUpperCase() || "?";
 
   return (
+    <AppShell>
     <div className="min-h-screen bg-bg">
-      <NavBar />
-
       <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
         {/* Back link */}
         <Link
@@ -354,5 +351,6 @@ export default function VendorProfilePage() {
         )}
       </div>
     </div>
+    </AppShell>
   );
 }

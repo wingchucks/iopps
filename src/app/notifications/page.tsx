@@ -10,7 +10,7 @@ import {
   type Notification,
 } from "@/lib/firestore/notifications";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 
@@ -26,10 +26,11 @@ const typeIcons: Record<string, string> = {
 export default function NotificationsPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <NotificationsContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

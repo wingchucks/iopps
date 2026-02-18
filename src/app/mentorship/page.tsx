@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import { useAuth } from "@/lib/auth-context";
@@ -116,8 +116,8 @@ export default function MentorshipPage() {
 
   if (loading) {
     return (
+    <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <div className="skeleton h-52 mb-6" />
         <div className="max-w-6xl mx-auto px-4 md:px-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -127,13 +127,13 @@ export default function MentorshipPage() {
           </div>
         </div>
       </div>
+    </AppShell>
     );
   }
 
   return (
+    <AppShell>
     <div className="min-h-screen bg-bg">
-      <NavBar />
-
       {/* Hero */}
       <div
         className="py-12 px-4 text-center"
@@ -525,5 +525,6 @@ export default function MentorshipPage() {
 
       <div className="pb-24" />
     </div>
+    </AppShell>
   );
 }

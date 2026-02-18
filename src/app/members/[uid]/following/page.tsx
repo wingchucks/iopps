@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Card from "@/components/Card";
 import FollowButton from "@/components/FollowButton";
@@ -14,10 +14,11 @@ import { getFollowing, type Connection } from "@/lib/firestore/connections";
 export default function FollowingPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <FollowingContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

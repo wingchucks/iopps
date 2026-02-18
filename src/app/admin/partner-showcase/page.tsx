@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import AdminRoute from "@/components/AdminRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
@@ -52,10 +52,11 @@ const tierColors: Record<string, string> = {
 export default function AdminPartnerShowcasePage() {
   return (
     <AdminRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <PartnerManager />
       </div>
+    </AppShell>
     </AdminRoute>
   );
 }

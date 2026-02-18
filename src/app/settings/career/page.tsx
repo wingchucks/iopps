@@ -13,7 +13,7 @@ import {
   type SalaryRange,
 } from "@/lib/firestore/members";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 
@@ -29,10 +29,11 @@ const emptyEducation: Education = { school: "", degree: "", field: "", year: new
 export default function CareerSettingsPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <CareerSettingsContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

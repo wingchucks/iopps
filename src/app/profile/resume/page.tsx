@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { useAuth } from "@/lib/auth-context";
@@ -33,10 +33,11 @@ interface ResumeInfo {
 export default function ResumePage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <ResumeContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

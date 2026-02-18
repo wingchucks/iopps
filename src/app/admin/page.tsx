@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AdminRoute from "@/components/AdminRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import PageSkeleton from "@/components/PageSkeleton";
 import Link from "next/link";
@@ -13,10 +13,11 @@ import { getPendingReportCount } from "@/lib/firestore/reports";
 export default function AdminPage() {
   return (
     <AdminRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <AdminContent />
       </div>
+    </AppShell>
     </AdminRoute>
   );
 }

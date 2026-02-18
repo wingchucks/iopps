@@ -14,17 +14,18 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { updateMemberProfile, deleteMemberProfile } from "@/lib/firestore/members";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 
 export default function AccountSettingsPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <AccountContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

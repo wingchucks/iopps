@@ -33,7 +33,7 @@ export default function FeedRightSidebar({
   savedItems,
 }: FeedRightSidebarProps) {
   return (
-    <aside className="hidden xl:block w-[260px] shrink-0 sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+    <aside className="hidden xl:block w-[260px] shrink-0 sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
       {/* Your Applications */}
       <Card className="mb-4" style={{ padding: 16 }}>
         <p className="text-xs font-bold text-text-muted mb-2.5 tracking-[1px]">

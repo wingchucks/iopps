@@ -100,3 +100,34 @@ input, textarea, select {
   animation: shimmer 1.5s infinite;
   border-radius: 8px;
 }
+
+/* Auth page animations */
+@keyframes authFadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes authScaleIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes authFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes authFloatSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+.auth-fade-up {
+  animation: authFadeUp 0.5s ease-out both;
+}
+.auth-scale-in {
+  animation: authScaleIn 0.4s ease-out both;
+}
+.auth-float {
+  animation: authFloat 4s ease-in-out infinite;
+}
+.auth-float-slow {
+  animation: authFloatSlow 6s ease-in-out infinite;
+}

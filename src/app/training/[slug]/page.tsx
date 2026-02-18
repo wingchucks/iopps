@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
@@ -84,7 +84,6 @@ export default function TrainingDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <div className="max-w-[1000px] mx-auto px-4 py-6 md:px-10 md:py-8">
           <div className="skeleton h-4 w-32 rounded mb-6" />
           <div className="skeleton h-10 w-3/4 rounded mb-4" />
@@ -107,7 +106,6 @@ export default function TrainingDetailPage() {
   if (!program) {
     return (
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
           <Link
             href="/training"
@@ -139,9 +137,8 @@ export default function TrainingDetailPage() {
       : null;
 
   return (
+    <AppShell>
     <div className="min-h-screen bg-bg">
-      <NavBar />
-
       <div className="max-w-[1000px] mx-auto px-4 py-6 md:px-10 md:py-8">
         {/* Back link */}
         <Link
@@ -459,6 +456,7 @@ export default function TrainingDetailPage() {
       {/* Spacer for mobile bottom CTA */}
       <div className="lg:hidden h-20" />
     </div>
+    </AppShell>
   );
 }
 

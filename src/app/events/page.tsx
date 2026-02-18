@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import { getPosts, type Post } from "@/lib/firestore/posts";
 import { displayLocation } from "@/lib/utils";
 
@@ -52,9 +52,8 @@ export default function EventsBrowsePage() {
   }, [posts, search, locationFilter, typeFilter]);
 
   return (
+    <AppShell>
     <div className="min-h-screen bg-bg">
-      <NavBar />
-
       {/* Hero */}
       <div
         className="relative overflow-hidden"
@@ -272,5 +271,6 @@ export default function EventsBrowsePage() {
         )}
       </div>
     </div>
+    </AppShell>
   );
 }

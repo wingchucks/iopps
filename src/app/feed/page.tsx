@@ -6,7 +6,7 @@ import { collection, query, where, orderBy, limit, getDocs } from "firebase/fire
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Footer from "@/components/Footer";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -41,13 +41,14 @@ const typeToTab: Record<string, string> = {
 export default function FeedPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg flex flex-col">
-        <NavBar />
         <FeedContent />
         <InstallPrompt />
         <OnboardingTour />
         <Footer />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

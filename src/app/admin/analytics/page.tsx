@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AdminRoute from "@/components/AdminRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Link from "next/link";
 import { getAllMembers, type MemberProfile } from "@/lib/firestore/members";
@@ -23,10 +23,11 @@ interface AnalyticsData {
 export default function AnalyticsPage() {
   return (
     <AdminRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <AnalyticsContent />
       </div>
+    </AppShell>
     </AdminRoute>
   );
 }

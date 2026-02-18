@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import AdminRoute from "@/components/AdminRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
@@ -576,10 +576,11 @@ const posts = [
 export default function SeedPage() {
   return (
     <AdminRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <SeedContent />
       </div>
+    </AppShell>
     </AdminRoute>
   );
 }

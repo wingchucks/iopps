@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { getPost, updatePost, deletePost } from "@/lib/firestore/posts";
@@ -189,7 +189,7 @@ export default function JobEditPage() {
 
   return (
     <ProtectedRoute>
-      <NavBar />
+      <AppShell>
       <div className="min-h-screen bg-bg">
         <div className="max-w-[800px] mx-auto px-4 py-8 md:px-10">
           {/* Back link */}
@@ -624,6 +624,7 @@ export default function JobEditPage() {
           )}
         </div>
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

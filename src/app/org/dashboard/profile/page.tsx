@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { useAuth } from "@/lib/auth-context";
@@ -309,7 +309,7 @@ export default function OrgProfileEditPage() {
 
   return (
     <ProtectedRoute>
-      <NavBar />
+      <AppShell>
       <div className="min-h-screen bg-bg">
         <div className="max-w-[900px] mx-auto px-4 py-8 md:px-10">
           {loading ? (
@@ -757,6 +757,7 @@ export default function OrgProfileEditPage() {
           )}
         </div>
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

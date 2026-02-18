@@ -37,7 +37,7 @@ export default function FeedSidebar({
     user?.displayName || user?.email?.split("@")[0] || "User";
 
   return (
-    <aside className="hidden lg:block w-[260px] shrink-0 sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+    <aside className="hidden lg:block w-[260px] shrink-0 sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
       {/* Profile card */}
       <Card className="mb-4" style={{ padding: 20 }}>
         <div className="flex items-center gap-2.5 mb-3">

@@ -1,7 +1,7 @@
 "use client";
 
 import AdminRoute from "@/components/AdminRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Badge from "@/components/Badge";
 import Link from "next/link";
 
@@ -22,10 +22,11 @@ const emailEvents = [
 export default function NewsletterPreviewPage() {
   return (
     <AdminRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <NewsletterPreviewContent />
       </div>
+    </AppShell>
     </AdminRoute>
   );
 }

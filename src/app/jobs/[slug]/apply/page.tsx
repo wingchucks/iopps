@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { getPost, type Post } from "@/lib/firestore/posts";
@@ -32,10 +32,11 @@ const COVER_LETTER_PROMPTS = [
 export default function ApplyPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <ApplyWizard />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

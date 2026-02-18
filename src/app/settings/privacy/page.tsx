@@ -11,7 +11,7 @@ import {
   type FieldVisibility,
 } from "@/lib/firestore/memberSettings";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import PageSkeleton from "@/components/PageSkeleton";
 
@@ -50,10 +50,11 @@ const fieldLabels: Record<string, string> = {
 export default function PrivacySettingsPage() {
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <PrivacyContent />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -55,9 +55,8 @@ export default function OrganizationsPage() {
   }, [orgs, search, activeFilter]);
 
   return (
+    <AppShell>
     <div className="min-h-screen bg-bg">
-      <NavBar />
-
       {/* Hero */}
       <section
         className="text-center"
@@ -153,6 +152,7 @@ export default function OrganizationsPage() {
         )}
       </div>
     </div>
+    </AppShell>
   );
 }
 

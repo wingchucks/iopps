@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/auth-context";
@@ -98,8 +98,8 @@ export default function BecomeMentorPage() {
 
   return (
     <ProtectedRoute>
+      <AppShell>
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <div className="max-w-2xl mx-auto px-4 md:px-10 py-8">
           <Link
             href="/mentorship"
@@ -340,6 +340,7 @@ export default function BecomeMentorPage() {
         </div>
         <div className="pb-24" />
       </div>
+    </AppShell>
     </ProtectedRoute>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import {
@@ -135,7 +135,6 @@ export default function ShopPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-bg">
-        <NavBar />
         <div className="max-w-[1200px] mx-auto px-4 py-6 md:px-10 md:py-8">
           {/* Hero skeleton */}
           <div className="skeleton h-48 rounded-2xl mb-6" />
@@ -162,9 +161,8 @@ export default function ShopPage() {
     (activeTab === "Businesses" && filteredVendors.length === 0);
 
   return (
+    <AppShell>
     <div className="min-h-screen bg-bg">
-      <NavBar />
-
       {/* Hero */}
       <section
         className="text-center"
@@ -525,5 +523,6 @@ export default function ShopPage() {
         </div>
       </div>
     </div>
+    </AppShell>
   );
 }

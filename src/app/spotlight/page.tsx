@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import NavBar from "@/components/NavBar";
+import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import PageSkeleton from "@/components/PageSkeleton";
@@ -41,10 +41,11 @@ function extractEmbedUrl(url: string): string {
 
 export default function SpotlightPage() {
   return (
+    <AppShell>
     <div className="min-h-screen bg-bg">
-      <NavBar />
       <SpotlightContent />
     </div>
+    </AppShell>
   );
 }
 
