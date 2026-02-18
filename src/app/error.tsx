@@ -1,7 +1,20 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-export default function NotFound() {
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    console.error("Page error:", error);
+  }, [error]);
+
   return (
     <div
       className="min-h-screen flex items-center justify-center px-6"
@@ -13,31 +26,46 @@ export default function NotFound() {
           <span className="text-text text-lg font-extrabold tracking-[2px]">IOPPS</span>
         </Link>
 
-        <h1
-          className="font-extrabold mb-2"
-          style={{ fontSize: 72, color: "var(--navy)", lineHeight: 1 }}
+        <div
+          className="inline-flex items-center justify-center rounded-full mb-6"
+          style={{ width: 64, height: 64, background: "var(--red-soft)" }}
         >
-          404
-        </h1>
-        <h2 className="text-xl font-bold text-text mb-3">Page not found</h2>
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--red)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+        </div>
+
+        <h2 className="text-xl font-bold text-text mb-3">Something went wrong</h2>
         <p className="text-text-sec text-[15px] mb-8 leading-relaxed">
-          The page you&apos;re looking for doesn&apos;t exist or may have been moved.
+          An unexpected error occurred. Please try again or return to the home page.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            href="/feed"
-            className="inline-block font-bold no-underline transition-all duration-150 hover:opacity-90"
+          <button
+            onClick={reset}
+            className="font-bold cursor-pointer transition-all duration-150 hover:opacity-90"
             style={{
               padding: "13px 28px",
               borderRadius: 12,
+              border: "none",
               background: "var(--teal)",
               color: "#fff",
               fontSize: 15,
             }}
           >
-            Go to Feed
-          </Link>
+            Try Again
+          </button>
           <Link
             href="/"
             className="inline-block font-semibold no-underline transition-all duration-150 hover:opacity-80"

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
   description:
     "Jobs, events, scholarships, businesses, schools, and livestreams — all in one place for Indigenous people across North America.",
-  metadataBase: new URL("https://iopps.vercel.app"),
+  metadataBase: new URL("https://iopps-fresh.vercel.app"),
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
