@@ -177,7 +177,7 @@ function SchoolProfileContent() {
             <p className="text-sm text-text-sec leading-relaxed mb-5">{org.description}</p>
 
             {/* Tags */}
-            {org.tags.length > 0 && (
+            {(org.tags || []).length > 0 && (
               <div
                 className="rounded-[14px] mb-5"
                 style={{
@@ -189,7 +189,7 @@ function SchoolProfileContent() {
                 <p className="text-sm font-bold text-teal mb-2.5">
                   &#129718; Focus Areas
                 </p>
-                {org.tags.map((tag) => (
+                {(org.tags || []).map((tag) => (
                   <div key={tag} className="flex gap-2 items-center mb-1">
                     <span className="text-xs text-teal">&#10003;</span>
                     <span className="text-[13px] text-text-sec">{tag}</span>

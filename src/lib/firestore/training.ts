@@ -100,7 +100,7 @@ export async function enrollInProgram(
     programTitle: program.title,
     progress: 0,
     completedModules: [],
-    totalModules: program.modules.length,
+    totalModules: (program.modules || []).length,
     status: "enrolled",
     enrolledAt: serverTimestamp(),
     completedAt: null,

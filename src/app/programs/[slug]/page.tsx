@@ -444,7 +444,7 @@ function ProgramDetailContent() {
                   </div>
                 </div>
                 <p className="text-xs text-text-sec leading-relaxed mb-3">
-                  {org.description.length > 120 ? org.description.slice(0, 120) + "..." : org.description}
+                  {(org.description || "").length > 120 ? (org.description || "").slice(0, 120) + "..." : org.description}
                 </p>
                 <Link href={orgLink} className="text-xs text-teal font-semibold no-underline hover:underline">
                   View Organization Profile &#8594;

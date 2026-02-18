@@ -61,7 +61,7 @@ export default function MentorshipPage() {
     let items = mentors;
     if (selectedExpertise.length > 0) {
       items = items.filter((m) =>
-        m.expertise.some((e) =>
+        (m.expertise || []).some((e) =>
           selectedExpertise.some((se) => e.toLowerCase().includes(se.toLowerCase()))
         )
       );
@@ -337,7 +337,7 @@ export default function MentorshipPage() {
 
                       {/* Expertise chips */}
                       <div className="flex flex-wrap gap-1.5 mb-3">
-                        {mentor.expertise.slice(0, 3).map((exp) => (
+                        {(mentor.expertise || []).slice(0, 3).map((exp) => (
                           <Badge
                             key={exp}
                             text={exp}
@@ -346,12 +346,12 @@ export default function MentorshipPage() {
                             small
                           />
                         ))}
-                        {mentor.expertise.length > 3 && (
+                        {(mentor.expertise || []).length > 3 && (
                           <span
                             className="text-xs"
                             style={{ color: "var(--text-muted)" }}
                           >
-                            +{mentor.expertise.length - 3}
+                            +{(mentor.expertise || []).length - 3}
                           </span>
                         )}
                       </div>

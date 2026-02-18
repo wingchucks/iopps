@@ -186,7 +186,7 @@ function LearningContent() {
                         {enrollment.programTitle}
                       </p>
                       <p className="text-xs text-text-muted">
-                        {enrollment.completedModules.length} of{" "}
+                        {(enrollment.completedModules || []).length} of{" "}
                         {enrollment.totalModules} modules completed
                       </p>
                     </div>

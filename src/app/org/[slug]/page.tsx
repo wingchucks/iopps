@@ -203,9 +203,9 @@ function OrgProfileContent() {
         <p className="text-sm text-text-sec leading-relaxed mb-6">{org.description}</p>
 
         {/* Tags */}
-        {org.tags.length > 0 && (
+        {(org.tags || []).length > 0 && (
           <div className="flex flex-wrap gap-2 mb-8">
-            {org.tags.map((tag) => (
+            {(org.tags || []).map((tag) => (
               <span
                 key={tag}
                 className="rounded-full text-xs font-semibold text-teal"

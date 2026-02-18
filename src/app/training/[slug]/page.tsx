@@ -303,7 +303,7 @@ export default function TrainingDetailPage() {
                   <div>
                     <p className="text-xs text-text-muted mb-1">Modules</p>
                     <p className="text-sm font-semibold text-text">
-                      {program.modules.length}
+                      {(program.modules || []).length}
                     </p>
                   </div>
                 </div>
@@ -311,14 +311,14 @@ export default function TrainingDetailPage() {
             </Card>
 
             {/* Prerequisites */}
-            {program.prerequisites.length > 0 && (
+            {(program.prerequisites || []).length > 0 && (
               <Card className="mb-6">
                 <div style={{ padding: 20 }}>
                   <h2 className="text-base font-bold text-text mb-3">
                     Prerequisites
                   </h2>
                   <ul className="list-disc pl-5 space-y-1">
-                    {program.prerequisites.map((prereq, i) => (
+                    {(program.prerequisites || []).map((prereq, i) => (
                       <li key={i} className="text-sm text-text-sec">
                         {prereq}
                       </li>
@@ -329,14 +329,14 @@ export default function TrainingDetailPage() {
             )}
 
             {/* Skills */}
-            {program.skills.length > 0 && (
+            {(program.skills || []).length > 0 && (
               <Card className="mb-6">
                 <div style={{ padding: 20 }}>
                   <h2 className="text-base font-bold text-text mb-3">
                     Skills You&apos;ll Learn
                   </h2>
                   <div className="flex flex-wrap gap-2">
-                    {program.skills.map((skill) => (
+                    {(program.skills || []).map((skill) => (
                       <span
                         key={skill}
                         className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold"
@@ -360,7 +360,7 @@ export default function TrainingDetailPage() {
                   Curriculum
                 </h2>
                 <div className="space-y-3">
-                  {program.modules.map((mod, i) => (
+                  {(program.modules || []).map((mod, i) => (
                     <div
                       key={i}
                       className="flex gap-3 p-3 rounded-xl"
@@ -583,7 +583,7 @@ function EnrollSidebar({
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             </svg>
             <span className="text-xs text-text-sec">
-              {program.modules.length} modules
+              {(program.modules || []).length} modules
             </span>
           </div>
           {program.certificateOffered && (

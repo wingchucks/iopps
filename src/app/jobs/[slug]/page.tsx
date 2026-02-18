@@ -242,9 +242,9 @@ function JobDetailContent() {
           )}
 
           {/* Tags */}
-          {org && org.tags.length > 0 && (
+          {org && (org.tags || []).length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
-              {org.tags.map((t) => (
+              {(org.tags || []).map((t) => (
                 <span
                   key={t}
                   className="rounded-xl text-[13px] font-semibold text-teal"
@@ -356,7 +356,7 @@ function JobDetailContent() {
                   </div>
                 </div>
                 <p className="text-xs text-text-sec leading-relaxed mb-3">
-                  {org.description.length > 120 ? org.description.slice(0, 120) + "..." : org.description}
+                  {(org.description || "").length > 120 ? (org.description || "").slice(0, 120) + "..." : org.description}
                 </p>
                 <Link href={orgLink} className="text-xs text-teal font-semibold no-underline hover:underline">
                   View Company Profile &#8594;

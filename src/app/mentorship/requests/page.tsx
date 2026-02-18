@@ -205,9 +205,9 @@ export default function MentorshipRequestsPage() {
                         {req.message}
                       </p>
 
-                      {req.goals.length > 0 && (
+                      {(req.goals || []).length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mb-4">
-                          {req.goals.map((g) => (
+                          {(req.goals || []).map((g) => (
                             <Badge
                               key={g}
                               text={g}
@@ -313,9 +313,9 @@ export default function MentorshipRequestsPage() {
                       {req.message}
                     </p>
 
-                    {req.goals.length > 0 && (
+                    {(req.goals || []).length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
-                        {req.goals.map((g) => (
+                        {(req.goals || []).map((g) => (
                           <Badge
                             key={g}
                             text={g}
