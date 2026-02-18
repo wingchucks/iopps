@@ -15,6 +15,7 @@ import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import ReportButton from "@/components/ReportButton";
+import { displayLocation } from "@/lib/utils";
 
 export default function StoryDetailPage() {
   return (
@@ -178,7 +179,7 @@ function StoryDetailContent() {
               <span>By {post.author || post.orgName}</span>
             )}
             {post.community && <span>{post.community}</span>}
-            {post.location && <span>&#128205; {post.location}</span>}
+            {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
           </div>
         </div>
       </div>
@@ -397,7 +398,7 @@ function StoryDetailContent() {
                   {post.location && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Location</span>
-                      <span className="text-xs font-semibold text-text">{post.location}</span>
+                      <span className="text-xs font-semibold text-text">{displayLocation(post.location)}</span>
                     </div>
                   )}
                 </div>

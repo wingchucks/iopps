@@ -14,6 +14,7 @@ import { getOrganization, type Organization } from "@/lib/firestore/organization
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { useAuth } from "@/lib/auth-context";
 import ReportButton from "@/components/ReportButton";
+import { displayLocation } from "@/lib/utils";
 
 export default function ScholarshipDetailPage() {
   return (
@@ -150,7 +151,7 @@ function ScholarshipDetailContent() {
             {post.orgName && <span>{post.orgName}</span>}
             {post.amount && <span>&#128176; {post.amount}</span>}
             {post.deadline && <span>&#128197; Deadline: {post.deadline}</span>}
-            {post.location && <span>&#128205; {post.location}</span>}
+            {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
           </div>
         </div>
       </div>
@@ -358,7 +359,7 @@ function ScholarshipDetailContent() {
                   {post.location && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Location</span>
-                      <span className="text-xs font-semibold text-text">{post.location}</span>
+                      <span className="text-xs font-semibold text-text">{displayLocation(post.location)}</span>
                     </div>
                   )}
                   {post.orgName && (

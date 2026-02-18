@@ -198,6 +198,7 @@ export default function TrainingDetailPage() {
             </div>
 
             {/* Instructor card */}
+            {program.instructor && (
             <Card className="mb-6">
               <div style={{ padding: 20 }} className="flex items-center gap-4">
                 <div
@@ -216,7 +217,7 @@ export default function TrainingDetailPage() {
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    program.instructor.name.charAt(0).toUpperCase()
+                    program.instructor.name?.charAt(0).toUpperCase()
                   )}
                 </div>
                 <div className="min-w-0">
@@ -232,6 +233,7 @@ export default function TrainingDetailPage() {
                 </div>
               </div>
             </Card>
+            )}
 
             {/* Description */}
             <Card className="mb-6">

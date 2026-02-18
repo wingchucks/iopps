@@ -15,6 +15,7 @@ import { savePost, unsavePost } from "@/lib/firestore/savedItems";
 import { hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
 import ReportButton from "@/components/ReportButton";
+import { displayLocation } from "@/lib/utils";
 
 export default function JobDetailPage() {
   return (
@@ -163,7 +164,7 @@ function JobDetailContent() {
               </div>
             </div>
             <div className="flex flex-wrap gap-3 text-sm text-text-sec">
-              {post.location && <span>&#128205; {post.location}</span>}
+              {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
               {post.salary && <span>&#128176; {post.salary}</span>}
               {post.deadline && <span>&#128197; Deadline: {post.deadline}</span>}
             </div>
@@ -316,7 +317,7 @@ function JobDetailContent() {
                   {post.location && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Location</span>
-                      <span className="text-xs font-semibold text-text">{post.location}</span>
+                      <span className="text-xs font-semibold text-text">{displayLocation(post.location)}</span>
                     </div>
                   )}
                   {post.deadline && (

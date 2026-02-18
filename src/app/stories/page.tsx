@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import NavBar from "@/components/NavBar";
 import { getPosts, type Post } from "@/lib/firestore/posts";
+import { displayLocation } from "@/lib/utils";
 
 type TabFilter = "all" | "story" | "spotlight";
 
@@ -239,7 +240,7 @@ export default function StoriesBrowsePage() {
                         )}
                         {post.location && (
                           <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
-                            <span>&#128205;</span> {post.location}
+                            <span>&#128205;</span> {displayLocation(post.location)}
                           </p>
                         )}
                       </div>

@@ -19,6 +19,7 @@ import {
 } from "@/lib/firestore/rsvps";
 import { useAuth } from "@/lib/auth-context";
 import ReportButton from "@/components/ReportButton";
+import { displayLocation } from "@/lib/utils";
 
 export default function EventDetailPage() {
   return (
@@ -222,7 +223,7 @@ function EventDetailContent() {
           <h1 className="text-2xl sm:text-4xl font-extrabold text-text mb-2">{post.title}</h1>
           <div className="flex flex-wrap justify-center gap-4 text-sm text-text-sec">
             {post.dates && <span>&#128197; {post.dates}</span>}
-            {post.location && <span>&#128205; {post.location}</span>}
+            {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
             {post.price && <span>&#127915; {post.price}</span>}
           </div>
         </div>
@@ -299,7 +300,7 @@ function EventDetailContent() {
               <Card>
                 <div style={{ padding: 16 }}>
                   <p className="text-sm font-bold text-teal mb-1">&#128205; Location</p>
-                  <p className="text-[13px] text-text-sec">{post.location}</p>
+                  <p className="text-[13px] text-text-sec">{displayLocation(post.location)}</p>
                 </div>
               </Card>
             )}
@@ -388,7 +389,7 @@ function EventDetailContent() {
                   {post.location && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Location</span>
-                      <span className="text-xs font-semibold text-text text-right max-w-[140px]">{post.location}</span>
+                      <span className="text-xs font-semibold text-text text-right max-w-[140px]">{displayLocation(post.location)}</span>
                     </div>
                   )}
                   {post.price && (

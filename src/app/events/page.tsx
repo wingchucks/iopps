@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import NavBar from "@/components/NavBar";
 import { getPosts, type Post } from "@/lib/firestore/posts";
+import { displayLocation } from "@/lib/utils";
 
 export default function EventsBrowsePage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -235,7 +236,7 @@ export default function EventsBrowsePage() {
                       <div className="flex flex-col gap-1.5 mt-auto">
                         {post.location && (
                           <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
-                            <span>&#128205;</span> {post.location}
+                            <span>&#128205;</span> {displayLocation(post.location)}
                           </p>
                         )}
                         {post.dates && (

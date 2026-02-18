@@ -7,20 +7,9 @@ import Card from "@/components/Card";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
+import { displayLocation } from "@/lib/utils";
 
 const typeFilters = ["All", "Employer", "School", "Non-Profit", "Government", "Business"];
-
-/** Safely convert a location field to a display string. */
-function displayLocation(loc: unknown): string {
-  if (!loc) return "";
-  if (typeof loc === "string") return loc;
-  if (typeof loc === "object" && loc !== null) {
-    const obj = loc as Record<string, unknown>;
-    const parts = [obj.city, obj.province].filter(Boolean).map(String);
-    return parts.join(", ");
-  }
-  return String(loc);
-}
 
 export default function OrganizationsPage() {
   const [orgs, setOrgs] = useState<Organization[]>([]);

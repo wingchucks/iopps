@@ -20,6 +20,7 @@ import {
 } from "@/lib/firestore/posts";
 import type { Post, PostStatus } from "@/lib/firestore/posts";
 import { getApplicationsByPost } from "@/lib/firestore/applications";
+import { displayLocation } from "@/lib/utils";
 
 interface PostWithApps extends Post {
   applicationCount: number;
@@ -590,7 +591,7 @@ export default function OrgDashboardPage() {
                             className="flex items-center gap-4 text-xs flex-wrap"
                             style={{ color: "var(--text-muted)" }}
                           >
-                            {post.location && <span>{post.location}</span>}
+                            {post.location && <span>{displayLocation(post.location)}</span>}
                             <span>Posted: {formatDate(post.createdAt)}</span>
                             <span>
                               {post.applicationCount} application

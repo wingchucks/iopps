@@ -25,6 +25,8 @@ import FeedRightSidebar from "@/components/FeedRightSidebar";
 import InstallPrompt from "@/components/InstallPrompt";
 import OnboardingTour from "@/components/OnboardingTour";
 
+import { displayLocation } from "@/lib/utils";
+
 const tabs = ["All", "Jobs", "Events", "Scholarships", "Businesses", "Schools", "Livestreams", "Stories"];
 
 const typeToTab: Record<string, string> = {
@@ -338,7 +340,7 @@ function FeedCard({ post }: { post: Post }) {
             </div>
           </div>
           <div className="flex flex-wrap gap-3 text-[13px] text-text-sec">
-            {post.location && <span>&#128205; {post.location}</span>}
+            {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
             {post.jobType && <span>{post.jobType}</span>}
             {post.salary && <span>&#128176; {post.salary}</span>}
             {post.deadline && <span>&#128197; {post.deadline}</span>}
@@ -372,7 +374,7 @@ function FeedCard({ post }: { post: Post }) {
               <span className="text-sm text-teal font-semibold">{post.orgName}</span>
             </div>
             <div className="flex gap-3 text-[13px] text-text-sec">
-              {post.location && <span>&#128205; {post.location}</span>}
+              {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
               {post.jobType && <span>{post.jobType}</span>}
               {post.salary && <span>&#128176; {post.salary}</span>}
             </div>
@@ -396,7 +398,7 @@ function FeedCard({ post }: { post: Post }) {
             <h3 className="text-base font-bold text-text mb-1.5">{post.title}</h3>
             <span className="text-sm text-teal font-semibold">{post.orgName}</span>
             <div className="flex gap-3 text-[13px] text-text-sec mt-1.5">
-              {post.location && <span>&#128205; {post.location}</span>}
+              {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
               {post.duration && <span>{post.duration}</span>}
               {post.credential && <span>{post.credential}</span>}
             </div>
@@ -456,7 +458,7 @@ function FeedCard({ post }: { post: Post }) {
             <h3 className="text-base font-bold text-text mt-2 mb-1">{post.title}</h3>
             <div className="flex gap-3 text-[13px] text-text-sec">
               {post.dates && <span>&#128197; {post.dates}</span>}
-              {post.location && <span>&#128205; {post.location}</span>}
+              {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
               {post.price && <span>&#127915; {post.price}</span>}
             </div>
           </div>
@@ -486,7 +488,7 @@ function FeedCard({ post }: { post: Post }) {
             <div className="flex gap-3 text-[13px] text-text-sec">
               {post.amount && <span>&#128176; {post.amount}</span>}
               {post.deadline && <span>&#128197; {post.deadline}</span>}
-              {post.location && <span>&#128205; {post.location}</span>}
+              {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
             </div>
           </div>
         </Card>

@@ -11,6 +11,7 @@ import Card from "@/components/Card";
 import { getPosts, type Post } from "@/lib/firestore/posts";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
 import { getVendors, type ShopVendor } from "@/lib/firestore/shop";
+import { displayLocation } from "@/lib/utils";
 
 const typeFilters = ["All", "Jobs", "Events", "Scholarships", "Programs", "Organizations", "Businesses", "Stories"];
 
@@ -56,18 +57,6 @@ function getPostTimestamp(post: Post): number {
   }
   if (post.order) return post.order;
   return 0;
-}
-
-/** Safely convert a location field to a display string. Firestore may store it as an object {city, province} or a plain string. */
-function displayLocation(loc: unknown): string {
-  if (!loc) return "";
-  if (typeof loc === "string") return loc;
-  if (typeof loc === "object" && loc !== null) {
-    const obj = loc as Record<string, unknown>;
-    const parts = [obj.city, obj.province].filter(Boolean).map(String);
-    return parts.join(", ");
-  }
-  return String(loc);
 }
 
 /** Safely convert a tags field to a string array. */
@@ -764,7 +753,7 @@ function SearchResultCard({ post }: { post: Post }) {
             <h3 className="text-sm font-bold text-text m-0 mb-0.5">{post.title}</h3>
             <div className="flex flex-wrap gap-2 text-xs text-text-sec">
               {post.orgName && <span>{post.orgName}</span>}
-              {post.location && <span>&#128205; {post.location}</span>}
+              {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
               {post.jobType && <span>{post.jobType}</span>}
               {post.salary && <span>{post.salary}</span>}
               {post.amount && <span>&#128176; {post.amount}</span>}
