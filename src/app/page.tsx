@@ -7,9 +7,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 
 const partners = [
   { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium" as const },
-  { name: "Saskatchewan Polytechnic", short: "SP", tier: "school" as const },
   { name: "Saskatoon Tribal Council", short: "STC", tier: "premium" as const },
-  { name: "First Nations University", short: "FNUniv", tier: "school" as const },
   { name: "Westland Corp", short: "WC", tier: "premium" as const },
 ];
 
