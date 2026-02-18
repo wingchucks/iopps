@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://iopps.vercel.app"),
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon.svg",
+    icon: "/favicon.ico",
   },
   appleWebApp: {
     capable: true,

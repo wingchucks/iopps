@@ -5,10 +5,10 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import ThemeToggle from "@/components/ThemeToggle";
 
-const partners = [
-  { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium" as const },
-  { name: "Saskatoon Tribal Council", short: "STC", tier: "premium" as const },
-  { name: "Westland Corp", short: "WC", tier: "premium" as const },
+const partners: { name: string; short: string; tier: string }[] = [
+  { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium" },
+  { name: "Saskatoon Tribal Council", short: "STC", tier: "premium" },
+  { name: "Westland Corp", short: "WC", tier: "premium" },
 ];
 
 const categories = [
