@@ -6,12 +6,15 @@ import AppShell from "@/components/AppShell";
 import { getPosts, type Post } from "@/lib/firestore/posts";
 import { displayLocation } from "@/lib/utils";
 
+const dateFilters = ["All Dates", "This Week", "This Month", "Upcoming"] as const;
+
 export default function EventsBrowsePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState<string>("All Dates");
 
   useEffect(() => {
     getPosts({ type: "event" })
@@ -48,8 +51,30 @@ export default function EventsBrowsePage() {
     if (typeFilter) {
       result = result.filter((p) => p.eventType === typeFilter);
     }
+    if (dateFilter !== "All Dates") {
+      const now = new Date();
+      result = result.filter((p) => {
+        if (!p.dates) return dateFilter === "Upcoming";
+        const match = p.dates.match(/(\w+)\s+(\d{1,2}),?\s*(\d{4})?/);
+        if (!match) return true;
+        const parsed = new Date(`${match[1]} ${match[2]}, ${match[3] || now.getFullYear()}`);
+        if (isNaN(parsed.getTime())) return true;
+        if (dateFilter === "This Week") {
+          const weekEnd = new Date(now);
+          weekEnd.setDate(weekEnd.getDate() + 7);
+          return parsed >= now && parsed <= weekEnd;
+        }
+        if (dateFilter === "This Month") {
+          return parsed.getMonth() === now.getMonth() && parsed.getFullYear() === now.getFullYear();
+        }
+        if (dateFilter === "Upcoming") {
+          return parsed >= now;
+        }
+        return true;
+      });
+    }
     return result;
-  }, [posts, search, locationFilter, typeFilter]);
+  }, [posts, search, locationFilter, typeFilter, dateFilter]);
 
   return (
     <AppShell>
@@ -125,6 +150,24 @@ export default function EventsBrowsePage() {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Date filter pills */}
+        <div className="flex gap-2 mb-6 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          {dateFilters.map((df) => (
+            <button
+              key={df}
+              onClick={() => setDateFilter(df)}
+              className="px-4 py-2 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all whitespace-nowrap"
+              style={{
+                background: dateFilter === df ? "var(--purple)" : "var(--card)",
+                color: dateFilter === df ? "#fff" : "var(--text-sec)",
+                border: dateFilter === df ? "none" : "1px solid var(--border)",
+              }}
+            >
+              {df}
+            </button>
+          ))}
         </div>
 
         {/* Loading Skeleton */}
