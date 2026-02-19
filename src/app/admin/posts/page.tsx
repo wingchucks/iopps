@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 import toast from "react-hot-toast";
 
 interface Post {
@@ -28,14 +29,6 @@ const TYPE_COLORS: Record<string, string> = {
   Unknown: "bg-gray-500/15 text-gray-500",
 };
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-CA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default function PostsPage() {
   const { user } = useAuth();

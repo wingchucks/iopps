@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 
 interface Report {
   id: string;
@@ -185,7 +186,7 @@ export default function ModerationPage() {
                   </span>
                   {report.createdAt && (
                     <span className="text-xs text-[var(--text-muted)] hidden sm:inline">
-                      {new Date(report.createdAt).toLocaleDateString()}
+                      {formatDate(report.createdAt)}
                     </span>
                   )}
                 </div>

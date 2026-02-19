@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 import toast from "react-hot-toast";
 
 interface Subscription {
@@ -48,14 +49,6 @@ function maskId(id: string | null): string {
   return id.slice(0, 4) + "••••" + id.slice(-4);
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-CA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default function PaymentsPage() {
   const { user } = useAuth();

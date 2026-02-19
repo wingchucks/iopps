@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 import toast from "react-hot-toast";
 
 interface Story {
@@ -152,7 +153,7 @@ export default function StoriesPage() {
                   {story.personName}{story.nation ? ` · ${story.nation}` : ""}
                 </p>
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : ""}
+                  {formatDate(story.createdAt)}
                 </p>
 
                 <div className="flex gap-2 pt-2">

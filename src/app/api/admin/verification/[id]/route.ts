@@ -25,6 +25,15 @@ export async function GET(
 
     const data = doc.data() as Record<string, unknown>;
 
+    // Serialize Firestore timestamps to ISO strings
+    const serialized: Record<string, unknown> = { ...data };
+    for (const key of ["submittedAt", "createdAt", "reviewedAt", "updatedAt"]) {
+      const val = serialized[key];
+      if (val && typeof val === "object" && "toDate" in (val as object)) {
+        serialized[key] = (val as { toDate: () => Date }).toDate().toISOString();
+      }
+    }
+
     // Fetch employer info
     let employer = null;
     if (data?.employerId) {
@@ -38,7 +47,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      request: { id: doc.id, ...data },
+      request: { id: doc.id, ...serialized },
       employer,
     });
   } catch (error) {
@@ -60,7 +69,13 @@ export async function POST(
 
   const { id } = await params;
   const body = await request.json();
-  const { action, message, checklist } = body;
+  const { action, message, checklist, elderConsultation, elderNotes } = body as {
+    action: string;
+    message?: string;
+    checklist?: Record<string, boolean>;
+    elderConsultation?: boolean;
+    elderNotes?: string;
+  };
 
   if (!action || !["approve", "requestInfo", "reject"].includes(action)) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
@@ -81,14 +96,24 @@ export async function POST(
       reject: "rejected",
     };
 
-    await adminDb.collection("verificationRequests").doc(id).update({
+    const updateData: Record<string, unknown> = {
       status: statusMap[action],
       checklist: checklist || {},
       reviewMessage: message || "",
       reviewedBy: auth.decodedToken.uid,
       reviewedAt: now,
       updatedAt: now,
-    });
+    };
+
+    // Store elder consultation flag and notes
+    if (elderConsultation !== undefined) {
+      updateData.elderConsultation = elderConsultation;
+    }
+    if (elderNotes !== undefined) {
+      updateData.elderNotes = elderNotes;
+    }
+
+    await adminDb.collection("verificationRequests").doc(id).update(updateData);
 
     // On approve, update employer verification status
     if (action === "approve" && data.employerId) {

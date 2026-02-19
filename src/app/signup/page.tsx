@@ -90,8 +90,8 @@ export default function SignupPage() {
 
         <div className="auth-fade-up flex flex-col gap-4" style={{ animationDelay: "0.3s" }}>
           {[
-            { icon: "\u{1F4BC}", text: "2,400+ job opportunities" },
-            { icon: "\u{1F393}", text: "150+ scholarships & grants" },
+            { icon: "\u{1F4BC}", text: "Indigenous job opportunities" },
+            { icon: "\u{1F393}", text: "Scholarships & grants" },
             { icon: "\u{1F91D}", text: "Mentorship matching" },
           ].map((item) => (
             <div key={item.text} className="flex items-center gap-3">

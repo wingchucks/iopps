@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 import toast from "react-hot-toast";
 
 interface VerificationRequest {
@@ -24,9 +25,19 @@ const DOC_TYPES = [
   "communityReference",
 ];
 
+function toDate(value: unknown): Date {
+  if (!value) return new Date(0);
+  if (typeof value === 'object' && value !== null) {
+    const v = value as Record<string, unknown>;
+    if (typeof v.seconds === 'number') return new Date(v.seconds * 1000);
+    if (typeof v._seconds === 'number') return new Date(v._seconds * 1000);
+  }
+  return new Date(value as string | number);
+}
+
 function getUrgency(submittedAt?: string) {
   if (!submittedAt) return { hours: 0, color: "text-emerald-400", bg: "bg-emerald-500/10" };
-  const hours = (Date.now() - new Date(submittedAt).getTime()) / (1000 * 60 * 60);
+  const hours = (Date.now() - toDate(submittedAt).getTime()) / (1000 * 60 * 60);
   if (hours > 72) return { hours, color: "text-red-400", bg: "bg-red-500/10" };
   if (hours > 48) return { hours, color: "text-amber-400", bg: "bg-amber-500/10" };
   return { hours, color: "text-emerald-400", bg: "bg-emerald-500/10" };
@@ -136,7 +147,7 @@ export default function VerificationQueuePage() {
                     <div>
                       <p className="font-medium">{req.orgName || "Unknown Organization"}</p>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        Submitted {req.submittedAt ? new Date(req.submittedAt).toLocaleDateString() : "—"}
+                        Submitted {formatDate(req.submittedAt)}
                       </p>
                     </div>
                   </div>

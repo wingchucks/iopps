@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 import toast from "react-hot-toast";
 
 // ---------------------------------------------------------------------------
@@ -50,8 +51,18 @@ function StarIcon({ className, filled }: { className?: string; filled?: boolean 
 // Helpers
 // ---------------------------------------------------------------------------
 
+function toDateValue(value: unknown): Date {
+  if (!value) return new Date(0);
+  if (typeof value === 'object' && value !== null) {
+    const v = value as Record<string, unknown>;
+    if (typeof v.seconds === 'number') return new Date(v.seconds * 1000);
+    if (typeof v._seconds === 'number') return new Date(v._seconds * 1000);
+  }
+  return new Date(value as string | number);
+}
+
 function getCountdown(dateStr: string): string {
-  const diff = new Date(dateStr).getTime() - Date.now();
+  const diff = toDateValue(dateStr).getTime() - Date.now();
   if (diff <= 0) return "Expired";
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -160,7 +171,7 @@ export default function PinnedPage() {
                   <p className="font-medium">{getItemTitle(item)}</p>
                   <div className="mt-0.5 flex gap-3 text-xs text-[var(--text-muted)]">
                     <span className="capitalize">{item.collection}</span>
-                    {item.pinnedAt && <span>Pinned {new Date(item.pinnedAt).toLocaleDateString()}</span>}
+                    {item.pinnedAt && <span>Pinned {formatDate(item.pinnedAt)}</span>}
                     {item.autoUnpinAt && (
                       <span className="text-amber-500">{getCountdown(item.autoUnpinAt)}</span>
                     )}
@@ -197,7 +208,7 @@ export default function PinnedPage() {
                     <span className="capitalize">{item.collection}</span>
                     {item.organization && <span>{item.organization}</span>}
                     {item.paidAmount && <span className="text-emerald-500">${item.paidAmount}</span>}
-                    {item.featuredAt && <span>Since {new Date(item.featuredAt).toLocaleDateString()}</span>}
+                    {item.featuredAt && <span>Since {formatDate(item.featuredAt)}</span>}
                   </div>
                 </div>
                 <div className="flex gap-2">

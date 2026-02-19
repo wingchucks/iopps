@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 import toast from "react-hot-toast";
 
 interface Application {
@@ -39,14 +40,6 @@ const STATUS_COLORS: Record<string, string> = {
   withdrawn: "bg-gray-500/15 text-gray-500",
 };
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-CA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default function UserDetailPage() {
   const { userId } = useParams<{ userId: string }>();

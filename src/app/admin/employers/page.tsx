@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -327,18 +328,7 @@ export default function AdminEmployersPage() {
     );
   }, [employers, searchQuery]);
 
-  // ---- Date formatting ----
-  const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString("en-CA", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
+
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">

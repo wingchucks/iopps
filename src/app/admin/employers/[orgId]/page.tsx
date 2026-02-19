@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 import toast from "react-hot-toast";
 
 interface Employer {
@@ -161,7 +162,7 @@ export default function OrganizationDetailPage() {
                 </span>
               </div>
               <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
-                Created {employer.createdAt ? new Date(employer.createdAt).toLocaleDateString() : "—"}
+                Created {formatDate(employer.createdAt)}
               </p>
             </div>
           </div>
@@ -223,7 +224,7 @@ export default function OrganizationDetailPage() {
           </div>
           <div>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>Renewal Date</p>
-            <p className="font-medium">{employer.renewalDate ? new Date(employer.renewalDate).toLocaleDateString() : "—"}</p>
+            <p className="font-medium">{formatDate(employer.renewalDate)}</p>
           </div>
         </div>
         {employer.stripeCustomerId && (
@@ -288,7 +289,7 @@ export default function OrganizationDetailPage() {
               <div className="pb-4">
                 <p className="text-sm font-medium">{item.action}</p>
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {new Date(item.timestamp).toLocaleString()}
+                  {formatDateTime(item.timestamp)}
                 </p>
               </div>
             </div>

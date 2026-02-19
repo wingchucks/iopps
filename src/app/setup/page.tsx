@@ -188,7 +188,7 @@ function SetupWizard() {
           {/* Bottom stat */}
           <div className="hidden lg:block pb-12 auth-fade-up" style={{ animationDelay: ".3s" }}>
             <p style={{ color: "rgba(255,255,255,.3)", fontSize: 12 }}>
-              Join 84,200+ Indigenous professionals
+              Join Indigenous professionals across North America
             </p>
           </div>
         </div>

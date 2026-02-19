@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -207,7 +208,7 @@ export default function EmailCampaignsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-[var(--text-muted)]">
-                      {c.sentAt ? new Date(c.sentAt).toLocaleDateString() : c.scheduledAt ? new Date(c.scheduledAt).toLocaleDateString() : "—"}
+                      {c.sentAt ? formatDate(c.sentAt) : c.scheduledAt ? formatDate(c.scheduledAt) : "—"}
                     </td>
                     <td className="px-4 py-3 text-right text-[var(--text-secondary)]">{openRate}{openRate !== "—" && "%"}</td>
                     <td className="px-4 py-3 text-right text-[var(--text-secondary)]">{clickRate}{clickRate !== "—" && "%"}</td>

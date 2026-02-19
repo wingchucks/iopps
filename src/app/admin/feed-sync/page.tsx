@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { formatDateTime as sharedFormatDateTime } from "@/lib/format-date";
 import Link from "next/link";
 
 // ---------------------------------------------------------------------------
@@ -353,20 +354,8 @@ export default function FeedSyncPage() {
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "Never";
-    try {
-      const d = typeof dateStr === "object" && (dateStr as Record<string, unknown>)._seconds
-        ? new Date(((dateStr as Record<string, unknown>)._seconds as number) * 1000)
-        : new Date(dateStr);
-      return d.toLocaleDateString("en-CA", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return "Unknown";
-    }
+    const result = sharedFormatDateTime(dateStr);
+    return result === '—' ? "Never" : result;
   };
 
   const filteredFeeds = searchQuery.trim()

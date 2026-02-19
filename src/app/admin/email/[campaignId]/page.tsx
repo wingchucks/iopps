@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import toast from "react-hot-toast";
+import { formatDateTime } from "@/lib/format-date";
 import Link from "next/link";
 
 // ---------------------------------------------------------------------------
@@ -135,10 +136,10 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ campa
           <h1 className="text-2xl font-bold">{campaign.subject}</h1>
           <p className="text-sm text-[var(--text-muted)]">
             {campaign.status === "sent" && campaign.sentAt
-              ? `Sent on ${new Date(campaign.sentAt).toLocaleString()}`
+              ? `Sent on ${formatDateTime(campaign.sentAt)}`
               : campaign.status === "scheduled" && campaign.scheduledAt
-              ? `Scheduled for ${new Date(campaign.scheduledAt).toLocaleString()}`
-              : `Draft — created ${new Date(campaign.createdAt).toLocaleString()}`}
+              ? `Scheduled for ${formatDateTime(campaign.scheduledAt)}`
+              : `Draft — created ${formatDateTime(campaign.createdAt)}`}
             {" · "}
             <span className="capitalize">{campaign.audience}</span> audience
           </p>

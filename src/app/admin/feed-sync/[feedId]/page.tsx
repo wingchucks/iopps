@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/format-date";
 import Link from "next/link";
 
 // ---------------------------------------------------------------------------
@@ -93,20 +94,8 @@ function TrashIcon({ className }: { className?: string }) {
 
 function formatTimestamp(ts: unknown): string {
   if (!ts) return "Never";
-  try {
-    const d = typeof ts === "object" && (ts as Record<string, unknown>)._seconds
-      ? new Date(((ts as Record<string, unknown>)._seconds as number) * 1000)
-      : new Date(ts as string);
-    return d.toLocaleDateString("en-CA", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return "Unknown";
-  }
+  const result = formatDateTime(ts);
+  return result === '—' ? "Never" : result;
 }
 
 // ---------------------------------------------------------------------------

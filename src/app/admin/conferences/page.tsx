@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Card, CardContent, Badge } from "@/components/ui";
+import { formatDate } from "@/lib/format-date";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -101,17 +102,7 @@ const MOCK_CONFERENCES: Conference[] = [
 // ---------------------------------------------------------------------------
 
 function formatDateRange(start: string, end: string): string {
-  const s = new Date(start);
-  const e = new Date(end);
-  if (isNaN(s.getTime()) || isNaN(e.getTime())) return `${start} - ${end}`;
-
-  const opts: Intl.DateTimeFormatOptions = {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  };
-
-  return `${s.toLocaleDateString("en-CA", opts)} - ${e.toLocaleDateString("en-CA", opts)}`;
+  return `${formatDate(start)} - ${formatDate(end)}`;
 }
 
 // ---------------------------------------------------------------------------

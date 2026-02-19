@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Card, CardContent, Badge, Skeleton } from "@/components/ui";
+import { formatDate } from "@/lib/format-date";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -51,16 +52,7 @@ const PAGE_SIZE = 20;
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatDate(dateStr: string): string {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
-  return date.toLocaleDateString("en-CA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
+
 
 // ---------------------------------------------------------------------------
 // Sub-components

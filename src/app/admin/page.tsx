@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { formatDateTime } from "@/lib/format-date";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -257,7 +258,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-foreground">{log.message}</p>
                   {log.createdAt && (
                     <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                      {new Date(log.createdAt).toLocaleString()}
+                      {formatDateTime(log.createdAt)}
                     </p>
                   )}
                 </div>

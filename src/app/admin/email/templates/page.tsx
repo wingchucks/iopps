@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 import toast from "react-hot-toast";
 
 // ---------------------------------------------------------------------------
@@ -271,7 +272,7 @@ export default function EmailTemplatesPage() {
                 </span>
               </div>
               <p className="mt-2 text-xs text-[var(--text-muted)]">
-                {t.lastUsedAt ? `Last used ${new Date(t.lastUsedAt).toLocaleDateString()}` : "Never used"}
+                {t.lastUsedAt ? `Last used ${formatDate(t.lastUsedAt)}` : "Never used"}
               </p>
               <div className="mt-3 flex gap-2">
                 <button onClick={() => startEdit(t)} className="rounded-lg border border-[var(--card-border)] px-3 py-1 text-xs font-medium hover:bg-muted">

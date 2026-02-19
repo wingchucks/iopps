@@ -5,6 +5,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/auth";
+import { formatDate } from "@/lib/format-date";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -249,18 +250,7 @@ export default function AdminUsersPage() {
     );
   }, [users, searchQuery]);
 
-  // ---- Date formatting ----
-  const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString("en-CA", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
+
 
   // ---- User initials for avatar fallback ----
   const getInitials = (name: string) => {

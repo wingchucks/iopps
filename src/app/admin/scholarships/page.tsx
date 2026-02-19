@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Card, CardContent, Badge } from "@/components/ui";
+import { formatDate } from "@/lib/format-date";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -89,15 +90,7 @@ const MOCK_SCHOLARSHIPS: Scholarship[] = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatDeadline(dateStr: string): string {
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
-  return date.toLocaleDateString("en-CA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
+
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -306,7 +299,7 @@ export default function AdminScholarshipsPage() {
                             {sch.amount}
                           </td>
                           <td className="hidden py-4 pr-4 text-text-secondary md:table-cell">
-                            {formatDeadline(sch.deadline)}
+                            {formatDate(sch.deadline)}
                           </td>
                           <td className="py-4 pr-4">
                             <Badge variant={badge.variant}>
