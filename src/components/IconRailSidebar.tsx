@@ -156,6 +156,7 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
 const navItems = [
   { href: "/search", label: "Search", icon: "search" },
   { href: "/feed", label: "Feed", icon: "home" },
+  // Admin injected dynamically below
   { href: "/jobs", label: "Jobs", icon: "briefcase" },
   { href: "/events", label: "Events", icon: "calendar" },
   { href: "/scholarships", label: "Scholarships", icon: "award" },
@@ -182,7 +183,23 @@ export default function IconRailSidebar() {
     if (!user) return;
     getMemberProfile(user.uid).then((profile) => {
       if (profile?.orgId) setHasOrg(true);
-      if (profile?.role === "admin" || profile?.role === "moderator") setIsAdmin(true);
+      if (profile?.role === "admin" || profile?.role === "moderator") {
+        setIsAdmin(true);
+      } else {
+        // Fallback: check Firebase custom claims
+        user.getIdTokenResult().then((result) => {
+          if (result.claims.admin === true || result.claims.role === "admin") {
+            setIsAdmin(true);
+          }
+        }).catch(() => {});
+      }
+    }).catch(() => {
+      // If members profile fails, still check claims
+      user.getIdTokenResult().then((result) => {
+        if (result.claims.admin === true || result.claims.role === "admin") {
+          setIsAdmin(true);
+        }
+      }).catch(() => {});
     });
   }, [user]);
 
@@ -196,9 +213,7 @@ export default function IconRailSidebar() {
     ...(hasOrg
       ? [{ href: "/org/dashboard", label: "Dashboard", icon: "dashboard" }]
       : []),
-    ...(isAdmin
-      ? [{ href: "/admin", label: "Admin", icon: "shield" }]
-      : []),
+
   ];
 
   return (
@@ -319,6 +334,44 @@ export default function IconRailSidebar() {
             {theme === "dark" ? "Light mode" : "Dark mode"}
           </span>
         </button>
+
+        {/* Admin (visible for admin/moderator only) */}
+        {isAdmin && (
+          <Link href="/admin" className="no-underline">
+            <div
+              className="flex items-center gap-3 h-10 px-3 rounded-lg transition-colors hover:bg-bg"
+              style={{
+                background:
+                  pathname === "/admin" || pathname.startsWith("/admin/")
+                    ? "color-mix(in srgb, var(--teal) 8%, transparent)"
+                    : "transparent",
+                borderLeft:
+                  pathname === "/admin" || pathname.startsWith("/admin/")
+                    ? "3px solid var(--teal)"
+                    : "3px solid transparent",
+                color:
+                  pathname === "/admin" || pathname.startsWith("/admin/")
+                    ? "var(--teal)"
+                    : "var(--text-muted)",
+              }}
+            >
+              <span className="w-5 h-5 shrink-0 flex items-center justify-center">
+                <NavIcon name="shield" size={20} />
+              </span>
+              <span
+                className="opacity-0 group-hover/rail:opacity-100 text-sm font-medium whitespace-nowrap transition-opacity duration-200"
+                style={{
+                  color:
+                    pathname === "/admin" || pathname.startsWith("/admin/")
+                      ? "var(--teal)"
+                      : "var(--text-sec)",
+                }}
+              >
+                Admin
+              </span>
+            </div>
+          </Link>
+        )}
 
         {/* Settings */}
         <Link href="/settings" className="no-underline">
