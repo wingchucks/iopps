@@ -102,6 +102,12 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
           <rect x="14" y="14" width="7" height="7" rx="1" />
         </svg>
       );
+    case "shield":
+      return (
+        <svg {...p}>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      );
     case "settings":
       return (
         <svg {...p}>
@@ -165,6 +171,7 @@ const navItems = [
 
 export default function IconRailSidebar() {
   const [hasOrg, setHasOrg] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
@@ -175,6 +182,7 @@ export default function IconRailSidebar() {
     if (!user) return;
     getMemberProfile(user.uid).then((profile) => {
       if (profile?.orgId) setHasOrg(true);
+      if (profile?.role === "admin" || profile?.role === "moderator") setIsAdmin(true);
     });
   }, [user]);
 
@@ -187,6 +195,9 @@ export default function IconRailSidebar() {
     ...navItems,
     ...(hasOrg
       ? [{ href: "/org/dashboard", label: "Dashboard", icon: "dashboard" }]
+      : []),
+    ...(isAdmin
+      ? [{ href: "/admin", label: "Admin", icon: "shield" }]
       : []),
   ];
 
