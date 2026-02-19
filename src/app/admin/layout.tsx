@@ -1,10 +1,200 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
+
+// ---------------------------------------------------------------------------
+// Notification types
+// ---------------------------------------------------------------------------
+
+interface AdminNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: "info" | "warning" | "error" | "success";
+  read: boolean;
+  createdAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Inline SVG: Bell icon
+// ---------------------------------------------------------------------------
+
+function BellIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 01-3.46 0" />
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Notifications dropdown
+// ---------------------------------------------------------------------------
+
+function NotificationsDropdown({ user }: { user: { getIdToken: () => Promise<string> } }) {
+  const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  // Fetch notifications when opened
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/admin/notifications", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data.notifications || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (open) fetchNotifications();
+  }, [open, fetchNotifications]);
+
+  const markAllRead = async () => {
+    try {
+      const token = await user.getIdToken();
+      await fetch("/api/admin/notifications", {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ markAll: true }),
+      });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (err) {
+      console.error("Failed to mark all read:", err);
+    }
+  };
+
+  const markRead = async (id: string) => {
+    try {
+      const token = await user.getIdToken();
+      await fetch("/api/admin/notifications", {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+      });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+      );
+    } catch (err) {
+      console.error("Failed to mark notification read:", err);
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="relative rounded-lg p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--card-bg)] hover:text-foreground"
+        aria-label="Notifications"
+      >
+        <BellIcon className="h-5 w-5" />
+        {unreadCount > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[#D97706] px-1 text-[10px] font-bold text-white">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute bottom-full left-0 z-50 mb-2 w-80 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-xl animate-scale-in">
+          <div className="flex items-center justify-between border-b border-[var(--card-border)] px-4 py-3">
+            <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllRead}
+                className="text-xs font-medium text-[#D97706] hover:text-[#B45309] transition-colors"
+              >
+                Mark all read
+              </button>
+            )}
+          </div>
+
+          <div className="max-h-64 overflow-y-auto">
+            {loading && (
+              <div className="px-4 py-6 text-center text-sm text-[var(--text-muted)]">
+                Loading...
+              </div>
+            )}
+
+            {!loading && notifications.length === 0 && (
+              <div className="px-4 py-6 text-center text-sm text-[var(--text-muted)]">
+                No notifications
+              </div>
+            )}
+
+            {!loading &&
+              notifications.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => !n.read && markRead(n.id)}
+                  className={cn(
+                    "flex w-full flex-col gap-0.5 px-4 py-3 text-left transition-colors hover:bg-[var(--card-bg)]",
+                    !n.read && "bg-[#D97706]/5",
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    {!n.read && (
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#D97706]" />
+                    )}
+                    <span className="text-xs font-medium text-foreground truncate">
+                      {n.title}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] line-clamp-2 pl-3.5">
+                    {n.message}
+                  </p>
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Navigation structure
@@ -157,10 +347,12 @@ function SidebarContent({
   pathname,
   onNavigate,
   onSignOut,
+  user,
 }: {
   pathname: string;
   onNavigate?: () => void;
   onSignOut: () => void;
+  user: { displayName: string | null; email: string | null; getIdToken: () => Promise<string> };
 }) {
   /** Check if a nav item is the "active" route */
   const isActive = (href: string) => {
@@ -215,7 +407,39 @@ function SidebarContent({
       </nav>
 
       {/* Footer actions */}
-      <div className="border-t border-[var(--card-border)] p-3 space-y-1">
+      <div className="border-t border-[var(--card-border)] p-3 space-y-2">
+        {/* Profile card */}
+        <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#D97706]/10 text-sm font-semibold text-[#D97706]">
+            {(() => {
+              const name = user.displayName || "";
+              if (!name) return "?";
+              const parts = name.trim().split(" ");
+              if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+              return name[0]?.toUpperCase() || "?";
+            })()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-foreground">
+              {user.displayName || "Admin"}
+            </p>
+            <p className="truncate text-xs text-[var(--text-muted)]">
+              {user.email || ""}
+            </p>
+          </div>
+        </div>
+
+        {/* Badge + Notifications row */}
+        <div className="flex items-center justify-between px-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-[#D97706]/20 bg-[#D97706]/10 px-2.5 py-0.5 text-xs font-medium text-[#D97706]">
+              Super Admin
+            </span>
+            <span className="text-[10px] text-[var(--text-muted)]">v1.0.0</span>
+          </div>
+          <NotificationsDropdown user={user} />
+        </div>
+
         <Link
           href="/"
           onClick={onNavigate}
@@ -330,6 +554,7 @@ export default function AdminLayout({
         <SidebarContent
           pathname={pathname}
           onSignOut={signOut}
+          user={user}
         />
       </aside>
 
@@ -348,6 +573,7 @@ export default function AdminLayout({
               pathname={pathname}
               onNavigate={closeDrawer}
               onSignOut={signOut}
+              user={user}
             />
           </aside>
         </div>

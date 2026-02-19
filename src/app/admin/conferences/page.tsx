@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Card, CardContent, Badge } from "@/components/ui";
 import { formatDate } from "@/lib/format-date";
+
+const PAGE_SIZE = 20;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -180,12 +182,22 @@ export default function AdminConferencesPage() {
     useState<Conference[]>(MOCK_CONFERENCES);
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [deleteTarget, setDeleteTarget] = useState<Conference | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Filter
   const filteredConferences =
     activeTab === "all"
       ? conferences
       : conferences.filter((c) => c.status === activeTab);
+
+  // Reset page on filter change
+  useEffect(() => { setCurrentPage(1); }, [activeTab]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredConferences.length / PAGE_SIZE);
+  const paginatedConferences = filteredConferences.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const rangeStart = filteredConferences.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(currentPage * PAGE_SIZE, filteredConferences.length);
 
   // Stats
   const totalCount = conferences.length;
@@ -309,7 +321,7 @@ export default function AdminConferencesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredConferences.map((conf) => {
+                    {paginatedConferences.map((conf) => {
                       const statusBadge = STATUS_BADGE[conf.status] || { label: conf.status || "Unknown", variant: "default" as const };
                       const paymentBadge = PAYMENT_BADGE[conf.payment] || { label: conf.payment || "Unknown", variant: "default" as const };
                       return (
@@ -473,6 +485,18 @@ export default function AdminConferencesPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {filteredConferences.length > 0 && (
+              <div className="flex items-center justify-between pt-4 border-t border-[var(--card-border)]">
+                <p className="text-sm text-[var(--text-muted)]">Showing {rangeStart}-{rangeEnd} of {filteredConferences.length}</p>
+                <div className="flex gap-2">
+                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-accent/10 disabled:opacity-40">Previous</button>
+                  <span className="text-sm px-3 py-1.5">{currentPage} / {totalPages}</span>
+                  <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-accent/10 disabled:opacity-40">Next</button>
+                </div>
               </div>
             )}
 

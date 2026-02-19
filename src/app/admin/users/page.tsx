@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/auth";
 import { formatDate } from "@/lib/format-date";
+
+const PAGE_SIZE = 20;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -180,6 +183,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // ---- Fetch users ----
   const fetchUsers = useCallback(async () => {
@@ -250,7 +254,14 @@ export default function AdminUsersPage() {
     );
   }, [users, searchQuery]);
 
+  // Reset page on filter/search change
+  useEffect(() => { setCurrentPage(1); }, [roleFilter, searchQuery]);
 
+  // ---- Pagination ----
+  const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const rangeStart = filteredUsers.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(currentPage * PAGE_SIZE, filteredUsers.length);
 
   // ---- User initials for avatar fallback ----
   const getInitials = (name: string) => {
@@ -268,7 +279,7 @@ export default function AdminUsersPage() {
           User Management
         </h1>
         <p className="mt-1 text-[var(--text-secondary)]">
-          Manage user accounts and roles
+          Manage user accounts and roles ({filteredUsers.length} total)
         </p>
       </div>
 
@@ -351,7 +362,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((u) => (
+                {paginatedUsers.map((u) => (
                   <tr
                     key={u.id}
                     className="border-b border-[var(--card-border)] last:border-b-0 transition-colors hover:bg-muted/50"
@@ -369,9 +380,9 @@ export default function AdminUsersPage() {
                             {getInitials(u.displayName)}
                           </div>
                         )}
-                        <span className="text-sm font-medium text-foreground">
+                        <Link href={`/admin/users/${u.id}`} className="text-sm font-medium text-foreground hover:text-accent transition-colors">
                           {u.displayName || "Unnamed"}
-                        </span>
+                        </Link>
                       </div>
                     </td>
                     <td className="px-5 py-4 text-sm text-[var(--text-secondary)]">
@@ -401,7 +412,7 @@ export default function AdminUsersPage() {
 
           {/* Mobile card list */}
           <div className="divide-y divide-[var(--card-border)] sm:hidden">
-            {filteredUsers.map((u) => (
+            {paginatedUsers.map((u) => (
               <div key={u.id} className="p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   {u.photoURL ? (
@@ -416,9 +427,9 @@ export default function AdminUsersPage() {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">
+                    <Link href={`/admin/users/${u.id}`} className="truncate text-sm font-medium text-foreground hover:text-accent transition-colors block">
                       {u.displayName || "Unnamed"}
-                    </p>
+                    </Link>
                     <p className="truncate text-xs text-[var(--text-muted)]">
                       {u.email}
                     </p>
@@ -438,6 +449,16 @@ export default function AdminUsersPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-4 border-t border-[var(--card-border)]">
+            <p className="text-sm text-[var(--text-muted)]">Showing {rangeStart}-{rangeEnd} of {filteredUsers.length}</p>
+            <div className="flex gap-2">
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-accent/10 disabled:opacity-40">Previous</button>
+              <span className="text-sm px-3 py-1.5">{currentPage} / {totalPages}</span>
+              <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-accent/10 disabled:opacity-40">Next</button>
+            </div>
           </div>
         </div>
       )}

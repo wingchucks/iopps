@@ -426,9 +426,9 @@ export default function AdminJobsPage() {
                             className="group border-b border-[var(--card-border)]/50 transition-colors hover:bg-[var(--card-bg)]/50"
                           >
                             <td className="py-4 pr-4">
-                              <p className="font-medium text-text-primary group-hover:text-accent transition-colors">
+                              <Link href={`/admin/jobs/${job.id}`} className="font-medium text-text-primary group-hover:text-accent transition-colors hover:text-accent">
                                 {job.title}
-                              </p>
+                              </Link>
                               <p className="mt-0.5 text-xs text-text-muted">
                                 {job.employerName}
                               </p>
@@ -557,29 +557,12 @@ export default function AdminJobsPage() {
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-6 flex items-center justify-between border-t border-card-border pt-4">
-                  <p className="text-sm text-text-muted">
-                    Showing {rangeStart}-{rangeEnd} of {total}
-                  </p>
+                <div className="flex items-center justify-between pt-4 border-t border-[var(--card-border)]">
+                  <p className="text-sm text-[var(--text-muted)]">Showing {rangeStart}-{rangeEnd} of {total}</p>
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page <= 1}
-                      className="rounded-lg border border-card-border bg-card px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPage((p) => Math.min(totalPages, p + 1))
-                      }
-                      disabled={page >= totalPages}
-                      className="rounded-lg border border-card-border bg-card px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Next
-                    </button>
+                    <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-accent/10 disabled:opacity-40">Previous</button>
+                    <span className="text-sm px-3 py-1.5">{page} / {totalPages}</span>
+                    <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-accent/10 disabled:opacity-40">Next</button>
                   </div>
                 </div>
               </>

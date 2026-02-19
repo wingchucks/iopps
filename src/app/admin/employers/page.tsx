@@ -2,10 +2,13 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format-date";
+
+const PAGE_SIZE = 20;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -217,6 +220,7 @@ export default function AdminEmployersPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Rejection modal state
   const [rejectModal, setRejectModal] = useState<{
@@ -328,7 +332,14 @@ export default function AdminEmployersPage() {
     );
   }, [employers, searchQuery]);
 
+  // Reset page on filter/search change
+  useEffect(() => { setCurrentPage(1); }, [statusFilter, searchQuery]);
 
+  // ---- Pagination ----
+  const totalPages = Math.ceil(filteredEmployers.length / PAGE_SIZE);
+  const paginatedEmployers = filteredEmployers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const rangeStart = filteredEmployers.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(currentPage * PAGE_SIZE, filteredEmployers.length);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -417,15 +428,15 @@ export default function AdminEmployersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredEmployers.map((employer) => (
+                {paginatedEmployers.map((employer) => (
                   <tr
                     key={employer.id}
                     className="border-b border-[var(--card-border)] last:border-b-0 transition-colors hover:bg-muted/50"
                   >
                     <td className="px-5 py-4">
-                      <p className="text-sm font-medium text-foreground">
+                      <Link href={`/admin/employers/${employer.id}`} className="text-sm font-medium text-foreground hover:text-accent transition-colors">
                         {employer.organizationName}
-                      </p>
+                      </Link>
                       {employer.contactPerson && (
                         <p className="mt-0.5 text-xs text-[var(--text-muted)]">
                           {employer.contactPerson}
@@ -476,13 +487,13 @@ export default function AdminEmployersPage() {
 
           {/* Mobile card list */}
           <div className="divide-y divide-[var(--card-border)] sm:hidden">
-            {filteredEmployers.map((employer) => (
+            {paginatedEmployers.map((employer) => (
               <div key={employer.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium text-foreground">
+                    <Link href={`/admin/employers/${employer.id}`} className="text-sm font-medium text-foreground hover:text-accent transition-colors">
                       {employer.organizationName}
-                    </p>
+                    </Link>
                     {employer.contactPerson && (
                       <p className="mt-0.5 text-xs text-[var(--text-muted)]">
                         {employer.contactPerson}
@@ -524,6 +535,16 @@ export default function AdminEmployersPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-4 border-t border-[var(--card-border)]">
+            <p className="text-sm text-[var(--text-muted)]">Showing {rangeStart}-{rangeEnd} of {filteredEmployers.length}</p>
+            <div className="flex gap-2">
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-accent/10 disabled:opacity-40">Previous</button>
+              <span className="text-sm px-3 py-1.5">{currentPage} / {totalPages}</span>
+              <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-accent/10 disabled:opacity-40">Next</button>
+            </div>
           </div>
         </div>
       )}

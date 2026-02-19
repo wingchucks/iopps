@@ -56,8 +56,27 @@ export async function GET(request: NextRequest) {
       filename = "employers-export.csv";
       break;
     }
+    case "applications": {
+      const snap = await adminDb.collection("applications").get();
+      const headers = ["ID", "Job ID", "Job Title", "Applicant ID", "Applicant Name", "Status", "Applied At"];
+      const rows = snap.docs.map((doc) => {
+        const d = doc.data();
+        return [
+          doc.id,
+          d.jobId || "",
+          d.jobTitle || "",
+          d.applicantId || d.userId || "",
+          d.applicantName || d.displayName || "",
+          d.status || "",
+          d.createdAt || d.appliedAt || "",
+        ];
+      });
+      csv = toCsv(headers, rows);
+      filename = "applications-export.csv";
+      break;
+    }
     default:
-      return NextResponse.json({ error: "Invalid type. Use users, jobs, or employers." }, { status: 400 });
+      return NextResponse.json({ error: "Invalid type. Use users, jobs, employers, or applications." }, { status: 400 });
   }
 
   return new NextResponse(csv, {

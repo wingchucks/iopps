@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Card, CardContent, Badge } from "@/components/ui";
 import { formatDate } from "@/lib/format-date";
+
+const PAGE_SIZE = 20;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -158,12 +160,22 @@ export default function AdminScholarshipsPage() {
     useState<Scholarship[]>(MOCK_SCHOLARSHIPS);
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [deleteTarget, setDeleteTarget] = useState<Scholarship | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Filter
   const filteredScholarships =
     activeTab === "all"
       ? scholarships
       : scholarships.filter((s) => s.status === activeTab);
+
+  // Reset page on filter change
+  useEffect(() => { setCurrentPage(1); }, [activeTab]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredScholarships.length / PAGE_SIZE);
+  const paginatedScholarships = filteredScholarships.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const rangeStart = filteredScholarships.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(currentPage * PAGE_SIZE, filteredScholarships.length);
 
   // Toggle publish / unpublish
   const togglePublish = (scholarship: Scholarship) => {
@@ -280,7 +292,7 @@ export default function AdminScholarshipsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredScholarships.map((sch) => {
+                    {paginatedScholarships.map((sch) => {
                       const badge = STATUS_BADGE[sch.status] || { label: sch.status || "Unknown", variant: "default" as const };
                       return (
                         <tr
@@ -458,6 +470,18 @@ export default function AdminScholarshipsPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {filteredScholarships.length > 0 && (
+              <div className="flex items-center justify-between pt-4 border-t border-[var(--card-border)]">
+                <p className="text-sm text-[var(--text-muted)]">Showing {rangeStart}-{rangeEnd} of {filteredScholarships.length}</p>
+                <div className="flex gap-2">
+                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-accent/10 disabled:opacity-40">Previous</button>
+                  <span className="text-sm px-3 py-1.5">{currentPage} / {totalPages}</span>
+                  <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-accent/10 disabled:opacity-40">Next</button>
+                </div>
               </div>
             )}
 
