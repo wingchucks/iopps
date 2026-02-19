@@ -6,7 +6,7 @@ import { FieldValue } from "firebase-admin/firestore";
 export const dynamic = "force-dynamic";
 
 // ---------------------------------------------------------------------------
-// GET /api/admin/feeds/[feedId] — Single feed detail + recent sync logs
+// GET /api/admin/feeds/[feedId] — Single feed detail + sync logs + jobs
 // ---------------------------------------------------------------------------
 
 export async function GET(
@@ -43,7 +43,29 @@ export async function GET(
       ...doc.data(),
     }));
 
-    return NextResponse.json({ feed, syncLogs });
+    // Fetch jobs imported by this feed (most recent 50)
+    const jobsSnap = await adminDb
+      .collection("jobs")
+      .where("feedId", "==", feedId)
+      .orderBy("createdAt", "desc")
+      .limit(50)
+      .get();
+
+    const jobs = jobsSnap.docs.map((doc) => ({
+      id: doc.id,
+      title: doc.data().title || "Untitled",
+      location: doc.data().location || null,
+      active: doc.data().active ?? true,
+      createdAt: doc.data().createdAt || null,
+      externalUrl: doc.data().externalUrl || null,
+    }));
+
+    // Separate error logs
+    const errorLogs = syncLogs.filter(
+      (log: Record<string, unknown>) => log.error,
+    );
+
+    return NextResponse.json({ feed, syncLogs, jobs, errorLogs });
   } catch (err) {
     console.error("[admin/feeds/[feedId]] GET error:", err);
     return NextResponse.json({ error: "Failed to fetch feed" }, { status: 500 });
@@ -69,7 +91,15 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const allowedFields = ["feedName", "feedUrl", "syncFrequency", "active", "mapping", "updateExistingJobs"];
+    const allowedFields = [
+      "feedName",
+      "feedUrl",
+      "syncFrequency",
+      "active",
+      "employerName",
+      "mapping",
+      "updateExistingJobs",
+    ];
     const updates: Record<string, unknown> = {};
 
     for (const key of allowedFields) {
