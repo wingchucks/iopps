@@ -354,7 +354,7 @@ export default function AdminConferencesPage() {
                             <div className="flex items-center justify-end gap-1">
                               {/* View */}
                               <Link
-                                href={`/conferences/${conf.id}`}
+                                href={`/conferences/${conf.id}`} prefetch={false}
                                 className="rounded-lg p-2 text-text-muted transition-colors hover:bg-surface hover:text-text-primary"
                                 title="View"
                                 aria-label={`View ${conf.title}`}
@@ -381,7 +381,7 @@ export default function AdminConferencesPage() {
 
                               {/* Edit (link to conference page) */}
                               <Link
-                                href={`/conferences/${conf.id}`}
+                                href={`/conferences/${conf.id}`} prefetch={false}
                                 className="rounded-lg p-2 text-text-muted transition-colors hover:bg-surface hover:text-text-primary"
                                 title="Edit"
                                 aria-label={`Edit ${conf.title}`}

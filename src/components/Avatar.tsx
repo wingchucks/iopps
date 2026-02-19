@@ -9,6 +9,10 @@ interface AvatarProps {
   src?: string;
 }
 
+function isValidImageUrl(url: string): boolean {
+  return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/") || url.startsWith("data:");
+}
+
 export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) {
   const [imgError, setImgError] = useState(false);
 
@@ -20,7 +24,7 @@ export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) 
 
   const radius = size > 48 ? 16 : "50%";
 
-  if (src && !imgError) {
+  if (src && !imgError && isValidImageUrl(src)) {
     return (
       <img
         src={src}

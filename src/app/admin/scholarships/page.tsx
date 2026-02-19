@@ -317,7 +317,7 @@ export default function AdminScholarshipsPage() {
                             <div className="flex items-center justify-end gap-1">
                               {/* View */}
                               <Link
-                                href={`/education/scholarships/${sch.id}`}
+                                href={`/scholarships/${sch.id}`} prefetch={false}
                                 className="rounded-lg p-2 text-text-muted transition-colors hover:bg-surface hover:text-text-primary"
                                 title="View"
                                 aria-label={`View ${sch.title}`}
