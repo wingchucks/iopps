@@ -43,6 +43,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "All Posts", href: "/admin/posts", icon: "\u2601" },
       { label: "Jobs", href: "/admin/jobs", icon: "\u2601" },
+      { label: "Pow Wows", href: "/admin/powwows", icon: "🪶" },
       { label: "Conferences", href: "/admin/conferences", icon: "\u2609" },
       { label: "Scholarships", href: "/admin/scholarships", icon: "\u2605" },
       { label: "Stories", href: "/admin/stories", icon: "\u270E" },
