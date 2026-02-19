@@ -1,368 +1,178 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import AdminRoute from "@/components/AdminRoute";
-import AppShell from "@/components/AppShell";
-import Card from "@/components/Card";
-import Button from "@/components/Button";
-import Badge from "@/components/Badge";
-import PageSkeleton from "@/components/PageSkeleton";
-import { useToast } from "@/lib/toast-context";
-import {
-  getPosts,
-  createPost,
-  updatePost,
-  deletePost,
-  type Post,
-} from "@/lib/firestore/posts";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
-type StoryCategory = "Success Story" | "Community Spotlight" | "Interview" | "Feature";
-
-const storyCategories: StoryCategory[] = [
-  "Success Story",
-  "Community Spotlight",
-  "Interview",
-  "Feature",
-];
-
-function slugify(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+interface Story {
+  id: string;
+  title: string;
+  personName: string;
+  nation: string;
+  heroPhoto: string;
+  status: "published" | "draft";
+  createdAt: string;
+  tags: string[];
 }
 
-function categoryToType(cat: StoryCategory): "story" | "spotlight" {
-  return cat === "Community Spotlight" || cat === "Interview"
-    ? "spotlight"
-    : "story";
-}
+const tabs = ["all", "published", "draft"] as const;
+type Tab = (typeof tabs)[number];
 
-const emptyForm = {
-  title: "",
-  slug: "",
-  content: "",
-  author: "",
-  featuredImage: "",
-  category: "Success Story" as StoryCategory,
-  excerpt: "",
-  status: "draft" as "draft" | "published",
-};
-
-export default function AdminStoriesPage() {
-  return (
-    <AdminRoute>
-      <AppShell>
-      <div className="min-h-screen bg-bg">
-        <StoriesManager />
-      </div>
-    </AppShell>
-    </AdminRoute>
-  );
-}
-
-function StoriesManager() {
-  const [stories, setStories] = useState<Post[]>([]);
+export default function StoriesPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(emptyForm);
-  const [saving, setSaving] = useState(false);
-  const { showToast } = useToast();
+  const [activeTab, setActiveTab] = useState<Tab>("all");
 
-  const load = useCallback(async () => {
+  const fetchStories = async () => {
     try {
-      const [storyPosts, spotlightPosts] = await Promise.all([
-        getPosts({ type: "story" }),
-        getPosts({ type: "spotlight" }),
-      ]);
-      setStories([...storyPosts, ...spotlightPosts]);
-    } catch (err) {
-      console.error("Failed to load stories:", err);
+      const token = await user?.getIdToken();
+      const params = activeTab !== "all" ? `?status=${activeTab}` : "";
+      const res = await fetch(`/api/admin/stories${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setStories(data.stories || []);
+    } catch {
+      toast.error("Failed to load stories");
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    load();
-  }, [load]);
-
-  const handleSave = async () => {
-    if (!form.title.trim()) return;
-    setSaving(true);
-    try {
-      const postType = categoryToType(form.category);
-      const slug = form.slug || slugify(form.title);
-      const postId = `${postType}-${slug}`;
-
-      const data = {
-        title: form.title,
-        slug,
-        description: form.content,
-        author: form.author,
-        featuredImage: form.featuredImage,
-        community: form.category,
-        excerpt: form.excerpt,
-        status: form.status === "published" ? ("active" as const) : ("draft" as const),
-        type: postType as "story" | "spotlight",
-      };
-
-      if (editingId) {
-        await updatePost(editingId, data);
-        showToast("Story updated");
-      } else {
-        await createPost(data);
-        showToast("Story created");
-      }
-      setForm(emptyForm);
-      setShowForm(false);
-      setEditingId(null);
-      await load();
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to save story", "error");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleEdit = (s: Post) => {
-    const cat = storyCategories.find(
-      (c) => c.toLowerCase() === s.community?.toLowerCase()
-    ) || (s.type === "spotlight" ? "Community Spotlight" : "Success Story");
-
-    setForm({
-      title: s.title,
-      slug: s.slug || "",
-      content: s.description || "",
-      author: s.author || "",
-      featuredImage: s.featuredImage || "",
-      category: cat,
-      excerpt: s.excerpt || "",
-      status: s.status === "active" ? "published" : "draft",
-    });
-    setEditingId(s.id);
-    setShowForm(true);
-  };
+    if (user) fetchStories();
+  }, [user, activeTab]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this story? This cannot be undone.")) return;
+    if (!confirm("Delete this story?")) return;
     try {
-      await deletePost(id);
-      showToast("Story deleted");
-      await load();
+      const token = await user?.getIdToken();
+      await fetch(`/api/admin/stories/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Story deleted");
+      setStories((prev) => prev.filter((s) => s.id !== id));
     } catch {
-      showToast("Failed to delete story", "error");
-    }
-  };
-
-  if (loading) return <PageSkeleton variant="grid" />;
-
-  const published = stories.filter((s) => s.status === "active").length;
-  const drafts = stories.filter((s) => s.status === "draft" || !s.status).length;
-
-  const categoryColor = (cat: string) => {
-    switch (cat?.toLowerCase()) {
-      case "success story":
-        return "var(--green)";
-      case "community spotlight":
-        return "var(--gold)";
-      case "interview":
-        return "var(--teal)";
-      case "feature":
-        return "#8B5CF6";
-      default:
-        return "var(--text-muted)";
+      toast.error("Failed to delete");
     }
   };
 
   return (
-    <div className="max-w-[1000px] mx-auto px-4 py-6 md:px-10 md:py-8">
-      <Link href="/admin" className="text-sm text-text-sec hover:underline mb-4 block">
-        &larr; Back to Admin
-      </Link>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-2xl font-extrabold text-text">Stories</h2>
-        <Button
-          primary
-          small
-          onClick={() => {
-            setForm(emptyForm);
-            setEditingId(null);
-            setShowForm(!showForm);
-          }}
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Success Stories</h1>
+          <p style={{ color: "var(--text-muted)" }}>
+            Manage stories that showcase Indigenous impact and resilience.
+          </p>
+        </div>
+        <button
+          onClick={() => router.push("/admin/stories/create")}
+          className="rounded-lg px-4 py-2 font-medium text-white"
+          style={{ backgroundColor: "var(--input-focus)" }}
         >
-          {showForm ? "Cancel" : "+ Create Story"}
-        </Button>
+          <span className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M8 3v10M3 8h10" />
+            </svg>
+            Create Story
+          </span>
+        </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        {[
-          { label: "Total Stories", value: stories.length },
-          { label: "Published", value: published },
-          { label: "Drafts", value: drafts },
-        ].map((s, i) => (
-          <Card key={i} style={{ padding: 16 }}>
-            <p className="text-2xl font-extrabold text-text">{s.value}</p>
-            <p className="text-xs text-text-muted">{s.label}</p>
-          </Card>
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-lg p-1" style={{ backgroundColor: "var(--input-bg)" }}>
+        {tabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => { setActiveTab(tab); setLoading(true); }}
+            className={cn(
+              "rounded-md px-4 py-2 text-sm font-medium capitalize transition-colors",
+              activeTab === tab
+                ? "bg-white shadow-sm dark:bg-zinc-700"
+                : "hover:bg-white/50 dark:hover:bg-zinc-700/50"
+            )}
+          >
+            {tab}
+          </button>
         ))}
       </div>
 
-      {/* Form */}
-      {showForm && (
-        <Card className="mb-6" style={{ padding: 20 }}>
-          <h3 className="text-base font-bold text-text mb-4">
-            {editingId ? "Edit Story" : "New Story"}
-          </h3>
-          <div className="flex flex-col gap-3">
-            <input
-              className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none"
-              placeholder="Title"
-              value={form.title}
-              onChange={(e) => {
-                const title = e.target.value;
-                setForm({
-                  ...form,
-                  title,
-                  slug: editingId ? form.slug : slugify(title),
-                });
-              }}
-            />
-            <input
-              className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none"
-              placeholder="Slug (auto-generated)"
-              value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value })}
-            />
-            <textarea
-              className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none resize-none"
-              rows={6}
-              placeholder="Content (supports markdown-like formatting)"
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-            />
-            <input
-              className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none"
-              placeholder="Author name"
-              value={form.author}
-              onChange={(e) => setForm({ ...form, author: e.target.value })}
-            />
-            <input
-              className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none"
-              placeholder="Featured image URL"
-              value={form.featuredImage}
-              onChange={(e) => setForm({ ...form, featuredImage: e.target.value })}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <select
-                className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none"
-                value={form.category}
-                onChange={(e) =>
-                  setForm({ ...form, category: e.target.value as StoryCategory })
-                }
-              >
-                {storyCategories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="status"
-                    checked={form.status === "draft"}
-                    onChange={() => setForm({ ...form, status: "draft" })}
-                    className="accent-[var(--navy)]"
-                  />
-                  <span className="text-sm text-text">Draft</span>
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="status"
-                    checked={form.status === "published"}
-                    onChange={() => setForm({ ...form, status: "published" })}
-                    className="accent-[var(--navy)]"
-                  />
-                  <span className="text-sm text-text">Published</span>
-                </label>
-              </div>
-            </div>
-            <textarea
-              className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none resize-none"
-              rows={2}
-              placeholder="Excerpt (short preview text)"
-              value={form.excerpt}
-              onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
-            />
-            <Button primary small onClick={handleSave} className={saving ? "opacity-60" : ""}>
-              {saving ? "Saving..." : editingId ? "Update Story" : "Create Story"}
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {/* Stories List */}
-      {stories.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-4xl mb-3">&#128214;</p>
-          <h3 className="text-lg font-bold text-text mb-1">No stories yet</h3>
-          <p className="text-sm text-text-muted">Create your first story above.</p>
+      {/* Stories grid */}
+      {loading ? (
+        <div className="py-12 text-center" style={{ color: "var(--text-muted)" }}>Loading…</div>
+      ) : stories.length === 0 ? (
+        <div
+          className="rounded-xl border py-12 text-center"
+          style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}
+        >
+          <p style={{ color: "var(--text-muted)" }}>No stories found.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {stories.map((s) => {
-            const cat = s.community || (s.type === "spotlight" ? "Community Spotlight" : "Success Story");
-            const isPublished = s.status === "active";
-            return (
-              <Card key={s.id} style={{ padding: 16 }}>
-                <div className="flex gap-4 items-start">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="font-semibold text-text text-sm truncate m-0">
-                        {s.title}
-                      </p>
-                      <Badge
-                        text={cat}
-                        color={categoryColor(cat)}
-                        small
-                      />
-                      <Badge
-                        text={isPublished ? "Published" : "Draft"}
-                        color={isPublished ? "var(--green)" : "var(--text-muted)"}
-                        bg={isPublished ? "var(--green-soft)" : undefined}
-                        small
-                      />
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-text-muted">
-                      {s.author && <span>By {s.author}</span>}
-                      {s.slug && <span>/{s.slug}</span>}
-                    </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {stories.map((story) => (
+            <div
+              key={story.id}
+              className="overflow-hidden rounded-xl border"
+              style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}
+            >
+              {/* Thumbnail */}
+              <div className="relative h-40 w-full bg-zinc-200 dark:bg-zinc-700">
+                {story.heroPhoto ? (
+                  <img src={story.heroPhoto} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center" style={{ color: "var(--text-muted)" }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <path d="m21 15-5-5L5 21" />
+                    </svg>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <button
-                      onClick={() => handleEdit(s)}
-                      className="text-xs px-2 py-1 rounded-lg bg-bg border border-border text-text-sec hover:bg-card cursor-pointer"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(s.id)}
-                      className="text-xs px-2 py-1 rounded-lg text-red-500 bg-bg border border-border hover:bg-red-50 cursor-pointer"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                )}
+                <span
+                  className={cn(
+                    "absolute right-2 top-2 rounded-full px-2 py-0.5 text-xs font-medium",
+                    story.status === "published"
+                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                  )}
+                >
+                  {story.status}
+                </span>
+              </div>
+
+              <div className="space-y-2 p-4">
+                <h3 className="font-semibold leading-tight">{story.title || "Untitled"}</h3>
+                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                  {story.personName}{story.nation ? ` · ${story.nation}` : ""}
+                </p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : ""}
+                </p>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => router.push(`/admin/stories/${story.id}/edit`)}
+                    className="rounded-md border px-3 py-1 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    style={{ borderColor: "var(--card-border)" }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(story.id)}
+                    className="rounded-md px-3 py-1 text-sm text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    Delete
+                  </button>
                 </div>
-              </Card>
-            );
-          })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

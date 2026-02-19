@@ -16,3 +16,8 @@ export function ensureTagsArray(tags: unknown): string[] {
   if (Array.isArray(tags)) return tags.map(String);
   return [];
 }
+
+/** Merge class names, filtering out falsy values. */
+export function cn(...classes: (string | undefined | null | false)[]): string {
+  return classes.filter(Boolean).join(" ");
+}

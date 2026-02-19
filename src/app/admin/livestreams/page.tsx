@@ -1,310 +1,182 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import AdminRoute from "@/components/AdminRoute";
-import AppShell from "@/components/AppShell";
-import Card from "@/components/Card";
-import Button from "@/components/Button";
-import Badge from "@/components/Badge";
-import PageSkeleton from "@/components/PageSkeleton";
-import { useToast } from "@/lib/toast-context";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  query,
-  orderBy,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useEffect, useState, useCallback } from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 interface Livestream {
   id: string;
   title: string;
-  videoUrl: string;
-  thumbnailUrl: string;
-  description: string;
-  scheduledDate: string;
-  status: "scheduled" | "live" | "archived";
+  thumbnail: string;
+  category: string;
+  duration: string;
   viewCount: number;
-  createdAt: unknown;
+  status: "live" | "archived" | "ended";
+  startedAt: string;
 }
 
-const emptyForm = {
-  title: "",
-  videoUrl: "",
-  thumbnailUrl: "",
-  description: "",
-  scheduledDate: "",
-  status: "scheduled" as Livestream["status"],
+const CATEGORIES = ["Pow Wow", "Interview", "Conference", "Indian Relay", "Governance"];
+const TABS = ["All", "Live Now", "Archived"] as const;
+
+const categoryColors: Record<string, string> = {
+  "Pow Wow": "bg-orange-500/20 text-orange-300",
+  Interview: "bg-blue-500/20 text-blue-300",
+  Conference: "bg-purple-500/20 text-purple-300",
+  "Indian Relay": "bg-green-500/20 text-green-300",
+  Governance: "bg-yellow-500/20 text-yellow-300",
 };
 
-export default function AdminLivestreamsPage() {
-  return (
-    <AdminRoute>
-      <AppShell>
-      <div className="min-h-screen bg-bg">
-        <LivestreamManager />
-      </div>
-    </AppShell>
-    </AdminRoute>
-  );
-}
-
-function LivestreamManager() {
+export default function LivestreamsPage() {
+  const { user } = useAuth();
   const [streams, setStreams] = useState<Livestream[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(emptyForm);
-  const [saving, setSaving] = useState(false);
-  const { showToast } = useToast();
+  const [tab, setTab] = useState<(typeof TABS)[number]>("All");
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const fetchStreams = useCallback(async () => {
     try {
-      const q = query(collection(db, "livestreams"), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      setStreams(
-        snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Livestream)
-      );
-    } catch (err) {
-      console.error("Failed to load livestreams:", err);
+      const statusParam = tab === "Live Now" ? "live" : tab === "Archived" ? "archived" : "";
+      const res = await fetch(`/api/admin/livestreams${statusParam ? `?status=${statusParam}` : ""}`, {
+        headers: { Authorization: `Bearer ${await user?.getIdToken()}` },
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setStreams(data.livestreams || []);
+    } catch {
+      toast.error("Failed to load livestreams");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tab, user]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    fetchStreams();
+  }, [fetchStreams]);
 
-  const handleSave = async () => {
-    if (!form.title.trim()) return;
-    setSaving(true);
+  const doAction = async (action: string, id: string, extra?: Record<string, string>) => {
     try {
-      if (editingId) {
-        await updateDoc(doc(db, "livestreams", editingId), { ...form });
-        showToast("Livestream updated");
-      } else {
-        await addDoc(collection(db, "livestreams"), {
-          ...form,
-          viewCount: 0,
-          createdAt: serverTimestamp(),
-        });
-        showToast("Livestream created");
-      }
-      setForm(emptyForm);
-      setShowForm(false);
-      setEditingId(null);
-      await load();
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to save livestream", "error");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleEdit = (s: Livestream) => {
-    setForm({
-      title: s.title,
-      videoUrl: s.videoUrl,
-      thumbnailUrl: s.thumbnailUrl,
-      description: s.description,
-      scheduledDate: s.scheduledDate,
-      status: s.status,
-    });
-    setEditingId(s.id);
-    setShowForm(true);
-  };
-
-  const handleArchive = async (id: string) => {
-    try {
-      await updateDoc(doc(db, "livestreams", id), { status: "archived" });
-      showToast("Livestream archived");
-      await load();
+      const res = await fetch("/api/admin/livestreams", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${await user?.getIdToken()}`,
+        },
+        body: JSON.stringify({ action, id, ...extra }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(action === "remove" ? "Removed" : action === "archive" ? "Archived" : action === "restore" ? "Restored" : "Updated");
+      fetchStreams();
     } catch {
-      showToast("Failed to archive", "error");
+      toast.error("Action failed");
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this livestream?")) return;
-    try {
-      await deleteDoc(doc(db, "livestreams", id));
-      showToast("Livestream deleted");
-      await load();
-    } catch {
-      showToast("Failed to delete", "error");
+  const confirmRemove = (id: string) => {
+    if (window.confirm("Remove this livestream permanently?")) {
+      doAction("remove", id);
     }
-  };
-
-  if (loading) return <PageSkeleton variant="grid" />;
-
-  const total = streams.length;
-  const active = streams.filter((s) => s.status === "live" || s.status === "scheduled").length;
-  const archived = streams.filter((s) => s.status === "archived").length;
-
-  const statusColor = (s: string) => {
-    if (s === "live") return "#EF4444";
-    if (s === "scheduled") return "#3B82F6";
-    return "var(--text-muted)";
   };
 
   return (
-    <div className="max-w-[1000px] mx-auto px-4 py-6 md:px-10 md:py-8">
-      <Link href="/admin" className="text-sm text-text-sec hover:underline mb-4 block">
-        &larr; Back to Admin
-      </Link>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-2xl font-extrabold text-text">Livestreams</h2>
-        <Button
-          primary
-          small
-          onClick={() => {
-            setForm(emptyForm);
-            setEditingId(null);
-            setShowForm(!showForm);
-          }}
-        >
-          {showForm ? "Cancel" : "+ Add Livestream"}
-        </Button>
-      </div>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <h1 className="text-2xl font-bold">Livestream Management</h1>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        {[
-          { label: "Total Streams", value: total },
-          { label: "Active", value: active },
-          { label: "Archived", value: archived },
-        ].map((s, i) => (
-          <Card key={i} style={{ padding: 16 }}>
-            <p className="text-2xl font-extrabold text-text">{s.value}</p>
-            <p className="text-xs text-text-muted">{s.label}</p>
-          </Card>
+      {/* Tabs */}
+      <div className="flex gap-2">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            onClick={() => { setTab(t); setLoading(true); }}
+            className={cn(
+              "rounded-lg px-4 py-2 text-sm font-medium transition",
+              tab === t ? "bg-white/10 text-white" : "text-[var(--text-muted)] hover:text-white"
+            )}
+          >
+            {t}
+          </button>
         ))}
       </div>
 
-      {/* Form */}
-      {showForm && (
-        <Card className="mb-6" style={{ padding: 20 }}>
-          <h3 className="text-base font-bold text-text mb-4">
-            {editingId ? "Edit Livestream" : "New Livestream"}
-          </h3>
-          <div className="flex flex-col gap-3">
-            <input
-              className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none"
-              placeholder="Title"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-            <input
-              className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none"
-              placeholder="Video URL (YouTube/Vimeo embed)"
-              value={form.videoUrl}
-              onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-            />
-            <input
-              className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none"
-              placeholder="Thumbnail URL"
-              value={form.thumbnailUrl}
-              onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
-            />
-            <textarea
-              className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none resize-none"
-              rows={3}
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="date"
-                className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none"
-                value={form.scheduledDate}
-                onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })}
-              />
-              <select
-                className="w-full px-3 py-2 rounded-xl bg-bg border border-border text-text text-sm focus:outline-none"
-                value={form.status}
-                onChange={(e) =>
-                  setForm({ ...form, status: e.target.value as Livestream["status"] })
-                }
-              >
-                <option value="scheduled">Scheduled</option>
-                <option value="live">Live</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-            <Button primary small onClick={handleSave} className={saving ? "opacity-60" : ""}>
-              {saving ? "Saving..." : editingId ? "Update" : "Create"}
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {/* List */}
-      {streams.length === 0 ? (
-        <p className="text-text-muted text-sm text-center py-10">No livestreams yet.</p>
+      {loading ? (
+        <p className="text-[var(--text-muted)]">Loading...</p>
+      ) : streams.length === 0 ? (
+        <p className="text-[var(--text-muted)]">No livestreams found.</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {streams.map((s) => (
-            <Card key={s.id} style={{ padding: 16 }}>
-              <div className="flex gap-4 items-start">
-                {/* Thumbnail placeholder */}
-                <div
-                  className="w-24 h-16 rounded-lg bg-bg flex items-center justify-center text-text-muted text-xl shrink-0"
-                  style={{ border: "1px solid var(--border)" }}
-                >
-                  {s.thumbnailUrl ? (
-                    <img
-                      src={s.thumbnailUrl}
-                      alt=""
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    "\u25B6"
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold text-text text-sm truncate">{s.title}</p>
-                    <Badge text={s.status} color={statusColor(s.status)} small />
+            <div
+              key={s.id}
+              className={cn(
+                "rounded-xl border p-4 space-y-3",
+                s.status === "live" ? "border-red-500/50 bg-red-500/5" : "border-[var(--card-border)] bg-[var(--card-bg)]"
+              )}
+            >
+              {/* Thumbnail */}
+              <div className="relative aspect-video rounded-lg bg-black/30 overflow-hidden">
+                {s.thumbnail && (
+                  <img src={s.thumbnail} alt={s.title} className="h-full w-full object-cover" />
+                )}
+                {s.status === "live" && (
+                  <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
+                    <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+                    LIVE
                   </div>
-                  <p className="text-xs text-text-muted mb-1 line-clamp-1">{s.description}</p>
-                  <div className="flex items-center gap-3 text-xs text-text-muted">
-                    <span>{s.scheduledDate || "No date"}</span>
-                    <span>{s.viewCount ?? 0} views</span>
-                  </div>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    onClick={() => handleEdit(s)}
-                    className="text-xs px-2 py-1 rounded-lg bg-bg border border-border text-text-sec hover:bg-card cursor-pointer"
-                  >
-                    Edit
-                  </button>
-                  {s.status !== "archived" && (
-                    <button
-                      onClick={() => handleArchive(s.id)}
-                      className="text-xs px-2 py-1 rounded-lg bg-bg border border-border text-text-sec hover:bg-card cursor-pointer"
-                    >
-                      Archive
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleDelete(s.id)}
-                    className="text-xs px-2 py-1 rounded-lg text-red-500 bg-bg border border-border hover:bg-red-50 cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </div>
+                )}
               </div>
-            </Card>
+
+              <h3 className="font-semibold truncate">{s.title}</h3>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Category badge */}
+                {editingCategory === s.id ? (
+                  <select
+                    className="rounded bg-black/30 border border-[var(--card-border)] px-2 py-1 text-xs"
+                    defaultValue={s.category}
+                    onChange={(e) => {
+                      doAction("update-category", s.id, { category: e.target.value });
+                      setEditingCategory(null);
+                    }}
+                    onBlur={() => setEditingCategory(null)}
+                    autoFocus
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <button
+                    onClick={() => setEditingCategory(s.id)}
+                    className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", categoryColors[s.category] || "bg-white/10 text-white")}
+                    title="Click to change category"
+                  >
+                    {s.category}
+                  </button>
+                )}
+
+                <span className="text-xs text-[var(--text-muted)]">{s.duration}</span>
+                <span className="text-xs text-[var(--text-muted)] ml-auto flex items-center gap-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  {s.viewCount.toLocaleString()}
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-1">
+                {s.status === "archived" ? (
+                  <button onClick={() => doAction("restore", s.id)} className="rounded bg-green-600/20 px-3 py-1 text-xs text-green-300 hover:bg-green-600/30">
+                    Restore
+                  </button>
+                ) : (
+                  <button onClick={() => doAction("archive", s.id)} className="rounded bg-yellow-600/20 px-3 py-1 text-xs text-yellow-300 hover:bg-yellow-600/30">
+                    Archive
+                  </button>
+                )}
+                <button onClick={() => confirmRemove(s.id)} className="rounded bg-red-600/20 px-3 py-1 text-xs text-red-300 hover:bg-red-600/30">
+                  Remove
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}

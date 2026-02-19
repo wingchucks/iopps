@@ -1,217 +1,336 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import AdminRoute from "@/components/AdminRoute";
-import AppShell from "@/components/AppShell";
-import Card from "@/components/Card";
-import Badge from "@/components/Badge";
-import PageSkeleton from "@/components/PageSkeleton";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import type { Subscription } from "@/lib/firestore/subscriptions";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
-export default function AdminPaymentsPage() {
-  return (
-    <AdminRoute>
-      <AppShell>
-      <div className="min-h-screen bg-bg">
-        <PaymentsDashboard />
-      </div>
-    </AppShell>
-    </AdminRoute>
-  );
+interface Subscription {
+  id: string;
+  name: string;
+  plan: string;
+  stripeSubscriptionId: string | null;
+  stripeCustomerId: string | null;
+  subscriptionStatus: string;
+  subscriptionStartDate: string | null;
+  subscriptionEndDate: string | null;
+  email: string | null;
 }
 
-function PaymentsDashboard() {
-  const [subs, setSubs] = useState<(Subscription & { orgName?: string })[]>([]);
+interface OneTimePayment {
+  id: string;
+  title: string;
+  employer: string;
+  paymentType: string;
+  amount: number | null;
+  paidAt: string | null;
+  status: string;
+}
+
+interface Summary {
+  monthlyRevenue: number;
+  activeSubscriptions: number;
+  expiredSubscriptions: number;
+  oneTimePayments: number;
+}
+
+type Tab = "active" | "expired" | "onetime";
+
+const PLAN_LABELS: Record<string, string> = {
+  essential: "Essential — $1,250/yr",
+  professional: "Professional — $2,500/yr",
+  school: "School — $5,500/yr",
+};
+
+function maskId(id: string | null): string {
+  if (!id) return "—";
+  if (id.length <= 8) return id;
+  return id.slice(0, 4) + "••••" + id.slice(-4);
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-CA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export default function PaymentsPage() {
+  const { user } = useAuth();
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [active, setActive] = useState<Subscription[]>([]);
+  const [expired, setExpired] = useState<Subscription[]>([]);
+  const [oneTime, setOneTime] = useState<OneTimePayment[]>([]);
+  const [tab, setTab] = useState<Tab>("active");
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    try {
-      const q = query(collection(db, "subscriptions"), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Subscription & { orgName?: string });
-      setSubs(data);
-    } catch (err) {
-      console.error("Failed to load subscriptions:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!user) return;
+    (async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch("/api/admin/payments", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        setSummary(data.summary);
+        setActive(data.active);
+        setExpired(data.expired);
+        setOneTime(data.oneTime);
+      } catch {
+        toast.error("Failed to load payment data");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [user]);
 
-  if (loading) return <PageSkeleton variant="grid" />;
+  const tabs: { key: Tab; label: string }[] = [
+    { key: "active", label: `Active Subs (${active.length})` },
+    { key: "expired", label: `Expired (${expired.length})` },
+    { key: "onetime", label: `One-Time (${oneTime.length})` },
+  ];
 
-  const now = new Date();
-  const thisMonth = subs.filter((s) => {
-    if (!s.createdAt) return false;
-    const d = new Date((s.createdAt as { seconds: number }).seconds * 1000);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  });
-  const thisYear = subs.filter((s) => {
-    if (!s.createdAt) return false;
-    const d = new Date((s.createdAt as { seconds: number }).seconds * 1000);
-    return d.getFullYear() === now.getFullYear();
-  });
-
-  const monthRevenue = thisMonth.reduce((sum, s) => sum + (s.totalAmount || s.amount || 0), 0);
-  const yearRevenue = thisYear.reduce((sum, s) => sum + (s.totalAmount || s.amount || 0), 0);
-  const totalRevenue = subs.reduce((sum, s) => sum + (s.totalAmount || s.amount || 0), 0);
-  const activeSubs = subs.filter((s) => s.status === "active");
-
-  const statusColor = (st: string) => {
-    if (st === "active") return "#22C55E";
-    if (st === "pending") return "#F59E0B";
-    return "#EF4444";
-  };
-
-  // Plan breakdown
-  const planCounts: Record<string, number> = {};
-  subs.forEach((s) => {
-    planCounts[s.plan] = (planCounts[s.plan] || 0) + 1;
-  });
-  const maxPlanCount = Math.max(...Object.values(planCounts), 1);
-
-  const formatDate = (ts: unknown) => {
-    if (!ts) return "\u2014";
-    const seconds = (ts as { seconds: number }).seconds;
-    if (!seconds) return "\u2014";
-    return new Date(seconds * 1000).toLocaleDateString();
-  };
-
-  const formatCurrency = (n: number) =>
-    "$" + n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-6">
+        <h1 className="text-2xl font-bold">Payments & Revenue</h1>
+        <p className="text-[var(--text-muted)]">Loading…</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-[1000px] mx-auto px-4 py-6 md:px-10 md:py-8">
-      <Link href="/admin" className="text-sm text-text-sec hover:underline mb-4 block">
-        &larr; Back to Admin
-      </Link>
-      <h2 className="text-2xl font-extrabold text-text mb-5">Payments &amp; Revenue</h2>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <h1 className="text-2xl font-bold">Payments & Revenue</h1>
 
-      {/* Revenue Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-7">
+      {/* Summary cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "This Month", value: formatCurrency(monthRevenue) },
-          { label: "This Year", value: formatCurrency(yearRevenue) },
-          { label: "Total Revenue", value: formatCurrency(totalRevenue) },
-          { label: "Active Subscriptions", value: String(activeSubs.length) },
-        ].map((s, i) => (
-          <Card key={i} style={{ padding: 16 }}>
-            <p className="text-2xl font-extrabold text-text">{s.value}</p>
-            <p className="text-xs text-text-muted">{s.label}</p>
-          </Card>
+          {
+            label: "Monthly Revenue",
+            value: `$${(summary?.monthlyRevenue ?? 0).toLocaleString("en-CA", { minimumFractionDigits: 0 })}`,
+            color: "text-green-500",
+          },
+          {
+            label: "Active Subscriptions",
+            value: summary?.activeSubscriptions ?? 0,
+            color: "text-accent",
+          },
+          {
+            label: "Expired / Lapsed",
+            value: summary?.expiredSubscriptions ?? 0,
+            color: "text-red-500",
+          },
+          {
+            label: "One-Time Payments",
+            value: summary?.oneTimePayments ?? 0,
+            color: "text-[var(--text-muted)]",
+          },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className="rounded-xl border border-[var(--card-border)] bg-surface p-5"
+          >
+            <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+              {card.label}
+            </p>
+            <p className={cn("mt-1 text-2xl font-bold", card.color)}>
+              {card.value}
+            </p>
+          </div>
         ))}
       </div>
 
-      {/* Subscriptions Table */}
-      <Card className="mb-6" style={{ padding: 0 }}>
-        <div className="px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-          <h3 className="text-base font-bold text-text">Subscriptions</h3>
-        </div>
-        {subs.length === 0 ? (
-          <p className="text-text-muted text-sm text-center py-8">No subscriptions found.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-text-muted" style={{ borderBottom: "1px solid var(--border)" }}>
-                  <th className="px-5 py-3 font-medium">Organization</th>
-                  <th className="px-3 py-3 font-medium">Plan</th>
-                  <th className="px-3 py-3 font-medium">Status</th>
-                  <th className="px-3 py-3 font-medium">Amount</th>
-                  <th className="px-3 py-3 font-medium">Start</th>
-                  <th className="px-3 py-3 font-medium">Expiry</th>
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-lg border border-[var(--card-border)] bg-surface p-1">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={cn(
+              "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              tab === t.key
+                ? "bg-accent text-white"
+                : "text-[var(--text-muted)] hover:text-foreground"
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tables */}
+      <div className="overflow-x-auto rounded-xl border border-[var(--card-border)] bg-surface">
+        {tab === "active" && (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="px-4 py-3">Organization</th>
+                <th className="px-4 py-3">Plan</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Start Date</th>
+                <th className="px-4 py-3">Renewal</th>
+                <th className="px-4 py-3">Stripe Sub ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {active.map((s) => (
+                <tr
+                  key={s.id}
+                  className={cn(
+                    "border-b border-[var(--card-border)] transition-colors hover:bg-[var(--card-bg)]",
+                    s.plan?.toLowerCase() === "school" && "bg-amber-500/5"
+                  )}
+                >
+                  <td className="px-4 py-3 font-medium">{s.name}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={cn(
+                        "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+                        s.plan?.toLowerCase() === "school"
+                          ? "bg-amber-500/15 text-amber-600"
+                          : s.plan?.toLowerCase() === "professional"
+                          ? "bg-blue-500/15 text-blue-500"
+                          : "bg-green-500/15 text-green-600"
+                      )}
+                    >
+                      {PLAN_LABELS[s.plan?.toLowerCase()] || s.plan}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex items-center gap-1.5 text-green-500">
+                      <span className="h-2 w-2 rounded-full bg-green-500" />
+                      {s.subscriptionStatus}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-[var(--text-muted)]">
+                    {formatDate(s.subscriptionStartDate)}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--text-muted)]">
+                    {formatDate(s.subscriptionEndDate)}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
+                    {maskId(s.stripeSubscriptionId)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {subs.map((s, i) => (
-                  <tr
-                    key={s.id}
-                    className="text-text"
-                    style={{
-                      background: i % 2 === 0 ? "transparent" : "var(--bg)",
-                      borderBottom: "1px solid var(--border)",
-                    }}
-                  >
-                    <td className="px-5 py-3 font-medium">{s.orgName || s.orgId}</td>
-                    <td className="px-3 py-3 capitalize">{s.plan}</td>
-                    <td className="px-3 py-3">
-                      <Badge text={s.status} color={statusColor(s.status)} small />
-                    </td>
-                    <td className="px-3 py-3">{formatCurrency(s.totalAmount || s.amount || 0)}</td>
-                    <td className="px-3 py-3 text-text-muted">{formatDate(s.createdAt)}</td>
-                    <td className="px-3 py-3 text-text-muted">{formatDate(s.expiresAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-
-      {/* Recent Transactions */}
-      <Card className="mb-6" style={{ padding: 0 }}>
-        <div className="px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-          <h3 className="text-base font-bold text-text">Recent Transactions</h3>
-        </div>
-        {subs.length === 0 ? (
-          <p className="text-text-muted text-sm text-center py-8">No transactions yet.</p>
-        ) : (
-          <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-            {subs.slice(0, 10).map((s) => (
-              <div key={s.id} className="flex items-center justify-between px-5 py-3">
-                <div>
-                  <p className="text-sm font-medium text-text">
-                    {s.orgName || s.orgId} &mdash; {s.plan}
-                  </p>
-                  <p className="text-xs text-text-muted">{formatDate(s.createdAt)}</p>
-                </div>
-                <p className="text-sm font-semibold text-text">
-                  {formatCurrency(s.totalAmount || s.amount || 0)}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      {/* Plan Breakdown */}
-      {Object.keys(planCounts).length > 0 && (
-        <Card style={{ padding: 20 }}>
-          <h3 className="text-base font-bold text-text mb-4">Plan Breakdown</h3>
-          <div className="flex flex-col gap-3">
-            {Object.entries(planCounts)
-              .sort((a, b) => b[1] - a[1])
-              .map(([plan, count]) => (
-                <div key={plan}>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-text capitalize">{plan}</span>
-                    <span className="text-text-muted">{count}</span>
-                  </div>
-                  <div className="w-full h-3 rounded-full bg-bg overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{
-                        width: `${(count / maxPlanCount) * 100}%`,
-                        background: "var(--navy)",
-                      }}
-                    />
-                  </div>
-                </div>
               ))}
-          </div>
-        </Card>
-      )}
+              {active.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-[var(--text-muted)]">
+                    No active subscriptions found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+
+        {tab === "expired" && (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="px-4 py-3">Organization</th>
+                <th className="px-4 py-3">Plan</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Expired</th>
+                <th className="px-4 py-3">Stripe Sub ID</th>
+                <th className="px-4 py-3">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expired.map((s) => (
+                <tr
+                  key={s.id}
+                  className="border-b border-[var(--card-border)] transition-colors hover:bg-[var(--card-bg)]"
+                >
+                  <td className="px-4 py-3 font-medium">{s.name}</td>
+                  <td className="px-4 py-3 text-[var(--text-muted)]">
+                    {PLAN_LABELS[s.plan?.toLowerCase()] || s.plan}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex items-center gap-1.5 text-red-500">
+                      <span className="h-2 w-2 rounded-full bg-red-500" />
+                      {s.subscriptionStatus}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-[var(--text-muted)]">
+                    {formatDate(s.subscriptionEndDate)}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
+                    {maskId(s.stripeSubscriptionId)}
+                  </td>
+                  <td className="px-4 py-3">
+                    {s.email && (
+                      <a
+                        href={`mailto:${s.email}`}
+                        className="rounded-md bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20"
+                      >
+                        Contact
+                      </a>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {expired.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-[var(--text-muted)]">
+                    No expired subscriptions
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+
+        {tab === "onetime" && (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="px-4 py-3">Job Title</th>
+                <th className="px-4 py-3">Employer</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Paid</th>
+                <th className="px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {oneTime.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-b border-[var(--card-border)] transition-colors hover:bg-[var(--card-bg)]"
+                >
+                  <td className="px-4 py-3 font-medium">{p.title}</td>
+                  <td className="px-4 py-3 text-[var(--text-muted)]">{p.employer}</td>
+                  <td className="px-4 py-3 text-[var(--text-muted)]">{p.paymentType}</td>
+                  <td className="px-4 py-3">
+                    {p.amount ? `$${p.amount.toLocaleString()}` : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--text-muted)]">
+                    {formatDate(p.paidAt)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="inline-block rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-600">
+                      {p.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {oneTime.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-[var(--text-muted)]">
+                    No one-time payments found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
