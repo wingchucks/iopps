@@ -319,8 +319,8 @@ export default function AdminConferencesPage() {
                   </thead>
                   <tbody>
                     {filteredConferences.map((conf) => {
-                      const statusBadge = STATUS_BADGE[conf.status];
-                      const paymentBadge = PAYMENT_BADGE[conf.payment];
+                      const statusBadge = STATUS_BADGE[conf.status] || { label: conf.status || "Unknown", variant: "default" as const };
+                      const paymentBadge = PAYMENT_BADGE[conf.payment] || { label: conf.payment || "Unknown", variant: "default" as const };
                       return (
                         <tr
                           key={conf.id}

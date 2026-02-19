@@ -427,7 +427,7 @@ export default function AdminJobsPage() {
                     </thead>
                     <tbody>
                       {filteredJobs.map((job) => {
-                        const badge = STATUS_BADGE[job.status];
+                        const badge = STATUS_BADGE[job.status] || { label: job.status || "Unknown", variant: "default" as const };
                         return (
                           <tr
                             key={job.id}

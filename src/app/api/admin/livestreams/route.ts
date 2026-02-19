@@ -14,14 +14,24 @@ export async function GET(request: NextRequest) {
 
   const status = request.nextUrl.searchParams.get("status");
 
-  let query: FirebaseFirestore.Query = adminDb.collection("livestreams").orderBy("startedAt", "desc");
-  if (status === "live") query = query.where("status", "==", "live");
-  else if (status === "archived") query = query.where("status", "==", "archived");
+  try {
+    let query: FirebaseFirestore.Query = adminDb.collection("livestreams");
+    if (status === "live") query = query.where("status", "==", "live");
+    else if (status === "archived") query = query.where("status", "==", "archived");
 
-  const snap = await query.limit(100).get();
-  const livestreams = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    // Try with ordering; fall back without if composite index is missing
+    let snap;
+    try {
+      snap = await query.orderBy("startedAt", "desc").limit(100).get();
+    } catch {
+      snap = await query.limit(100).get();
+    }
 
-  return NextResponse.json({ livestreams });
+    const livestreams = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return NextResponse.json({ livestreams });
+  } catch {
+    return NextResponse.json({ livestreams: [] });
+  }
 }
 
 export async function POST(request: NextRequest) {

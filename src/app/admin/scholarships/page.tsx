@@ -288,7 +288,7 @@ export default function AdminScholarshipsPage() {
                   </thead>
                   <tbody>
                     {filteredScholarships.map((sch) => {
-                      const badge = STATUS_BADGE[sch.status];
+                      const badge = STATUS_BADGE[sch.status] || { label: sch.status || "Unknown", variant: "default" as const };
                       return (
                         <tr
                           key={sch.id}
