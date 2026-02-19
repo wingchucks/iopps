@@ -14,6 +14,9 @@ interface Partner {
   visible: boolean;
   spotlight: boolean;
   order: number;
+  hires: number;
+  applications: number;
+  views: number;
 }
 
 export default function PartnersPage() {
@@ -21,6 +24,8 @@ export default function PartnersPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingLogo, setEditingLogo] = useState<string | null>(null);
+  const [newLogoUrl, setNewLogoUrl] = useState("");
   const [modalForm, setModalForm] = useState({
     name: "",
     logoUrl: "",
@@ -28,6 +33,7 @@ export default function PartnersPage() {
     tier: "Standard" as "Premium" | "Standard",
   });
   const [saving, setSaving] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const fetchPartners = async () => {
     try {
@@ -46,6 +52,7 @@ export default function PartnersPage() {
 
   useEffect(() => {
     if (user) fetchPartners();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleAdd = async () => {
@@ -84,8 +91,55 @@ export default function PartnersPage() {
       setPartners((prev) =>
         prev.map((p) => (p.id === id ? { ...p, [field]: !current } : p))
       );
+      toast.success(field === "spotlight"
+        ? (!current ? "Spotlight enabled" : "Spotlight disabled")
+        : (!current ? "Now visible" : "Now hidden")
+      );
     } catch {
       toast.error("Failed to update");
+    }
+  };
+
+  const updateLogo = async (id: string) => {
+    if (!newLogoUrl.trim()) {
+      toast.error("Please enter a URL");
+      return;
+    }
+    setActionLoading(id);
+    try {
+      const token = await user?.getIdToken();
+      await fetch(`/api/admin/partners/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ logoUrl: newLogoUrl }),
+      });
+      setPartners((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, logoUrl: newLogoUrl } : p))
+      );
+      setEditingLogo(null);
+      setNewLogoUrl("");
+      toast.success("Logo updated");
+    } catch {
+      toast.error("Failed to update logo");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const updateTier = async (id: string, newTier: "Premium" | "Standard") => {
+    try {
+      const token = await user?.getIdToken();
+      await fetch(`/api/admin/partners/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tier: newTier }),
+      });
+      setPartners((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, tier: newTier } : p))
+      );
+      toast.success("Tier updated");
+    } catch {
+      toast.error("Failed to update tier");
     }
   };
 
@@ -134,6 +188,13 @@ export default function PartnersPage() {
     borderColor: "var(--input-border)",
   };
 
+  // Summary stats
+  const premiumCount = partners.filter((p) => p.tier === "Premium").length;
+  const spotlightPartner = partners.find((p) => p.spotlight);
+  const totalHires = partners.reduce((s, p) => s + p.hires, 0);
+  const totalApplications = partners.reduce((s, p) => s + p.applications, 0);
+  const totalViews = partners.reduce((s, p) => s + p.views, 0);
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
@@ -158,8 +219,33 @@ export default function PartnersPage() {
         </button>
       </div>
 
+      {/* Impact metrics */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Partners</p>
+          <p className="mt-1 text-xl font-bold text-accent">{partners.length}</p>
+          <p className="mt-0.5 text-xs text-[var(--text-muted)]">{premiumCount} premium</p>
+        </div>
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Total Hires</p>
+          <p className="mt-1 text-xl font-bold text-green-500">{totalHires.toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Applications</p>
+          <p className="mt-1 text-xl font-bold text-blue-500">{totalApplications.toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Page Views</p>
+          <p className="mt-1 text-xl font-bold text-purple-500">{totalViews.toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-amber-400">Spotlight</p>
+          <p className="mt-1 text-sm font-bold text-amber-300">{spotlightPartner?.name || "None"}</p>
+        </div>
+      </div>
+
       {loading ? (
-        <div className="py-12 text-center" style={{ color: "var(--text-muted)" }}>Loading…</div>
+        <div className="py-12 text-center" style={{ color: "var(--text-muted)" }}>Loading...</div>
       ) : partners.length === 0 ? (
         <div
           className="rounded-xl border py-12 text-center"
@@ -172,8 +258,12 @@ export default function PartnersPage() {
           {partners.map((partner, index) => (
             <div
               key={partner.id}
-              className="flex items-center gap-4 rounded-xl border p-4"
-              style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}
+              className={cn(
+                "flex items-center gap-4 rounded-xl border p-4",
+                partner.spotlight && "border-amber-500/30 bg-amber-500/5",
+                !partner.visible && "opacity-50"
+              )}
+              style={!partner.spotlight ? { backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" } : undefined}
             >
               {/* Reorder */}
               <div className="flex flex-col gap-1">
@@ -186,6 +276,7 @@ export default function PartnersPage() {
                     <path d="M3 9l4-4 4 4" />
                   </svg>
                 </button>
+                <span className="text-center text-[10px] text-[var(--text-muted)]">{index + 1}</span>
                 <button
                   onClick={() => movePartner(index, "down")}
                   disabled={index === partners.length - 1}
@@ -198,32 +289,52 @@ export default function PartnersPage() {
               </div>
 
               {/* Logo */}
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-700">
-                {partner.logoUrl ? (
-                  <img src={partner.logoUrl} alt="" className="h-full w-full object-contain p-1" />
-                ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--text-muted)" }}>
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <path d="m21 15-5-5L5 21" />
+              <div className="relative group">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-700">
+                  {partner.logoUrl ? (
+                    <img src={partner.logoUrl} alt="" className="h-full w-full object-contain p-1" />
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--text-muted)" }}>
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <path d="m21 15-5-5L5 21" />
+                    </svg>
+                  )}
+                </div>
+                <button
+                  onClick={() => { setEditingLogo(editingLogo === partner.id ? null : partner.id); setNewLogoUrl(partner.logoUrl || ""); }}
+                  className="absolute -bottom-1 -right-1 rounded-full bg-white/10 p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20"
+                  title="Replace logo"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
                   </svg>
-                )}
+                </button>
               </div>
 
               {/* Info */}
               <div className="min-w-0 flex-1">
-                <h3 className="font-semibold">{partner.name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold">{partner.name}</h3>
+                  {partner.spotlight && (
+                    <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-400">
+                      SPOTLIGHT
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
-                  <span
+                  <button
+                    onClick={() => updateTier(partner.id, partner.tier === "Premium" ? "Standard" : "Premium")}
                     className={cn(
-                      "rounded-full px-2 py-0.5 text-xs font-medium",
+                      "rounded-full px-2 py-0.5 text-xs font-medium transition-colors cursor-pointer",
                       partner.tier === "Premium"
-                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-                        : "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400"
+                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50"
+                        : "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600"
                     )}
+                    title="Click to toggle tier"
                   >
                     {partner.tier}
-                  </span>
+                  </button>
                   {partner.websiteUrl && (
                     <a
                       href={partner.websiteUrl}
@@ -234,6 +345,49 @@ export default function PartnersPage() {
                       {partner.websiteUrl.replace(/^https?:\/\//, "")}
                     </a>
                   )}
+                </div>
+
+                {/* Logo URL editor */}
+                {editingLogo === partner.id && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newLogoUrl}
+                      onChange={(e) => setNewLogoUrl(e.target.value)}
+                      placeholder="New logo URL..."
+                      className="flex-1 rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:ring-2"
+                      style={{ ...inputStyle, "--tw-ring-color": "var(--input-focus)" } as React.CSSProperties}
+                    />
+                    <button
+                      onClick={() => updateLogo(partner.id)}
+                      disabled={actionLoading === partner.id}
+                      className="rounded-lg bg-accent/20 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/30 disabled:opacity-50"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => { setEditingLogo(null); setNewLogoUrl(""); }}
+                      className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-[var(--text-muted)] hover:bg-white/15"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+                {/* Impact metrics per partner */}
+                <div className="mt-1.5 flex items-center gap-3 text-xs text-[var(--text-muted)]">
+                  <span className="flex items-center gap-1" title="Hires">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+                    {partner.hires} hires
+                  </span>
+                  <span className="flex items-center gap-1" title="Applications">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    {partner.applications} apps
+                  </span>
+                  <span className="flex items-center gap-1" title="Views">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    {partner.views.toLocaleString()} views
+                  </span>
                 </div>
               </div>
 
@@ -259,7 +413,7 @@ export default function PartnersPage() {
                       : "bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400"
                   )}
                 >
-                  {partner.spotlight ? "★ Spotlight" : "Spotlight"}
+                  {partner.spotlight ? "Spotlight" : "Spotlight"}
                 </button>
               </div>
 
@@ -348,7 +502,7 @@ export default function PartnersPage() {
                 className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                 style={{ backgroundColor: "var(--input-focus)" }}
               >
-                {saving ? "Adding…" : "Add Partner"}
+                {saving ? "Adding..." : "Add Partner"}
               </button>
             </div>
           </div>

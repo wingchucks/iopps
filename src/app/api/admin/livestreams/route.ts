@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     let query: FirebaseFirestore.Query = adminDb.collection("livestreams");
     if (status === "live") query = query.where("status", "==", "live");
     else if (status === "archived") query = query.where("status", "==", "archived");
+    else if (status === "ended") query = query.where("status", "==", "ended");
 
     // Try with ordering; fall back without if composite index is missing
     let snap;
@@ -27,7 +28,21 @@ export async function GET(request: NextRequest) {
       snap = await query.limit(100).get();
     }
 
-    const livestreams = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const livestreams = snap.docs.map((doc) => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        title: d.title || "Untitled",
+        thumbnail: d.thumbnail || "",
+        category: d.category || "Unknown",
+        duration: d.duration || "",
+        viewCount: d.viewCount || d.views || 0,
+        peakViewers: d.peakViewers || d.peakViewCount || 0,
+        status: d.status || "ended",
+        startedAt: d.startedAt?.toDate?.()?.toISOString() || d.startedAt || null,
+        endedAt: d.endedAt?.toDate?.()?.toISOString() || d.endedAt || null,
+      };
+    });
     return NextResponse.json({ livestreams });
   } catch {
     return NextResponse.json({ livestreams: [] });

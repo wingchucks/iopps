@@ -13,8 +13,11 @@ interface UnifiedPost {
   status: string;
   views: number;
   clicks: number;
+  applications: number;
   collection: string;
   archived: boolean;
+  archivedBy?: string;
+  archivedAt?: string;
 }
 
 const COLLECTIONS: { name: string; type: string }[] = [
@@ -48,13 +51,14 @@ export async function GET(request: NextRequest) {
           status: d.status || "active",
           views: d.views || d.viewCount || 0,
           clicks: d.clicks || d.clickCount || 0,
+          applications: d.applications || d.applicationCount || 0,
           collection: col.name,
           archived: d.status === "archived" || d.archived === true,
         });
       });
     }
 
-    // Also fetch archived content
+    // Also fetch archived content from archivedContent collection
     const archivedSnap = await adminDb.collection("archivedContent").limit(200).get();
     archivedSnap.docs.forEach((doc) => {
       const d = doc.data();
@@ -65,10 +69,13 @@ export async function GET(request: NextRequest) {
         author: d.employerName || d.company || d.authorName || "Unknown",
         date: d.createdAt?.toDate?.()?.toISOString() || d.createdAt || null,
         status: "archived",
-        views: d.views || 0,
-        clicks: d.clicks || 0,
+        views: d.views || d.viewCount || 0,
+        clicks: d.clicks || d.clickCount || 0,
+        applications: d.applications || d.applicationCount || 0,
         collection: d.originalCollection || "unknown",
         archived: true,
+        archivedBy: d.archivedBy || undefined,
+        archivedAt: d.archivedAt || undefined,
       });
     });
 
@@ -99,18 +106,23 @@ export async function POST(request: NextRequest) {
 
   try {
     if (action === "archive") {
-      // Move to archivedContent
+      // Soft delete: move data to archivedContent collection
       const docRef = adminDb.collection(collection).doc(postId);
       const doc = await docRef.get();
       if (!doc.exists) {
         return NextResponse.json({ error: "Post not found" }, { status: 404 });
       }
       const data = doc.data()!;
+      const adminUid = auth.decodedToken.uid;
+
       await adminDb.collection("archivedContent").doc(postId).set({
         ...data,
         originalCollection: collection,
+        originalId: postId,
         originalType: COLLECTIONS.find((c) => c.name === collection)?.type || collection,
+        archivedBy: adminUid,
         archivedAt: new Date().toISOString(),
+        data: data, // preserve full original data
       });
       await docRef.update({ status: "archived", archived: true });
 
@@ -118,6 +130,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "restore") {
+      // Restore from archivedContent
       const archivedRef = adminDb.collection("archivedContent").doc(postId);
       const archivedDoc = await archivedRef.get();
       if (!archivedDoc.exists) {

@@ -12,13 +12,30 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Firestore not initialized" }, { status: 500 });
   }
 
-  const snapshot = await adminDb.collection("partners").orderBy("order", "asc").get();
-  const partners = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  try {
+    const snapshot = await adminDb.collection("partners").orderBy("order", "asc").get();
+    const partners = snapshot.docs.map((doc) => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        name: d.name || "",
+        logoUrl: d.logoUrl || "",
+        websiteUrl: d.websiteUrl || "",
+        tier: d.tier || "Standard",
+        visible: d.visible !== false,
+        spotlight: d.spotlight || false,
+        order: d.order || 0,
+        hires: d.hires || d.hireCount || 0,
+        applications: d.applications || d.applicationCount || 0,
+        views: d.views || d.viewCount || 0,
+      };
+    });
 
-  return NextResponse.json({ partners });
+    return NextResponse.json({ partners });
+  } catch (error) {
+    console.error("Error fetching partners:", error);
+    return NextResponse.json({ partners: [] });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -44,6 +61,9 @@ export async function POST(request: NextRequest) {
     visible: true,
     spotlight: false,
     order: maxOrder + 1,
+    hires: 0,
+    applications: 0,
+    views: 0,
     createdAt: now,
     updatedAt: now,
   };
