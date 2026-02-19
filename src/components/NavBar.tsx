@@ -26,6 +26,7 @@ const baseNavLinks = [
 export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasOrg, setHasOrg] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
@@ -35,12 +36,14 @@ export default function NavBar() {
     if (!user) return;
     getMemberProfile(user.uid).then((profile) => {
       if (profile?.orgId) setHasOrg(true);
+      if (profile?.role === "admin" || profile?.role === "moderator") setIsAdmin(true);
     });
   }, [user]);
 
   const navLinks = [
     ...baseNavLinks,
     ...(hasOrg ? [{ href: "/org/dashboard", label: "Dashboard", dot: false }] : []),
+    ...(isAdmin ? [{ href: "/admin", label: "Admin", dot: false }] : []),
     { href: "/profile", label: "Profile", dot: false },
   ];
 
