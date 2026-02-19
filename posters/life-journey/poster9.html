@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .poster {
+      width: 1080px;
+      height: 1080px;
+      background: linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      padding: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(20,184,166,0.3) 0%, transparent 70%);
+      top: -100px;
+      right: -100px;
+      pointer-events: none;
+    }
+    .glow2 {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(20,184,166,0.2) 0%, transparent 70%);
+      bottom: -150px;
+      left: -100px;
+      pointer-events: none;
+    }
+    .quote {
+      color: #f8fafc;
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1.4;
+      max-width: 900px;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+    }
+    .accent {
+      color: #14b8a6;
+      text-shadow: 0 0 40px rgba(20,184,166,0.5);
+    }
+    .logo {
+      position: absolute;
+      bottom: 50px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 1;
+    }
+    .logo img {
+      width: 80px;
+      height: 80px;
+      filter: drop-shadow(0 0 25px rgba(20,184,166,0.5));
+    }
+    .logo-text {
+      color: #14b8a6;
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-shadow: 0 0 30px rgba(20,184,166,0.5);
+    }
+    .line {
+      position: absolute;
+      left: 50px;
+      top: 50px;
+      bottom: 50px;
+      width: 4px;
+      background: linear-gradient(to bottom, transparent, #14b8a6, transparent);
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <div class="glow"></div>
+    <div class="glow2"></div>
+    <div class="line"></div>
+    <p class="quote">
+      Life is a journey, not a race.
+      <br><br>
+      <span class="accent">There's no medal for burning out first.</span>
+    </p>
+    <div class="logo">
+      <img src="../../web/public/logo.png" alt="IOPPS">
+      <span class="logo-text">IOPPS.CA</span>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+name: Build Mobile Apps
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install mobile dependencies
+        working-directory: ./mobile
+        run: npm ci
+
+      - name: Run tests
+        working-directory: ./mobile
+        run: npm test
+
+      - name: Run lint
+        working-directory: ./mobile
+        run: npm run lint
+
+      - name: Type check
+        working-directory: ./mobile
+        run: npm run typecheck
+
+      - name: Build Android APK with EAS
+        working-directory: ./mobile
+        run: eas build --platform android --profile production --non-interactive
+
+      - name: Download Android build artifact
+        working-directory: ./mobile
+        run: |
+          BUILD_URL=$(eas build:list --platform android --limit 1 --json | jq -r '.[0].artifacts.buildUrl')
+          curl -o app-release.apk "$BUILD_URL"
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: android-apk
+          path: mobile/app-release.apk
+          retention-days: 30
+
+  build-ios:
+    name: Build iOS App
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install mobile dependencies
+        working-directory: ./mobile
+        run: npm ci
+
+      - name: Run tests
+        working-directory: ./mobile
+        run: npm test
+
+      - name: Run lint
+        working-directory: ./mobile
+        run: npm run lint
+
+      - name: Type check
+        working-directory: ./mobile
+        run: npm run typecheck
+
+      - name: Build iOS with EAS
+        working-directory: ./mobile
+        run: eas build --platform ios --profile production --non-interactive
+
+      - name: Download iOS build artifact
+        working-directory: ./mobile
+        run: |
+          BUILD_URL=$(eas build:list --platform ios --limit 1 --json | jq -r '.[0].artifacts.buildUrl')
+          curl -o app.ipa "$BUILD_URL"
+
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v6
+        with:
+          name: ios-ipa
+          path: mobile/app.ipa
+          retention-days: 30

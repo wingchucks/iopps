@@ -1,0 +1,16 @@
+C:\Users\natha\iopps\ADMIN_GUIDE.md
+C:\Users\natha\iopps\EMPLOYER_JOURNEY_AUDIT.md
+C:\Users\natha\iopps\iopps-journeys-combined.jsx
+C:\Users\natha\iopps\IOPPS-Master-Brief.md
+C:\Users\natha\iopps\PARTNER_SHOWCASE_PLAN.md
+C:\Users\natha\iopps\PROJECT_BRIEFING.md
+C:\Users\natha\iopps\web\add-admin-navigation.js
+C:\Users\natha\iopps\web\check-admin-access.js
+C:\Users\natha\iopps\web\components\AdminNavigation.js
+C:\Users\natha\iopps\web\deploy-admin.js
+C:\Users\natha\iopps\web\find-specs.js
+C:\Users\natha\iopps\web\fix-nathan-admin.js
+C:\Users\natha\iopps\web\grant-admin-access.js
+C:\Users\natha\iopps\web\hooks\useAdminAuth.js
+C:\Users\natha\iopps\web\lib\firebase-admin.ts
+C:\Users\natha\iopps\web\MASTER-ADMIN-ACCESS-PLAN.js

@@ -1,0 +1,344 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userRole() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+
+    function isEmployer() {
+      return userRole() == "employer";
+    }
+
+    function isCommunityMember() {
+      return userRole() == "community";
+    }
+
+    function isAdmin() {
+      return userRole() == "admin";
+    }
+
+    function isModerator() {
+      return userRole() == "moderator" || userRole() == "admin";
+    }
+
+    function isApprovedEmployer() {
+      return isEmployer() &&
+        exists(/databases/$(database)/documents/employers/$(request.auth.uid)) &&
+        (
+          !get(/databases/$(database)/documents/employers/$(request.auth.uid)).data.keys().hasAny(["status"]) ||
+          get(/databases/$(database)/documents/employers/$(request.auth.uid)).data.status == "approved"
+        );
+    }
+
+    function isActiveDoc(data) {
+      return data.keys().hasAny(["active"])
+        ? data.active == true
+        : true;
+    }
+
+    match /users/{userId} {
+      // Any signed-in user can read user profiles (for display names, etc.)
+      allow read: if isSignedIn();
+      // Users can write to their own document, admins/moderators can update any user (for role management)
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isModerator());
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    match /employers/{userId} {
+      allow read: if true;
+      // Employers can write to their own profile, admins/moderators can update any (for approval)
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isModerator());
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    match /memberProfiles/{userId} {
+      allow read, write: if isSignedIn() && isCommunityMember() && request.auth.uid == userId;
+    }
+
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.employerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && isEmployer() &&
+        resource.data.employerId == request.auth.uid;
+    }
+
+    match /applications/{applicationId} {
+      allow create: if isSignedIn() && isCommunityMember() &&
+        request.resource.data.memberId == request.auth.uid;
+
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.memberId ||
+        (isEmployer() && (
+          resource.data.employerId == request.auth.uid ||
+          (
+            exists(/databases/$(database)/documents/jobs/$(resource.data.jobId)) &&
+            get(/databases/$(database)/documents/jobs/$(resource.data.jobId)).data.employerId
+              == request.auth.uid
+          )
+        ))
+      );
+
+      // Employers can update status, members can withdraw their own applications
+      allow update: if isSignedIn() && (
+        (isEmployer() && (
+          resource.data.employerId == request.auth.uid ||
+          (
+            exists(/databases/$(database)/documents/jobs/$(resource.data.jobId)) &&
+            get(/databases/$(database)/documents/jobs/$(resource.data.jobId)).data.employerId
+              == request.auth.uid
+          )
+        )) ||
+        (isCommunityMember() &&
+         request.auth.uid == resource.data.memberId &&
+         request.resource.data.status == "withdrawn")
+      );
+    }
+
+    match /savedJobs/{savedJobId} {
+      allow create: if isSignedIn() &&
+        request.auth.uid == request.resource.data.memberId;
+      allow read, update, delete: if isSignedIn() &&
+        request.auth.uid == resource.data.memberId;
+    }
+
+    match /jobAlerts/{alertId} {
+      allow create: if isSignedIn() && isCommunityMember() &&
+        request.resource.data.memberId == request.auth.uid;
+      allow read, update, delete: if isSignedIn() && (
+        (isCommunityMember() && resource.data.memberId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    match /conferences/{conferenceId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.employerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && isEmployer() &&
+        resource.data.employerId == request.auth.uid;
+    }
+
+    match /scholarships/{scholarshipId} {
+      allow read: if isActiveDoc(resource.data) ||
+        (isSignedIn() && (
+          (isEmployer() && resource.data.employerId == request.auth.uid) ||
+          isModerator()
+        ));
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.employerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        (isEmployer() && resource.data.employerId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    match /scholarshipApplications/{applicationId} {
+      allow create: if isSignedIn() && isCommunityMember() &&
+        request.resource.data.memberId == request.auth.uid;
+
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.memberId ||
+        (isEmployer() && resource.data.employerId == request.auth.uid)
+      );
+
+      // Employers can update status, members can withdraw their own applications
+      allow update: if isSignedIn() && (
+        (isEmployer() && resource.data.employerId == request.auth.uid) ||
+        (isCommunityMember() &&
+         request.auth.uid == resource.data.memberId &&
+         request.resource.data.status == "withdrawn")
+      );
+    }
+
+    match /shopListings/{listingId} {
+      // Public read for active listings
+      allow read: if isActiveDoc(resource.data) ||
+        (isSignedIn() && (
+          (isEmployer() && resource.data.vendorId == request.auth.uid) ||
+          isModerator()
+        ));
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.vendorId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        (isEmployer() && resource.data.vendorId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    match /vendors/{vendorId} {
+      // Public read for active vendor profiles
+      allow read: if resource.data.active == true ||
+        (isSignedIn() && (
+          request.auth.uid == vendorId ||
+          isModerator()
+        ));
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.auth.uid == vendorId;
+      allow update: if isSignedIn() && isEmployer() &&
+        request.auth.uid == vendorId;
+      allow delete: if isSignedIn() && isEmployer() &&
+        request.auth.uid == vendorId;
+    }
+
+    match /productServiceListings/{listingId} {
+      // Public read for active product/service listings
+      allow read: if resource.data.active == true ||
+        (isSignedIn() && (
+          (isEmployer() && resource.data.vendorId == request.auth.uid) ||
+          isModerator()
+        ));
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.vendorId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        (isEmployer() && resource.data.vendorId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    match /contactSubmissions/{submissionId} {
+      // Anyone can create contact submissions
+      allow create: if true;
+      // Only moderators can read contact submissions
+      allow read: if isSignedIn() && isModerator();
+    }
+
+    match /liveStreams/{streamId} {
+      allow read: if isActiveDoc(resource.data) ||
+        (isSignedIn() && (
+          (isEmployer() && resource.data.employerId == request.auth.uid) ||
+          isModerator()
+        ));
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.employerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        (isEmployer() && resource.data.employerId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    match /powwows/{powwowId} {
+      allow read: if isActiveDoc(resource.data) ||
+        (isSignedIn() && (
+          (isEmployer() && resource.data.employerId == request.auth.uid) ||
+          isModerator()
+        ));
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.employerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        (isEmployer() && resource.data.employerId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    match /powwowRegistrations/{registrationId} {
+      // Anyone can create a powwow registration
+      allow create: if true;
+      // Employers can read their own event registrations
+      allow read: if isSignedIn() && (
+        (isEmployer() && resource.data.employerId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      // Users can read their own notifications, admins can read all
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Users can update their own notifications (mark as read)
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Users can delete their own notifications
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Server creates notifications via Admin SDK
+      allow create: if false;
+    }
+
+    // Conversations (messaging)
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.employerId ||
+        request.auth.uid == resource.data.memberId ||
+        isModerator()
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.employerId == request.auth.uid ||
+        request.resource.data.memberId == request.auth.uid
+      );
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.employerId ||
+        request.auth.uid == resource.data.memberId
+      );
+      allow delete: if isModerator();
+    }
+
+    // Messages
+    match /messages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      allow update: if isSignedIn();
+      allow delete: if isModerator();
+    }
+
+    // RSS Feeds (admin only)
+    match /rssFeeds/{feedId} {
+      allow read: if isSignedIn() && isModerator();
+      allow write: if isSignedIn() && isModerator();
+    }
+
+    // Cron Logs (admin read-only, server writes via Admin SDK)
+    match /cronLogs/{logId} {
+      allow read: if isSignedIn() && isModerator();
+      allow write: if false; // Server only via Admin SDK
+    }
+
+    // Training Programs
+    match /trainingPrograms/{programId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.organizationId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        (isEmployer() && resource.data.organizationId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    // Services (marketplace)
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        (isEmployer() && resource.data.userId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    // Subscriptions
+    match /subscriptions/{subscriptionId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == subscriptionId ||
+        isModerator()
+      );
+      allow write: if false; // Server only via Admin SDK (Stripe webhooks)
+    }
+
+    // Member profiles (community members)
+    match /members/{memberId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == memberId ||
+        isModerator()
+      );
+      allow create: if isSignedIn() && request.auth.uid == memberId;
+      allow update: if isSignedIn() && request.auth.uid == memberId;
+      allow delete: if isSignedIn() && isAdmin();
+    }
+  }
+}

@@ -1,0 +1,29 @@
+🎉 **TESTING OPPORTUNITY: IOPPS Platform** 🎉
+
+I'm looking for help testing the new Indigenous Opportunities & Partnerships Platform (IOPPS)!
+
+**What is IOPPS?**
+A platform connecting Indigenous job seekers with employment opportunities and helping employers reach Indigenous talent.
+
+**What I need help testing:**
+✅ Web app - Employer job posting feature
+✅ Mobile app - Job browsing and quick apply
+✅ Cross-platform sync - Jobs posted on web appear in mobile
+
+**How to participate:**
+📱 MOBILE: Download "Expo Go" from App Store/Google Play, then scan my QR code (I'll share it!)
+💻 WEB: Visit https://iopps.ca and create an employer account
+
+**Important:**
+⚠️ This is TEST MODE - no real payments!
+🎯 Looking for feedback on bugs, UI/UX, and suggestions
+⏱️ Takes about 10-15 minutes
+
+**Interested?** Comment below or DM me and I'll send you:
+- QR code for mobile app
+- Testing guide with scenarios
+- My contact for reporting feedback
+
+Thanks for helping make this better! 🙏
+
+#IndigenousEntrepreneurship #IOPPS #TechTesting #CommunitySupport
