@@ -4,7 +4,6 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import ThemeToggle from "@/components/ThemeToggle";
-import LiveStats from "@/components/LiveStats";
 
 const partners: { name: string; short: string; tier: string; logo?: string }[] = [
   { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium", logo: "" },
@@ -15,12 +14,12 @@ const partners: { name: string; short: string; tier: string; logo?: string }[] =
 ];
 
 const categories = [
-  { icon: "\u{1F4BC}", title: "Jobs & Careers", cta: "Browse Jobs", desc: "Indigenous-focused job postings and career opportunities", href: "/jobs" },
-  { icon: "\u{1FAB6}", title: "Events & Pow Wows", cta: "Browse Events", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
-  { icon: "\u{1F393}", title: "Scholarships & Grants", cta: "Browse Scholarships", desc: "Funding for students and entrepreneurs", href: "/scholarships" },
-  { icon: "\u{1F3EA}", title: "Shop Indigenous", cta: "Browse Shops", desc: "Support Indigenous-owned businesses", href: "/shop" },
-  { icon: "\u{1F4DA}", title: "Schools & Programs", cta: "Browse Schools", desc: "Training and education programs", href: "/schools" },
-  { icon: "\u{1F4FA}", title: "IOPPS Spotlight", cta: "Watch Now", desc: "Live streams, interviews, and stories", href: "/stories" },
+  { icon: "\u{1F4BC}", title: "Jobs & Careers", count: "111", cta: "Browse Jobs", desc: "Indigenous-focused job postings and career opportunities", href: "/jobs" },
+  { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: "25", cta: "Browse Events", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
+  { icon: "\u{1F393}", title: "Scholarships & Grants", count: "10", cta: "Browse Scholarships", desc: "Funding for students and entrepreneurs", href: "/scholarships" },
+  { icon: "\u{1F3EA}", title: "Shop Indigenous", count: "Coming Soon", cta: "Browse Shops", desc: "Support Indigenous-owned businesses", href: "/shop" },
+  { icon: "\u{1F4DA}", title: "Schools & Programs", count: "158", cta: "Browse Schools", desc: "Training and education programs", href: "/schools" },
+  { icon: "\u{1F4FA}", title: "IOPPS Spotlight", count: "New", cta: "Watch Now", desc: "Live streams, interviews, and stories", href: "/stories" },
 ];
 
 export default function LandingPage() {
@@ -236,6 +235,7 @@ export default function LandingPage() {
               className="p-6 rounded-2xl bg-card text-center transition-all duration-200 border border-border hover:shadow-md no-underline"
             >
               <span className="text-4xl block mb-2">{item.icon}</span>
+              <p className="text-xl font-extrabold text-teal mb-0.5">{item.count}</p>
               <p className="text-base font-bold text-text mb-1">{item.title}</p>
               <p className="text-[13px] text-text-sec mb-3">{item.desc}</p>
               <span className="text-sm font-bold text-teal">{item.cta} &rarr;</span>
@@ -246,7 +246,19 @@ export default function LandingPage() {
 
       {/* Stats Strip */}
       <section className="border-t border-border px-5 md:px-10 lg:px-20 py-8">
-        <LiveStats />
+        <div className="flex flex-wrap justify-center gap-8 md:gap-16">
+          {[
+            { value: "756", label: "Community Members" },
+            { value: "111", label: "Jobs Posted" },
+            { value: "25", label: "Events Listed" },
+            { value: "3", label: "Organizations" },
+          ].map((stat) => (
+            <div key={stat.label} className="text-center">
+              <p className="text-2xl md:text-3xl font-extrabold text-teal mb-0.5">{stat.value}</p>
+              <p className="text-xs font-semibold text-text-muted tracking-wide m-0">{stat.label}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* CTA Footer */}

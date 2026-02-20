@@ -7,16 +7,17 @@ import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import Avatar from "@/components/Avatar";
-import { getPosts, type Post } from "@/lib/firestore/posts";
+import { getJobs, type Job } from "@/lib/firestore/jobs";
 
 const employmentTypes = ["All", "Full-time", "Part-time", "Contract", "Temporary", "Internship"];
 
-function daysAgo(post: Post): string {
+function daysAgo(job: Job): string {
   let ts = 0;
-  if (post.createdAt && typeof post.createdAt === "object" && "seconds" in post.createdAt) {
-    ts = (post.createdAt as { seconds: number }).seconds * 1000;
-  } else if (post.order) {
-    ts = post.order;
+  const createdAt = job.createdAt || job.postedAt;
+  if (createdAt && typeof createdAt === "object" && createdAt !== null && "seconds" in (createdAt as Record<string, unknown>)) {
+    ts = ((createdAt as Record<string, unknown>).seconds as number) * 1000;
+  } else if (job.order) {
+    ts = job.order;
   }
   if (!ts) return "";
   const days = Math.floor((Date.now() - ts) / (1000 * 60 * 60 * 24));
@@ -25,8 +26,20 @@ function daysAgo(post: Post): string {
   return `${days} days ago`;
 }
 
+function getSalaryDisplay(job: Job): string {
+  if (job.salary) return job.salary;
+  if (!job.salaryRange) return "";
+  const sr = job.salaryRange;
+  if (sr.disclosed === false) return "";
+  const fmt = (n: number) => `$${n.toLocaleString()}`;
+  if (sr.min && sr.max) return `${fmt(sr.min)} - ${fmt(sr.max)}`;
+  if (sr.min) return `From ${fmt(sr.min)}`;
+  if (sr.max) return `Up to ${fmt(sr.max)}`;
+  return "";
+}
+
 export default function JobsPage() {
-  const [jobs, setJobs] = useState<Post[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
@@ -38,8 +51,8 @@ export default function JobsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const posts = await getPosts({ type: "job" });
-        setJobs(posts);
+        const result = await getJobs();
+        setJobs(result);
       } catch (err) {
         console.error("Failed to load jobs:", err);
       } finally {
@@ -56,7 +69,7 @@ export default function JobsPage() {
     const q = search.toLowerCase().trim();
     if (q) {
       result = result.filter((j) => {
-        const text = [j.title, j.orgName, j.orgShort, j.location, j.jobType, j.salary]
+        const text = [j.title, j.employerName || j.orgName, j.orgShort, j.location, j.employmentType || j.jobType, j.salary]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
@@ -72,7 +85,7 @@ export default function JobsPage() {
 
     // Employment type
     if (typeFilter !== "All") {
-      result = result.filter((j) => j.jobType?.toLowerCase() === typeFilter.toLowerCase());
+      result = result.filter((j) => (j.employmentType || j.jobType)?.toLowerCase() === typeFilter.toLowerCase());
     }
 
     // Remote
@@ -89,8 +102,9 @@ export default function JobsPage() {
     const max = parseFloat(salaryMax);
     if (!isNaN(min) || !isNaN(max)) {
       result = result.filter((j) => {
-        if (!j.salary) return false;
-        const nums = j.salary.match(/[\d,.]+[kK]?/g);
+        const salStr = getSalaryDisplay(j);
+        if (!salStr) return false;
+        const nums = salStr.match(/[\d,.]+[kK]?/g);
         if (!nums) return false;
         const parsed = nums
           .map((n) => {
@@ -288,7 +302,7 @@ export default function JobsPage() {
                     <div style={{ padding: "18px 20px" }}>
                       <div className="flex items-start gap-3 mb-3">
                         <Avatar
-                          name={job.orgShort || job.orgName || ""}
+                          name={job.employerName || job.orgShort || job.orgName || ""}
                           size={40}
                           gradient="linear-gradient(135deg, var(--navy), var(--blue))"
                         />
@@ -297,7 +311,7 @@ export default function JobsPage() {
                             {job.title}
                           </h3>
                           <p className="text-sm text-teal font-semibold m-0">
-                            {job.orgName || job.orgShort}
+                            {job.employerName || job.orgName || job.orgShort}
                             {String((job as unknown as Record<string, unknown>).source || "") !== "" && (
                               <span className="text-xs text-text-muted ml-2 font-normal">
                                 via {String((job as unknown as Record<string, unknown>).source)}
@@ -310,15 +324,15 @@ export default function JobsPage() {
                         {job.location && (
                           <span className="text-xs text-text-sec">&#128205; {job.location}</span>
                         )}
-                        {job.jobType && (
-                          <Badge text={job.jobType} color="var(--blue)" bg="var(--blue-soft)" small />
+                        {(job.employmentType || job.jobType) && (
+                          <Badge text={job.employmentType || job.jobType || ""} color="var(--blue)" bg="var(--blue-soft)" small />
                         )}
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex flex-wrap gap-2 items-center">
-                          {job.salary && (
+                          {getSalaryDisplay(job) && (
                             <span className="text-xs font-semibold text-text-sec">
-                              &#128176; {job.salary}
+                              &#128176; {getSalaryDisplay(job)}
                             </span>
                           )}
                           {posted && (
