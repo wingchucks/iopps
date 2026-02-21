@@ -89,6 +89,22 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Saved items: users can read/write their own saved items only
+    match /saved_items/{itemId} {
+      allow read, write: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+    }
+
+    // Applications: users can read/write their own applications, employers can read
+    match /applications/{applicationId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
     // Posts (jobs, events, scholarships, programs, stories, spotlights):
     // Public read. Admin or org owner/admin can write.
     match /posts/{postId} {
