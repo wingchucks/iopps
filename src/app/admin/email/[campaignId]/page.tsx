@@ -128,22 +128,30 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ campa
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link href="/admin/email" className="rounded-lg p-2 transition-colors hover:bg-muted">
-          <ArrowLeftIcon />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">{campaign.subject}</h1>
-          <p className="text-sm text-[var(--text-muted)]">
-            {campaign.status === "sent" && campaign.sentAt
-              ? `Sent on ${formatDateTime(campaign.sentAt)}`
-              : campaign.status === "scheduled" && campaign.scheduledAt
-              ? `Scheduled for ${formatDateTime(campaign.scheduledAt)}`
-              : `Draft — created ${formatDateTime(campaign.createdAt)}`}
-            {" · "}
-            <span className="capitalize">{campaign.audience}</span> audience
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/admin/email" className="rounded-lg p-2 transition-colors hover:bg-muted">
+            <ArrowLeftIcon />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold">{campaign.subject}</h1>
+            <p className="text-sm text-[var(--text-muted)]">
+              {campaign.status === "sent" && campaign.sentAt
+                ? `Sent on ${formatDateTime(campaign.sentAt)}`
+                : campaign.status === "scheduled" && campaign.scheduledAt
+                ? `Scheduled for ${formatDateTime(campaign.scheduledAt)}`
+                : `Draft — created ${formatDateTime(campaign.createdAt)}`}
+              {" · "}
+              <span className="capitalize">{campaign.audience}</span> audience
+            </p>
+          </div>
         </div>
+        <Link
+          href={`/admin/email/preview/${campaignId}`}
+          className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90"
+        >
+          Preview
+        </Link>
       </div>
 
       {/* Stats Grid */}
