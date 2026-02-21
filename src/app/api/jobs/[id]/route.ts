@@ -21,11 +21,12 @@ function serialize(value: unknown): unknown {
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const db = getAdminDb();
-    const doc = await db.collection("jobs").doc(params.id).get();
+    const doc = await db.collection("jobs").doc(id).get();
 
     if (!doc.exists) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
