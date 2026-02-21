@@ -179,9 +179,16 @@ function JobDetailContent() {
           {job.description && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">About This Role</h3>
-              <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                {job.description}
-              </p>
+              {job.description.includes("<") ? (
+                <div
+                  className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: job.description }}
+                />
+              ) : (
+                <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
+                  {job.description}
+                </p>
+              )}
             </>
           )}
 
@@ -305,10 +312,10 @@ function JobDetailContent() {
                       <span className="text-xs font-semibold" style={{ color: "var(--red, #ef4444)" }}>{closingDate}</span>
                     </div>
                   )}
-                  {job.category && (
+                  {job.department && (
                     <div className="flex justify-between">
-                      <span className="text-xs text-text-muted">Category</span>
-                      <span className="text-xs font-semibold text-text">{job.category}</span>
+                      <span className="text-xs text-text-muted">Department</span>
+                      <span className="text-xs font-semibold text-text">{job.department}</span>
                     </div>
                   )}
                 </div>
