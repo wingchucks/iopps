@@ -35,6 +35,60 @@ service cloud.firestore {
 
     // ── Public content collections ──
 
+    // Jobs: public read, admin or employer can write
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow write: if isAdmin();
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+    }
+
+    // Employers: public read, employer can update own, admin can write any
+    match /employers/{employerId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Users: authenticated read (member directory), users write own, admin writes any
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Scholarships: public read, admin write
+    match /scholarships/{scholarshipId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Conferences / Events: public read, admin write
+    match /conferences/{conferenceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Events (legacy alias): public read, admin write
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // RSS feeds collection: public read, admin write
+    match /rssFeeds/{feedId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Stories: public read, admin write
+    match /stories/{storyId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Posts (jobs, events, scholarships, programs, stories, spotlights):
     // Public read. Admin or org owner/admin can write.
     match /posts/{postId} {

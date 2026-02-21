@@ -7,7 +7,7 @@ import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import Avatar from "@/components/Avatar";
-import { getJobs, type Job } from "@/lib/firestore/jobs";
+import type { Job } from "@/lib/firestore/jobs";
 
 const employmentTypes = ["All", "Full-time", "Part-time", "Contract", "Temporary", "Internship"];
 
@@ -51,8 +51,10 @@ export default function JobsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const result = await getJobs();
-        setJobs(result);
+        const res = await fetch("/api/jobs");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setJobs(data.jobs ?? []);
       } catch (err) {
         console.error("Failed to load jobs:", err);
       } finally {
