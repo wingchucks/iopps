@@ -1,11 +1,11 @@
 {
   "name": "IOPPS — Empowering Indigenous Success",
   "short_name": "IOPPS",
-  "description": "Jobs, events, scholarships, businesses, schools, and livestreams for Indigenous communities.",
+  "description": "Indigenous Opportunities & Partnerships Platform — Jobs, events, scholarships, businesses, schools, and livestreams for Indigenous communities.",
   "start_url": "/feed",
   "display": "standalone",
-  "background_color": "#0F2B4C",
-  "theme_color": "#0F2B4C",
+  "background_color": "#0B1D2C",
+  "theme_color": "#0D9488",
   "orientation": "portrait-primary",
   "icons": [
     {

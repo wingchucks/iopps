@@ -65,3 +65,10 @@ export async function getJobById(id: string): Promise<Job | null> {
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() } as Job;
 }
+
+export async function getJobsByEmployer(employerId: string): Promise<Job[]> {
+  const snap = await getDocs(
+    query(col, where("employerId", "==", employerId), where("active", "==", true))
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Job));
+}

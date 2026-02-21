@@ -15,10 +15,10 @@ const partners: { name: string; short: string; tier: string; logo?: string }[] =
 
 const categories = [
   { icon: "\u{1F4BC}", title: "Jobs & Careers", count: "111", cta: "Browse Jobs", desc: "Indigenous-focused job postings and career opportunities", href: "/jobs" },
-  { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: "25", cta: "Browse Events", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
-  { icon: "\u{1F393}", title: "Scholarships & Grants", count: "10", cta: "Browse Scholarships", desc: "Funding for students and entrepreneurs", href: "/scholarships" },
+  { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: "5", cta: "Browse Events", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
+  { icon: "\u{1F393}", title: "Scholarships & Grants", count: "17", cta: "Browse Scholarships", desc: "Funding for students and entrepreneurs", href: "/scholarships" },
   { icon: "\u{1F3EA}", title: "Shop Indigenous", count: "Coming Soon", cta: "Browse Shops", desc: "Support Indigenous-owned businesses", href: "/shop" },
-  { icon: "\u{1F4DA}", title: "Schools & Programs", count: "158", cta: "Browse Schools", desc: "Training and education programs", href: "/schools" },
+  { icon: "\u{1F4DA}", title: "Schools & Programs", count: "190+", cta: "Browse Schools", desc: "Training and education programs", href: "/schools" },
   { icon: "\u{1F4FA}", title: "IOPPS Spotlight", count: "New", cta: "Watch Now", desc: "Live streams, interviews, and stories", href: "/stories" },
 ];
 

@@ -14,6 +14,7 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Link from "next/link";
 import { getPosts, type Post } from "@/lib/firestore/posts";
+import CreatePostModal from "@/components/CreatePostModal";
 import { getOrganizations, type Organization, getOrganization } from "@/lib/firestore/organizations";
 import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
 import { getApplications, type Application } from "@/lib/firestore/applications";
@@ -72,6 +73,7 @@ function FeedContent() {
   const [orgPending, setOrgPending] = useState(false);
   const [userRole, setUserRole] = useState<string | undefined>();
   const [userOrgRole, setUserOrgRole] = useState<string | undefined>();
+  const [showCreatePost, setShowCreatePost] = useState(false);
   const { user, signOut } = useAuth();
   const router = useRouter();
 
@@ -151,6 +153,15 @@ function FeedContent() {
     router.push("/");
   };
 
+  const handlePostCreated = async () => {
+    try {
+      const freshPosts = await getPosts();
+      setPosts(freshPosts);
+    } catch (err) {
+      console.error("Failed to refresh feed:", err);
+    }
+  };
+
   const filtered = tab === "All" ? posts : posts.filter((p) => typeToTab[p.type] === tab);
 
   const hiringOrgs = orgs
@@ -191,6 +202,51 @@ function FeedContent() {
             <p className="text-sm m-0 mt-1" style={{ color: "var(--text-sec)" }}>
               Here&apos;s what&apos;s new in your community
             </p>
+          </div>
+        )}
+
+        {/* Create post prompt */}
+        {user && (
+          <div
+            className="rounded-2xl mb-3 cursor-pointer"
+            style={{
+              padding: "14px 20px",
+              background: "var(--card)",
+              border: "1.5px solid var(--border)",
+            }}
+            onClick={() => setShowCreatePost(true)}
+          >
+            <div className="flex items-center gap-3">
+              <Avatar
+                name={user.displayName || "U"}
+                size={36}
+                src={user.photoURL || undefined}
+              />
+              <div
+                className="flex-1 text-sm text-text-muted rounded-full"
+                style={{
+                  padding: "10px 16px",
+                  background: "var(--bg)",
+                  border: "1.5px solid var(--border)",
+                }}
+              >
+                Share a story or update...
+              </div>
+              <button
+                className="flex items-center gap-1.5 text-xs font-semibold border-none cursor-pointer rounded-lg"
+                style={{
+                  padding: "8px 12px",
+                  background: "color-mix(in srgb, var(--teal) 10%, transparent)",
+                  color: "var(--teal)",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCreatePost(true);
+                }}
+              >
+                &#128247; Photo
+              </button>
+            </div>
           </div>
         )}
 
@@ -349,6 +405,13 @@ function FeedContent() {
       <FeedRightSidebar
         applications={applications}
         savedItems={savedItems}
+      />
+
+      {/* Create Post Modal */}
+      <CreatePostModal
+        open={showCreatePost}
+        onClose={() => setShowCreatePost(false)}
+        onPostCreated={handlePostCreated}
       />
     </div>
   );

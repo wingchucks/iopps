@@ -136,12 +136,14 @@ export async function getMembersPaginated(
 ): Promise<{ members: MemberProfile[]; lastDoc: QueryDocumentSnapshot | null }> {
   const constraints = [
     orderBy("displayName"),
-    limit(PAGE_SIZE),
+    limit(PAGE_SIZE + 10), // fetch a few extra to account for hidden ones
     ...(cursor ? [startAfter(cursor)] : []),
   ];
   const snap = await getDocs(query(collection(db, "members"), ...constraints));
-  const members = snap.docs.map((d) => d.data() as MemberProfile);
-  const lastDoc = snap.docs.length === PAGE_SIZE ? snap.docs[snap.docs.length - 1] : null;
+  // Filter out members hidden from directory client-side (avoids Firestore index requirement)
+  const allDocs = snap.docs.filter((d) => d.data().hideFromDirectory !== true);
+  const members = allDocs.slice(0, PAGE_SIZE).map((d) => d.data() as MemberProfile);
+  const lastDoc = allDocs.length >= PAGE_SIZE ? allDocs[PAGE_SIZE - 1] : null;
   return { members, lastDoc };
 }
 

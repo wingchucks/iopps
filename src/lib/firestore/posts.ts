@@ -157,3 +157,30 @@ export async function updatePost(
   if (!existing.exists()) throw new Error("Post not found");
   await updateDoc(doc(db, "posts", id), data);
 }
+
+/** Create a post authored by a community member (story type). */
+export async function createMemberPost(data: {
+  title: string;
+  description: string;
+  type: "story" | "spotlight";
+  authorUid: string;
+  authorName: string;
+  authorPhoto?: string;
+  featuredImage?: string;
+}): Promise<string> {
+  const slug =
+    data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "") +
+    "-" +
+    Date.now().toString(36);
+  const id = `${data.type}-${slug}`;
+  await setDoc(doc(db, "posts", id), {
+    ...data,
+    status: "active",
+    createdAt: serverTimestamp(),
+    order: Date.now(),
+  });
+  return id;
+}
