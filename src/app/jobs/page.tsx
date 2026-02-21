@@ -314,11 +314,6 @@ export default function JobsPage() {
                           </h3>
                           <p className="text-sm text-teal font-semibold m-0">
                             {job.employerName || job.orgName || job.orgShort}
-                            {String((job as unknown as Record<string, unknown>).source || "") !== "" && (
-                              <span className="text-xs text-text-muted ml-2 font-normal">
-                                via {String((job as unknown as Record<string, unknown>).source)}
-                              </span>
-                            )}
                           </p>
                         </div>
                       </div>

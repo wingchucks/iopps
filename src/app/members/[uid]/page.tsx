@@ -22,14 +22,7 @@ import FollowButton from "@/components/FollowButton";
 import ReportButton from "@/components/ReportButton";
 import Toast from "@/components/Toast";
 
-const interestLabels: Record<string, { icon: string; label: string }> = {
-  jobs: { icon: "\u{1F4BC}", label: "Jobs & Careers" },
-  events: { icon: "\u{1FAB6}", label: "Events & Pow Wows" },
-  scholarships: { icon: "\u{1F393}", label: "Scholarships & Grants" },
-  businesses: { icon: "\u{1F3EA}", label: "Indigenous Businesses" },
-  schools: { icon: "\u{1F4DA}", label: "Schools & Programs" },
-  livestreams: { icon: "\u{1F4FA}", label: "Livestreams & Stories" },
-};
+import { interestLabels } from "@/lib/constants/interests";
 
 export default function MemberProfilePage() {
   return (
@@ -160,6 +153,11 @@ function MemberProfileContent() {
                 />
               )}
             </div>
+            {profile.headline && (
+              <p className="text-sm mb-2" style={{ color: "rgba(255,255,255,.55)" }}>
+                {profile.headline}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2 mt-2">
               <Badge
                 text={profile.role === "admin" ? "Admin" : profile.role === "moderator" ? "Moderator" : profile.orgRole === "owner" || profile.orgRole === "admin" ? "Organization" : "Community Member"}
@@ -269,6 +267,34 @@ function MemberProfileContent() {
                       {profile.community || "No community set"}
                     </span>
                   </div>
+                  <div className="flex gap-2 items-center">
+                    <span className="text-sm">&#128231;</span>
+                    <span className="text-sm text-text-sec">{profile.email}</span>
+                  </div>
+                  {profile.nation && (
+                    <div className="flex gap-2 items-center">
+                      <span className="text-sm">&#127758;</span>
+                      <span className="text-sm text-text-sec">{profile.nation}</span>
+                    </div>
+                  )}
+                  {profile.territory && (
+                    <div className="flex gap-2 items-center">
+                      <span className="text-sm">&#128506;&#65039;</span>
+                      <span className="text-sm text-text-sec">{profile.territory}</span>
+                    </div>
+                  )}
+                  {profile.languages && (
+                    <div className="flex gap-2 items-center">
+                      <span className="text-sm">&#128172;</span>
+                      <span className="text-sm text-text-sec">{profile.languages}</span>
+                    </div>
+                  )}
+                  {profile.skillsText && (
+                    <div className="flex gap-2 items-center">
+                      <span className="text-sm">&#128736;&#65039;</span>
+                      <span className="text-sm text-text-sec">{profile.skillsText}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>

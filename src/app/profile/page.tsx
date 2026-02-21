@@ -28,14 +28,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 
-const interestLabels: Record<string, { icon: string; label: string }> = {
-  jobs: { icon: "\u{1F4BC}", label: "Jobs & Careers" },
-  events: { icon: "\u{1FAB6}", label: "Events & Pow Wows" },
-  scholarships: { icon: "\u{1F393}", label: "Scholarships & Grants" },
-  businesses: { icon: "\u{1F3EA}", label: "Indigenous Businesses" },
-  schools: { icon: "\u{1F4DA}", label: "Schools & Programs" },
-  livestreams: { icon: "\u{1F4FA}", label: "Livestreams & Stories" },
-};
+import { interestOptions, interestLabels } from "@/lib/constants/interests";
 
 const appStatusConfig: Record<
   ApplicationStatus,
@@ -70,6 +63,7 @@ function ProfileContent() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [editSection, setEditSection] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,7 +76,14 @@ function ProfileContent() {
   const [languages, setLanguages] = useState("");
   const [headline, setHeadline] = useState("");
   const [skillsText, setSkillsText] = useState("");
+  const [editInterests, setEditInterests] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const toggleInterest = (id: string) => {
+    setEditInterests((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
 
   // Activity stats
   const [apps, setApps] = useState<Application[]>([]);
@@ -105,6 +106,7 @@ function ProfileContent() {
         setLanguages(data.languages || "");
         setHeadline(data.headline || "");
         setSkillsText(data.skillsText || "");
+        setEditInterests(data.interests || []);
       }
       // Load activity stats, RSVPs, and connection counts
       const [userApps, saved, userRsvps, followers, following] = await Promise.all([
@@ -146,13 +148,15 @@ function ProfileContent() {
         languages,
         headline,
         skillsText,
+        interests: editInterests,
       });
       setProfile((prev) =>
         prev
-          ? { ...prev, community, location, bio, nation, territory, languages, headline, skillsText }
+          ? { ...prev, community, location, bio, nation, territory, languages, headline, skillsText, interests: editInterests }
           : prev
       );
       setEditing(false);
+      setEditSection(null);
       showToast("Profile updated");
     } catch (err) {
       console.error("Failed to update profile:", err);
@@ -289,7 +293,15 @@ function ProfileContent() {
           <div className="flex gap-2.5 mt-2 sm:mt-0">
             <Button
               small
-              onClick={() => setEditing(!editing)}
+              onClick={() => {
+                if (editing) {
+                  setEditing(false);
+                  setEditSection(null);
+                } else {
+                  setEditing(true);
+                  setEditSection("basics");
+                }
+              }}
               style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)", background: "rgba(255,255,255,.12)" }}
             >
               {editing ? "Cancel" : "Edit Profile"}
@@ -313,117 +325,197 @@ function ProfileContent() {
       {/* Content */}
       <div className="px-4 py-6 md:px-12">
         {editing ? (
-          /* -- Edit Mode -- */
+          /* -- Edit Mode (Accordion Sections) -- */
           <div>
             <h3 className="text-lg font-bold text-text mb-4">Edit Profile</h3>
 
-            <label className="block mb-4">
-              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                Community / First Nation
-              </span>
-              <input
-                type="text"
-                value={community}
-                onChange={(e) => setCommunity(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-                placeholder="e.g. Muskoday First Nation"
-              />
-            </label>
+            <div className="flex flex-col gap-3 mb-6">
+              {/* Section: Basics */}
+              <EditSection
+                title="Basics"
+                icon="&#127963;&#65039;"
+                isOpen={editSection === "basics"}
+                onToggle={() => setEditSection(editSection === "basics" ? null : "basics")}
+              >
+                <label className="block mb-4">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                    Community / First Nation
+                  </span>
+                  <input
+                    type="text"
+                    value={community}
+                    onChange={(e) => setCommunity(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                    placeholder="e.g. Muskoday First Nation"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                    Location
+                  </span>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                    placeholder="e.g. Saskatoon, SK"
+                  />
+                </label>
+              </EditSection>
 
-            <label className="block mb-4">
-              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                Location
-              </span>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-                placeholder="e.g. Saskatoon, SK"
-              />
-            </label>
+              {/* Section: Identity & Heritage */}
+              <EditSection
+                title="Identity & Heritage"
+                icon="&#127758;"
+                isOpen={editSection === "identity"}
+                onToggle={() => setEditSection(editSection === "identity" ? null : "identity")}
+              >
+                <label className="block mb-4">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                    Nation / People
+                  </span>
+                  <input
+                    type="text"
+                    value={nation}
+                    onChange={(e) => setNation(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                    placeholder="e.g. Cree, Anishinaabe, Metis"
+                  />
+                </label>
+                <label className="block mb-4">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                    Territory / Homeland
+                  </span>
+                  <input
+                    type="text"
+                    value={territory}
+                    onChange={(e) => setTerritory(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                    placeholder="e.g. Treaty 6, Metis Nation Region 3"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                    Languages Spoken
+                  </span>
+                  <input
+                    type="text"
+                    value={languages}
+                    onChange={(e) => setLanguages(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                    placeholder="e.g. Cree, Michif, English, French"
+                  />
+                </label>
+              </EditSection>
 
-            <label className="block mb-4">
-              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                Bio
-              </span>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal resize-none"
-                placeholder="A few words about yourself..."
-              />
-            </label>
+              {/* Section: About You */}
+              <EditSection
+                title="About You"
+                icon="&#128100;"
+                isOpen={editSection === "about"}
+                onToggle={() => setEditSection(editSection === "about" ? null : "about")}
+              >
+                <label className="block mb-4">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                    Professional Headline
+                  </span>
+                  <input
+                    type="text"
+                    value={headline}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 80) setHeadline(e.target.value);
+                    }}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                    placeholder="e.g. Software Developer | Treaty 6"
+                  />
+                  <span className="text-xs text-text-muted mt-1 block text-right">{headline.length}/80</span>
+                </label>
+                <label className="block mb-4">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                    Bio
+                  </span>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal resize-none"
+                    placeholder="A few words about yourself..."
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                    Skills
+                  </span>
+                  <input
+                    type="text"
+                    value={skillsText}
+                    onChange={(e) => setSkillsText(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                    placeholder="e.g. Project Management, Web Development"
+                  />
+                  <span className="text-xs text-text-muted mt-1 block">Comma-separated</span>
+                </label>
+              </EditSection>
 
-            <label className="block mb-4">
-              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                Nation / People
-              </span>
-              <input
-                type="text"
-                value={nation}
-                onChange={(e) => setNation(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-                placeholder="e.g., Cree, Anishinaabe, M&eacute;tis"
-              />
-            </label>
+              {/* Section: Interests */}
+              <EditSection
+                title="Interests"
+                icon="&#9733;"
+                isOpen={editSection === "interests"}
+                onToggle={() => setEditSection(editSection === "interests" ? null : "interests")}
+              >
+                <p className="text-sm text-text-muted mb-4">
+                  Select categories to personalize your feed.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {interestOptions.map((opt) => {
+                    const selected = editInterests.includes(opt.id);
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => toggleInterest(opt.id)}
+                        className="flex items-center gap-3.5 rounded-xl cursor-pointer text-left transition-all duration-200 bg-card"
+                        style={{
+                          padding: "14px 16px",
+                          border: selected
+                            ? "2px solid var(--teal)"
+                            : "2px solid var(--border)",
+                          boxShadow: selected ? "0 0 0 3px rgba(13,148,136,.08)" : "none",
+                        }}
+                      >
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200"
+                          style={{
+                            background: selected ? "rgba(13,148,136,.1)" : "rgba(128,128,128,.06)",
+                          }}
+                        >
+                          <span className="text-xl">{opt.icon}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p
+                            className="text-sm font-semibold m-0 transition-colors duration-200"
+                            style={{ color: selected ? "var(--teal)" : "var(--text)" }}
+                          >
+                            {opt.label}
+                          </p>
+                          <p className="text-xs text-text-muted m-0 mt-0.5">{opt.desc}</p>
+                        </div>
+                        {selected && (
+                          <svg className="ml-auto flex-shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </EditSection>
+            </div>
 
-            <label className="block mb-4">
-              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                Territory / Homeland
-              </span>
-              <input
-                type="text"
-                value={territory}
-                onChange={(e) => setTerritory(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-                placeholder="e.g., Treaty 6, M&eacute;tis Nation Region 3"
-              />
-            </label>
-
-            <label className="block mb-4">
-              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                Languages Spoken
-              </span>
-              <input
-                type="text"
-                value={languages}
-                onChange={(e) => setLanguages(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-                placeholder="e.g., Cree, Michif, English, French"
-              />
-            </label>
-
-            <label className="block mb-4">
-              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                Professional Headline
-              </span>
-              <input
-                type="text"
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-                placeholder="e.g., Software Developer | Treaty 6"
-              />
-            </label>
-
-            <label className="block mb-6">
-              <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                Skills
-              </span>
-              <input
-                type="text"
-                value={skillsText}
-                onChange={(e) => setSkillsText(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-                placeholder="e.g., Project Management, Web Development, Cree Language"
-              />
-            </label>
-
-            <div className="flex gap-3">
+            <div className="flex gap-3 mb-6">
               <Button
-                onClick={() => setEditing(false)}
+                onClick={() => { setEditing(false); setEditSection(null); }}
                 style={{ borderRadius: 14, padding: "12px 24px" }}
               >
                 Cancel
@@ -441,6 +533,9 @@ function ProfileContent() {
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
             </div>
+
+            {/* Quick Links — Edit Mode */}
+            <QuickLinks resumeFileName={profile?.resumeFileName} openToWork={profile?.openToWork} />
           </div>
         ) : (
           /* -- View Mode -- */
@@ -813,6 +908,11 @@ function ProfileContent() {
               )}
             </div>
 
+            {/* Quick Links — View Mode */}
+            <div className="mt-8">
+              <QuickLinks resumeFileName={profile?.resumeFileName} openToWork={profile?.openToWork} />
+            </div>
+
             {/* My Events Section */}
             <div className="mt-8">
               <h3 className="text-lg font-bold text-text mb-3">My Events</h3>
@@ -883,6 +983,106 @@ function ProfileContent() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ── Inline Accordion Section ── */
+function EditSection({
+  title,
+  icon,
+  isOpen,
+  onToggle,
+  children,
+}: {
+  title: string;
+  icon: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 cursor-pointer bg-transparent border-0 text-left"
+        style={{ padding: "14px 16px" }}
+      >
+        <span className="text-lg" dangerouslySetInnerHTML={{ __html: icon }} />
+        <span className="text-sm font-bold text-text flex-1">{title}</span>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--text-muted)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="transition-transform duration-200"
+          style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div style={{ padding: "0 16px 16px" }}>
+          {children}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/* ── Quick Link Cards ── */
+function QuickLinks({
+  resumeFileName,
+  openToWork,
+}: {
+  resumeFileName?: string;
+  openToWork?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <Link href="/profile/resume" className="no-underline">
+        <Card className="hover:border-teal transition-colors">
+          <div style={{ padding: 16 }} className="flex items-center gap-3">
+            <div
+              className="flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ width: 40, height: 40, background: "rgba(13,148,136,.08)" }}
+            >
+              <span className="text-base">&#128196;</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-text mb-0.5">Manage Resume</p>
+              <p className="text-xs text-text-muted m-0">
+                {resumeFileName || "No resume uploaded"}
+              </p>
+            </div>
+            <span className="text-text-muted text-sm">&#8594;</span>
+          </div>
+        </Card>
+      </Link>
+      <Link href="/settings/career" className="no-underline">
+        <Card className="hover:border-teal transition-colors">
+          <div style={{ padding: 16 }} className="flex items-center gap-3">
+            <div
+              className="flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ width: 40, height: 40, background: openToWork ? "rgba(34,197,94,.08)" : "rgba(13,148,136,.08)" }}
+            >
+              <span className="text-base">{openToWork ? "\u2705" : "\u{1F4BC}"}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-text mb-0.5">Career Preferences</p>
+              <p className="text-xs text-text-muted m-0">
+                {openToWork ? "Open to Work" : "Set your work preferences"}
+              </p>
+            </div>
+            <span className="text-text-muted text-sm">&#8594;</span>
+          </div>
+        </Card>
+      </Link>
     </div>
   );
 }
