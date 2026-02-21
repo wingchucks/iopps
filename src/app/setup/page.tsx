@@ -23,8 +23,10 @@ const interestOptions = [
 
 const stepInfo = [
   { num: 1, title: "Your Profile", subtitle: "Tell us a bit about yourself so the community can connect with you." },
-  { num: 2, title: "Your Interests", subtitle: "Choose what matters most to you and we'll personalize your feed." },
-  { num: 3, title: "You're Ready", subtitle: "Welcome to the community. Your journey starts now." },
+  { num: 2, title: "Identity & Heritage", subtitle: "Share your cultural background and connections." },
+  { num: 3, title: "About You", subtitle: "Let the community know what you do and what you bring." },
+  { num: 4, title: "Your Interests", subtitle: "Choose what matters most to you and we'll personalize your feed." },
+  { num: 5, title: "You're Ready", subtitle: "Welcome to the community. Your journey starts now." },
 ];
 
 export default function SetupPage() {
@@ -44,6 +46,11 @@ function SetupWizard() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [nation, setNation] = useState("");
+  const [territory, setTerritory] = useState("");
+  const [languages, setLanguages] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [skillsText, setSkillsText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const router = useRouter();
@@ -63,6 +70,8 @@ function SetupWizard() {
     reader.onload = () => setPhotoPreview(reader.result as string);
     reader.readAsDataURL(file);
   };
+
+  const parsedSkills = skillsText.split(",").map((s) => s.trim()).filter(Boolean);
 
   const handleFinish = async () => {
     if (!user) return;
@@ -87,6 +96,12 @@ function SetupWizard() {
           location,
           bio,
           interests,
+          nation,
+          territory,
+          languages,
+          headline,
+          skillsText,
+          skills: parsedSkills,
           ...(photoURL ? { photoURL } : {}),
           updatedAt: serverTimestamp(),
         });
@@ -98,6 +113,12 @@ function SetupWizard() {
           location,
           bio,
           interests,
+          nation,
+          territory,
+          languages,
+          headline,
+          skillsText,
+          skills: parsedSkills,
         });
       }
     } catch (err) {
@@ -159,14 +180,14 @@ function SetupWizard() {
                         <div
                           className="w-0.5 transition-all duration-300"
                           style={{
-                            height: 48,
+                            height: 40,
                             background: isDone ? "var(--teal)" : "rgba(255,255,255,.08)",
                           }}
                         />
                       )}
                     </div>
                     {/* Label */}
-                    <div className="pt-1.5 pb-6">
+                    <div className="pt-1.5 pb-4">
                       <p
                         className="text-sm font-semibold m-0 transition-colors duration-300"
                         style={{ color: isActive || isDone ? "#fff" : "rgba(255,255,255,.3)" }}
@@ -221,7 +242,7 @@ function SetupWizard() {
           {/* Mobile step indicator */}
           <div className="lg:hidden mb-6">
             <div className="flex gap-2 mb-2">
-              {[1, 2, 3].map((s) => (
+              {[1, 2, 3, 4, 5].map((s) => (
                 <div
                   key={s}
                   className="flex-1 h-1.5 rounded-full transition-all duration-300"
@@ -229,10 +250,10 @@ function SetupWizard() {
                 />
               ))}
             </div>
-            <p className="text-xs text-text-muted">Step {step} of 3 — {currentStepInfo.title}</p>
+            <p className="text-xs text-text-muted">Step {step} of 5 — {currentStepInfo.title}</p>
           </div>
 
-          {/* ═══ STEP 1: Profile Info ═══ */}
+          {/* ═══ STEP 1: Profile Basics ═══ */}
           {step === 1 && (
             <div className="auth-scale-in">
               <div className="flex items-center gap-4 mb-8">
@@ -297,7 +318,7 @@ function SetupWizard() {
                 />
               </label>
 
-              <label className="block mb-5">
+              <label className="block mb-8">
                 <span className="text-xs font-semibold text-text-sec mb-2 block tracking-wide uppercase">
                   Location
                 </span>
@@ -307,19 +328,6 @@ function SetupWizard() {
                   onChange={(e) => setLocation(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10"
                   placeholder="e.g. Saskatoon, SK"
-                />
-              </label>
-
-              <label className="block mb-8">
-                <span className="text-xs font-semibold text-text-sec mb-2 block tracking-wide uppercase">
-                  Short Bio <span className="text-text-muted font-normal normal-case">(optional)</span>
-                </span>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10 resize-none"
-                  placeholder="A few words about yourself..."
                 />
               </label>
 
@@ -345,8 +353,154 @@ function SetupWizard() {
             </div>
           )}
 
-          {/* ═══ STEP 2: Interests ═══ */}
+          {/* ═══ STEP 2: Identity & Heritage ═══ */}
           {step === 2 && (
+            <div className="auth-scale-in">
+              <h2 className="font-bold text-text mb-1" style={{ fontSize: 24 }}>Identity & Heritage</h2>
+              <p className="text-sm text-text-muted mb-7">
+                Share your cultural background and connections. All fields are optional.
+              </p>
+
+              <label className="block mb-5">
+                <span className="text-xs font-semibold text-text-sec mb-2 block tracking-wide uppercase">
+                  Nation / People
+                </span>
+                <input
+                  type="text"
+                  value={nation}
+                  onChange={(e) => setNation(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10"
+                  placeholder="e.g. Cree, Anishinaabe, Metis"
+                />
+              </label>
+
+              <label className="block mb-5">
+                <span className="text-xs font-semibold text-text-sec mb-2 block tracking-wide uppercase">
+                  Territory / Homeland
+                </span>
+                <input
+                  type="text"
+                  value={territory}
+                  onChange={(e) => setTerritory(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10"
+                  placeholder="e.g. Treaty 6, Metis Nation Region 3"
+                />
+              </label>
+
+              <label className="block mb-8">
+                <span className="text-xs font-semibold text-text-sec mb-2 block tracking-wide uppercase">
+                  Languages Spoken
+                </span>
+                <input
+                  type="text"
+                  value={languages}
+                  onChange={(e) => setLanguages(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10"
+                  placeholder="e.g. Cree, Michif, English, French"
+                />
+              </label>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 bg-card text-text border border-border hover:border-text-muted"
+                  style={{ padding: "14px 24px", fontSize: 15 }}
+                >
+                  Back
+                </button>
+                <button
+                  onClick={() => setStep(3)}
+                  className="flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
+                  style={{
+                    background: "linear-gradient(135deg, var(--teal), var(--navy))",
+                    padding: "14px 24px",
+                    fontSize: 15,
+                    boxShadow: "0 4px 14px rgba(13,148,136,.25)",
+                  }}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ STEP 3: About You ═══ */}
+          {step === 3 && (
+            <div className="auth-scale-in">
+              <h2 className="font-bold text-text mb-1" style={{ fontSize: 24 }}>About You</h2>
+              <p className="text-sm text-text-muted mb-7">
+                Let the community know what you do and what you bring. All fields are optional.
+              </p>
+
+              <label className="block mb-5">
+                <span className="text-xs font-semibold text-text-sec mb-2 block tracking-wide uppercase">
+                  Professional Headline
+                </span>
+                <input
+                  type="text"
+                  value={headline}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 80) setHeadline(e.target.value);
+                  }}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10"
+                  placeholder="e.g. Software Developer | Treaty 6"
+                />
+                <span className="text-xs text-text-muted mt-1 block text-right">{headline.length}/80</span>
+              </label>
+
+              <label className="block mb-5">
+                <span className="text-xs font-semibold text-text-sec mb-2 block tracking-wide uppercase">
+                  Short Bio
+                </span>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10 resize-none"
+                  placeholder="A few words about yourself..."
+                />
+              </label>
+
+              <label className="block mb-8">
+                <span className="text-xs font-semibold text-text-sec mb-2 block tracking-wide uppercase">
+                  Skills
+                </span>
+                <input
+                  type="text"
+                  value={skillsText}
+                  onChange={(e) => setSkillsText(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10"
+                  placeholder="e.g. Project Management, Web Development"
+                />
+                <span className="text-xs text-text-muted mt-1 block">Comma-separated</span>
+              </label>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStep(2)}
+                  className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 bg-card text-text border border-border hover:border-text-muted"
+                  style={{ padding: "14px 24px", fontSize: 15 }}
+                >
+                  Back
+                </button>
+                <button
+                  onClick={() => setStep(4)}
+                  className="flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
+                  style={{
+                    background: "linear-gradient(135deg, var(--teal), var(--navy))",
+                    padding: "14px 24px",
+                    fontSize: 15,
+                    boxShadow: "0 4px 14px rgba(13,148,136,.25)",
+                  }}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ STEP 4: Interests ═══ */}
+          {step === 4 && (
             <div className="auth-scale-in">
               <h2 className="font-bold text-text mb-1" style={{ fontSize: 24 }}>What interests you?</h2>
               <p className="text-sm text-text-muted mb-7">
@@ -398,14 +552,14 @@ function SetupWizard() {
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => setStep(1)}
+                  onClick={() => setStep(3)}
                   className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 bg-card text-text border border-border hover:border-text-muted"
                   style={{ padding: "14px 24px", fontSize: 15 }}
                 >
                   Back
                 </button>
                 <button
-                  onClick={() => setStep(3)}
+                  onClick={() => setStep(5)}
                   className="flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
                   style={{
                     background: "linear-gradient(135deg, var(--teal), var(--navy))",
@@ -420,8 +574,8 @@ function SetupWizard() {
             </div>
           )}
 
-          {/* ═══ STEP 3: Confirmation + Preview ═══ */}
-          {step === 3 && (
+          {/* ═══ STEP 5: Confirmation + Preview ═══ */}
+          {step === 5 && (
             <div className="auth-scale-in">
               <div className="text-center mb-8">
                 <div
@@ -471,6 +625,7 @@ function SetupWizard() {
                     )}
                     <div className="pb-0.5">
                       <p className="text-base font-bold text-text m-0">{user?.displayName || "Your Name"}</p>
+                      {headline && <p className="text-xs text-text-sec m-0 mt-0.5">{headline}</p>}
                       {community && <p className="text-xs text-teal m-0">{community}</p>}
                     </div>
                   </div>
@@ -480,6 +635,25 @@ function SetupWizard() {
                   <div className="flex flex-wrap gap-1.5">
                     {location && (
                       <Badge text={`\u{1F4CD} ${location}`} color="var(--text-sec)" small />
+                    )}
+                    {nation && (
+                      <Badge text={nation} color="var(--gold)" small />
+                    )}
+                    {territory && (
+                      <Badge text={territory} color="var(--gold)" small />
+                    )}
+                    {languages && (
+                      <Badge text={`\u{1F5E3}\u{FE0F} ${languages}`} color="var(--purple)" small />
+                    )}
+                    {parsedSkills.length > 0 && (
+                      <>
+                        {parsedSkills.slice(0, 3).map((skill) => (
+                          <Badge key={skill} text={skill} color="var(--teal)" small />
+                        ))}
+                        {parsedSkills.length > 3 && (
+                          <Badge text={`+${parsedSkills.length - 3} more`} color="var(--text-muted)" small />
+                        )}
+                      </>
                     )}
                     {interests.map((id) => {
                       const opt = interestOptions.find((o) => o.id === id);
@@ -493,7 +667,7 @@ function SetupWizard() {
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(4)}
                   className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 bg-card text-text border border-border hover:border-text-muted"
                   style={{ padding: "14px 24px", fontSize: 15 }}
                 >
