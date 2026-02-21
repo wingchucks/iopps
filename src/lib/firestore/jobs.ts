@@ -46,6 +46,7 @@ export interface Job {
   indigenousPreference?: boolean;
   employerId?: string;
   category?: string;
+  department?: string;
 }
 
 const col = collection(db, "jobs");
