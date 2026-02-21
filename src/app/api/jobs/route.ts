@@ -41,7 +41,15 @@ export async function GET() {
 
     const jobs = snap.docs.map((doc) => {
       const data = doc.data();
-      return serialize({ id: doc.id, ...data });
+      const serialized = serialize({ id: doc.id, ...data }) as Record<string, unknown>;
+
+      // Normalize salary: if stored as {display: "..."}, extract the string
+      if (serialized.salary && typeof serialized.salary === "object") {
+        const salObj = serialized.salary as Record<string, unknown>;
+        serialized.salary = salObj.display ? String(salObj.display) : "";
+      }
+
+      return serialized;
     });
 
     return NextResponse.json({ jobs, count: jobs.length });
