@@ -9,7 +9,6 @@ import {
   getDocs,
   query,
   orderBy,
-  where,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -100,13 +99,12 @@ export async function updateOrganization(
 
 export async function getOrganizations(): Promise<Organization[]> {
   const snap = await getDocs(
-    query(
-      collection(db, "organizations"),
-      where("verified", "==", true),
-      orderBy("name")
-    )
+    query(collection(db, "organizations"), orderBy("name"))
   );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Organization);
+  // Filter client-side to only show verified orgs (avoids Firestore composite index)
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }) as Organization)
+    .filter((org) => org.verified === true);
 }
 
 // Used by admin pages for seeding/managing orgs
