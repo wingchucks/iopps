@@ -39,26 +39,33 @@ function JobDetailContent() {
 
   useEffect(() => {
     async function load() {
+      // Load job data
       try {
         const res = await fetch(`/api/jobs/${slug}`);
         if (!res.ok) {
           setJob(null);
+          setLoading(false);
           return;
         }
         const data = await res.json();
         setJob(data.job ?? null);
-
-        if (data.job && user) {
-          const alreadyApplied = await hasApplied(user.uid, slug);
-          setApplied(alreadyApplied);
-          const alreadySaved = await isPostSaved(user.uid, slug);
-          setSaved(alreadySaved);
-        }
       } catch (err) {
         console.error("Failed to load job:", err);
         setJob(null);
       } finally {
         setLoading(false);
+      }
+
+      // Check saved/applied status separately — don't let these crash the job display
+      if (user) {
+        try {
+          const alreadyApplied = await hasApplied(user.uid, slug);
+          setApplied(alreadyApplied);
+        } catch { /* ignore — user just won't see applied state */ }
+        try {
+          const alreadySaved = await isPostSaved(user.uid, slug);
+          setSaved(alreadySaved);
+        } catch { /* ignore — user just won't see saved state */ }
       }
     }
     load();
