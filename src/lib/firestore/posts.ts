@@ -176,8 +176,12 @@ export async function createMemberPost(data: {
     "-" +
     Date.now().toString(36);
   const id = `${data.type}-${slug}`;
+  // Strip undefined values — Firestore rejects them
+  const clean = Object.fromEntries(
+    Object.entries(data).filter(([, v]) => v !== undefined)
+  );
   await setDoc(doc(db, "posts", id), {
-    ...data,
+    ...clean,
     status: "active",
     createdAt: serverTimestamp(),
     order: Date.now(),
