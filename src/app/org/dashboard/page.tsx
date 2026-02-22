@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
@@ -331,14 +331,31 @@ function StatusBadge({ status }: { status?: PostStatus }) {
 }
 
 export default function OrgDashboardPage() {
+  return (
+    <Suspense>
+      <OrgDashboardContent />
+    </Suspense>
+  );
+}
+
+function OrgDashboardContent() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
   const [posts, setPosts] = useState<PostWithApps[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+
+  // Auto-open job form when ?create=job is in URL
+  useEffect(() => {
+    if (searchParams.get("create") === "job") {
+      setEditingPost(null);
+      setShowForm(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!user) return;
