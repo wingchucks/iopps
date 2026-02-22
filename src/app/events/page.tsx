@@ -4,13 +4,14 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { getPosts, type Post } from "@/lib/firestore/posts";
+import { getEvents, type Event } from "@/lib/firestore/events";
+import { getPosts } from "@/lib/firestore/posts";
 import { displayLocation } from "@/lib/utils";
 
 const dateFilters = ["All Dates", "This Week", "This Month", "Upcoming"] as const;
 
 export default function EventsBrowsePage() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
@@ -18,50 +19,80 @@ export default function EventsBrowsePage() {
   const [dateFilter, setDateFilter] = useState<string>("All Dates");
 
   useEffect(() => {
-    getPosts({ type: "event" })
-      .then(setPosts)
-      .catch((err) => console.error("Failed to load events:", err))
-      .finally(() => setLoading(false));
+    async function load() {
+      try {
+        // Primary: dedicated events collection
+        let items = await getEvents();
+        // Fallback: posts collection if dedicated is empty
+        if (items.length === 0) {
+          const posts = await getPosts({ type: "event" });
+          items = posts.map((p) => ({
+            id: p.id,
+            title: p.title,
+            slug: p.slug || p.id.replace(/^event-/, ""),
+            description: p.description,
+            dates: p.dates,
+            location: p.location,
+            eventType: p.eventType,
+            orgId: p.orgId,
+            orgName: p.orgName,
+            orgShort: p.orgShort,
+            price: p.price,
+            schedule: p.schedule,
+            highlights: p.highlights,
+            featured: p.featured,
+            badges: p.badges,
+            source: p.source,
+          }));
+        }
+        setEvents(items);
+      } catch (err) {
+        console.error("Failed to load events:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
   const locations = useMemo(
-    () => [...new Set(posts.map((p) => p.location).filter(Boolean))] as string[],
-    [posts]
+    () => [...new Set(events.map((e) => e.location).filter(Boolean))] as string[],
+    [events]
   );
 
   const eventTypes = useMemo(
     () => {
-      const fromPosts = posts.map((p) => p.eventType).filter(Boolean) as string[];
-      const all = new Set(fromPosts);
+      const fromEvents = events.map((e) => e.eventType).filter(Boolean) as string[];
+      const all = new Set(fromEvents);
       all.add("Pow Wow");
       return [...all];
     },
-    [posts]
+    [events]
   );
 
   const filtered = useMemo(() => {
-    let result = posts;
+    let result = events;
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.orgName?.toLowerCase().includes(q) ||
-          p.location?.toLowerCase().includes(q) ||
-          p.description?.toLowerCase().includes(q)
+        (e) =>
+          e.title.toLowerCase().includes(q) ||
+          e.orgName?.toLowerCase().includes(q) ||
+          e.location?.toLowerCase().includes(q) ||
+          e.description?.toLowerCase().includes(q)
       );
     }
     if (locationFilter) {
-      result = result.filter((p) => p.location === locationFilter);
+      result = result.filter((e) => e.location === locationFilter);
     }
     if (typeFilter) {
-      result = result.filter((p) => p.eventType === typeFilter);
+      result = result.filter((e) => e.eventType === typeFilter);
     }
     if (dateFilter !== "All Dates") {
       const now = new Date();
-      result = result.filter((p) => {
-        if (!p.dates) return dateFilter === "Upcoming";
-        const match = p.dates.match(/(\w+)\s+(\d{1,2}),?\s*(\d{4})?/);
+      result = result.filter((e) => {
+        if (!e.dates) return dateFilter === "Upcoming";
+        const match = e.dates.match(/(\w+)\s+(\d{1,2}),?\s*(\d{4})?/);
         if (!match) return true;
         const parsed = new Date(`${match[1]} ${match[2]}, ${match[3] || now.getFullYear()}`);
         if (isNaN(parsed.getTime())) return true;
@@ -80,7 +111,7 @@ export default function EventsBrowsePage() {
       });
     }
     return result;
-  }, [posts, search, locationFilter, typeFilter, dateFilter]);
+  }, [events, search, locationFilter, typeFilter, dateFilter]);
 
   return (
     <AppShell>
@@ -211,16 +242,16 @@ export default function EventsBrowsePage() {
         {/* Events Grid */}
         {!loading && filtered.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((post) => {
-              const slug = post.id.replace(/^event-/, "");
+            {filtered.map((evt) => {
+              const slug = evt.slug || evt.id;
               // Parse a short month/day from the dates string
-              const dateParts = post.dates?.match(/(\w{3,})\s+(\d{1,2})/);
+              const dateParts = evt.dates?.match(/(\w{3,})\s+(\d{1,2})/);
               const month = dateParts?.[1]?.slice(0, 3).toUpperCase() || "";
               const day = dateParts?.[2] || "";
 
               return (
                 <Link
-                  key={post.id}
+                  key={evt.id}
                   href={`/events/${slug}`}
                   className="no-underline group"
                 >
@@ -264,9 +295,9 @@ export default function EventsBrowsePage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <h3 className="text-[15px] font-bold text-text m-0 mb-1 line-clamp-2 group-hover:text-purple transition-colors">
-                            {post.title}
+                            {evt.title}
                           </h3>
-                          {post.eventType && (
+                          {evt.eventType && (
                             <span
                               className="inline-block text-[11px] font-semibold rounded-lg px-2 py-0.5"
                               style={{
@@ -274,7 +305,7 @@ export default function EventsBrowsePage() {
                                 background: "var(--purple-soft)",
                               }}
                             >
-                              {post.eventType}
+                              {evt.eventType}
                             </span>
                           )}
                         </div>
@@ -282,19 +313,19 @@ export default function EventsBrowsePage() {
 
                       {/* Details */}
                       <div className="flex flex-col gap-1.5 mt-auto">
-                        {post.location && (
+                        {evt.location && (
                           <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
-                            <span>&#128205;</span> {displayLocation(post.location)}
+                            <span>&#128205;</span> {displayLocation(evt.location)}
                           </p>
                         )}
-                        {post.dates && (
+                        {evt.dates && (
                           <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
-                            <span>&#128197;</span> {post.dates}
+                            <span>&#128197;</span> {evt.dates}
                           </p>
                         )}
-                        {post.orgName && (
+                        {evt.orgName && (
                           <p className="text-xs text-text-muted m-0 flex items-center gap-1.5">
-                            <span>&#127970;</span> {post.orgName}
+                            <span>&#127970;</span> {evt.orgName}
                           </p>
                         )}
                       </div>
@@ -305,7 +336,7 @@ export default function EventsBrowsePage() {
                           className="text-xs font-bold"
                           style={{ color: "var(--purple)" }}
                         >
-                          {post.price?.toLowerCase() === "free"
+                          {evt.price?.toLowerCase() === "free"
                             ? "RSVP - Free Event"
                             : "View Details"}{" "}
                           &#8594;

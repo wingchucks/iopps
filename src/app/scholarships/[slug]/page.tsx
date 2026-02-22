@@ -9,12 +9,21 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
-import { getPost, getPosts, type Post } from "@/lib/firestore/posts";
+import { getScholarshipBySlug, getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
+import { getPost, getPosts } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { useAuth } from "@/lib/auth-context";
 import ReportButton from "@/components/ReportButton";
 import { displayLocation } from "@/lib/utils";
+
+function isClosingSoon(deadline?: string): boolean {
+  if (!deadline) return false;
+  const d = new Date(deadline);
+  if (isNaN(d.getTime())) return false;
+  const diff = d.getTime() - Date.now();
+  return diff > 0 && diff < 14 * 24 * 60 * 60 * 1000;
+}
 
 export default function ScholarshipDetailPage() {
   return (
@@ -31,9 +40,9 @@ export default function ScholarshipDetailPage() {
 function ScholarshipDetailContent() {
   const params = useParams();
   const slug = params.slug as string;
-  const [post, setPost] = useState<Post | null>(null);
+  const [scholarship, setScholarship] = useState<Scholarship | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
-  const [related, setRelated] = useState<Post[]>([]);
+  const [related, setRelated] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [actionLoading, setActionLoading] = useState("");
@@ -42,20 +51,59 @@ function ScholarshipDetailContent() {
   useEffect(() => {
     async function load() {
       try {
-        const postData = await getPost(`scholarship-${slug}`);
-        setPost(postData);
-        if (postData?.orgId) {
-          const orgData = await getOrganization(postData.orgId);
+        // Primary: dedicated scholarships collection
+        let data = await getScholarshipBySlug(slug);
+
+        // Fallback: posts collection
+        if (!data) {
+          const post = await getPost(`scholarship-${slug}`);
+          if (post) {
+            data = {
+              id: post.id,
+              title: post.title,
+              slug: post.slug || slug,
+              description: post.description,
+              eligibility: post.eligibility,
+              amount: post.amount,
+              deadline: post.deadline,
+              orgId: post.orgId,
+              orgName: post.orgName,
+              orgShort: post.orgShort,
+              applicationUrl: post.applicationUrl,
+              requirements: post.requirements,
+              location: post.location,
+              featured: post.featured,
+              badges: post.badges,
+              source: post.source,
+            };
+          }
+        }
+
+        setScholarship(data);
+        if (data?.orgId) {
+          const orgData = await getOrganization(data.orgId);
           setOrg(orgData);
         }
-        if (postData && user) {
-          const isSaved = await isPostSaved(user.uid, postData.id);
+        if (data && user) {
+          // Check saved using both possible ID formats
+          const isSaved = await isPostSaved(user.uid, data.id);
           setSaved(isSaved);
         }
-        // Load related scholarships
-        const allScholarships = await getPosts({ type: "scholarship", max: 10 });
+        // Load related scholarships from dedicated collection
+        let allScholarships = await getScholarships();
+        if (allScholarships.length === 0) {
+          const posts = await getPosts({ type: "scholarship", max: 10 });
+          allScholarships = posts.map((p) => ({
+            id: p.id,
+            title: p.title,
+            slug: p.slug || p.id.replace(/^scholarship-/, ""),
+            orgName: p.orgName,
+            amount: p.amount,
+            deadline: p.deadline,
+          }));
+        }
         setRelated(
-          allScholarships.filter((s) => s.id !== `scholarship-${slug}`).slice(0, 3)
+          allScholarships.filter((s) => s.id !== data?.id).slice(0, 3)
         );
       } catch (err) {
         console.error("Failed to load scholarship:", err);
@@ -67,14 +115,14 @@ function ScholarshipDetailContent() {
   }, [slug, user]);
 
   const handleSave = async () => {
-    if (!user || !post) return;
+    if (!user || !scholarship) return;
     setActionLoading("save");
     try {
       if (saved) {
-        await unsavePost(user.uid, post.id);
+        await unsavePost(user.uid, scholarship.id);
         setSaved(false);
       } else {
-        await savePost(user.uid, post.id, post.title, post.type);
+        await savePost(user.uid, scholarship.id, scholarship.title, "scholarship");
         setSaved(true);
       }
     } catch (err) {
@@ -102,7 +150,7 @@ function ScholarshipDetailContent() {
     );
   }
 
-  if (!post) {
+  if (!scholarship) {
     return (
       <div className="max-w-[600px] mx-auto px-4 py-20 text-center">
         <p className="text-5xl mb-4">&#127891;</p>
@@ -117,6 +165,7 @@ function ScholarshipDetailContent() {
 
   const orgLink = org ? `/org/${org.id}` : "#";
   const isPremium = org?.tier === "premium";
+  const closingSoon = isClosingSoon(scholarship.deadline);
 
   return (
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
@@ -140,19 +189,19 @@ function ScholarshipDetailContent() {
           <span className="text-6xl sm:text-7xl block mb-4">&#127891;</span>
           <div className="flex flex-wrap justify-center gap-2 mb-3">
             <Badge text="Scholarship" color="var(--green)" bg="var(--green-soft)" small />
-            {post.featured && (
+            {scholarship.featured && (
               <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
             )}
-            {post.closingSoon && (
+            {closingSoon && (
               <Badge text="Closing Soon" color="var(--red)" bg="var(--red-soft)" small />
             )}
           </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-text mb-2">{post.title}</h1>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-text mb-2">{scholarship.title}</h1>
           <div className="flex flex-wrap justify-center gap-4 text-sm text-text-sec">
-            {post.orgName && <span>{post.orgName}</span>}
-            {post.amount && <span>&#128176; {post.amount}</span>}
-            {post.deadline && <span>&#128197; Deadline: {post.deadline}</span>}
-            {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
+            {scholarship.orgName && <span>{scholarship.orgName}</span>}
+            {scholarship.amount && <span>&#128176; {scholarship.amount}</span>}
+            {scholarship.deadline && <span>&#128197; Deadline: {scholarship.deadline}</span>}
+            {scholarship.location && <span>&#128205; {displayLocation(scholarship.location)}</span>}
           </div>
         </div>
       </div>
@@ -164,13 +213,13 @@ function ScholarshipDetailContent() {
           {org && (
             <div className="flex items-center gap-3 mb-6">
               <Avatar
-                name={post.orgShort || org.shortName}
+                name={scholarship.orgShort || org.shortName}
                 size={40}
                 gradient={isPremium ? "linear-gradient(135deg, var(--navy), var(--teal))" : undefined}
               />
               <div>
                 <Link href={orgLink} className="text-[15px] text-teal font-bold no-underline hover:underline">
-                  {post.orgName || org.name}
+                  {scholarship.orgName || org.name}
                 </Link>
                 {isPremium && (
                   <div className="flex items-center gap-1.5">
@@ -182,31 +231,31 @@ function ScholarshipDetailContent() {
           )}
 
           {/* Description */}
-          {post.description && (
+          {scholarship.description && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">About This Scholarship</h3>
               <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                {post.description}
+                {scholarship.description}
               </p>
             </>
           )}
 
           {/* Eligibility */}
-          {post.eligibility && (
+          {scholarship.eligibility && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">Eligibility</h3>
               <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                {post.eligibility}
+                {scholarship.eligibility}
               </p>
             </>
           )}
 
           {/* Requirements */}
-          {post.requirements && post.requirements.length > 0 && (
+          {scholarship.requirements && scholarship.requirements.length > 0 && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">Requirements</h3>
               <ul className="mb-6 pl-0 list-none">
-                {post.requirements.map((r, i) => (
+                {scholarship.requirements.map((r, i) => (
                   <li key={i} className="flex gap-2 items-start mb-2">
                     <span className="text-teal text-sm mt-0.5">&#10003;</span>
                     <span className="text-sm text-text-sec">{r}</span>
@@ -217,7 +266,7 @@ function ScholarshipDetailContent() {
           )}
 
           {/* How to Apply */}
-          {post.applicationUrl && (
+          {scholarship.applicationUrl && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">How to Apply</h3>
               <p className="text-sm text-text-sec leading-relaxed mb-6">
@@ -237,9 +286,9 @@ function ScholarshipDetailContent() {
           )}
 
           {/* Tags */}
-          {post.badges && post.badges.length > 0 && (
+          {scholarship.badges && scholarship.badges.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
-              {post.badges.map((b) => (
+              {scholarship.badges.map((b) => (
                 <span
                   key={b}
                   className="rounded-xl text-[13px] font-semibold text-teal"
@@ -261,7 +310,7 @@ function ScholarshipDetailContent() {
               <h3 className="text-lg font-bold text-text mb-3">Related Scholarships</h3>
               <div className="flex flex-col gap-2 mb-6">
                 {related.map((r) => {
-                  const rSlug = r.id.replace(/^scholarship-/, "");
+                  const rSlug = r.slug || r.id;
                   return (
                     <Link key={r.id} href={`/scholarships/${rSlug}`} className="no-underline">
                       <Card className="cursor-pointer">
@@ -293,8 +342,8 @@ function ScholarshipDetailContent() {
           {/* Apply/Save Card */}
           <Card className="mb-4" style={{ position: "sticky", top: 80 }}>
             <div style={{ padding: 20 }}>
-              {post.applicationUrl ? (
-                <a href={post.applicationUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+              {scholarship.applicationUrl ? (
+                <a href={scholarship.applicationUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
                   <Button
                     primary
                     full
@@ -345,34 +394,34 @@ function ScholarshipDetailContent() {
               <div className="border-t border-border pt-4">
                 <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">SCHOLARSHIP DETAILS</p>
                 <div className="flex flex-col gap-2.5">
-                  {post.amount && (
+                  {scholarship.amount && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Value</span>
-                      <span className="text-xs font-semibold text-green">{post.amount}</span>
+                      <span className="text-xs font-semibold text-green">{scholarship.amount}</span>
                     </div>
                   )}
-                  {post.deadline && (
+                  {scholarship.deadline && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Deadline</span>
-                      <span className="text-xs font-semibold text-red">{post.deadline}</span>
+                      <span className="text-xs font-semibold text-red">{scholarship.deadline}</span>
                     </div>
                   )}
-                  {post.location && (
+                  {scholarship.location && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Location</span>
-                      <span className="text-xs font-semibold text-text">{displayLocation(post.location)}</span>
+                      <span className="text-xs font-semibold text-text">{displayLocation(scholarship.location)}</span>
                     </div>
                   )}
-                  {post.orgName && (
+                  {scholarship.orgName && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Organization</span>
-                      <span className="text-xs font-semibold text-text">{post.orgName}</span>
+                      <span className="text-xs font-semibold text-text">{scholarship.orgName}</span>
                     </div>
                   )}
-                  {post.source && (
+                  {scholarship.source && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Source</span>
-                      <span className="text-xs font-semibold text-text">{post.source}</span>
+                      <span className="text-xs font-semibold text-text">{scholarship.source}</span>
                     </div>
                   )}
                 </div>
@@ -413,8 +462,8 @@ function ScholarshipDetailContent() {
           <div className="mt-3 text-center">
             <ReportButton
               targetType="post"
-              targetId={post.id}
-              targetTitle={post.title}
+              targetId={scholarship.id}
+              targetTitle={scholarship.title}
             />
           </div>
         </div>

@@ -59,22 +59,46 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Scholarships: public read, admin write
+    // Scholarships: public read, admin write, org owner/admin can create/update their org's
     match /scholarships/{scholarshipId} {
       allow read: if true;
       allow write: if isAdmin();
+      allow create: if isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        memberData().orgId == request.resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"];
+      allow update: if isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        memberData().orgId == resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"];
     }
 
-    // Conferences / Events: public read, admin write
+    // Conferences: public read, admin write, org owner/admin can create/update their org's
     match /conferences/{conferenceId} {
       allow read: if true;
       allow write: if isAdmin();
+      allow create: if isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        memberData().orgId == request.resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"];
+      allow update: if isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        memberData().orgId == resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"];
     }
 
-    // Events (legacy alias): public read, admin write
+    // Events: public read, admin write, org owner/admin can create/update their org's
     match /events/{eventId} {
       allow read: if true;
       allow write: if isAdmin();
+      allow create: if isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        memberData().orgId == request.resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"];
+      allow update: if isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        memberData().orgId == resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"];
     }
 
     // RSS feeds collection: public read, admin write
