@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -7,6 +8,8 @@ import AppShell from "@/components/AppShell";
 import Footer from "@/components/Footer";
 import Card from "@/components/Card";
 import { useOnboarding } from "@/lib/onboarding-context";
+import { useAuth } from "@/lib/auth-context";
+import { getMemberProfile } from "@/lib/firestore/members";
 
 const settingsLinks = [
   {
@@ -38,6 +41,13 @@ const settingsLinks = [
 export default function SettingsPage() {
   const { resetTour } = useOnboarding();
   const router = useRouter();
+  const { user } = useAuth();
+  const [hasOrg, setHasOrg] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    getMemberProfile(user.uid).then((p) => { if (p?.orgId) setHasOrg(true); });
+  }, [user]);
 
   const handleRestartTour = () => {
     router.push("/feed");
@@ -51,10 +61,10 @@ export default function SettingsPage() {
       <div className="min-h-screen bg-bg flex flex-col">
         <div className="max-w-[700px] mx-auto px-4 py-8 md:px-10 flex-1">
           <Link
-            href="/profile"
+            href={hasOrg ? "/org/dashboard" : "/profile"}
             className="text-sm text-teal font-semibold no-underline hover:underline mb-4 inline-block"
           >
-            &larr; Back to Profile
+            &larr; {hasOrg ? "Back to Dashboard" : "Back to Profile"}
           </Link>
           <h1 className="text-2xl font-extrabold text-text mb-1">Settings</h1>
           <p className="text-sm text-text-muted mb-6">

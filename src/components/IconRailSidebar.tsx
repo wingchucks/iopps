@@ -432,12 +432,12 @@ export default function IconRailSidebar() {
 
         {/* Profile / Sign out */}
         <div className="flex items-center gap-3 h-10 px-3 rounded-lg">
-          <Link href="/profile" className="shrink-0 no-underline">
+          <Link href={hasOrg ? "/org/dashboard" : "/profile"} className="shrink-0 no-underline">
             <Avatar name={displayName} size={28} />
           </Link>
           <div className="opacity-0 group-hover/rail:opacity-100 flex items-center gap-2 transition-opacity duration-200 min-w-0">
             <Link
-              href="/profile"
+              href={hasOrg ? "/org/dashboard" : "/profile"}
               className="text-sm font-medium no-underline truncate"
               style={{ color: "var(--text-sec)" }}
             >

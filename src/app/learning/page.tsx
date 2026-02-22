@@ -8,6 +8,7 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
+import { getMemberProfile } from "@/lib/firestore/members";
 import {
   getUserEnrollments,
   type TrainingEnrollment,
@@ -42,6 +43,12 @@ function LearningContent() {
   const { showToast } = useToast();
   const [enrollments, setEnrollments] = useState<TrainingEnrollment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasOrg, setHasOrg] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    getMemberProfile(user.uid).then((p) => { if (p?.orgId) setHasOrg(true); });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -97,10 +104,10 @@ function LearningContent() {
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8 pb-24">
       {/* Back link */}
       <Link
-        href="/profile"
+        href={hasOrg ? "/org/dashboard" : "/profile"}
         className="inline-flex items-center gap-1 text-sm text-text-muted no-underline hover:text-teal mb-4"
       >
-        &#8592; Back to Profile
+        &#8592; {hasOrg ? "Back to Dashboard" : "Back to Profile"}
       </Link>
 
       {/* Page header */}
