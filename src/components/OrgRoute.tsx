@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, getDocFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 interface OrgRouteProps {
@@ -35,7 +35,13 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
         // Fallback: if no member profile or no orgId, check users collection for employerId
         if (!memberProfile?.orgId) {
           console.log("[OrgRoute] No member profile, checking users collection for uid:", user!.uid);
-          const userDoc = await getDoc(doc(db, "users", user!.uid));
+          let userDoc;
+          try {
+            userDoc = await getDocFromServer(doc(db, "users", user!.uid));
+          } catch {
+            // Fallback to cache if server unreachable
+            userDoc = await getDoc(doc(db, "users", user!.uid));
+          }
           const userData = userDoc.data();
           console.log("[OrgRoute] User data:", userData?.role, userData?.employerId);
           if (userData?.employerId && userData?.role === "employer") {

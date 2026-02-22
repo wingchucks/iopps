@@ -21,7 +21,7 @@ import {
 import type { Post, PostStatus } from "@/lib/firestore/posts";
 import { getApplicationsByPost } from "@/lib/firestore/applications";
 import { displayLocation } from "@/lib/utils";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, getDocFromServer, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 interface PostWithApps extends Post {
@@ -348,7 +348,9 @@ export default function OrgDashboardPage() {
 
       // Fallback: check users collection for employer accounts
       if (!orgId) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
+        let userDoc;
+          try { userDoc = await getDocFromServer(doc(db, "users", user.uid)); }
+          catch { userDoc = await getDoc(doc(db, "users", user.uid)); }
         const userData = userDoc.data();
         if (userData?.employerId && userData?.role === "employer") {
           orgId = userData.employerId;

@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { getMemberProfile } from "@/lib/firestore/members";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, getDocFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Avatar from "./Avatar";
 
@@ -457,3 +457,4 @@ export default function IconRailSidebar() {
     </aside>
   );
 }
+
