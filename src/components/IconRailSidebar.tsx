@@ -431,31 +431,49 @@ export default function IconRailSidebar() {
         </Link>
 
         {/* Profile / Sign out */}
-        <div className="flex items-center gap-3 h-10 px-3 rounded-lg">
-          <Link href={hasOrg ? "/org/dashboard" : "/profile"} className="shrink-0 no-underline">
-            <Avatar name={displayName} size={28} />
-          </Link>
-          <div className="opacity-0 group-hover/rail:opacity-100 flex items-center gap-2 transition-opacity duration-200 min-w-0">
-            <Link
-              href={hasOrg ? "/org/dashboard" : "/profile"}
-              className="text-sm font-medium no-underline truncate"
+        {user ? (
+          <div className="flex items-center gap-3 h-10 px-3 rounded-lg">
+            <Link href={hasOrg ? "/org/dashboard" : "/profile"} className="shrink-0 no-underline">
+              <Avatar name={displayName} size={28} />
+            </Link>
+            <div className="opacity-0 group-hover/rail:opacity-100 flex items-center gap-2 transition-opacity duration-200 min-w-0">
+              <Link
+                href={hasOrg ? "/org/dashboard" : "/profile"}
+                className="text-sm font-medium no-underline truncate"
+                style={{ color: "var(--text-sec)" }}
+              >
+                {displayName}
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="text-[11px] font-semibold rounded-md border-none cursor-pointer whitespace-nowrap"
+                style={{
+                  padding: "3px 8px",
+                  background: "color-mix(in srgb, var(--red) 10%, transparent)",
+                  color: "var(--red)",
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        ) : (
+          <Link
+            href="/signin"
+            className="flex items-center gap-3 h-10 px-3 rounded-lg no-underline"
+          >
+            <span className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full"
+              style={{ background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 600 }}>
+              ?
+            </span>
+            <span
+              className="opacity-0 group-hover/rail:opacity-100 text-sm font-medium whitespace-nowrap transition-opacity duration-200"
               style={{ color: "var(--text-sec)" }}
             >
-              {displayName}
-            </Link>
-            <button
-              onClick={handleSignOut}
-              className="text-[11px] font-semibold rounded-md border-none cursor-pointer whitespace-nowrap"
-              style={{
-                padding: "3px 8px",
-                background: "color-mix(in srgb, var(--red) 10%, transparent)",
-                color: "var(--red)",
-              }}
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
+              Sign in
+            </span>
+          </Link>
+        )}
       </div>
       <style>{`
         @keyframes pulse-dot {

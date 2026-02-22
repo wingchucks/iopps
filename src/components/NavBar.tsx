@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -70,7 +71,7 @@ export default function NavBar() {
         {/* Left: logo + nav links */}
         <div className="flex items-center gap-4 md:gap-8">
           <Link href="/feed" className="flex items-center gap-2.5 no-underline">
-            <img src="/logo.png" alt="IOPPS" width={36} height={36} className="shrink-0" />
+            <Image src="/logo.png" alt="IOPPS" width={36} height={36} className="shrink-0" />
             <span className="text-white font-black text-xl md:text-2xl tracking-[2px]">IOPPS</span>
             <span
               className="text-teal-light rounded opacity-80 hidden sm:inline"
@@ -250,13 +251,24 @@ export default function NavBar() {
           </Link>
           <div className="mx-4 mt-2 flex items-center gap-2">
             <ThemeToggle />
-            <button
-              onClick={handleSignOut}
-              className="flex-1 py-2.5 rounded-[10px] border-none cursor-pointer text-sm font-semibold"
-              style={{ background: "rgba(220,38,38,.15)", color: "#DC2626" }}
-            >
-              Sign Out
-            </button>
+            {user ? (
+              <button
+                onClick={handleSignOut}
+                className="flex-1 py-2.5 rounded-[10px] border-none cursor-pointer text-sm font-semibold"
+                style={{ background: "rgba(220,38,38,.15)", color: "#DC2626" }}
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                href="/signin"
+                onClick={() => setMenuOpen(false)}
+                className="flex-1 py-2.5 rounded-[10px] border-none text-sm font-semibold text-center no-underline"
+                style={{ background: "rgba(59,130,246,.15)", color: "#3B82F6" }}
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
       )}
