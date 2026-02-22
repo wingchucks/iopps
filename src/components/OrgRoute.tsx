@@ -3,10 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
-import { doc, getDoc, getDocFromServer } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 interface OrgRouteProps {
   children: React.ReactNode;
@@ -30,48 +27,37 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
 
     async function checkOrg() {
       try {
-        let memberProfile = await getMemberProfile(user!.uid);
+        // Use server-side API to avoid Firestore client offline issues
+        const idToken = await user!.getIdToken();
+        const res = await fetch("/api/employer/check", {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
 
-        // Fallback: if no member profile or no orgId, check users collection for employerId
-        if (!memberProfile?.orgId) {
-          console.log("[OrgRoute] No member profile, checking users collection for uid:", user!.uid);
-          let userDoc;
-          try {
-            userDoc = await getDocFromServer(doc(db, "users", user!.uid));
-          } catch {
-            // Fallback to cache if server unreachable
-            userDoc = await getDoc(doc(db, "users", user!.uid));
-          }
-          const userData = userDoc.data();
-          console.log("[OrgRoute] User data:", userData?.role, userData?.employerId);
-          if (userData?.employerId && userData?.role === "employer") {
-            // Employer without a members entry — synthesize a profile
-            memberProfile = {
-              uid: user!.uid,
-              email: userData.email || user!.email || "",
-              displayName: userData.displayName || user!.displayName || "",
-              orgId: userData.employerId,
-              orgRole: "owner",
-            } as MemberProfile;
-          } else {
-            router.replace("/feed");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authorized && data.profile) {
+            const memberProfile = data.profile as MemberProfile;
+
+            if (requiredRole) {
+              const role = memberProfile.orgRole;
+              if (requiredRole === "owner" && role !== "owner") {
+                router.replace("/org/dashboard");
+                return;
+              }
+              if (requiredRole === "admin" && role !== "owner" && role !== "admin") {
+                router.replace("/org/dashboard");
+                return;
+              }
+            }
+
+            setProfile(memberProfile);
+            setAuthorized(true);
             return;
           }
         }
 
-        if (requiredRole) {
-          const role = memberProfile.orgRole;
-          if (requiredRole === "owner" && role !== "owner") {
-            router.replace("/org/dashboard");
-            return;
-          }
-          if (requiredRole === "admin" && role !== "owner" && role !== "admin") {
-            router.replace("/org/dashboard");
-            return;
-          }
-        }
-        setProfile(memberProfile);
-        setAuthorized(true);
+        // Not an employer/org member
+        router.replace("/feed");
       } catch (err) {
         console.error("[OrgRoute] checkOrg failed:", err);
         router.replace("/feed");
@@ -86,7 +72,6 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
   if (loading || checking) {
     return (
       <div className="min-h-screen bg-bg">
-        {/* Mobile nav skeleton */}
         <div
           className="lg:hidden h-16 sticky top-0 z-50"
           style={{
@@ -98,8 +83,6 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
             <div className="w-9 h-9 rounded-full skeleton" style={{ opacity: 0.15 }} />
           </div>
         </div>
-
-        {/* Desktop sidebar rail skeleton */}
         <div
           className="hidden lg:flex flex-col fixed top-0 left-0 h-screen w-[72px] border-r z-40"
           style={{ background: "var(--card)", borderColor: "var(--border)" }}
@@ -114,8 +97,6 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
             ))}
           </div>
         </div>
-
-        {/* Content skeleton */}
         <div className="lg:pl-[72px]">
           <div className="max-w-[900px] mx-auto px-4 py-8 md:px-10">
             <div className="w-48 h-8 rounded skeleton mb-4" />
