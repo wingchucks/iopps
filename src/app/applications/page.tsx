@@ -9,6 +9,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
+import { getMemberProfile } from "@/lib/firestore/members";
 import {
   getApplications,
   withdrawApplication,
@@ -60,6 +61,12 @@ function ApplicationsContent() {
   const [filter, setFilter] = useState<ApplicationStatus | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [withdrawing, setWithdrawing] = useState<string | null>(null);
+  const [hasOrg, setHasOrg] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    getMemberProfile(user.uid).then((p) => { if (p?.orgId) setHasOrg(true); });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -120,10 +127,10 @@ function ApplicationsContent() {
   return (
     <div className="max-w-[800px] mx-auto px-4 py-6 md:px-10 md:py-8">
       <Link
-        href="/profile"
+        href={hasOrg ? "/org/dashboard" : "/profile"}
         className="inline-flex items-center gap-1 text-sm text-text-muted no-underline hover:text-teal mb-4"
       >
-        &#8592; Back to Profile
+        &#8592; {hasOrg ? "Back to Dashboard" : "Back to Profile"}
       </Link>
 
       <h2 className="text-2xl font-extrabold text-text mb-5">
