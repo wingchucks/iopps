@@ -73,6 +73,7 @@ function FeedContent() {
   const [orgPending, setOrgPending] = useState(false);
   const [userRole, setUserRole] = useState<string | undefined>();
   const [userOrgRole, setUserOrgRole] = useState<string | undefined>();
+  const [hasOrg, setHasOrg] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const { user, signOut } = useAuth();
   const router = useRouter();
@@ -138,6 +139,7 @@ function FeedContent() {
             if (profile?.role) setUserRole(profile.role);
             if (profile?.orgRole) setUserOrgRole(profile.orgRole);
             if (profile?.orgId) {
+              setHasOrg(true);
               const org = await getOrganization(profile.orgId);
               if (org && (org as unknown as Record<string, unknown>).status === "pending") {
                 setOrgPending(true);
@@ -190,6 +192,7 @@ function FeedContent() {
         onSignOut={handleSignOut}
         userRole={userRole}
         orgRole={userOrgRole}
+        hasOrg={hasOrg}
       />
 
       {/* ═══ Center Feed ═══ */}

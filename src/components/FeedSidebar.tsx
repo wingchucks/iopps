@@ -15,6 +15,7 @@ interface FeedSidebarProps {
   onSignOut: () => void;
   userRole?: string;
   orgRole?: string;
+  hasOrg?: boolean;
 }
 
 function getRoleLabel(role?: string, orgRole?: string) {
@@ -32,6 +33,7 @@ export default function FeedSidebar({
   onSignOut,
   userRole,
   orgRole,
+  hasOrg,
 }: FeedSidebarProps) {
   const { user } = useAuth();
   const displayName =
@@ -48,37 +50,39 @@ export default function FeedSidebar({
             <p className="text-xs text-teal-light m-0">{getRoleLabel(userRole, orgRole)}</p>
           </div>
         </div>
-        <div className="mb-3">
-          <div className="flex justify-between text-[11px] mb-1">
-            <span className="text-text-muted">Profile completeness</span>
-            <span className="text-teal font-bold">60%</span>
-          </div>
-          <div
-            className="h-1.5 rounded-full"
-            style={{
-              background: "var(--border)",
-            }}
-          >
+        {!hasOrg && (
+          <div className="mb-3">
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-text-muted">Profile completeness</span>
+              <span className="text-teal font-bold">60%</span>
+            </div>
             <div
               className="h-1.5 rounded-full"
               style={{
-                width: "60%",
-                background:
-                  "linear-gradient(90deg, var(--teal), var(--blue))",
+                background: "var(--border)",
               }}
-            />
+            >
+              <div
+                className="h-1.5 rounded-full"
+                style={{
+                  width: "60%",
+                  background:
+                    "linear-gradient(90deg, var(--teal), var(--blue))",
+                }}
+              />
+            </div>
           </div>
-        </div>
+        )}
         <div className="flex gap-2">
           <Link
-            href="/profile"
+            href={hasOrg ? "/org/dashboard" : "/profile"}
             className="flex-1 text-center text-xs font-semibold rounded-lg no-underline py-2"
             style={{
               background: "color-mix(in srgb, var(--teal) 8%, transparent)",
               color: "var(--teal)",
             }}
           >
-            View Profile
+            {hasOrg ? "Org Dashboard" : "View Profile"}
           </Link>
           <Button small onClick={onSignOut} style={{ fontSize: 12, flex: 1 }}>
             Sign Out

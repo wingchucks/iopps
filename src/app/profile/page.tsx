@@ -96,6 +96,11 @@ function ProfileContent() {
     if (!user) return;
     try {
       const data = await getMemberProfile(user.uid);
+      // Redirect org users to the org dashboard profile
+      if (data?.orgId) {
+        router.replace("/org/dashboard/profile");
+        return;
+      }
       setProfile(data);
       if (data) {
         setCommunity(data.community);

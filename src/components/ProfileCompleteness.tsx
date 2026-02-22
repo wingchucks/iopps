@@ -66,6 +66,9 @@ export default function ProfileCompleteness() {
 
   if (!loaded || dismissed) return null;
 
+  // Org users don't need the community profile checklist
+  if (profile?.orgId) return null;
+
   const steps = getSteps(profile, !!profile?.photoURL);
   const completed = steps.filter((s) => s.done).length;
   const total = steps.length;
