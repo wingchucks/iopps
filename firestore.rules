@@ -136,12 +136,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
       allow create: if isSignedIn() && (
-        // Org owner/admin can create org posts
-        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-         memberData().orgId == request.resource.data.orgId &&
-         memberData().orgRole in ["owner", "admin"]) ||
         // Any authenticated user can create their own community posts
-        request.resource.data.authorUid == request.auth.uid
+        request.resource.data.authorUid == request.auth.uid ||
+        // Org owner/admin can create org posts (guard orgId existence first)
+        ('orgId' in request.resource.data &&
+         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         memberData().orgId == request.resource.data.orgId &&
+         memberData().orgRole in ["owner", "admin"])
       );
       allow update: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
