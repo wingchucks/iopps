@@ -31,13 +31,19 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const db = getAdminDb();
-    const snap = await db
-      .collection("jobs")
-      .where("active", "==", true)
-      .get();
+    const { searchParams } = new URL(request.url);
+    const employerName = searchParams.get("employerName");
+    const employerId = searchParams.get("employerId");
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query: any = db.collection("jobs").where("active", "==", true);
+    if (employerId) query = query.where("employerId", "==", employerId);
+    if (employerName) query = query.where("employerName", "==", employerName);
+
+    const snap = await query.get();
 
     const jobs = snap.docs.map((doc) => {
       const data = doc.data();
