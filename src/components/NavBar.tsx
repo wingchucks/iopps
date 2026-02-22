@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -70,7 +71,7 @@ export default function NavBar() {
         {/* Left: logo + nav links */}
         <div className="flex items-center gap-4 md:gap-8">
           <Link href="/feed" className="flex items-center gap-2.5 no-underline">
-            <img src="/logo.png" alt="IOPPS" width={36} height={36} className="shrink-0" />
+            <Image src="/logo.png" alt="IOPPS" width={36} height={36} className="shrink-0" />
             <span className="text-white font-black text-xl md:text-2xl tracking-[2px]">IOPPS</span>
             <span
               className="text-teal-light rounded opacity-80 hidden sm:inline"
