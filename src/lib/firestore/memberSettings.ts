@@ -56,7 +56,16 @@ export async function getMemberSettings(
       updatedAt: null,
     };
   }
-  return snap.data() as MemberSettings;
+  // Merge with defaults so missing fields (e.g. fieldVisibility) don't cause crashes
+  return {
+    userId,
+    ...defaultSettings,
+    ...snap.data(),
+    fieldVisibility: {
+      ...defaultFieldVisibility,
+      ...(snap.data().fieldVisibility ?? {}),
+    },
+  } as MemberSettings;
 }
 
 export async function updateMemberSettings(

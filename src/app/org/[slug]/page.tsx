@@ -184,7 +184,7 @@ function OrgProfileContent() {
                 background: following ? "#fff" : "transparent",
               }}
             >
-              {following ? "&#10003; Following" : "&#43; Follow"}
+              {following ? "✓ Following" : "+ Follow"}
             </Button>
             <Button small style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)" }}>
               &#128172; Message
