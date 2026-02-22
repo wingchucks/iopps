@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Card, CardContent, Badge } from "@/components/ui";
 import { formatDate } from "@/lib/format-date";
+import {
+  getScholarships,
+  updateScholarship,
+  deleteScholarship,
+  type Scholarship,
+} from "@/lib/firestore/scholarships";
 
 const PAGE_SIZE = 20;
 
@@ -14,15 +20,6 @@ const PAGE_SIZE = 20;
 
 type ScholarshipStatus = "active" | "expired" | "flagged";
 type TabFilter = "all" | ScholarshipStatus;
-
-interface Scholarship {
-  id: string;
-  title: string;
-  provider: string;
-  amount: string;
-  deadline: string;
-  status: ScholarshipStatus;
-}
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -44,55 +41,21 @@ const STATUS_BADGE: Record<
   flagged: { label: "Flagged", variant: "warning" },
 };
 
-// Mock data -- replace with API when scholarship admin endpoint is available
-const MOCK_SCHOLARSHIPS: Scholarship[] = [
-  {
-    id: "sch-1",
-    title: "Indigenous STEM Leaders Scholarship",
-    provider: "Indspire",
-    amount: "$10,000",
-    deadline: "2026-08-31",
-    status: "active",
-  },
-  {
-    id: "sch-2",
-    title: "First Nations Education Award",
-    provider: "National Indigenous Scholarship Foundation",
-    amount: "$5,000",
-    deadline: "2026-05-15",
-    status: "active",
-  },
-  {
-    id: "sch-3",
-    title: "Metis Nation Post-Secondary Bursary",
-    provider: "Metis National Council",
-    amount: "$3,500",
-    deadline: "2025-12-01",
-    status: "expired",
-  },
-  {
-    id: "sch-4",
-    title: "Northern Communities Scholarship",
-    provider: "Arctic Co-operatives Limited",
-    amount: "$7,500",
-    deadline: "2026-10-15",
-    status: "flagged",
-  },
-  {
-    id: "sch-5",
-    title: "Indigenous Business Leadership Award",
-    provider: "Canadian Council for Aboriginal Business",
-    amount: "$15,000",
-    deadline: "2026-03-01",
-    status: "active",
-  },
-];
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-
+function resolveStatus(sch: Scholarship): ScholarshipStatus {
+  if (sch.status === "flagged") return "flagged";
+  if (sch.status === "expired") return "expired";
+  if (sch.active === false) return "expired";
+  // Check if deadline has passed
+  if (sch.deadline) {
+    const d = new Date(sch.deadline);
+    if (!isNaN(d.getTime()) && d < new Date()) return "expired";
+  }
+  return "active";
+}
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -150,17 +113,50 @@ function ConfirmDialog({
 }
 
 // ---------------------------------------------------------------------------
+// Displayed row type (Scholarship + resolved status)
+// ---------------------------------------------------------------------------
+
+interface ScholarshipRow {
+  id: string;
+  title: string;
+  provider: string;
+  amount: string;
+  deadline: string;
+  status: ScholarshipStatus;
+}
+
+function toRow(sch: Scholarship): ScholarshipRow {
+  return {
+    id: sch.id,
+    title: sch.title,
+    provider: sch.orgName || sch.organization || "",
+    amount: sch.amount || "",
+    deadline: sch.deadline || "",
+    status: resolveStatus(sch),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
 export default function AdminScholarshipsPage() {
   useAuth();
 
-  const [scholarships, setScholarships] =
-    useState<Scholarship[]>(MOCK_SCHOLARSHIPS);
+  const [scholarships, setScholarships] = useState<ScholarshipRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
-  const [deleteTarget, setDeleteTarget] = useState<Scholarship | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ScholarshipRow | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [actionLoading, setActionLoading] = useState("");
+
+  // Load real data from Firestore
+  useEffect(() => {
+    getScholarships()
+      .then((items) => setScholarships(items.map(toRow)))
+      .catch((err) => console.error("Failed to load scholarships:", err))
+      .finally(() => setLoading(false));
+  }, []);
 
   // Filter
   const filteredScholarships =
@@ -178,34 +174,57 @@ export default function AdminScholarshipsPage() {
   const rangeEnd = Math.min(currentPage * PAGE_SIZE, filteredScholarships.length);
 
   // Toggle publish / unpublish
-  const togglePublish = (scholarship: Scholarship) => {
-    setScholarships((prev) =>
-      prev.map((s) => {
-        if (s.id !== scholarship.id) return s;
-        const newStatus: ScholarshipStatus =
-          s.status === "expired" ? "active" : "expired";
-        return { ...s, status: newStatus };
-      }),
-    );
+  const togglePublish = async (scholarship: ScholarshipRow) => {
+    setActionLoading(scholarship.id);
+    try {
+      const newStatus = scholarship.status === "expired" ? "active" : "expired";
+      await updateScholarship(scholarship.id, {
+        status: newStatus,
+        active: newStatus === "active",
+      });
+      setScholarships((prev) =>
+        prev.map((s) =>
+          s.id === scholarship.id ? { ...s, status: newStatus } : s
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to toggle publish:", err);
+    } finally {
+      setActionLoading("");
+    }
   };
 
   // Toggle flag / unflag
-  const toggleFlag = (scholarship: Scholarship) => {
-    setScholarships((prev) =>
-      prev.map((s) => {
-        if (s.id !== scholarship.id) return s;
-        const newStatus: ScholarshipStatus =
-          s.status === "flagged" ? "active" : "flagged";
-        return { ...s, status: newStatus };
-      }),
-    );
+  const toggleFlag = async (scholarship: ScholarshipRow) => {
+    setActionLoading(scholarship.id);
+    try {
+      const newStatus = scholarship.status === "flagged" ? "active" : "flagged";
+      await updateScholarship(scholarship.id, { status: newStatus });
+      setScholarships((prev) =>
+        prev.map((s) =>
+          s.id === scholarship.id ? { ...s, status: newStatus } : s
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to toggle flag:", err);
+    } finally {
+      setActionLoading("");
+    }
   };
 
   // Delete
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    setScholarships((prev) => prev.filter((s) => s.id !== deleteTarget.id));
-    setDeleteTarget(null);
+    setActionLoading(deleteTarget.id);
+    try {
+      await deleteScholarship(deleteTarget.id);
+      setScholarships((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+    } catch (err) {
+      console.error("Failed to delete scholarship:", err);
+    } finally {
+      setDeleteTarget(null);
+      setActionLoading("");
+    }
   };
 
   return (
@@ -244,8 +263,16 @@ export default function AdminScholarshipsPage() {
               ))}
             </div>
 
+            {/* Loading state */}
+            {loading && (
+              <div className="py-16 text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent text-accent" />
+                <p className="mt-3 text-sm text-text-muted">Loading scholarships...</p>
+              </div>
+            )}
+
             {/* Empty state */}
-            {filteredScholarships.length === 0 ? (
+            {!loading && filteredScholarships.length === 0 && (
               <div className="rounded-xl border border-dashed border-card-border py-16 text-center">
                 <svg
                   className="mx-auto h-10 w-10 text-text-muted"
@@ -268,8 +295,10 @@ export default function AdminScholarshipsPage() {
                   Scholarships will appear here once they are submitted.
                 </p>
               </div>
-            ) : (
-              /* Scholarship Table */
+            )}
+
+            {/* Scholarship Table */}
+            {!loading && filteredScholarships.length > 0 && (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -294,10 +323,12 @@ export default function AdminScholarshipsPage() {
                   <tbody>
                     {paginatedScholarships.map((sch) => {
                       const badge = STATUS_BADGE[sch.status] || { label: sch.status || "Unknown", variant: "default" as const };
+                      const isProcessing = actionLoading === sch.id;
                       return (
                         <tr
                           key={sch.id}
                           className="group border-b border-[var(--card-border)]/50 transition-colors hover:bg-[var(--card-bg)]/50"
+                          style={{ opacity: isProcessing ? 0.6 : 1 }}
                         >
                           <td className="py-4 pr-4">
                             <p className="font-medium text-text-primary group-hover:text-accent transition-colors">
@@ -351,6 +382,7 @@ export default function AdminScholarshipsPage() {
                               <button
                                 type="button"
                                 onClick={() => togglePublish(sch)}
+                                disabled={isProcessing}
                                 className={[
                                   "rounded-lg p-2 transition-colors",
                                   sch.status === "expired"
@@ -369,7 +401,6 @@ export default function AdminScholarshipsPage() {
                                 }
                               >
                                 {sch.status === "expired" ? (
-                                  // Publish (arrow up)
                                   <svg
                                     className="h-4 w-4"
                                     fill="none"
@@ -384,7 +415,6 @@ export default function AdminScholarshipsPage() {
                                     />
                                   </svg>
                                 ) : (
-                                  // Unpublish (arrow down)
                                   <svg
                                     className="h-4 w-4"
                                     fill="none"
@@ -405,6 +435,7 @@ export default function AdminScholarshipsPage() {
                               <button
                                 type="button"
                                 onClick={() => toggleFlag(sch)}
+                                disabled={isProcessing}
                                 className={[
                                   "rounded-lg p-2 transition-colors",
                                   sch.status === "flagged"
@@ -445,6 +476,7 @@ export default function AdminScholarshipsPage() {
                               <button
                                 type="button"
                                 onClick={() => setDeleteTarget(sch)}
+                                disabled={isProcessing}
                                 className="rounded-lg p-2 text-text-muted transition-colors hover:bg-error/10 hover:text-error"
                                 title="Delete"
                                 aria-label={`Delete ${sch.title}`}
@@ -474,7 +506,7 @@ export default function AdminScholarshipsPage() {
             )}
 
             {/* Pagination */}
-            {filteredScholarships.length > 0 && (
+            {!loading && filteredScholarships.length > 0 && (
               <div className="flex items-center justify-between pt-4 border-t border-[var(--card-border)]">
                 <p className="text-sm text-[var(--text-muted)]">Showing {rangeStart}-{rangeEnd} of {filteredScholarships.length}</p>
                 <div className="flex gap-2">
@@ -484,11 +516,6 @@ export default function AdminScholarshipsPage() {
                 </div>
               </div>
             )}
-
-            {/* Mock data notice */}
-            <div className="mt-6 rounded-lg border border-info/20 bg-info/5 p-3 text-xs text-info">
-              Using mock data. Connect the scholarships admin API for live data.
-            </div>
           </CardContent>
         </Card>
       </div>

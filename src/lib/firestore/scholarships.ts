@@ -2,10 +2,14 @@ import {
   collection,
   getDocs,
   getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
   doc,
   query,
   orderBy,
   where,
+  serverTimestamp,
   type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -56,4 +60,32 @@ export async function getScholarshipBySlug(
   if (snap.empty) return null;
   const d = snap.docs[0];
   return { id: d.id, ...d.data() } as Scholarship;
+}
+
+export async function createScholarship(
+  data: Omit<Scholarship, "id" | "createdAt" | "order">
+): Promise<string> {
+  const id =
+    data.slug ||
+    data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  await setDoc(doc(col, id), {
+    ...data,
+    createdAt: serverTimestamp(),
+    order: Date.now(),
+  });
+  return id;
+}
+
+export async function updateScholarship(
+  id: string,
+  data: Partial<Omit<Scholarship, "id">>
+): Promise<void> {
+  await updateDoc(doc(col, id), data);
+}
+
+export async function deleteScholarship(id: string): Promise<void> {
+  await deleteDoc(doc(col, id));
 }

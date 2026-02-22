@@ -3,49 +3,88 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { getPosts, type Post } from "@/lib/firestore/posts";
+import { getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
+import { getPosts } from "@/lib/firestore/posts";
 import { displayLocation } from "@/lib/utils";
 
+function isClosingSoon(deadline?: string): boolean {
+  if (!deadline) return false;
+  const d = new Date(deadline);
+  if (isNaN(d.getTime())) return false;
+  const diff = d.getTime() - Date.now();
+  return diff > 0 && diff < 14 * 24 * 60 * 60 * 1000; // within 14 days
+}
+
 export default function ScholarshipsBrowsePage() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [scholarships, setScholarships] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [eligibilityFilter, setEligibilityFilter] = useState("");
   const [closingSoonOnly, setClosingSoonOnly] = useState(false);
 
   useEffect(() => {
-    getPosts({ type: "scholarship" })
-      .then(setPosts)
-      .catch((err) => console.error("Failed to load scholarships:", err))
-      .finally(() => setLoading(false));
+    async function load() {
+      try {
+        // Primary: dedicated scholarships collection
+        let items = await getScholarships();
+        // Fallback: posts collection if dedicated is empty
+        if (items.length === 0) {
+          const posts = await getPosts({ type: "scholarship" });
+          items = posts.map((p) => ({
+            id: p.id,
+            title: p.title,
+            slug: p.slug || p.id.replace(/^scholarship-/, ""),
+            description: p.description,
+            eligibility: p.eligibility,
+            amount: p.amount,
+            deadline: p.deadline,
+            orgId: p.orgId,
+            orgName: p.orgName,
+            orgShort: p.orgShort,
+            applicationUrl: p.applicationUrl,
+            requirements: p.requirements,
+            location: p.location,
+            featured: p.featured,
+            badges: p.badges,
+            source: p.source,
+          }));
+        }
+        setScholarships(items);
+      } catch (err) {
+        console.error("Failed to load scholarships:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
   const eligibilities = useMemo(
     () =>
-      [...new Set(posts.map((p) => p.eligibility).filter(Boolean))] as string[],
-    [posts]
+      [...new Set(scholarships.map((s) => s.eligibility).filter(Boolean))] as string[],
+    [scholarships]
   );
 
   const filtered = useMemo(() => {
-    let result = posts;
+    let result = scholarships;
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.orgName?.toLowerCase().includes(q) ||
-          p.eligibility?.toLowerCase().includes(q) ||
-          p.description?.toLowerCase().includes(q)
+        (s) =>
+          s.title.toLowerCase().includes(q) ||
+          s.orgName?.toLowerCase().includes(q) ||
+          s.eligibility?.toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q)
       );
     }
     if (eligibilityFilter) {
-      result = result.filter((p) => p.eligibility === eligibilityFilter);
+      result = result.filter((s) => s.eligibility === eligibilityFilter);
     }
     if (closingSoonOnly) {
-      result = result.filter((p) => p.closingSoon);
+      result = result.filter((s) => isClosingSoon(s.deadline));
     }
     return result;
-  }, [posts, search, eligibilityFilter, closingSoonOnly]);
+  }, [scholarships, search, eligibilityFilter, closingSoonOnly]);
 
   return (
     <AppShell>
@@ -156,12 +195,13 @@ export default function ScholarshipsBrowsePage() {
         {/* Scholarships Grid */}
         {!loading && filtered.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((post) => {
-              const slug = post.id.replace(/^scholarship-/, "");
+            {filtered.map((sch) => {
+              const slug = sch.slug || sch.id;
+              const closingSoon = isClosingSoon(sch.deadline);
 
               return (
                 <Link
-                  key={post.id}
+                  key={sch.id}
                   href={`/scholarships/${slug}`}
                   className="no-underline group"
                 >
@@ -180,7 +220,7 @@ export default function ScholarshipsBrowsePage() {
                     <div className="p-5 flex-1 flex flex-col">
                       {/* Amount badge + closing soon */}
                       <div className="flex items-center gap-2 mb-3">
-                        {post.amount && (
+                        {sch.amount && (
                           <span
                             className="inline-block text-sm font-extrabold rounded-xl px-3 py-1.5"
                             style={{
@@ -188,10 +228,10 @@ export default function ScholarshipsBrowsePage() {
                               background: "var(--gold-soft)",
                             }}
                           >
-                            {post.amount}
+                            {sch.amount}
                           </span>
                         )}
-                        {post.closingSoon && (
+                        {closingSoon && (
                           <span
                             className="inline-block text-[10px] font-bold rounded-lg px-2 py-1"
                             style={{
@@ -206,33 +246,33 @@ export default function ScholarshipsBrowsePage() {
 
                       {/* Title */}
                       <h3 className="text-[15px] font-bold text-text m-0 mb-2 line-clamp-2 group-hover:text-gold transition-colors">
-                        {post.title}
+                        {sch.title}
                       </h3>
 
                       {/* Org */}
-                      {post.orgName && (
+                      {sch.orgName && (
                         <p className="text-xs text-text-sec m-0 mb-2">
-                          {post.orgName}
+                          {sch.orgName}
                         </p>
                       )}
 
                       {/* Eligibility snippet */}
-                      {post.eligibility && (
+                      {sch.eligibility && (
                         <p className="text-xs text-text-muted m-0 mb-3 line-clamp-2 leading-relaxed">
-                          {post.eligibility}
+                          {sch.eligibility}
                         </p>
                       )}
 
                       {/* Details */}
                       <div className="flex flex-col gap-1.5 mt-auto">
-                        {post.deadline && (
+                        {sch.deadline && (
                           <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
-                            <span>&#128197;</span> Deadline: {post.deadline}
+                            <span>&#128197;</span> Deadline: {sch.deadline}
                           </p>
                         )}
-                        {post.location && (
+                        {sch.location && (
                           <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
-                            <span>&#128205;</span> {displayLocation(post.location)}
+                            <span>&#128205;</span> {displayLocation(sch.location)}
                           </p>
                         )}
                       </div>

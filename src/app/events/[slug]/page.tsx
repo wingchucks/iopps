@@ -8,6 +8,7 @@ import AppShell from "@/components/AppShell";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
+import { getEventBySlug, type Event as EventDoc } from "@/lib/firestore/events";
 import { getPost, type Post } from "@/lib/firestore/posts";
 import { savePost, unsavePost } from "@/lib/firestore/savedItems";
 import {
@@ -21,6 +22,22 @@ import { useAuth } from "@/lib/auth-context";
 import ReportButton from "@/components/ReportButton";
 import { displayLocation } from "@/lib/utils";
 
+// Unified type for rendering — covers fields from both Event and Post
+type EventData = {
+  id: string;
+  title: string;
+  slug?: string;
+  description?: string;
+  dates?: string;
+  location?: string;
+  eventType?: string;
+  orgName?: string;
+  price?: string;
+  schedule?: { day: string; items: string[] }[];
+  highlights?: string[];
+  type?: string;
+};
+
 export default function EventDetailPage() {
   return (
     <ProtectedRoute>
@@ -33,12 +50,11 @@ export default function EventDetailPage() {
   );
 }
 
-function generateICS(post: Post): string {
+function generateICS(event: EventData): string {
   const now = new Date();
   const formatDate = (d: Date) =>
     d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-  const uid = `${post.id}@iopps.ca`;
-  // Use the post dates string as the description since we don't have parsed dates
+  const uid = `${event.id}@iopps.ca`;
   const start = formatDate(now);
   const end = formatDate(new Date(now.getTime() + 2 * 60 * 60 * 1000));
   const lines = [
@@ -49,22 +65,22 @@ function generateICS(post: Post): string {
     `UID:${uid}`,
     `DTSTART:${start}`,
     `DTEND:${end}`,
-    `SUMMARY:${post.title}`,
-    `DESCRIPTION:${post.dates || ""} - ${post.description?.substring(0, 200) || ""}`,
-    `LOCATION:${post.location || ""}`,
+    `SUMMARY:${event.title}`,
+    `DESCRIPTION:${event.dates || ""} - ${event.description?.substring(0, 200) || ""}`,
+    `LOCATION:${event.location || ""}`,
     "END:VEVENT",
     "END:VCALENDAR",
   ];
   return lines.join("\r\n");
 }
 
-function downloadICS(post: Post) {
-  const ics = generateICS(post);
+function downloadICS(event: EventData) {
+  const ics = generateICS(event);
   const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${post.title.replace(/[^a-zA-Z0-9]/g, "_")}.ics`;
+  a.download = `${event.title.replace(/[^a-zA-Z0-9]/g, "_")}.ics`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -74,7 +90,7 @@ function downloadICS(post: Post) {
 function EventDetailContent() {
   const params = useParams();
   const slug = params.slug as string;
-  const [post, setPost] = useState<Post | null>(null);
+  const [event, setEvent] = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [rsvpStatus, setRsvpStatus] = useState<RSVPStatus | null>(null);
@@ -85,12 +101,35 @@ function EventDetailContent() {
   useEffect(() => {
     async function load() {
       try {
-        const postData = await getPost(`event-${slug}`);
-        setPost(postData);
-        if (postData && user) {
+        // Primary: dedicated events collection
+        let data: EventData | null = await getEventBySlug(slug);
+
+        // Fallback: posts collection
+        if (!data) {
+          const post = await getPost(`event-${slug}`);
+          if (post) {
+            data = {
+              id: post.id,
+              title: post.title,
+              slug: post.slug || slug,
+              description: post.description,
+              dates: post.dates,
+              location: post.location,
+              eventType: post.eventType,
+              orgName: post.orgName,
+              price: post.price,
+              schedule: post.schedule,
+              highlights: post.highlights,
+              type: post.type,
+            };
+          }
+        }
+
+        setEvent(data);
+        if (data && user) {
           const [existingRsvp, count] = await Promise.all([
-            getRSVP(user.uid, postData.id),
-            getEventRSVPCount(postData.id),
+            getRSVP(user.uid, data.id),
+            getEventRSVPCount(data.id),
           ]);
           if (existingRsvp) {
             setRsvpStatus(existingRsvp.status);
@@ -107,14 +146,14 @@ function EventDetailContent() {
   }, [slug, user]);
 
   const handleSave = async () => {
-    if (!user || !post) return;
+    if (!user || !event) return;
     setActionLoading("save");
     try {
       if (saved) {
-        await unsavePost(user.uid, post.id);
+        await unsavePost(user.uid, event.id);
         setSaved(false);
       } else {
-        await savePost(user.uid, post.id, post.title, post.type, post.orgName);
+        await savePost(user.uid, event.id, event.title, "event", event.orgName);
         setSaved(true);
       }
     } catch (err) {
@@ -125,25 +164,23 @@ function EventDetailContent() {
   };
 
   const handleRsvp = async (status: RSVPStatus) => {
-    if (!user || !post) return;
+    if (!user || !event) return;
     setActionLoading(`rsvp-${status}`);
     try {
-      // If clicking the same status, remove RSVP
       if (rsvpStatus === status) {
-        await removeRSVP(user.uid, post.id);
+        await removeRSVP(user.uid, event.id);
         if (status === "going") setGoingCount((c) => Math.max(0, c - 1));
         setRsvpStatus(null);
       } else {
         const wasGoing = rsvpStatus === "going";
         await setRSVP({
           userId: user.uid,
-          postId: post.id,
-          postTitle: post.title,
-          postDate: post.dates,
-          postLocation: post.location,
+          postId: event.id,
+          postTitle: event.title,
+          postDate: event.dates,
+          postLocation: event.location,
           status,
         });
-        // Update going count
         if (status === "going" && !wasGoing) setGoingCount((c) => c + 1);
         if (status !== "going" && wasGoing) setGoingCount((c) => Math.max(0, c - 1));
         setRsvpStatus(status);
@@ -172,20 +209,20 @@ function EventDetailContent() {
     );
   }
 
-  if (!post) {
+  if (!event) {
     return (
       <div className="max-w-[600px] mx-auto px-4 py-20 text-center">
-        <p className="text-5xl mb-4">🎪</p>
+        <p className="text-5xl mb-4">&#127914;</p>
         <h2 className="text-2xl font-extrabold text-text mb-2">Event Not Found</h2>
         <p className="text-text-sec mb-6">This event doesn&apos;t exist or may have been removed.</p>
         <Link href="/events">
-          <Button primary>Browse Events →</Button>
+          <Button primary>Browse Events &#8594;</Button>
         </Link>
       </div>
     );
   }
 
-  const emoji = post.eventType === "Pow Wow" ? "🪶" : post.eventType === "Career Fair" ? "💼" : post.eventType === "Round Dance" ? "💃" : "🎪";
+  const emoji = event.eventType === "Pow Wow" ? "\u{1FAB6}" : event.eventType === "Career Fair" ? "\u{1F4BC}" : event.eventType === "Round Dance" ? "\u{1F483}" : "\u{1F3AA}";
 
   const rsvpButtons: { status: RSVPStatus; label: string; icon: string }[] = [
     { status: "going", label: "Going", icon: "\u2714" },
@@ -214,18 +251,18 @@ function EventDetailContent() {
         <div className="text-center">
           <span className="text-6xl sm:text-7xl block mb-4">{emoji}</span>
           <div className="flex flex-wrap justify-center gap-2 mb-3">
-            {post.eventType && (
-              <Badge text={post.eventType} color="var(--gold)" bg="var(--gold-soft)" small />
+            {event.eventType && (
+              <Badge text={event.eventType} color="var(--gold)" bg="var(--gold-soft)" small />
             )}
-            {post.price && post.price.toLowerCase() === "free" && (
+            {event.price && event.price.toLowerCase() === "free" && (
               <Badge text="Free Event" color="var(--green)" bg="var(--green-soft)" small />
             )}
           </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-text mb-2">{post.title}</h1>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-text mb-2">{event.title}</h1>
           <div className="flex flex-wrap justify-center gap-4 text-sm text-text-sec">
-            {post.dates && <span>&#128197; {post.dates}</span>}
-            {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
-            {post.price && <span>&#127915; {post.price}</span>}
+            {event.dates && <span>&#128197; {event.dates}</span>}
+            {event.location && <span>&#128205; {displayLocation(event.location)}</span>}
+            {event.price && <span>&#127915; {event.price}</span>}
           </div>
         </div>
       </div>
@@ -234,21 +271,21 @@ function EventDetailContent() {
         {/* Main Content */}
         <div className="md:col-span-2">
           {/* Description */}
-          {post.description && (
+          {event.description && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">About This Event</h3>
               <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                {post.description}
+                {event.description}
               </p>
             </>
           )}
 
           {/* Highlights */}
-          {post.highlights && post.highlights.length > 0 && (
+          {event.highlights && event.highlights.length > 0 && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">Highlights</h3>
               <div className="flex flex-wrap gap-2 mb-6">
-                {post.highlights.map((h, i) => (
+                {event.highlights.map((h, i) => (
                   <span
                     key={i}
                     className="rounded-xl text-[13px] font-semibold text-gold"
@@ -266,11 +303,11 @@ function EventDetailContent() {
           )}
 
           {/* Schedule */}
-          {post.schedule && post.schedule.length > 0 && (
+          {event.schedule && event.schedule.length > 0 && (
             <>
               <h3 className="text-lg font-bold text-text mb-3">Schedule</h3>
               <div className="flex flex-col gap-3 mb-6">
-                {post.schedule.map((day, i) => (
+                {event.schedule.map((day, i) => (
                   <Card key={i}>
                     <div style={{ padding: 16 }}>
                       <p className="text-sm font-bold text-teal mb-2.5">{day.day}</p>
@@ -289,19 +326,19 @@ function EventDetailContent() {
 
           {/* Event Info Cards */}
           <div className="flex flex-col gap-3">
-            {post.dates && (
+            {event.dates && (
               <Card>
                 <div style={{ padding: 16 }}>
                   <p className="text-sm font-bold text-teal mb-1">&#128197; Date & Time</p>
-                  <p className="text-[13px] text-text-sec">{post.dates}</p>
+                  <p className="text-[13px] text-text-sec">{event.dates}</p>
                 </div>
               </Card>
             )}
-            {post.location && (
+            {event.location && (
               <Card>
                 <div style={{ padding: 16 }}>
                   <p className="text-sm font-bold text-teal mb-1">&#128205; Location</p>
-                  <p className="text-[13px] text-text-sec">{displayLocation(post.location)}</p>
+                  <p className="text-[13px] text-text-sec">{displayLocation(event.location)}</p>
                 </div>
               </Card>
             )}
@@ -352,7 +389,7 @@ function EventDetailContent() {
               {/* Add to Calendar */}
               <Button
                 full
-                onClick={() => downloadICS(post)}
+                onClick={() => downloadICS(event)}
                 style={{
                   borderRadius: 14,
                   padding: "12px 24px",
@@ -381,28 +418,28 @@ function EventDetailContent() {
               <div className="border-t border-border pt-4">
                 <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">EVENT DETAILS</p>
                 <div className="flex flex-col gap-2.5">
-                  {post.dates && (
+                  {event.dates && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Dates</span>
-                      <span className="text-xs font-semibold text-text">{post.dates}</span>
+                      <span className="text-xs font-semibold text-text">{event.dates}</span>
                     </div>
                   )}
-                  {post.location && (
+                  {event.location && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Location</span>
-                      <span className="text-xs font-semibold text-text text-right max-w-[140px]">{displayLocation(post.location)}</span>
+                      <span className="text-xs font-semibold text-text text-right max-w-[140px]">{displayLocation(event.location)}</span>
                     </div>
                   )}
-                  {post.price && (
+                  {event.price && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Price</span>
-                      <span className="text-xs font-semibold text-green">{post.price}</span>
+                      <span className="text-xs font-semibold text-green">{event.price}</span>
                     </div>
                   )}
-                  {post.eventType && (
+                  {event.eventType && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Category</span>
-                      <span className="text-xs font-semibold text-text">{post.eventType}</span>
+                      <span className="text-xs font-semibold text-text">{event.eventType}</span>
                     </div>
                   )}
                 </div>
@@ -428,8 +465,8 @@ function EventDetailContent() {
           <div className="mt-3 text-center">
             <ReportButton
               targetType="post"
-              targetId={post.id}
-              targetTitle={post.title}
+              targetId={event.id}
+              targetTitle={event.title}
             />
           </div>
         </div>
