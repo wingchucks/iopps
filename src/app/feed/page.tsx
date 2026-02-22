@@ -20,6 +20,8 @@ import { getOrganizations, type Organization, getOrganization } from "@/lib/fire
 import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
 import { getApplications, type Application } from "@/lib/firestore/applications";
 import { getVendors, type ShopVendor } from "@/lib/firestore/shop";
+import { getEvents, type Event } from "@/lib/firestore/events";
+import { getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
 import { getMemberProfile } from "@/lib/firestore/members";
 import ProfileCompleteness from "@/components/ProfileCompleteness";
 import FeedSidebar from "@/components/FeedSidebar";
@@ -90,8 +92,10 @@ function FeedContent() {
   useEffect(() => {
     async function load() {
       try {
-        const [p, o, v, j] = await Promise.all([getPosts(), getOrganizations(), getVendors(), getJobs()]);
-        // Merge dedicated jobs into posts (convert Job → Post shape)
+        const [p, o, v, j, ev, sc] = await Promise.all([
+          getPosts(), getOrganizations(), getVendors(), getJobs(), getEvents(), getScholarships(),
+        ]);
+        // Helper: serialize Timestamps, location objects, etc. to strings
         const toStr = (v: unknown): string | undefined => {
           if (!v) return undefined;
           if (typeof v === "string") return v;
@@ -108,6 +112,8 @@ function FeedContent() {
           }
           return String(v);
         };
+
+        // Convert dedicated jobs → Post shape
         const jobPosts: Post[] = j.map((job: Job) => ({
           id: job.id,
           type: "job" as const,
@@ -124,9 +130,63 @@ function FeedContent() {
           createdAt: job.createdAt,
           order: job.order ?? 0,
         }));
-        // Combine: legacy posts + dedicated jobs (dedupe by id)
+
+        // Convert dedicated events → Post shape
+        const eventPosts: Post[] = ev.map((e: Event) => ({
+          id: e.id,
+          type: "event" as const,
+          title: e.title,
+          dates: toStr(e.dates || e.date),
+          location: toStr(e.location),
+          eventType: e.eventType || e.type,
+          price: toStr(e.price),
+          orgName: e.orgName || e.organizer || "",
+          featured: e.featured,
+          order: e.order ?? 0,
+          createdAt: e.createdAt,
+        }));
+
+        // Convert dedicated scholarships → Post shape
+        const scholarshipPosts: Post[] = sc.map((s: Scholarship) => ({
+          id: s.id,
+          type: "scholarship" as const,
+          title: s.title,
+          amount: toStr(s.amount),
+          deadline: toStr(s.deadline),
+          location: toStr(s.location),
+          orgName: s.orgName || s.organization || "",
+          featured: s.featured,
+          closingSoon: false,
+          order: s.order ?? 0,
+          createdAt: s.createdAt,
+        }));
+
+        // Convert school-type orgs → Post shape (feeds the "Schools" tab via type "program")
+        const schoolPosts: Post[] = o
+          .filter((org) => org.type === "school" || org.tier === "school")
+          .map((org) => ({
+            id: `school-${org.id}`,
+            type: "program" as const,
+            title: org.name,
+            orgName: org.shortName || org.name,
+            location: org.location ? displayLocation(org.location) : undefined,
+            featured: org.tier === "premium",
+            order: 0,
+            createdAt: org.createdAt ?? null,
+          }));
+
+        // Combine: legacy posts + dedicated collections (dedupe by id)
         const existingJobIds = new Set(p.filter((x) => x.type === "job").map((x) => x.id));
-        const merged = [...p, ...jobPosts.filter((jp) => !existingJobIds.has(jp.id))];
+        const existingEventIds = new Set(p.filter((x) => x.type === "event").map((x) => x.id));
+        const existingScholarshipIds = new Set(p.filter((x) => x.type === "scholarship").map((x) => x.id));
+        const existingProgramIds = new Set(p.filter((x) => x.type === "program").map((x) => x.id));
+        const merged = [
+          ...p,
+          ...jobPosts.filter((jp) => !existingJobIds.has(jp.id)),
+          ...eventPosts.filter((ep) => !existingEventIds.has(ep.id)),
+          ...scholarshipPosts.filter((sp) => !existingScholarshipIds.has(sp.id)),
+          ...schoolPosts.filter((sp) => !existingProgramIds.has(sp.id)),
+        ];
         setPosts(merged);
         setOrgs(o);
         setVendors(v);
