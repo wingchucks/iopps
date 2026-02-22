@@ -14,6 +14,7 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Link from "next/link";
 import { getPosts, type Post } from "@/lib/firestore/posts";
+import { getJobs, type Job } from "@/lib/firestore/jobs";
 import CreatePostModal from "@/components/CreatePostModal";
 import { getOrganizations, type Organization, getOrganization } from "@/lib/firestore/organizations";
 import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
@@ -89,8 +90,28 @@ function FeedContent() {
   useEffect(() => {
     async function load() {
       try {
-        const [p, o, v] = await Promise.all([getPosts(), getOrganizations(), getVendors()]);
-        setPosts(p);
+        const [p, o, v, j] = await Promise.all([getPosts(), getOrganizations(), getVendors(), getJobs()]);
+        // Merge dedicated jobs into posts (convert Job → Post shape)
+        const jobPosts: Post[] = j.map((job: Job) => ({
+          id: job.id,
+          type: "job" as const,
+          title: job.title,
+          orgName: job.orgName || job.employerName || job.companyName,
+          orgShort: job.orgShort || job.orgName || job.employerName || job.companyName,
+          location: job.location,
+          jobType: job.jobType || job.employmentType,
+          salary: job.salary,
+          deadline: job.closingDate,
+          featured: job.featured,
+          source: job.source,
+          closingSoon: false,
+          createdAt: job.createdAt,
+          order: job.order ?? 0,
+        }));
+        // Combine: legacy posts + dedicated jobs (dedupe by id)
+        const existingJobIds = new Set(p.filter((x) => x.type === "job").map((x) => x.id));
+        const merged = [...p, ...jobPosts.filter((jp) => !existingJobIds.has(jp.id))];
+        setPosts(merged);
         setOrgs(o);
         setVendors(v);
 
