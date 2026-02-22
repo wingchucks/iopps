@@ -21,6 +21,8 @@ import {
 import type { Post, PostStatus } from "@/lib/firestore/posts";
 import { getApplicationsByPost } from "@/lib/firestore/applications";
 import { displayLocation } from "@/lib/utils";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface PostWithApps extends Post {
   applicationCount: number;
@@ -341,19 +343,90 @@ export default function OrgDashboardPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const memberProfile = await getMemberProfile(user.uid);
-      if (!memberProfile?.orgId) return;
+      let memberProfile = await getMemberProfile(user.uid);
+      let orgId = memberProfile?.orgId;
+
+      // Fallback: check users collection for employer accounts
+      if (!orgId) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userData = userDoc.data();
+        if (userData?.employerId && userData?.role === "employer") {
+          orgId = userData.employerId;
+          memberProfile = {
+            uid: user.uid,
+            email: userData.email || user.email || "",
+            displayName: userData.displayName || user.displayName || "",
+            orgId: orgId!,
+            orgRole: "owner",
+          } as MemberProfile;
+        }
+      }
+
+      if (!orgId) return;
       setProfile(memberProfile);
-      const [organization, orgPosts] = await Promise.all([
-        getOrganization(memberProfile.orgId),
-        getOrgPosts(memberProfile.orgId),
-      ]);
-      setOrg(organization);
+
+      // Try organizations collection first, then employers collection
+      let organization = await getOrganization(orgId);
+      if (!organization) {
+        const empDoc = await getDoc(doc(db, "employers", orgId));
+        if (empDoc.exists()) {
+          const emp = empDoc.data();
+          organization = {
+            id: orgId,
+            name: emp.companyName || emp.name || "My Organization",
+            slug: (emp.companyName || emp.name || "org").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            description: emp.description || "",
+            logoUrl: emp.logoUrl || "",
+            website: emp.website || "",
+            email: emp.email || "",
+            phone: emp.phone || "",
+            location: emp.location || "",
+            type: "employer",
+            status: emp.status || "approved",
+            verified: emp.verified || false,
+          } as unknown as Organization;
+        }
+      }
+
+      // Get posts (org posts) + jobs from the jobs collection
+      const orgPosts = await getOrgPosts(orgId);
+
+      // Also get jobs from the jobs collection (for employer accounts)
+      const jobsQuery = query(collection(db, "jobs"), where("employerId", "==", orgId));
+      const jobsSnap = await getDocs(jobsQuery);
+      const jobsAsPosts: Post[] = jobsSnap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          title: data.title || "",
+          slug: data.slug || d.id,
+          type: "job" as const,
+          description: data.description || "",
+          location: data.location || "",
+          salary: data.salary || data.salaryRange || "",
+          status: (data.status || "active") as PostStatus,
+          orgId: orgId!,
+          orgName: data.employerName || data.company || "",
+          authorId: user.uid,
+          authorName: user.displayName || "",
+          createdAt: data.createdAt || new Date().toISOString(),
+          updatedAt: data.updatedAt || new Date().toISOString(),
+        } as unknown as Post;
+      });
+
+      // Merge: use jobs if no org posts of type job exist
+      const allPosts = orgPosts.length > 0 ? orgPosts : jobsAsPosts;
+
+      setOrg(organization || null);
 
       const postsWithApps: PostWithApps[] = await Promise.all(
-        orgPosts.map(async (p) => {
-          const apps = await getApplicationsByPost(p.id);
-          return { ...p, applicationCount: apps.length };
+        allPosts.map(async (p) => {
+          try {
+            const apps = await getApplicationsByPost(p.id);
+            return { ...p, applicationCount: apps.length };
+          } catch {
+            return { ...p, applicationCount: 0 };
+          }
         })
       );
       setPosts(postsWithApps);
@@ -393,11 +466,42 @@ export default function OrgDashboardPage() {
     setEditingPost(null);
     if (!profile?.orgId) return;
     setLoading(true);
+
+    // Refresh from both org posts and jobs collection
     const orgPosts = await getOrgPosts(profile.orgId);
+    let allPosts = orgPosts;
+    if (orgPosts.length === 0) {
+      const jobsQuery = query(collection(db, "jobs"), where("employerId", "==", profile.orgId));
+      const jobsSnap = await getDocs(jobsQuery);
+      allPosts = jobsSnap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          title: data.title || "",
+          slug: data.slug || d.id,
+          type: "job" as const,
+          description: data.description || "",
+          location: data.location || "",
+          salary: data.salary || data.salaryRange || "",
+          status: (data.status || "active") as PostStatus,
+          orgId: profile.orgId,
+          orgName: org?.name || "",
+          authorId: user?.uid || "",
+          authorName: user?.displayName || "",
+          createdAt: data.createdAt || new Date().toISOString(),
+          updatedAt: data.updatedAt || new Date().toISOString(),
+        } as unknown as Post;
+      });
+    }
+
     const postsWithApps: PostWithApps[] = await Promise.all(
-      orgPosts.map(async (p) => {
-        const apps = await getApplicationsByPost(p.id);
-        return { ...p, applicationCount: apps.length };
+      allPosts.map(async (p) => {
+        try {
+          const apps = await getApplicationsByPost(p.id);
+          return { ...p, applicationCount: apps.length };
+        } catch {
+          return { ...p, applicationCount: 0 };
+        }
       })
     );
     setPosts(postsWithApps);
