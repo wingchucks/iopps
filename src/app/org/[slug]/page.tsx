@@ -11,7 +11,7 @@ import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { getPostsByOrg, type Post } from "@/lib/firestore/posts";
-import { getJobsByEmployer, type Job } from "@/lib/firestore/jobs";
+import type { Job } from "@/lib/firestore/jobs";
 import { displayLocation } from "@/lib/utils";
 
 export default function OrgProfilePage() {
@@ -40,12 +40,12 @@ function OrgProfileContent() {
         const orgData = await getOrganization(slug);
         setOrg(orgData);
         if (orgData) {
-          const [orgPosts, orgJobs] = await Promise.all([
+          const [orgPosts, jobsRes] = await Promise.all([
             getPostsByOrg(slug),
-            getJobsByEmployer(slug),
+            fetch(`/api/jobs?employerName=${encodeURIComponent(orgData.name)}`).then(r => r.json()),
           ]);
           setPosts(orgPosts);
-          setJobs(orgJobs);
+          setJobs(jobsRes.jobs ?? []);
         }
       } catch (err) {
         console.error("Failed to load organization:", err);
@@ -214,7 +214,7 @@ function OrgProfileContent() {
             <div
               key={i}
               className="p-4 text-center rounded-[14px]"
-              style={{ background: "#F8FAFC" }}
+              style={{ background: "var(--card)", border: "1px solid var(--border)" }}
             >
               <span className="text-[22px]">{s.icon}</span>
               <p className="text-[22px] font-extrabold text-text mt-1 mb-0">{s.value}</p>
