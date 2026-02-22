@@ -45,7 +45,7 @@ export async function GET(request: Request) {
 
     const snap = await query.get();
 
-    const jobs = snap.docs.map((doc) => {
+    const jobs = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const data = doc.data();
       const serialized = serialize({ id: doc.id, ...data }) as Record<string, unknown>;
 
