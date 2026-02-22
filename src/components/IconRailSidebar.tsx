@@ -242,6 +242,7 @@ export default function IconRailSidebar() {
   ];
 
   return (
+  <>
     <aside className="hidden lg:flex flex-col fixed top-0 left-0 h-screen w-[72px] hover:w-[220px] bg-card border-r border-border z-40 transition-[width] duration-200 group/rail overflow-hidden">
       {/* Logo */}
       <Link
@@ -462,18 +463,19 @@ export default function IconRailSidebar() {
           50% { opacity: 0.5; transform: scale(1.3); }
         }
       `}</style>
-      <CreateChooserModal
-        open={showChooser}
-        onClose={() => setShowChooser(false)}
-        onShareStory={() => setShowCreatePost(true)}
-        hasOrg={hasOrg}
-      />
-      <CreatePostModal
-        open={showCreatePost}
-        onClose={() => setShowCreatePost(false)}
-        onPostCreated={() => setShowCreatePost(false)}
-      />
     </aside>
+    <CreateChooserModal
+      open={showChooser}
+      onClose={() => setShowChooser(false)}
+      onShareStory={() => setShowCreatePost(true)}
+      hasOrg={hasOrg}
+    />
+    <CreatePostModal
+      open={showCreatePost}
+      onClose={() => setShowCreatePost(false)}
+      onPostCreated={() => setShowCreatePost(false)}
+    />
+  </>
   );
 }
 

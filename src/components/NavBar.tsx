@@ -58,6 +58,7 @@ export default function NavBar() {
   };
 
   return (
+  <>
     <nav
       className="sticky top-0 z-50"
       style={{
@@ -265,17 +266,18 @@ export default function NavBar() {
           50% { opacity: 0.5; transform: scale(1.3); }
         }
       `}</style>
-      <CreateChooserModal
-        open={showChooser}
-        onClose={() => setShowChooser(false)}
-        onShareStory={() => setShowCreatePost(true)}
-        hasOrg={hasOrg}
-      />
-      <CreatePostModal
-        open={showCreatePost}
-        onClose={() => setShowCreatePost(false)}
-        onPostCreated={() => setShowCreatePost(false)}
-      />
     </nav>
+    <CreateChooserModal
+      open={showChooser}
+      onClose={() => setShowChooser(false)}
+      onShareStory={() => setShowCreatePost(true)}
+      hasOrg={hasOrg}
+    />
+    <CreatePostModal
+      open={showCreatePost}
+      onClose={() => setShowCreatePost(false)}
+      onPostCreated={() => setShowCreatePost(false)}
+    />
+  </>
   );
 }
