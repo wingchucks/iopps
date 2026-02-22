@@ -251,9 +251,11 @@ service cloud.firestore {
     }
 
     // Conversations: participants can read/create/update.
-    // Also allow read when querying by unreadBy (used for unread count badge).
+    // Allow get for non-existent docs (existence check before create).
+    // Allow list when querying by unreadBy (used for unread count badge).
     match /conversations/{convId} {
-      allow read: if isSignedIn() && (
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && (
         request.auth.uid in resource.data.participants ||
         resource.data.unreadBy == request.auth.uid
       );
