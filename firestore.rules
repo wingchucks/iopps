@@ -131,13 +131,18 @@ service cloud.firestore {
 
     // Posts (jobs, events, scholarships, programs, stories, spotlights):
     // Public read. Admin or org owner/admin can write.
+    // Authenticated users can create their own community posts (stories).
     match /posts/{postId} {
       allow read: if true;
       allow write: if isAdmin();
-      allow create: if isSignedIn() &&
-        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-        memberData().orgId == request.resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+      allow create: if isSignedIn() && (
+        // Org owner/admin can create org posts
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         memberData().orgId == request.resource.data.orgId &&
+         memberData().orgRole in ["owner", "admin"]) ||
+        // Any authenticated user can create their own community posts
+        request.resource.data.authorUid == request.auth.uid
+      );
       allow update: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == resource.data.orgId &&
