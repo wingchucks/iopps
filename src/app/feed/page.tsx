@@ -92,18 +92,34 @@ function FeedContent() {
       try {
         const [p, o, v, j] = await Promise.all([getPosts(), getOrganizations(), getVendors(), getJobs()]);
         // Merge dedicated jobs into posts (convert Job → Post shape)
+        const toStr = (v: unknown): string | undefined => {
+          if (!v) return undefined;
+          if (typeof v === "string") return v;
+          if (typeof v === "object" && v !== null && "seconds" in v)
+            return new Date((v as { seconds: number }).seconds * 1000)
+              .toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" });
+          if (typeof v === "object" && v !== null) {
+            const o = v as Record<string, unknown>;
+            const parts: string[] = [];
+            if (o.city) parts.push(String(o.city));
+            if (o.province) parts.push(String(o.province));
+            if (o.remote) parts.push("Remote");
+            return parts.join(", ") || undefined;
+          }
+          return String(v);
+        };
         const jobPosts: Post[] = j.map((job: Job) => ({
           id: job.id,
           type: "job" as const,
           title: job.title,
-          orgName: job.orgName || job.employerName || job.companyName,
-          orgShort: job.orgShort || job.orgName || job.employerName || job.companyName,
-          location: job.location,
-          jobType: job.jobType || job.employmentType,
-          salary: job.salary,
-          deadline: job.closingDate,
+          orgName: toStr(job.orgName || job.employerName || job.companyName) || "",
+          orgShort: toStr(job.orgShort || job.orgName || job.employerName || job.companyName) || "",
+          location: toStr(job.location),
+          jobType: toStr(job.jobType || job.employmentType),
+          salary: toStr(job.salary),
+          deadline: toStr(job.closingDate),
           featured: job.featured,
-          source: job.source,
+          source: toStr(job.source),
           closingSoon: false,
           createdAt: job.createdAt,
           order: job.order ?? 0,
