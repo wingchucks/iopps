@@ -9,6 +9,8 @@ import { getMemberProfile } from "@/lib/firestore/members";
 import { doc, getDoc, getDocFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Avatar from "./Avatar";
+import CreateChooserModal from "./CreateChooserModal";
+import CreatePostModal from "./CreatePostModal";
 
 /* ── SVG icon component ── */
 function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
@@ -175,6 +177,8 @@ const navItems = [
 export default function IconRailSidebar() {
   const [hasOrg, setHasOrg] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showChooser, setShowChooser] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
@@ -261,7 +265,11 @@ export default function IconRailSidebar() {
 
       {/* Create button — auth only */}
       {user && (
-        <Link href="/feed?compose=true" className="no-underline shrink-0 px-2 pt-2">
+        <button
+          onClick={() => setShowChooser(true)}
+          className="shrink-0 px-2 pt-2 border-none cursor-pointer"
+          style={{ background: "transparent" }}
+        >
           <div
             className="flex items-center gap-3 h-10 px-3 rounded-lg transition-colors"
             style={{ background: "var(--teal)", color: "#fff" }}
@@ -273,7 +281,7 @@ export default function IconRailSidebar() {
               Create
             </span>
           </div>
-        </Link>
+        </button>
       )}
 
       {/* Separator */}
@@ -454,6 +462,17 @@ export default function IconRailSidebar() {
           50% { opacity: 0.5; transform: scale(1.3); }
         }
       `}</style>
+      <CreateChooserModal
+        open={showChooser}
+        onClose={() => setShowChooser(false)}
+        onShareStory={() => setShowCreatePost(true)}
+        hasOrg={hasOrg}
+      />
+      <CreatePostModal
+        open={showCreatePost}
+        onClose={() => setShowCreatePost(false)}
+        onPostCreated={() => setShowCreatePost(false)}
+      />
     </aside>
   );
 }

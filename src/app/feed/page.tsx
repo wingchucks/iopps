@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -45,7 +45,7 @@ export default function FeedPage() {
     <ProtectedRoute>
       <AppShell>
       <div className="min-h-screen bg-bg flex flex-col">
-        <FeedContent />
+        <Suspense><FeedContent /></Suspense>
         <InstallPrompt />
         <OnboardingTour />
         <Footer />
@@ -76,6 +76,14 @@ function FeedContent() {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Auto-open story modal when ?compose=true is in URL
+  useEffect(() => {
+    if (searchParams.get("compose") === "true") {
+      setShowCreatePost(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function load() {
