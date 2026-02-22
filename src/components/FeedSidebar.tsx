@@ -20,6 +20,7 @@ interface FeedSidebarProps {
 function getRoleLabel(role?: string, orgRole?: string) {
   if (role === "admin") return "Admin";
   if (role === "moderator") return "Moderator";
+  if (role === "employer") return "Employer";
   if (orgRole === "owner" || orgRole === "admin") return "Organization";
   return "Community Member";
 }

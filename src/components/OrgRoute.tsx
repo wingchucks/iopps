@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface OrgRouteProps {
   children: React.ReactNode;
@@ -28,11 +30,27 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
 
     async function checkOrg() {
       try {
-        const memberProfile = await getMemberProfile(user!.uid);
+        let memberProfile = await getMemberProfile(user!.uid);
+
+        // Fallback: if no member profile or no orgId, check users collection for employerId
         if (!memberProfile?.orgId) {
-          router.replace("/feed");
-          return;
+          const userDoc = await getDoc(doc(db, "users", user!.uid));
+          const userData = userDoc.data();
+          if (userData?.employerId && userData?.role === "employer") {
+            // Employer without a members entry — synthesize a profile
+            memberProfile = {
+              uid: user!.uid,
+              email: userData.email || user!.email || "",
+              displayName: userData.displayName || user!.displayName || "",
+              orgId: userData.employerId,
+              orgRole: "owner",
+            } as MemberProfile;
+          } else {
+            router.replace("/feed");
+            return;
+          }
         }
+
         if (requiredRole) {
           const role = memberProfile.orgRole;
           if (requiredRole === "owner" && role !== "owner") {

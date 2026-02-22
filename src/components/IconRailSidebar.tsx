@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { getMemberProfile } from "@/lib/firestore/members";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import Avatar from "./Avatar";
 
 /* ── SVG icon component ── */
@@ -181,26 +183,45 @@ export default function IconRailSidebar() {
 
   useEffect(() => {
     if (!user) return;
-    getMemberProfile(user.uid).then((profile) => {
-      if (profile?.orgId) setHasOrg(true);
-      if (profile?.role === "admin" || profile?.role === "moderator") {
-        setIsAdmin(true);
-      } else {
-        // Fallback: check Firebase custom claims
-        user.getIdTokenResult().then((result) => {
-          if (result.claims.admin === true || result.claims.role === "admin") {
-            setIsAdmin(true);
+
+    async function checkRoles() {
+      try {
+        const profile = await getMemberProfile(user!.uid);
+        if (profile?.orgId) {
+          setHasOrg(true);
+        } else {
+          // Fallback: check users collection for employer role
+          const userDoc = await getDoc(doc(db, "users", user!.uid));
+          const userData = userDoc.data();
+          if (userData?.employerId && userData?.role === "employer") {
+            setHasOrg(true);
           }
-        }).catch(() => {});
+        }
+        if (profile?.role === "admin" || profile?.role === "moderator") {
+          setIsAdmin(true);
+          return;
+        }
+      } catch {
+        // Members profile failed — check users collection as fallback
+        try {
+          const userDoc = await getDoc(doc(db, "users", user!.uid));
+          const userData = userDoc.data();
+          if (userData?.employerId && userData?.role === "employer") {
+            setHasOrg(true);
+          }
+        } catch {}
       }
-    }).catch(() => {
-      // If members profile fails, still check claims
-      user.getIdTokenResult().then((result) => {
+
+      // Check Firebase custom claims for admin
+      try {
+        const result = await user!.getIdTokenResult();
         if (result.claims.admin === true || result.claims.role === "admin") {
           setIsAdmin(true);
         }
-      }).catch(() => {});
-    });
+      } catch {}
+    }
+
+    checkRoles();
   }, [user]);
 
   const handleSignOut = async () => {
