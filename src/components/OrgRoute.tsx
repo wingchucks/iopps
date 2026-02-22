@@ -34,8 +34,10 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
 
         // Fallback: if no member profile or no orgId, check users collection for employerId
         if (!memberProfile?.orgId) {
+          console.log("[OrgRoute] No member profile, checking users collection for uid:", user!.uid);
           const userDoc = await getDoc(doc(db, "users", user!.uid));
           const userData = userDoc.data();
+          console.log("[OrgRoute] User data:", userData?.role, userData?.employerId);
           if (userData?.employerId && userData?.role === "employer") {
             // Employer without a members entry — synthesize a profile
             memberProfile = {
@@ -64,7 +66,8 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
         }
         setProfile(memberProfile);
         setAuthorized(true);
-      } catch {
+      } catch (err) {
+        console.error("[OrgRoute] checkOrg failed:", err);
         router.replace("/feed");
       } finally {
         setChecking(false);
