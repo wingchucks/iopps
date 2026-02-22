@@ -250,13 +250,24 @@ export default function NavBar() {
           </Link>
           <div className="mx-4 mt-2 flex items-center gap-2">
             <ThemeToggle />
-            <button
-              onClick={handleSignOut}
-              className="flex-1 py-2.5 rounded-[10px] border-none cursor-pointer text-sm font-semibold"
-              style={{ background: "rgba(220,38,38,.15)", color: "#DC2626" }}
-            >
-              Sign Out
-            </button>
+            {user ? (
+              <button
+                onClick={handleSignOut}
+                className="flex-1 py-2.5 rounded-[10px] border-none cursor-pointer text-sm font-semibold"
+                style={{ background: "rgba(220,38,38,.15)", color: "#DC2626" }}
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                href="/signin"
+                onClick={() => setMenuOpen(false)}
+                className="flex-1 py-2.5 rounded-[10px] border-none text-sm font-semibold text-center no-underline"
+                style={{ background: "rgba(59,130,246,.15)", color: "#3B82F6" }}
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
       )}

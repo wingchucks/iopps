@@ -42,53 +42,69 @@ export default function FeedSidebar({
   return (
     <aside className="hidden lg:block w-[260px] shrink-0 sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
       {/* Profile card */}
-      <Card className="mb-4" style={{ padding: 20 }}>
-        <div className="flex items-center gap-2.5 mb-3">
-          <Avatar name={displayName} size={44} />
-          <div>
-            <p className="text-[15px] font-bold text-text m-0">{displayName}</p>
-            <p className="text-xs text-teal-light m-0">{getRoleLabel(userRole, orgRole)}</p>
-          </div>
-        </div>
-        {!hasOrg && (
-          <div className="mb-3">
-            <div className="flex justify-between text-[11px] mb-1">
-              <span className="text-text-muted">Profile completeness</span>
-              <span className="text-teal font-bold">60%</span>
+      {user ? (
+        <Card className="mb-4" style={{ padding: 20 }}>
+          <div className="flex items-center gap-2.5 mb-3">
+            <Avatar name={displayName} size={44} />
+            <div>
+              <p className="text-[15px] font-bold text-text m-0">{displayName}</p>
+              <p className="text-xs text-teal-light m-0">{getRoleLabel(userRole, orgRole)}</p>
             </div>
-            <div
-              className="h-1.5 rounded-full"
-              style={{
-                background: "var(--border)",
-              }}
-            >
+          </div>
+          {!hasOrg && (
+            <div className="mb-3">
+              <div className="flex justify-between text-[11px] mb-1">
+                <span className="text-text-muted">Profile completeness</span>
+                <span className="text-teal font-bold">60%</span>
+              </div>
               <div
                 className="h-1.5 rounded-full"
                 style={{
-                  width: "60%",
-                  background:
-                    "linear-gradient(90deg, var(--teal), var(--blue))",
+                  background: "var(--border)",
                 }}
-              />
+              >
+                <div
+                  className="h-1.5 rounded-full"
+                  style={{
+                    width: "60%",
+                    background:
+                      "linear-gradient(90deg, var(--teal), var(--blue))",
+                  }}
+                />
+              </div>
             </div>
+          )}
+          <div className="flex gap-2">
+            <Link
+              href={hasOrg ? "/org/dashboard" : "/profile"}
+              className="flex-1 text-center text-xs font-semibold rounded-lg no-underline py-2"
+              style={{
+                background: "color-mix(in srgb, var(--teal) 8%, transparent)",
+                color: "var(--teal)",
+              }}
+            >
+              {hasOrg ? "Org Dashboard" : "View Profile"}
+            </Link>
+            <Button small onClick={onSignOut} style={{ fontSize: 12, flex: 1 }}>
+              Sign Out
+            </Button>
           </div>
-        )}
-        <div className="flex gap-2">
+        </Card>
+      ) : (
+        <Card className="mb-4" style={{ padding: 20 }}>
+          <p className="text-sm font-semibold text-text m-0 mb-3">Welcome to IOPPS</p>
           <Link
-            href={hasOrg ? "/org/dashboard" : "/profile"}
-            className="flex-1 text-center text-xs font-semibold rounded-lg no-underline py-2"
+            href="/signin"
+            className="block text-center text-xs font-semibold rounded-lg no-underline py-2"
             style={{
               background: "color-mix(in srgb, var(--teal) 8%, transparent)",
               color: "var(--teal)",
             }}
           >
-            {hasOrg ? "Org Dashboard" : "View Profile"}
+            Sign In
           </Link>
-          <Button small onClick={onSignOut} style={{ fontSize: 12, flex: 1 }}>
-            Sign Out
-          </Button>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {/* Featured Partners */}
       <Card className="mb-4">
