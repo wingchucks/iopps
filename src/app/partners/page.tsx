@@ -165,6 +165,7 @@ function PartnersContent() {
                   <Avatar
                     name={featuredSchool.shortName}
                     size={72}
+                    src={featuredSchool.logoUrl}
                     gradient="linear-gradient(135deg, var(--teal), var(--blue))"
                   />
                   <div className="flex-1 min-w-0">
@@ -246,6 +247,7 @@ function PartnersContent() {
                           <Avatar
                             name={org.shortName}
                             size={48}
+                            src={org.logoUrl}
                             gradient={isSchool ? "linear-gradient(135deg, var(--teal), var(--blue))" : undefined}
                           />
                           <div className="flex-1 min-w-0">

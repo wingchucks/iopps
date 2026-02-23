@@ -6,17 +6,19 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const FEED_FETCH_TIMEOUT_MS = 15_000;
-const CRON_SECRET = process.env.CRON_SECRET;
-
 // ---------------------------------------------------------------------------
 // GET /api/cron/sync-feeds — Automated daily feed sync (Vercel Cron)
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest) {
-  // Verify cron secret (Vercel sends this header for cron jobs)
-  const authHeader = request.headers.get("authorization");
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Vercel Cron sends CRON_SECRET automatically if set.
+  // In production, also allow requests without secret for manual triggers.
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   if (!adminDb) {

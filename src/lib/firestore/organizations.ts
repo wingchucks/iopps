@@ -31,6 +31,7 @@ export interface Organization {
   contactName?: string;
   contactEmail?: string;
   logo?: string;
+  logoUrl?: string;
   description: string;
   foundedYear?: number;
   communityAffiliation?: string;
