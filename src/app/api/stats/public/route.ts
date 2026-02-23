@@ -13,7 +13,7 @@ export async function GET() {
       adminDb.collection("users").count().get(),
       adminDb.collection("jobs").where("status", "==", "active").count().get(),
       adminDb.collection("employers").count().get(),
-      adminDb.collection("conferences").count().get(),
+      adminDb.collection("events").count().get(),
     ]);
 
     return NextResponse.json(

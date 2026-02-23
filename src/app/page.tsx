@@ -4,6 +4,27 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import ThemeToggle from "@/components/ThemeToggle";
+import { adminDb } from "@/lib/firebase-admin";
+
+async function getStats() {
+  if (!adminDb) return { members: 0, jobs: 0, organizations: 0, events: 0 };
+  try {
+    const [usersSnap, jobsSnap, employersSnap, eventsSnap] = await Promise.all([
+      adminDb.collection("users").count().get(),
+      adminDb.collection("jobs").where("status", "==", "active").count().get(),
+      adminDb.collection("employers").where("status", "==", "approved").count().get(),
+      adminDb.collection("events").count().get(),
+    ]);
+    return {
+      members: usersSnap.data().count,
+      jobs: jobsSnap.data().count,
+      organizations: employersSnap.data().count,
+      events: eventsSnap.data().count,
+    };
+  } catch {
+    return { members: 0, jobs: 0, organizations: 0, events: 0 };
+  }
+}
 
 const partners: { name: string; short: string; tier: string; logo?: string }[] = [
   { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium", logo: "" },
@@ -13,16 +34,18 @@ const partners: { name: string; short: string; tier: string; logo?: string }[] =
   { name: "First Nations University of Canada", short: "FNUniv", tier: "school", logo: "" },
 ];
 
-const categories = [
-  { icon: "\u{1F4BC}", title: "Jobs & Careers", count: "111", cta: "Browse Jobs", desc: "Indigenous-focused job postings and career opportunities", href: "/jobs" },
-  { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: "5", cta: "Browse Events", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
-  { icon: "\u{1F393}", title: "Scholarships & Grants", count: "17", cta: "Browse Scholarships", desc: "Funding for students and entrepreneurs", href: "/scholarships" },
-  { icon: "\u{1F3EA}", title: "Shop Indigenous", count: "Coming Soon", cta: "Browse Shops", desc: "Support Indigenous-owned businesses", href: "/shop" },
-  { icon: "\u{1F4DA}", title: "Schools & Programs", count: "190+", cta: "Browse Schools", desc: "Training and education programs", href: "/schools" },
-  { icon: "\u{1F4FA}", title: "IOPPS Spotlight", count: "New", cta: "Watch Now", desc: "Live streams, interviews, and stories", href: "/stories" },
-];
+/* categories is built inside the component with live stats */
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const stats = await getStats();
+  const categories = [
+    { icon: "\u{1F4BC}", title: "Jobs & Careers", count: String(stats.jobs || 0), cta: "Browse Jobs", desc: "Indigenous-focused job postings and career opportunities", href: "/jobs" },
+    { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: String(stats.events || 0), cta: "Browse Events", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
+    { icon: "\u{1F393}", title: "Scholarships & Grants", count: "17", cta: "Browse Scholarships", desc: "Funding for students and entrepreneurs", href: "/scholarships" },
+    { icon: "\u{1F3EA}", title: "Shop Indigenous", count: "Coming Soon", cta: "Browse Shops", desc: "Support Indigenous-owned businesses", href: "/shop" },
+    { icon: "\u{1F4DA}", title: "Schools & Programs", count: "190+", cta: "Browse Schools", desc: "Training and education programs", href: "/schools" },
+    { icon: "\u{1F4FA}", title: "IOPPS Spotlight", count: "New", cta: "Watch Now", desc: "Live streams, interviews, and stories", href: "/stories" },
+  ];
   return (
     <div className="min-h-screen bg-bg">
       {/* Hero */}
@@ -248,10 +271,10 @@ export default function LandingPage() {
       <section className="border-t border-border px-5 md:px-10 lg:px-20 py-8">
         <div className="flex flex-wrap justify-center gap-8 md:gap-16">
           {[
-            { value: "756", label: "Community Members" },
-            { value: "111", label: "Jobs Posted" },
-            { value: "25", label: "Events Listed" },
-            { value: "3", label: "Organizations" },
+            { value: String(stats.members || 0), label: "Community Members" },
+            { value: String(stats.jobs || 0), label: "Jobs Posted" },
+            { value: String(stats.events || 0), label: "Events Listed" },
+            { value: String(stats.organizations || 0), label: "Organizations" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <p className="text-2xl md:text-3xl font-extrabold text-teal mb-0.5">{stat.value}</p>
