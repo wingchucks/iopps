@@ -126,7 +126,7 @@ function OrgProfileContent() {
           &#8592; All Partners
         </Link>
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start sm:items-center">
-          <Avatar name={org.shortName} size={80} src={org.logo} />
+          <Avatar name={org.shortName} size={80} src={org.logoUrl || org.logo} />
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <h1 className="text-xl sm:text-[28px] font-extrabold text-white m-0">
