@@ -126,6 +126,13 @@ export default function JobsPage() {
       });
     }
 
+    // Sort: featured jobs first, then by recency
+    result.sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return 0;
+    });
+
     return result;
   }, [jobs, search, locationFilter, typeFilter, salaryMin, salaryMax, remoteOnly]);
 

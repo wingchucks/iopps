@@ -27,11 +27,11 @@ async function getStats() {
 }
 
 const partners: { name: string; short: string; tier: string; logo?: string }[] = [
-  { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium", logo: "" },
-  { name: "Saskatoon Tribal Council", short: "STC", tier: "premium", logo: "" },
-  { name: "Westland Corp", short: "WC", tier: "premium", logo: "" },
-  { name: "Saskatchewan Polytechnic", short: "SaskPoly", tier: "school", logo: "" },
-  { name: "First Nations University of Canada", short: "FNUniv", tier: "school", logo: "" },
+  { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium", logo: "https://storage.googleapis.com/iopps-c2224.firebasestorage.app/employers/sR78eEVUvvVaOFLGcUudlD0s0gq1/logo/siga-logo.png" },
+  { name: "Saskatoon Tribal Council", short: "STC", tier: "premium" },
+  { name: "Westland Insurance Group Ltd.", short: "Westland", tier: "premium" },
+  { name: "Saskatchewan Polytechnic", short: "SaskPoly", tier: "school" },
+  { name: "First Nations University of Canada", short: "FNUniv", tier: "school" },
 ];
 
 /* categories is built inside the component with live stats */
@@ -226,6 +226,7 @@ export default async function LandingPage() {
                 <Avatar
                   name={p.short}
                   size={40}
+                  src={p.logo}
                   gradient={
                     p.tier === "school"
                       ? "linear-gradient(135deg, rgba(13,148,136,.13), rgba(37,99,235,.09))"
