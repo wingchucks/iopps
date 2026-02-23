@@ -484,10 +484,16 @@ function OrgDashboardContent() {
 
   const formatDate = (ts: unknown): string => {
     if (!ts) return "N/A";
-    if (typeof ts === "object" && ts !== null && "toDate" in ts) {
-      return (ts as { toDate: () => Date }).toDate().toLocaleDateString();
+    if (typeof ts === "string") return new Date(ts).toLocaleDateString();
+    if (typeof ts === "object" && ts !== null) {
+      if ("toDate" in ts) {
+        return (ts as { toDate: () => Date }).toDate().toLocaleDateString();
+      }
+      if ("_seconds" in ts) {
+        return new Date((ts as { _seconds: number })._seconds * 1000).toLocaleDateString();
+      }
     }
-    return String(ts);
+    return "N/A";
   };
 
   return (
