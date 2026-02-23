@@ -98,7 +98,7 @@ function ListEditor({
         className="text-sm font-semibold cursor-pointer border-none rounded-lg px-3 py-1.5"
         style={{ background: "rgba(13,148,136,.1)", color: "var(--teal)" }}
       >
-        + Add {label.replace(/s$/, "")}
+        + Add {label.replace(/ies$/, "y").replace(/s$/, "")}
       </button>
     </div>
   );

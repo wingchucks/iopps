@@ -152,8 +152,8 @@ export default function OrgAnalyticsPage() {
                 {[
                   { label: "Active Jobs", value: stats.activeJobs },
                   { label: "Total Applications", value: stats.totalApps },
-                  { label: "Profile Views", value: "--" },
-                  { label: "Avg Response Time", value: "--" },
+                  { label: "Profile Views", value: 0 },
+                  { label: "Avg Response Time", value: "N/A" },
                 ].map(({ label, value }) => (
                   <Card key={label} className="p-5">
                     <p
