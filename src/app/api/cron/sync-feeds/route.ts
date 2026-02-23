@@ -78,7 +78,9 @@ export async function GET(request: NextRequest) {
         const feedType = (feed as Record<string, unknown>).feedType as string || "xml";
         const items = feedType === "oracle-hcm"
           ? parseOracleHcm(responseText)
-          : parseSimpleXml(responseText);
+          : feedType === "adp"
+            ? parseAdp(responseText)
+            : parseSimpleXml(responseText);
         let jobsImported = 0;
 
         for (const item of items) {
@@ -229,6 +231,31 @@ function stripCdata(text: string): string {
 // ---------------------------------------------------------------------------
 // Oracle HCM parser — handles recruitingCEJobRequisitions JSON response
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// ADP Workforce Now parser
+// ---------------------------------------------------------------------------
+
+function parseAdp(text: string): Array<Record<string, string>> {
+  try {
+    const json = JSON.parse(text);
+    const requisitions = json.jobRequisitions || [];
+    return requisitions.map((req: Record<string, unknown>) => {
+      const itemID = String(req.itemID || "");
+      const cid = (req as Record<string, unknown>).clientRequisitionID || "";
+      return {
+        title: String(req.requisitionTitle || ""),
+        guid: itemID,
+        link: `https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=${cid}&jobId=${itemID}&lang=en_CA&source=CC2`,
+        pubDate: String((req.postDate as string)?.substring(0, 10) || ""),
+        description: "",
+        location: "Saskatoon, SK",
+      };
+    });
+  } catch {
+    return [];
+  }
+}
 
 function parseOracleHcm(text: string): Array<Record<string, string>> {
   try {
