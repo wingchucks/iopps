@@ -30,8 +30,6 @@ const partners: { name: string; short: string; tier: string; logo?: string }[] =
   { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium", logo: "https://storage.googleapis.com/iopps-c2224.firebasestorage.app/employers/sR78eEVUvvVaOFLGcUudlD0s0gq1/logo/siga-logo.png" },
   { name: "Saskatoon Tribal Council", short: "STC", tier: "premium" },
   { name: "Westland Insurance Group Ltd.", short: "Westland", tier: "premium" },
-  { name: "Saskatchewan Polytechnic", short: "SaskPoly", tier: "school" },
-  { name: "First Nations University of Canada", short: "FNUniv", tier: "school" },
 ];
 
 /* categories is built inside the component with live stats */
@@ -237,9 +235,9 @@ export default async function LandingPage() {
               <div>
                 <p className="text-[13px] font-semibold text-text m-0">{p.name}</p>
                 <Badge
-                  text={p.tier === "school" ? "\u{1F393} Education Partner" : "\u2713 Premium Partner"}
-                  color={p.tier === "school" ? "var(--teal)" : "var(--gold)"}
-                  bg={p.tier === "school" ? "var(--teal-soft)" : "var(--gold-soft)"}
+                  text={"\u2713 Premium Partner"}
+                  color={"var(--gold)"}
+                  bg={"var(--gold-soft)"}
                   small
                 />
               </div>
