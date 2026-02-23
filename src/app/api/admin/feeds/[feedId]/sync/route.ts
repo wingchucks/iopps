@@ -187,7 +187,8 @@ export async function POST(
 
 function parseSimpleXml(xml: string): Array<Record<string, string>> {
   const items: Array<Record<string, string>> = [];
-  const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+  // Support both <item> (standard RSS) and <job> (SmartJobBoard) tags
+  const itemRegex = /<(?:item|job)>([\s\S]*?)<\/(?:item|job)>/gi;
   let match: RegExpExecArray | null;
 
   while ((match = itemRegex.exec(xml)) !== null) {
@@ -197,9 +198,19 @@ function parseSimpleXml(xml: string): Array<Record<string, string>> {
     let fieldMatch: RegExpExecArray | null;
 
     while ((fieldMatch = fieldRegex.exec(content)) !== null) {
-      item[fieldMatch[1]] = fieldMatch[2]
+      item[fieldMatch[1].toLowerCase()] = fieldMatch[2]
         .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
         .trim();
+    }
+
+    // Normalize SmartJobBoard field names to RSS standard
+    if (!item.link && item.url) item.link = item.url;
+    if (!item.guid && item.referencenumber) item.guid = item.referencenumber;
+    if (!item.pubDate && item.date) item.pubDate = item.date;
+    if (!item.location && (item.city || item.state)) {
+      item.location = [item.city, item.state, item.country]
+        .filter(Boolean)
+        .join(", ");
     }
 
     items.push(item);
