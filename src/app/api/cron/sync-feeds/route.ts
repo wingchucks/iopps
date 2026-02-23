@@ -74,8 +74,11 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        const xml = await response.text();
-        const items = parseSimpleXml(xml);
+        const responseText = await response.text();
+        const feedType = (feed as Record<string, unknown>).feedType as string || "xml";
+        const items = feedType === "oracle-hcm"
+          ? parseOracleHcm(responseText)
+          : parseSimpleXml(responseText);
         let jobsImported = 0;
 
         for (const item of items) {
@@ -221,4 +224,25 @@ function parseSimpleXml(xml: string): Array<Record<string, string>> {
 
 function stripCdata(text: string): string {
   return text.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").trim();
+}
+
+// ---------------------------------------------------------------------------
+// Oracle HCM parser — handles recruitingCEJobRequisitions JSON response
+// ---------------------------------------------------------------------------
+
+function parseOracleHcm(text: string): Array<Record<string, string>> {
+  try {
+    const json = JSON.parse(text);
+    const requisitions = json.items?.[0]?.requisitionList || [];
+    return requisitions.map((req: Record<string, unknown>) => ({
+      title: String(req.Title || ""),
+      guid: String(req.Id || ""),
+      link: `https://iaayzv.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/SIGA/job/${req.Id}`,
+      pubDate: String(req.PostedDate || ""),
+      description: String(req.ShortDescriptionStr || ""),
+      location: String(req.PrimaryLocation || "Canada"),
+    }));
+  } catch {
+    return [];
+  }
 }
