@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
@@ -24,7 +25,7 @@ export default function AboutPage() {
           href="/"
           className="flex flex-col items-center no-underline hover:opacity-80 transition-opacity"
         >
-          <img src="/logo.png" alt="IOPPS" width={64} height={64} className="mb-3" />
+          <Image src="/logo.png" alt="IOPPS" width={64} height={64} className="mb-3" />
           <span className="text-white font-black tracking-[4px] text-2xl">IOPPS</span>
         </Link>
         <h1 className="text-white font-extrabold text-3xl md:text-4xl mt-6 mb-3">
