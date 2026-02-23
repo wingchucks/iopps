@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const links = [
   { href: "/about", label: "About" },
@@ -15,7 +16,7 @@ export default function Footer() {
     >
       <div className="max-w-[1200px] mx-auto px-4 py-5 md:px-10 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="IOPPS" width={24} height={24} />
+          <Image src="/logo.png" alt="IOPPS" width={24} height={24} />
           <span className="text-white font-extrabold text-sm tracking-wide">IOPPS</span>
           <span className="text-xs" style={{ color: "rgba(255,255,255,.4)" }}>
             &copy; {new Date().getFullYear()}

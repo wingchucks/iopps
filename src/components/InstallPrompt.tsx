@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -62,7 +63,7 @@ export default function InstallPrompt() {
     >
       <div style={{ padding: "16px 20px" }}>
         <div className="flex items-start gap-3">
-          <img src="/logo.png" alt="IOPPS" width={44} height={44} className="shrink-0 rounded-xl" />
+          <Image src="/logo.png" alt="IOPPS" width={44} height={44} className="shrink-0 rounded-xl" />
           <div className="flex-1">
             <p className="text-[15px] font-bold text-white m-0 mb-0.5">
               Install IOPPS

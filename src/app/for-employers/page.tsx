@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 
@@ -86,7 +87,7 @@ export default function ForEmployersPage() {
             href="/"
             className="flex items-center gap-2.5 no-underline"
           >
-            <img src="/logo.png" alt="IOPPS" width={36} height={36} />
+            <Image src="/logo.png" alt="IOPPS" width={36} height={36} />
             <span className="text-white font-black text-xl tracking-[2px]">
               IOPPS
             </span>
