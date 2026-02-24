@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { sendEmployerWelcome } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -110,6 +111,9 @@ export async function POST(req: NextRequest) {
 
     // Set custom claims so auth token reflects employer role
     await adminAuth.setCustomUserClaims(uid, { role: "employer", employerId: uid });
+
+    // Send welcome email (non-blocking)
+    sendEmployerWelcome({ email: contactEmail, contactName, orgName: name }).catch(() => {});
 
     return NextResponse.json({ success: true, orgId: uid, slug });
   } catch (err) {

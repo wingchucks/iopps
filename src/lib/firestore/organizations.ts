@@ -27,6 +27,7 @@ export interface OrganizationSocialLinks {
 export interface Organization {
   id: string;
   name: string;
+  slug?: string;
   type: "business" | "school" | "non-profit" | "government" | "employer";
   contactName?: string;
   contactEmail?: string;

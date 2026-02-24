@@ -170,6 +170,17 @@ function ApplyWizard() {
         updatedAt: serverTimestamp(),
       });
       showToast("Application submitted!", "success");
+
+      // Notify employer (non-blocking — don't let this fail the submission)
+      try {
+        const idToken = await user.getIdToken();
+        fetch("/api/applications/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+          body: JSON.stringify({ postId: post.id, postTitle: post.title, orgId: post.orgId || "" }),
+        }).catch(() => {}); // Fire-and-forget
+      } catch { /* ignore */ }
+
       router.push("/feed");
     } catch (err) {
       console.error("Submit failed:", err);

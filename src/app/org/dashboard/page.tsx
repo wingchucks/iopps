@@ -563,6 +563,11 @@ function OrgDashboardContent() {
                   <Link href="/org/dashboard/billing">
                     <Button small>💳 Billing</Button>
                   </Link>
+                  {org?.slug && (
+                    <Link href={`/org/${org.slug}`} target="_blank">
+                      <Button small>👁 Public Page</Button>
+                    </Link>
+                  )}
                   <Button
                     primary
                     small

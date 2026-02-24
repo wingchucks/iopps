@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { sendSubscriptionConfirmation } from "@/lib/email";
 
 /* ── Plan ID → tier label mapping ── */
 const PLAN_TO_TIER: Record<string, string> = {
@@ -106,6 +107,23 @@ export async function POST(req: NextRequest) {
         }
 
         console.log(`[stripe/webhook] ✅ Activated ${tier} plan for org ${orgId}`);
+
+        // Send confirmation email (non-blocking)
+        const empSnap = await db.collection("employers").doc(orgId).get();
+        const empEmail = empSnap.data()?.contactEmail || empSnap.data()?.email;
+        const empContact = empSnap.data()?.contactName || "";
+        const empName = empSnap.data()?.name || "";
+        const planNames: Record<string, string> = { standard: "Standard", premium: "Premium", school: "School" };
+        if (empEmail) {
+          sendSubscriptionConfirmation({
+            email: empEmail,
+            contactName: empContact,
+            orgName: empName,
+            planName: planNames[tier] || tier,
+            amount: amount ? Number(amount) / 100 : 0,
+            gst: gstAmount ? Number(gstAmount) / 100 : 0,
+          }).catch(() => {});
+        }
       } else if (isOneTimePost) {
         // 2c. Add post credits to employer
         const creditField =
