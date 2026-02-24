@@ -35,6 +35,15 @@ function slugify(text: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+const JOB_CATEGORIES = [
+  "Administration", "Agriculture", "Arts & Culture", "Business",
+  "Construction & Trades", "Education", "Environment & Land",
+  "Finance", "Government & Public Service", "Health & Wellness",
+  "Hospitality & Tourism", "Human Resources", "Information Technology",
+  "Legal", "Management", "Marketing & Communications",
+  "Natural Resources", "Social Services", "Transportation", "Other",
+];
+
 const emptyForm = {
   title: "",
   slug: "",
@@ -42,6 +51,15 @@ const emptyForm = {
   description: "",
   location: "",
   salary: "",
+  employmentType: "",
+  workLocation: "",
+  positions: "1",
+  category: "",
+  externalApplyUrl: "",
+  requiresResume: true,
+  requiresCoverLetter: false,
+  requiresReferences: false,
+  featured: false,
   responsibilities: [""],
   qualifications: [""],
   benefits: [""],
@@ -141,6 +159,15 @@ function JobForm({
         qualifications: form.qualifications.filter((q) => q.trim()),
         benefits: form.benefits.filter((b) => b.trim()),
         closingDate: form.closingDate,
+        employmentType: form.employmentType,
+        workLocation: form.workLocation,
+        positions: form.positions,
+        category: form.category,
+        externalApplyUrl: form.externalApplyUrl,
+        requiresResume: form.requiresResume,
+        requiresCoverLetter: form.requiresCoverLetter,
+        requiresReferences: form.requiresReferences,
+        featured: form.featured,
         willTrain: form.willTrain,
         driversLicense: form.driversLicense,
         status: publishStatus,
@@ -247,6 +274,78 @@ function JobForm({
             />
           </div>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold mb-1" style={{ color: "var(--text)" }}>
+              Employment Type
+            </label>
+            <select
+              value={form.employmentType}
+              onChange={(e) => set("employmentType", e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-sm"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
+            >
+              <option value="">Select type...</option>
+              <option>Full-time</option>
+              <option>Part-time</option>
+              <option>Contract</option>
+              <option>Casual</option>
+              <option>Seasonal</option>
+              <option>Internship</option>
+              <option>Volunteer</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1" style={{ color: "var(--text)" }}>
+              Work Location
+            </label>
+            <select
+              value={form.workLocation}
+              onChange={(e) => set("workLocation", e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-sm"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
+            >
+              <option value="">Select...</option>
+              <option>On-site</option>
+              <option>Hybrid</option>
+              <option>Remote</option>
+            </select>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold mb-1" style={{ color: "var(--text)" }}>
+              Job Category
+            </label>
+            <select
+              value={form.category}
+              onChange={(e) => set("category", e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-sm"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
+            >
+              <option value="">Select category...</option>
+              {JOB_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1" style={{ color: "var(--text)" }}>
+              Number of Openings
+            </label>
+            <select
+              value={form.positions}
+              onChange={(e) => set("positions", e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-sm"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
+            >
+              <option value="1">1 position</option>
+              <option value="2">2 positions</option>
+              <option value="3">3 positions</option>
+              <option value="4">4 positions</option>
+              <option value="5">5 positions</option>
+              <option value="5+">5+ positions</option>
+            </select>
+          </div>
+        </div>
         <div>
           <label className="block text-sm font-semibold mb-1" style={{ color: "var(--text)" }}>
             Closing Date
@@ -263,30 +362,54 @@ function JobForm({
             }}
           />
         </div>
-        {/* Checkboxes */}
-        <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={form.willTrain}
-              onChange={(e) => set("willTrain", e.target.checked)}
-              className="w-4 h-4 rounded accent-teal"
-            />
-            <span className="text-sm font-medium" style={{ color: "var(--text)" }}>
-              Will Train
-            </span>
+        <div>
+          <label className="block text-sm font-semibold mb-1" style={{ color: "var(--text)" }}>
+            External Apply URL <span className="font-normal text-text-sec">(optional — skip IOPPS apply form)</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={form.driversLicense}
-              onChange={(e) => set("driversLicense", e.target.checked)}
-              className="w-4 h-4 rounded accent-teal"
-            />
-            <span className="text-sm font-medium" style={{ color: "var(--text)" }}>
-              Driver&apos;s License Required
-            </span>
-          </label>
+          <input
+            type="url"
+            value={form.externalApplyUrl}
+            onChange={(e) => set("externalApplyUrl", e.target.value)}
+            placeholder="https://careers.yourorg.com/apply/..."
+            className="w-full px-3 py-2 rounded-lg text-sm"
+            style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
+          />
+        </div>
+        {/* Job Options */}
+        <div className="rounded-xl p-4 flex flex-col gap-3" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+          <p className="text-xs font-bold tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>Job Options</p>
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" checked={form.willTrain} onChange={(e) => set("willTrain", e.target.checked)} className="w-4 h-4 rounded" />
+              <span className="text-sm font-medium" style={{ color: "var(--text)" }}>Will Train</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" checked={form.driversLicense} onChange={(e) => set("driversLicense", e.target.checked)} className="w-4 h-4 rounded" />
+              <span className="text-sm font-medium" style={{ color: "var(--text)" }}>Driver&apos;s License Required</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" checked={form.featured} onChange={(e) => set("featured", e.target.checked)} className="w-4 h-4 rounded" />
+              <span className="text-sm font-medium" style={{ color: "var(--amber, #D97706)" }}>⭐ Feature This Job</span>
+            </label>
+          </div>
+        </div>
+        {/* Required Documents */}
+        <div className="rounded-xl p-4 flex flex-col gap-3" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+          <p className="text-xs font-bold tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>Required from Applicants</p>
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" checked={form.requiresResume} onChange={(e) => set("requiresResume", e.target.checked)} className="w-4 h-4 rounded" />
+              <span className="text-sm font-medium" style={{ color: "var(--text)" }}>Resume / CV</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" checked={form.requiresCoverLetter} onChange={(e) => set("requiresCoverLetter", e.target.checked)} className="w-4 h-4 rounded" />
+              <span className="text-sm font-medium" style={{ color: "var(--text)" }}>Cover Letter</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" checked={form.requiresReferences} onChange={(e) => set("requiresReferences", e.target.checked)} className="w-4 h-4 rounded" />
+              <span className="text-sm font-medium" style={{ color: "var(--text)" }}>References</span>
+            </label>
+          </div>
         </div>
         <div>
           <label className="block text-sm font-semibold mb-1" style={{ color: "var(--text)" }}>
@@ -657,6 +780,15 @@ function OrgDashboardContent() {
                               ? editingPost.benefits
                               : [""],
                             closingDate: editingPost.closingDate || "",
+                            employmentType: String((editingPost as unknown as Record<string, unknown>).employmentType || ""),
+                            workLocation: String((editingPost as unknown as Record<string, unknown>).workLocation || ""),
+                            positions: String((editingPost as unknown as Record<string, unknown>).positions || "1"),
+                            category: String((editingPost as unknown as Record<string, unknown>).category || ""),
+                            externalApplyUrl: String((editingPost as unknown as Record<string, unknown>).externalApplyUrl || ""),
+                            requiresResume: (editingPost as unknown as Record<string, unknown>).requiresResume !== false,
+                            requiresCoverLetter: !!(editingPost as unknown as Record<string, unknown>).requiresCoverLetter,
+                            requiresReferences: !!(editingPost as unknown as Record<string, unknown>).requiresReferences,
+                            featured: !!(editingPost as unknown as Record<string, unknown>).featured,
                             willTrain: !!(editingPost as unknown as Record<string, unknown>).willTrain,
                             driversLicense: !!(editingPost as unknown as Record<string, unknown>).driversLicense,
                             status: editingPost.status || "draft",

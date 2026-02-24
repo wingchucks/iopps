@@ -126,7 +126,16 @@ function JobDetailContent() {
   const closingDate = job.closingDate
     ? new Date(job.closingDate as string).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })
     : null;
-  const applicationUrl = job.applicationUrl || (job as unknown as Record<string, unknown>).applicationLink as string | undefined || (job as unknown as Record<string, unknown>).externalUrl as string | undefined;
+  const applicationUrl = job.applicationUrl
+    || (job as unknown as Record<string, unknown>).applicationLink as string | undefined
+    || (job as unknown as Record<string, unknown>).externalUrl as string | undefined
+    || (job as unknown as Record<string, unknown>).externalApplyUrl as string | undefined;
+  const workLocation = (job as unknown as Record<string, unknown>).workLocation as string | undefined;
+  const category = (job as unknown as Record<string, unknown>).category as string | undefined;
+  const positions = (job as unknown as Record<string, unknown>).positions as string | undefined;
+  const requiresResume = !!(job as unknown as Record<string, unknown>).requiresResume;
+  const requiresCoverLetter = !!(job as unknown as Record<string, unknown>).requiresCoverLetter;
+  const requiresReferences = !!(job as unknown as Record<string, unknown>).requiresReferences;
 
   return (
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
@@ -149,6 +158,9 @@ function JobDetailContent() {
               )}
               {jobType && (
                 <Badge text={jobType} color="var(--blue)" bg="var(--blue-soft)" small />
+              )}
+              {workLocation && (
+                <Badge text={workLocation} color="var(--teal)" bg="var(--teal-soft)" small />
               )}
               {job.indigenousPreference && (
                 <Badge text="Indigenous Preference" color="var(--teal)" bg="var(--teal-soft)" small />
@@ -335,6 +347,18 @@ function JobDetailContent() {
                       <span className="text-xs font-semibold text-text">{job.department}</span>
                     </div>
                   )}
+                  {category && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-text-muted">Category</span>
+                      <span className="text-xs font-semibold text-text">{category}</span>
+                    </div>
+                  )}
+                  {positions && positions !== "1" && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-text-muted">Openings</span>
+                      <span className="text-xs font-semibold text-text">{positions}</span>
+                    </div>
+                  )}
                   {!!(job as unknown as Record<string, unknown>).willTrain && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Training</span>
@@ -349,6 +373,16 @@ function JobDetailContent() {
                   )}
                 </div>
               </div>
+              {(requiresResume || requiresCoverLetter || requiresReferences) && (
+                <div className="border-t border-border pt-4">
+                  <p className="text-xs font-bold text-text-muted mb-2 tracking-[1px]">TO APPLY</p>
+                  <div className="flex flex-col gap-1.5">
+                    {requiresResume && <span className="text-xs text-text-sec">📄 Resume / CV required</span>}
+                    {requiresCoverLetter && <span className="text-xs text-text-sec">✉️ Cover letter required</span>}
+                    {requiresReferences && <span className="text-xs text-text-sec">👥 References required</span>}
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>
