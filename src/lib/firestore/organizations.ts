@@ -62,6 +62,11 @@ export interface Organization {
   programs?: string[];
 }
 
+/**
+ * @deprecated Use POST /api/employer/signup instead for new employer registration.
+ * This client-side function only creates the organizations doc.
+ * The server-side route handles all 4 collections atomically with Admin SDK.
+ */
 export async function createOrganization(
   orgId: string,
   data: {
@@ -71,60 +76,13 @@ export async function createOrganization(
     contactEmail: string;
   }
 ): Promise<void> {
-  const slug = data.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .substring(0, 60);
-
-  const now = serverTimestamp();
-
-  // 1. Create organizations/{orgId}
   await setDoc(doc(db, "organizations", orgId), {
     ...data,
-    slug,
     onboardingComplete: false,
     plan: null,
-    status: "pending",
-    verified: false,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   });
-
-  // 2. Create employers/{orgId}
-  await setDoc(doc(db, "employers", orgId), {
-    id: orgId,
-    name: data.name,
-    type: data.type,
-    contactName: data.contactName,
-    contactEmail: data.contactEmail,
-    plan: "free",
-    subscriptionTier: "free",
-    status: "pending",
-    verified: false,
-    onboardingComplete: false,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  // 3. Set user role to employer in users collection
-  await setDoc(doc(db, "users", orgId), {
-    role: "employer",
-    employerId: orgId,
-    displayName: data.contactName,
-    email: data.contactEmail,
-    updatedAt: now,
-  }, { merge: true });
-
-  // 4. Create members/{orgId} with orgId so they're filtered from talent search
-  await setDoc(doc(db, "members", orgId), {
-    displayName: data.name,
-    email: data.contactEmail,
-    orgId: orgId,
-    role: "employer",
-    createdAt: now,
-    updatedAt: now,
-  }, { merge: true });
 }
 
 export async function getOrganization(

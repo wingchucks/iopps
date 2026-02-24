@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { createOrganization } from "@/lib/firestore/organizations";
 import Button from "@/components/Button";
 
 const ORG_TYPES = [
@@ -26,14 +25,15 @@ export default function OrgSignupPage() {
   const [loading, setLoading] = useState(false);
   const { signUp, user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const signingUpRef = useRef(false); // Prevents useEffect redirect during signup
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !signingUpRef.current) {
       router.replace("/org/onboarding");
     }
   }, [user, authLoading, router]);
 
-  if (authLoading || user) return null;
+  if (authLoading || (user && !signingUpRef.current)) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,22 +53,37 @@ export default function OrgSignupPage() {
     }
 
     setLoading(true);
+    signingUpRef.current = true; // Block useEffect redirect
     try {
       await signUp(contactName, email, password);
-      // After signUp, auth state updates and we get the user
-      // We need to get the UID from the auth module directly
-      const { auth } = await import("@/lib/firebase");
-      const uid = auth.currentUser?.uid;
-      if (!uid) throw new Error("Failed to get user ID");
 
-      await createOrganization(uid, {
-        name: orgName,
-        type: orgType,
-        contactName,
-        contactEmail: email,
+      // Get ID token for server-side API call
+      const { auth } = await import("@/lib/firebase");
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("Failed to get user after signup");
+      const idToken = await currentUser.getIdToken();
+
+      // Create org via server-side API (Admin SDK — atomic, secure)
+      const res = await fetch("/api/employer/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          name: orgName,
+          type: orgType,
+          contactName,
+          contactEmail: email,
+        }),
       });
 
-      router.push("/verify-email");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Server error" }));
+        throw new Error(data.error || "Failed to create organization");
+      }
+
+      router.push("/org/onboarding");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to create account";
       if (msg.includes("email-already-in-use")) {
@@ -78,6 +93,7 @@ export default function OrgSignupPage() {
       }
     } finally {
       setLoading(false);
+      signingUpRef.current = false;
     }
   };
 
