@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
@@ -26,6 +26,7 @@ export default function OrgProfilePage() {
 
 function OrgProfileContent() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug as string;
   const { user } = useAuth();
   const [org, setOrg] = useState<Organization | null>(null);
@@ -33,6 +34,16 @@ function OrgProfileContent() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState(false);
+
+  const handleFollow = () => {
+    if (!user) { router.push("/login"); return; }
+    setFollowing(!following);
+  };
+
+  const handleMessage = () => {
+    if (!user) { router.push("/login"); return; }
+    router.push(`/messages?to=${org?.id || slug}`);
+  };
 
   useEffect(() => {
     async function load() {
@@ -177,7 +188,7 @@ function OrgProfileContent() {
           <div className="flex gap-2.5 mt-2 sm:mt-0 shrink-0">
             <Button
               small
-              onClick={() => setFollowing(!following)}
+              onClick={handleFollow}
               style={{
                 color: following ? "var(--navy)" : "#fff",
                 borderColor: "rgba(255,255,255,.25)",
@@ -186,7 +197,7 @@ function OrgProfileContent() {
             >
               {following ? "✓ Following" : "+ Follow"}
             </Button>
-            <Button small style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)" }}>
+            <Button small onClick={handleMessage} style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)" }}>
               &#128172; Message
             </Button>
             {websiteUrl && (
