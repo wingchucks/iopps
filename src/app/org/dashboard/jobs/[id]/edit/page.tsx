@@ -46,9 +46,40 @@ export default function JobEditPage() {
   const [applicationUrl, setApplicationUrl] = useState("");
   const [status, setStatus] = useState<PostStatus>("draft");
 
+  const [isImported, setIsImported] = useState(false);
+
   useEffect(() => {
     (async () => {
-      const p = await getPost(postId);
+      let p = await getPost(postId).catch(() => null);
+
+      // Fallback: check jobs collection via API (imported/synced jobs)
+      if (!p) {
+        try {
+          const res = await fetch(`/api/jobs/${postId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.job) {
+              p = {
+                id: data.job.id,
+                type: "job",
+                title: data.job.title || "",
+                description: data.job.description || "",
+                location: data.job.location || "",
+                salary: typeof data.job.salary === "string" ? data.job.salary : "",
+                jobType: data.job.employmentType || data.job.jobType || "Full-time",
+                qualifications: data.job.qualifications || [],
+                closingDate: data.job.closingDate || "",
+                applicationUrl: data.job.applicationUrl || "",
+                status: data.job.active ? "active" : "closed",
+                orgId: data.job.employerId || "",
+                orgName: data.job.employerName || "",
+              } as unknown as Post;
+              setIsImported(true);
+            }
+          }
+        } catch { /* ignore */ }
+      }
+
       if (!p) {
         router.replace("/org/dashboard");
         return;
@@ -220,6 +251,22 @@ export default function JobEditPage() {
               >
                 Edit Job Posting
               </h1>
+
+              {isImported && (
+                <div
+                  className="rounded-xl px-5 py-4 mb-6 text-sm"
+                  style={{
+                    background: "rgba(245,158,11,.1)",
+                    border: "1px solid rgba(245,158,11,.3)",
+                    color: "var(--text-sec)",
+                  }}
+                >
+                  <strong style={{ color: "#F59E0B" }}>⚡ Imported Job</strong>
+                  <span className="ml-2">
+                    This job was synced from an external feed. Edits here won&apos;t persist — the job is managed by the source system.
+                  </span>
+                </div>
+              )}
 
               <Card className="p-6">
                 <div className="flex flex-col gap-5">
