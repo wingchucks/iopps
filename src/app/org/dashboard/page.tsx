@@ -46,6 +46,8 @@ const emptyForm = {
   qualifications: [""],
   benefits: [""],
   closingDate: "",
+  willTrain: false,
+  driversLicense: false,
   status: "draft" as PostStatus,
 };
 
@@ -139,6 +141,8 @@ function JobForm({
         qualifications: form.qualifications.filter((q) => q.trim()),
         benefits: form.benefits.filter((b) => b.trim()),
         closingDate: form.closingDate,
+        willTrain: form.willTrain,
+        driversLicense: form.driversLicense,
         status: publishStatus,
         orgId,
         orgName,
@@ -258,6 +262,31 @@ function JobForm({
               color: "var(--text)",
             }}
           />
+        </div>
+        {/* Checkboxes */}
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={form.willTrain}
+              onChange={(e) => set("willTrain", e.target.checked)}
+              className="w-4 h-4 rounded accent-teal"
+            />
+            <span className="text-sm font-medium" style={{ color: "var(--text)" }}>
+              Will Train
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={form.driversLicense}
+              onChange={(e) => set("driversLicense", e.target.checked)}
+              className="w-4 h-4 rounded accent-teal"
+            />
+            <span className="text-sm font-medium" style={{ color: "var(--text)" }}>
+              Driver&apos;s License Required
+            </span>
+          </label>
         </div>
         <div>
           <label className="block text-sm font-semibold mb-1" style={{ color: "var(--text)" }}>
