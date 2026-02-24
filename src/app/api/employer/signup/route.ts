@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
     batch.set(adminDb.collection("employers").doc(uid), {
       id: uid,
       name,
+      slug,
       type,
       contactName,
       contactEmail,

@@ -48,15 +48,31 @@ function OrgProfileContent() {
   useEffect(() => {
     async function load() {
       try {
-        const orgData = await getOrganization(slug);
+        // Use server-side API to resolve org by slug or slug field
+        const orgRes = await fetch(`/api/org/${encodeURIComponent(slug)}`);
+        if (!orgRes.ok) {
+          setOrg(null);
+          setLoading(false);
+          return;
+        }
+        const orgJson = await orgRes.json();
+        const orgData = orgJson.org as Organization | null;
         setOrg(orgData);
         if (orgData) {
-          const [orgPosts, jobsRes] = await Promise.all([
-            getPostsByOrg(slug),
-            fetch(`/api/jobs?employerName=${encodeURIComponent(orgData.name)}`).then(r => r.json()),
+          // Fetch jobs — try by employerId (org doc ID) and by employerName
+          const orgId = orgData.id;
+          const [orgPosts, jobsByIdRes, jobsByNameRes] = await Promise.all([
+            getPostsByOrg(orgId).catch(() => []),
+            fetch(`/api/jobs?employerId=${encodeURIComponent(orgId)}`).then(r => r.json()).catch(() => ({ jobs: [] })),
+            fetch(`/api/jobs?employerName=${encodeURIComponent(orgData.name)}`).then(r => r.json()).catch(() => ({ jobs: [] })),
           ]);
           setPosts(orgPosts);
-          setJobs(jobsRes.jobs ?? []);
+          // Merge and deduplicate jobs from both queries
+          const jobMap = new Map<string, Job>();
+          for (const j of [...(jobsByIdRes.jobs ?? []), ...(jobsByNameRes.jobs ?? [])]) {
+            jobMap.set(j.id, j);
+          }
+          setJobs(Array.from(jobMap.values()));
         }
       } catch (err) {
         console.error("Failed to load organization:", err);
