@@ -28,6 +28,8 @@ export default function TalentSearchPage() {
 
   const filtered = useMemo(() => {
     return members.filter((m) => {
+      // Filter out org/employer accounts — they have an orgId set
+      if (m.orgId) return false;
       // Search by name or skills
       if (search) {
         const q = search.toLowerCase();

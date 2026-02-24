@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
   onConversations,
@@ -36,6 +37,7 @@ export default function MessagesPage() {
 
 function MessagesContent() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -48,6 +50,21 @@ function MessagesContent() {
   const [memberSearch, setMemberSearch] = useState("");
   const [loadingMembers, setLoadingMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-open conversation from ?to= URL param
+  const toParam = searchParams?.get("to");
+  useEffect(() => {
+    if (!user || !toParam || loading) return;
+    // Create or open conversation with the target user
+    getOrCreateConversation(user.uid, toParam).then(async (convId) => {
+      if (!profiles[toParam]) {
+        const p = await getMemberProfile(toParam);
+        if (p) setProfiles((prev) => ({ ...prev, [toParam]: p }));
+      }
+      setActiveConvId(convId);
+    }).catch(console.error);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, toParam, loading]);
 
   // Real-time conversations listener
   useEffect(() => {
