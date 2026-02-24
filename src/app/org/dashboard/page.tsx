@@ -657,6 +657,8 @@ function OrgDashboardContent() {
                               ? editingPost.benefits
                               : [""],
                             closingDate: editingPost.closingDate || "",
+                            willTrain: !!(editingPost as unknown as Record<string, unknown>).willTrain,
+                            driversLicense: !!(editingPost as unknown as Record<string, unknown>).driversLicense,
                             status: editingPost.status || "draft",
                           }
                         : emptyForm

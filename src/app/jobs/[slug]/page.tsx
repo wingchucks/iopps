@@ -153,10 +153,10 @@ function JobDetailContent() {
               {job.indigenousPreference && (
                 <Badge text="Indigenous Preference" color="var(--teal)" bg="var(--teal-soft)" small />
               )}
-              {(job as unknown as Record<string, unknown>).willTrain && (
+              {!!(job as unknown as Record<string, unknown>).willTrain && (
                 <Badge text="Will Train" color="var(--green)" bg="var(--green-soft, rgba(16,185,129,.12))" small />
               )}
-              {(job as unknown as Record<string, unknown>).driversLicense && (
+              {!!(job as unknown as Record<string, unknown>).driversLicense && (
                 <Badge text="Driver's License Required" color="var(--amber)" bg="var(--amber-soft, rgba(217,119,6,.12))" small />
               )}
             </div>
@@ -335,13 +335,13 @@ function JobDetailContent() {
                       <span className="text-xs font-semibold text-text">{job.department}</span>
                     </div>
                   )}
-                  {(job as unknown as Record<string, unknown>).willTrain && (
+                  {!!(job as unknown as Record<string, unknown>).willTrain && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Training</span>
                       <span className="text-xs font-semibold" style={{ color: "var(--green)" }}>Will Train ✓</span>
                     </div>
                   )}
-                  {(job as unknown as Record<string, unknown>).driversLicense && (
+                  {!!(job as unknown as Record<string, unknown>).driversLicense && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Driver&apos;s License</span>
                       <span className="text-xs font-semibold" style={{ color: "var(--amber)" }}>Required</span>
