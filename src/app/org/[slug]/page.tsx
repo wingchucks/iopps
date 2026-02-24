@@ -358,7 +358,7 @@ function OrgProfileContent() {
           {/* Right Column — Jobs & Events */}
           <div>
             {/* Open Positions from jobs collection */}
-            {user && jobs.length > 0 && (
+            {jobs.length > 0 && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-bold text-text m-0">Open Positions</h3>
@@ -391,7 +391,7 @@ function OrgProfileContent() {
             )}
 
             {/* Legacy posts jobs (if any exist and no jobs collection data) */}
-            {user && jobs.length === 0 && posts.filter((p) => p.type === "job").length > 0 && (
+            {jobs.length === 0 && posts.filter((p) => p.type === "job").length > 0 && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-bold text-text m-0">Open Positions</h3>
@@ -430,7 +430,7 @@ function OrgProfileContent() {
             )}
 
             {/* Upcoming Events */}
-            {user && events.length > 0 && (
+            {events.length > 0 && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-bold text-text m-0">Upcoming Events</h3>
@@ -465,23 +465,28 @@ function OrgProfileContent() {
               </div>
             )}
 
-            {/* Sign in prompt for unauthenticated visitors */}
-            {!user && (totalJobs > 0 || events.length > 0) && (
-              <Card className="mb-6">
-                <div className="p-6 text-center">
-                  <p className="text-text font-bold mb-1">Sign in to see more</p>
+            {/* Sign in prompt for unauthenticated visitors — soft CTA to apply */}
+            {!user && totalJobs > 0 && (
+              <Card className="mb-6" style={{ border: "1px solid rgba(13,148,136,.2)" }}>
+                <div className="p-5 text-center">
+                  <p className="text-text font-bold mb-1">Ready to apply?</p>
                   <p className="text-text-muted text-sm mb-4">
-                    View open positions, events, and contact information.
+                    Create a free account to apply for positions and connect with Indigenous employers.
                   </p>
-                  <Link href="/login">
-                    <Button primary small>Sign In</Button>
-                  </Link>
+                  <div className="flex gap-2 justify-center">
+                    <Link href="/signup">
+                      <Button primary small>Join Free</Button>
+                    </Link>
+                    <Link href="/login">
+                      <Button small>Sign In</Button>
+                    </Link>
+                  </div>
                 </div>
               </Card>
             )}
 
             {/* Empty state if no posts and no jobs */}
-            {user && jobs.length === 0 && posts.filter((p) => p.type === "job").length === 0 && events.length === 0 && (
+            {jobs.length === 0 && posts.filter((p) => p.type === "job").length === 0 && events.length === 0 && (
               <Card>
                 <div className="p-6 text-center">
                   <p className="text-text-muted text-sm">No open positions or events at this time. Follow this organization to get notified.</p>
