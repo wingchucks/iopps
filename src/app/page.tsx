@@ -174,7 +174,8 @@ export default async function LandingPage() {
             <Button
               style={{
                 color: "#fff",
-                borderColor: "rgba(255,255,255,.25)",
+                background: "rgba(255,255,255,.12)",
+                borderColor: "rgba(255,255,255,.3)",
                 fontSize: 17,
                 padding: "16px 40px",
                 borderRadius: 14,
