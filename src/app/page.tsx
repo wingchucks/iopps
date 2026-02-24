@@ -4,6 +4,7 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import ThemeToggle from "@/components/ThemeToggle";
+import MobileMenu from "@/components/MobileMenu";
 import { adminDb } from "@/lib/firebase-admin";
 
 async function getStats() {
@@ -108,6 +109,7 @@ export default async function LandingPage() {
               Pricing
             </Link>
             <ThemeToggle />
+            <MobileMenu />
           </div>
         </div>
 
@@ -195,11 +197,12 @@ export default async function LandingPage() {
             EMPOWERING INDIGENOUS SUCCESS
           </p>
         </div>
+        <div className="relative">
         <div
           className="partner-strip flex gap-6 flex-nowrap overflow-x-auto pb-2"
           style={{ scrollbarWidth: "none" }}
         >
-          <style>{`.partner-strip::-webkit-scrollbar{display:none}`}</style>
+          <style>{`.partner-strip::-webkit-scrollbar{display:none} @media(max-width:639px){.partner-fade{display:block}}`}</style>
           {partners.map((p, i) => (
             <Link
               key={i}
@@ -244,6 +247,14 @@ export default async function LandingPage() {
               </div>
             </Link>
           ))}
+        </div>
+          {/* Scroll hint fade — mobile only */}
+          <div
+            className="partner-fade hidden absolute right-0 top-0 h-full w-12 pointer-events-none"
+            style={{
+              background: "linear-gradient(90deg, transparent, var(--bg))",
+            }}
+          />
         </div>
       </section>
 
