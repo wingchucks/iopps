@@ -67,7 +67,30 @@ function ApplyWizard() {
   useEffect(() => {
     async function load() {
       try {
-        const postData = await getPost(`job-${slug}`);
+        // Try multiple sources: slug directly, job- prefix, then jobs API
+        let postData = await getPost(slug).catch(() => null);
+        if (!postData) postData = await getPost(`job-${slug}`).catch(() => null);
+        if (!postData) {
+          // Fall back to jobs collection via API
+          const res = await fetch(`/api/jobs/${slug}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.job) {
+              // Convert to Post-like shape
+              postData = {
+                id: data.job.id,
+                type: "job",
+                title: data.job.title,
+                orgName: data.job.employerName || data.job.orgName || "",
+                orgId: data.job.employerId || data.job.orgId || "",
+                status: "active",
+                description: data.job.description || "",
+                location: data.job.location || "",
+                salary: data.job.salary || "",
+              } as Post;
+            }
+          }
+        }
         setPost(postData);
         if (postData && user) {
           const already = await hasApplied(user.uid, postData.id);

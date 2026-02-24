@@ -558,7 +558,10 @@ function OrgDashboardContent() {
                     <Button small>Analytics</Button>
                   </Link>
                   <Link href="/org/dashboard/applications">
-                    <Button small>View Applications</Button>
+                    <Button small>Applications</Button>
+                  </Link>
+                  <Link href="/org/dashboard/billing">
+                    <Button small>💳 Billing</Button>
                   </Link>
                   <Button
                     primary

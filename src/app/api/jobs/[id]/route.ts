@@ -26,19 +26,32 @@ export async function GET(
   try {
     const { id } = await params;
     const db = getAdminDb();
-    const doc = await db.collection("jobs").doc(id).get();
 
-    if (!doc.exists) {
+    // Check jobs collection first, then fall back to posts collection
+    let docRef = await db.collection("jobs").doc(id).get();
+    let source = "jobs";
+
+    if (!docRef.exists) {
+      docRef = await db.collection("posts").doc(id).get();
+      source = "posts";
+    }
+
+    if (!docRef.exists) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    const data = doc.data()!;
-    const job = serialize({ id: doc.id, ...data }) as Record<string, unknown>;
+    const data = docRef.data()!;
+    const job = serialize({ id: docRef.id, ...data, _source: source }) as Record<string, unknown>;
 
     // Normalize salary object to string
     if (job.salary && typeof job.salary === "object") {
       const salObj = job.salary as Record<string, unknown>;
       job.salary = salObj.display ? String(salObj.display) : "";
+    }
+
+    // Normalize employer name
+    if (!job.employerName) {
+      job.employerName = job.orgName || job.companyName || "";
     }
 
     return NextResponse.json({ job });

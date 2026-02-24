@@ -31,6 +31,23 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
+function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "jobs" | "posts"): Record<string, unknown> {
+  const data = doc.data();
+  const serialized = serialize({ id: doc.id, ...data }) as Record<string, unknown>;
+  // Normalize salary object to string
+  if (serialized.salary && typeof serialized.salary === "object") {
+    const salObj = serialized.salary as Record<string, unknown>;
+    serialized.salary = salObj.display ? String(salObj.display) : "";
+  }
+  // Normalize employer name fields
+  if (!serialized.employerName) {
+    serialized.employerName = serialized.orgName || serialized.companyName || "";
+  }
+  // Tag source
+  serialized._source = source;
+  return serialized;
+}
+
 export async function GET(request: Request) {
   try {
     const db = getAdminDb();
@@ -38,24 +55,41 @@ export async function GET(request: Request) {
     const employerName = searchParams.get("employerName");
     const employerId = searchParams.get("employerId");
 
+    // Query 1: jobs collection (imported/synced jobs)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query: any = db.collection("jobs").where("active", "==", true);
-    if (employerId) query = query.where("employerId", "==", employerId);
-    if (employerName) query = query.where("employerName", "==", employerName);
+    let jobsQuery: any = db.collection("jobs").where("active", "==", true);
+    if (employerId) jobsQuery = jobsQuery.where("employerId", "==", employerId);
+    if (employerName) jobsQuery = jobsQuery.where("employerName", "==", employerName);
 
-    const snap = await query.get();
+    // Query 2: posts collection (employer-posted jobs from dashboard)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let postsQuery: any = db.collection("posts").where("type", "==", "job").where("status", "==", "active");
+    if (employerId) postsQuery = postsQuery.where("orgId", "==", employerId);
+    if (employerName) postsQuery = postsQuery.where("orgName", "==", employerName);
 
-    const jobs = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
-      const data = doc.data();
-      const serialized = serialize({ id: doc.id, ...data }) as Record<string, unknown>;
+    const [jobsSnap, postsSnap] = await Promise.all([jobsQuery.get(), postsQuery.get()]);
 
-      // Normalize salary: if stored as {display: "..."}, extract the string
-      if (serialized.salary && typeof serialized.salary === "object") {
-        const salObj = serialized.salary as Record<string, unknown>;
-        serialized.salary = salObj.display ? String(salObj.display) : "";
+    const jobIds = new Set<string>();
+    const jobs: Record<string, unknown>[] = [];
+
+    jobsSnap.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      jobIds.add(doc.id);
+      jobs.push(normalizeJob(doc, "jobs"));
+    });
+
+    // Merge posts — skip if same slug already in jobs collection
+    postsSnap.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      const slug = doc.data().slug || doc.id;
+      if (!jobIds.has(doc.id) && !jobIds.has(slug)) {
+        jobs.push(normalizeJob(doc, "posts"));
       }
+    });
 
-      return serialized;
+    // Sort: featured first, then by createdAt desc
+    jobs.sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return 0;
     });
 
     return NextResponse.json({ jobs, count: jobs.length });
