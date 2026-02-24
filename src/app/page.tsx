@@ -28,8 +28,8 @@ async function getStats() {
 
 const partners: { name: string; short: string; tier: string; logo?: string }[] = [
   { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium", logo: "https://storage.googleapis.com/iopps-c2224.firebasestorage.app/employers/sR78eEVUvvVaOFLGcUudlD0s0gq1/logo/siga-logo.png" },
-  { name: "Saskatoon Tribal Council", short: "STC", tier: "premium" },
-  { name: "Westland Insurance Group Ltd.", short: "Westland", tier: "premium" },
+  { name: "Saskatoon Tribal Council", short: "STC", tier: "premium", logo: "https://storage.googleapis.com/iopps-c2224.firebasestorage.app/employers/tsRvNLiRWARbOoiBOiEVFDwFfZn2/logo/stc-logo.png" },
+  { name: "Westland Insurance Group Ltd.", short: "Westland", tier: "premium", logo: "https://storage.googleapis.com/iopps-c2224.firebasestorage.app/employers/UyTZcF7xEiRmBnSEzcSMmw9MXvL2/logo/westland-logo.png" },
 ];
 
 /* categories is built inside the component with live stats */
