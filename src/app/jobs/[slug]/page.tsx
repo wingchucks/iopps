@@ -126,7 +126,7 @@ function JobDetailContent() {
   const closingDate = job.closingDate
     ? new Date(job.closingDate as string).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })
     : null;
-  const applicationUrl = job.applicationUrl || (job as unknown as Record<string, unknown>).applicationLink as string | undefined;
+  const applicationUrl = job.applicationUrl || (job as unknown as Record<string, unknown>).applicationLink as string | undefined || (job as unknown as Record<string, unknown>).externalUrl as string | undefined;
 
   return (
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
@@ -176,7 +176,7 @@ function JobDetailContent() {
           </div>
 
           {/* Description */}
-          {job.description && (
+          {job.description ? (
             <>
               <h3 className="text-lg font-bold text-text mb-2">About This Role</h3>
               {job.description.includes("<") ? (
@@ -190,7 +190,18 @@ function JobDetailContent() {
                 </p>
               )}
             </>
-          )}
+          ) : applicationUrl ? (
+            <div className="mb-6 p-5 rounded-2xl border border-border bg-[var(--card)]">
+              <p className="text-sm text-text-sec mb-4">
+                Full job details are available on the employer&apos;s career site.
+              </p>
+              <a href={applicationUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+                <Button primary style={{ borderRadius: 12, padding: "12px 24px", fontSize: 15, fontWeight: 700 }}>
+                  View Full Details &amp; Apply ↗
+                </Button>
+              </a>
+            </div>
+          ) : null}
 
           {/* Requirements */}
           {job.requirements && (
