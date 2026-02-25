@@ -131,6 +131,7 @@ function JobForm({
   orgShort,
   onSave,
   onCancel,
+  forceCreate,
 }: {
   initial: FormData;
   orgId: string;
@@ -138,10 +139,11 @@ function JobForm({
   orgShort: string;
   onSave: () => void;
   onCancel: () => void;
+  forceCreate?: boolean;
 }) {
   const [form, setForm] = useState<FormData>(initial);
   const [saving, setSaving] = useState(false);
-  const isEdit = initial.title !== "";
+  const isEdit = !forceCreate && initial.title !== "";
 
   const handleSubmit = async (publishStatus: PostStatus) => {
     if (!form.title.trim()) return;
@@ -500,11 +502,13 @@ function OrgDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   // Auto-open job form when ?create=job is in URL
   useEffect(() => {
     if (searchParams.get("create") === "job") {
       setEditingPost(null);
+      setIsDuplicating(false);
       setShowForm(true);
     }
   }, [searchParams]);
@@ -575,6 +579,20 @@ function OrgDashboardContent() {
 
   const handleEdit = (post: Post) => {
     setEditingPost(post);
+    setIsDuplicating(false);
+    setShowForm(true);
+  };
+
+  const handleDuplicate = (post: Post) => {
+    const cloned = {
+      ...post,
+      id: "",
+      title: `Copy of ${post.title}`,
+      slug: slugify(`copy-of-${post.title}-${Date.now()}`),
+      status: "draft" as PostStatus,
+    };
+    setEditingPost(cloned as Post);
+    setIsDuplicating(true);
     setShowForm(true);
   };
 
@@ -725,6 +743,7 @@ function OrgDashboardContent() {
                     small
                     onClick={() => {
                       setEditingPost(null);
+                      setIsDuplicating(false);
                       setShowForm(true);
                     }}
                   >
@@ -798,11 +817,16 @@ function OrgDashboardContent() {
                     orgId={profile?.orgId || ""}
                     orgName={org?.name || ""}
                     orgShort={org?.shortName || ""}
-                    onSave={handleFormSave}
+                    onSave={() => {
+                      setIsDuplicating(false);
+                      handleFormSave();
+                    }}
                     onCancel={() => {
                       setShowForm(false);
                       setEditingPost(null);
+                      setIsDuplicating(false);
                     }}
+                    forceCreate={isDuplicating}
                   />
                 </div>
               )}
@@ -838,6 +862,17 @@ function OrgDashboardContent() {
                               {post.title}
                             </h3>
                             <StatusBadge status={post.status} />
+                            {/* Expired warning badge */}
+                            {(post.status || "active") === "active" &&
+                              post.closingDate &&
+                              post.closingDate < new Date().toISOString().split("T")[0] && (
+                              <span
+                                className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                style={{ background: "rgba(220,38,38,.12)", color: "#DC2626" }}
+                              >
+                                Expired
+                              </span>
+                            )}
                           </div>
                           <div
                             className="flex items-center gap-4 text-xs flex-wrap"
@@ -893,6 +928,16 @@ function OrgDashboardContent() {
                           >
                             Full Edit
                           </Link>
+                          <button
+                            onClick={() => handleDuplicate(post)}
+                            className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                            style={{
+                              background: "rgba(139,92,246,.1)",
+                              color: "#8B5CF6",
+                            }}
+                          >
+                            Duplicate
+                          </button>
                           <button
                             onClick={() => handleDelete(post.id)}
                             className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
