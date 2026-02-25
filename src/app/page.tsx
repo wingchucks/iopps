@@ -5,6 +5,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import ThemeToggle from "@/components/ThemeToggle";
 import MobileMenu from "@/components/MobileMenu";
+import { HeroCTA, BottomCTA } from "@/components/HomepageCTA";
 import { adminDb } from "@/lib/firebase-admin";
 
 async function getStats() {
@@ -157,36 +158,7 @@ export default async function LandingPage() {
           iopps.ca
         </p>
 
-        <div className="relative flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
-          <Link href="/signup">
-            <Button
-              primary
-              style={{
-                background: "var(--teal)",
-                fontSize: 17,
-                padding: "16px 40px",
-                borderRadius: 14,
-                fontWeight: 700,
-              }}
-            >
-              Join the Community
-            </Button>
-          </Link>
-          <Link href="/login">
-            <Button
-              style={{
-                color: "#fff",
-                background: "rgba(255,255,255,.12)",
-                borderColor: "rgba(255,255,255,.3)",
-                fontSize: 17,
-                padding: "16px 40px",
-                borderRadius: 14,
-              }}
-            >
-              Sign In
-            </Button>
-          </Link>
-        </div>
+        <HeroCTA />
       </section>
 
       {/* Partner Strip */}
@@ -301,20 +273,7 @@ export default async function LandingPage() {
         <p className="text-base text-text-sec mb-6 max-w-[480px] mx-auto">
           Connect with Indigenous professionals, organizations, and opportunities across North America.
         </p>
-        <Link href="/signup">
-          <Button
-            primary
-            style={{
-              background: "var(--teal)",
-              fontSize: 16,
-              padding: "14px 36px",
-              borderRadius: 14,
-              fontWeight: 700,
-            }}
-          >
-            Get Started
-          </Button>
-        </Link>
+        <BottomCTA />
         <p className="text-teal mt-6 mb-0" style={{ fontSize: 11, fontWeight: 800, letterSpacing: 4 }}>
           EMPOWERING INDIGENOUS SUCCESS
         </p>
