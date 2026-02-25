@@ -21,7 +21,16 @@ export default function SignupPage() {
     if (!authLoading && user) router.replace("/feed");
   }, [user, authLoading, router]);
 
-  if (authLoading || user) return null;
+  if (authLoading || user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-teal/30 border-t-teal rounded-full animate-spin" />
+          <p className="text-text-sec text-sm font-medium">One moment...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

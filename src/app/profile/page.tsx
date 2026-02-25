@@ -304,7 +304,7 @@ function ProfileContent() {
                   setEditSection(null);
                 } else {
                   setEditing(true);
-                  setEditSection("basics");
+                  setEditSection("identity");
                 }
               }}
               style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)", background: "rgba(255,255,255,.12)" }}
@@ -335,39 +335,6 @@ function ProfileContent() {
             <h3 className="text-lg font-bold text-text mb-4">Edit Profile</h3>
 
             <div className="flex flex-col gap-3 mb-6">
-              {/* Section: Basics */}
-              <EditSection
-                title="Basics"
-                icon="&#127963;&#65039;"
-                isOpen={editSection === "basics"}
-                onToggle={() => setEditSection(editSection === "basics" ? null : "basics")}
-              >
-                <label className="block mb-4">
-                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                    Community / First Nation
-                  </span>
-                  <input
-                    type="text"
-                    value={community}
-                    onChange={(e) => setCommunity(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-                    placeholder="e.g. Muskoday First Nation"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                    Location
-                  </span>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-                    placeholder="e.g. Saskatoon, SK"
-                  />
-                </label>
-              </EditSection>
-
               {/* Section: Identity & Heritage */}
               <EditSection
                 title="Identity & Heritage"
@@ -389,6 +356,18 @@ function ProfileContent() {
                 </label>
                 <label className="block mb-4">
                   <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                    Community / First Nation
+                  </span>
+                  <input
+                    type="text"
+                    value={community}
+                    onChange={(e) => setCommunity(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                    placeholder="e.g. Muskoday First Nation"
+                  />
+                </label>
+                <label className="block mb-4">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
                     Territory / Homeland
                   </span>
                   <input
@@ -397,6 +376,18 @@ function ProfileContent() {
                     onChange={(e) => setTerritory(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                     placeholder="e.g. Treaty 6, Metis Nation Region 3"
+                  />
+                </label>
+                <label className="block mb-4">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                    Location
+                  </span>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                    placeholder="e.g. Saskatoon, SK"
                   />
                 </label>
                 <label className="block">

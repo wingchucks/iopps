@@ -36,7 +36,16 @@ function LoginForm() {
     if (!authLoading && user) router.replace(redirectTo || "/feed");
   }, [user, authLoading, router, redirectTo]);
 
-  if (authLoading || user) return null;
+  if (authLoading || user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-teal/30 border-t-teal rounded-full animate-spin" />
+          <p className="text-text-sec text-sm font-medium">Signing you in...</p>
+        </div>
+      </div>
+    );
+  }
 
   const navigateAfterAuth = async (uid: string) => {
     const profile = await getMemberProfile(uid);
