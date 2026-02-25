@@ -23,7 +23,7 @@ const options = [
     label: "Post a Job",
     description: "Create a job posting",
     orgOnly: true,
-    href: "/org/dashboard?create=job",
+    href: "/org/dashboard/jobs/new",
   },
   {
     id: "scholarship",
