@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Redirect jobs.iopps.ca → iopps.ca (old SmartJobBoard domain)
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "jobs.iopps.ca" }],
+        destination: "https://www.iopps.ca/:path*",
+        permanent: true,
+      },
       { source: "/signin", destination: "/login", permanent: true },
       { source: "/sign-in", destination: "/login", permanent: true },
       { source: "/log-in", destination: "/login", permanent: true },
