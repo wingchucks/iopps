@@ -27,16 +27,28 @@ export async function GET(req: NextRequest) {
 
     const employerId = userData.employerId;
 
+    // Also check members collection for orgId (profile page uses this)
+    const memberDoc = await adminDb.collection("members").doc(uid).get();
+    const memberOrgId = memberDoc.exists ? memberDoc.data()?.orgId : null;
+
     // Get employer data
     const empDoc = await adminDb.collection("employers").doc(employerId).get();
     const empData = empDoc.exists ? empDoc.data() : null;
 
-    // Try organizations collection first, then build from employer
+    // Try organizations collection — prefer member's orgId, then employerId
     let orgData = null;
-    const orgDoc = await adminDb.collection("organizations").doc(employerId).get();
+    const orgId = memberOrgId || employerId;
+    const orgDoc = await adminDb.collection("organizations").doc(orgId).get();
     if (orgDoc.exists) {
       orgData = { id: orgDoc.id, ...orgDoc.data() };
-    } else if (empData) {
+    } else if (orgId !== employerId) {
+      // Fallback: try employerId if memberOrgId didn't match
+      const empOrgDoc = await adminDb.collection("organizations").doc(employerId).get();
+      if (empOrgDoc.exists) {
+        orgData = { id: empOrgDoc.id, ...empOrgDoc.data() };
+      }
+    }
+    if (!orgData && empData) {
       orgData = {
         id: employerId,
         name: empData.companyName || empData.name || "My Organization",
@@ -116,7 +128,7 @@ export async function GET(req: NextRequest) {
         uid,
         email: userData.email,
         displayName: userData.displayName,
-        orgId: employerId,
+        orgId: memberOrgId || employerId,
         orgRole: "owner",
       },
     });
