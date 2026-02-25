@@ -62,6 +62,11 @@ export async function getScholarshipBySlug(
   return { id: d.id, ...d.data() } as Scholarship;
 }
 
+export async function getScholarshipsByOrg(orgId: string): Promise<Scholarship[]> {
+  const snap = await getDocs(query(col, where("orgId", "==", orgId)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Scholarship);
+}
+
 export async function createScholarship(
   data: Omit<Scholarship, "id" | "createdAt" | "order">
 ): Promise<string> {

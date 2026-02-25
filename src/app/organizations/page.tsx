@@ -9,7 +9,7 @@ import Badge from "@/components/Badge";
 import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
 import { displayLocation } from "@/lib/utils";
 
-const typeFilters = ["All", "Employer", "School", "Non-Profit", "Government", "Business"];
+const typeFilters = ["All", "Employer", "School", "Non-Profit", "Government", "Business", "Legal", "Professional"];
 
 export default function OrganizationsPage() {
   const [orgs, setOrgs] = useState<Organization[]>([]);
@@ -167,7 +167,11 @@ function OrgCard({ org }: { org: Organization }) {
           ? "Non-Profit"
           : org.type === "government"
             ? "Government"
-            : "Business";
+            : org.type === "legal"
+              ? "Legal Services"
+              : org.type === "professional"
+                ? "Professional Services"
+                : "Business";
 
   return (
     <Link href={`/org/${org.id}`} className="no-underline">

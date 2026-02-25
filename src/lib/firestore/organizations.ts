@@ -28,7 +28,7 @@ export interface Organization {
   id: string;
   name: string;
   slug?: string;
-  type: "business" | "school" | "non-profit" | "government" | "employer";
+  type: "business" | "school" | "non-profit" | "government" | "employer" | "legal" | "professional";
   contactName?: string;
   contactEmail?: string;
   logo?: string;

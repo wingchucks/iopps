@@ -2,10 +2,14 @@ import {
   collection,
   getDocs,
   getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
   doc,
   query,
   orderBy,
   where,
+  serverTimestamp,
   type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -56,4 +60,37 @@ export async function getEventBySlug(slug: string): Promise<Event | null> {
   if (snap.empty) return null;
   const d = snap.docs[0];
   return { id: d.id, ...d.data() } as Event;
+}
+
+export async function getEventsByOrg(orgId: string): Promise<Event[]> {
+  const snap = await getDocs(query(col, where("orgId", "==", orgId)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Event);
+}
+
+export async function createEvent(
+  data: Omit<Event, "id" | "createdAt" | "order">
+): Promise<string> {
+  const id =
+    data.slug ||
+    data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  await setDoc(doc(col, id), {
+    ...data,
+    createdAt: serverTimestamp(),
+    order: Date.now(),
+  });
+  return id;
+}
+
+export async function updateEvent(
+  id: string,
+  data: Partial<Omit<Event, "id">>
+): Promise<void> {
+  await updateDoc(doc(col, id), data);
+}
+
+export async function deleteEvent(id: string): Promise<void> {
+  await deleteDoc(doc(col, id));
 }
