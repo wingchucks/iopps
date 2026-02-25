@@ -18,6 +18,7 @@ import {
   type Event,
 } from "@/lib/firestore/events";
 import OrgDashboardNav from "@/components/OrgDashboardNav";
+import Avatar from "@/components/Avatar";
 
 function slugify(text: string): string {
   return text
@@ -450,14 +451,7 @@ export default function OrgDashboardEventsPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                   <div className="flex items-center gap-4">
-                    {org?.name && (
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg"
-                        style={{ background: "var(--navy)" }}
-                      >
-                        {org.name.charAt(0)}
-                      </div>
-                    )}
+                    <Avatar name={org?.shortName || org?.name || ""} size={48} src={org?.logoUrl || org?.logo} />
                     <div>
                       <h1 className="text-2xl font-bold" style={{ color: "var(--text)" }}>
                         Events

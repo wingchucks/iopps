@@ -24,6 +24,7 @@ import { displayLocation } from "@/lib/utils";
 import { doc, getDoc, getDocFromServer, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import OrgDashboardNav from "@/components/OrgDashboardNav";
+import Avatar from "@/components/Avatar";
 
 interface PostWithApps extends Post {
   applicationCount: number;
@@ -704,14 +705,7 @@ function OrgDashboardContent() {
               {/* Header */}
               <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                 <div className="flex items-center gap-4">
-                  {org?.name && (
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg"
-                      style={{ background: "var(--navy)" }}
-                    >
-                      {org.name.charAt(0)}
-                    </div>
-                  )}
+                  <Avatar name={org?.shortName || org?.name || ""} size={48} src={org?.logoUrl || org?.logo} />
                   <div>
                     <h1
                       className="text-2xl font-bold"
