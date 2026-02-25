@@ -42,6 +42,7 @@ const SIZES = ["1-10", "11-50", "51-200", "200+"];
 interface ProfileForm {
   name: string;
   logo: string;
+  banner: string;
   description: string;
   industry: string;
   size: string;
@@ -61,6 +62,7 @@ function completeness(form: ProfileForm): number {
   const fields = [
     form.name,
     form.logo,
+    form.banner,
     form.description,
     form.industry,
     form.size,
@@ -75,6 +77,16 @@ function completeness(form: ProfileForm): number {
 function ProfilePreview({ form }: { form: ProfileForm }) {
   return (
     <Card className="p-6">
+      {form.banner && (
+        <div className="relative w-full h-32 rounded-xl overflow-hidden mb-4" style={{ border: "1px solid var(--border)" }}>
+          <Image
+            src={form.banner}
+            alt="Banner"
+            fill
+            className="object-cover"
+          />
+        </div>
+      )}
       <div className="flex items-start gap-4">
         {form.logo ? (
           <Image
@@ -194,10 +206,12 @@ export default function OrgProfileEditPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [preview, setPreview] = useState(false);
   const [form, setForm] = useState<ProfileForm>({
     name: "",
     logo: "",
+    banner: "",
     description: "",
     industry: "",
     size: "",
@@ -228,6 +242,8 @@ export default function OrgProfileEditPage() {
         setForm({
           name: org.name || "",
           logo: org.logo || "",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          banner: org.bannerUrl || (org as any).banner || "",
           description: org.description || "",
           industry: org.industry || "",
           size: org.size || "",
@@ -270,6 +286,24 @@ export default function OrgProfileEditPage() {
     }
   };
 
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !orgId) return;
+    setUploadingBanner(true);
+    try {
+      const storageRef = ref(storage, `org-banners/${orgId}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      set("banner", url);
+      showToast("Banner uploaded", "success");
+    } catch (err) {
+      console.error("Banner upload failed:", err);
+      showToast("Failed to upload banner", "error");
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!orgId) return;
     setSaving(true);
@@ -277,6 +311,7 @@ export default function OrgProfileEditPage() {
       await updateOrganization(orgId, {
         name: form.name,
         logo: form.logo,
+        bannerUrl: form.banner,
         description: form.description,
         industry: form.industry,
         size: form.size,
@@ -438,6 +473,52 @@ export default function OrgProfileEditPage() {
                               onChange={handleLogoUpload}
                               className="hidden"
                               disabled={uploading}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                      {/* Banner */}
+                      <div>
+                        <label
+                          className="block text-sm font-semibold mb-2"
+                          style={{ color: "var(--text)" }}
+                        >
+                          Banner Image
+                        </label>
+                        <div className="flex flex-col gap-3">
+                          {form.banner ? (
+                            <div className="relative w-full h-32 rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                              <Image
+                                src={form.banner}
+                                alt="Banner"
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div
+                              className="w-full h-32 rounded-xl flex items-center justify-center"
+                              style={{ background: "var(--bg)", border: "2px dashed var(--border)" }}
+                            >
+                              <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+                                No banner image — recommended 1200×300
+                              </span>
+                            </div>
+                          )}
+                          <label
+                            className="inline-flex px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-opacity hover:opacity-80 w-fit"
+                            style={{
+                              background: "rgba(13,148,136,.1)",
+                              color: "var(--teal)",
+                            }}
+                          >
+                            {uploadingBanner ? "Uploading..." : "Upload Banner"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleBannerUpload}
+                              className="hidden"
+                              disabled={uploadingBanner}
                             />
                           </label>
                         </div>

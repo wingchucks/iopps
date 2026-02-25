@@ -33,6 +33,7 @@ export interface Organization {
   contactEmail?: string;
   logo?: string;
   logoUrl?: string;
+  bannerUrl?: string;
   description: string;
   foundedYear?: number;
   communityAffiliation?: string;
