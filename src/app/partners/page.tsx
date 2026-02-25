@@ -7,7 +7,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Link from "next/link";
-import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
+import type { Organization } from "@/lib/firestore/organizations";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
 const filters = ["All", "Employers", "Schools", "Businesses"];
@@ -39,12 +39,9 @@ function PartnersContent() {
   useEffect(() => {
     async function load() {
       try {
-        const data = await getOrganizations();
-        // C-01 & M-21: Only show orgs that completed onboarding or have a tier set
-        const partners = data.filter(
-          (o) => o.onboardingComplete === true || (o.tier && o.tier.length > 0)
-        );
-        setOrgs(partners);
+        const res = await fetch("/api/organizations");
+        const data = await res.json();
+        setOrgs(data.orgs ?? []);
       } catch (err) {
         console.error("Failed to load organizations:", err);
       } finally {
