@@ -15,8 +15,7 @@ import {
   updateOrganization,
 } from "@/lib/firestore/organizations";
 import type { Organization } from "@/lib/firestore/organizations";
-import { storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { auth } from "@/lib/firebase";
 
 const INDUSTRIES = [
   "Technology",
@@ -268,14 +267,31 @@ export default function OrgProfileEditPage() {
   const set = (key: keyof ProfileForm, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  const uploadOrgImage = async (file: File, type: "logo" | "banner") => {
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) throw new Error("Not authenticated");
+    const body = new FormData();
+    body.append("file", file);
+    body.append("type", type);
+    const res = await fetch("/api/org/upload", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body,
+    });
+    if (!res.ok) {
+      const msg = await res.json().catch(() => ({ error: "Upload failed" }));
+      throw new Error(msg.error || "Upload failed");
+    }
+    const { url } = await res.json();
+    return url as string;
+  };
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !orgId) return;
     setUploading(true);
     try {
-      const storageRef = ref(storage, `org-logos/${orgId}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      const url = await uploadOrgImage(file, "logo");
       set("logo", url);
       showToast("Logo uploaded", "success");
     } catch (err) {
@@ -291,9 +307,7 @@ export default function OrgProfileEditPage() {
     if (!file || !orgId) return;
     setUploadingBanner(true);
     try {
-      const storageRef = ref(storage, `org-banners/${orgId}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      const url = await uploadOrgImage(file, "banner");
       set("banner", url);
       showToast("Banner uploaded", "success");
     } catch (err) {
