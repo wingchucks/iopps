@@ -89,6 +89,14 @@ export default function FeedSidebar({
               Sign Out
             </Button>
           </div>
+          {!hasOrg && (
+            <Link
+              href="/org/upgrade"
+              className="block text-center text-xs text-teal font-semibold mt-3 no-underline hover:underline"
+            >
+              Create an Organization &rarr;
+            </Link>
+          )}
         </Card>
       ) : (
         <Card className="mb-4" style={{ padding: 20 }}>
