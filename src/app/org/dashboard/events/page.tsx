@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
@@ -336,6 +337,7 @@ function EventForm({
 
 export default function OrgDashboardEventsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
@@ -486,11 +488,7 @@ export default function OrgDashboardEventsPage() {
                 {!showForm && (
                   <div className="mb-6">
                     <button
-                      onClick={() => {
-                        setEditingEvent(null);
-                        setIsDuplicating(false);
-                        setShowForm(true);
-                      }}
+                      onClick={() => router.push("/org/dashboard/events/new")}
                       className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer transition-all hover:opacity-80"
                       style={{ background: "var(--teal)", color: "#fff" }}
                     >

@@ -39,7 +39,7 @@ const options = [
     label: "Post an Event",
     description: "Share an upcoming event",
     orgOnly: true,
-    href: "/org/dashboard",
+    href: "/org/dashboard/events/new",
   },
 ];
 
