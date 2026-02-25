@@ -152,7 +152,13 @@ export default function OrgAnalyticsPage() {
       }
     }
 
-    return { activeJobs, totalApps, pendingReview, avgResponseTime };
+    // Sum view counts across all posts
+    const totalViews = posts.reduce((sum, p) => {
+      const views = (p as unknown as Record<string, unknown>).viewCount;
+      return sum + (typeof views === "number" ? views : 0);
+    }, 0);
+
+    return { activeJobs, totalApps, pendingReview, avgResponseTime, totalViews };
   }, [posts, allApps]);
 
   return (
@@ -194,6 +200,7 @@ export default function OrgAnalyticsPage() {
                 {[
                   { label: "Active Jobs", value: stats.activeJobs },
                   { label: "Total Applications", value: stats.totalApps },
+                  { label: "Total Views", value: stats.totalViews },
                   { label: "Pending Review", value: stats.pendingReview },
                   { label: "Avg Response Time", value: stats.avgResponseTime },
                 ].map(({ label, value }) => (
@@ -240,7 +247,7 @@ export default function OrgAnalyticsPage() {
                             borderBottom: "1px solid var(--border)",
                           }}
                         >
-                          {["Job Title", "Status", "Applications", "Posted"].map(
+                          {["Job Title", "Status", "Views", "Applications", "Posted"].map(
                             (h) => (
                               <th
                                 key={h}
@@ -269,6 +276,12 @@ export default function OrgAnalyticsPage() {
                             </td>
                             <td className="px-5 py-3">
                               <StatusBadge status={post.status || "active"} />
+                            </td>
+                            <td
+                              className="px-5 py-3"
+                              style={{ color: "var(--text)" }}
+                            >
+                              {((post as unknown as Record<string, unknown>).viewCount as number) || 0}
                             </td>
                             <td
                               className="px-5 py-3"

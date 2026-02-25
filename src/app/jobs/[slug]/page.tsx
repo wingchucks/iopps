@@ -49,6 +49,11 @@ function JobDetailContent() {
         }
         const data = await res.json();
         setJob(data.job ?? null);
+
+        // Track view (fire-and-forget)
+        if (data.job) {
+          fetch(`/api/jobs/${slug}/view`, { method: "POST" }).catch(() => {});
+        }
       } catch (err) {
         console.error("Failed to load job:", err);
         setJob(null);
