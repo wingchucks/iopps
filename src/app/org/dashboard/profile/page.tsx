@@ -270,19 +270,36 @@ export default function OrgProfileEditPage() {
   const uploadOrgImage = async (file: File, type: "logo" | "banner") => {
     const token = await auth.currentUser?.getIdToken();
     if (!token) throw new Error("Not authenticated");
-    const body = new FormData();
-    body.append("file", file);
-    body.append("type", type);
-    const res = await fetch("/api/org/upload", {
+    const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+
+    // Step 1: Get a signed upload URL
+    const res1 = await fetch("/api/org/upload", {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body,
+      headers,
+      body: JSON.stringify({ type, contentType: file.type }),
     });
-    if (!res.ok) {
-      const msg = await res.json().catch(() => ({ error: "Upload failed" }));
+    if (!res1.ok) {
+      const msg = await res1.json().catch(() => ({ error: "Upload failed" }));
       throw new Error(msg.error || "Upload failed");
     }
-    const { url } = await res.json();
+    const { signedUrl } = await res1.json();
+
+    // Step 2: Upload directly to Cloud Storage (bypasses Vercel body limit)
+    const uploadRes = await fetch(signedUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!uploadRes.ok) throw new Error("Storage upload failed");
+
+    // Step 3: Make public + update org document
+    const res2 = await fetch("/api/org/upload", {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ type }),
+    });
+    if (!res2.ok) throw new Error("Failed to finalize upload");
+    const { url } = await res2.json();
     return url as string;
   };
 
