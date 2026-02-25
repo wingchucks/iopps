@@ -22,6 +22,7 @@ export default function OrgSignupPage() {
   const [confirm, setConfirm] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState("");
+  const [emailInUse, setEmailInUse] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signUp, user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -97,8 +98,10 @@ export default function OrgSignupPage() {
       const msg = err instanceof Error ? err.message : "Failed to create account";
       if (msg.includes("email-already-in-use")) {
         setError("An account with this email already exists.");
+        setEmailInUse(true);
       } else {
         setError(msg);
+        setEmailInUse(false);
       }
     } finally {
       setLoading(false);
@@ -139,6 +142,15 @@ export default function OrgSignupPage() {
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-red-soft text-red text-sm font-medium">
               {error}
+              {emailInUse && (
+                <>
+                  {" "}
+                  <Link href="/login" className="text-teal font-semibold underline">
+                    Sign in
+                  </Link>{" "}
+                  to upgrade your account to an organization.
+                </>
+              )}
             </div>
           )}
 
