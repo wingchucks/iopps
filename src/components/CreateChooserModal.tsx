@@ -31,7 +31,7 @@ const options = [
     label: "Post a Scholarship",
     description: "Offer a scholarship opportunity",
     orgOnly: true,
-    href: "/org/dashboard",
+    href: "/org/dashboard/scholarships/new",
   },
   {
     id: "event",
