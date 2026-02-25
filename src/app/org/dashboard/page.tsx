@@ -23,6 +23,7 @@ import { getApplicationsByPost } from "@/lib/firestore/applications";
 import { displayLocation } from "@/lib/utils";
 import { doc, getDoc, getDocFromServer, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import OrgDashboardNav from "@/components/OrgDashboardNav";
 
 interface PostWithApps extends Post {
   applicationCount: number;
@@ -131,6 +132,7 @@ function JobForm({
   orgShort,
   onSave,
   onCancel,
+  forceCreate,
 }: {
   initial: FormData;
   orgId: string;
@@ -138,10 +140,11 @@ function JobForm({
   orgShort: string;
   onSave: () => void;
   onCancel: () => void;
+  forceCreate?: boolean;
 }) {
   const [form, setForm] = useState<FormData>(initial);
   const [saving, setSaving] = useState(false);
-  const isEdit = initial.title !== "";
+  const isEdit = !forceCreate && initial.title !== "";
 
   const handleSubmit = async (publishStatus: PostStatus) => {
     if (!form.title.trim()) return;
@@ -500,11 +503,13 @@ function OrgDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   // Auto-open job form when ?create=job is in URL
   useEffect(() => {
     if (searchParams.get("create") === "job") {
       setEditingPost(null);
+      setIsDuplicating(false);
       setShowForm(true);
     }
   }, [searchParams]);
@@ -560,12 +565,29 @@ function OrgDashboardContent() {
     })();
   }, [user, router]);
 
+  const [pendingApps, setPendingApps] = useState(0);
+
   const stats = useMemo(() => {
     const total = posts.length;
     const active = posts.filter((p) => (p.status || "active") === "active").length;
     const totalApps = posts.reduce((sum, p) => sum + p.applicationCount, 0);
     return { total, active, totalApps };
   }, [posts]);
+
+  // Count pending (submitted) applications for nav badge
+  useEffect(() => {
+    if (!profile?.orgId) return;
+    (async () => {
+      let pending = 0;
+      for (const post of posts) {
+        try {
+          const apps = await getApplicationsByPost(post.id);
+          pending += apps.filter((a) => a.status === "submitted").length;
+        } catch { /* ignore */ }
+      }
+      setPendingApps(pending);
+    })();
+  }, [posts, profile?.orgId]);
 
   const handleDelete = async (postId: string) => {
     if (!confirm("Are you sure you want to delete this posting?")) return;
@@ -575,6 +597,20 @@ function OrgDashboardContent() {
 
   const handleEdit = (post: Post) => {
     setEditingPost(post);
+    setIsDuplicating(false);
+    setShowForm(true);
+  };
+
+  const handleDuplicate = (post: Post) => {
+    const cloned = {
+      ...post,
+      id: "",
+      title: `Copy of ${post.title}`,
+      slug: slugify(`copy-of-${post.title}-${Date.now()}`),
+      status: "draft" as PostStatus,
+    };
+    setEditingPost(cloned as Post);
+    setIsDuplicating(true);
     setShowForm(true);
   };
 
@@ -691,46 +727,15 @@ function OrgDashboardContent() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-3 flex-wrap">
-                  <Link href="/org/dashboard/talent">
-                    <Button small>
-                      <span className="inline-flex items-center gap-1.5">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="11" cy="11" r="8" />
-                          <path d="M21 21l-4.35-4.35" />
-                        </svg>
-                        Talent Search
-                      </span>
-                    </Button>
-                  </Link>
-                  <Link href="/org/dashboard/profile">
-                    <Button small>Edit Profile</Button>
-                  </Link>
-                  <Link href="/org/dashboard/analytics">
-                    <Button small>Analytics</Button>
-                  </Link>
-                  <Link href="/org/dashboard/applications">
-                    <Button small>Applications</Button>
-                  </Link>
-                  <Link href="/org/dashboard/billing">
-                    <Button small>💳 Billing</Button>
-                  </Link>
-                  {org?.slug && (
-                    <Link href={`/org/${org.slug}`} target="_blank">
-                      <Button small>👁 Public Page</Button>
-                    </Link>
-                  )}
-                  <Button
-                    primary
-                    small
-                    onClick={() => {
-                      setEditingPost(null);
-                      setShowForm(true);
-                    }}
-                  >
-                    + Post a Job
-                  </Button>
-                </div>
+                <OrgDashboardNav
+                  orgSlug={org?.slug}
+                  pendingApps={pendingApps}
+                  onPostJob={() => {
+                    setEditingPost(null);
+                    setIsDuplicating(false);
+                    setShowForm(true);
+                  }}
+                />
               </div>
 
               {/* Stats */}
@@ -798,11 +803,16 @@ function OrgDashboardContent() {
                     orgId={profile?.orgId || ""}
                     orgName={org?.name || ""}
                     orgShort={org?.shortName || ""}
-                    onSave={handleFormSave}
+                    onSave={() => {
+                      setIsDuplicating(false);
+                      handleFormSave();
+                    }}
                     onCancel={() => {
                       setShowForm(false);
                       setEditingPost(null);
+                      setIsDuplicating(false);
                     }}
+                    forceCreate={isDuplicating}
                   />
                 </div>
               )}
@@ -838,6 +848,17 @@ function OrgDashboardContent() {
                               {post.title}
                             </h3>
                             <StatusBadge status={post.status} />
+                            {/* Expired warning badge */}
+                            {(post.status || "active") === "active" &&
+                              post.closingDate &&
+                              post.closingDate < new Date().toISOString().split("T")[0] && (
+                              <span
+                                className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                style={{ background: "rgba(220,38,38,.12)", color: "#DC2626" }}
+                              >
+                                Expired
+                              </span>
+                            )}
                           </div>
                           <div
                             className="flex items-center gap-4 text-xs flex-wrap"
@@ -893,6 +914,16 @@ function OrgDashboardContent() {
                           >
                             Full Edit
                           </Link>
+                          <button
+                            onClick={() => handleDuplicate(post)}
+                            className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                            style={{
+                              background: "rgba(139,92,246,.1)",
+                              color: "#8B5CF6",
+                            }}
+                          >
+                            Duplicate
+                          </button>
                           <button
                             onClick={() => handleDelete(post.id)}
                             className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"

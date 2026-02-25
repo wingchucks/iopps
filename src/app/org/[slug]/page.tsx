@@ -139,9 +139,11 @@ function OrgProfileContent() {
     <div className="max-w-[900px] mx-auto pb-24">
       {/* Hero Header */}
       <div
-        className="rounded-b-3xl"
+        className="rounded-b-3xl relative overflow-hidden"
         style={{
-          background: "linear-gradient(160deg, var(--navy-deep) 0%, var(--navy) 50%, var(--teal) 100%)",
+          background: org.bannerUrl
+            ? `linear-gradient(to bottom, rgba(10,25,47,.6), rgba(10,25,47,.85)), url(${org.bannerUrl}) center/cover no-repeat`
+            : "linear-gradient(160deg, var(--navy-deep) 0%, var(--navy) 50%, var(--teal) 100%)",
           padding: "clamp(24px, 4vw, 40px) clamp(16px, 4vw, 48px)",
         }}
       >

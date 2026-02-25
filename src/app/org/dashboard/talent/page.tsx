@@ -8,6 +8,36 @@ import Card from "@/components/Card";
 import { getAllMembers } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
 
+interface SavedSearch {
+  name: string;
+  filters: {
+    search: string;
+    skillFilter: string[];
+    locationFilter: string;
+    educationFilter: string;
+    workPref: string;
+    communityFilter: string;
+    openOnly: boolean;
+    hasResumeOnly: boolean;
+  };
+}
+
+const SAVED_SEARCHES_KEY = "iopps_talent_saved_searches";
+
+function loadSavedSearches(): SavedSearch[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(SAVED_SEARCHES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistSavedSearches(searches: SavedSearch[]) {
+  localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(searches));
+}
+
 export default function TalentSearchPage() {
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,8 +45,15 @@ export default function TalentSearchPage() {
   const [skillFilter, setSkillFilter] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  const [educationFilter, setEducationFilter] = useState("");
   const [workPref, setWorkPref] = useState("all");
+  const [communityFilter, setCommunityFilter] = useState("");
   const [openOnly, setOpenOnly] = useState(false);
+  const [hasResumeOnly, setHasResumeOnly] = useState(false);
+  // Saved searches
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [saveSearchName, setSaveSearchName] = useState("");
+  const [showSaveInput, setShowSaveInput] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -24,7 +61,63 @@ export default function TalentSearchPage() {
       setMembers(all);
       setLoading(false);
     })();
+    setSavedSearches(loadSavedSearches());
   }, []);
+
+  const hasActiveFilters =
+    search || skillFilter.length > 0 || locationFilter || educationFilter ||
+    workPref !== "all" || communityFilter || openOnly || hasResumeOnly;
+
+  const handleSaveSearch = () => {
+    if (!saveSearchName.trim()) return;
+    const newSearch: SavedSearch = {
+      name: saveSearchName.trim(),
+      filters: {
+        search,
+        skillFilter,
+        locationFilter,
+        educationFilter,
+        workPref,
+        communityFilter,
+        openOnly,
+        hasResumeOnly,
+      },
+    };
+    const updated = [...savedSearches, newSearch];
+    setSavedSearches(updated);
+    persistSavedSearches(updated);
+    setSaveSearchName("");
+    setShowSaveInput(false);
+  };
+
+  const handleLoadSearch = (saved: SavedSearch) => {
+    setSearch(saved.filters.search);
+    setSkillFilter(saved.filters.skillFilter);
+    setLocationFilter(saved.filters.locationFilter);
+    setEducationFilter(saved.filters.educationFilter);
+    setWorkPref(saved.filters.workPref);
+    setCommunityFilter(saved.filters.communityFilter);
+    setOpenOnly(saved.filters.openOnly);
+    setHasResumeOnly(saved.filters.hasResumeOnly);
+  };
+
+  const handleDeleteSearch = (index: number) => {
+    const updated = savedSearches.filter((_, i) => i !== index);
+    setSavedSearches(updated);
+    persistSavedSearches(updated);
+  };
+
+  const handleClearFilters = () => {
+    setSearch("");
+    setSkillFilter([]);
+    setSkillInput("");
+    setLocationFilter("");
+    setEducationFilter("");
+    setWorkPref("all");
+    setCommunityFilter("");
+    setOpenOnly(false);
+    setHasResumeOnly(false);
+  };
 
   const filtered = useMemo(() => {
     return members.filter((m) => {
@@ -54,11 +147,29 @@ export default function TalentSearchPage() {
       if (workPref !== "all") {
         if (m.workPreference !== workPref) return false;
       }
+      // Education level filter
+      if (educationFilter) {
+        const hasMatchingEd = m.education?.some((ed) =>
+          ed.degree?.toLowerCase().includes(educationFilter.toLowerCase())
+        );
+        if (!hasMatchingEd) return false;
+      }
+      // Community / Nation filter
+      if (communityFilter) {
+        const q = communityFilter.toLowerCase();
+        if (
+          !m.community?.toLowerCase().includes(q) &&
+          !m.nation?.toLowerCase().includes(q)
+        )
+          return false;
+      }
       // Open to work
       if (openOnly && !m.openToWork) return false;
+      // Has resume
+      if (hasResumeOnly && !m.resumeUrl) return false;
       return true;
     });
-  }, [members, search, skillFilter, locationFilter, workPref, openOnly]);
+  }, [members, search, skillFilter, locationFilter, educationFilter, communityFilter, workPref, openOnly, hasResumeOnly]);
 
   const addSkill = () => {
     const trimmed = skillInput.trim();
@@ -116,7 +227,7 @@ export default function TalentSearchPage() {
                 }}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Skills chip input */}
                 <div>
                   <label
@@ -202,6 +313,59 @@ export default function TalentSearchPage() {
                   />
                 </div>
 
+                {/* Education Level */}
+                <div>
+                  <label
+                    className="block text-xs font-semibold mb-1.5"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Education Level
+                  </label>
+                  <select
+                    value={educationFilter}
+                    onChange={(e) => setEducationFilter(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-sm cursor-pointer"
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                    }}
+                  >
+                    <option value="">All</option>
+                    <option value="High School">High School</option>
+                    <option value="Certificate">Certificate</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="Bachelor">Bachelor</option>
+                    <option value="Master">Master</option>
+                    <option value="Doctorate">Doctorate</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                {/* Community / Nation */}
+                <div>
+                  <label
+                    className="block text-xs font-semibold mb-1.5"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Community / Nation
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Community or nation..."
+                    value={communityFilter}
+                    onChange={(e) => setCommunityFilter(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-sm"
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Work Preference */}
                 <div>
                   <label
@@ -255,8 +419,148 @@ export default function TalentSearchPage() {
                   Open to Work only
                 </span>
               </div>
+
+              {/* Has Resume toggle */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setHasResumeOnly(!hasResumeOnly)}
+                  className="relative h-7 w-12 rounded-full border-none cursor-pointer transition-colors duration-200 shrink-0"
+                  style={{
+                    background: hasResumeOnly ? "var(--teal)" : "transparent",
+                    border: hasResumeOnly
+                      ? "none"
+                      : "2px solid var(--border)",
+                  }}
+                >
+                  <span
+                    className="absolute top-[3px] h-5 w-5 rounded-full transition-all duration-200"
+                    style={{
+                      background: hasResumeOnly ? "#fff" : "var(--text-muted)",
+                      left: hasResumeOnly ? 24 : 3,
+                    }}
+                  />
+                </button>
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--text)" }}
+                >
+                  Has Resume only
+                </span>
+              </div>
+
+              {/* Save / Clear actions */}
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                {hasActiveFilters && (
+                  <>
+                    <button
+                      onClick={() => setShowSaveInput(!showSaveInput)}
+                      className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                      style={{
+                        background: "rgba(139,92,246,.1)",
+                        color: "#8B5CF6",
+                      }}
+                    >
+                      Save This Search
+                    </button>
+                    <button
+                      onClick={handleClearFilters}
+                      className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                      style={{
+                        background: "var(--bg)",
+                        color: "var(--text-muted)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      Clear Filters
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Save search name input */}
+              {showSaveInput && (
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    placeholder="Name this search..."
+                    value={saveSearchName}
+                    onChange={(e) => setSaveSearchName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveSearch();
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 rounded-xl text-sm"
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSaveSearch}
+                    className="px-3 py-2 rounded-xl border-none cursor-pointer text-xs font-semibold"
+                    style={{ background: "var(--teal)", color: "#fff" }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => { setShowSaveInput(false); setSaveSearchName(""); }}
+                    className="px-3 py-2 rounded-xl border-none cursor-pointer text-xs font-semibold"
+                    style={{
+                      background: "var(--bg)",
+                      color: "var(--text-muted)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
           </Card>
+
+          {/* Saved Searches */}
+          {savedSearches.length > 0 && (
+            <div className="mb-6">
+              <p
+                className="text-xs font-bold tracking-widest uppercase mb-2"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Saved Searches
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {savedSearches.map((saved, i) => (
+                  <div
+                    key={i}
+                    className="inline-flex items-center gap-1.5 rounded-xl text-xs font-semibold"
+                    style={{
+                      background: "var(--card)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <button
+                      onClick={() => handleLoadSearch(saved)}
+                      className="px-3 py-2 border-none bg-transparent cursor-pointer text-xs font-semibold"
+                      style={{ color: "var(--teal)" }}
+                    >
+                      {saved.name}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSearch(i)}
+                      className="pr-2.5 border-none bg-transparent cursor-pointer text-xs leading-none"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Delete saved search"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Results */}
           {loading ? (

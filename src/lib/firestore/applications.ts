@@ -143,3 +143,13 @@ export async function updateApplicationStatus(
 export async function withdrawApplication(appId: string): Promise<void> {
   await updateApplicationStatus(appId, "withdrawn", "Withdrawn by applicant");
 }
+
+export async function updateApplicationNote(
+  appId: string,
+  reviewerNote: string
+): Promise<void> {
+  await updateDoc(doc(db, "applications", appId), {
+    reviewerNote,
+    updatedAt: serverTimestamp(),
+  });
+}
