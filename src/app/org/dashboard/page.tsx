@@ -506,14 +506,12 @@ function OrgDashboardContent() {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [isDuplicating, setIsDuplicating] = useState(false);
 
-  // Auto-open job form when ?create=job is in URL
+  // Redirect to wizard when ?create=job is in URL
   useEffect(() => {
     if (searchParams.get("create") === "job") {
-      setEditingPost(null);
-      setIsDuplicating(false);
-      setShowForm(true);
+      router.push("/org/dashboard/jobs/new");
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   useEffect(() => {
     if (!user) return;
@@ -725,9 +723,7 @@ function OrgDashboardContent() {
                   orgSlug={org?.slug}
                   pendingApps={pendingApps}
                   onPostJob={() => {
-                    setEditingPost(null);
-                    setIsDuplicating(false);
-                    setShowForm(true);
+                    router.push("/org/dashboard/jobs/new");
                   }}
                 />
               </div>
