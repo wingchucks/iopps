@@ -77,6 +77,7 @@ function FeedContent() {
   const [userRole, setUserRole] = useState<string | undefined>();
   const [userOrgRole, setUserOrgRole] = useState<string | undefined>();
   const [hasOrg, setHasOrg] = useState(false);
+  const [orgLogo, setOrgLogo] = useState<string | undefined>();
   const [showCreatePost, setShowCreatePost] = useState(false);
   const { user, signOut } = useAuth();
   const router = useRouter();
@@ -238,8 +239,12 @@ function FeedContent() {
             if (profile?.orgId) {
               setHasOrg(true);
               const org = await getOrganization(profile.orgId);
-              if (org && (org as unknown as Record<string, unknown>).status === "pending") {
-                setOrgPending(true);
+              if (org) {
+                const logo = org.logoUrl || org.logo;
+                if (logo) setOrgLogo(logo);
+                if ((org as unknown as Record<string, unknown>).status === "pending") {
+                  setOrgPending(true);
+                }
               }
             }
           } catch {
@@ -290,6 +295,7 @@ function FeedContent() {
         userRole={userRole}
         orgRole={userOrgRole}
         hasOrg={hasOrg}
+        orgLogo={orgLogo}
       />
 
       {/* ═══ Center Feed ═══ */}
@@ -328,7 +334,7 @@ function FeedContent() {
               <Avatar
                 name={user.displayName || "U"}
                 size={36}
-                src={user.photoURL || undefined}
+                src={orgLogo || user.photoURL || undefined}
               />
               <div
                 className="flex-1 text-sm text-text-muted rounded-full"
