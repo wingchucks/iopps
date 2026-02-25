@@ -45,7 +45,7 @@ export default function FeedSidebar({
       {user ? (
         <Card className="mb-4" style={{ padding: 20 }}>
           <div className="flex items-center gap-2.5 mb-3">
-            <Avatar name={displayName} size={44} />
+            <Avatar name={displayName} size={44} src={user.photoURL || undefined} />
             <div>
               <p className="text-[15px] font-bold text-text m-0">{displayName}</p>
               <p className="text-xs text-teal-light m-0">{getRoleLabel(userRole, orgRole)}</p>
