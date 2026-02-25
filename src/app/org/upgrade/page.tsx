@@ -8,6 +8,8 @@ const ORG_TYPES = [
   { value: "school", label: "School / Training", desc: "List programs, courses, and scholarships" },
   { value: "business", label: "Indigenous Business", desc: "Showcase your products and services" },
   { value: "nonprofit", label: "Non-Profit / Organization", desc: "Share events, scholarships, and opportunities" },
+  { value: "legal", label: "Legal Services", desc: "Law firms and legal service providers" },
+  { value: "professional", label: "Professional Services", desc: "Consulting, accounting, and other professional services" },
 ];
 
 export default function OrgUpgradePage() {

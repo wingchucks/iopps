@@ -129,7 +129,7 @@ function OrgProfileContent() {
   ];
 
   const typeLabel =
-    org.type === "employer" ? "Employer" : org.type === "school" ? "Education" : org.type === "non-profit" ? "Non-Profit" : org.type === "government" ? "Government" : "Business";
+    org.type === "employer" ? "Employer" : org.type === "school" ? "Education" : org.type === "non-profit" ? "Non-Profit" : org.type === "government" ? "Government" : org.type === "legal" ? "Legal Services" : org.type === "professional" ? "Professional Services" : "Business";
 
   const websiteUrl = org.website
     ? org.website.startsWith("http") ? org.website : `https://${org.website}`

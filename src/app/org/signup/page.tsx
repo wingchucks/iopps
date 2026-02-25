@@ -11,6 +11,8 @@ const ORG_TYPES = [
   { value: "school", label: "School / Educational Institution" },
   { value: "non-profit", label: "Non-Profit Organization" },
   { value: "government", label: "Government Agency" },
+  { value: "legal", label: "Legal Services" },
+  { value: "professional", label: "Professional Services" },
 ] as const;
 
 export default function OrgSignupPage() {
