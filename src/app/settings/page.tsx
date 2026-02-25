@@ -91,6 +91,26 @@ export default function SettingsPage() {
               </Link>
             ))}
 
+            {/* Upgrade to Org — only for community members */}
+            {!hasOrg && (
+              <Link href="/org/upgrade" className="no-underline">
+                <Card className="hover:border-teal/30 transition-colors border-dashed">
+                  <div className="flex items-center gap-4 p-4">
+                    <span className="text-2xl">🏢</span>
+                    <div className="flex-1">
+                      <h3 className="text-[15px] font-bold text-text mb-0.5">
+                        Set Up an Organization Page
+                      </h3>
+                      <p className="text-sm text-text-muted m-0">
+                        Post jobs, list events, and showcase your organization on IOPPS
+                      </p>
+                    </div>
+                    <span className="text-text-muted text-lg">&rsaquo;</span>
+                  </div>
+                </Card>
+              </Link>
+            )}
+
             {/* Restart Tour */}
             <Card className="hover:border-teal/30 transition-colors">
               <button

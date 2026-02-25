@@ -29,7 +29,16 @@ export default function OrgSignupPage() {
 
   useEffect(() => {
     if (!authLoading && user && !signingUpRef.current) {
-      router.replace("/org/onboarding");
+      // Already an employer → go to dashboard/onboarding
+      // Community member → redirect to upgrade flow
+      user.getIdTokenResult().then((result) => {
+        const role = result.claims.role;
+        if (role === "employer") {
+          router.replace("/org/dashboard");
+        } else {
+          router.replace("/org/upgrade");
+        }
+      });
     }
   }, [user, authLoading, router]);
 
