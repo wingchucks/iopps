@@ -52,6 +52,7 @@ export interface Organization {
   updatedAt?: unknown;
   onboardingComplete?: boolean;
   plan?: string | null;
+  emailTemplates?: Record<string, string>;
   // Legacy fields used by admin/seed pages
   shortName: string;
   tier: "premium" | "school" | "standard";
