@@ -39,7 +39,7 @@ function PartnersContent() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/organizations");
+        const res = await fetch("/api/organizations?partners=true");
         const data = await res.json();
         setOrgs(data.orgs ?? []);
       } catch (err) {

@@ -9,7 +9,7 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import { getPosts, type Post } from "@/lib/firestore/posts";
-import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
+import type { Organization } from "@/lib/firestore/organizations";
 import { getVendors, type ShopVendor } from "@/lib/firestore/shop";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
@@ -98,9 +98,13 @@ function SearchContent() {
   useEffect(() => {
     async function load() {
       try {
-        const [p, o, v] = await Promise.all([getPosts(), getOrganizations(), getVendors()]);
+        const [p, orgRes, v] = await Promise.all([
+          getPosts(),
+          fetch("/api/organizations").then(r => r.json()).catch(() => ({ orgs: [] })),
+          getVendors(),
+        ]);
         setPosts(p);
-        setOrgs(o);
+        setOrgs(orgRes.orgs ?? []);
         setVendors(v);
       } catch (err) {
         console.error("Failed to load search data:", err);

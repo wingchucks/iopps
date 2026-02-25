@@ -20,10 +20,36 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const partnersOnly = searchParams.get("partners") === "true";
+
     const db = getAdminDb();
-    const snapshot = await db
+    let snapshot;
+
+    if (partnersOnly) {
+      // Partners page: only paid plans or verified orgs
+      const [premiumSnap, verifiedSnap] = await Promise.all([
+        db.collection("organizations")
+          .where("plan", "in", ["premium", "standard", "school"])
+          .get(),
+        db.collection("organizations")
+          .where("verified", "==", true)
+          .get(),
+      ]);
+      const seen = new Set<string>();
+      const docs = [...premiumSnap.docs, ...verifiedSnap.docs].filter(d => {
+        if (seen.has(d.id)) return false;
+        seen.add(d.id);
+        return true;
+      });
+      const orgs = docs.map(doc => serialize({ id: doc.id, ...doc.data() }));
+      return NextResponse.json({ orgs });
+    }
+
+    // Search / general: all orgs that completed onboarding
+    snapshot = await db
       .collection("organizations")
       .where("onboardingComplete", "==", true)
       .get();
