@@ -26,10 +26,39 @@ export interface Scholarship {
   orgId?: string;
   orgName?: string;
   orgShort?: string;
+  authorId?: string;
   url?: string;
   applicationUrl?: string;
+  applicationInstructions?: string;
+  applyMethod?: string;
   requirements?: string[];
   location?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  category?: string;
+  // Scholarship/Bursary-specific
+  educationLevel?: string;
+  fieldOfStudy?: string[];
+  gpaRequired?: string;
+  numberOfAwards?: string;
+  renewable?: string;
+  indigenousSpecific?: string;
+  financialNeed?: string;
+  priorityGroups?: string[];
+  // Business grant-specific
+  businessStage?: string;
+  industrySector?: string[];
+  fundingUse?: string[];
+  matchingFunds?: string;
+  indigenousOwnership?: string;
+  businessPlanRequired?: string;
+  maxFundingPerApplicant?: string;
+  // Community grant-specific
+  projectType?: string[];
+  applicantType?: string[];
+  communitySize?: string;
+  projectDuration?: string;
+  reportingRequired?: string;
   status?: string;
   active?: boolean;
   featured?: boolean;
