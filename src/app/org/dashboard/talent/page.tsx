@@ -8,6 +8,36 @@ import Card from "@/components/Card";
 import { getAllMembers } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
 
+interface SavedSearch {
+  name: string;
+  filters: {
+    search: string;
+    skillFilter: string[];
+    locationFilter: string;
+    educationFilter: string;
+    workPref: string;
+    communityFilter: string;
+    openOnly: boolean;
+    hasResumeOnly: boolean;
+  };
+}
+
+const SAVED_SEARCHES_KEY = "iopps_talent_saved_searches";
+
+function loadSavedSearches(): SavedSearch[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(SAVED_SEARCHES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistSavedSearches(searches: SavedSearch[]) {
+  localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(searches));
+}
+
 export default function TalentSearchPage() {
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +50,10 @@ export default function TalentSearchPage() {
   const [communityFilter, setCommunityFilter] = useState("");
   const [openOnly, setOpenOnly] = useState(false);
   const [hasResumeOnly, setHasResumeOnly] = useState(false);
+  // Saved searches
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [saveSearchName, setSaveSearchName] = useState("");
+  const [showSaveInput, setShowSaveInput] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -27,7 +61,63 @@ export default function TalentSearchPage() {
       setMembers(all);
       setLoading(false);
     })();
+    setSavedSearches(loadSavedSearches());
   }, []);
+
+  const hasActiveFilters =
+    search || skillFilter.length > 0 || locationFilter || educationFilter ||
+    workPref !== "all" || communityFilter || openOnly || hasResumeOnly;
+
+  const handleSaveSearch = () => {
+    if (!saveSearchName.trim()) return;
+    const newSearch: SavedSearch = {
+      name: saveSearchName.trim(),
+      filters: {
+        search,
+        skillFilter,
+        locationFilter,
+        educationFilter,
+        workPref,
+        communityFilter,
+        openOnly,
+        hasResumeOnly,
+      },
+    };
+    const updated = [...savedSearches, newSearch];
+    setSavedSearches(updated);
+    persistSavedSearches(updated);
+    setSaveSearchName("");
+    setShowSaveInput(false);
+  };
+
+  const handleLoadSearch = (saved: SavedSearch) => {
+    setSearch(saved.filters.search);
+    setSkillFilter(saved.filters.skillFilter);
+    setLocationFilter(saved.filters.locationFilter);
+    setEducationFilter(saved.filters.educationFilter);
+    setWorkPref(saved.filters.workPref);
+    setCommunityFilter(saved.filters.communityFilter);
+    setOpenOnly(saved.filters.openOnly);
+    setHasResumeOnly(saved.filters.hasResumeOnly);
+  };
+
+  const handleDeleteSearch = (index: number) => {
+    const updated = savedSearches.filter((_, i) => i !== index);
+    setSavedSearches(updated);
+    persistSavedSearches(updated);
+  };
+
+  const handleClearFilters = () => {
+    setSearch("");
+    setSkillFilter([]);
+    setSkillInput("");
+    setLocationFilter("");
+    setEducationFilter("");
+    setWorkPref("all");
+    setCommunityFilter("");
+    setOpenOnly(false);
+    setHasResumeOnly(false);
+  };
 
   const filtered = useMemo(() => {
     return members.filter((m) => {
@@ -357,8 +447,120 @@ export default function TalentSearchPage() {
                   Has Resume only
                 </span>
               </div>
+
+              {/* Save / Clear actions */}
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                {hasActiveFilters && (
+                  <>
+                    <button
+                      onClick={() => setShowSaveInput(!showSaveInput)}
+                      className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                      style={{
+                        background: "rgba(139,92,246,.1)",
+                        color: "#8B5CF6",
+                      }}
+                    >
+                      Save This Search
+                    </button>
+                    <button
+                      onClick={handleClearFilters}
+                      className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                      style={{
+                        background: "var(--bg)",
+                        color: "var(--text-muted)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      Clear Filters
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Save search name input */}
+              {showSaveInput && (
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    placeholder="Name this search..."
+                    value={saveSearchName}
+                    onChange={(e) => setSaveSearchName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveSearch();
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 rounded-xl text-sm"
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSaveSearch}
+                    className="px-3 py-2 rounded-xl border-none cursor-pointer text-xs font-semibold"
+                    style={{ background: "var(--teal)", color: "#fff" }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => { setShowSaveInput(false); setSaveSearchName(""); }}
+                    className="px-3 py-2 rounded-xl border-none cursor-pointer text-xs font-semibold"
+                    style={{
+                      background: "var(--bg)",
+                      color: "var(--text-muted)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
           </Card>
+
+          {/* Saved Searches */}
+          {savedSearches.length > 0 && (
+            <div className="mb-6">
+              <p
+                className="text-xs font-bold tracking-widest uppercase mb-2"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Saved Searches
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {savedSearches.map((saved, i) => (
+                  <div
+                    key={i}
+                    className="inline-flex items-center gap-1.5 rounded-xl text-xs font-semibold"
+                    style={{
+                      background: "var(--card)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <button
+                      onClick={() => handleLoadSearch(saved)}
+                      className="px-3 py-2 border-none bg-transparent cursor-pointer text-xs font-semibold"
+                      style={{ color: "var(--teal)" }}
+                    >
+                      {saved.name}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSearch(i)}
+                      className="pr-2.5 border-none bg-transparent cursor-pointer text-xs leading-none"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Delete saved search"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Results */}
           {loading ? (

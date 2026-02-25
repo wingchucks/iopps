@@ -23,6 +23,7 @@ import { getApplicationsByPost } from "@/lib/firestore/applications";
 import { displayLocation } from "@/lib/utils";
 import { doc, getDoc, getDocFromServer, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import OrgDashboardNav from "@/components/OrgDashboardNav";
 
 interface PostWithApps extends Post {
   applicationCount: number;
@@ -564,12 +565,29 @@ function OrgDashboardContent() {
     })();
   }, [user, router]);
 
+  const [pendingApps, setPendingApps] = useState(0);
+
   const stats = useMemo(() => {
     const total = posts.length;
     const active = posts.filter((p) => (p.status || "active") === "active").length;
     const totalApps = posts.reduce((sum, p) => sum + p.applicationCount, 0);
     return { total, active, totalApps };
   }, [posts]);
+
+  // Count pending (submitted) applications for nav badge
+  useEffect(() => {
+    if (!profile?.orgId) return;
+    (async () => {
+      let pending = 0;
+      for (const post of posts) {
+        try {
+          const apps = await getApplicationsByPost(post.id);
+          pending += apps.filter((a) => a.status === "submitted").length;
+        } catch { /* ignore */ }
+      }
+      setPendingApps(pending);
+    })();
+  }, [posts, profile?.orgId]);
 
   const handleDelete = async (postId: string) => {
     if (!confirm("Are you sure you want to delete this posting?")) return;
@@ -709,47 +727,15 @@ function OrgDashboardContent() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-3 flex-wrap">
-                  <Link href="/org/dashboard/talent">
-                    <Button small>
-                      <span className="inline-flex items-center gap-1.5">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="11" cy="11" r="8" />
-                          <path d="M21 21l-4.35-4.35" />
-                        </svg>
-                        Talent Search
-                      </span>
-                    </Button>
-                  </Link>
-                  <Link href="/org/dashboard/profile">
-                    <Button small>Edit Profile</Button>
-                  </Link>
-                  <Link href="/org/dashboard/analytics">
-                    <Button small>Analytics</Button>
-                  </Link>
-                  <Link href="/org/dashboard/applications">
-                    <Button small>Applications</Button>
-                  </Link>
-                  <Link href="/org/dashboard/billing">
-                    <Button small>💳 Billing</Button>
-                  </Link>
-                  {org?.slug && (
-                    <Link href={`/org/${org.slug}`} target="_blank">
-                      <Button small>👁 Public Page</Button>
-                    </Link>
-                  )}
-                  <Button
-                    primary
-                    small
-                    onClick={() => {
-                      setEditingPost(null);
-                      setIsDuplicating(false);
-                      setShowForm(true);
-                    }}
-                  >
-                    + Post a Job
-                  </Button>
-                </div>
+                <OrgDashboardNav
+                  orgSlug={org?.slug}
+                  pendingApps={pendingApps}
+                  onPostJob={() => {
+                    setEditingPost(null);
+                    setIsDuplicating(false);
+                    setShowForm(true);
+                  }}
+                />
               </div>
 
               {/* Stats */}
