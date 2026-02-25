@@ -110,7 +110,49 @@ export default function OrgAnalyticsPage() {
       (p) => (p.status || "active") === "active"
     ).length;
     const totalApps = allApps.length;
-    return { activeJobs, totalApps };
+    const pendingReview = allApps.filter((a) => a.status === "submitted").length;
+
+    // Calculate average response time from statusHistory
+    const responseTimes: number[] = [];
+    for (const app of allApps) {
+      const history = app.statusHistory;
+      if (!history || history.length < 2) continue;
+      const submittedEntry = history.find((e) => e.status === "submitted");
+      if (!submittedEntry) continue;
+      const submittedIdx = history.indexOf(submittedEntry);
+      const nextEntry = history.find(
+        (e, i) => i > submittedIdx && e.status !== "submitted"
+      );
+      if (!nextEntry) continue;
+      const toMs = (ts: unknown): number | null => {
+        if (!ts) return null;
+        if (typeof ts === "object" && ts !== null && "toDate" in ts) {
+          return (ts as { toDate: () => Date }).toDate().getTime();
+        }
+        if (typeof ts === "number") return ts;
+        return null;
+      };
+      const startMs = toMs(submittedEntry.timestamp);
+      const endMs = toMs(nextEntry.timestamp);
+      if (startMs && endMs && endMs > startMs) {
+        responseTimes.push(endMs - startMs);
+      }
+    }
+    let avgResponseTime: string;
+    if (responseTimes.length === 0) {
+      avgResponseTime = "\u2014";
+    } else {
+      const avgMs =
+        responseTimes.reduce((sum, t) => sum + t, 0) / responseTimes.length;
+      const avgHours = avgMs / (1000 * 60 * 60);
+      if (avgHours < 48) {
+        avgResponseTime = `${avgHours.toFixed(1)}h`;
+      } else {
+        avgResponseTime = `${(avgHours / 24).toFixed(1)}d`;
+      }
+    }
+
+    return { activeJobs, totalApps, pendingReview, avgResponseTime };
   }, [posts, allApps]);
 
   return (
@@ -152,8 +194,8 @@ export default function OrgAnalyticsPage() {
                 {[
                   { label: "Active Jobs", value: stats.activeJobs },
                   { label: "Total Applications", value: stats.totalApps },
-                  { label: "Profile Views", value: 0 },
-                  { label: "Avg Response Time", value: "N/A" },
+                  { label: "Pending Review", value: stats.pendingReview },
+                  { label: "Avg Response Time", value: stats.avgResponseTime },
                 ].map(({ label, value }) => (
                   <Card key={label} className="p-5">
                     <p

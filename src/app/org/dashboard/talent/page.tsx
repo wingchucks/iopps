@@ -15,8 +15,11 @@ export default function TalentSearchPage() {
   const [skillFilter, setSkillFilter] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  const [educationFilter, setEducationFilter] = useState("");
   const [workPref, setWorkPref] = useState("all");
+  const [communityFilter, setCommunityFilter] = useState("");
   const [openOnly, setOpenOnly] = useState(false);
+  const [hasResumeOnly, setHasResumeOnly] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -54,11 +57,29 @@ export default function TalentSearchPage() {
       if (workPref !== "all") {
         if (m.workPreference !== workPref) return false;
       }
+      // Education level filter
+      if (educationFilter) {
+        const hasMatchingEd = m.education?.some((ed) =>
+          ed.degree?.toLowerCase().includes(educationFilter.toLowerCase())
+        );
+        if (!hasMatchingEd) return false;
+      }
+      // Community / Nation filter
+      if (communityFilter) {
+        const q = communityFilter.toLowerCase();
+        if (
+          !m.community?.toLowerCase().includes(q) &&
+          !m.nation?.toLowerCase().includes(q)
+        )
+          return false;
+      }
       // Open to work
       if (openOnly && !m.openToWork) return false;
+      // Has resume
+      if (hasResumeOnly && !m.resumeUrl) return false;
       return true;
     });
-  }, [members, search, skillFilter, locationFilter, workPref, openOnly]);
+  }, [members, search, skillFilter, locationFilter, educationFilter, communityFilter, workPref, openOnly, hasResumeOnly]);
 
   const addSkill = () => {
     const trimmed = skillInput.trim();
@@ -116,7 +137,7 @@ export default function TalentSearchPage() {
                 }}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Skills chip input */}
                 <div>
                   <label
@@ -202,6 +223,59 @@ export default function TalentSearchPage() {
                   />
                 </div>
 
+                {/* Education Level */}
+                <div>
+                  <label
+                    className="block text-xs font-semibold mb-1.5"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Education Level
+                  </label>
+                  <select
+                    value={educationFilter}
+                    onChange={(e) => setEducationFilter(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-sm cursor-pointer"
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                    }}
+                  >
+                    <option value="">All</option>
+                    <option value="High School">High School</option>
+                    <option value="Certificate">Certificate</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="Bachelor">Bachelor</option>
+                    <option value="Master">Master</option>
+                    <option value="Doctorate">Doctorate</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                {/* Community / Nation */}
+                <div>
+                  <label
+                    className="block text-xs font-semibold mb-1.5"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Community / Nation
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Community or nation..."
+                    value={communityFilter}
+                    onChange={(e) => setCommunityFilter(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-sm"
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Work Preference */}
                 <div>
                   <label
@@ -253,6 +327,34 @@ export default function TalentSearchPage() {
                   style={{ color: "var(--text)" }}
                 >
                   Open to Work only
+                </span>
+              </div>
+
+              {/* Has Resume toggle */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setHasResumeOnly(!hasResumeOnly)}
+                  className="relative h-7 w-12 rounded-full border-none cursor-pointer transition-colors duration-200 shrink-0"
+                  style={{
+                    background: hasResumeOnly ? "var(--teal)" : "transparent",
+                    border: hasResumeOnly
+                      ? "none"
+                      : "2px solid var(--border)",
+                  }}
+                >
+                  <span
+                    className="absolute top-[3px] h-5 w-5 rounded-full transition-all duration-200"
+                    style={{
+                      background: hasResumeOnly ? "#fff" : "var(--text-muted)",
+                      left: hasResumeOnly ? 24 : 3,
+                    }}
+                  />
+                </button>
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--text)" }}
+                >
+                  Has Resume only
                 </span>
               </div>
             </div>
