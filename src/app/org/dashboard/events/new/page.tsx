@@ -10,6 +10,7 @@ import type { MemberProfile } from "@/lib/firestore/members";
 import { getOrganization } from "@/lib/firestore/organizations";
 import type { Organization } from "@/lib/firestore/organizations";
 import { createEvent } from "@/lib/firestore/events";
+import type { Event } from "@/lib/firestore/events";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -350,6 +351,7 @@ export default function NewEventPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saveError, setSaveError] = useState("");
   const [showPreview, setShowPreview] = useState(false);
 
   // Load org & profile
@@ -414,6 +416,7 @@ export default function NewEventPage() {
     if (status === "active" && !validate()) return;
     if (!profile?.orgId || !user) return;
     setSaving(true);
+    setSaveError("");
     try {
       const slug =
         form.title
@@ -440,37 +443,44 @@ export default function NewEventPage() {
 
       const cat = EVENT_CATEGORIES.find((c) => c.id === form.category);
 
-      await createEvent({
+      // Build payload — only include optional fields when they have values
+      // (Firestore setDoc rejects explicit `undefined` values)
+      const payload: Record<string, unknown> = {
         title: form.title,
         slug,
         description: form.description,
         date: form.startDate,
         dates,
         startDate: form.startDate,
-        endDate: form.endDate || undefined,
-        startTime: form.startTime || undefined,
-        endTime: form.endTime || undefined,
         location: form.location,
         category: form.category,
         eventType: cat?.label || form.category,
         isFree: form.isFree,
         price: form.isFree ? "Free" : form.price,
-        rsvpLink: form.rsvpLink || undefined,
-        contactName: form.contactName || undefined,
-        contactEmail: form.contactEmail || undefined,
-        contactPhone: form.contactPhone || undefined,
         highlights: form.highlights.filter((h) => h.trim()),
         status,
         active: status === "active",
         orgId: profile.orgId,
-        orgName: org?.name,
-        orgShort: org?.shortName,
         authorId: user.uid,
-      });
+      };
+      if (form.endDate) payload.endDate = form.endDate;
+      if (form.startTime) payload.startTime = form.startTime;
+      if (form.endTime) payload.endTime = form.endTime;
+      if (form.rsvpLink) payload.rsvpLink = form.rsvpLink;
+      if (form.contactName) payload.contactName = form.contactName;
+      if (form.contactEmail) payload.contactEmail = form.contactEmail;
+      if (form.contactPhone) payload.contactPhone = form.contactPhone;
+      if (org?.name) payload.orgName = org.name;
+      if (org?.shortName) payload.orgShort = org.shortName;
+
+      await createEvent(payload as Omit<Event, "id" | "createdAt" | "order">);
 
       router.push("/org/dashboard/events?created=1");
     } catch (err) {
       console.error("Failed to create event:", err);
+      setSaveError(
+        err instanceof Error ? err.message : "Something went wrong. Please try again."
+      );
     } finally {
       setSaving(false);
     }
@@ -1012,6 +1022,28 @@ export default function NewEventPage() {
                       </div>
                     </div>
                   </Section>
+
+                  {/* ━━ Error Banner ━━ */}
+                  {saveError && (
+                    <div
+                      style={{
+                        margin: "0 0 16px 38px",
+                        padding: "12px 16px",
+                        background: "rgba(239,68,68,0.08)",
+                        border: "1px solid rgba(239,68,68,0.3)",
+                        borderRadius: 10,
+                        color: "#EF4444",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <span style={{ fontSize: 16 }}>⚠</span>
+                      {saveError}
+                    </div>
+                  )}
 
                   {/* ━━ Action Buttons ━━ */}
                   <div
