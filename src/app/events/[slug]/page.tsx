@@ -36,6 +36,9 @@ type EventData = {
   schedule?: { day: string; items: string[] }[];
   highlights?: string[];
   type?: string;
+  rsvpLink?: string;
+  contactEmail?: string;
+  contactPhone?: string;
 };
 
 export default function EventDetailPage() {
@@ -121,6 +124,7 @@ function EventDetailContent() {
               schedule: post.schedule,
               highlights: post.highlights,
               type: post.type,
+              rsvpLink: (post as unknown as Record<string, unknown>).rsvpLink as string | undefined,
             };
           }
         }
@@ -350,6 +354,23 @@ function EventDetailContent() {
           {/* RSVP Card */}
           <Card className="mb-4" style={{ position: "sticky", top: 80 }}>
             <div style={{ padding: 20 }}>
+              {/* Register Button */}
+              {event.rsvpLink && (
+                <a
+                  href={event.rsvpLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold no-underline cursor-pointer transition-opacity hover:opacity-90 mb-4"
+                  style={{
+                    background: "var(--teal)",
+                    color: "#fff",
+                    border: "none",
+                  }}
+                >
+                  &#127915; Register for This Event
+                </a>
+              )}
+
               {/* RSVP Buttons */}
               <div className="flex gap-2 mb-3">
                 {rsvpButtons.map(({ status, label, icon }) => {
@@ -440,6 +461,18 @@ function EventDetailContent() {
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Category</span>
                       <span className="text-xs font-semibold text-text">{event.eventType}</span>
+                    </div>
+                  )}
+                  {event.contactEmail && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-text-muted">Contact</span>
+                      <a href={`mailto:${event.contactEmail}`} className="text-xs font-semibold text-teal no-underline hover:underline">{event.contactEmail}</a>
+                    </div>
+                  )}
+                  {event.contactPhone && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-text-muted">Phone</span>
+                      <a href={`tel:${event.contactPhone}`} className="text-xs font-semibold text-teal no-underline hover:underline">{event.contactPhone}</a>
                     </div>
                   )}
                 </div>
