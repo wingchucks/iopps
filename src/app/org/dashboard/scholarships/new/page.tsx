@@ -461,6 +461,7 @@ export default function NewScholarshipPage() {
   const [newReq, setNewReq] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -514,13 +515,19 @@ export default function NewScholarshipPage() {
   }, [form]);
 
   const handleSave = async (status: "active" | "draft") => {
-    if (!profile?.orgId || !user) return;
+    if (!profile?.orgId || !user) {
+      setError("Unable to publish — your organization profile could not be loaded. Please refresh and try again.");
+      return;
+    }
     setSaving(true);
+    setError("");
     try {
       const slug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now().toString(36);
       const cat = CATEGORIES.find((c) => c.id === form.category);
 
       // Build data object with all fields
+      // NOTE: Firestore setDoc rejects `undefined` values, so we omit empty
+      // optional fields instead of passing `|| undefined`.
       const data: Record<string, unknown> = {
         title: form.title,
         slug,
@@ -529,20 +536,20 @@ export default function NewScholarshipPage() {
         deadline: form.deadline,
         eligibility: form.eligibility,
         requirements: form.requirements,
-        applicationUrl: form.applicationUrl || undefined,
-        applicationInstructions: form.applicationInstructions || undefined,
         applyMethod: form.applyMethod,
-        location: form.location || undefined,
-        contactEmail: form.contactEmail || undefined,
-        contactPhone: form.contactPhone || undefined,
         category: form.category,
         status,
         active: status === "active",
         orgId: profile.orgId,
-        orgName: org?.name,
-        orgShort: org?.shortName,
+        orgName: org?.name || "",
+        orgShort: org?.shortName || "",
         authorId: user.uid,
       };
+      if (form.applicationUrl) data.applicationUrl = form.applicationUrl;
+      if (form.applicationInstructions) data.applicationInstructions = form.applicationInstructions;
+      if (form.location) data.location = form.location;
+      if (form.contactEmail) data.contactEmail = form.contactEmail;
+      if (form.contactPhone) data.contactPhone = form.contactPhone;
 
       // Include category-specific fields
       const catConfig = CATEGORY_FIELDS[form.category];
@@ -559,6 +566,7 @@ export default function NewScholarshipPage() {
       router.push("/org/dashboard/scholarships?created=1");
     } catch (err) {
       console.error("Failed to create scholarship:", err);
+      setError("Something went wrong while publishing. Please try again or contact support.");
     } finally {
       setSaving(false);
     }
@@ -906,6 +914,13 @@ export default function NewScholarshipPage() {
                         </div>
                       </Section>
                     </div>
+
+                    {/* Error Banner */}
+                    {error && (
+                      <div style={{ marginTop: 16, padding: "12px 16px", background: "rgba(220,38,38,.08)", border: "1px solid rgba(220,38,38,.25)", borderRadius: 10, color: "#DC2626", fontSize: 14, fontWeight: 500 }}>
+                        {error}
+                      </div>
+                    )}
 
                     {/* Action Bar */}
                     <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", alignItems: "center", marginTop: 20, padding: "16px 0" }}>
