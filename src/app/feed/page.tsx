@@ -93,11 +93,19 @@ function FeedContent() {
   useEffect(() => {
     async function load() {
       try {
-        const jobsRes = await fetch("/api/jobs?limit=200").then(r => r.json()).catch(() => ({ jobs: [] }));
-        const [p, o, v, ev, sc] = await Promise.all([
-          getPosts(), getOrganizations(), getVendors(), getEvents(), getScholarships(),
+        const [jobsRes, postsRes, orgsRes, eventsRes, scholarshipsRes] = await Promise.all([
+          fetch("/api/jobs?limit=200").then(r => r.json()).catch(() => ({ jobs: [] })),
+          fetch("/api/posts").then(r => r.json()).catch(() => ({ posts: [] })),
+          fetch("/api/organizations").then(r => r.json()).catch(() => ({ organizations: [] })),
+          fetch("/api/events").then(r => r.json()).catch(() => ({ events: [] })),
+          fetch("/api/scholarships").then(r => r.json()).catch(() => ({ scholarships: [] })),
         ]);
         const j = jobsRes.jobs ?? [];
+        const p = postsRes.posts ?? [];
+        const o = orgsRes.organizations ?? [];
+        const ev = eventsRes.events ?? [];
+        const sc = scholarshipsRes.scholarships ?? [];
+        const v: unknown[] = [];
         // Helper: serialize Timestamps, location objects, etc. to strings
         const toStr = (v: unknown): string | undefined => {
           if (!v) return undefined;
