@@ -65,7 +65,11 @@ export default function EventsBrowsePage() {
       const fromEvents = events.map((e) => e.eventType).filter(Boolean) as string[];
       const all = new Set(fromEvents);
       all.add("Pow Wow");
-      return [...all];
+      all.add("Conference");
+      all.add("Cultural");
+      all.add("Career Fair");
+      all.add("Sports");
+      return [...all].sort();
     },
     [events]
   );
