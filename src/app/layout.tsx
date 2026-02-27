@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
   description:
     "Jobs, events, scholarships, businesses, schools, and livestreams — all in one place for Indigenous people across North America.",
-  metadataBase: new URL("https://iopps-fresh.vercel.app"),
+  metadataBase: new URL("https://www.iopps.ca"),
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
@@ -31,17 +31,26 @@ export const metadata: Metadata = {
     title: "IOPPS",
   },
   openGraph: {
-    title: "IOPPS — Empowering Indigenous Success",
+    title: "IOPPS.CA — Empowering Indigenous Success",
     description:
-      "Jobs, events, scholarships, businesses, schools, and livestreams for Indigenous communities.",
-    siteName: "IOPPS",
+      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, schools, and livestreams — built for Indigenous communities across North America.",
+    siteName: "IOPPS.CA",
+    url: "https://www.iopps.ca",
     type: "website",
+    images: [
+      {
+        url: "https://www.iopps.ca/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "IOPPS.CA — Empowering Indigenous Success",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "IOPPS — Empowering Indigenous Success",
+    title: "IOPPS.CA — Empowering Indigenous Success",
     description:
-      "Jobs, events, scholarships, businesses, schools, and livestreams for Indigenous communities.",
+      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, schools, and livestreams — built for Indigenous communities across North America.",
   },
 };
 
