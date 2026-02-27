@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://www.iopps.ca/logo.png",
+        url: "https://www.iopps.ca/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "IOPPS.CA — Empowering Indigenous Success",
