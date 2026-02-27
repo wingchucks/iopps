@@ -93,9 +93,11 @@ function FeedContent() {
   useEffect(() => {
     async function load() {
       try {
-        const [p, o, v, j, ev, sc] = await Promise.all([
-          getPosts(), getOrganizations(), getVendors(), getJobs(), getEvents(), getScholarships(),
+        const jobsRes = await fetch("/api/jobs?limit=200").then(r => r.json()).catch(() => ({ jobs: [] }));
+        const [p, o, v, ev, sc] = await Promise.all([
+          getPosts(), getOrganizations(), getVendors(), getEvents(), getScholarships(),
         ]);
+        const j = jobsRes.jobs ?? [];
         // Helper: serialize Timestamps, location objects, etc. to strings
         const toStr = (v: unknown): string | undefined => {
           if (!v) return undefined;

@@ -1,0 +1,21 @@
+[debug] [2026-02-25T02:39:27.137Z] ----------------------------------------------------------------------
+[debug] [2026-02-25T02:39:27.140Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\natha\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js --token 
+[debug] [2026-02-25T02:39:27.141Z] CLI Version:   15.5.1
+[debug] [2026-02-25T02:39:27.141Z] Platform:      win32
+[debug] [2026-02-25T02:39:27.141Z] Node Version:  v25.6.1
+[debug] [2026-02-25T02:39:27.141Z] Time:          Tue Feb 24 2026 20:39:27 GMT-0600 (Central Standard Time)
+[debug] [2026-02-25T02:39:27.141Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-02-25T02:39:27.144Z] TypeError: Cannot read properties of undefined (reading '0')
+    at Command.<anonymous> (C:\Users\natha\AppData\Roaming\npm\node_modules\firebase-tools\lib\index.js:78:21)
+    at Command.listener [as _actionHandler] (C:\Users\natha\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\commander\index.js:413:31)
+    at Command._parseCommand (C:\Users\natha\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\commander\index.js:914:14)
+    at Command.parse (C:\Users\natha\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\commander\index.js:717:10)
+    at cli (C:\Users\natha\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\cli.js:123:26)
+    at Object.<anonymous> (C:\Users\natha\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js:17:5)
+    at Module._compile (node:internal/modules/cjs/loader:1811:14)
+    at Object..js (node:internal/modules/cjs/loader:1942:10)
+    at Module.load (node:internal/modules/cjs/loader:1532:32)
+    at Module._load (node:internal/modules/cjs/loader:1334:12)
+[error] 
+[error] Error: An unexpected error has occurred.
