@@ -100,12 +100,17 @@ function FeedContent() {
           fetch("/api/events").then(r => r.json()).catch(() => ({ events: [] })),
           fetch("/api/scholarships").then(r => r.json()).catch(() => ({ scholarships: [] })),
         ]);
-        const j = jobsRes.jobs ?? [];
-        const p = postsRes.posts ?? [];
-        const o = orgsRes.organizations ?? [];
-        const ev = eventsRes.events ?? [];
-        const sc = scholarshipsRes.scholarships ?? [];
-        const v: unknown[] = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const j: any[] = jobsRes.jobs ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const p: any[] = postsRes.posts ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const o: any[] = orgsRes.organizations ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ev: any[] = eventsRes.events ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sc: any[] = scholarshipsRes.scholarships ?? [];
+        const v: ShopVendor[] = [];
         // Helper: serialize Timestamps, location objects, etc. to strings
         const toStr = (v: unknown): string | undefined => {
           if (!v) return undefined;
