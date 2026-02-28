@@ -67,6 +67,11 @@ export interface Organization {
   since: string;
   verified: boolean;
   indigenousOwned?: boolean;
+  hours?: Record<string, string>;
+  gallery?: string[];
+  videos?: string[];
+  treatyTerritory?: string;
+  nation?: string;
   tags: string[];
   programCount?: number;
   programs?: string[];
