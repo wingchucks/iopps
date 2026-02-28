@@ -300,6 +300,11 @@ export default function SignupPage() {
               Privacy Policy
             </Link>
           </p>
+
+          <p className="text-text-muted text-[11px] text-center mt-4 leading-relaxed flex items-center justify-center gap-1.5">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Protected by reCAPTCHA Enterprise
+          </p>
         </div>
       </div>
     </div>
