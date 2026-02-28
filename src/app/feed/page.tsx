@@ -1,787 +1,429 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth-context";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import AppShell from "@/components/AppShell";
-import Footer from "@/components/Footer";
-import Avatar from "@/components/Avatar";
-import Badge from "@/components/Badge";
-import Button from "@/components/Button";
-import Card from "@/components/Card";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { getPosts, type Post } from "@/lib/firestore/posts";
-import { getJobs, type Job } from "@/lib/firestore/jobs";
-import CreatePostModal from "@/components/CreatePostModal";
-import { getOrganizations, type Organization, getOrganization } from "@/lib/firestore/organizations";
-import { getSavedItems, type SavedItem } from "@/lib/firestore/savedItems";
-import { getApplications, type Application } from "@/lib/firestore/applications";
-import { getVendors, type ShopVendor } from "@/lib/firestore/shop";
-import { getEvents, type Event } from "@/lib/firestore/events";
-import { getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
-import { getMemberProfile } from "@/lib/firestore/members";
-import ProfileCompleteness from "@/components/ProfileCompleteness";
-import FeedSidebar from "@/components/FeedSidebar";
-import FeedRightSidebar from "@/components/FeedRightSidebar";
-import InstallPrompt from "@/components/InstallPrompt";
-import OnboardingTour from "@/components/OnboardingTour";
+import AppShell from "@/components/AppShell";
 
-import { displayLocation } from "@/lib/utils";
+// ── Types ────────────────────────────────────────────────────────────────────
 
-const tabs = ["All", "Jobs", "Events", "Scholarships", "Businesses", "Schools", "Stories"];
-const navTabs: Record<string, string> = { Livestreams: "/livestreams" };
+type FeedItemType = "job" | "program" | "event" | "scholarship";
 
-const typeToTab: Record<string, string> = {
-  job: "Jobs",
-  event: "Events",
-  scholarship: "Scholarships",
-  program: "Schools",
-  story: "Stories",
-  spotlight: "Stories",
+interface FeedItem {
+  id: string;
+  type: FeedItemType;
+  title: string;
+  orgName: string;
+  orgLogo?: string;
+  orgSlug?: string;
+  subtitle?: string;       // location, dates, category
+  detail?: string;         // salary, duration, amount
+  badge?: string;          // e.g. "Full-Time", "In-Person"
+  href: string;
+  createdAt?: string;
+  featured?: boolean;
+}
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const TABS = [
+  { key: "all",         label: "All",          emoji: "🌐" },
+  { key: "job",         label: "Jobs",         emoji: "💼" },
+  { key: "program",     label: "Programs",     emoji: "📚" },
+  { key: "event",       label: "Events",       emoji: "📅" },
+  { key: "scholarship", label: "Scholarships", emoji: "🎓" },
+] as const;
+
+type TabKey = typeof TABS[number]["key"];
+
+const TYPE_COLORS: Record<FeedItemType, { bg: string; text: string; border: string }> = {
+  job:         { bg: "rgba(20,184,166,.12)",  text: "#14B8A6", border: "rgba(20,184,166,.25)" },
+  program:     { bg: "rgba(99,102,241,.12)",  text: "#818CF8", border: "rgba(99,102,241,.25)" },
+  event:       { bg: "rgba(251,146,60,.12)",  text: "#FB923C", border: "rgba(251,146,60,.25)" },
+  scholarship: { bg: "rgba(250,204,21,.12)",  text: "#FBBF24", border: "rgba(250,204,21,.25)" },
 };
 
-export default function FeedPage() {
+const TYPE_ICONS: Record<FeedItemType, string> = {
+  job: "💼", program: "📚", event: "📅", scholarship: "🎓",
+};
+
+// ── Data fetchers ─────────────────────────────────────────────────────────────
+
+async function fetchJobs(): Promise<FeedItem[]> {
+  const res = await fetch("/api/jobs?limit=40");
+  if (!res.ok) return [];
+  const data = await res.json();
+  const jobs = Array.isArray(data) ? data : (data.jobs || []);
+  return jobs.map((j: Record<string, unknown>) => ({
+    id: String(j.id || j.slug || ""),
+    type: "job" as FeedItemType,
+    title: String(j.title || ""),
+    orgName: String(j.employerName || j.company || ""),
+    orgLogo: j.employerLogoUrl as string || j.logoUrl as string || "",
+    orgSlug: j.orgSlug as string || j.employerId as string || "",
+    subtitle: [j.location, j.employmentType].filter(Boolean).join(" · "),
+    detail: j.salary as string || "",
+    badge: j.featured ? "Featured" : (j.employmentType as string || ""),
+    href: `/jobs/${j.id || j.slug}`,
+    createdAt: j.createdAt as string || "",
+    featured: Boolean(j.featured),
+  }));
+}
+
+async function fetchPrograms(): Promise<FeedItem[]> {
+  const res = await fetch("/api/programs");
+  if (!res.ok) return [];
+  const data = await res.json();
+  const programs = data.programs || [];
+  return programs.map((p: Record<string, unknown>) => ({
+    id: String(p.id || ""),
+    type: "program" as FeedItemType,
+    title: String(p.title || ""),
+    orgName: String(p.orgName || ""),
+    orgLogo: p.orgLogoUrl as string || "",
+    orgSlug: p.orgId as string || "",
+    subtitle: [p.location, p.format].filter(Boolean).join(" · "),
+    detail: p.duration as string || "",
+    badge: p.credential as string || p.category as string || "",
+    href: (p.externalUrl as string) || `/schools/${p.orgId}`,
+    createdAt: p.createdAt as string || "",
+    featured: Boolean(p.featured),
+  }));
+}
+
+async function fetchEvents(): Promise<FeedItem[]> {
+  const res = await fetch("/api/events");
+  if (!res.ok) return [];
+  const data = await res.json();
+  const events = Array.isArray(data) ? data : (data.events || []);
+  return events.map((e: Record<string, unknown>) => ({
+    id: String(e.id || ""),
+    type: "event" as FeedItemType,
+    title: String(e.title || e.name || ""),
+    orgName: String(e.organizer || e.organization || "IOPPS"),
+    orgLogo: e.logoUrl as string || e.imageUrl as string || e.posterUrl as string || "",
+    subtitle: [e.location, e.city].filter(Boolean).join(", "),
+    detail: e.date as string || e.startDate as string || e.dates as string || "",
+    badge: e.eventType as string || e.type as string || "",
+    href: `/events/${e.id || e.slug}`,
+    createdAt: e.createdAt as string || e.date as string || "",
+    featured: Boolean(e.featured),
+  }));
+}
+
+async function fetchScholarships(): Promise<FeedItem[]> {
+  const res = await fetch("/api/scholarships");
+  if (!res.ok) return [];
+  const data = await res.json();
+  const scholarships = Array.isArray(data) ? data : (data.scholarships || []);
+  return scholarships
+    .filter((s: Record<string, unknown>) => s.status === "active" || !s.status)
+    .map((s: Record<string, unknown>) => ({
+      id: String(s.id || ""),
+      type: "scholarship" as FeedItemType,
+      title: String(s.title || s.name || ""),
+      orgName: String(s.provider || s.organization || s.orgName || ""),
+      orgLogo: s.logoUrl as string || "",
+      subtitle: s.deadline ? `Deadline: ${s.deadline}` : String(s.eligibility || ""),
+      detail: s.amount as string || s.value as string || "",
+      badge: s.category as string || s.type as string || "",
+      href: (s.applicationUrl as string) || (s.url as string) || `/scholarships`,
+      createdAt: s.createdAt as string || "",
+      featured: Boolean(s.featured),
+    }));
+}
+
+// ── Components ────────────────────────────────────────────────────────────────
+
+function OrgAvatar({ logo, name, size = 40 }: { logo?: string; name: string; size?: number }) {
+  const [imgError, setImgError] = useState(false);
+  const initials = name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+
+  if (logo && !imgError) {
+    return (
+      <img
+        src={logo}
+        alt={name}
+        width={size}
+        height={size}
+        onError={() => setImgError(true)}
+        style={{
+          width: size, height: size, borderRadius: 10,
+          objectFit: "contain", background: "#1e2940", padding: 4, flexShrink: 0,
+        }}
+      />
+    );
+  }
   return (
-    <ProtectedRoute>
-      <AppShell>
-      <div className="min-h-screen bg-bg flex flex-col">
-        <Suspense><FeedContent /></Suspense>
-        <InstallPrompt />
-        <OnboardingTour />
-        <Footer />
-      </div>
-    </AppShell>
-    </ProtectedRoute>
+    <div style={{
+      width: size, height: size, borderRadius: 10, flexShrink: 0,
+      background: "linear-gradient(135deg, #14B8A6, #3B82F6)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: size * 0.35, fontWeight: 700, color: "#fff",
+    }}>
+      {initials}
+    </div>
   );
 }
 
-interface Livestream {
-  id: string;
-  title: string;
-  status: string;
+function TypeBadge({ type }: { type: FeedItemType }) {
+  const c = TYPE_COLORS[type];
+  return (
+    <span style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: "0.05em",
+      textTransform: "uppercase", padding: "2px 8px", borderRadius: 6,
+      background: c.bg, color: c.text, border: `1px solid ${c.border}`,
+    }}>
+      {TYPE_ICONS[type]} {type}
+    </span>
+  );
 }
 
-function FeedContent() {
-  const [tab, setTab] = useState("All");
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [orgs, setOrgs] = useState<Organization[]>([]);
-  const [vendors, setVendors] = useState<ShopVendor[]>([]);
-  const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [livestream, setLivestream] = useState<Livestream | null>(null);
-  const [orgPending, setOrgPending] = useState(false);
-  const [userRole, setUserRole] = useState<string | undefined>();
-  const [userOrgRole, setUserOrgRole] = useState<string | undefined>();
-  const [hasOrg, setHasOrg] = useState(false);
-  const [orgLogo, setOrgLogo] = useState<string | undefined>();
-  const [showCreatePost, setShowCreatePost] = useState(false);
-  const { user, signOut } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+function FeedCard({ item }: { item: FeedItem }) {
+  const isExternal = item.href.startsWith("http");
+  const CardWrapper = ({ children }: { children: React.ReactNode }) =>
+    isExternal ? (
+      <a href={item.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+        {children}
+      </a>
+    ) : (
+      <Link href={item.href} style={{ textDecoration: "none" }}>
+        {children}
+      </Link>
+    );
 
-  // Auto-open story modal when ?compose=true is in URL
-  useEffect(() => {
-    if (searchParams.get("compose") === "true") {
-      setShowCreatePost(true);
-    }
-  }, [searchParams]);
+  return (
+    <CardWrapper>
+      <div style={{
+        background: "var(--card, #111827)",
+        border: "1px solid var(--border, rgba(255,255,255,.08))",
+        borderRadius: 16,
+        padding: "16px 18px",
+        cursor: "pointer",
+        transition: "border-color .15s, transform .15s",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLDivElement).style.borderColor = TYPE_COLORS[item.type].border;
+          (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border, rgba(255,255,255,.08))";
+          (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+        }}
+      >
+        {/* Top row: logo + org + type badge */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <OrgAvatar logo={item.orgLogo} name={item.orgName} size={38} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "var(--text-sec, #9CA3AF)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {item.orgName}
+            </p>
+          </div>
+          <TypeBadge type={item.type} />
+        </div>
+
+        {/* Title */}
+        <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text, #F9FAFB)", lineHeight: 1.35 }}>
+          {item.title}
+        </p>
+
+        {/* Subtitle + detail row */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px" }}>
+          {item.subtitle && (
+            <span style={{ fontSize: 12, color: "var(--text-sec, #9CA3AF)" }}>
+              📍 {item.subtitle}
+            </span>
+          )}
+          {item.detail && (
+            <span style={{ fontSize: 12, color: "var(--text-sec, #9CA3AF)" }}>
+              {item.type === "scholarship" ? "💰" : item.type === "program" ? "⏱" : item.type === "job" ? "💵" : "📆"} {item.detail}
+            </span>
+          )}
+        </div>
+
+        {/* Badge + CTA */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 2 }}>
+          {item.badge ? (
+            <span style={{
+              fontSize: 11, fontWeight: 600,
+              padding: "3px 10px", borderRadius: 20,
+              background: "rgba(255,255,255,.06)", color: "var(--text-sec, #9CA3AF)",
+            }}>
+              {item.badge}
+            </span>
+          ) : <span />}
+          <span style={{ fontSize: 12, fontWeight: 700, color: TYPE_COLORS[item.type].text }}>
+            {item.type === "job" ? "View & Apply →" :
+             item.type === "program" ? "Learn More →" :
+             item.type === "event" ? "View Details →" :
+             "Apply Now →"}
+          </span>
+        </div>
+      </div>
+    </CardWrapper>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div style={{
+      background: "var(--card, #111827)",
+      border: "1px solid var(--border, rgba(255,255,255,.08))",
+      borderRadius: 16, padding: "16px 18px",
+    }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+        <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,255,255,.06)" }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ height: 10, width: "40%", background: "rgba(255,255,255,.06)", borderRadius: 4, marginBottom: 6 }} />
+          <div style={{ height: 8, width: "20%", background: "rgba(255,255,255,.04)", borderRadius: 4 }} />
+        </div>
+      </div>
+      <div style={{ height: 14, width: "80%", background: "rgba(255,255,255,.06)", borderRadius: 4, marginBottom: 8 }} />
+      <div style={{ height: 10, width: "60%", background: "rgba(255,255,255,.04)", borderRadius: 4 }} />
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
+export default function FeedPage() {
+  const [allItems, setAllItems] = useState<FeedItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabKey>("all");
 
   useEffect(() => {
     async function load() {
       try {
-        const [jobsRes, postsRes, orgsRes, eventsRes, scholarshipsRes] = await Promise.all([
-          fetch("/api/jobs?limit=200").then(r => r.json()).catch(() => ({ jobs: [] })),
-          fetch("/api/posts").then(r => r.json()).catch(() => ({ posts: [] })),
-          fetch("/api/organizations").then(r => r.json()).catch(() => ({ organizations: [] })),
-          fetch("/api/events").then(r => r.json()).catch(() => ({ events: [] })),
-          fetch("/api/scholarships").then(r => r.json()).catch(() => ({ scholarships: [] })),
+        const [jobs, programs, events, scholarships] = await Promise.all([
+          fetchJobs(),
+          fetchPrograms(),
+          fetchEvents(),
+          fetchScholarships(),
         ]);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const j: any[] = jobsRes.jobs ?? [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const p: any[] = postsRes.posts ?? [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const o: any[] = orgsRes.organizations ?? [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const ev: any[] = eventsRes.events ?? [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const sc: any[] = scholarshipsRes.scholarships ?? [];
-        const v: ShopVendor[] = [];
-        // Helper: serialize Timestamps, location objects, etc. to strings
-        const toStr = (v: unknown): string | undefined => {
-          if (!v) return undefined;
-          if (typeof v === "string") return v;
-          if (typeof v === "object" && v !== null && "seconds" in v)
-            return new Date((v as { seconds: number }).seconds * 1000)
-              .toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" });
-          if (typeof v === "object" && v !== null) {
-            const o = v as Record<string, unknown>;
-            const parts: string[] = [];
-            if (o.city) parts.push(String(o.city));
-            if (o.province) parts.push(String(o.province));
-            if (o.remote) parts.push("Remote");
-            return parts.join(", ") || undefined;
-          }
-          return String(v);
-        };
-
-        // Convert dedicated jobs → Post shape
-        const jobPosts: Post[] = j.map((job: Job) => ({
-          id: job.id,
-          type: "job" as const,
-          title: job.title,
-          orgName: toStr(job.orgName || job.employerName || job.companyName) || "",
-          orgShort: toStr(job.orgShort || job.orgName || job.employerName || job.companyName) || "",
-          location: toStr(job.location),
-          jobType: toStr(job.jobType || job.employmentType),
-          salary: toStr(job.salary),
-          deadline: toStr(job.closingDate),
-          featured: job.featured,
-          source: toStr(job.source),
-          closingSoon: false,
-          createdAt: job.createdAt,
-          order: job.order ?? 0,
-        }));
-
-        // Convert dedicated events → Post shape
-        const eventPosts: Post[] = ev.map((e: Event) => ({
-          id: e.id,
-          type: "event" as const,
-          title: e.title,
-          dates: toStr(e.dates || e.date),
-          location: toStr(e.location),
-          eventType: e.eventType || e.type,
-          price: toStr(e.price),
-          orgName: e.orgName || e.organizer || "",
-          featured: e.featured,
-          order: e.order ?? 0,
-          createdAt: e.createdAt,
-        }));
-
-        // Convert dedicated scholarships → Post shape
-        const scholarshipPosts: Post[] = sc.map((s: Scholarship) => ({
-          id: s.id,
-          type: "scholarship" as const,
-          title: s.title,
-          amount: toStr(s.amount),
-          deadline: toStr(s.deadline),
-          location: toStr(s.location),
-          orgName: s.orgName || s.organization || "",
-          featured: s.featured,
-          closingSoon: false,
-          order: s.order ?? 0,
-          createdAt: s.createdAt,
-        }));
-
-        // Convert school-type orgs → Post shape (feeds the "Schools" tab via type "program")
-        const schoolPosts: Post[] = o
-          .filter((org) => org.type === "school" || org.tier === "school")
-          .map((org) => ({
-            id: `school-${org.id}`,
-            type: "program" as const,
-            title: org.name,
-            orgName: org.shortName || org.name,
-            location: org.location ? displayLocation(org.location) : undefined,
-            featured: org.tier === "premium",
-            order: 0,
-            createdAt: org.createdAt ?? null,
-          }));
-
-        // Combine: legacy posts + dedicated collections (dedupe by id)
-        const existingJobIds = new Set(p.filter((x) => x.type === "job").map((x) => x.id));
-        const existingEventIds = new Set(p.filter((x) => x.type === "event").map((x) => x.id));
-        const existingScholarshipIds = new Set(p.filter((x) => x.type === "scholarship").map((x) => x.id));
-        const existingProgramIds = new Set(p.filter((x) => x.type === "program").map((x) => x.id));
-        const merged = [
-          ...p,
-          ...jobPosts.filter((jp) => !existingJobIds.has(jp.id)),
-          ...eventPosts.filter((ep) => !existingEventIds.has(ep.id)),
-          ...scholarshipPosts.filter((sp) => !existingScholarshipIds.has(sp.id)),
-          ...schoolPosts.filter((sp) => !existingProgramIds.has(sp.id)),
-        ];
-        setPosts(merged);
-        setOrgs(o);
-        setVendors(v);
-
-        // Fetch active livestream
-        try {
-          const liveQ = query(
-            collection(db, "livestreams"),
-            where("status", "==", "live"),
-            limit(1)
-          );
-          const liveSnap = await getDocs(liveQ);
-          if (!liveSnap.empty) {
-            const doc = liveSnap.docs[0];
-            setLivestream({ id: doc.id, ...doc.data() } as Livestream);
-          } else {
-            // Fallback: get most recent livestream
-            const recentQ = query(
-              collection(db, "livestreams"),
-              orderBy("createdAt", "desc"),
-              limit(1)
-            );
-            const recentSnap = await getDocs(recentQ);
-            if (!recentSnap.empty) {
-              const doc = recentSnap.docs[0];
-              const data = doc.data();
-              if (data.status === "live") {
-                setLivestream({ id: doc.id, ...data } as Livestream);
-              }
-            }
-          }
-        } catch {
-          // livestreams collection may not exist yet — silently ignore
-        }
-
-        if (user) {
-          const [s, a] = await Promise.all([
-            getSavedItems(user.uid).catch(() => []),
-            getApplications(user.uid).catch(() => []),
-          ]);
-          setSavedItems(s);
-          setApplications(a);
-
-          // Check if user's org is pending
-          try {
-            const profile = await getMemberProfile(user.uid);
-            if (profile?.role) setUserRole(profile.role);
-            if (profile?.orgRole) setUserOrgRole(profile.orgRole);
-            if (profile?.orgId) {
-              setHasOrg(true);
-              const org = await getOrganization(profile.orgId);
-              if (org) {
-                const logo = org.logoUrl || org.logo;
-                if (logo) setOrgLogo(logo);
-                if ((org as unknown as Record<string, unknown>).status === "pending") {
-                  setOrgPending(true);
-                }
-              }
-            }
-          } catch {
-            // ignore — user may not have org
-          }
-        }
+        // Merge and sort: featured first, then by createdAt desc
+        const merged = [...jobs, ...programs, ...events, ...scholarships].sort((a, b) => {
+          if (a.featured && !b.featured) return -1;
+          if (!a.featured && b.featured) return 1;
+          const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return db - da;
+        });
+        setAllItems(merged);
       } catch (err) {
-        console.error("Failed to load feed data:", err);
+        console.error("Feed load error:", err);
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [user]);
+  }, []);
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
-  };
+  const filtered = useMemo(() =>
+    activeTab === "all" ? allItems : allItems.filter((i) => i.type === activeTab),
+  [allItems, activeTab]);
 
-  const handlePostCreated = async () => {
-    try {
-      const freshPosts = await getPosts();
-      setPosts(freshPosts);
-    } catch (err) {
-      console.error("Failed to refresh feed:", err);
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: allItems.length };
+    for (const tab of TABS.slice(1)) {
+      c[tab.key] = allItems.filter((i) => i.type === tab.key).length;
     }
-  };
-
-  const filtered = tab === "All" ? posts : posts.filter((p) => typeToTab[p.type] === tab);
-
-  const hiringOrgs = orgs
-    .filter((o) => o.type === "employer" && o.openJobs > 0)
-    .map((o) => ({ name: o.shortName, count: o.openJobs, id: o.id }));
-
-  const featuredPartners = orgs.filter((o) => o.tier === "premium" || o.tier === "school").slice(0, 3);
-  const events = posts.filter((p) => p.type === "event").slice(0, 3);
-  const closingSoon = posts.filter((p) => p.closingSoon || p.featured).slice(0, 3);
+    return c;
+  }, [allItems]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_260px] gap-6 max-w-[1200px] mx-auto px-4 py-4 md:px-10 md:py-6">
-      {/* ═══ Left Sidebar ═══ */}
-      <FeedSidebar
-        featuredPartners={featuredPartners}
-        closingSoon={closingSoon}
-        events={events}
-        onSignOut={handleSignOut}
-        userRole={userRole}
-        orgRole={userOrgRole}
-        hasOrg={hasOrg}
-        orgLogo={orgLogo}
-      />
+    <AppShell>
+      <div style={{ minHeight: "100vh", background: "var(--bg, #0B1120)" }}>
 
-      {/* ═══ Center Feed ═══ */}
-      <div className="min-w-0" data-tour-step="feed">
-        {/* Welcome greeting */}
-        {user && (
-          <div
-            className="rounded-2xl mb-3"
-            style={{
-              padding: "16px 20px",
-              background: "var(--card)",
-              border: "1.5px solid var(--border)",
-            }}
-          >
-            <h2 className="text-lg font-bold m-0" style={{ color: "var(--text)" }}>
-              Welcome back, {user.displayName || "there"}!
-            </h2>
-            <p className="text-sm m-0 mt-1" style={{ color: "var(--text-sec)" }}>
-              Here&apos;s what&apos;s new in your community
+        {/* Hero */}
+        <section style={{
+          background: "linear-gradient(160deg, #0D2137 0%, #0B1120 100%)",
+          borderBottom: "1px solid rgba(255,255,255,.06)",
+          padding: "28px 20px 20px",
+        }}>
+          <div style={{ maxWidth: 700, margin: "0 auto" }}>
+            <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#F9FAFB" }}>
+              Opportunities Feed
+            </h1>
+            <p style={{ margin: 0, fontSize: 13, color: "#6B7280" }}>
+              Jobs, programs, events, and scholarships — all in one place
             </p>
           </div>
-        )}
-
-        {/* Create post prompt */}
-        {user && (
-          <div
-            className="rounded-2xl mb-3 cursor-pointer"
-            style={{
-              padding: "14px 20px",
-              background: "var(--card)",
-              border: "1.5px solid var(--border)",
-            }}
-            onClick={() => setShowCreatePost(true)}
-          >
-            <div className="flex items-center gap-3">
-              <Avatar
-                name={user.displayName || "U"}
-                size={36}
-                src={orgLogo || user.photoURL || undefined}
-              />
-              <div
-                className="flex-1 text-sm text-text-muted rounded-full"
-                style={{
-                  padding: "10px 16px",
-                  background: "var(--bg)",
-                  border: "1.5px solid var(--border)",
-                }}
-              >
-                Share a story or update...
-              </div>
-              <button
-                className="flex items-center gap-1.5 text-xs font-semibold border-none cursor-pointer rounded-lg"
-                style={{
-                  padding: "8px 12px",
-                  background: "color-mix(in srgb, var(--teal) 10%, transparent)",
-                  color: "var(--teal)",
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowCreatePost(true);
-                }}
-              >
-                &#128247; Photo
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Profile completeness */}
-        <ProfileCompleteness />
-
-        {/* Pending org banner */}
-        {orgPending && (
-          <div
-            className="flex items-center gap-3 rounded-[14px] mb-3"
-            style={{
-              padding: "12px 16px",
-              background: "var(--gold-soft)",
-              border: "1.5px solid rgba(217,119,6,.25)",
-            }}
-          >
-            <span
-              className="flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0"
-              style={{ background: "rgba(217,119,6,.15)" }}
-            >
-              &#9432;
-            </span>
-            <p className="text-sm text-text m-0">
-              <strong style={{ color: "var(--gold)" }}>Your organization is under review.</strong>{" "}
-              We&apos;ll notify you once approved. In the meantime, you can explore the community.
-            </p>
-          </div>
-        )}
-
-        {/* LIVE banner — only shown when an active livestream exists */}
-        {livestream && (
-          <div
-            className="flex items-center gap-3 rounded-[14px] mb-3 cursor-pointer"
-            style={{
-              padding: "12px 16px",
-              background: "linear-gradient(135deg, var(--red), #991B1B)",
-            }}
-          >
-            <span
-              className="text-[11px] text-white font-bold rounded-full"
-              style={{ background: "rgba(255,255,255,.2)", padding: "4px 12px" }}
-            >
-              &#9679; LIVE
-            </span>
-            <span className="text-white text-sm font-semibold">{livestream.title}</span>
-            <span className="ml-auto text-xs" style={{ color: "rgba(255,255,255,.7)" }}>Watch &#8594;</span>
-          </div>
-        )}
+        </section>
 
         {/* Tabs */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {tabs.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="px-4 py-2 rounded-full border-none whitespace-nowrap font-semibold text-[13px] cursor-pointer transition-colors"
-              style={{
-                background: tab === t ? "var(--navy)" : "var(--border)",
-                color: tab === t ? "#fff" : "var(--text-sec)",
-              }}
-            >
-              {t}
-            </button>
-          ))}
-          {Object.entries(navTabs).map(([label, href]) => (
-            <Link
-              key={label}
-              href={href}
-              className="px-4 py-2 rounded-full whitespace-nowrap font-semibold text-[13px] no-underline transition-colors"
-              style={{
-                background: "var(--border)",
-                color: "var(--text-sec)",
-              }}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Hiring Now Carousel */}
-        {hiringOrgs.length > 0 && (
-          <div className="flex gap-2 mb-4 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            {hiringOrgs.map((org) => (
-              <Link key={org.id} href={`/org/${org.id}`} className="no-underline">
-                <div
-                  className="flex-none flex items-center gap-2 rounded-xl cursor-pointer"
+        <div style={{
+          position: "sticky", top: 0, zIndex: 10,
+          background: "var(--bg, #0B1120)",
+          borderBottom: "1px solid rgba(255,255,255,.06)",
+          padding: "0 20px",
+        }}>
+          <div style={{
+            maxWidth: 700, margin: "0 auto",
+            display: "flex", gap: 4, overflowX: "auto",
+            padding: "10px 0",
+            scrollbarWidth: "none",
+          }}>
+            {TABS.map((tab) => {
+              const active = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
                   style={{
-                    padding: "8px 14px",
-                    background: "color-mix(in srgb, var(--teal) 6%, var(--card))",
-                    border: "1.5px solid var(--border)",
+                    flexShrink: 0,
+                    padding: "7px 14px", borderRadius: 20,
+                    border: active ? "1px solid #14B8A6" : "1px solid rgba(255,255,255,.08)",
+                    background: active ? "rgba(20,184,166,.15)" : "transparent",
+                    color: active ? "#14B8A6" : "#9CA3AF",
+                    fontSize: 13, fontWeight: active ? 700 : 500,
+                    cursor: "pointer",
+                    transition: "all .15s",
+                    display: "flex", alignItems: "center", gap: 5,
                   }}
                 >
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center font-extrabold"
-                    style={{
-                      fontSize: 9,
-                      background: "color-mix(in srgb, var(--teal) 12%, transparent)",
-                      color: "var(--teal)",
-                    }}
-                  >
-                    {org.name.slice(0, 2)}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-text m-0">{org.name}</p>
-                    <p className="m-0 font-semibold text-teal" style={{ fontSize: 10 }}>
-                      {org.count} open roles
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Feed Cards */}
-        {loading ? (
-          <div className="flex flex-col gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="skeleton h-[140px] rounded-2xl" />
-            ))}
-          </div>
-        ) : tab === "Businesses" ? (
-          vendors.length === 0 ? (
-            <Card style={{ padding: 40, textAlign: "center" }}>
-              <p className="text-3xl mb-2">&#127978;</p>
-              <p className="text-sm font-bold text-text mb-1">No businesses found</p>
-              <p className="text-sm text-text-muted">Indigenous businesses will be featured here soon.</p>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {vendors.map((vendor) => (
-                <VendorCard key={vendor.id} vendor={vendor} />
-              ))}
-            </div>
-          )
-        ) : filtered.length === 0 ? (
-          <Card style={{ padding: 40, textAlign: "center" }}>
-            <p className="text-3xl mb-2">&#128269;</p>
-            <p className="text-sm font-bold text-text mb-1">No {tab === "All" ? "posts" : tab.toLowerCase()} found</p>
-            <p className="text-sm text-text-muted">
-              {tab === "All"
-                ? "Check back soon for new opportunities and updates."
-                : "Try a different category or check back later."}
-            </p>
-          </Card>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {filtered.map((post) => (
-              <FeedCard key={post.id} post={post} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ═══ Right Sidebar ═══ */}
-      <FeedRightSidebar
-        applications={applications}
-        savedItems={savedItems}
-      />
-
-      {/* Create Post Modal */}
-      <CreatePostModal
-        open={showCreatePost}
-        onClose={() => setShowCreatePost(false)}
-        onPostCreated={handlePostCreated}
-      />
-    </div>
-  );
-}
-
-function FeedCard({ post }: { post: Post }) {
-  const slug = post.id.replace(/^(job|event|scholarship|program|spotlight|story)-/, "");
-
-  if (post.type === "job" && post.featured) {
-    return (
-      <Card gold>
-        <div style={{ padding: "16px 20px" }}>
-          <div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
-            <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
-            {post.closingSoon && <Badge text="Closing Soon" color="var(--red)" bg="var(--red-soft)" small />}
-          </div>
-          <h3 className="text-[17px] font-bold text-text mb-2">{post.title}</h3>
-          <div className="flex items-center gap-2.5 mb-2.5">
-            <Avatar name={post.orgShort || ""} size={32} gradient="linear-gradient(135deg, var(--navy), var(--teal))" />
-            <div className="flex items-center gap-2">
-              <span className="text-[15px] text-teal font-bold">{post.orgShort}</span>
-              <Badge text="&#10003; Premium Partner" color="var(--gold)" bg="var(--gold-soft)" small />
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3 text-[13px] text-text-sec">
-            {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
-            {post.jobType && <span>{post.jobType}</span>}
-            {post.salary && <span>&#128176; {post.salary}</span>}
-            {post.deadline && <span>&#128197; {post.deadline}</span>}
+                  <span>{tab.emoji}</span>
+                  <span>{tab.label}</span>
+                  {!loading && counts[tab.key] > 0 && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700,
+                      padding: "1px 6px", borderRadius: 10,
+                      background: active ? "rgba(20,184,166,.25)" : "rgba(255,255,255,.08)",
+                      color: active ? "#14B8A6" : "#6B7280",
+                    }}>
+                      {counts[tab.key]}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
-        <div
-          className="flex justify-between items-center border-t border-border"
-          style={{ padding: "10px 20px", background: "color-mix(in srgb, var(--bg) 50%, var(--card))" }}
-        >
-          <span className="text-xs text-text-muted cursor-pointer">&#128278; Save</span>
-          <Link href={`/jobs/${slug}`}><Button small primary>View Job →</Button></Link>
-        </div>
-      </Card>
-    );
-  }
 
-  if (post.type === "job") {
-    return (
-      <Link href={`/jobs/${slug}`} className="no-underline">
-        <Card>
-          <div style={{ padding: "16px 20px" }}>
-            <div className="flex items-center gap-1.5 mb-2">
-              <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
-              {post.source && <span className="text-[11px] text-text-muted italic">{post.source}</span>}
-              {post.badges?.includes("Verified") && (
-                <Badge text="&#10003; Verified" color="var(--green)" bg="var(--green-soft)" small />
-              )}
+        {/* Feed */}
+        <div style={{ maxWidth: 700, margin: "0 auto", padding: "16px 16px 48px" }}>
+          {loading ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
-            <h3 className="text-base font-bold text-text mb-1.5">{post.title}</h3>
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-sm text-teal font-semibold">{post.orgName}</span>
-            </div>
-            <div className="flex gap-3 text-[13px] text-text-sec">
-              {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
-              {post.jobType && <span>{post.jobType}</span>}
-              {post.salary && <span>&#128176; {post.salary}</span>}
-            </div>
-          </div>
-        </Card>
-      </Link>
-    );
-  }
-
-  if (post.type === "program") {
-    return (
-      <Link href={`/programs/${slug}`} className="no-underline">
-        <Card>
-          <div style={{ padding: "16px 20px" }}>
-            <div className="flex items-center gap-1.5 mb-2">
-              <Badge text="Program" color="var(--blue)" bg="var(--blue-soft)" small icon={<span>&#128218;</span>} />
-              {post.badges?.includes("Education Partner") && (
-                <Badge text="&#127891; Education Partner" color="var(--teal)" bg="var(--teal-soft)" small />
-              )}
-            </div>
-            <h3 className="text-base font-bold text-text mb-1.5">{post.title}</h3>
-            <span className="text-sm text-teal font-semibold">{post.orgName}</span>
-            <div className="flex gap-3 text-[13px] text-text-sec mt-1.5">
-              {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
-              {post.duration && <span>{post.duration}</span>}
-              {post.credential && <span>{post.credential}</span>}
-            </div>
-          </div>
-        </Card>
-      </Link>
-    );
-  }
-
-  if (post.type === "spotlight") {
-    return (
-      <Link href={`/stories/${slug}`} className="no-underline">
-        <div
-          className="rounded-2xl cursor-pointer"
-          style={{
-            padding: 20,
-            border: "1.5px solid rgba(217,119,6,.19)",
-            background: `linear-gradient(135deg, var(--gold-soft), var(--spotlight-bg))`,
-          }}
-        >
-          <div className="flex justify-between items-center mb-3">
-            <p className="text-[11px] font-bold text-gold tracking-[1px] m-0">PARTNER SPOTLIGHT</p>
-            <p className="text-gold tracking-[1.5px] m-0 opacity-50" style={{ fontSize: 8, fontWeight: 800 }}>
-              EMPOWERING INDIGENOUS SUCCESS
-            </p>
-          </div>
-          <div className="flex gap-3.5 items-center">
-            <Avatar name={post.orgShort || ""} size={52} gradient="linear-gradient(135deg, rgba(217,119,6,.25), rgba(15,43,76,.19))" />
-            <div>
-              <h3 className="text-base font-bold text-text mb-1">{post.title}</h3>
-              <p className="text-[13px] text-text-sec mb-2">{post.description}</p>
-              <span
-                className="inline-block text-xs font-semibold rounded-lg"
-                style={{ background: "var(--gold)", color: "#fff", padding: "6px 14px" }}
-              >
-                Read More &#8594;
-              </span>
-            </div>
-          </div>
-        </div>
-      </Link>
-    );
-  }
-
-  if (post.type === "event") {
-    return (
-      <Link href={`/events/${slug}`} className="no-underline">
-        <Card>
-          <div
-            className="h-[100px] flex items-center justify-center text-5xl"
-            style={{ background: "linear-gradient(135deg, rgba(15,43,76,.06), rgba(217,119,6,.06))" }}
-          >
-            {post.eventType === "Pow Wow" ? "🪶" : post.eventType === "Career Fair" ? "💼" : "🎪"}
-          </div>
-          <div style={{ padding: "14px 20px" }}>
-            {post.eventType && <Badge text={post.eventType} color="var(--gold)" bg="var(--gold-soft)" small />}
-            <h3 className="text-base font-bold text-text mt-2 mb-1">{post.title}</h3>
-            <div className="flex gap-3 text-[13px] text-text-sec">
-              {post.dates && <span>&#128197; {post.dates}</span>}
-              {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
-              {post.price && <span>&#127915; {post.price}</span>}
-            </div>
-          </div>
-        </Card>
-      </Link>
-    );
-  }
-
-  if (post.type === "scholarship") {
-    return (
-      <Link href={`/scholarships/${slug}`} className="no-underline">
-        <Card>
-          <div style={{ padding: "16px 20px" }}>
-            <div className="flex items-center gap-1.5 mb-2">
-              <Badge text="Scholarship" color="var(--green)" bg="var(--green-soft)" small icon={<span>&#127891;</span>} />
-              {post.featured && (
-                <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
-              )}
-              {post.closingSoon && (
-                <Badge text="Closing Soon" color="var(--red)" bg="var(--red-soft)" small />
-              )}
-            </div>
-            <h3 className="text-base font-bold text-text mb-1.5">{post.title}</h3>
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-sm text-teal font-semibold">{post.orgName}</span>
-            </div>
-            <div className="flex gap-3 text-[13px] text-text-sec">
-              {post.amount && <span>&#128176; {post.amount}</span>}
-              {post.deadline && <span>&#128197; {post.deadline}</span>}
-              {post.location && <span>&#128205; {displayLocation(post.location)}</span>}
-            </div>
-          </div>
-        </Card>
-      </Link>
-    );
-  }
-
-  if (post.type === "story") {
-    return (
-      <Link href={`/stories/${slug}`} className="no-underline">
-        <Card className="cursor-pointer">
-          <div style={{ padding: 20, background: "linear-gradient(135deg, rgba(5,150,105,.04), rgba(13,148,136,.03))" }}>
-            <Badge text="&#127775; Success Story" color="var(--green)" bg="var(--green-soft)" small />
-            <div className="flex gap-3.5 mt-3 items-center">
-              <Avatar name={post.title} size={52} />
-              <div>
-                <p className="text-base font-bold m-0 text-text">{post.title}</p>
-                {post.community && <p className="text-xs text-teal font-semibold mt-0.5">{post.community}</p>}
-              </div>
-            </div>
-            {post.quote && (
-              <p className="text-[15px] font-semibold italic text-text mt-3.5 leading-relaxed">
-                &quot;{post.quote}&quot;
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <p style={{ fontSize: 40, margin: "0 0 12px" }}>🌐</p>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#F9FAFB", margin: "0 0 8px" }}>
+                No {activeTab === "all" ? "opportunities" : activeTab + "s"} yet
+              </h3>
+              <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>
+                Check back soon — new opportunities are added regularly.
               </p>
-            )}
-          </div>
-        </Card>
-      </Link>
-    );
-  }
-
-  return null;
-}
-
-function VendorCard({ vendor }: { vendor: ShopVendor }) {
-  const initial = vendor.name?.charAt(0)?.toUpperCase() || "?";
-  const locationStr = vendor.location
-    ? `${vendor.location.city}, ${vendor.location.province}`
-    : null;
-
-  return (
-    <Link href={`/shop/${vendor.slug}`} className="no-underline">
-      <Card className="cursor-pointer">
-        <div style={{ padding: "16px 20px" }}>
-          <div className="flex items-center gap-3 mb-2">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, var(--gold), #B45309)" }}
-            >
-              {initial}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-text truncate m-0">{vendor.name}</p>
-              <Badge text={vendor.category} color="var(--gold)" bg="var(--gold-soft)" small />
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {filtered.map((item) => <FeedCard key={`${item.type}-${item.id}`} item={item} />)}
             </div>
-          </div>
-          {locationStr && (
-            <p className="text-xs text-text-muted mb-2">&#128205; {locationStr}</p>
           )}
-          <span
-            className="text-xs font-semibold"
-            style={{ color: "var(--gold)" }}
-          >
-            Visit &#8594;
-          </span>
         </div>
-      </Card>
-    </Link>
+      </div>
+    </AppShell>
   );
 }
