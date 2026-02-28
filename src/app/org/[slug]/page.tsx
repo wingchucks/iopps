@@ -5,12 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
-import Badge from "@/components/Badge";
-import Button from "@/components/Button";
-import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
-import { getOrganization, type Organization } from "@/lib/firestore/organizations";
-import { getPostsByOrg, type Post } from "@/lib/firestore/posts";
+import type { Organization } from "@/lib/firestore/organizations";
 import type { Job } from "@/lib/firestore/jobs";
 import { displayLocation } from "@/lib/utils";
 
@@ -30,7 +26,6 @@ function OrgProfileContent() {
   const slug = params.slug as string;
   const { user } = useAuth();
   const [org, setOrg] = useState<Organization | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState(false);
@@ -48,7 +43,6 @@ function OrgProfileContent() {
   useEffect(() => {
     async function load() {
       try {
-        // Use server-side API to resolve org by slug or slug field
         const orgRes = await fetch(`/api/org/${encodeURIComponent(slug)}`);
         if (!orgRes.ok) {
           setOrg(null);
@@ -59,15 +53,11 @@ function OrgProfileContent() {
         const orgData = orgJson.org as Organization | null;
         setOrg(orgData);
         if (orgData) {
-          // Fetch jobs — try by employerId (org doc ID) and by employerName
           const orgId = orgData.id;
-          const [orgPosts, jobsByIdRes, jobsByNameRes] = await Promise.all([
-            getPostsByOrg(orgId).catch(() => []),
+          const [jobsByIdRes, jobsByNameRes] = await Promise.all([
             fetch(`/api/jobs?employerId=${encodeURIComponent(orgId)}`).then(r => r.json()).catch(() => ({ jobs: [] })),
             fetch(`/api/jobs?employerName=${encodeURIComponent(orgData.name)}`).then(r => r.json()).catch(() => ({ jobs: [] })),
           ]);
-          setPosts(orgPosts);
-          // Merge and deduplicate jobs from both queries
           const jobMap = new Map<string, Job>();
           for (const j of [...(jobsByIdRes.jobs ?? []), ...(jobsByNameRes.jobs ?? [])]) {
             jobMap.set(j.id, j);
@@ -85,15 +75,24 @@ function OrgProfileContent() {
 
   if (loading) {
     return (
-      <div className="max-w-[900px] mx-auto">
-        <div className="skeleton h-[200px] rounded-b-3xl" />
-        <div className="px-4 py-6 md:px-12">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-[80px] rounded-[14px]" />)}
+      <div className="max-w-[960px] mx-auto">
+        <div className="px-4 pt-4">
+          <div className="skeleton h-4 w-32 rounded" />
+        </div>
+        <div className="px-4 mt-3">
+          <div className="skeleton h-[220px] rounded-2xl" />
+        </div>
+        <div className="px-4 -mt-[60px] relative z-10">
+          <div className="skeleton h-[180px] rounded-2xl" />
+        </div>
+        <div className="px-4 mt-6 grid grid-cols-1 md:grid-cols-[1fr_320px] gap-6">
+          <div className="flex flex-col gap-6">
+            <div className="skeleton h-[200px] rounded-2xl" />
+            <div className="skeleton h-[150px] rounded-2xl" />
           </div>
-          <div className="skeleton h-[100px] rounded-[14px] mb-6" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-[70px] rounded-2xl" />)}
+          <div className="flex flex-col gap-5">
+            <div className="skeleton h-[200px] rounded-2xl" />
+            <div className="skeleton h-[100px] rounded-2xl" />
           </div>
         </div>
       </div>
@@ -106,423 +105,398 @@ function OrgProfileContent() {
         <p className="text-5xl mb-4">&#127970;</p>
         <h2 className="text-2xl font-extrabold text-text mb-2">Organization Not Found</h2>
         <p className="text-text-sec mb-6">This organization doesn&apos;t exist or hasn&apos;t been added yet.</p>
-        <Link href="/partners">
-          <Button primary>Browse Partners</Button>
+        <Link href="/partners" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold bg-teal text-white no-underline hover:opacity-90 transition-opacity">
+          Browse Partners
         </Link>
       </div>
     );
   }
 
-  const events = posts.filter((p) => p.type === "event");
-  const totalJobs = jobs.length || org.openJobs || 0;
-
-  const memberSince = org.since || (org.createdAt && typeof org.createdAt === "object" && "toDate" in (org.createdAt as Record<string, unknown>)
-    ? new Date((org.createdAt as { toDate: () => Date }).toDate()).getFullYear().toString()
-    : undefined);
-
-  const stats = [
-    { label: "Open Jobs", value: String(totalJobs), icon: "\uD83D\uDCBC" },
-    ...(org.employees ? [{ label: "Employees", value: org.employees, icon: "\uD83D\uDC65" }] : []),
-    ...(org.size && !org.employees ? [{ label: "Company Size", value: org.size, icon: "\uD83C\uDFE2" }] : []),
-    ...(memberSince ? [{ label: "Since", value: memberSince, icon: "\uD83D\uDCC5" }] : []),
-    ...(org.verified ? [{ label: "Status", value: "Verified", icon: "\u2713" }] : []),
-  ];
-
-  const typeLabel =
-    org.type === "employer" ? "Employer" : org.type === "school" ? "Education" : org.type === "non-profit" ? "Non-Profit" : org.type === "government" ? "Government" : org.type === "legal" ? "Legal Services" : org.type === "professional" ? "Professional Services" : "Business";
-
   const websiteUrl = org.website
     ? org.website.startsWith("http") ? org.website : `https://${org.website}`
     : null;
 
+  const totalJobs = jobs.length || org.openJobs || 0;
+  const foundedYear = org.foundedYear ? String(org.foundedYear) : org.since || null;
+  const employeeCount = org.employees || org.size || null;
+  const isIndigenousOwned = org.tags?.some(t => t.toLowerCase().includes("indigenous"));
+  const hasSocialLinks = org.socialLinks && Object.values(org.socialLinks).some(Boolean);
+  const hasContact = websiteUrl || org.contactEmail || org.phone || org.address;
+  const hasTags = org.tags && org.tags.length > 0;
+  const hasQuickStats = foundedYear || employeeCount || org.verified || totalJobs > 0;
+
+  const typeLabel =
+    org.type === "employer" ? "Employer"
+    : org.type === "school" ? "Education"
+    : org.type === "non-profit" ? "Non-Profit"
+    : org.type === "government" ? "Government"
+    : org.type === "legal" ? "Legal Services"
+    : org.type === "professional" ? "Professional Services"
+    : "Business";
+
   return (
-    <div className="max-w-[900px] mx-auto pb-24">
-      {/* Hero Header */}
-      <div
-        className="rounded-b-3xl relative overflow-hidden"
-        style={{
-          background: org.bannerUrl
-            ? `linear-gradient(to bottom, rgba(10,25,47,.6), rgba(10,25,47,.85)), url(${org.bannerUrl}) center/cover no-repeat`
-            : "linear-gradient(160deg, var(--navy-deep) 0%, var(--navy) 50%, var(--teal) 100%)",
-          padding: "clamp(24px, 4vw, 40px) clamp(16px, 4vw, 48px)",
-        }}
-      >
+    <div className="max-w-[960px] mx-auto pb-16">
+      {/* Back Link */}
+      <div className="px-4 pt-4">
         <Link
           href="/partners"
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold mb-5 no-underline"
-          style={{ color: "rgba(255,255,255,.6)" }}
+          className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal"
         >
-          &#8592; All Partners
+          &#8592; Back to Directory
         </Link>
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start sm:items-center">
-          <Avatar name={org.shortName} size={80} src={org.logoUrl || org.logo} />
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <h1 className="text-xl sm:text-[28px] font-extrabold text-white m-0">
-                {org.name}
-              </h1>
-            </div>
-            <p className="text-[15px] mb-2.5" style={{ color: "rgba(255,255,255,.7)" }}>
-              &#128205; {displayLocation(org.location)}
-              {org.website && (
-                <>
-                  {" "}&bull;{" "}
-                  <a
-                    href={websiteUrl!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="no-underline hover:underline"
-                    style={{ color: "rgba(255,255,255,.7)" }}
-                  >
-                    {org.website}
-                  </a>
-                </>
-              )}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {org.tier === "premium" && (
-                <Badge text="&#10003; Premium Partner" color="#F5D78E" bg="rgba(245,215,142,.15)" small />
-              )}
-              {org.tier === "school" && (
-                <Badge text="&#127891; Education Partner" color="#6EE7B7" bg="rgba(110,231,183,.15)" small />
-              )}
-              {org.verified && (
-                <Badge text="&#10003; Verified" color="#6EE7B7" bg="rgba(110,231,183,.15)" small />
-              )}
-              <Badge
-                text={typeLabel}
-                color={org.type === "school" ? "var(--teal-light)" : "#F5D78E"}
-                bg={org.type === "school" ? "rgba(13,148,136,.2)" : "rgba(245,215,142,.15)"}
-                small
-              />
-              {org.industry && (
-                <Badge text={org.industry} color="rgba(255,255,255,.8)" bg="rgba(255,255,255,.12)" small />
-              )}
-              {org.size && (
-                <Badge text={org.size} color="rgba(255,255,255,.8)" bg="rgba(255,255,255,.12)" small />
-              )}
-            </div>
-          </div>
-          <div className="flex gap-2.5 mt-2 sm:mt-0 shrink-0">
-            <Button
-              small
-              onClick={handleFollow}
-              style={{
-                color: following ? "var(--navy)" : "#fff",
-                borderColor: "rgba(255,255,255,.25)",
-                background: following ? "#fff" : "transparent",
-              }}
-            >
-              {following ? "✓ Following" : "+ Follow"}
-            </Button>
-            <Button small onClick={handleMessage} style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)" }}>
-              &#128172; Message
-            </Button>
-            {websiteUrl && (
-              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                <Button small primary style={{ background: "var(--teal)" }}>
-                  Visit Website
-                </Button>
-              </a>
-            )}
-          </div>
-        </div>
-        <p
-          className="text-center mt-5 mb-0"
-          style={{ fontSize: 10, fontWeight: 800, letterSpacing: 3, color: "rgba(255,255,255,.4)" }}
-        >
-          EMPOWERING INDIGENOUS SUCCESS
-        </p>
       </div>
 
-      {/* Content */}
-      <div className="px-4 py-6 md:px-12">
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-7">
-          {stats.map((s, i) => (
+      {/* Banner */}
+      <div className="px-4 mt-3">
+        <div
+          className="rounded-2xl relative overflow-hidden h-[220px]"
+          style={{
+            background: org.bannerUrl
+              ? `url(${org.bannerUrl}) center/cover no-repeat`
+              : "linear-gradient(135deg, #2d1b4e, #1e293b, #0f172a)",
+          }}
+        >
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(to top, rgba(2,6,23,0.95) 0%, rgba(2,6,23,0.3) 40%, transparent 70%)" }}
+          />
+          {isIndigenousOwned && (
             <div
-              key={i}
-              className="p-4 text-center rounded-[14px]"
-              style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+              className="absolute top-4 right-4 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold"
+              style={{
+                background: "rgba(245,158,11,0.2)",
+                color: "#fbbf24",
+                border: "1px solid rgba(245,158,11,0.4)",
+                backdropFilter: "blur(12px)",
+              }}
             >
-              <span className="text-[22px]">{s.icon}</span>
-              <p className="text-[22px] font-extrabold text-text mt-1 mb-0">{s.value}</p>
-              <p className="text-[11px] text-text-muted m-0">{s.label}</p>
+              &#127998; Indigenous-Owned Business
             </div>
-          ))}
+          )}
+        </div>
+      </div>
+
+      {/* Header Card */}
+      <div className="px-4 -mt-[60px] relative z-[5]">
+        <div className="bg-card rounded-2xl border border-border p-6">
+          <div className="flex flex-col sm:flex-row gap-5 items-start">
+            {/* Logo */}
+            <div className="-mt-10" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
+              <Avatar
+                name={org.shortName || org.name}
+                size={80}
+                src={org.logoUrl || org.logo}
+              />
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-[28px] font-extrabold text-text leading-tight">
+                {org.name}
+              </h1>
+              {(org.industry || typeLabel) && (
+                <p className="mt-1 text-sm font-semibold text-gold">
+                  {[typeLabel, org.industry].filter(Boolean).join(" \u00B7 ")}
+                </p>
+              )}
+              <p className="mt-1.5 text-[13px] text-text-muted flex items-center gap-1">
+                &#128205; {displayLocation(org.location) || "Canada"}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 flex-wrap shrink-0">
+              {websiteUrl && (
+                <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-teal text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)]">
+                    &#127760; Visit Website
+                  </button>
+                </a>
+              )}
+              <button
+                onClick={handleFollow}
+                className={`inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all border border-border hover:border-teal hover:text-teal ${
+                  following ? "bg-teal text-white border-teal" : "bg-transparent text-text-muted"
+                }`}
+              >
+                {following ? "\u2713 Following" : "+ Follow"}
+              </button>
+              <button
+                onClick={handleMessage}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:border-teal hover:text-teal"
+              >
+                &#128172; Message
+              </button>
+            </div>
+          </div>
+
+          {/* Social Links Row */}
+          {hasSocialLinks && (
+            <div className="flex gap-2 flex-wrap mt-4">
+              {org.socialLinks!.instagram && (
+                <a
+                  href={org.socialLinks!.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px"
+                >
+                  Instagram
+                </a>
+              )}
+              {org.socialLinks!.facebook && (
+                <a
+                  href={org.socialLinks!.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px"
+                >
+                  Facebook
+                </a>
+              )}
+              {org.socialLinks!.linkedin && (
+                <a
+                  href={org.socialLinks!.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px"
+                >
+                  LinkedIn
+                </a>
+              )}
+              {org.socialLinks!.twitter && (
+                <a
+                  href={org.socialLinks!.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px"
+                >
+                  Twitter / X
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Quick Stats */}
+          {hasQuickStats && (
+            <div className="flex gap-6 flex-wrap mt-4 pt-4 border-t border-border">
+              {foundedYear && (
+                <div className="flex items-center gap-2">
+                  <span className="text-base">&#128197;</span>
+                  <span className="text-[13px] text-text-muted">
+                    Founded <strong className="text-text font-semibold">{foundedYear}</strong>
+                  </span>
+                </div>
+              )}
+              {employeeCount && (
+                <div className="flex items-center gap-2">
+                  <span className="text-base">&#128101;</span>
+                  <span className="text-[13px] text-text-muted">
+                    <strong className="text-text font-semibold">{employeeCount}</strong> employees
+                  </span>
+                </div>
+              )}
+              {org.verified && (
+                <div className="flex items-center gap-2">
+                  <span className="text-base">&#127942;</span>
+                  <span className="text-[13px] text-text-muted">
+                    <strong className="text-text font-semibold">IOPPS Verified</strong>
+                  </span>
+                </div>
+              )}
+              {totalJobs > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-base">&#128188;</span>
+                  <span className="text-[13px] text-text-muted">
+                    <strong className="text-text font-semibold">{totalJobs}</strong> open job{totalJobs !== 1 ? "s" : ""}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Content: Main + Sidebar */}
+      <div className="px-4 mt-6 grid grid-cols-1 md:grid-cols-[1fr_320px] gap-6">
+        {/* Main Column */}
+        <div className="flex flex-col gap-6">
+          {/* About Section */}
+          {org.description && (
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="text-base font-bold text-text mb-4 flex items-center gap-2">
+                <span className="text-lg">&#128214;</span> About
+              </h2>
+              <p className="text-sm text-text-muted leading-[1.7] whitespace-pre-wrap">
+                {org.description}
+              </p>
+            </div>
+          )}
+
+          {/* Services Section */}
+          {org.services && org.services.length > 0 && (
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="text-base font-bold text-text mb-4 flex items-center gap-2">
+                <span className="text-lg">&#128736;</span> Services
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {org.services.map((svc) => (
+                  <div
+                    key={svc}
+                    className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl border border-border/30 bg-bg"
+                  >
+                    <span className="text-teal text-sm shrink-0">&#10146;</span>
+                    <span className="text-[13px] font-semibold text-text">{svc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Open Positions */}
+          {jobs.length > 0 && (
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="text-base font-bold text-text mb-4 flex items-center gap-2">
+                <span className="text-lg">&#128188;</span> Open Positions
+                <span className="text-xs text-text-muted font-normal ml-1">({jobs.length})</span>
+              </h2>
+              <div className="flex flex-col gap-2.5">
+                {jobs.map((j) => (
+                  <Link key={j.id} href={`/jobs/${j.slug || j.id}`} className="no-underline block">
+                    <div className="px-4 py-3.5 rounded-xl border border-border/30 bg-bg transition-all hover:-translate-y-0.5 hover:border-teal/30 cursor-pointer">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        {(j.jobType || j.employmentType) && (
+                          <span
+                            className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold"
+                            style={{ background: "rgba(13,148,136,0.1)", color: "var(--teal)" }}
+                          >
+                            {j.jobType || j.employmentType}
+                          </span>
+                        )}
+                        {j.featured && (
+                          <span
+                            className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold"
+                            style={{ background: "rgba(217,119,6,0.1)", color: "var(--gold)" }}
+                          >
+                            Featured
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold text-text">{j.title}</p>
+                      <p className="text-xs text-text-muted mt-1">
+                        {[j.location, j.salary].filter(Boolean).join(" \u00B7 ")}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sign-in CTA (unauthenticated users only) */}
+          {!user && (
+            <div
+              className="rounded-2xl p-6 text-center border border-teal/20"
+              style={{ background: "linear-gradient(135deg, rgba(13,148,136,0.08), rgba(6,182,212,0.05))" }}
+            >
+              <h4 className="text-base font-bold text-text">Ready to apply?</h4>
+              <p className="mt-1.5 text-xs text-text-muted">
+                Create a free account to apply for positions and connect with Indigenous employers.
+              </p>
+              <div className="flex gap-2 justify-center mt-3.5">
+                <Link href="/signup" className="no-underline">
+                  <button className="px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-teal text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)]">
+                    Join Free
+                  </button>
+                </Link>
+                <Link href="/login" className="no-underline">
+                  <button className="px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:border-teal hover:text-teal">
+                    Sign In
+                  </button>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Two-column layout: About + Jobs (matching prototype) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column — About */}
-          <div>
-            <h3 className="text-lg font-bold text-text mb-2.5">About</h3>
-            <p className="text-sm text-text-sec leading-relaxed mb-5">{org.description}</p>
+        {/* Right Sidebar */}
+        <div className="flex flex-col gap-5">
+          {/* Contact Card */}
+          {hasContact && (
+            <div className="bg-card rounded-2xl border border-border p-5">
+              <h3 className="text-[13px] font-bold uppercase tracking-wider text-text-muted mb-3.5">
+                Contact
+              </h3>
+              <div className="flex flex-col">
+                {websiteUrl && (
+                  <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
+                    <span className="text-base w-5 text-center shrink-0">&#127760;</span>
+                    <div>
+                      <p className="text-[11px] text-text-muted">Website</p>
+                      <a
+                        href={websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[13px] text-teal no-underline hover:underline"
+                      >
+                        {org.website}
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {org.contactEmail && (
+                  <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
+                    <span className="text-base w-5 text-center shrink-0">&#9993;</span>
+                    <div>
+                      <p className="text-[11px] text-text-muted">Email</p>
+                      <a
+                        href={`mailto:${org.contactEmail}`}
+                        className="text-[13px] text-teal no-underline hover:underline"
+                      >
+                        {org.contactEmail}
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {org.phone && (
+                  <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
+                    <span className="text-base w-5 text-center shrink-0">&#128222;</span>
+                    <div>
+                      <p className="text-[11px] text-text-muted">Phone</p>
+                      <p className="text-[13px] text-text">{org.phone}</p>
+                    </div>
+                  </div>
+                )}
+                {org.address && (
+                  <div className="flex items-center gap-2.5 py-2.5">
+                    <span className="text-base w-5 text-center shrink-0">&#128205;</span>
+                    <div>
+                      <p className="text-[11px] text-text-muted">Address</p>
+                      <p className="text-[13px] text-text">{org.address}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
-            {/* Tags / Services */}
-            {(org.tags || []).length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-5">
-                {(org.tags || []).map((tag) => (
+          {/* Tags Card */}
+          {hasTags && (
+            <div className="bg-card rounded-2xl border border-border p-5">
+              <h3 className="text-[13px] font-bold uppercase tracking-wider text-text-muted mb-3.5">
+                Tags
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {org.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-lg text-xs font-semibold text-teal"
-                    style={{ padding: "4px 12px", background: "rgba(13,148,136,.1)" }}
+                    className="px-3 py-1 rounded-full text-[11px] font-medium text-text-muted bg-bg border border-border"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
-            )}
-
-            {/* Services */}
-            {org.services && org.services.length > 0 && (
-              <div className="mb-5">
-                <p className="text-xs font-bold text-text-muted mb-2 tracking-[1px]">SERVICES</p>
-                <div className="flex flex-wrap gap-2">
-                  {org.services.map((svc) => (
-                    <span
-                      key={svc}
-                      className="rounded-lg text-xs font-semibold"
-                      style={{ padding: "4px 12px", background: "rgba(13,148,136,.06)", color: "var(--teal)", border: "1.5px solid rgba(13,148,136,.1)" }}
-                    >
-                      {svc}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Contact & Info */}
-            {user && (
-              <Card className="mb-5">
-                <div className="p-4">
-                  <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">CONTACT &amp; INFO</p>
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-2.5 text-sm text-text-sec">
-                      <span>&#128205;</span>
-                      <span>{displayLocation(org.location)}</span>
-                    </div>
-                    {org.website && (
-                      <div className="flex items-center gap-2.5 text-sm text-text-sec">
-                        <span>&#127760;</span>
-                        <a
-                          href={websiteUrl!}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-teal hover:underline no-underline"
-                        >
-                          {org.website}
-                        </a>
-                      </div>
-                    )}
-                    {org.phone && (
-                      <div className="flex items-center gap-2.5 text-sm text-text-sec">
-                        <span>&#128222;</span>
-                        <span>{org.phone}</span>
-                      </div>
-                    )}
-                    {org.contactEmail && (
-                      <div className="flex items-center gap-2.5 text-sm text-text-sec">
-                        <span>&#128231;</span>
-                        <a href={`mailto:${org.contactEmail}`} className="text-teal hover:underline no-underline">
-                          {org.contactEmail}
-                        </a>
-                      </div>
-                    )}
-                    {org.address && (
-                      <div className="flex items-center gap-2.5 text-sm text-text-sec">
-                        <span>&#127970;</span>
-                        <span>{org.address}</span>
-                      </div>
-                    )}
-                    {org.industry && (
-                      <div className="flex items-center gap-2.5 text-sm text-text-sec">
-                        <span>&#127981;</span>
-                        <span>{org.industry}</span>
-                      </div>
-                    )}
-                    {memberSince && (
-                      <div className="flex items-center gap-2.5 text-sm text-text-sec">
-                        <span>&#128197;</span>
-                        <span>Member since {memberSince}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Social Links */}
-            {user && org.socialLinks && Object.values(org.socialLinks).some(Boolean) && (
-              <Card>
-                <div className="p-4">
-                  <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">SOCIAL</p>
-                  <div className="flex gap-3">
-                    {org.socialLinks.facebook && (
-                      <a href={org.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-text-sec hover:text-teal transition-colors no-underline text-sm font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(13,148,136,.06)" }}>
-                        Facebook
-                      </a>
-                    )}
-                    {org.socialLinks.linkedin && (
-                      <a href={org.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-text-sec hover:text-teal transition-colors no-underline text-sm font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(13,148,136,.06)" }}>
-                        LinkedIn
-                      </a>
-                    )}
-                    {org.socialLinks.instagram && (
-                      <a href={org.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-text-sec hover:text-teal transition-colors no-underline text-sm font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(13,148,136,.06)" }}>
-                        Instagram
-                      </a>
-                    )}
-                    {org.socialLinks.twitter && (
-                      <a href={org.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-text-sec hover:text-teal transition-colors no-underline text-sm font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(13,148,136,.06)" }}>
-                        Twitter / X
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            )}
-          </div>
-
-          {/* Right Column — Jobs & Events */}
-          <div>
-            {/* Open Positions from jobs collection */}
-            {jobs.length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-bold text-text m-0">Open Positions</h3>
-                  <span className="text-xs font-semibold text-text-muted">{jobs.length} position{jobs.length !== 1 ? "s" : ""}</span>
-                </div>
-                <div className="flex flex-col gap-2.5">
-                  {jobs.map((j) => (
-                    <Link key={j.id} href={`/jobs/${j.id}`} className="no-underline">
-                      <Card className="cursor-pointer hover:shadow-md">
-                        <div className="flex justify-between items-center" style={{ padding: "14px 16px" }}>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
-                              {j.featured && <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small />}
-                            </div>
-                            <p className="text-sm font-bold text-text mt-1 mb-0 truncate">{j.title}</p>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              {(j.jobType || j.employmentType) && <span className="text-xs text-text-muted">{j.jobType || j.employmentType}</span>}
-                              {j.salary && <span className="text-xs text-text-muted">&bull; {j.salary}</span>}
-                              {j.location && <span className="text-xs text-text-muted">&bull; {j.location}</span>}
-                            </div>
-                          </div>
-                          <span className="text-text-muted text-lg ml-2">&#8250;</span>
-                        </div>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Legacy posts jobs (if any exist and no jobs collection data) */}
-            {jobs.length === 0 && posts.filter((p) => p.type === "job").length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-bold text-text m-0">Open Positions</h3>
-                  <span className="text-xs font-semibold text-text-muted">{posts.filter((p) => p.type === "job").length} position{posts.filter((p) => p.type === "job").length !== 1 ? "s" : ""}</span>
-                </div>
-                <div className="flex flex-col gap-2.5">
-                  {posts.filter((p) => p.type === "job").map((j) => {
-                    const jobSlug = j.id.replace(/^job-/, "");
-                    return (
-                      <Link key={j.id} href={`/jobs/${jobSlug}`} className="no-underline">
-                        <Card className="cursor-pointer hover:shadow-md">
-                          <div className="flex justify-between items-center" style={{ padding: "14px 16px" }}>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Badge text="Job" color="var(--blue)" bg="var(--blue-soft)" small />
-                                {j.featured && <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small />}
-                              </div>
-                              <p className="text-sm font-bold text-text mt-1 mb-0 truncate">{j.title}</p>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {j.jobType && <span className="text-xs text-text-muted">{j.jobType}</span>}
-                                {j.salary && <span className="text-xs text-text-muted">&bull; {j.salary}</span>}
-                                {j.location && <span className="text-xs text-text-muted">&bull; {j.location}</span>}
-                              </div>
-                              {j.closingSoon && (
-                                <span className="text-[10px] font-bold text-red mt-1.5 inline-block">Closing Soon</span>
-                              )}
-                            </div>
-                            <span className="text-text-muted text-lg ml-2">&#8250;</span>
-                          </div>
-                        </Card>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Upcoming Events */}
-            {events.length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-bold text-text m-0">Upcoming Events</h3>
-                  <span className="text-xs font-semibold text-text-muted">{events.length} event{events.length !== 1 ? "s" : ""}</span>
-                </div>
-                <div className="flex flex-col gap-2.5">
-                  {events.map((e) => {
-                    const eventSlug = e.id.replace(/^event-/, "");
-                    return (
-                      <Link key={e.id} href={`/events/${eventSlug}`} className="no-underline">
-                        <Card className="cursor-pointer hover:shadow-md">
-                          <div className="flex justify-between items-center" style={{ padding: "14px 16px" }}>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Badge text="Event" color="var(--purple)" bg="var(--purple-soft)" small />
-                                {e.eventType && <Badge text={e.eventType} color="var(--teal)" bg="var(--teal-soft)" small />}
-                              </div>
-                              <p className="text-sm font-bold text-text mt-1 mb-0 truncate">{e.title}</p>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {e.dates && <span className="text-xs text-text-muted">&#128197; {e.dates}</span>}
-                                {e.location && <span className="text-xs text-text-muted">&bull; &#128205; {e.location}</span>}
-                                {e.price && <span className="text-xs text-text-muted">&bull; {e.price}</span>}
-                              </div>
-                            </div>
-                            <span className="text-text-muted text-lg ml-2">&#8250;</span>
-                          </div>
-                        </Card>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Sign in prompt for unauthenticated visitors — soft CTA to apply */}
-            {!user && totalJobs > 0 && (
-              <Card className="mb-6" style={{ border: "1px solid rgba(13,148,136,.2)" }}>
-                <div className="p-5 text-center">
-                  <p className="text-text font-bold mb-1">Ready to apply?</p>
-                  <p className="text-text-muted text-sm mb-4">
-                    Create a free account to apply for positions and connect with Indigenous employers.
-                  </p>
-                  <div className="flex gap-2 justify-center">
-                    <Link href="/signup">
-                      <Button primary small>Join Free</Button>
-                    </Link>
-                    <Link href="/login">
-                      <Button small>Sign In</Button>
-                    </Link>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Empty state if no posts and no jobs */}
-            {jobs.length === 0 && posts.filter((p) => p.type === "job").length === 0 && events.length === 0 && (
-              <Card>
-                <div className="p-6 text-center">
-                  <p className="text-text-muted text-sm">No open positions or events at this time. Follow this organization to get notified.</p>
-                </div>
-              </Card>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
