@@ -9,7 +9,7 @@ import { type Organization } from "@/lib/firestore/organizations";
 import { displayLocation } from "@/lib/utils";
 
 // ── Types ──
-interface SchoolProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; campus?: string; location?: string; schoolId?: string; institutionName?: string; }
+interface SchoolProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; type?: string; campus?: string; location?: string; region?: string; schoolId?: string; institutionName?: string; provider?: string; description?: string; cost?: string; eligibility?: string; format?: string; applyUrl?: string; }
 interface SchoolJob { id: string; title: string; slug?: string; location?: string; jobType?: string; employmentType?: string; salary?: string; featured?: boolean; employerId?: string; employerName?: string; }
 interface SchoolScholarship { id: string; title: string; amount?: string; deadline?: string; description?: string; employerId?: string; organization?: string; }
 interface Campus { name: string; location: string; type?: string; }
@@ -79,7 +79,7 @@ function SchoolProfileContent() {
           ));
 
           // Default to first non-empty tab
-          if (allPrograms.filter((p: SchoolProgram) => p.schoolId === orgId || (p.institutionName && p.institutionName.toLowerCase().includes(orgName.toLowerCase()))).length > 0) {
+          if (allPrograms.filter((p: SchoolProgram) => p.schoolId === orgId || (p.institutionName && p.institutionName.toLowerCase().includes(orgName.toLowerCase())) || (p.provider && p.provider.toLowerCase().includes(orgName.toLowerCase()))).length > 0) {
             setActiveTab("programs");
           } else if (jobMap.size > 0) {
             setActiveTab("careers");
@@ -286,22 +286,24 @@ function SchoolProfileContent() {
                 {/* Programs Panel */}
                 {activeTab === "programs" && (
                   <div className="flex flex-col gap-2.5">
-                    {programs.slice(0, 5).map((p, i) => (
-                      <div key={p.id} className="flex items-center justify-between px-4 py-3.5 rounded-xl transition-all"
+                    {programs.slice(0, 6).map((p, i) => (
+                      <div key={p.id} className="px-4 py-3.5 rounded-xl transition-all"
                         style={{
                           background: i === 0 ? "rgba(167,139,250,0.06)" : "rgba(30,41,59,0.4)",
                           border: i === 0 ? "1px solid rgba(167,139,250,0.15)" : "1px solid rgba(255,255,255,0.04)",
                         }}>
-                        <div>
+                        <div className="flex items-center justify-between mb-1">
                           <p className="text-sm font-bold text-text">{p.title || p.programName}</p>
-                          <p className="text-xs text-text-muted mt-0.5">
-                            {[p.credential, p.duration, p.campus || p.location].filter(Boolean).join(" · ")}
-                          </p>
+                          {(p.credential || p.type) && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 ml-2" style={{ background: PURPLE_SOFT, color: PURPLE }}>{p.type || p.credential}</span>}
                         </div>
-                        {p.credential && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md" style={{ background: PURPLE_SOFT, color: PURPLE }}>{p.credential}</span>}
+                        <p className="text-xs text-text-muted">
+                          {[p.duration, p.format, p.region || p.campus || p.location].filter(Boolean).join(" · ")}
+                        </p>
+                        {p.description && <p className="text-[11px] text-text-muted mt-1.5 line-clamp-2 leading-relaxed">{p.description}</p>}
+                        {p.cost && <p className="text-[11px] mt-1" style={{ color: PURPLE }}>💰 {p.cost}</p>}
                       </div>
                     ))}
-                    {programs.length > 5 && (
+                    {programs.length > 6 && (
                       <div className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer"
                         style={{ color: PURPLE, border: `1px solid rgba(167,139,250,0.2)`, background: "rgba(167,139,250,0.04)" }}>
                         View All {programs.length} Programs →

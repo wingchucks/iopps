@@ -13,7 +13,7 @@ import { displayLocation } from "@/lib/utils";
 // ── Types for opportunities ──
 interface OrgEvent { id: string; title: string; eventType?: string; date?: string; dates?: string; location?: string; employerId?: string; organizerName?: string; }
 interface OrgScholarship { id: string; title: string; amount?: string; deadline?: string; description?: string; employerId?: string; organization?: string; }
-interface OrgProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; campus?: string; location?: string; schoolId?: string; institutionName?: string; }
+interface OrgProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; campus?: string; location?: string; schoolId?: string; institutionName?: string; provider?: string; }
 
 // ── Helpers ──
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -131,7 +131,7 @@ function OrgProfileContent() {
           // Filter programs by org
           const allPrograms: OrgProgram[] = programsRes.programs ?? [];
           setPrograms(allPrograms.filter((p: OrgProgram) =>
-            p.schoolId === orgId || (p.institutionName && p.institutionName.toLowerCase().includes(orgName.toLowerCase()))
+            p.schoolId === orgId || (p.institutionName && p.institutionName.toLowerCase().includes(orgName.toLowerCase())) || (p.provider && p.provider.toLowerCase().includes(orgName.toLowerCase()))
           ));
 
           // Track view

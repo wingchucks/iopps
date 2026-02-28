@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 export const runtime = "nodejs";
@@ -26,7 +27,7 @@ export async function GET() {
     const snap = await db
       .collection("training_programs")
       .where("active", "==", true)
-      .limit(100)
+      .limit(500)
       .get();
 
     const programs = snap.docs.map((d) => serialize({ id: d.id, ...d.data() }));
