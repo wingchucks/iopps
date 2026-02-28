@@ -48,7 +48,7 @@ const DAY_LABELS: Record<string, string> = {
 };
 
 const TABS = [
-  "Overview", "Applications", "Events", "Scholarships",
+  "Overview", "Jobs", "Applications", "Events", "Scholarships",
   "Talent Search", "Analytics", "Edit Profile", "Team", "Templates", "Billing",
 ];
 
@@ -1131,6 +1131,501 @@ function BillingTab({ org, orgId }: { org: Organization | null; orgId: string })
     </>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════
+   JOBS TAB
+   ═══════════════════════════════════════════════════════════ */
+function JobsTab({ jobs, orgId, getToken, formatTimestamp }: {
+  jobs: DashJob[]; orgId: string; getToken: () => Promise<string>; formatTimestamp: (ts: unknown) => string;
+}) {
+  const [filter, setFilter] = useState<"all"|"active"|"draft"|"expired">("all");
+  const router = useRouter();
+
+  const filtered = filter === "all" ? jobs : jobs.filter((j) => {
+    if (filter === "active") return !j.status || j.status === "active";
+    if (filter === "draft") return j.status === "draft";
+    if (filter === "expired") return j.status === "expired" || j.status === "closed";
+    return true;
+  });
+
+  const statusColor = (s?: string) => {
+    if (!s || s === "active") return { bg: "rgba(34,197,94,0.1)", text: "#22C55E" };
+    if (s === "draft") return { bg: "rgba(245,158,11,0.1)", text: "#F59E0B" };
+    if (s === "expired" || s === "closed") return { bg: "rgba(239,68,68,0.1)", text: "#EF4444" };
+    return { bg: "rgba(148,163,184,0.1)", text: "#94A3B8" };
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <h2 className="text-xl font-extrabold tracking-tight" style={{
+          background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
+          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+        }}>Jobs ({jobs.length})</h2>
+        <div className="flex gap-2">
+          {(["all","active","draft","expired"] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all capitalize"
+              style={filter === f ? { background: `rgba(${AMBER_RGB},0.12)`, color: AMBER } : { background: "rgba(255,255,255,0.03)", color: "var(--text-muted)" }}
+            >{f === "all" ? `All (${jobs.length})` : f}</button>
+          ))}
+        </div>
+      </div>
+      {filtered.length === 0 ? (
+        <DashCard>
+          <div className="text-center py-12">
+            <p className="text-4xl mb-3 opacity-30">💼</p>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>No {filter === "all" ? "" : filter + " "}jobs found.</p>
+          </div>
+        </DashCard>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filtered.map((job) => {
+            const sc = statusColor(job.status);
+            return (
+              <DashCard key={job.id}>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase" style={{ background: sc.bg, color: sc.text }}>
+                        {job.status || "Active"}
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold truncate" style={{ color: "var(--text)" }}>{job.title}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      {formatTimestamp(job.createdAt)}{job.location ? ` · ${job.location}` : ""} · {job.applicationCount} application{job.applicationCount !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={() => router.push(`/org/dashboard/jobs/${job.slug || job.id}/edit`)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
+                      style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-sec)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              </DashCard>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   APPLICATIONS TAB
+   ═══════════════════════════════════════════════════════════ */
+function ApplicationsTab({ jobs, getToken }: { jobs: DashJob[]; getToken: () => Promise<string> }) {
+  const [applications, setApplications] = useState<Array<{id:string; jobTitle:string; applicantName:string; email:string; status:string; appliedAt:string; resumeUrl?:string}>>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = await getToken();
+        const res = await fetch("/api/employer/applications", { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          setApplications(data.applications || []);
+        }
+      } catch { /* */ }
+      setLoading(false);
+    })();
+  }, [getToken]);
+
+  const statusColors: Record<string, {bg:string;text:string}> = {
+    new: { bg: "rgba(59,130,246,0.1)", text: "#3B82F6" },
+    reviewed: { bg: "rgba(245,158,11,0.1)", text: "#F59E0B" },
+    shortlisted: { bg: "rgba(34,197,94,0.1)", text: "#22C55E" },
+    rejected: { bg: "rgba(239,68,68,0.1)", text: "#EF4444" },
+  };
+
+  const filtered = statusFilter === "all" ? applications : applications.filter((a) => a.status === statusFilter);
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <h2 className="text-xl font-extrabold tracking-tight" style={{
+          background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
+          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+        }}>Applications ({applications.length})</h2>
+        <div className="flex gap-2">
+          {["all","new","reviewed","shortlisted","rejected"].map((s) => (
+            <button key={s} onClick={() => setStatusFilter(s)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all capitalize"
+              style={statusFilter === s ? { background: `rgba(${AMBER_RGB},0.12)`, color: AMBER } : { background: "rgba(255,255,255,0.03)", color: "var(--text-muted)" }}
+            >{s}</button>
+          ))}
+        </div>
+      </div>
+      {loading ? (
+        <div className="flex flex-col gap-3">{[1,2,3].map((i) => <div key={i} className="h-24 rounded-2xl skeleton" />)}</div>
+      ) : filtered.length === 0 ? (
+        <DashCard>
+          <div className="text-center py-12">
+            <p className="text-4xl mb-3 opacity-30">📋</p>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>No applications yet. Applications will appear here when candidates apply to your jobs.</p>
+          </div>
+        </DashCard>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filtered.map((app) => {
+            const sc = statusColors[app.status] || statusColors.new;
+            return (
+              <DashCard key={app.id}>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: sc.bg, color: sc.text }}>
+                    {app.applicantName?.charAt(0)?.toUpperCase() || "?"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{app.applicantName}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Applied for: {app.jobTitle} · {app.email}</p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0" style={{ background: sc.bg, color: sc.text }}>
+                    {app.status}
+                  </span>
+                  {app.resumeUrl && (
+                    <a href={app.resumeUrl} target="_blank" rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline transition-all shrink-0"
+                      style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-sec)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                      Resume
+                    </a>
+                  )}
+                </div>
+              </DashCard>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EVENTS TAB
+   ═══════════════════════════════════════════════════════════ */
+function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise<string> }) {
+  const [events, setEvents] = useState<Array<{id:string; title:string; eventType?:string; date?:string; location?:string; status?:string}>>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ title: "", eventType: "Community", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "" });
+  const EVENT_TYPES = ["Powwow", "Career Fair", "Conference", "Community", "Cultural", "Sports", "Fundraiser", "Workshop", "Ceremony"];
+  const inputCls = "w-full px-4 py-3 rounded-xl text-sm";
+  const inputSt: React.CSSProperties = { background: "rgba(2,6,23,0.6)", border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit" };
+  const lblSt: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" as const, letterSpacing: "0.5px" };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = await getToken();
+        const res = await fetch("/api/employer/events", { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) { const d = await res.json(); setEvents(d.events || []); }
+      } catch { /* */ }
+      setLoading(false);
+    })();
+  }, [getToken]);
+
+  const handleCreate = async () => {
+    if (!form.title.trim()) return;
+    setSaving(true);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/employer/events", {
+        method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(form),
+      });
+      if (res.ok) { const c = await res.json(); setEvents((p) => [c, ...p]); setForm({ title: "", eventType: "Community", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "" }); setShowForm(false); }
+    } catch { /* */ }
+    setSaving(false);
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-xl font-extrabold tracking-tight" style={{ background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Events ({events.length})</h2>
+        <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Create Event"}</GlowButton>
+      </div>
+      {showForm && (
+        <DashCard>
+          <h3 className="text-base font-bold mb-5" style={{ color: "var(--text)" }}>New Event</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <div><label style={lblSt}>Title *</label><input className={inputCls} style={inputSt} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Event name" /></div>
+            <div><label style={lblSt}>Type</label><select className={inputCls} style={{ ...inputSt, cursor: "pointer" }} value={form.eventType} onChange={(e) => setForm((p) => ({ ...p, eventType: e.target.value }))}>{EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
+            <div><label style={lblSt}>Start Date</label><input type="date" className={inputCls} style={inputSt} value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} /></div>
+            <div><label style={lblSt}>End Date</label><input type="date" className={inputCls} style={inputSt} value={form.endDate} onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))} /></div>
+            <div><label style={lblSt}>Location</label><input className={inputCls} style={inputSt} value={form.location} onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))} placeholder="City, Province" /></div>
+            <div><label style={lblSt}>Admission</label><select className={inputCls} style={{ ...inputSt, cursor: "pointer" }} value={form.admissionType} onChange={(e) => setForm((p) => ({ ...p, admissionType: e.target.value }))}><option value="Free">Free</option><option value="Paid">Paid</option><option value="Donation">Donation</option></select></div>
+          </div>
+          <div className="mb-4"><label style={lblSt}>Description</label><textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} /></div>
+          <div className="mb-5"><label style={lblSt}>External Link</label><input className={inputCls} style={inputSt} value={form.externalUrl} onChange={(e) => setForm((p) => ({ ...p, externalUrl: e.target.value }))} placeholder="https://..." /></div>
+          <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>{saving ? "Creating..." : "Create Event"}</GlowButton>
+        </DashCard>
+      )}
+      {loading ? (
+        <div className="flex flex-col gap-3">{[1,2,3].map((i) => <div key={i} className="h-20 rounded-2xl skeleton" />)}</div>
+      ) : events.length === 0 && !showForm ? (
+        <DashCard><div className="text-center py-12"><p className="text-4xl mb-3 opacity-30">📅</p><p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No events yet</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>Create events like job fairs, pow wows, or community gatherings.</p></div></DashCard>
+      ) : (
+        <div className="flex flex-col gap-2 mt-4">
+          {events.map((ev) => (
+            <DashCard key={ev.id}>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.08)" }}>
+                  <div className="text-[10px] font-bold" style={{ color: "#F59E0B" }}>{ev.date ? new Date(ev.date).toLocaleDateString("en-US", { month: "short" }).toUpperCase() : ""}</div>
+                  <div className="text-lg font-black leading-none" style={{ color: "#F59E0B" }}>{ev.date ? new Date(ev.date).getDate() : ""}</div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{ev.title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{ev.eventType && <span className="mr-2">🎪 {ev.eventType}</span>}{ev.date ? new Date(ev.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}{ev.location ? ` · ${ev.location}` : ""}</p>
+                </div>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0" style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}>{ev.status || "Active"}</span>
+              </div>
+            </DashCard>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCHOLARSHIPS TAB
+   ═══════════════════════════════════════════════════════════ */
+function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise<string> }) {
+  const [scholarships, setScholarships] = useState<Array<{id:string; title:string; amount?:string; deadline?:string; status?:string; description?:string}>>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ title: "", amount: "", deadline: "", description: "", eligibility: "", howToApply: "", externalUrl: "" });
+  const inputCls = "w-full px-4 py-3 rounded-xl text-sm";
+  const inputSt: React.CSSProperties = { background: "rgba(2,6,23,0.6)", border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit" };
+  const lblSt: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" as const, letterSpacing: "0.5px" };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = await getToken();
+        const res = await fetch("/api/employer/scholarships", { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) { const d = await res.json(); setScholarships(d.scholarships || []); }
+      } catch { /* */ }
+      setLoading(false);
+    })();
+  }, [getToken]);
+
+  const handleCreate = async () => {
+    if (!form.title.trim()) return;
+    setSaving(true);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/employer/scholarships", {
+        method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(form),
+      });
+      if (res.ok) { const c = await res.json(); setScholarships((p) => [c, ...p]); setForm({ title: "", amount: "", deadline: "", description: "", eligibility: "", howToApply: "", externalUrl: "" }); setShowForm(false); }
+    } catch { /* */ }
+    setSaving(false);
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-xl font-extrabold tracking-tight" style={{ background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Scholarships ({scholarships.length})</h2>
+        <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Post Scholarship"}</GlowButton>
+      </div>
+      {showForm && (
+        <DashCard>
+          <h3 className="text-base font-bold mb-5" style={{ color: "var(--text)" }}>New Scholarship</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <div><label style={lblSt}>Title *</label><input className={inputCls} style={inputSt} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Scholarship name" /></div>
+            <div><label style={lblSt}>Amount</label><input className={inputCls} style={inputSt} value={form.amount} onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))} placeholder="e.g. $5,000" /></div>
+            <div><label style={lblSt}>Deadline</label><input type="date" className={inputCls} style={inputSt} value={form.deadline} onChange={(e) => setForm((p) => ({ ...p, deadline: e.target.value }))} /></div>
+            <div><label style={lblSt}>External Link</label><input className={inputCls} style={inputSt} value={form.externalUrl} onChange={(e) => setForm((p) => ({ ...p, externalUrl: e.target.value }))} placeholder="https://..." /></div>
+          </div>
+          <div className="mb-4"><label style={lblSt}>Description</label><textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} /></div>
+          <div className="mb-4"><label style={lblSt}>Eligibility</label><textarea className={inputCls} rows={2} style={{ ...inputSt, resize: "vertical" as const }} value={form.eligibility} onChange={(e) => setForm((p) => ({ ...p, eligibility: e.target.value }))} placeholder="Who is eligible?" /></div>
+          <div className="mb-5"><label style={lblSt}>How to Apply</label><textarea className={inputCls} rows={2} style={{ ...inputSt, resize: "vertical" as const }} value={form.howToApply} onChange={(e) => setForm((p) => ({ ...p, howToApply: e.target.value }))} placeholder="Application instructions" /></div>
+          <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>{saving ? "Creating..." : "Post Scholarship"}</GlowButton>
+        </DashCard>
+      )}
+      {loading ? (
+        <div className="flex flex-col gap-3">{[1,2,3].map((i) => <div key={i} className="h-20 rounded-2xl skeleton" />)}</div>
+      ) : scholarships.length === 0 && !showForm ? (
+        <DashCard><div className="text-center py-12"><p className="text-4xl mb-3 opacity-30">🎓</p><p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No scholarships yet</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>Share scholarship opportunities for Indigenous students.</p></div></DashCard>
+      ) : (
+        <div className="flex flex-col gap-2 mt-4">
+          {scholarships.map((s) => (
+            <DashCard key={s.id}>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: "rgba(251,191,36,0.08)" }}>🎓</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{s.title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{s.amount && <span className="mr-2">💰 {s.amount}</span>}{s.deadline && <span>Deadline: {new Date(s.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>}</p>
+                </div>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0" style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}>{s.status || "Active"}</span>
+              </div>
+            </DashCard>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TALENT SEARCH TAB
+   ═══════════════════════════════════════════════════════════ */
+function TalentSearchTab() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Array<{id:string; name:string; title?:string; location?:string; skills?:string[]}>>([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    setLoading(true); setSearched(true);
+    try {
+      const res = await fetch(`/api/talent?q=${encodeURIComponent(query)}`);
+      if (res.ok) { const d = await res.json(); setResults(d.members || []); }
+    } catch { /* */ }
+    setLoading(false);
+  };
+
+  return (
+    <>
+      <h2 className="text-xl font-extrabold tracking-tight mb-5" style={{ background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Talent Search</h2>
+      <DashCard>
+        <div className="flex gap-3 mb-6">
+          <input className="flex-1 px-4 py-3 rounded-xl text-sm" style={{ background: "rgba(2,6,23,0.6)", border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit" }}
+            placeholder="Search by name, skills, or location..." value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} />
+          <GlowButton onClick={handleSearch}>Search</GlowButton>
+        </div>
+        {loading ? (
+          <div className="flex flex-col gap-3">{[1,2].map((i) => <div key={i} className="h-16 rounded-xl skeleton" />)}</div>
+        ) : !searched ? (
+          <div className="text-center py-8"><p className="text-4xl mb-3 opacity-30">🔍</p><p className="text-sm" style={{ color: "var(--text-muted)" }}>Search for candidates from the IOPPS community.</p></div>
+        ) : results.length === 0 ? (
+          <p className="text-center text-sm py-6" style={{ color: "var(--text-muted)" }}>No results found for &quot;{query}&quot;</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {results.map((m) => (
+              <div key={m.id} className="px-4 py-3.5 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+                <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{m.name}</p>
+                {m.title && <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{m.title}</p>}
+                {m.location && <p className="text-xs" style={{ color: "var(--text-muted)" }}>📍 {m.location}</p>}
+                {m.skills && m.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {m.skills.slice(0, 4).map((s) => <span key={s} className="px-2 py-0.5 rounded text-[10px] font-medium" style={{ background: `rgba(${AMBER_RGB},0.08)`, color: AMBER }}>{s}</span>)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </DashCard>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEAM TAB
+   ═══════════════════════════════════════════════════════════ */
+function TeamTab({ orgId, getToken }: { orgId: string; getToken: () => Promise<string> }) {
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("editor");
+  const [saving] = useState(false);
+  const [members] = useState<Array<{email:string; role:string; name?:string}>>([]);
+  const inputCls = "w-full px-4 py-3 rounded-xl text-sm";
+  const inputSt: React.CSSProperties = { background: "rgba(2,6,23,0.6)", border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit" };
+  const lblSt: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" as const, letterSpacing: "0.5px" };
+
+  const roleColors: Record<string, {bg:string;text:string}> = {
+    owner: { bg: `rgba(${AMBER_RGB},0.1)`, text: AMBER },
+    admin: { bg: "rgba(167,139,250,0.1)", text: "#A78BFA" },
+    editor: { bg: "rgba(59,130,246,0.1)", text: "#3B82F6" },
+    viewer: { bg: "rgba(148,163,184,0.1)", text: "#94A3B8" },
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-xl font-extrabold tracking-tight" style={{ background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Team</h2>
+        <GlowButton onClick={() => setShowInvite(!showInvite)}>{showInvite ? "Cancel" : "+ Invite Member"}</GlowButton>
+      </div>
+      {showInvite && (
+        <DashCard>
+          <h3 className="text-base font-bold mb-5" style={{ color: "var(--text)" }}>Invite Team Member</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+            <div><label style={lblSt}>Email *</label><input type="email" className={inputCls} style={inputSt} value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="team@example.com" /></div>
+            <div><label style={lblSt}>Role</label><select className={inputCls} style={{ ...inputSt, cursor: "pointer" }} value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
+              <option value="admin">Admin — Full access</option><option value="editor">Editor — Post jobs, events, scholarships</option><option value="viewer">Viewer — View applications & analytics</option>
+            </select></div>
+          </div>
+          <GlowButton disabled={saving || !inviteEmail.trim()} onClick={() => { /* TODO: POST /api/employer/team */ }}>Send Invite</GlowButton>
+        </DashCard>
+      )}
+      {members.length === 0 ? (
+        <DashCard><div className="text-center py-12"><p className="text-4xl mb-3 opacity-30">👥</p><p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No team members yet</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>Invite people to help manage your organization on IOPPS.</p></div></DashCard>
+      ) : (
+        <div className="flex flex-col gap-2 mt-4">
+          {members.map((m) => {
+            const rc = roleColors[m.role] || roleColors.viewer;
+            return (
+              <DashCard key={m.email}>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: rc.bg, color: rc.text }}>{(m.name || m.email).charAt(0).toUpperCase()}</div>
+                  <div className="flex-1 min-w-0"><p className="text-sm font-bold" style={{ color: "var(--text)" }}>{m.name || m.email}</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>{m.email}</p></div>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase" style={{ background: rc.bg, color: rc.text }}>{m.role}</span>
+                </div>
+              </DashCard>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEMPLATES TAB
+   ═══════════════════════════════════════════════════════════ */
+function TemplatesTab() {
+  const [templates] = useState<Array<{id:string; title:string; usedCount:number}>>([]);
+  const [showForm, setShowForm] = useState(false);
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-xl font-extrabold tracking-tight" style={{ background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Templates</h2>
+        <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Create Template"}</GlowButton>
+      </div>
+      {showForm && (
+        <DashCard>
+          <h3 className="text-base font-bold mb-3" style={{ color: "var(--text)" }}>New Template</h3>
+          <p className="text-xs mb-5" style={{ color: "var(--text-muted)" }}>Create a job posting template to speed up future posts. Go to &quot;Post a Job&quot; and fill in the details, then save as template.</p>
+          <GlowButton onClick={() => setShowForm(false)}>Got It</GlowButton>
+        </DashCard>
+      )}
+      {templates.length === 0 && !showForm ? (
+        <DashCard><div className="text-center py-12"><p className="text-4xl mb-3 opacity-30">📄</p><p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No templates yet</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>Save job posting templates for faster creation.</p></div></DashCard>
+      ) : (
+        <div className="flex flex-col gap-2 mt-4">
+          {templates.map((t) => (
+            <DashCard key={t.id}>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: `rgba(${AMBER_RGB},0.08)` }}>📄</div>
+                <div className="flex-1 min-w-0"><p className="text-sm font-bold" style={{ color: "var(--text)" }}>{t.title}</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>Used {t.usedCount} time{t.usedCount !== 1 ? "s" : ""}</p></div>
+                <button className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none" style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER }}>Use Template</button>
+              </div>
+            </DashCard>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 
 /* ═══════════════════════════════════════════════════════════
    PLACEHOLDER TAB
