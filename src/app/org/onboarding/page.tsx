@@ -41,6 +41,41 @@ const SERVICES = [
   "Community Programs",
 ];
 
+const INSTITUTION_TYPES = [
+  "University",
+  "College",
+  "Technical Institute",
+  "High School",
+  "K-12",
+  "Language School",
+  "Other",
+];
+
+const STUDENT_BODY_OPTIONS = [
+  "Under 500",
+  "500-2000",
+  "2000-5000",
+  "5000-15000",
+  "15000+",
+];
+
+const SCHOOL_SERVICES = [
+  "Program Listings",
+  "Scholarships",
+  "Co-op Placements",
+  "Career Services",
+  "Student Housing",
+  "Continuing Education",
+  "Indigenous Student Services",
+];
+
+const ENROLLMENT_OPTIONS = [
+  "Open Enrollment",
+  "Application Required",
+  "Waitlist",
+  "Closed",
+];
+
 const PARTNERSHIP_OPTIONS = [
   "Co-op Placements",
   "Job Fairs",
@@ -75,6 +110,14 @@ export default function OrgOnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [orgType, setOrgType] = useState("");
+
+  // School-specific fields
+  const [institutionType, setInstitutionType] = useState("");
+  const [studentBodySize, setStudentBodySize] = useState("");
+  const [accreditation, setAccreditation] = useState("");
+  const [campusCount, setCampusCount] = useState("");
+  const [enrollmentStatus, setEnrollmentStatus] = useState("");
 
   // Step 1 — Identity
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -122,6 +165,7 @@ export default function OrgOnboardingPage() {
         return;
       }
       // Populate fields from saved data
+      if (org.type) setOrgType(org.type);
       if (org.logo) setLogoPreview(org.logo);
       if (org.description) setDescription(org.description);
       if (org.foundedYear) setFoundedYear(String(org.foundedYear));
@@ -140,6 +184,12 @@ export default function OrgOnboardingPage() {
       if (org.socialLinks?.linkedin) setLinkedin(org.socialLinks.linkedin);
       if (org.socialLinks?.instagram) setInstagram(org.socialLinks.instagram);
       if (org.socialLinks?.twitter) setTwitter(org.socialLinks.twitter);
+      // School-specific
+      if (org.institutionType) setInstitutionType(org.institutionType);
+      if (org.studentBodySize) setStudentBodySize(org.studentBodySize);
+      if (org.accreditation) setAccreditation(org.accreditation);
+      if (org.campusCount) setCampusCount(String(org.campusCount));
+      if (org.enrollmentStatus) setEnrollmentStatus(org.enrollmentStatus);
       setLoadingData(false);
     })();
   }, [user, authLoading, router]);
@@ -184,6 +234,14 @@ export default function OrgOnboardingPage() {
       if (phone) data.phone = phone;
       if (address) data.address = address;
       data.socialLinks = { facebook, linkedin, instagram, twitter };
+      // School-specific fields (conditional inclusion)
+      Object.assign(data, {
+        ...(institutionType ? { institutionType } : {}),
+        ...(studentBodySize ? { studentBodySize } : {}),
+        ...(accreditation ? { accreditation } : {}),
+        ...(campusCount ? { campusCount: parseInt(campusCount, 10) } : {}),
+        ...(enrollmentStatus ? { enrollmentStatus } : {}),
+      });
 
       await updateOrganization(user.uid, data);
     } finally {
@@ -351,6 +409,22 @@ export default function OrgOnboardingPage() {
                   placeholder="e.g. Indigenous community name"
                 />
               </label>
+
+              {orgType === "school" && (
+                <label className="block">
+                  <span className="text-sm font-semibold text-text-sec mb-1.5 block">Institution Type</span>
+                  <select
+                    value={institutionType}
+                    onChange={(e) => setInstitutionType(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">Select institution type</option>
+                    {INSTITUTION_TYPES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
             </div>
           )}
 
@@ -373,26 +447,74 @@ export default function OrgOnboardingPage() {
                 </select>
               </label>
 
-              <div>
-                <span className="text-sm font-semibold text-text-sec mb-2 block">Organization Size</span>
-                <div className="flex flex-wrap gap-2">
-                  {SIZE_OPTIONS.map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setSize(opt)}
-                      className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
-                      style={{
-                        background: size === opt ? "var(--teal)" : "var(--card)",
-                        color: size === opt ? "#fff" : "var(--text)",
-                        borderColor: size === opt ? "var(--teal)" : "var(--border)",
-                      }}
-                    >
-                      {opt} employees
-                    </button>
-                  ))}
+              {orgType === "school" ? (
+                <>
+                  <div>
+                    <span className="text-sm font-semibold text-text-sec mb-2 block">Student Body Size</span>
+                    <div className="flex flex-wrap gap-2">
+                      {STUDENT_BODY_OPTIONS.map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setStudentBodySize(opt)}
+                          className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                          style={{
+                            background: studentBodySize === opt ? "var(--teal)" : "var(--card)",
+                            color: studentBodySize === opt ? "#fff" : "var(--text)",
+                            borderColor: studentBodySize === opt ? "var(--teal)" : "var(--border)",
+                          }}
+                        >
+                          {opt} students
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-sec mb-1.5 block">Accreditation</span>
+                    <input
+                      type="text"
+                      value={accreditation}
+                      onChange={(e) => setAccreditation(e.target.value)}
+                      className={inputClass}
+                      placeholder="e.g. AACSB, Regional Accreditation"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-text-sec mb-1.5 block">Number of Campuses</span>
+                    <input
+                      type="number"
+                      value={campusCount}
+                      onChange={(e) => setCampusCount(e.target.value)}
+                      className={inputClass}
+                      placeholder="e.g. 3"
+                      min="1"
+                    />
+                  </label>
+                </>
+              ) : (
+                <div>
+                  <span className="text-sm font-semibold text-text-sec mb-2 block">Organization Size</span>
+                  <div className="flex flex-wrap gap-2">
+                    {SIZE_OPTIONS.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setSize(opt)}
+                        className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                        style={{
+                          background: size === opt ? "var(--teal)" : "var(--card)",
+                          color: size === opt ? "#fff" : "var(--text)",
+                          borderColor: size === opt ? "var(--teal)" : "var(--border)",
+                        }}
+                      >
+                        {opt} employees
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
@@ -439,9 +561,11 @@ export default function OrgOnboardingPage() {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <span className="text-sm font-semibold text-text-sec mb-2 block">Services Offered</span>
+                <span className="text-sm font-semibold text-text-sec mb-2 block">
+                  {orgType === "school" ? "School Services" : "Services Offered"}
+                </span>
                 <div className="grid grid-cols-2 gap-2">
-                  {SERVICES.map((svc) => (
+                  {(orgType === "school" ? SCHOOL_SERVICES : SERVICES).map((svc) => (
                     <button
                       key={svc}
                       type="button"
@@ -459,26 +583,49 @@ export default function OrgOnboardingPage() {
                 </div>
               </div>
 
-              <div>
-                <span className="text-sm font-semibold text-text-sec mb-2 block">Hiring Status</span>
-                <div className="flex gap-2">
-                  {["Actively Hiring", "Open to Applications", "Not Hiring"].map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setHiringStatus(opt)}
-                      className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
-                      style={{
-                        background: hiringStatus === opt ? "var(--teal)" : "var(--card)",
-                        color: hiringStatus === opt ? "#fff" : "var(--text)",
-                        borderColor: hiringStatus === opt ? "var(--teal)" : "var(--border)",
-                      }}
-                    >
-                      {opt}
-                    </button>
-                  ))}
+              {orgType === "school" ? (
+                <div>
+                  <span className="text-sm font-semibold text-text-sec mb-2 block">Enrollment Status</span>
+                  <div className="flex flex-wrap gap-2">
+                    {ENROLLMENT_OPTIONS.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setEnrollmentStatus(opt)}
+                        className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                        style={{
+                          background: enrollmentStatus === opt ? "var(--teal)" : "var(--card)",
+                          color: enrollmentStatus === opt ? "#fff" : "var(--text)",
+                          borderColor: enrollmentStatus === opt ? "var(--teal)" : "var(--border)",
+                        }}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <span className="text-sm font-semibold text-text-sec mb-2 block">Hiring Status</span>
+                  <div className="flex gap-2">
+                    {["Actively Hiring", "Open to Applications", "Not Hiring"].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setHiringStatus(opt)}
+                        className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                        style={{
+                          background: hiringStatus === opt ? "var(--teal)" : "var(--card)",
+                          color: hiringStatus === opt ? "#fff" : "var(--text)",
+                          borderColor: hiringStatus === opt ? "var(--teal)" : "var(--border)",
+                        }}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <span className="text-sm font-semibold text-text-sec mb-2 block">Partnership Interests</span>

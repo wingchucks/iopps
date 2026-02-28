@@ -48,6 +48,12 @@ export interface Organization {
   phone?: string;
   address?: string;
   socialLinks?: OrganizationSocialLinks;
+  // School-specific fields
+  institutionType?: string;
+  studentBodySize?: string;
+  accreditation?: string;
+  campusCount?: number;
+  enrollmentStatus?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
   onboardingComplete?: boolean;

@@ -6,7 +6,7 @@ import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
-import { getOrganizations, type Organization } from "@/lib/firestore/organizations";
+import { type Organization } from "@/lib/firestore/organizations";
 import { displayLocation } from "@/lib/utils";
 
 export default function SchoolsPage() {
@@ -17,8 +17,10 @@ export default function SchoolsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const all = await getOrganizations();
-        setSchools(all.filter((o) => o.type === "school" || o.tier === "school"));
+        const res = await fetch("/api/schools");
+        if (!res.ok) throw new Error("Failed to fetch schools");
+        const data = await res.json();
+        setSchools(data.schools);
       } catch (err) {
         console.error("Failed to load schools:", err);
       } finally {
