@@ -66,6 +66,7 @@ export interface Organization {
   employees?: string;
   since: string;
   verified: boolean;
+  indigenousOwned?: boolean;
   tags: string[];
   programCount?: number;
   programs?: string[];
