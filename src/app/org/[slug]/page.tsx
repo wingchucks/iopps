@@ -63,6 +63,13 @@ function OrgProfileContent() {
             jobMap.set(j.id, j);
           }
           setJobs(Array.from(jobMap.values()));
+
+          // Track profile view
+          fetch("/api/employer/views", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orgId, type: "profile" }),
+          }).catch(() => {});
         }
       } catch (err) {
         console.error("Failed to load organization:", err);
