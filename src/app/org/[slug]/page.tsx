@@ -126,7 +126,7 @@ function OrgProfileContent() {
   const totalJobs = jobs.length || org.openJobs || 0;
   const foundedYear = org.foundedYear ? String(org.foundedYear) : org.since || null;
   const employeeCount = org.employees || org.size || null;
-  const isIndigenousOwned = org.tags?.some(t => t.toLowerCase().includes("indigenous"));
+  const isIndigenousOwned = org.indigenousOwned === true || org.tags?.some((t: string) => t === "Indigenous-Owned" || t === "Indigenous-Owned Business");
   const hasSocialLinks = org.socialLinks && Object.values(org.socialLinks).some(Boolean);
   const hasContact = websiteUrl || org.contactEmail || org.phone || org.address;
   const hasTags = org.tags && org.tags.length > 0;
