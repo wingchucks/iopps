@@ -7,13 +7,14 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const db = getAdminDb();
+
+    // Only show schools with an active plan (paid)
     const snap = await db
       .collection("organizations")
       .where("type", "==", "school")
       .where("onboardingComplete", "==", true)
       .get();
 
-    // Also get orgs with tier/plan = school
     const tierSnap = await db
       .collection("organizations")
       .where("tier", "==", "school")
@@ -26,7 +27,11 @@ export async function GET() {
     for (const doc of [...snap.docs, ...tierSnap.docs]) {
       if (seen.has(doc.id)) continue;
       seen.add(doc.id);
-      schools.push({ id: doc.id, ...doc.data() });
+      const data = doc.data();
+      // Only include schools with a paid plan
+      if (data.plan && data.plan !== "free") {
+        schools.push({ id: doc.id, ...data });
+      }
     }
 
     return NextResponse.json(schools);

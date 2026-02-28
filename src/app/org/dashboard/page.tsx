@@ -186,6 +186,32 @@ function OrgDashboardContent() {
     })();
   }, [user]);
 
+  // Gate: schools must have an active plan before accessing dashboard
+  if (!loading && org && org.type === "school" && !org.plan) {
+    return (
+      <AppShell>
+        <div className="max-w-lg mx-auto px-4 py-20 text-center">
+          <p className="text-5xl mb-4">🎓</p>
+          <h2 className="text-2xl font-extrabold text-text mb-3">Choose Your School Plan</h2>
+          <p className="text-text-sec mb-2">
+            To activate your school profile and start posting programs, please select a plan.
+          </p>
+          <p className="text-sm text-text-muted mb-8">
+            Post a single program for <strong>$50</strong>, or get the full School Plan at <strong>$5,500/year</strong> with unlimited programs, jobs, and featured listings.
+          </p>
+          <Link href="/org/plans" className="no-underline">
+            <button
+              className="px-8 py-3.5 rounded-xl border-none font-bold text-base cursor-pointer"
+              style={{ background: "var(--teal)", color: "#fff" }}
+            >
+              View Plans &amp; Pricing →
+            </button>
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
   /* ─── profile save handler ─── */
   const saveProfile = async (fields: Record<string, unknown>) => {
     setSaving(true);
