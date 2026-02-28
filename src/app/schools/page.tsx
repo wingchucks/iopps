@@ -20,7 +20,7 @@ export default function SchoolsPage() {
         const res = await fetch("/api/schools");
         if (!res.ok) throw new Error("Failed to fetch schools");
         const data = await res.json();
-        setSchools(data.schools);
+        setSchools(Array.isArray(data) ? data : (data.schools || []));
       } catch (err) {
         console.error("Failed to load schools:", err);
       } finally {
@@ -147,7 +147,7 @@ function SchoolCard({ school }: { school: Organization }) {
             <Avatar
               name={school.shortName || school.name}
               size={52}
-              src={school.logo}
+              src={school.logoUrl || school.logo}
               gradient="linear-gradient(135deg, var(--teal), var(--blue))"
             />
             <div className="min-w-0 flex-1">
