@@ -399,12 +399,13 @@ function OrgDashboardContent() {
                   />
                 )}
 
-                {activeTab === "Applications" && <PlaceholderTab title="Applications" desc="Applications will appear here when candidates apply to your jobs." icon="clipboard" />}
-                {activeTab === "Events" && <PlaceholderTab title="Events" desc="Create events like job fairs, pow wows, or community gatherings." icon="calendar" />}
-                {activeTab === "Scholarships" && <PlaceholderTab title="Scholarships" desc="Share scholarship opportunities for Indigenous students." icon="graduation" />}
-                {activeTab === "Talent Search" && <PlaceholderTab title="Talent Search" desc="Find candidates from the IOPPS community." icon="search" />}
-                {activeTab === "Team" && <PlaceholderTab title="Team" desc="Add people to help manage your organization on IOPPS." icon="team" />}
-                {activeTab === "Templates" && <PlaceholderTab title="Templates" desc="Save job posting templates for faster creation." icon="template" />}
+                {activeTab === "Jobs" && <JobsTab jobs={jobs} orgId={orgId} getToken={getToken} formatTimestamp={formatTimestamp} />}
+                {activeTab === "Applications" && <ApplicationsTab jobs={jobs} getToken={getToken} />}
+                {activeTab === "Events" && <EventsTab orgId={orgId} getToken={getToken} />}
+                {activeTab === "Scholarships" && <ScholarshipsTab orgId={orgId} getToken={getToken} />}
+                {activeTab === "Talent Search" && <TalentSearchTab />}
+                {activeTab === "Team" && <TeamTab orgId={orgId} getToken={getToken} />}
+                {activeTab === "Templates" && <TemplatesTab />}
                 {activeTab === "Billing" && <BillingTab org={org} orgId={orgId} />}
               </>
             )}
