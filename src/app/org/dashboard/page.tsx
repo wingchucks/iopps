@@ -1345,6 +1345,19 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
 
   const resetForm = () => setForm({ title: "", eventType: "", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "", contactName: "", contactEmail: "", contactPhone: "", highlights: [], highlightInput: "", posterUrl: "" });
 
+  const [uploading, setUploading] = useState(false);
+  const handlePosterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploading(true);
+    try {
+      const token = await getToken();
+      const fd = new FormData(); fd.append("file", file); fd.append("folder", "events/posters");
+      const res = await fetch("/api/employer/upload", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd });
+      if (res.ok) { const { url } = await res.json(); setForm(p => ({ ...p, posterUrl: url })); }
+    } catch { /* */ }
+    setUploading(false);
+  };
+
   const handleCreate = async (mode: "publish" | "draft") => {
     if (!form.title.trim()) return;
     setSaving(true); setSaveMode(mode);
@@ -1568,6 +1581,39 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
               </div>
             </div>
 
+
+            {/* Section 7: Event Poster */}
+            <SectionNum n={7} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">Event Poster / Image</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>Upload a poster or banner image for your event (optional)</p>
+            <div className="ml-10 mb-8">
+              {form.posterUrl ? (
+                <div className="relative rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)", maxWidth: 400 }}>
+                  <img src={form.posterUrl} alt="Event poster" className="w-full h-auto rounded-xl" style={{ maxHeight: 300, objectFit: "cover" }} />
+                  <button type="button" onClick={() => setForm(p => ({ ...p, posterUrl: "" }))}
+                    className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer"
+                    style={{ background: "rgba(0,0,0,0.7)", color: "#fff", border: "none" }}>✕</button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center py-10 rounded-xl cursor-pointer transition-all"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "2px dashed rgba(255,255,255,0.1)" }}>
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePosterUpload} disabled={uploading} />
+                  {uploading ? (
+                    <>
+                      <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin mb-3" style={{ borderColor: `${AMBER} transparent ${AMBER} ${AMBER}` }} />
+                      <p className="text-sm font-semibold" style={{ color: AMBER }}>Uploading...</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-3xl mb-2 opacity-40">🖼️</div>
+                      <p className="text-sm font-semibold" style={{ color: "var(--text-sec)" }}>Click to upload poster</p>
+                      <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>JPEG, PNG, or WebP — max 5MB</p>
+                    </>
+                  )}
+                </label>
+              )}
+            </div>
+
             {/* Live Preview */}
             {form.title && (
               <div className="ml-10 mb-6 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
@@ -1716,6 +1762,19 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
   }, [getToken]);
 
   const resetForm = () => setForm({ title: "", opportunityType: "Scholarship", amount: "", deadline: "", description: "", educationLevel: [], fieldOfStudy: [], minimumGPA: "", eligibility: "", howToApply: "", externalUrl: "", contactEmail: "", contactPhone: "", location: "", posterUrl: "" });
+
+  const [scholUploading, setScholUploading] = useState(false);
+  const handleScholPosterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setScholUploading(true);
+    try {
+      const token = await getToken();
+      const fd = new FormData(); fd.append("file", file); fd.append("folder", "scholarships/posters");
+      const res = await fetch("/api/employer/upload", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd });
+      if (res.ok) { const { url } = await res.json(); setForm(p => ({ ...p, posterUrl: url })); }
+    } catch { /* */ }
+    setScholUploading(false);
+  };
 
   const handleCreate = async (mode: "publish" | "draft") => {
     if (!form.title.trim()) return;
@@ -1956,6 +2015,39 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
                     placeholder="(306) 555-0000" />
                 </div>
               </div>
+            </div>
+
+
+            {/* Section 6: Poster / Image */}
+            <SectionNum n={6} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">Poster / Image</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>Upload a promotional image (optional)</p>
+            <div className="ml-10 mb-8">
+              {form.posterUrl ? (
+                <div className="relative rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)", maxWidth: 400 }}>
+                  <img src={form.posterUrl} alt="Scholarship poster" className="w-full h-auto rounded-xl" style={{ maxHeight: 300, objectFit: "cover" }} />
+                  <button type="button" onClick={() => setForm(p => ({ ...p, posterUrl: "" }))}
+                    className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer"
+                    style={{ background: "rgba(0,0,0,0.7)", color: "#fff", border: "none" }}>✕</button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center py-10 rounded-xl cursor-pointer transition-all"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "2px dashed rgba(255,255,255,0.1)" }}>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleScholPosterUpload} disabled={scholUploading} />
+                  {scholUploading ? (
+                    <>
+                      <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin mb-3" style={{ borderColor: "#FBBF24 transparent #FBBF24 #FBBF24" }} />
+                      <p className="text-sm font-semibold" style={{ color: "#FBBF24" }}>Uploading...</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-3xl mb-2 opacity-40">🖼️</div>
+                      <p className="text-sm font-semibold" style={{ color: "var(--text-sec)" }}>Click to upload image</p>
+                      <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>JPEG, PNG, or WebP — max 5MB</p>
+                    </>
+                  )}
+                </label>
+              )}
             </div>
 
             {/* Preview */}
