@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
     }
 
-    const bucket = getStorage().bucket();
+    const bucket = getStorage().bucket("iopps-c2224.firebasestorage.app");
     const ext = file.name.split(".").pop() || "jpg";
     const filename = `${folder}/${orgId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
