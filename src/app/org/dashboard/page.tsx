@@ -1317,7 +1317,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
     title: "", eventType: "", date: "", endDate: "", location: "",
     description: "", admissionType: "Free", externalUrl: "",
     contactName: "", contactEmail: "", contactPhone: "",
-    highlights: [] as string[], highlightInput: "",
+    highlights: [] as string[], highlightInput: "", posterUrl: "",
   });
 
   const inputCls = "w-full px-4 py-3.5 rounded-xl text-sm";
@@ -1343,7 +1343,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
     })();
   }, [getToken]);
 
-  const resetForm = () => setForm({ title: "", eventType: "", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "", contactName: "", contactEmail: "", contactPhone: "", highlights: [], highlightInput: "" });
+  const resetForm = () => setForm({ title: "", eventType: "", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "", contactName: "", contactEmail: "", contactPhone: "", highlights: [], highlightInput: "", posterUrl: "" });
 
   const handleCreate = async (mode: "publish" | "draft") => {
     if (!form.title.trim()) return;
@@ -1351,6 +1351,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
     try {
       const token = await getToken();
       const { highlightInput, ...payload } = form;
+      // posterUrl included in payload
       const res = await fetch("/api/employer/events", {
         method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ ...payload, status: mode === "draft" ? "draft" : "active" }),
@@ -1678,7 +1679,7 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
     title: "", opportunityType: "Scholarship", amount: "", deadline: "",
     description: "", educationLevel: [] as string[], fieldOfStudy: [] as string[],
     minimumGPA: "", eligibility: "", howToApply: "", externalUrl: "",
-    contactEmail: "", contactPhone: "", location: "",
+    contactEmail: "", contactPhone: "", location: "", posterUrl: "",
   });
 
   const inputCls = "w-full px-4 py-3.5 rounded-xl text-sm";
@@ -1714,7 +1715,7 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
     })();
   }, [getToken]);
 
-  const resetForm = () => setForm({ title: "", opportunityType: "Scholarship", amount: "", deadline: "", description: "", educationLevel: [], fieldOfStudy: [], minimumGPA: "", eligibility: "", howToApply: "", externalUrl: "", contactEmail: "", contactPhone: "", location: "" });
+  const resetForm = () => setForm({ title: "", opportunityType: "Scholarship", amount: "", deadline: "", description: "", educationLevel: [], fieldOfStudy: [], minimumGPA: "", eligibility: "", howToApply: "", externalUrl: "", contactEmail: "", contactPhone: "", location: "", posterUrl: "" });
 
   const handleCreate = async (mode: "publish" | "draft") => {
     if (!form.title.trim()) return;
