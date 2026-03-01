@@ -1312,18 +1312,24 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ title: "", eventType: "Powwow", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "" });
+  const [saveMode, setSaveMode] = useState<"publish"|"draft">("publish");
+  const [form, setForm] = useState({
+    title: "", eventType: "", date: "", endDate: "", location: "",
+    description: "", admissionType: "Free", externalUrl: "",
+    contactName: "", contactEmail: "", contactPhone: "",
+    highlights: [] as string[], highlightInput: "",
+  });
 
-  const inputCls = "w-full px-4 py-3 rounded-xl text-sm";
-  const inputSt: React.CSSProperties = { background: "rgba(2,6,23,0.6)", border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit" };
-  const lblSt: React.CSSProperties = { display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" as const, letterSpacing: "0.6px" };
+  const inputCls = "w-full px-4 py-3.5 rounded-xl text-sm";
+  const inputSt: React.CSSProperties = { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text)", fontFamily: "inherit" };
+  const lblSt: React.CSSProperties = { display: "block", fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 4 };
+  const helpSt: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)", marginBottom: 12 };
 
   const EVENT_TYPES = [
-    { value: "Powwow", emoji: "🥁" }, { value: "Career Fair", emoji: "💼" },
-    { value: "Conference", emoji: "🎤" }, { value: "Workshop", emoji: "🛠️" },
-    { value: "Cultural", emoji: "🪶" }, { value: "Community", emoji: "🤝" },
-    { value: "Sports", emoji: "⚽" }, { value: "Fundraiser", emoji: "💛" },
-    { value: "Ceremony", emoji: "🔥" },
+    { value: "Pow Wow", icon: "🪶" }, { value: "Hockey Tournament", icon: "🏒" },
+    { value: "Career Fair", icon: "💼" }, { value: "Round Dance", icon: "💫" },
+    { value: "Conference", icon: "🎤" }, { value: "Workshop / Training", icon: "📋" },
+    { value: "Fundraiser", icon: "❤️" }, { value: "Other / General", icon: "⭐" },
   ];
 
   useEffect(() => {
@@ -1337,22 +1343,40 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
     })();
   }, [getToken]);
 
-  const resetForm = () => setForm({ title: "", eventType: "Powwow", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "" });
+  const resetForm = () => setForm({ title: "", eventType: "", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "", contactName: "", contactEmail: "", contactPhone: "", highlights: [], highlightInput: "" });
 
-  const handleCreate = async () => {
+  const handleCreate = async (mode: "publish" | "draft") => {
     if (!form.title.trim()) return;
-    setSaving(true);
+    setSaving(true); setSaveMode(mode);
     try {
       const token = await getToken();
+      const { highlightInput, ...payload } = form;
       const res = await fetch("/api/employer/events", {
-        method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(form),
+        method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, status: mode === "draft" ? "draft" : "active" }),
       });
       if (res.ok) { const c = await res.json(); setEvents((p) => [c, ...p]); resetForm(); setShowForm(false); }
     } catch { /* */ }
     setSaving(false);
   };
 
-  const selectedType = EVENT_TYPES.find(t => t.value === form.eventType);
+  const addHighlight = () => {
+    if (form.highlightInput.trim() && form.highlights.length < 6) {
+      setForm(p => ({ ...p, highlights: [...p.highlights, p.highlightInput.trim()], highlightInput: "" }));
+    }
+  };
+
+  // Progress calculation
+  const filledFields = [form.eventType, form.title, form.description, form.date, form.location].filter(Boolean).length;
+  const progress = Math.round((filledFields / 5) * 100);
+
+  // Section number indicator
+  const SectionNum = ({ n }: { n: number }) => (
+    <div className="flex items-center gap-3 mb-1">
+      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+        style={{ background: `rgba(${AMBER_RGB},0.15)`, color: AMBER }}>{n}</div>
+    </div>
+  );
 
   return (
     <>
@@ -1364,87 +1388,113 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
       </div>
 
       {showForm && (
-        <div className="rounded-2xl overflow-hidden mb-6" style={{ border: `1px solid rgba(${AMBER_RGB},0.25)`, boxShadow: `0 8px 40px rgba(${AMBER_RGB},0.06)` }}>
+        <div className="rounded-2xl overflow-hidden mb-6" style={{ border: `1px solid rgba(${AMBER_RGB},0.2)` }}>
           {/* Header */}
-          <div className="px-6 py-5 flex items-center justify-between" style={{ background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.1) 0%, rgba(2,6,23,0.95) 100%)`, borderBottom: `1px solid rgba(${AMBER_RGB},0.15)` }}>
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ background: `rgba(${AMBER_RGB},0.15)` }}>
-                {selectedType?.emoji ?? "📅"}
-              </div>
+          <div className="px-6 py-4" style={{ background: `rgba(${AMBER_RGB},0.04)`, borderBottom: `1px solid rgba(${AMBER_RGB},0.12)` }}>
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-base font-black text-text">Create New Event</h3>
-                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Share an event with the Indigenous community on IOPPS</p>
+                <h3 className="text-lg font-black text-text">Create Event</h3>
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Posting as your organization</p>
               </div>
+              {form.title && (
+                <span className="px-3 py-1 rounded-lg text-[11px] font-bold" style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER }}>
+                  👁 Preview below
+                </span>
+              )}
+            </div>
+            {/* Progress bar */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: progress === 100 ? "#22C55E" : AMBER }} />
+              </div>
+              <span className="text-xs font-bold shrink-0" style={{ color: progress === 100 ? "#22C55E" : AMBER }}>
+                {progress === 100 ? "✓ Ready to publish" : `${progress}%`}
+              </span>
             </div>
           </div>
 
-          <div className="p-6" style={{ background: "rgba(2,6,23,0.7)" }}>
+          <div className="p-6" style={{ background: "rgba(2,6,23,0.5)" }}>
 
-            {/* STEP 1: Event Type */}
-            <div className="mb-7">
-              <label style={lblSt}>① What kind of event?</label>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {EVENT_TYPES.map((t) => (
-                  <button key={t.value} type="button" onClick={() => setForm(p => ({ ...p, eventType: t.value }))}
-                    className="flex items-center gap-2.5 px-3 py-3 rounded-xl cursor-pointer transition-all"
-                    style={{
-                      background: form.eventType === t.value ? `rgba(${AMBER_RGB},0.12)` : "rgba(255,255,255,0.02)",
-                      border: form.eventType === t.value ? `1.5px solid rgba(${AMBER_RGB},0.45)` : "1.5px solid rgba(255,255,255,0.05)",
-                      color: form.eventType === t.value ? AMBER : "var(--text-muted)",
-                    }}>
-                    <span className="text-lg leading-none shrink-0">{t.emoji}</span>
-                    <span className="text-xs font-semibold">{t.value}</span>
-                  </button>
-                ))}
+            {/* Section 1: Event Type */}
+            <SectionNum n={1} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">What type of event?</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>Choose the category that best fits</p>
+            <div className="grid grid-cols-2 gap-3 mb-8 ml-10">
+              {EVENT_TYPES.map((t) => (
+                <button key={t.value} type="button" onClick={() => setForm(p => ({ ...p, eventType: t.value }))}
+                  className="flex items-center gap-3 px-4 py-4 rounded-xl cursor-pointer transition-all text-left"
+                  style={{
+                    background: form.eventType === t.value ? `rgba(${AMBER_RGB},0.08)` : "rgba(255,255,255,0.02)",
+                    border: form.eventType === t.value ? `2px solid rgba(${AMBER_RGB},0.5)` : "2px solid rgba(255,255,255,0.06)",
+                    color: form.eventType === t.value ? AMBER : "var(--text-sec)",
+                    position: "relative",
+                  }}>
+                  <span className="text-2xl shrink-0">{t.icon}</span>
+                  <span className="text-sm font-semibold">{t.value}</span>
+                  {form.eventType === t.value && (
+                    <span className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: AMBER, color: "#000" }}>✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Section 2: Basic Information */}
+            <SectionNum n={2} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">Basic Information</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>Tell people what this event is about</p>
+            <div className="ml-10 mb-8">
+              <div className="mb-4">
+                <label style={lblSt}>Event Title <span style={{ color: "#EF4444" }}>*</span></label>
+                <input className={inputCls} style={inputSt} value={form.title}
+                  onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
+                  placeholder="e.g. Indigenous Leadership & Business Conference 2026" />
+              </div>
+              <div>
+                <label style={lblSt}>Description <span style={{ color: "#EF4444" }}>*</span></label>
+                <p style={helpSt}>What should people know about this event?</p>
+                <textarea className={inputCls} rows={5} style={{ ...inputSt, resize: "vertical" as const }}
+                  value={form.description}
+                  onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
+                  placeholder="Agenda, performers, activities, what to bring..." />
+                <p className="text-[11px] mt-1.5 text-right" style={{ color: form.description.length > 900 ? "#EF4444" : "var(--text-muted)" }}>{form.description.length}/1000</p>
               </div>
             </div>
 
-            {/* STEP 2: Title */}
-            <div className="mb-6">
-              <label style={lblSt}>② Event Title <span style={{ color: "#EF4444" }}>*</span></label>
-              <input className={inputCls}
-                style={{ ...inputSt, fontSize: 15, fontWeight: 600 }}
-                value={form.title}
-                onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
-                placeholder={`e.g. ${form.eventType === "Powwow" ? "Annual Summer Powwow 2026" : form.eventType === "Career Fair" ? "Indigenous Careers Expo 2026" : `${form.eventType} 2026`}`}
-              />
-            </div>
-
-            {/* STEP 3: Dates */}
-            <div className="mb-6">
-              <label style={lblSt}>③ Dates</label>
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <input type="date" className={inputCls} style={inputSt} value={form.date} onChange={(e) => setForm(p => ({ ...p, date: e.target.value }))} />
-                  <p className="text-[10px] mt-1.5" style={{ color: "var(--text-muted)" }}>Start date</p>
+            {/* Section 3: Date & Time */}
+            <SectionNum n={3} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">Date & Location</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>When and where is this happening?</p>
+            <div className="ml-10 mb-8">
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label style={lblSt}>Start Date</label>
+                  <input type="date" className={inputCls} style={inputSt} value={form.date}
+                    onChange={(e) => setForm(p => ({ ...p, date: e.target.value }))} />
                 </div>
-                <div className="pt-3.5 font-light text-lg" style={{ color: "var(--text-muted)" }}>→</div>
-                <div className="flex-1">
-                  <input type="date" className={inputCls} style={inputSt} value={form.endDate} onChange={(e) => setForm(p => ({ ...p, endDate: e.target.value }))} />
-                  <p className="text-[10px] mt-1.5" style={{ color: "var(--text-muted)" }}>End date (optional)</p>
+                <div>
+                  <label style={lblSt}>End Date</label>
+                  <p style={helpSt}>Leave blank for single-day events</p>
+                  <input type="date" className={inputCls} style={inputSt} value={form.endDate}
+                    onChange={(e) => setForm(p => ({ ...p, endDate: e.target.value }))} />
                 </div>
               </div>
-            </div>
-
-            {/* STEP 4: Location + Admission */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-              <div className="lg:col-span-2">
-                <label style={lblSt}>④ Location</label>
+              <div className="mb-4">
+                <label style={lblSt}>Location</label>
+                <p style={helpSt}>Where is this event happening?</p>
                 <input className={inputCls} style={inputSt} value={form.location}
                   onChange={(e) => setForm(p => ({ ...p, location: e.target.value }))}
-                  placeholder="City, Province or 'Virtual'" />
+                  placeholder="e.g. Saskatoon, SK or Virtual" />
               </div>
               <div>
                 <label style={lblSt}>Admission</label>
-                <div className="flex rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                  {[{ v: "Free", e: "🎟️" }, { v: "Paid", e: "💳" }, { v: "Donation", e: "🙏" }].map(({ v, e }) => (
+                <div className="flex rounded-xl overflow-hidden mt-1" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+                  {[{ v: "Free", e: "🎟️" }, { v: "Paid", e: "💳" }, { v: "By Donation", e: "🙏" }].map(({ v, e }) => (
                     <button key={v} type="button" onClick={() => setForm(p => ({ ...p, admissionType: v }))}
-                      className="flex-1 py-3 text-[11px] font-bold cursor-pointer"
+                      className="flex-1 py-3 text-xs font-bold cursor-pointer"
                       style={{
-                        background: form.admissionType === v ? `rgba(${AMBER_RGB},0.15)` : "rgba(2,6,23,0.6)",
+                        background: form.admissionType === v ? `rgba(${AMBER_RGB},0.12)` : "transparent",
                         color: form.admissionType === v ? AMBER : "var(--text-muted)",
-                        border: "none",
-                        borderRight: v !== "Donation" ? "1px solid var(--border)" : "none",
+                        border: "none", borderRight: v !== "By Donation" ? "1px solid rgba(255,255,255,0.1)" : "none",
                       }}>
                       {e} {v}
                     </button>
@@ -1453,83 +1503,121 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
               </div>
             </div>
 
-            {/* STEP 5: Description */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <label style={{ ...lblSt, marginBottom: 0 }}>⑤ Description</label>
-                <span className="text-[10px]" style={{ color: form.description.length > 450 ? "#EF4444" : "var(--text-muted)" }}>
-                  {form.description.length}/500
-                </span>
+            {/* Section 4: Highlights */}
+            <SectionNum n={4} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">Highlights</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>Key features or attractions (optional)</p>
+            <div className="ml-10 mb-8">
+              {form.highlights.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {form.highlights.map((h, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2"
+                      style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER, border: `1px solid rgba(${AMBER_RGB},0.2)` }}>
+                      {h}
+                      <button type="button" onClick={() => setForm(p => ({ ...p, highlights: p.highlights.filter((_, idx) => idx !== i) }))}
+                        className="text-[10px] cursor-pointer opacity-60 hover:opacity-100" style={{ background: "none", border: "none", color: "inherit" }}>✕</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input className={inputCls} style={inputSt} value={form.highlightInput}
+                  onChange={(e) => setForm(p => ({ ...p, highlightInput: e.target.value }))}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addHighlight(); } }}
+                  placeholder="e.g. Live drumming, Traditional feast, Grand Entry" />
+                <button type="button" onClick={addHighlight}
+                  className="px-4 rounded-xl text-xs font-bold cursor-pointer shrink-0"
+                  style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER, border: `1px solid rgba(${AMBER_RGB},0.2)` }}>
+                  + Add
+                </button>
               </div>
-              <textarea className={inputCls} rows={4} maxLength={500}
-                style={{ ...inputSt, resize: "vertical" as const }}
-                value={form.description}
-                onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
-                placeholder="Tell the community what to expect — activities, performers, food, schedule highlights, what to bring..." />
+              <p className="text-[11px] mt-1.5" style={{ color: "var(--text-muted)" }}>{form.highlights.length}/6 highlights</p>
             </div>
 
-            {/* External link */}
-            <div className="mb-6">
-              <label style={lblSt}>🔗 Event Website or Ticket Link</label>
+            {/* Section 5: RSVP Link */}
+            <SectionNum n={5} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">RSVP / Registration Link</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>Link to external registration page, Eventbrite, etc.</p>
+            <div className="ml-10 mb-8">
               <input className={inputCls} style={inputSt} value={form.externalUrl}
                 onChange={(e) => setForm(p => ({ ...p, externalUrl: e.target.value }))}
-                placeholder="https://..." />
+                placeholder="https://www.example.com/event/registration" />
+            </div>
+
+            {/* Section 6: Contact */}
+            <SectionNum n={6} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">Registration & Contact</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>How people can register or get more info</p>
+            <div className="ml-10 mb-8">
+              <div className="p-5 rounded-xl mb-4" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <label style={lblSt}>Contact Information (optional)</label>
+                <div className="mb-3">
+                  <input className={inputCls} style={inputSt} value={form.contactName}
+                    onChange={(e) => setForm(p => ({ ...p, contactName: e.target.value }))}
+                    placeholder="Contact name" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <input className={inputCls} style={inputSt} value={form.contactEmail}
+                    onChange={(e) => setForm(p => ({ ...p, contactEmail: e.target.value }))}
+                    placeholder="events@organization.ca" />
+                  <input className={inputCls} style={inputSt} value={form.contactPhone}
+                    onChange={(e) => setForm(p => ({ ...p, contactPhone: e.target.value }))}
+                    placeholder="(306) 555-0000" />
+                </div>
+              </div>
             </div>
 
             {/* Live Preview */}
             {form.title && (
-              <div className="mb-6 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
-                <div className="px-4 py-2.5 flex items-center gap-2" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>👁 Preview — how it will appear</span>
+              <div className="ml-10 mb-6 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div className="px-4 py-2.5" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>This is how your listing appears in the community feed</span>
                 </div>
                 <div className="p-4" style={{ background: "rgba(255,255,255,0.01)" }}>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-start gap-4">
                     <div className="w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 text-center"
                       style={{ background: `rgba(${AMBER_RGB},0.08)`, border: `1px solid rgba(${AMBER_RGB},0.18)` }}>
-                      <div className="text-[9px] font-black uppercase tracking-wide" style={{ color: AMBER }}>
-                        {form.date ? new Date(form.date).toLocaleDateString("en-US", { month: "short" }) : "MON"}
-                      </div>
-                      <div className="text-2xl font-black leading-tight" style={{ color: AMBER }}>
-                        {form.date ? new Date(form.date).getDate() : "—"}
-                      </div>
+                      <div className="text-[9px] font-black uppercase" style={{ color: AMBER }}>{form.date ? new Date(form.date).toLocaleDateString("en-US", { month: "short" }) : "TBD"}</div>
+                      <div className="text-xl font-black leading-tight" style={{ color: AMBER }}>{form.date ? new Date(form.date).getDate() : "—"}</div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="text-sm font-black text-text leading-tight">{form.title}</span>
-                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase"
-                          style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER }}>
-                          {selectedType?.emoji} {form.eventType}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold"
-                          style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
-                          {form.admissionType === "Free" ? "🎟️ Free" : form.admissionType === "Paid" ? "💳 Paid" : "🙏 Donation"}
-                        </span>
+                        <span className="text-sm font-black text-text">{form.title}</span>
+                        {form.eventType && <span className="px-2 py-0.5 rounded-md text-[9px] font-bold" style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER }}>{form.eventType}</span>}
                       </div>
-                      <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                        {form.date ? new Date(form.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "Date TBD"}
-                        {form.endDate && form.endDate !== form.date ? ` – ${new Date(form.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        {form.date ? new Date(form.date).toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric" }) : "Date TBD"}
                         {form.location ? ` · 📍 ${form.location}` : ""}
+                        {form.admissionType ? ` · ${form.admissionType}` : ""}
                       </p>
+                      {form.description && <p className="text-xs mt-2 leading-relaxed line-clamp-2" style={{ color: "var(--text-sec)" }}>{form.description}</p>}
+                      {form.highlights.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {form.highlights.map((h, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded-md text-[10px] font-semibold" style={{ background: `rgba(${AMBER_RGB},0.08)`, color: AMBER }}>{h}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {form.description && (
-                    <p className="text-xs mt-3 leading-relaxed line-clamp-2" style={{ color: "var(--text-sec)" }}>{form.description}</p>
-                  )}
                 </div>
               </div>
             )}
 
             {/* Footer actions */}
-            <div className="flex items-center gap-3 pt-4" style={{ borderTop: `1px solid rgba(${AMBER_RGB},0.12)` }}>
-              <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>
-                {saving ? "Publishing..." : "📅 Publish Event"}
+            <div className="flex items-center gap-3 ml-10 pt-5" style={{ borderTop: `1px solid rgba(${AMBER_RGB},0.1)` }}>
+              <GlowButton disabled={saving || !form.title.trim()} onClick={() => handleCreate("publish")}>
+                {saving && saveMode === "publish" ? "Publishing..." : "Publish Event"}
               </GlowButton>
+              <button type="button" disabled={saving || !form.title.trim()} onClick={() => handleCreate("draft")}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold cursor-pointer disabled:opacity-40"
+                style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-sec)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                {saving && saveMode === "draft" ? "Saving..." : "Save as Draft"}
+              </button>
               <button type="button" onClick={() => { resetForm(); setShowForm(false); }}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-                style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                className="text-sm font-semibold cursor-pointer ml-auto" style={{ background: "none", border: "none", color: "var(--text-muted)" }}>
                 Cancel
               </button>
-              {!form.title.trim() && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>✦ Title is required</p>}
             </div>
           </div>
         </div>
@@ -1546,37 +1634,33 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
             <GlowButton onClick={() => setShowForm(true)}>+ Create Your First Event</GlowButton>
           </div>
         </DashCard>
-      ) : (
+      ) : !showForm ? (
         <div className="flex flex-col gap-2 mt-4">
           {events.map((ev) => (
             <DashCard key={ev.id}>
               <div className="flex items-center gap-4">
-                <div className="w-13 h-13 rounded-xl flex flex-col items-center justify-center shrink-0 text-center px-2"
-                  style={{ background: `rgba(${AMBER_RGB},0.07)`, minWidth: "3.25rem" }}>
-                  <div className="text-[9px] font-black uppercase tracking-wide" style={{ color: AMBER }}>
-                    {ev.date ? new Date(ev.date).toLocaleDateString("en-US", { month: "short" }) : ""}
-                  </div>
-                  <div className="text-xl font-black leading-tight" style={{ color: AMBER }}>
-                    {ev.date ? new Date(ev.date).getDate() : "—"}
-                  </div>
+                <div className="w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 text-center"
+                  style={{ background: `rgba(${AMBER_RGB},0.07)`, minWidth: "3rem" }}>
+                  <div className="text-[9px] font-black uppercase" style={{ color: AMBER }}>{ev.date ? new Date(ev.date).toLocaleDateString("en-US", { month: "short" }) : ""}</div>
+                  <div className="text-xl font-black leading-tight" style={{ color: AMBER }}>{ev.date ? new Date(ev.date).getDate() : "—"}</div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-text">{ev.title}</p>
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                    {ev.eventType && `${EVENT_TYPES.find(t => t.value === ev.eventType)?.emoji ?? "🎪"} ${ev.eventType}`}
+                    {ev.eventType ? `${EVENT_TYPES.find(t => t.value === ev.eventType)?.icon ?? "🎪"} ${ev.eventType}` : ""}
                     {ev.date ? ` · ${new Date(ev.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
                     {ev.location ? ` · ${ev.location}` : ""}
                   </p>
                 </div>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0"
-                  style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
+                  style={{ background: ev.status === "draft" ? "rgba(251,191,36,0.1)" : "rgba(34,197,94,0.1)", color: ev.status === "draft" ? "#FBBF24" : "#22C55E" }}>
                   {ev.status || "Active"}
                 </span>
               </div>
             </DashCard>
           ))}
         </div>
-      )}
+      ) : null}
     </>
   );
 }
@@ -1589,35 +1673,35 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveMode, setSaveMode] = useState<"publish"|"draft">("publish");
   const [form, setForm] = useState({
-    title: "", amount: "", awardType: "One-Time", deadline: "", description: "",
-    eligibility: [] as string[], fieldOfStudy: [] as string[], howToApply: "", externalUrl: ""
+    title: "", opportunityType: "Scholarship", amount: "", deadline: "",
+    description: "", educationLevel: [] as string[], fieldOfStudy: [] as string[],
+    minimumGPA: "", eligibility: "", howToApply: "", externalUrl: "",
+    contactEmail: "", contactPhone: "", location: "",
   });
 
-  const inputCls = "w-full px-4 py-3 rounded-xl text-sm";
-  const inputSt: React.CSSProperties = { background: "rgba(2,6,23,0.6)", border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit" };
-  const lblSt: React.CSSProperties = { display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" as const, letterSpacing: "0.6px" };
+  const inputCls = "w-full px-4 py-3.5 rounded-xl text-sm";
+  const inputSt: React.CSSProperties = { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text)", fontFamily: "inherit" };
+  const lblSt: React.CSSProperties = { display: "block", fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 4 };
+  const helpSt: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)", marginBottom: 12 };
 
   const GOLD = "#FBBF24";
   const GOLD_RGB = "251,191,36";
 
-  const ELIGIBILITY_OPTIONS = [
-    "First Nations", "Métis", "Inuit", "Status Indian", "Non-Status",
-    "Post-Secondary Student", "Enrolled Full-Time", "High School Graduate",
-    "Treaty Member", "Band Member", "Women", "Youth (Under 25)",
-  ];
-  const FIELDS_OF_STUDY = [
-    "Health & Wellness", "Business & Entrepreneurship", "Education", "Technology & IT",
-    "Trades & Apprenticeship", "Arts & Culture", "Law & Justice", "Social Work",
-    "Environmental Sciences", "Engineering", "Agriculture", "Any Field",
+  const OPPORTUNITY_TYPES = [
+    { value: "Scholarship", icon: "🎓", desc: "Academic awards for students" },
+    { value: "Bursary", icon: "💰", desc: "Financial need-based aid" },
+    { value: "Business Grant", icon: "🏢", desc: "Funding for entrepreneurs" },
+    { value: "Community Grant", icon: "💛", desc: "Community project funding" },
   ];
 
-  const daysUntilDeadline = form.deadline
-    ? Math.ceil((new Date(form.deadline).getTime() - Date.now()) / 86400000)
-    : null;
+  const EDUCATION_LEVELS = ["High School", "Certificate/Diploma", "Undergraduate", "Graduate", "Post-Doctoral", "Any Level"];
+  const FIELDS_OF_STUDY = ["Any Field", "STEM", "Business", "Health Sciences", "Education", "Arts & Humanities", "Social Sciences", "Trades & Technology", "Environmental Studies", "Indigenous Studies", "Law"];
 
-  const toggleTag = (arr: string[], val: string) =>
-    arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
+  const toggleTag = (arr: string[], val: string) => arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
+
+  const daysUntilDeadline = form.deadline ? Math.ceil((new Date(form.deadline).getTime() - Date.now()) / 86400000) : null;
 
   useEffect(() => {
     (async () => {
@@ -1630,14 +1714,14 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
     })();
   }, [getToken]);
 
-  const resetForm = () => setForm({ title: "", amount: "", awardType: "One-Time", deadline: "", description: "", eligibility: [], fieldOfStudy: [], howToApply: "", externalUrl: "" });
+  const resetForm = () => setForm({ title: "", opportunityType: "Scholarship", amount: "", deadline: "", description: "", educationLevel: [], fieldOfStudy: [], minimumGPA: "", eligibility: "", howToApply: "", externalUrl: "", contactEmail: "", contactPhone: "", location: "" });
 
-  const handleCreate = async () => {
+  const handleCreate = async (mode: "publish" | "draft") => {
     if (!form.title.trim()) return;
-    setSaving(true);
+    setSaving(true); setSaveMode(mode);
     try {
       const token = await getToken();
-      const payload = { ...form, eligibility: form.eligibility.join(", "), fieldOfStudy: form.fieldOfStudy.join(", ") };
+      const payload = { ...form, educationLevel: form.educationLevel.join(", "), fieldOfStudy: form.fieldOfStudy.join(", "), status: mode === "draft" ? "draft" : "active" };
       const res = await fetch("/api/employer/scholarships", {
         method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
@@ -1645,6 +1729,17 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
     } catch { /* */ }
     setSaving(false);
   };
+
+  // Progress
+  const filledFields = [form.opportunityType, form.title, form.amount, form.deadline, form.description].filter(Boolean).length;
+  const progress = Math.round((filledFields / 5) * 100);
+
+  const SectionNum = ({ n }: { n: number }) => (
+    <div className="flex items-center gap-3 mb-1">
+      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+        style={{ background: `rgba(${GOLD_RGB},0.15)`, color: GOLD }}>{n}</div>
+    </div>
+  );
 
   return (
     <>
@@ -1656,174 +1751,262 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
       </div>
 
       {showForm && (
-        <div className="rounded-2xl overflow-hidden mb-6" style={{ border: `1px solid rgba(${GOLD_RGB},0.25)`, boxShadow: `0 8px 40px rgba(${GOLD_RGB},0.06)` }}>
+        <div className="rounded-2xl overflow-hidden mb-6" style={{ border: `1px solid rgba(${GOLD_RGB},0.2)` }}>
           {/* Header */}
-          <div className="px-6 py-5 flex items-center justify-between" style={{ background: `linear-gradient(135deg, rgba(${GOLD_RGB},0.1) 0%, rgba(2,6,23,0.95) 100%)`, borderBottom: `1px solid rgba(${GOLD_RGB},0.15)` }}>
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ background: `rgba(${GOLD_RGB},0.15)` }}>🎓</div>
+          <div className="px-6 py-4" style={{ background: `rgba(${GOLD_RGB},0.04)`, borderBottom: `1px solid rgba(${GOLD_RGB},0.12)` }}>
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-base font-black text-text">Post a Scholarship</h3>
-                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Invest in the next generation of Indigenous leaders</p>
+                <h3 className="text-lg font-black text-text">Create Scholarship</h3>
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Posting as your organization</p>
               </div>
+              {form.title && (
+                <span className="px-3 py-1 rounded-lg text-[11px] font-bold" style={{ background: `rgba(${GOLD_RGB},0.1)`, color: GOLD }}>
+                  👁 Preview below
+                </span>
+              )}
+            </div>
+            {/* Progress bar */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: progress === 100 ? "#22C55E" : GOLD }} />
+              </div>
+              <span className="text-xs font-bold shrink-0" style={{ color: progress === 100 ? "#22C55E" : GOLD }}>
+                {progress === 100 ? "✓ Ready to publish" : `${progress}%`}
+              </span>
             </div>
           </div>
 
-          <div className="p-6" style={{ background: "rgba(2,6,23,0.7)" }}>
+          <div className="p-6" style={{ background: "rgba(2,6,23,0.5)" }}>
 
-            {/* Name + Amount */}
-            <div className="mb-6">
-              <label style={lblSt}>① Scholarship Name <span style={{ color: "#EF4444" }}>*</span></label>
-              <input className={inputCls} style={{ ...inputSt, fontSize: 15, fontWeight: 600 }}
-                value={form.title}
-                onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
-                placeholder="e.g. Indigenous Excellence Award 2026" />
+            {/* Section 1: Opportunity Type */}
+            <SectionNum n={1} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">What type of opportunity?</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>Select the category that best describes this funding</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8 ml-10">
+              {OPPORTUNITY_TYPES.map((t) => (
+                <button key={t.value} type="button" onClick={() => setForm(p => ({ ...p, opportunityType: t.value }))}
+                  className="flex flex-col items-center gap-2 px-4 py-5 rounded-xl cursor-pointer transition-all text-center relative"
+                  style={{
+                    background: form.opportunityType === t.value ? `rgba(${GOLD_RGB},0.08)` : "rgba(255,255,255,0.02)",
+                    border: form.opportunityType === t.value ? `2px solid rgba(${GOLD_RGB},0.5)` : "2px solid rgba(255,255,255,0.06)",
+                  }}>
+                  <span className="text-2xl">{t.icon}</span>
+                  <span className="text-xs font-bold" style={{ color: form.opportunityType === t.value ? GOLD : "var(--text-sec)" }}>{t.value}</span>
+                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{t.desc}</span>
+                  {form.opportunityType === t.value && (
+                    <span className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: GOLD, color: "#000" }}>✓</span>
+                  )}
+                </button>
+              ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
-              {/* Amount */}
-              <div>
-                <label style={lblSt}>② Award Amount</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-black" style={{ color: GOLD }}>$</span>
-                  <input className={inputCls} style={{ ...inputSt, paddingLeft: "1.85rem" }}
-                    value={form.amount}
-                    onChange={(e) => setForm(p => ({ ...p, amount: e.target.value }))}
-                    placeholder="5,000" />
+            {/* Section 2: Scholarship Details */}
+            <SectionNum n={2} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">Scholarship Details</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>Help students find the right fit</p>
+            <div className="ml-10 mb-8">
+              <div className="p-5 rounded-xl mb-5" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                {/* Education Level */}
+                <div className="mb-5">
+                  <label style={lblSt}>Education Level <span style={{ color: "#EF4444" }}>*</span></label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {EDUCATION_LEVELS.map((lvl) => {
+                      const sel = form.educationLevel.includes(lvl);
+                      return (
+                        <button key={lvl} type="button" onClick={() => setForm(p => ({ ...p, educationLevel: toggleTag(p.educationLevel, lvl) }))}
+                          className="px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                          style={{
+                            background: sel ? `rgba(${GOLD_RGB},0.12)` : "rgba(255,255,255,0.03)",
+                            border: sel ? `1.5px solid rgba(${GOLD_RGB},0.45)` : "1.5px solid rgba(255,255,255,0.08)",
+                            color: sel ? GOLD : "var(--text-muted)",
+                          }}>
+                          {sel ? `✓ ${lvl}` : lvl}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <p className="text-[10px] mt-1.5" style={{ color: "var(--text-muted)" }}>Number or range (e.g. 2,500 – 5,000)</p>
-              </div>
-              {/* Award Type */}
-              <div>
-                <label style={lblSt}>Award Type</label>
-                <div className="flex rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                  {["One-Time", "Renewable", "Bursary"].map((v) => (
-                    <button key={v} type="button" onClick={() => setForm(p => ({ ...p, awardType: v }))}
-                      className="flex-1 py-3 text-[11px] font-bold cursor-pointer"
-                      style={{
-                        background: form.awardType === v ? `rgba(${GOLD_RGB},0.15)` : "rgba(2,6,23,0.6)",
-                        color: form.awardType === v ? GOLD : "var(--text-muted)",
-                        border: "none",
-                        borderRight: v !== "Bursary" ? "1px solid var(--border)" : "none",
-                      }}>
-                      {v === "One-Time" ? "🎯" : v === "Renewable" ? "🔄" : "📚"} {v}
-                    </button>
-                  ))}
+
+                {/* Field of Study */}
+                <div className="mb-5">
+                  <label style={lblSt}>Field of Study</label>
+                  <p style={helpSt}>Select all that apply, or leave empty for any field</p>
+                  <div className="flex flex-wrap gap-2">
+                    {FIELDS_OF_STUDY.map((fld) => {
+                      const sel = form.fieldOfStudy.includes(fld);
+                      return (
+                        <button key={fld} type="button" onClick={() => setForm(p => ({ ...p, fieldOfStudy: toggleTag(p.fieldOfStudy, fld) }))}
+                          className="px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                          style={{
+                            background: sel ? `rgba(${GOLD_RGB},0.12)` : "rgba(255,255,255,0.03)",
+                            border: sel ? `1.5px solid rgba(${GOLD_RGB},0.45)` : "1.5px solid rgba(255,255,255,0.08)",
+                            color: sel ? GOLD : "var(--text-muted)",
+                          }}>
+                          {sel ? `✓ ${fld}` : fld}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Minimum GPA */}
+                <div>
+                  <label style={lblSt}>Minimum GPA</label>
+                  <p style={helpSt}>Academic standing requirement — leave blank if none</p>
+                  <input className={inputCls} style={{ ...inputSt, maxWidth: 200 }} value={form.minimumGPA}
+                    onChange={(e) => setForm(p => ({ ...p, minimumGPA: e.target.value }))}
+                    placeholder='e.g. "3.0" or "70%" ' />
                 </div>
               </div>
             </div>
 
-            {/* Deadline */}
-            <div className="mb-6">
-              <label style={lblSt}>③ Application Deadline</label>
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
+            {/* Section 3: Award Details */}
+            <SectionNum n={3} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">Award Details</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>The funding details</p>
+            <div className="ml-10 mb-8">
+              <div className="mb-4">
+                <label style={lblSt}>{form.opportunityType} Name <span style={{ color: "#EF4444" }}>*</span></label>
+                <input className={inputCls} style={{ ...inputSt, fontSize: 15, fontWeight: 600 }} value={form.title}
+                  onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
+                  placeholder={`e.g. Indigenous ${form.opportunityType === "Business Grant" ? "Entrepreneur" : form.opportunityType === "Community Grant" ? "Community" : "Excellence"} Award 2026`} />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label style={lblSt}>Award Amount</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-black" style={{ color: GOLD }}>$</span>
+                    <input className={inputCls} style={{ ...inputSt, paddingLeft: "1.85rem" }} value={form.amount}
+                      onChange={(e) => setForm(p => ({ ...p, amount: e.target.value }))}
+                      placeholder="5,000" />
+                  </div>
+                </div>
+                <div>
+                  <label style={lblSt}>Application Deadline</label>
                   <input type="date" className={inputCls} style={inputSt} value={form.deadline}
                     onChange={(e) => setForm(p => ({ ...p, deadline: e.target.value }))} />
+                  {daysUntilDeadline !== null && (
+                    <p className="text-xs font-bold mt-1.5" style={{ color: daysUntilDeadline < 14 ? "#EF4444" : GOLD }}>
+                      {daysUntilDeadline < 0 ? "⚠️ Expired" : daysUntilDeadline === 0 ? "⚡ Due Today" : `⏰ ${daysUntilDeadline} days until deadline`}
+                    </p>
+                  )}
                 </div>
-                {daysUntilDeadline !== null && (
-                  <div className="px-4 py-2.5 rounded-xl text-sm font-bold shrink-0"
-                    style={{
-                      background: daysUntilDeadline < 14 ? "rgba(239,68,68,0.1)" : `rgba(${GOLD_RGB},0.1)`,
-                      color: daysUntilDeadline < 14 ? "#EF4444" : GOLD,
-                    }}>
-                    {daysUntilDeadline < 0 ? "⚠️ Expired" : daysUntilDeadline === 0 ? "⚡ Due Today" : `⏰ ${daysUntilDeadline} days left`}
-                  </div>
-                )}
               </div>
-            </div>
-
-            {/* Eligibility */}
-            <div className="mb-6">
-              <label style={lblSt}>④ Who is Eligible?</label>
-              <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>Select all that apply</p>
-              <div className="flex flex-wrap gap-2">
-                {ELIGIBILITY_OPTIONS.map((opt) => {
-                  const sel = form.eligibility.includes(opt);
-                  return (
-                    <button key={opt} type="button" onClick={() => setForm(p => ({ ...p, eligibility: toggleTag(p.eligibility, opt) }))}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all"
-                      style={{
-                        background: sel ? `rgba(${GOLD_RGB},0.12)` : "rgba(255,255,255,0.03)",
-                        border: sel ? `1px solid rgba(${GOLD_RGB},0.4)` : "1px solid rgba(255,255,255,0.07)",
-                        color: sel ? GOLD : "var(--text-muted)",
-                      }}>
-                      {opt}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Fields of Study */}
-            <div className="mb-6">
-              <label style={lblSt}>⑤ Field of Study</label>
-              <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>Select all that apply (or leave blank for any field)</p>
-              <div className="flex flex-wrap gap-2">
-                {FIELDS_OF_STUDY.map((opt) => {
-                  const sel = form.fieldOfStudy.includes(opt);
-                  return (
-                    <button key={opt} type="button" onClick={() => setForm(p => ({ ...p, fieldOfStudy: toggleTag(p.fieldOfStudy, opt) }))}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all"
-                      style={{
-                        background: sel ? `rgba(${GOLD_RGB},0.12)` : "rgba(255,255,255,0.03)",
-                        border: sel ? `1px solid rgba(${GOLD_RGB},0.4)` : "1px solid rgba(255,255,255,0.07)",
-                        color: sel ? GOLD : "var(--text-muted)",
-                      }}>
-                      {opt}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="mb-5">
-              <label style={lblSt}>⑥ Description</label>
-              <textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }}
-                value={form.description}
-                onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
-                placeholder="What is this scholarship for? What values or achievements does it recognize?" />
-            </div>
-
-            {/* How to Apply + Link */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
               <div>
-                <label style={lblSt}>How to Apply</label>
-                <textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }}
-                  value={form.howToApply}
-                  onChange={(e) => setForm(p => ({ ...p, howToApply: e.target.value }))}
-                  placeholder="e.g. Submit cover letter, transcript, and 2 references to scholarships@org.ca" />
+                <label style={lblSt}>Description</label>
+                <p style={helpSt}>What is this {form.opportunityType.toLowerCase()} for? What does it support?</p>
+                <textarea className={inputCls} rows={4} style={{ ...inputSt, resize: "vertical" as const }} value={form.description}
+                  onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
+                  placeholder={`Describe the ${form.opportunityType.toLowerCase()}, its purpose, values it recognizes...`} />
+              </div>
+            </div>
+
+            {/* Section 4: Eligibility & How to Apply */}
+            <SectionNum n={4} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">Eligibility & Application</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>Requirements and instructions</p>
+            <div className="ml-10 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label style={lblSt}>Eligibility Requirements</label>
+                  <textarea className={inputCls} rows={4} style={{ ...inputSt, resize: "vertical" as const }} value={form.eligibility}
+                    onChange={(e) => setForm(p => ({ ...p, eligibility: e.target.value }))}
+                    placeholder="e.g. Must be a First Nations, Métis, or Inuit student enrolled in a Canadian post-secondary institution..." />
+                </div>
+                <div>
+                  <label style={lblSt}>How to Apply</label>
+                  <textarea className={inputCls} rows={4} style={{ ...inputSt, resize: "vertical" as const }} value={form.howToApply}
+                    onChange={(e) => setForm(p => ({ ...p, howToApply: e.target.value }))}
+                    placeholder="e.g. Submit cover letter, transcript, and 2 references to scholarships@org.ca" />
+                </div>
               </div>
               <div>
                 <label style={lblSt}>Application Link / Website</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-3.5 text-xs" style={{ color: "var(--text-muted)" }}>🔗</span>
-                  <input className={inputCls} style={{ ...inputSt, paddingLeft: "2rem" }}
-                    value={form.externalUrl}
-                    onChange={(e) => setForm(p => ({ ...p, externalUrl: e.target.value }))}
-                    placeholder="https://..." />
-                </div>
-                {form.amount && (
-                  <div className="mt-4 p-4 rounded-xl" style={{ background: `rgba(${GOLD_RGB},0.06)`, border: `1px solid rgba(${GOLD_RGB},0.15)` }}>
-                    <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>Award Summary</p>
-                    <p className="text-2xl font-black" style={{ color: GOLD }}>${form.amount}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{form.awardType}{form.deadline ? ` · Due ${new Date(form.deadline).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}` : ""}</p>
-                  </div>
-                )}
+                <input className={inputCls} style={inputSt} value={form.externalUrl}
+                  onChange={(e) => setForm(p => ({ ...p, externalUrl: e.target.value }))}
+                  placeholder="https://..." />
               </div>
             </div>
 
+            {/* Section 5: Location & Contact */}
+            <SectionNum n={5} />
+            <h4 className="text-base font-bold text-text mb-1 ml-10">Location & Contact</h4>
+            <p style={{ ...helpSt, marginLeft: 40 }}>For applicant inquiries</p>
+            <div className="ml-10 mb-8">
+              <div className="mb-4">
+                <label style={lblSt}>Location</label>
+                <p style={helpSt}>Where is this opportunity available?</p>
+                <input className={inputCls} style={inputSt} value={form.location}
+                  onChange={(e) => setForm(p => ({ ...p, location: e.target.value }))}
+                  placeholder="Canada-wide" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label style={lblSt}>Contact Email</label>
+                  <p style={helpSt}>For applicant inquiries</p>
+                  <input type="email" className={inputCls} style={inputSt} value={form.contactEmail}
+                    onChange={(e) => setForm(p => ({ ...p, contactEmail: e.target.value }))}
+                    placeholder="scholarships@organization.ca" />
+                </div>
+                <div>
+                  <label style={lblSt}>Contact Phone</label>
+                  <input className={inputCls} style={inputSt} value={form.contactPhone}
+                    onChange={(e) => setForm(p => ({ ...p, contactPhone: e.target.value }))}
+                    placeholder="(306) 555-0000" />
+                </div>
+              </div>
+            </div>
+
+            {/* Preview */}
+            {form.title && (
+              <div className="ml-10 mb-6 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div className="px-4 py-2.5" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>This is how your listing appears in the community feed</span>
+                </div>
+                <div className="p-4" style={{ background: "rgba(255,255,255,0.01)" }}>
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 text-2xl"
+                      style={{ background: `rgba(${GOLD_RGB},0.08)`, border: `1px solid rgba(${GOLD_RGB},0.18)` }}>
+                      {OPPORTUNITY_TYPES.find(t => t.value === form.opportunityType)?.icon ?? "🎓"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="text-sm font-black text-text">{form.title}</span>
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold" style={{ background: `rgba(${GOLD_RGB},0.1)`, color: GOLD }}>{form.opportunityType}</span>
+                      </div>
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        {form.amount ? `$${form.amount}` : "Amount TBD"}
+                        {form.deadline ? ` · Due ${new Date(form.deadline).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                        {form.location ? ` · ${form.location}` : ""}
+                      </p>
+                      {form.description && <p className="text-xs mt-2 leading-relaxed line-clamp-2" style={{ color: "var(--text-sec)" }}>{form.description}</p>}
+                      {(form.educationLevel.length > 0 || form.fieldOfStudy.length > 0) && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {[...form.educationLevel, ...form.fieldOfStudy].map((tag, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded-md text-[10px] font-semibold" style={{ background: `rgba(${GOLD_RGB},0.08)`, color: GOLD }}>{tag}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Footer */}
-            <div className="flex items-center gap-3 pt-4" style={{ borderTop: `1px solid rgba(${GOLD_RGB},0.12)` }}>
-              <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>
-                {saving ? "Publishing..." : "🎓 Publish Scholarship"}
+            <div className="flex items-center gap-3 ml-10 pt-5" style={{ borderTop: `1px solid rgba(${GOLD_RGB},0.1)` }}>
+              <GlowButton disabled={saving || !form.title.trim()} onClick={() => handleCreate("publish")}>
+                {saving && saveMode === "publish" ? "Publishing..." : "Publish"}
               </GlowButton>
+              <button type="button" disabled={saving || !form.title.trim()} onClick={() => handleCreate("draft")}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold cursor-pointer disabled:opacity-40"
+                style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-sec)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                {saving && saveMode === "draft" ? "Saving..." : "Save as Draft"}
+              </button>
               <button type="button" onClick={() => { resetForm(); setShowForm(false); }}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-                style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                className="text-sm font-semibold cursor-pointer ml-auto" style={{ background: "none", border: "none", color: "var(--text-muted)" }}>
                 Cancel
               </button>
-              {!form.title.trim() && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>✦ Name is required</p>}
             </div>
           </div>
         </div>
@@ -1840,22 +2023,20 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
             <GlowButton onClick={() => setShowForm(true)}>+ Post Your First Scholarship</GlowButton>
           </div>
         </DashCard>
-      ) : (
+      ) : !showForm ? (
         <div className="flex flex-col gap-2 mt-4">
           {scholarships.map((s) => {
             const days = s.deadline ? Math.ceil((new Date(s.deadline).getTime() - Date.now()) / 86400000) : null;
             return (
               <DashCard key={s.id}>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 text-center"
-                    style={{ background: `rgba(${GOLD_RGB},0.08)`, border: `1px solid rgba(${GOLD_RGB},0.15)` }}>
-                    <span className="text-xl">🎓</span>
-                  </div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-xl"
+                    style={{ background: `rgba(${GOLD_RGB},0.08)` }}>🎓</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-text">{s.title}</p>
                     <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                      {s.amount ? `$${s.amount} · ` : ""}
-                      {s.deadline ? `Deadline ${new Date(s.deadline).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}` : "No deadline set"}
+                      {s.amount ? `$${s.amount}` : ""}
+                      {s.deadline ? ` · Due ${new Date(s.deadline).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}` : ""}
                     </p>
                   </div>
                   {days !== null && (
@@ -1865,7 +2046,7 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
                     </span>
                   )}
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0"
-                    style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
+                    style={{ background: s.status === "draft" ? "rgba(251,191,36,0.1)" : "rgba(34,197,94,0.1)", color: s.status === "draft" ? "#FBBF24" : "#22C55E" }}>
                     {s.status || "Active"}
                   </span>
                 </div>
@@ -1873,7 +2054,7 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
             );
           })}
         </div>
-      )}
+      ) : null}
     </>
   );
 }
