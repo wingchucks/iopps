@@ -1344,8 +1344,8 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
 
   return (
     <>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-extrabold tracking-tight" style={{ background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Events ({events.length})</h2>
+      <div className="flex items-center justify-between mb-5 gap-3">
+        <h2 className="text-xl font-extrabold tracking-tight text-text shrink-0">Events ({events.length})</h2>
         <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Create Event"}</GlowButton>
       </div>
       {showForm && (
@@ -1430,8 +1430,8 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
 
   return (
     <>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-extrabold tracking-tight" style={{ background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Scholarships ({scholarships.length})</h2>
+      <div className="flex items-center justify-between mb-5 gap-3">
+        <h2 className="text-xl font-extrabold tracking-tight text-text shrink-0">Scholarships ({scholarships.length})</h2>
         <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Post Scholarship"}</GlowButton>
       </div>
       {showForm && (
@@ -1550,8 +1550,8 @@ function TeamTab({ orgId, getToken }: { orgId: string; getToken: () => Promise<s
 
   return (
     <>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-extrabold tracking-tight" style={{ background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Team</h2>
+      <div className="flex items-center justify-between mb-5 gap-3">
+        <h2 className="text-xl font-extrabold tracking-tight text-text shrink-0">Team</h2>
         <GlowButton onClick={() => setShowInvite(!showInvite)}>{showInvite ? "Cancel" : "+ Invite Member"}</GlowButton>
       </div>
       {showInvite && (
@@ -1597,8 +1597,8 @@ function TemplatesTab() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-extrabold tracking-tight" style={{ background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Templates</h2>
+      <div className="flex items-center justify-between mb-5 gap-3">
+        <h2 className="text-xl font-extrabold tracking-tight text-text shrink-0">Templates</h2>
         <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Create Template"}</GlowButton>
       </div>
       {showForm && (
