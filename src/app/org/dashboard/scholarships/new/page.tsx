@@ -1,4 +1,6 @@
 "use client";
+const spinStyle = `@keyframes spin { to { transform: rotate(360deg) } }`;
+if (typeof document !== "undefined" && !document.getElementById("spin-anim-sc")) { const s = document.createElement("style"); s.id = "spin-anim-sc"; s.textContent = spinStyle; document.head.appendChild(s); }
 
 import { useState, useCallback, useMemo } from "react";
 import { useEffect } from "react";

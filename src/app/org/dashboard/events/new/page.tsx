@@ -1,4 +1,7 @@
 "use client";
+// poster upload spinner
+const spinStyle = `@keyframes spin { to { transform: rotate(360deg) } }`;
+if (typeof document !== "undefined" && !document.getElementById("spin-anim")) { const s = document.createElement("style"); s.id = "spin-anim"; s.textContent = spinStyle; document.head.appendChild(s); }
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -47,6 +50,7 @@ interface FormState {
   contactEmail: string;
   contactPhone: string;
   highlights: string[];
+  posterUrl: string;
 }
 
 const emptyForm: FormState = {
@@ -65,6 +69,7 @@ const emptyForm: FormState = {
   contactEmail: "",
   contactPhone: "",
   highlights: [],
+  posterUrl: "",
 };
 
 /* ------------------------------------------------------------------ */
@@ -352,6 +357,20 @@ export default function NewEventPage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const handlePosterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setSaveError("Image too large (max 5MB)"); return; }
+    setUploading(true);
+    try {
+      const token = await user!.getIdToken();
+      const fd = new FormData(); fd.append("file", file); fd.append("folder", "events/posters");
+      const res = await fetch("/api/employer/upload", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd });
+      if (res.ok) { const { url } = await res.json(); set("posterUrl", url); }
+      else { setSaveError("Upload failed — try again"); }
+    } catch { setSaveError("Upload failed"); }
+    setUploading(false);
+  };
   const [showPreview, setShowPreview] = useState(false);
 
   // Load org & profile
@@ -470,6 +489,7 @@ export default function NewEventPage() {
       if (form.contactName) payload.contactName = form.contactName;
       if (form.contactEmail) payload.contactEmail = form.contactEmail;
       if (form.contactPhone) payload.contactPhone = form.contactPhone;
+    if (form.posterUrl) payload.posterUrl = form.posterUrl;
       if (org?.name) payload.orgName = org.name;
       if (org?.shortName) payload.orgShort = org.shortName;
 
@@ -1020,6 +1040,35 @@ export default function NewEventPage() {
                           </div>
                         </div>
                       </div>
+                    </div>
+                  </Section>
+
+                  {/* ━━ SECTION 7: Event Poster ━━ */}
+                  <Section number="7" title="Event Poster / Image" subtitle="Upload a poster or banner image (optional)">
+                    <div style={{ marginLeft: 38 }}>
+                      {form.posterUrl ? (
+                        <div style={{ position: "relative", maxWidth: 400, borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}>
+                          <img src={form.posterUrl} alt="Event poster" style={{ width: "100%", height: "auto", maxHeight: 300, objectFit: "cover", display: "block" }} />
+                          <button type="button" onClick={() => set("posterUrl", "")}
+                            style={{ position: "absolute", top: 8, right: 8, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.7)", color: "#fff", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                        </div>
+                      ) : (
+                        <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", borderRadius: 12, cursor: "pointer", background: "var(--bg)", border: "2px dashed var(--border)", maxWidth: 400 }}>
+                          <input type="file" accept="image/*" style={{ display: "none" }} onChange={handlePosterUpload} disabled={uploading} />
+                          {uploading ? (
+                            <>
+                              <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid var(--teal)", borderTopColor: "transparent", animation: "spin 1s linear infinite", marginBottom: 12 }} />
+                              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--teal)" }}>Uploading...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>🖼️</span>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-sec)" }}>Click to upload poster</span>
+                              <span style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>JPEG, PNG, or WebP — max 5MB</span>
+                            </>
+                          )}
+                        </label>
+                      )}
                     </div>
                   </Section>
 
