@@ -60,3 +60,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }
+export async function DELETE(req: NextRequest) {
+  const auth = req.headers.get("authorization");
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const { uid } = await req.json();
+  try {
+    await getAuth().deleteUser(uid);
+    return NextResponse.json({ ok: true, deleted: uid });
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
+}
