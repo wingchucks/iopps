@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createHmac } from "crypto";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { Resend } from "resend";
 
@@ -11,6 +12,16 @@ const resend = process.env.RESEND_API_KEY
 
 const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.iopps.ca";
+
+function generateUnsubToken(uid: string): string {
+  return createHmac("sha256", process.env.CRON_SECRET || "").update(uid).digest("hex").substring(0, 32);
+}
+
+function personalizeHtml(html: string, uid: string): string {
+  const token = generateUnsubToken(uid);
+  const unsubUrl = `${SITE_URL}/api/unsubscribe?uid=${uid}&token=${token}`;
+  return html.replace(/UNSUBSCRIBE_URL/g, unsubUrl);
+}
 
 // ---------------------------------------------------------------------------
 // Auth helper
@@ -59,7 +70,7 @@ function buildNewsletterHtml(body: string, subject: string): string {
     <div style="padding:24px;text-align:center;background:#f9fafb;border-radius:0 0 16px 16px;">
       <p style="color:#9ca3af;font-size:12px;margin:0;">&copy; ${year} IOPPS.ca &mdash; Indigenous Opportunities, Partnerships, Programs &amp; Services</p>
       <p style="color:#9ca3af;font-size:12px;margin:8px 0 0;">
-        <a href="${SITE_URL}/settings/notifications" style="color:#0D9488;text-decoration:none;">Unsubscribe</a> &middot;
+        <a href="UNSUBSCRIBE_URL" style="color:#0D9488;text-decoration:none;">Unsubscribe</a> &middot;
         <a href="${SITE_URL}" style="color:#0D9488;text-decoration:none;">iopps.ca</a>
       </p>
     </div>
@@ -179,11 +190,11 @@ export async function POST(request: NextRequest) {
     }
 
     const snap = await query.get();
-    const recipients: string[] = [];
+    const recipients: { email: string; uid: string }[] = [];
     snap.forEach((doc) => {
       const data = doc.data();
       if (data.email && typeof data.email === "string") {
-        recipients.push(data.email);
+        recipients.push({ email: data.email, uid: doc.id });
       }
     });
 
@@ -211,13 +222,13 @@ export async function POST(request: NextRequest) {
     let totalFailed = 0;
 
     for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-      const batch = recipients.slice(i, i + BATCH_SIZE);
+      const batch = recipients.slice(i, i + BATCH_SIZE) as { email: string; uid: string }[];
 
-      const batchPayload = batch.map((email) => ({
+      const batchPayload = batch.map(({ email, uid }) => ({
         from: FROM_EMAIL,
         to: email,
         subject,
-        html,
+        html: personalizeHtml(html, uid),
       }));
 
       try {

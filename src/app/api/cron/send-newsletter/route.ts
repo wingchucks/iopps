@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createHmac } from "crypto";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { Resend } from "resend";
 
@@ -7,6 +8,16 @@ export const runtime = "nodejs";
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.iopps.ca";
+
+function generateUnsubToken(uid: string): string {
+  return createHmac("sha256", process.env.CRON_SECRET || "").update(uid).digest("hex").substring(0, 32);
+}
+
+function personalizeHtml(html: string, uid: string): string {
+  const token = generateUnsubToken(uid);
+  const unsubUrl = `${SITE_URL}/api/unsubscribe?uid=${uid}&token=${token}`;
+  return html.replace(/UNSUBSCRIBE_URL/g, unsubUrl);
+}
 
 function buildHtml(body: string, subject: string): string {
   const year = new Date().getFullYear();
@@ -22,7 +33,7 @@ function buildHtml(body: string, subject: string): string {
     </div>
     <div style="padding:24px;text-align:center;background:#f9fafb;border-radius:0 0 16px 16px;">
       <p style="color:#9ca3af;font-size:12px;margin:0;">&copy; ${year} IOPPS.ca &mdash; Indigenous Opportunities, Partnerships, Programs &amp; Services</p>
-      <p style="color:#9ca3af;font-size:12px;margin:8px 0 0;"><a href="${SITE_URL}/settings/notifications" style="color:#0D9488;text-decoration:none;">Unsubscribe</a> &middot; <a href="${SITE_URL}" style="color:#0D9488;text-decoration:none;">iopps.ca</a></p>
+      <p style="color:#9ca3af;font-size:12px;margin:8px 0 0;"><a href="UNSUBSCRIBE_URL" style="color:#0D9488;text-decoration:none;">Unsubscribe</a> &middot; <a href="${SITE_URL}" style="color:#0D9488;text-decoration:none;">iopps.ca</a></p>
     </div>
   </div>
 </body></html>`;
@@ -59,8 +70,8 @@ export async function GET(request: NextRequest) {
     else if (audience === "community") query = query.where("role", "==", "community");
 
     const usersSnap = await query.get();
-    const recipients: string[] = [];
-    usersSnap.forEach(u => { const d = u.data(); if (d.email) recipients.push(d.email); });
+    const recipients: { email: string; uid: string }[] = [];
+    usersSnap.forEach(u => { const d = u.data(); if (d.email) recipients.push({ email: d.email, uid: u.id }); });
 
     if (recipients.length === 0) {
       await doc.ref.update({ status: "sent", sentAt: now, "stats.sent": 0 });
@@ -72,7 +83,7 @@ export async function GET(request: NextRequest) {
     let sent = 0;
 
     for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-      const batch = recipients.slice(i, i + BATCH_SIZE).map(email => ({ from: FROM_EMAIL, to: email, subject, html }));
+      const batch = recipients.slice(i, i + BATCH_SIZE).map(({ email, uid }) => ({ from: FROM_EMAIL, to: email, subject, html: personalizeHtml(html, uid) }));
       try { await resend.batch.send(batch); sent += batch.length; } catch { /* continue */ }
       if (i + BATCH_SIZE < recipients.length) await new Promise(r => setTimeout(r, 500));
     }
