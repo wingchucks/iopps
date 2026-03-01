@@ -35,6 +35,7 @@ export default function UnifiedSignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [newsletterOptIn, setNewsletterOptIn] = useState(true);
 
   // School
   const [schoolName, setSchoolName] = useState("");
@@ -90,14 +91,34 @@ export default function UnifiedSignupPage() {
     if (password !== confirmPassword) { setError("Passwords don't match"); return; }
     if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
     setSubmitting(true);
-    try { await signUp(name, email, password); goTo(3); }
+    try {
+        await signUp(name, email, password);
+        try {
+          const { getAuth } = await import("firebase/auth");
+          const cu = getAuth().currentUser;
+          if (cu) {
+            const t = await cu.getIdToken();
+            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn }) });
+          }
+        } catch { /* non-blocking */ }
+        goTo(3);
+      }
     catch (err: unknown) { setError(err instanceof Error ? err.message : "Signup failed"); }
     finally { setSubmitting(false); }
   };
 
   const handleGoogle = async () => {
     setError(""); setSubmitting(true);
-    try { await signInWithGoogle(); goTo(3); }
+    try {
+        const cred = await signInWithGoogle();
+        try {
+          if (cred?.user) {
+            const t = await cred.user.getIdToken();
+            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn }) });
+          }
+        } catch { /* non-blocking */ }
+        goTo(3);
+      }
     catch (err: unknown) { setError(err instanceof Error ? err.message : "Google sign-in failed"); }
     finally { setSubmitting(false); }
   };
@@ -225,6 +246,17 @@ export default function UnifiedSignupPage() {
               <div><FormInput label="Password" required type="password" placeholder="Min. 8 characters" value={password} onChange={e => setPassword(e.target.value)} /><PasswordStrength password={password} /></div>
               <FormInput label="Confirm Password" required type="password" placeholder="Re-enter password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
             </div>
+          </div>
+          {/* Newsletter Opt-In */}
+          <div style={{ marginTop: 20 }}>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer", padding: "14px 16px", borderRadius: 12, background: CSS.card, border: `1px solid ${newsletterOptIn ? "rgba(20,184,166,0.3)" : CSS.border}`, transition: "all 0.2s" }}>
+              <input type="checkbox" checked={newsletterOptIn} onChange={e => setNewsletterOptIn(e.target.checked)}
+                style={{ width: 18, height: 18, marginTop: 2, accentColor: CSS.accent, cursor: "pointer" }} />
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: CSS.text }}>{"📬"} Subscribe to IOPPS Newsletter</div>
+                <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 2 }}>Get weekly updates on new jobs, events, scholarships, and community highlights. Unsubscribe anytime.</div>
+              </div>
+            </label>
           </div>
           <div style={{ marginTop: 24, background: CSS.card, border: "1px solid rgba(34,197,94,0.3)", borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 24, height: 24, borderRadius: "50%", background: CSS.success, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>✓</span></div>
