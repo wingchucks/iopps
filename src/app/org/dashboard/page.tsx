@@ -1308,15 +1308,23 @@ function ApplicationsTab({ jobs, getToken }: { jobs: DashJob[]; getToken: () => 
    EVENTS TAB
    ═══════════════════════════════════════════════════════════ */
 function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise<string> }) {
-  const [events, setEvents] = useState<Array<{id:string; title:string; eventType?:string; date?:string; location?:string; status?:string}>>([]);
+  const [events, setEvents] = useState<Array<{id:string;title:string;eventType?:string;date?:string;location?:string;status?:string}>>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ title: "", eventType: "Community", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "" });
-  const EVENT_TYPES = ["Powwow", "Career Fair", "Conference", "Community", "Cultural", "Sports", "Fundraiser", "Workshop", "Ceremony"];
+  const [form, setForm] = useState({ title: "", eventType: "Powwow", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "" });
+
   const inputCls = "w-full px-4 py-3 rounded-xl text-sm";
   const inputSt: React.CSSProperties = { background: "rgba(2,6,23,0.6)", border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit" };
-  const lblSt: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" as const, letterSpacing: "0.5px" };
+  const lblSt: React.CSSProperties = { display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" as const, letterSpacing: "0.6px" };
+
+  const EVENT_TYPES = [
+    { value: "Powwow", emoji: "🥁" }, { value: "Career Fair", emoji: "💼" },
+    { value: "Conference", emoji: "🎤" }, { value: "Workshop", emoji: "🛠️" },
+    { value: "Cultural", emoji: "🪶" }, { value: "Community", emoji: "🤝" },
+    { value: "Sports", emoji: "⚽" }, { value: "Fundraiser", emoji: "💛" },
+    { value: "Ceremony", emoji: "🔥" },
+  ];
 
   useEffect(() => {
     (async () => {
@@ -1329,6 +1337,8 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
     })();
   }, [getToken]);
 
+  const resetForm = () => setForm({ title: "", eventType: "Powwow", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "" });
+
   const handleCreate = async () => {
     if (!form.title.trim()) return;
     setSaving(true);
@@ -1337,105 +1347,231 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
       const res = await fetch("/api/employer/events", {
         method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(form),
       });
-      if (res.ok) { const c = await res.json(); setEvents((p) => [c, ...p]); setForm({ title: "", eventType: "Community", date: "", endDate: "", location: "", description: "", admissionType: "Free", externalUrl: "" }); setShowForm(false); }
+      if (res.ok) { const c = await res.json(); setEvents((p) => [c, ...p]); resetForm(); setShowForm(false); }
     } catch { /* */ }
     setSaving(false);
   };
+
+  const selectedType = EVENT_TYPES.find(t => t.value === form.eventType);
 
   return (
     <>
       <div className="flex items-center justify-between mb-5 gap-3">
         <h2 className="text-xl font-extrabold tracking-tight text-text shrink-0">Events ({events.length})</h2>
-        <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Create Event"}</GlowButton>
+        <GlowButton onClick={() => { setShowForm(!showForm); if (showForm) resetForm(); }}>
+          {showForm ? "✕ Cancel" : "+ Create Event"}
+        </GlowButton>
       </div>
+
       {showForm && (
-        <div className="rounded-2xl overflow-hidden mb-4" style={{ border: `1px solid rgba(${AMBER_RGB},0.2)` }}>
-          {/* Form header */}
-          <div className="px-6 py-4 flex items-center gap-3" style={{ background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.08), rgba(245,158,11,0.04))`, borderBottom: `1px solid rgba(${AMBER_RGB},0.12)` }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: `rgba(${AMBER_RGB},0.12)` }}>📅</div>
-            <div>
-              <h3 className="text-base font-bold text-text">Create New Event</h3>
-              <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Fill in the details below. Only Title is required.</p>
+        <div className="rounded-2xl overflow-hidden mb-6" style={{ border: `1px solid rgba(${AMBER_RGB},0.25)`, boxShadow: `0 8px 40px rgba(${AMBER_RGB},0.06)` }}>
+          {/* Header */}
+          <div className="px-6 py-5 flex items-center justify-between" style={{ background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.1) 0%, rgba(2,6,23,0.95) 100%)`, borderBottom: `1px solid rgba(${AMBER_RGB},0.15)` }}>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ background: `rgba(${AMBER_RGB},0.15)` }}>
+                {selectedType?.emoji ?? "📅"}
+              </div>
+              <div>
+                <h3 className="text-base font-black text-text">Create New Event</h3>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Share an event with the Indigenous community on IOPPS</p>
+              </div>
             </div>
           </div>
-          <div className="p-6 bg-card">
-            {/* Section: Basic Info */}
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: `rgba(${AMBER_RGB},0.7)` }}>Basic Info</p>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
-              <div>
-                <label style={lblSt}>Event Title <span style={{ color: "#EF4444" }}>*</span></label>
-                <input className={inputCls} style={inputSt} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="e.g. Annual Pow Wow 2026" />
-              </div>
-              <div>
-                <label style={lblSt}>Event Type</label>
-                <select className={inputCls} style={{ ...inputSt, cursor: "pointer" }} value={form.eventType} onChange={(e) => setForm((p) => ({ ...p, eventType: e.target.value }))}>
-                  {EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
+
+          <div className="p-6" style={{ background: "rgba(2,6,23,0.7)" }}>
+
+            {/* STEP 1: Event Type */}
+            <div className="mb-7">
+              <label style={lblSt}>① What kind of event?</label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {EVENT_TYPES.map((t) => (
+                  <button key={t.value} type="button" onClick={() => setForm(p => ({ ...p, eventType: t.value }))}
+                    className="flex items-center gap-2.5 px-3 py-3 rounded-xl cursor-pointer transition-all"
+                    style={{
+                      background: form.eventType === t.value ? `rgba(${AMBER_RGB},0.12)` : "rgba(255,255,255,0.02)",
+                      border: form.eventType === t.value ? `1.5px solid rgba(${AMBER_RGB},0.45)` : "1.5px solid rgba(255,255,255,0.05)",
+                      color: form.eventType === t.value ? AMBER : "var(--text-muted)",
+                    }}>
+                    <span className="text-lg leading-none shrink-0">{t.emoji}</span>
+                    <span className="text-xs font-semibold">{t.value}</span>
+                  </button>
+                ))}
               </div>
             </div>
-            {/* Section: Dates & Location */}
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: `rgba(${AMBER_RGB},0.7)` }}>📍 Date & Location</p>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
-              <div>
-                <label style={lblSt}>Start Date</label>
-                <input type="date" className={inputCls} style={inputSt} value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} />
+
+            {/* STEP 2: Title */}
+            <div className="mb-6">
+              <label style={lblSt}>② Event Title <span style={{ color: "#EF4444" }}>*</span></label>
+              <input className={inputCls}
+                style={{ ...inputSt, fontSize: 15, fontWeight: 600 }}
+                value={form.title}
+                onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
+                placeholder={`e.g. ${form.eventType === "Powwow" ? "Annual Summer Powwow 2026" : form.eventType === "Career Fair" ? "Indigenous Careers Expo 2026" : `${form.eventType} 2026`}`}
+              />
+            </div>
+
+            {/* STEP 3: Dates */}
+            <div className="mb-6">
+              <label style={lblSt}>③ Dates</label>
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <input type="date" className={inputCls} style={inputSt} value={form.date} onChange={(e) => setForm(p => ({ ...p, date: e.target.value }))} />
+                  <p className="text-[10px] mt-1.5" style={{ color: "var(--text-muted)" }}>Start date</p>
+                </div>
+                <div className="pt-3.5 font-light text-lg" style={{ color: "var(--text-muted)" }}>→</div>
+                <div className="flex-1">
+                  <input type="date" className={inputCls} style={inputSt} value={form.endDate} onChange={(e) => setForm(p => ({ ...p, endDate: e.target.value }))} />
+                  <p className="text-[10px] mt-1.5" style={{ color: "var(--text-muted)" }}>End date (optional)</p>
+                </div>
               </div>
-              <div>
-                <label style={lblSt}>End Date</label>
-                <input type="date" className={inputCls} style={inputSt} value={form.endDate} onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))} />
+            </div>
+
+            {/* STEP 4: Location + Admission */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+              <div className="lg:col-span-2">
+                <label style={lblSt}>④ Location</label>
+                <input className={inputCls} style={inputSt} value={form.location}
+                  onChange={(e) => setForm(p => ({ ...p, location: e.target.value }))}
+                  placeholder="City, Province or 'Virtual'" />
               </div>
               <div>
                 <label style={lblSt}>Admission</label>
-                <select className={inputCls} style={{ ...inputSt, cursor: "pointer" }} value={form.admissionType} onChange={(e) => setForm((p) => ({ ...p, admissionType: e.target.value }))}>
-                  <option value="Free">🎟️ Free</option><option value="Paid">💳 Paid</option><option value="Donation">🙏 Donation</option>
-                </select>
+                <div className="flex rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                  {[{ v: "Free", e: "🎟️" }, { v: "Paid", e: "💳" }, { v: "Donation", e: "🙏" }].map(({ v, e }) => (
+                    <button key={v} type="button" onClick={() => setForm(p => ({ ...p, admissionType: v }))}
+                      className="flex-1 py-3 text-[11px] font-bold cursor-pointer"
+                      style={{
+                        background: form.admissionType === v ? `rgba(${AMBER_RGB},0.15)` : "rgba(2,6,23,0.6)",
+                        color: form.admissionType === v ? AMBER : "var(--text-muted)",
+                        border: "none",
+                        borderRight: v !== "Donation" ? "1px solid var(--border)" : "none",
+                      }}>
+                      {e} {v}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="mb-5">
-              <label style={lblSt}>Location</label>
-              <input className={inputCls} style={inputSt} value={form.location} onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))} placeholder="e.g. Waskesiu, Prince Albert National Park, SK" />
-            </div>
-            {/* Section: Details */}
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: `rgba(${AMBER_RGB},0.7)` }}>📝 Event Details</p>
-            <div className="mb-4">
-              <label style={lblSt}>Description</label>
-              <textarea className={inputCls} rows={4} style={{ ...inputSt, resize: "vertical" as const }} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Tell people what to expect — activities, performers, schedule highlights..." />
-              <p className="text-[11px] mt-1.5" style={{ color: "var(--text-muted)" }}>{form.description.length}/500 characters</p>
-            </div>
+
+            {/* STEP 5: Description */}
             <div className="mb-6">
-              <label style={lblSt}>Event Website / Ticket Link</label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs" style={{ color: "var(--text-muted)" }}>🔗</span>
-                <input className={inputCls} style={{ ...inputSt, paddingLeft: "2rem" }} value={form.externalUrl} onChange={(e) => setForm((p) => ({ ...p, externalUrl: e.target.value }))} placeholder="https://..." />
+              <div className="flex items-center justify-between mb-2">
+                <label style={{ ...lblSt, marginBottom: 0 }}>⑤ Description</label>
+                <span className="text-[10px]" style={{ color: form.description.length > 450 ? "#EF4444" : "var(--text-muted)" }}>
+                  {form.description.length}/500
+                </span>
               </div>
+              <textarea className={inputCls} rows={4} maxLength={500}
+                style={{ ...inputSt, resize: "vertical" as const }}
+                value={form.description}
+                onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
+                placeholder="Tell the community what to expect — activities, performers, food, schedule highlights, what to bring..." />
             </div>
-            {/* Footer */}
-            <div className="flex items-center gap-3 pt-4" style={{ borderTop: `1px solid rgba(${AMBER_RGB},0.1)` }}>
-              <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>{saving ? "Publishing..." : "📅 Publish Event"}</GlowButton>
-              <button onClick={() => setShowForm(false)} className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none" style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}>Cancel</button>
-              {!form.title.trim() && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Title required to publish</p>}
+
+            {/* External link */}
+            <div className="mb-6">
+              <label style={lblSt}>🔗 Event Website or Ticket Link</label>
+              <input className={inputCls} style={inputSt} value={form.externalUrl}
+                onChange={(e) => setForm(p => ({ ...p, externalUrl: e.target.value }))}
+                placeholder="https://..." />
+            </div>
+
+            {/* Live Preview */}
+            {form.title && (
+              <div className="mb-6 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div className="px-4 py-2.5 flex items-center gap-2" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>👁 Preview — how it will appear</span>
+                </div>
+                <div className="p-4" style={{ background: "rgba(255,255,255,0.01)" }}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 text-center"
+                      style={{ background: `rgba(${AMBER_RGB},0.08)`, border: `1px solid rgba(${AMBER_RGB},0.18)` }}>
+                      <div className="text-[9px] font-black uppercase tracking-wide" style={{ color: AMBER }}>
+                        {form.date ? new Date(form.date).toLocaleDateString("en-US", { month: "short" }) : "MON"}
+                      </div>
+                      <div className="text-2xl font-black leading-tight" style={{ color: AMBER }}>
+                        {form.date ? new Date(form.date).getDate() : "—"}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="text-sm font-black text-text leading-tight">{form.title}</span>
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase"
+                          style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER }}>
+                          {selectedType?.emoji} {form.eventType}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold"
+                          style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
+                          {form.admissionType === "Free" ? "🎟️ Free" : form.admissionType === "Paid" ? "💳 Paid" : "🙏 Donation"}
+                        </span>
+                      </div>
+                      <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                        {form.date ? new Date(form.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "Date TBD"}
+                        {form.endDate && form.endDate !== form.date ? ` – ${new Date(form.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}
+                        {form.location ? ` · 📍 ${form.location}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  {form.description && (
+                    <p className="text-xs mt-3 leading-relaxed line-clamp-2" style={{ color: "var(--text-sec)" }}>{form.description}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Footer actions */}
+            <div className="flex items-center gap-3 pt-4" style={{ borderTop: `1px solid rgba(${AMBER_RGB},0.12)` }}>
+              <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>
+                {saving ? "Publishing..." : "📅 Publish Event"}
+              </GlowButton>
+              <button type="button" onClick={() => { resetForm(); setShowForm(false); }}
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
+                style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                Cancel
+              </button>
+              {!form.title.trim() && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>✦ Title is required</p>}
             </div>
           </div>
         </div>
       )}
+
       {loading ? (
         <div className="flex flex-col gap-3">{[1,2,3].map((i) => <div key={i} className="h-20 rounded-2xl skeleton" />)}</div>
       ) : events.length === 0 && !showForm ? (
-        <DashCard><div className="text-center py-12"><p className="text-4xl mb-3 opacity-30">📅</p><p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No events yet</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>Create events like job fairs, pow wows, or community gatherings.</p></div></DashCard>
+        <DashCard>
+          <div className="text-center py-14">
+            <div className="text-5xl mb-4">📅</div>
+            <p className="text-base font-bold mb-2" style={{ color: "var(--text-sec)" }}>No events yet</p>
+            <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>Share pow wows, career fairs, conferences, and community gatherings with thousands of Indigenous community members.</p>
+            <GlowButton onClick={() => setShowForm(true)}>+ Create Your First Event</GlowButton>
+          </div>
+        </DashCard>
       ) : (
         <div className="flex flex-col gap-2 mt-4">
           {events.map((ev) => (
             <DashCard key={ev.id}>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.08)" }}>
-                  <div className="text-[10px] font-bold" style={{ color: "#F59E0B" }}>{ev.date ? new Date(ev.date).toLocaleDateString("en-US", { month: "short" }).toUpperCase() : ""}</div>
-                  <div className="text-lg font-black leading-none" style={{ color: "#F59E0B" }}>{ev.date ? new Date(ev.date).getDate() : ""}</div>
+                <div className="w-13 h-13 rounded-xl flex flex-col items-center justify-center shrink-0 text-center px-2"
+                  style={{ background: `rgba(${AMBER_RGB},0.07)`, minWidth: "3.25rem" }}>
+                  <div className="text-[9px] font-black uppercase tracking-wide" style={{ color: AMBER }}>
+                    {ev.date ? new Date(ev.date).toLocaleDateString("en-US", { month: "short" }) : ""}
+                  </div>
+                  <div className="text-xl font-black leading-tight" style={{ color: AMBER }}>
+                    {ev.date ? new Date(ev.date).getDate() : "—"}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{ev.title}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{ev.eventType && <span className="mr-2">🎪 {ev.eventType}</span>}{ev.date ? new Date(ev.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}{ev.location ? ` · ${ev.location}` : ""}</p>
+                  <p className="text-sm font-bold text-text">{ev.title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    {ev.eventType && `${EVENT_TYPES.find(t => t.value === ev.eventType)?.emoji ?? "🎪"} ${ev.eventType}`}
+                    {ev.date ? ` · ${new Date(ev.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                    {ev.location ? ` · ${ev.location}` : ""}
+                  </p>
                 </div>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0" style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}>{ev.status || "Active"}</span>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0"
+                  style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
+                  {ev.status || "Active"}
+                </span>
               </div>
             </DashCard>
           ))}
@@ -1449,14 +1585,39 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
    SCHOLARSHIPS TAB
    ═══════════════════════════════════════════════════════════ */
 function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise<string> }) {
-  const [scholarships, setScholarships] = useState<Array<{id:string; title:string; amount?:string; deadline?:string; status?:string; description?:string}>>([]);
+  const [scholarships, setScholarships] = useState<Array<{id:string;title:string;amount?:string;deadline?:string;status?:string}>>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ title: "", amount: "", deadline: "", description: "", eligibility: "", howToApply: "", externalUrl: "" });
+  const [form, setForm] = useState({
+    title: "", amount: "", awardType: "One-Time", deadline: "", description: "",
+    eligibility: [] as string[], fieldOfStudy: [] as string[], howToApply: "", externalUrl: ""
+  });
+
   const inputCls = "w-full px-4 py-3 rounded-xl text-sm";
   const inputSt: React.CSSProperties = { background: "rgba(2,6,23,0.6)", border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit" };
-  const lblSt: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" as const, letterSpacing: "0.5px" };
+  const lblSt: React.CSSProperties = { display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" as const, letterSpacing: "0.6px" };
+
+  const GOLD = "#FBBF24";
+  const GOLD_RGB = "251,191,36";
+
+  const ELIGIBILITY_OPTIONS = [
+    "First Nations", "Métis", "Inuit", "Status Indian", "Non-Status",
+    "Post-Secondary Student", "Enrolled Full-Time", "High School Graduate",
+    "Treaty Member", "Band Member", "Women", "Youth (Under 25)",
+  ];
+  const FIELDS_OF_STUDY = [
+    "Health & Wellness", "Business & Entrepreneurship", "Education", "Technology & IT",
+    "Trades & Apprenticeship", "Arts & Culture", "Law & Justice", "Social Work",
+    "Environmental Sciences", "Engineering", "Agriculture", "Any Field",
+  ];
+
+  const daysUntilDeadline = form.deadline
+    ? Math.ceil((new Date(form.deadline).getTime() - Date.now()) / 86400000)
+    : null;
+
+  const toggleTag = (arr: string[], val: string) =>
+    arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
 
   useEffect(() => {
     (async () => {
@@ -1469,15 +1630,18 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
     })();
   }, [getToken]);
 
+  const resetForm = () => setForm({ title: "", amount: "", awardType: "One-Time", deadline: "", description: "", eligibility: [], fieldOfStudy: [], howToApply: "", externalUrl: "" });
+
   const handleCreate = async () => {
     if (!form.title.trim()) return;
     setSaving(true);
     try {
       const token = await getToken();
+      const payload = { ...form, eligibility: form.eligibility.join(", "), fieldOfStudy: form.fieldOfStudy.join(", ") };
       const res = await fetch("/api/employer/scholarships", {
-        method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(form),
+        method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
-      if (res.ok) { const c = await res.json(); setScholarships((p) => [c, ...p]); setForm({ title: "", amount: "", deadline: "", description: "", eligibility: "", howToApply: "", externalUrl: "" }); setShowForm(false); }
+      if (res.ok) { const c = await res.json(); setScholarships((p) => [c, ...p]); resetForm(); setShowForm(false); }
     } catch { /* */ }
     setSaving(false);
   };
@@ -1486,92 +1650,228 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
     <>
       <div className="flex items-center justify-between mb-5 gap-3">
         <h2 className="text-xl font-extrabold tracking-tight text-text shrink-0">Scholarships ({scholarships.length})</h2>
-        <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Post Scholarship"}</GlowButton>
+        <GlowButton onClick={() => { setShowForm(!showForm); if (showForm) resetForm(); }}>
+          {showForm ? "✕ Cancel" : "+ Post Scholarship"}
+        </GlowButton>
       </div>
+
       {showForm && (
-        <div className="rounded-2xl overflow-hidden mb-4" style={{ border: "1px solid rgba(251,191,36,0.2)" }}>
-          {/* Form header */}
-          <div className="px-6 py-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, rgba(251,191,36,0.08), rgba(245,158,11,0.04))", borderBottom: "1px solid rgba(251,191,36,0.12)" }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: "rgba(251,191,36,0.12)" }}>🎓</div>
-            <div>
-              <h3 className="text-base font-bold text-text">Post a Scholarship</h3>
-              <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Help Indigenous students fund their education. Only Title is required.</p>
+        <div className="rounded-2xl overflow-hidden mb-6" style={{ border: `1px solid rgba(${GOLD_RGB},0.25)`, boxShadow: `0 8px 40px rgba(${GOLD_RGB},0.06)` }}>
+          {/* Header */}
+          <div className="px-6 py-5 flex items-center justify-between" style={{ background: `linear-gradient(135deg, rgba(${GOLD_RGB},0.1) 0%, rgba(2,6,23,0.95) 100%)`, borderBottom: `1px solid rgba(${GOLD_RGB},0.15)` }}>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ background: `rgba(${GOLD_RGB},0.15)` }}>🎓</div>
+              <div>
+                <h3 className="text-base font-black text-text">Post a Scholarship</h3>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Invest in the next generation of Indigenous leaders</p>
+              </div>
             </div>
           </div>
-          <div className="p-6 bg-card">
-            {/* Section: Basic Info */}
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(251,191,36,0.7)" }}>Basic Info</p>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+
+          <div className="p-6" style={{ background: "rgba(2,6,23,0.7)" }}>
+
+            {/* Name + Amount */}
+            <div className="mb-6">
+              <label style={lblSt}>① Scholarship Name <span style={{ color: "#EF4444" }}>*</span></label>
+              <input className={inputCls} style={{ ...inputSt, fontSize: 15, fontWeight: 600 }}
+                value={form.title}
+                onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
+                placeholder="e.g. Indigenous Excellence Award 2026" />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+              {/* Amount */}
               <div>
-                <label style={lblSt}>Scholarship Name <span style={{ color: "#EF4444" }}>*</span></label>
-                <input className={inputCls} style={inputSt} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="e.g. Indigenous Excellence Award 2026" />
-              </div>
-              <div>
-                <label style={lblSt}>Award Amount</label>
+                <label style={lblSt}>② Award Amount</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold" style={{ color: "#FBBF24" }}>$</span>
-                  <input className={inputCls} style={{ ...inputSt, paddingLeft: "1.75rem" }} value={form.amount} onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))} placeholder="5,000" />
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-black" style={{ color: GOLD }}>$</span>
+                  <input className={inputCls} style={{ ...inputSt, paddingLeft: "1.85rem" }}
+                    value={form.amount}
+                    onChange={(e) => setForm(p => ({ ...p, amount: e.target.value }))}
+                    placeholder="5,000" />
                 </div>
-                <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>Enter just the number or a range (e.g. 2,500 – 5,000)</p>
+                <p className="text-[10px] mt-1.5" style={{ color: "var(--text-muted)" }}>Number or range (e.g. 2,500 – 5,000)</p>
               </div>
-            </div>
-            {/* Section: Deadline */}
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(251,191,36,0.7)" }}>⏰ Deadline & Application</p>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+              {/* Award Type */}
               <div>
-                <label style={lblSt}>Application Deadline</label>
-                <input type="date" className={inputCls} style={inputSt} value={form.deadline} onChange={(e) => setForm((p) => ({ ...p, deadline: e.target.value }))} />
-              </div>
-              <div>
-                <label style={lblSt}>Apply / Info Link</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs" style={{ color: "var(--text-muted)" }}>🔗</span>
-                  <input className={inputCls} style={{ ...inputSt, paddingLeft: "2rem" }} value={form.externalUrl} onChange={(e) => setForm((p) => ({ ...p, externalUrl: e.target.value }))} placeholder="https://..." />
+                <label style={lblSt}>Award Type</label>
+                <div className="flex rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                  {["One-Time", "Renewable", "Bursary"].map((v) => (
+                    <button key={v} type="button" onClick={() => setForm(p => ({ ...p, awardType: v }))}
+                      className="flex-1 py-3 text-[11px] font-bold cursor-pointer"
+                      style={{
+                        background: form.awardType === v ? `rgba(${GOLD_RGB},0.15)` : "rgba(2,6,23,0.6)",
+                        color: form.awardType === v ? GOLD : "var(--text-muted)",
+                        border: "none",
+                        borderRight: v !== "Bursary" ? "1px solid var(--border)" : "none",
+                      }}>
+                      {v === "One-Time" ? "🎯" : v === "Renewable" ? "🔄" : "📚"} {v}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
-            {/* Section: Details */}
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(251,191,36,0.7)" }}>📝 Details</p>
-            <div className="mb-4">
-              <label style={lblSt}>Description</label>
-              <textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="What is this scholarship about? Who is it for? What does it support?" />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-              <div>
-                <label style={lblSt}>Eligibility Requirements</label>
-                <textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }} value={form.eligibility} onChange={(e) => setForm((p) => ({ ...p, eligibility: e.target.value }))} placeholder="e.g. Indigenous student enrolled in post-secondary, GPA 2.5+, Treaty 6 community member..." />
+
+            {/* Deadline */}
+            <div className="mb-6">
+              <label style={lblSt}>③ Application Deadline</label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <input type="date" className={inputCls} style={inputSt} value={form.deadline}
+                    onChange={(e) => setForm(p => ({ ...p, deadline: e.target.value }))} />
+                </div>
+                {daysUntilDeadline !== null && (
+                  <div className="px-4 py-2.5 rounded-xl text-sm font-bold shrink-0"
+                    style={{
+                      background: daysUntilDeadline < 14 ? "rgba(239,68,68,0.1)" : `rgba(${GOLD_RGB},0.1)`,
+                      color: daysUntilDeadline < 14 ? "#EF4444" : GOLD,
+                    }}>
+                    {daysUntilDeadline < 0 ? "⚠️ Expired" : daysUntilDeadline === 0 ? "⚡ Due Today" : `⏰ ${daysUntilDeadline} days left`}
+                  </div>
+                )}
               </div>
+            </div>
+
+            {/* Eligibility */}
+            <div className="mb-6">
+              <label style={lblSt}>④ Who is Eligible?</label>
+              <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>Select all that apply</p>
+              <div className="flex flex-wrap gap-2">
+                {ELIGIBILITY_OPTIONS.map((opt) => {
+                  const sel = form.eligibility.includes(opt);
+                  return (
+                    <button key={opt} type="button" onClick={() => setForm(p => ({ ...p, eligibility: toggleTag(p.eligibility, opt) }))}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                      style={{
+                        background: sel ? `rgba(${GOLD_RGB},0.12)` : "rgba(255,255,255,0.03)",
+                        border: sel ? `1px solid rgba(${GOLD_RGB},0.4)` : "1px solid rgba(255,255,255,0.07)",
+                        color: sel ? GOLD : "var(--text-muted)",
+                      }}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Fields of Study */}
+            <div className="mb-6">
+              <label style={lblSt}>⑤ Field of Study</label>
+              <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>Select all that apply (or leave blank for any field)</p>
+              <div className="flex flex-wrap gap-2">
+                {FIELDS_OF_STUDY.map((opt) => {
+                  const sel = form.fieldOfStudy.includes(opt);
+                  return (
+                    <button key={opt} type="button" onClick={() => setForm(p => ({ ...p, fieldOfStudy: toggleTag(p.fieldOfStudy, opt) }))}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                      style={{
+                        background: sel ? `rgba(${GOLD_RGB},0.12)` : "rgba(255,255,255,0.03)",
+                        border: sel ? `1px solid rgba(${GOLD_RGB},0.4)` : "1px solid rgba(255,255,255,0.07)",
+                        color: sel ? GOLD : "var(--text-muted)",
+                      }}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="mb-5">
+              <label style={lblSt}>⑥ Description</label>
+              <textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }}
+                value={form.description}
+                onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
+                placeholder="What is this scholarship for? What values or achievements does it recognize?" />
+            </div>
+
+            {/* How to Apply + Link */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
               <div>
                 <label style={lblSt}>How to Apply</label>
-                <textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }} value={form.howToApply} onChange={(e) => setForm((p) => ({ ...p, howToApply: e.target.value }))} placeholder="e.g. Submit cover letter, transcript, and 2 reference letters to scholarships@org.ca" />
+                <textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }}
+                  value={form.howToApply}
+                  onChange={(e) => setForm(p => ({ ...p, howToApply: e.target.value }))}
+                  placeholder="e.g. Submit cover letter, transcript, and 2 references to scholarships@org.ca" />
+              </div>
+              <div>
+                <label style={lblSt}>Application Link / Website</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-3.5 text-xs" style={{ color: "var(--text-muted)" }}>🔗</span>
+                  <input className={inputCls} style={{ ...inputSt, paddingLeft: "2rem" }}
+                    value={form.externalUrl}
+                    onChange={(e) => setForm(p => ({ ...p, externalUrl: e.target.value }))}
+                    placeholder="https://..." />
+                </div>
+                {form.amount && (
+                  <div className="mt-4 p-4 rounded-xl" style={{ background: `rgba(${GOLD_RGB},0.06)`, border: `1px solid rgba(${GOLD_RGB},0.15)` }}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>Award Summary</p>
+                    <p className="text-2xl font-black" style={{ color: GOLD }}>${form.amount}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{form.awardType}{form.deadline ? ` · Due ${new Date(form.deadline).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}` : ""}</p>
+                  </div>
+                )}
               </div>
             </div>
+
             {/* Footer */}
-            <div className="flex items-center gap-3 pt-4" style={{ borderTop: "1px solid rgba(251,191,36,0.1)" }}>
-              <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>{saving ? "Publishing..." : "🎓 Publish Scholarship"}</GlowButton>
-              <button onClick={() => setShowForm(false)} className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none" style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}>Cancel</button>
+            <div className="flex items-center gap-3 pt-4" style={{ borderTop: `1px solid rgba(${GOLD_RGB},0.12)` }}>
+              <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>
+                {saving ? "Publishing..." : "🎓 Publish Scholarship"}
+              </GlowButton>
+              <button type="button" onClick={() => { resetForm(); setShowForm(false); }}
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
+                style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                Cancel
+              </button>
+              {!form.title.trim() && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>✦ Name is required</p>}
             </div>
           </div>
         </div>
       )}
+
       {loading ? (
         <div className="flex flex-col gap-3">{[1,2,3].map((i) => <div key={i} className="h-20 rounded-2xl skeleton" />)}</div>
       ) : scholarships.length === 0 && !showForm ? (
-        <DashCard><div className="text-center py-12"><p className="text-4xl mb-3 opacity-30">🎓</p><p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No scholarships yet</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>Share scholarship opportunities for Indigenous students.</p></div></DashCard>
+        <DashCard>
+          <div className="text-center py-14">
+            <div className="text-5xl mb-4">🎓</div>
+            <p className="text-base font-bold mb-2" style={{ color: "var(--text-sec)" }}>No scholarships posted yet</p>
+            <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>Help Indigenous students access education funding. Your scholarship will reach thousands of community members on IOPPS.</p>
+            <GlowButton onClick={() => setShowForm(true)}>+ Post Your First Scholarship</GlowButton>
+          </div>
+        </DashCard>
       ) : (
         <div className="flex flex-col gap-2 mt-4">
-          {scholarships.map((s) => (
-            <DashCard key={s.id}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: "rgba(251,191,36,0.08)" }}>🎓</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{s.title}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{s.amount && <span className="mr-2">💰 {s.amount}</span>}{s.deadline && <span>Deadline: {new Date(s.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>}</p>
+          {scholarships.map((s) => {
+            const days = s.deadline ? Math.ceil((new Date(s.deadline).getTime() - Date.now()) / 86400000) : null;
+            return (
+              <DashCard key={s.id}>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 text-center"
+                    style={{ background: `rgba(${GOLD_RGB},0.08)`, border: `1px solid rgba(${GOLD_RGB},0.15)` }}>
+                    <span className="text-xl">🎓</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-text">{s.title}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      {s.amount ? `$${s.amount} · ` : ""}
+                      {s.deadline ? `Deadline ${new Date(s.deadline).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}` : "No deadline set"}
+                    </p>
+                  </div>
+                  {days !== null && (
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0"
+                      style={{ background: days < 14 ? "rgba(239,68,68,0.1)" : `rgba(${GOLD_RGB},0.1)`, color: days < 14 ? "#EF4444" : GOLD }}>
+                      {days < 0 ? "Expired" : days === 0 ? "Today" : `${days}d left`}
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0"
+                    style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
+                    {s.status || "Active"}
+                  </span>
                 </div>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0" style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}>{s.status || "Active"}</span>
-              </div>
-            </DashCard>
-          ))}
+              </DashCard>
+            );
+          })}
         </div>
       )}
     </>
