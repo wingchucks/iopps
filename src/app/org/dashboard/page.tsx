@@ -1349,20 +1349,74 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
         <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Create Event"}</GlowButton>
       </div>
       {showForm && (
-        <DashCard>
-          <h3 className="text-base font-bold mb-5" style={{ color: "var(--text)" }}>New Event</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-            <div><label style={lblSt}>Title *</label><input className={inputCls} style={inputSt} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Event name" /></div>
-            <div><label style={lblSt}>Type</label><select className={inputCls} style={{ ...inputSt, cursor: "pointer" }} value={form.eventType} onChange={(e) => setForm((p) => ({ ...p, eventType: e.target.value }))}>{EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
-            <div><label style={lblSt}>Start Date</label><input type="date" className={inputCls} style={inputSt} value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} /></div>
-            <div><label style={lblSt}>End Date</label><input type="date" className={inputCls} style={inputSt} value={form.endDate} onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))} /></div>
-            <div><label style={lblSt}>Location</label><input className={inputCls} style={inputSt} value={form.location} onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))} placeholder="City, Province" /></div>
-            <div><label style={lblSt}>Admission</label><select className={inputCls} style={{ ...inputSt, cursor: "pointer" }} value={form.admissionType} onChange={(e) => setForm((p) => ({ ...p, admissionType: e.target.value }))}><option value="Free">Free</option><option value="Paid">Paid</option><option value="Donation">Donation</option></select></div>
+        <div className="rounded-2xl overflow-hidden mb-4" style={{ border: `1px solid rgba(${AMBER_RGB},0.2)` }}>
+          {/* Form header */}
+          <div className="px-6 py-4 flex items-center gap-3" style={{ background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.08), rgba(245,158,11,0.04))`, borderBottom: `1px solid rgba(${AMBER_RGB},0.12)` }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: `rgba(${AMBER_RGB},0.12)` }}>📅</div>
+            <div>
+              <h3 className="text-base font-bold text-text">Create New Event</h3>
+              <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Fill in the details below. Only Title is required.</p>
+            </div>
           </div>
-          <div className="mb-4"><label style={lblSt}>Description</label><textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} /></div>
-          <div className="mb-5"><label style={lblSt}>External Link</label><input className={inputCls} style={inputSt} value={form.externalUrl} onChange={(e) => setForm((p) => ({ ...p, externalUrl: e.target.value }))} placeholder="https://..." /></div>
-          <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>{saving ? "Creating..." : "Create Event"}</GlowButton>
-        </DashCard>
+          <div className="p-6 bg-card">
+            {/* Section: Basic Info */}
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: `rgba(${AMBER_RGB},0.7)` }}>Basic Info</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+              <div>
+                <label style={lblSt}>Event Title <span style={{ color: "#EF4444" }}>*</span></label>
+                <input className={inputCls} style={inputSt} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="e.g. Annual Pow Wow 2026" />
+              </div>
+              <div>
+                <label style={lblSt}>Event Type</label>
+                <select className={inputCls} style={{ ...inputSt, cursor: "pointer" }} value={form.eventType} onChange={(e) => setForm((p) => ({ ...p, eventType: e.target.value }))}>
+                  {EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            </div>
+            {/* Section: Dates & Location */}
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: `rgba(${AMBER_RGB},0.7)` }}>📍 Date & Location</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+              <div>
+                <label style={lblSt}>Start Date</label>
+                <input type="date" className={inputCls} style={inputSt} value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} />
+              </div>
+              <div>
+                <label style={lblSt}>End Date</label>
+                <input type="date" className={inputCls} style={inputSt} value={form.endDate} onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))} />
+              </div>
+              <div>
+                <label style={lblSt}>Admission</label>
+                <select className={inputCls} style={{ ...inputSt, cursor: "pointer" }} value={form.admissionType} onChange={(e) => setForm((p) => ({ ...p, admissionType: e.target.value }))}>
+                  <option value="Free">🎟️ Free</option><option value="Paid">💳 Paid</option><option value="Donation">🙏 Donation</option>
+                </select>
+              </div>
+            </div>
+            <div className="mb-5">
+              <label style={lblSt}>Location</label>
+              <input className={inputCls} style={inputSt} value={form.location} onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))} placeholder="e.g. Waskesiu, Prince Albert National Park, SK" />
+            </div>
+            {/* Section: Details */}
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: `rgba(${AMBER_RGB},0.7)` }}>📝 Event Details</p>
+            <div className="mb-4">
+              <label style={lblSt}>Description</label>
+              <textarea className={inputCls} rows={4} style={{ ...inputSt, resize: "vertical" as const }} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Tell people what to expect — activities, performers, schedule highlights..." />
+              <p className="text-[11px] mt-1.5" style={{ color: "var(--text-muted)" }}>{form.description.length}/500 characters</p>
+            </div>
+            <div className="mb-6">
+              <label style={lblSt}>Event Website / Ticket Link</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs" style={{ color: "var(--text-muted)" }}>🔗</span>
+                <input className={inputCls} style={{ ...inputSt, paddingLeft: "2rem" }} value={form.externalUrl} onChange={(e) => setForm((p) => ({ ...p, externalUrl: e.target.value }))} placeholder="https://..." />
+              </div>
+            </div>
+            {/* Footer */}
+            <div className="flex items-center gap-3 pt-4" style={{ borderTop: `1px solid rgba(${AMBER_RGB},0.1)` }}>
+              <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>{saving ? "Publishing..." : "📅 Publish Event"}</GlowButton>
+              <button onClick={() => setShowForm(false)} className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none" style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}>Cancel</button>
+              {!form.title.trim() && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Title required to publish</p>}
+            </div>
+          </div>
+        </div>
       )}
       {loading ? (
         <div className="flex flex-col gap-3">{[1,2,3].map((i) => <div key={i} className="h-20 rounded-2xl skeleton" />)}</div>
@@ -1435,19 +1489,70 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
         <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Post Scholarship"}</GlowButton>
       </div>
       {showForm && (
-        <DashCard>
-          <h3 className="text-base font-bold mb-5" style={{ color: "var(--text)" }}>New Scholarship</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-            <div><label style={lblSt}>Title *</label><input className={inputCls} style={inputSt} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Scholarship name" /></div>
-            <div><label style={lblSt}>Amount</label><input className={inputCls} style={inputSt} value={form.amount} onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))} placeholder="e.g. $5,000" /></div>
-            <div><label style={lblSt}>Deadline</label><input type="date" className={inputCls} style={inputSt} value={form.deadline} onChange={(e) => setForm((p) => ({ ...p, deadline: e.target.value }))} /></div>
-            <div><label style={lblSt}>External Link</label><input className={inputCls} style={inputSt} value={form.externalUrl} onChange={(e) => setForm((p) => ({ ...p, externalUrl: e.target.value }))} placeholder="https://..." /></div>
+        <div className="rounded-2xl overflow-hidden mb-4" style={{ border: "1px solid rgba(251,191,36,0.2)" }}>
+          {/* Form header */}
+          <div className="px-6 py-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, rgba(251,191,36,0.08), rgba(245,158,11,0.04))", borderBottom: "1px solid rgba(251,191,36,0.12)" }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: "rgba(251,191,36,0.12)" }}>🎓</div>
+            <div>
+              <h3 className="text-base font-bold text-text">Post a Scholarship</h3>
+              <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Help Indigenous students fund their education. Only Title is required.</p>
+            </div>
           </div>
-          <div className="mb-4"><label style={lblSt}>Description</label><textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} /></div>
-          <div className="mb-4"><label style={lblSt}>Eligibility</label><textarea className={inputCls} rows={2} style={{ ...inputSt, resize: "vertical" as const }} value={form.eligibility} onChange={(e) => setForm((p) => ({ ...p, eligibility: e.target.value }))} placeholder="Who is eligible?" /></div>
-          <div className="mb-5"><label style={lblSt}>How to Apply</label><textarea className={inputCls} rows={2} style={{ ...inputSt, resize: "vertical" as const }} value={form.howToApply} onChange={(e) => setForm((p) => ({ ...p, howToApply: e.target.value }))} placeholder="Application instructions" /></div>
-          <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>{saving ? "Creating..." : "Post Scholarship"}</GlowButton>
-        </DashCard>
+          <div className="p-6 bg-card">
+            {/* Section: Basic Info */}
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(251,191,36,0.7)" }}>Basic Info</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+              <div>
+                <label style={lblSt}>Scholarship Name <span style={{ color: "#EF4444" }}>*</span></label>
+                <input className={inputCls} style={inputSt} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="e.g. Indigenous Excellence Award 2026" />
+              </div>
+              <div>
+                <label style={lblSt}>Award Amount</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold" style={{ color: "#FBBF24" }}>$</span>
+                  <input className={inputCls} style={{ ...inputSt, paddingLeft: "1.75rem" }} value={form.amount} onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))} placeholder="5,000" />
+                </div>
+                <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>Enter just the number or a range (e.g. 2,500 – 5,000)</p>
+              </div>
+            </div>
+            {/* Section: Deadline */}
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(251,191,36,0.7)" }}>⏰ Deadline & Application</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+              <div>
+                <label style={lblSt}>Application Deadline</label>
+                <input type="date" className={inputCls} style={inputSt} value={form.deadline} onChange={(e) => setForm((p) => ({ ...p, deadline: e.target.value }))} />
+              </div>
+              <div>
+                <label style={lblSt}>Apply / Info Link</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs" style={{ color: "var(--text-muted)" }}>🔗</span>
+                  <input className={inputCls} style={{ ...inputSt, paddingLeft: "2rem" }} value={form.externalUrl} onChange={(e) => setForm((p) => ({ ...p, externalUrl: e.target.value }))} placeholder="https://..." />
+                </div>
+              </div>
+            </div>
+            {/* Section: Details */}
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(251,191,36,0.7)" }}>📝 Details</p>
+            <div className="mb-4">
+              <label style={lblSt}>Description</label>
+              <textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="What is this scholarship about? Who is it for? What does it support?" />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+              <div>
+                <label style={lblSt}>Eligibility Requirements</label>
+                <textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }} value={form.eligibility} onChange={(e) => setForm((p) => ({ ...p, eligibility: e.target.value }))} placeholder="e.g. Indigenous student enrolled in post-secondary, GPA 2.5+, Treaty 6 community member..." />
+              </div>
+              <div>
+                <label style={lblSt}>How to Apply</label>
+                <textarea className={inputCls} rows={3} style={{ ...inputSt, resize: "vertical" as const }} value={form.howToApply} onChange={(e) => setForm((p) => ({ ...p, howToApply: e.target.value }))} placeholder="e.g. Submit cover letter, transcript, and 2 reference letters to scholarships@org.ca" />
+              </div>
+            </div>
+            {/* Footer */}
+            <div className="flex items-center gap-3 pt-4" style={{ borderTop: "1px solid rgba(251,191,36,0.1)" }}>
+              <GlowButton disabled={saving || !form.title.trim()} onClick={handleCreate}>{saving ? "Publishing..." : "🎓 Publish Scholarship"}</GlowButton>
+              <button onClick={() => setShowForm(false)} className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none" style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}>Cancel</button>
+            </div>
+          </div>
+        </div>
       )}
       {loading ? (
         <div className="flex flex-col gap-3">{[1,2,3].map((i) => <div key={i} className="h-20 rounded-2xl skeleton" />)}</div>
