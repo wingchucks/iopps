@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     if (!isScheduled) {
       let recipientQuery = adminDb
         .collection("users")
-        .where("emailOptIn", "==", true);
+        .where("newsletterOptIn", "==", true);
 
       if (audience === "employers") {
         recipientQuery = recipientQuery.where("accountType", "==", "employer");
