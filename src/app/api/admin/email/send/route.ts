@@ -71,8 +71,11 @@ function buildNewsletterHtml(body: string, subject: string): string {
 // POST /api/admin/email/send
 // ---------------------------------------------------------------------------
 export async function POST(request: NextRequest) {
+  // Auth: admin token OR CRON_SECRET header
   const admin = await verifyAdmin(request);
-  if (!admin) {
+  const cronSecret = request.headers.get("x-cron-secret");
+  const isCronAuth = cronSecret && cronSecret === process.env.CRON_SECRET;
+  if (!admin && !isCronAuth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -107,7 +110,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Resend not configured" }, { status: 500 });
       }
 
-      const toEmail = testEmail || admin.email;
+      const toEmail = testEmail || admin?.email;
       if (!toEmail) {
         return NextResponse.json({ error: "No test email available" }, { status: 400 });
       }
@@ -129,7 +132,7 @@ export async function POST(request: NextRequest) {
         audience,
         body: emailBody || "",
         sentTo: toEmail,
-        sentBy: admin.uid,
+        sentBy: admin?.uid || "cron",
         sentAt: new Date().toISOString(),
       });
 
@@ -152,7 +155,7 @@ export async function POST(request: NextRequest) {
         scheduledAt,
         sentAt: null as string | null,
         createdAt: new Date().toISOString(),
-        createdBy: admin.uid,
+        createdBy: admin?.uid || "cron",
         stats: { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, unsubscribed: 0 },
       };
       const ref = await db.collection("emailCampaigns").add(campaign);
@@ -196,7 +199,7 @@ export async function POST(request: NextRequest) {
       status: "sending",
       sentAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
-      createdBy: admin.uid,
+      createdBy: admin?.uid || "cron",
       recipientCount: recipients.length,
       stats: { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, unsubscribed: 0 },
     };
