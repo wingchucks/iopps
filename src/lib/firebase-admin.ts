@@ -6,7 +6,7 @@ let _app: App | null = null;
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
 
-function getAdminApp(): App {
+export function getAdminApp(): App {
   if (_app) return _app;
 
   const existing = getApps();
