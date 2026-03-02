@@ -598,7 +598,7 @@ function SearchContent() {
             <div key={i} className="skeleton h-[80px] rounded-2xl" />
           ))}
         </div>
-      ) : !q ? (
+      ) : !q && typeFilter === "All" ? (
         <div className="text-center py-16">
           <p className="text-5xl mb-4">&#128269;</p>
           <h2 className="text-xl font-bold text-text mb-2">Search IOPPS</h2>
