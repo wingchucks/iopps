@@ -165,7 +165,7 @@ function SearchContent() {
 
   // Text-matched posts
   const textFilteredPosts = useMemo(() => {
-    if (!q) return [];
+    if (!q) return posts;
     return posts.filter((p) => {
       const text = [p.title, p.orgName, p.orgShort, p.location, p.description, p.jobType, p.eventType, p.community, p.salary]
         .filter(Boolean)
@@ -177,7 +177,7 @@ function SearchContent() {
 
   // Text-matched orgs
   const textFilteredOrgs = useMemo(() => {
-    if (!q) return [];
+    if (!q) return orgs;
     return orgs.filter((o) => {
       const text = [o.name, o.shortName, displayLocation(o.location), o.description, ...ensureTagsArray(o.tags)]
         .filter(Boolean)
@@ -291,7 +291,7 @@ function SearchContent() {
 
   // Text-matched vendors
   const filteredVendors = useMemo(() => {
-    if (!q) return [];
+    if (!q) return vendors;
     let result = vendors.filter((v) => {
       const text = [v.name, v.category, v.description, v.location?.city, v.location?.province]
         .filter(Boolean)
