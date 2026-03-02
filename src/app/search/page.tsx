@@ -167,7 +167,7 @@ function SearchContent() {
   const textFilteredPosts = useMemo(() => {
     if (!q) return posts;
     return posts.filter((p) => {
-      const text = [p.title, p.orgName, p.orgShort, p.location, p.description, p.jobType, p.eventType, p.community, p.salary]
+      const text = [p.title, p.orgName, p.orgShort, displayLocation(p.location), p.description, p.jobType, p.eventType, p.community, p.salary]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -211,7 +211,7 @@ function SearchContent() {
     // Location filter
     if (location.trim()) {
       const loc = location.toLowerCase().trim();
-      result = result.filter((p) => p.location && p.location.toLowerCase().includes(loc));
+      result = result.filter((p) => p.location && displayLocation(p.location).toLowerCase().includes(loc));
     }
 
     // Salary range filter (jobs only, keeps non-job posts through)

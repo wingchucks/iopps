@@ -56,7 +56,7 @@ export default function EventsBrowsePage() {
   }, []);
 
   const locations = useMemo(
-    () => [...new Set(events.map((e) => e.location).filter(Boolean))] as string[],
+    () => [...new Set(events.map((e) => displayLocation(e.location)).filter(Boolean))].sort(),
     [events]
   );
 
@@ -82,12 +82,12 @@ export default function EventsBrowsePage() {
         (e) =>
           e.title.toLowerCase().includes(q) ||
           e.orgName?.toLowerCase().includes(q) ||
-          e.location?.toLowerCase().includes(q) ||
+          displayLocation(e.location).toLowerCase().includes(q) ||
           e.description?.toLowerCase().includes(q)
       );
     }
     if (locationFilter) {
-      result = result.filter((e) => e.location === locationFilter);
+      result = result.filter((e) => displayLocation(e.location) === locationFilter);
     }
     if (typeFilter) {
       result = result.filter((e) => e.eventType === typeFilter);
