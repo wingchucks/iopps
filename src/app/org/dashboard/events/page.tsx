@@ -6,6 +6,7 @@ import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
+import { displayLocation } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
@@ -512,7 +513,7 @@ export default function OrgDashboardEventsPage() {
                               description: editingEvent.description || "",
                               date: editingEvent.date || "",
                               dates: editingEvent.dates || "",
-                              location: editingEvent.location || "",
+                              location: displayLocation(editingEvent.location) || "",
                               eventType: editingEvent.eventType || "",
                               price: editingEvent.price || "",
                               highlights: editingEvent.highlights?.length
@@ -571,7 +572,7 @@ export default function OrgDashboardEventsPage() {
                               style={{ color: "var(--text-muted)" }}
                             >
                               {event.dates && <span>{event.dates}</span>}
-                              {event.location && <span>{event.location}</span>}
+                              {event.location && <span>{displayLocation(event.location)}</span>}
                               {event.price && <span>{event.price}</span>}
                               <span>Created: {formatDate(event.createdAt)}</span>
                             </div>

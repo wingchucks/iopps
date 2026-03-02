@@ -25,7 +25,7 @@ export interface Event {
   endDate?: string;
   startTime?: string;
   endTime?: string;
-  location?: string;
+  location?: string | { city?: string; venue?: string; province?: string; remote?: boolean };
   type?: string;
   eventType?: string;
   category?: string;

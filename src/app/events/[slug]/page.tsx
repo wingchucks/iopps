@@ -29,7 +29,7 @@ type EventData = {
   slug?: string;
   description?: string;
   dates?: string;
-  location?: string;
+  location?: string | { city?: string; venue?: string; province?: string; remote?: boolean };
   eventType?: string;
   orgName?: string;
   price?: string;
@@ -182,7 +182,7 @@ function EventDetailContent() {
           postId: event.id,
           postTitle: event.title,
           postDate: event.dates,
-          postLocation: event.location,
+          postLocation: displayLocation(event.location),
           status,
         });
         if (status === "going" && !wasGoing) setGoingCount((c) => c + 1);
