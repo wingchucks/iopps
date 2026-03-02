@@ -310,7 +310,7 @@ function SearchContent() {
     return result;
   }, [vendors, q, location]);
 
-  const showOrgs = typeFilter === "All" || typeFilter === "Organizations";
+  const showOrgs = typeFilter === "All" || typeFilter === "Organizations" || typeFilter === "Businesses";
   const showVendors = typeFilter === "All" || typeFilter === "Businesses";
   const totalResults = sortedPosts.length + (showOrgs ? filteredOrgs.length : 0) + (showVendors ? filteredVendors.length : 0);
 
