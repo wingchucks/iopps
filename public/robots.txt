@@ -9,4 +9,4 @@ Disallow: /org/dashboard/*
 Disallow: /org/onboarding
 Disallow: /applications
 
-Sitemap: https://iopps-fresh.vercel.app/sitemap.xml
+Sitemap: https://www.iopps.ca/sitemap.xml
