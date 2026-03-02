@@ -9,22 +9,24 @@ import { HeroCTA, BottomCTA } from "@/components/HomepageCTA";
 import { adminDb } from "@/lib/firebase-admin";
 
 async function getStats() {
-  if (!adminDb) return { members: 0, jobs: 0, organizations: 0, events: 0 };
+  if (!adminDb) return { members: 0, jobs: 0, organizations: 0, events: 0, shops: 0 };
   try {
-    const [usersSnap, jobsSnap, employersSnap, eventsSnap] = await Promise.all([
+    const [usersSnap, jobsSnap, employersSnap, eventsSnap, shopsSnap] = await Promise.all([
       adminDb.collection("users").count().get(),
       adminDb.collection("jobs").where("status", "==", "active").count().get(),
       adminDb.collection("employers").where("status", "==", "approved").count().get(),
       adminDb.collection("events").count().get(),
+      adminDb.collection("shopListings").where("status", "==", "active").count().get(),
     ]);
     return {
       members: usersSnap.data().count,
       jobs: jobsSnap.data().count,
       organizations: employersSnap.data().count,
       events: eventsSnap.data().count,
+      shops: shopsSnap.data().count,
     };
   } catch {
-    return { members: 0, jobs: 0, organizations: 0, events: 0 };
+    return { members: 0, jobs: 0, organizations: 0, events: 0, shops: 0 };
   }
 }
 
@@ -42,7 +44,7 @@ export default async function LandingPage() {
     { icon: "\u{1F4BC}", title: "Jobs & Careers", count: String(stats.jobs || 0), cta: "Browse Jobs", desc: "Indigenous-focused job postings and career opportunities", href: "/jobs" },
     { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: String(stats.events || 0), cta: "Browse Events", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
     { icon: "\u{1F393}", title: "Scholarships & Grants", count: "17", cta: "Browse Scholarships", desc: "Funding for students and entrepreneurs", href: "/scholarships" },
-    { icon: "\u{1F3EA}", title: "Shop Indigenous", count: "Coming Soon", cta: "Browse Shops", desc: "Support Indigenous-owned businesses", href: "/shop" },
+    { icon: "\u{1F3EA}", title: "Shop Indigenous", count: String(stats.shops || 0), cta: "Browse Shops", desc: "Support Indigenous-owned businesses", href: "/shop" },
     { icon: "\u{1F4DA}", title: "Schools & Programs", count: "190+", cta: "Browse Schools", desc: "Training and education programs", href: "/schools" },
     { icon: "\u{1F4FA}", title: "IOPPS Spotlight", count: "New", cta: "Watch Now", desc: "Live streams, interviews, and stories", href: "/stories" },
   ];
