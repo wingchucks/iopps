@@ -53,7 +53,7 @@ function buildNewsletterHtml(body: string, subject: string): string {
 <body style="margin:0;padding:20px;background:#f3f4f6;">
   <div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
     <div style="background:linear-gradient(135deg,#0F2B4C,#0D9488);padding:32px 24px;text-align:center;border-radius:16px 16px 0 0;">
-      <h1 style="color:#fff;font-weight:900;font-size:28px;letter-spacing:3px;margin:0;">IOPPS</h1>
+      <img src="https://www.iopps.ca/logo.png" alt="IOPPS" style="height:48px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;" /><h1 style="color:#fff;font-weight:900;font-size:28px;letter-spacing:3px;margin:0;">IOPPS</h1>
       <p style="color:rgba(255,255,255,.6);font-size:12px;margin:4px 0 0;letter-spacing:1px;">EMPOWERING INDIGENOUS SUCCESS</p>
     </div>
     <div style="padding:32px 24px;background:#ffffff;">
