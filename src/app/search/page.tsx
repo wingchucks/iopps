@@ -310,7 +310,7 @@ function SearchContent() {
     return result;
   }, [vendors, q, location]);
 
-  const showOrgs = typeFilter === "All" || typeFilter === "Organizations" || typeFilter === "Businesses";
+  const showOrgs = typeFilter === "All" || typeFilter === "Organizations";
   const showVendors = typeFilter === "All" || typeFilter === "Businesses";
   const totalResults = sortedPosts.length + (showOrgs ? filteredOrgs.length : 0) + (showVendors ? filteredVendors.length : 0);
 
@@ -643,9 +643,9 @@ function SearchContent() {
                               {org.name}
                             </h3>
                             <Badge
-                              text={org.tier === "school" ? "Education" : "Premium"}
-                              color={org.tier === "school" ? "var(--teal)" : "var(--gold)"}
-                              bg={org.tier === "school" ? "var(--teal-soft)" : "var(--gold-soft)"}
+                              text={org.tier === "premium" ? "Premium" : org.tier === "school" || org.type === "school" ? "Education" : "Partner"}
+                              color={org.tier === "premium" ? "var(--gold)" : org.tier === "school" || org.type === "school" ? "var(--teal)" : "var(--teal)"}
+                              bg={org.tier === "premium" ? "var(--gold-soft)" : org.tier === "school" || org.type === "school" ? "var(--teal-soft)" : "var(--teal-soft)"}
                               small
                             />
                           </div>
