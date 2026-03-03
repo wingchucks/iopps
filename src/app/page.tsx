@@ -2,11 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
-import Button from "@/components/Button";
+
 import ThemeToggle from "@/components/ThemeToggle";
 import MobileMenu from "@/components/MobileMenu";
-import { HeroCTA, BottomCTA } from "@/components/HomepageCTA";
+import { HeroCTA, BottomCTA, PartnerStripCTA } from "@/components/HomepageCTA";
 import { adminDb } from "@/lib/firebase-admin";
+import { displayLocation } from "@/lib/utils";
 
 async function getStats() {
   if (!adminDb) return { members: 0, jobs: 0, organizations: 0, events: 0, shops: 0 };
@@ -30,16 +31,47 @@ async function getStats() {
   }
 }
 
-const partners: { name: string; short: string; tier: string; logo?: string }[] = [
-  { name: "Saskatchewan Indian Gaming Authority", short: "SIGA", tier: "premium", logo: "https://storage.googleapis.com/iopps-c2224.firebasestorage.app/employers/sR78eEVUvvVaOFLGcUudlD0s0gq1/logo/siga-logo.png" },
-  { name: "Saskatoon Tribal Council", short: "STC", tier: "premium", logo: "https://storage.googleapis.com/iopps-c2224.firebasestorage.app/employers/tsRvNLiRWARbOoiBOiEVFDwFfZn2/logo/stc-logo.png" },
-  { name: "Westland Insurance Group Ltd.", short: "Westland", tier: "premium", logo: "https://storage.googleapis.com/iopps-c2224.firebasestorage.app/employers/UyTZcF7xEiRmBnSEzcSMmw9MXvL2/logo/westland-logo.png" },
-];
+interface PartnerData {
+  name: string;
+  shortName: string;
+  tier: string;
+  logoUrl?: string;
+  location?: unknown;
+  type?: string;
+}
+
+async function getPartners(): Promise<PartnerData[]> {
+  if (!adminDb) return [];
+  try {
+    const snap = await adminDb
+      .collection("organizations")
+      .where("verified", "==", true)
+      .get();
+    const orgs = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }) as Record<string, unknown>)
+      .filter((o) => o.logoUrl || o.logo)
+      .map((o) => ({
+        name: String(o.name || ""),
+        shortName: String(o.shortName || o.name || ""),
+        tier: String(o.tier || "standard"),
+        logoUrl: String(o.logoUrl || o.logo || ""),
+        location: o.location,
+        type: String(o.type || ""),
+      }))
+      .sort((a, b) => {
+        const tierOrder: Record<string, number> = { premium: 0, school: 1, standard: 2 };
+        return (tierOrder[a.tier] ?? 2) - (tierOrder[b.tier] ?? 2);
+      });
+    return orgs;
+  } catch {
+    return [];
+  }
+}
 
 /* categories is built inside the component with live stats */
 
 export default async function LandingPage() {
-  const stats = await getStats();
+  const [stats, partners] = await Promise.all([getStats(), getPartners()]);
   const categories = [
     { icon: "\u{1F4BC}", title: "Jobs & Careers", count: String(stats.jobs || 0), cta: "Browse Jobs", desc: "Indigenous-focused job postings and career opportunities", href: "/jobs" },
     { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: String(stats.events || 0), cta: "Browse Events", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
@@ -165,70 +197,93 @@ export default async function LandingPage() {
 
       {/* Partner Strip */}
       <section className="border-b border-border px-5 md:px-10 lg:px-20 py-8">
-        <div className="flex justify-between items-center mb-5">
-          <p className="text-xs font-bold text-text-muted tracking-[2px] m-0">OUR PARTNERS</p>
-          <p className="text-text-muted tracking-[2.5px] m-0 opacity-50" style={{ fontSize: 9, fontWeight: 800 }}>
-            EMPOWERING INDIGENOUS SUCCESS
-          </p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+          <div>
+            <p className="text-xs font-bold text-text-muted tracking-[2px] m-0 mb-1">OUR PARTNERS</p>
+            <p className="text-[13px] text-text-sec m-0">Organizations investing in Indigenous talent</p>
+          </div>
+          <PartnerStripCTA />
         </div>
-        <div className="relative">
-        <div
-          className="partner-strip flex gap-6 flex-nowrap overflow-x-auto pb-2"
-          style={{ scrollbarWidth: "none" }}
-        >
-          <style>{`.partner-strip::-webkit-scrollbar{display:none} @media(max-width:639px){.partner-fade{display:block}}`}</style>
-          {partners.map((p, i) => (
-            <Link
-              key={i}
-              href="/partners"
-              className="flex items-center gap-3 rounded-xl transition-all duration-150 min-w-[180px] shrink-0 no-underline hover:shadow-md"
-              style={{
-                padding: "12px 20px",
-                border:
-                  p.tier === "school"
-                    ? "1.5px solid rgba(13,148,136,.19)"
-                    : "1.5px solid var(--border)",
-                background: p.tier === "school" ? "rgba(13,148,136,.02)" : "var(--card)",
-              }}
-            >
-              {p.logo ? (
-                <img
-                  src={p.logo}
-                  alt={p.short}
-                  className="shrink-0 object-contain rounded-lg"
-                  style={{ width: 40, height: 40 }}
-                />
-              ) : (
-                <Avatar
-                  name={p.short}
-                  size={40}
-                  src={p.logo}
-                  gradient={
-                    p.tier === "school"
-                      ? "linear-gradient(135deg, rgba(13,148,136,.13), rgba(37,99,235,.09))"
-                      : "linear-gradient(135deg, rgba(15,43,76,.06), rgba(13,148,136,.05))"
-                  }
-                />
-              )}
-              <div>
-                <p className="text-[13px] font-semibold text-text m-0">{p.name}</p>
-                <Badge
-                  text={"\u2713 Premium Partner"}
-                  color={"var(--gold)"}
-                  bg={"var(--gold-soft)"}
-                  small
-                />
-              </div>
-            </Link>
-          ))}
-        </div>
-          {/* Scroll hint fade — mobile only */}
-          <div
-            className="partner-fade hidden absolute right-0 top-0 h-full w-12 pointer-events-none"
-            style={{
-              background: "linear-gradient(90deg, transparent, var(--bg))",
-            }}
-          />
+
+        {partners.length >= 3 ? (
+          <div className="relative overflow-hidden">
+            {/* Edge fade masks */}
+            <div className="absolute left-0 top-0 h-full w-12 z-10 pointer-events-none" style={{ background: "linear-gradient(90deg, var(--bg), transparent)" }} />
+            <div className="absolute right-0 top-0 h-full w-12 z-10 pointer-events-none" style={{ background: "linear-gradient(270deg, var(--bg), transparent)" }} />
+            <style>{`
+              @keyframes partner-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+              .partner-track { display: flex; gap: 20px; width: max-content; animation: partner-scroll 30s linear infinite; }
+              .partner-track:hover { animation-play-state: paused; }
+            `}</style>
+            <div className="partner-track">
+              {/* Doubled for seamless loop */}
+              {[...partners, ...partners].map((p, i) => (
+                <Link
+                  key={i}
+                  href="/partners"
+                  className="flex items-center gap-3 rounded-xl transition-all duration-150 shrink-0 no-underline hover:shadow-md"
+                  style={{
+                    padding: "12px 20px",
+                    minWidth: 240,
+                    border: p.tier === "school" ? "1.5px solid rgba(13,148,136,.19)" : "1.5px solid var(--border)",
+                    background: p.tier === "school" ? "rgba(13,148,136,.02)" : "var(--card)",
+                  }}
+                >
+                  <Avatar name={p.shortName} size={40} src={p.logoUrl} />
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-text m-0 truncate">{p.name}</p>
+                    {displayLocation(p.location) && (
+                      <p className="text-[11px] text-text-muted m-0 truncate">&#128205; {displayLocation(p.location)}</p>
+                    )}
+                    <Badge
+                      text={p.tier === "premium" ? "\u2713 Premium" : p.tier === "school" ? "Education" : "Partner"}
+                      color={p.tier === "premium" ? "var(--gold)" : p.tier === "school" ? "var(--blue)" : "var(--teal)"}
+                      bg={p.tier === "premium" ? "var(--gold-soft)" : p.tier === "school" ? "var(--blue-soft)" : "var(--teal-soft)"}
+                      small
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-5 flex-wrap">
+            {partners.map((p, i) => (
+              <Link
+                key={i}
+                href="/partners"
+                className="flex items-center gap-3 rounded-xl transition-all duration-150 no-underline hover:shadow-md"
+                style={{ padding: "12px 20px", border: "1.5px solid var(--border)", background: "var(--card)" }}
+              >
+                <Avatar name={p.shortName} size={40} src={p.logoUrl} />
+                <div>
+                  <p className="text-[13px] font-semibold text-text m-0">{p.name}</p>
+                  <Badge
+                    text={p.tier === "premium" ? "\u2713 Premium" : "Partner"}
+                    color={p.tier === "premium" ? "var(--gold)" : "var(--teal)"}
+                    bg={p.tier === "premium" ? "var(--gold-soft)" : "var(--teal-soft)"}
+                    small
+                  />
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Impact stats row */}
+        <div className="flex flex-wrap justify-center gap-8 mt-6 pt-5 border-t border-border">
+          <div className="text-center">
+            <p className="text-lg font-extrabold text-teal mb-0">{partners.length || stats.organizations}</p>
+            <p className="text-[11px] text-text-muted font-semibold tracking-wide m-0">Partners</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-extrabold text-teal mb-0">100+</p>
+            <p className="text-[11px] text-text-muted font-semibold tracking-wide m-0">Open Positions</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-extrabold text-teal mb-0">10+</p>
+            <p className="text-[11px] text-text-muted font-semibold tracking-wide m-0">Industries</p>
+          </div>
         </div>
       </section>
 

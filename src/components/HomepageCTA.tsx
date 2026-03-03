@@ -61,6 +61,47 @@ export function HeroCTA() {
   );
 }
 
+export function PartnerStripCTA() {
+  const { user } = useAuth();
+
+  return (
+    <div className="flex items-center gap-3">
+      <Link href="/partners" className="text-sm font-semibold text-teal no-underline hover:underline">
+        View all partners &rarr;
+      </Link>
+      {user ? (
+        <Link href="/feed">
+          <Button
+            small
+            primary
+            style={{
+              background: "var(--gold)",
+              borderRadius: 10,
+              fontWeight: 700,
+            }}
+          >
+            Go to Dashboard
+          </Button>
+        </Link>
+      ) : (
+        <Link href="/signup?type=employer">
+          <Button
+            small
+            primary
+            style={{
+              background: "var(--gold)",
+              borderRadius: 10,
+              fontWeight: 700,
+            }}
+          >
+            Become a Partner
+          </Button>
+        </Link>
+      )}
+    </div>
+  );
+}
+
 export function BottomCTA() {
   const { user } = useAuth();
 
