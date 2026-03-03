@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import { sendEmployerWelcome } from "@/lib/email";
+import { sendEmployerWelcome, sendAdminNewSignup } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -121,6 +121,7 @@ export async function POST(req: NextRequest) {
 
     // Send welcome email (non-blocking)
     sendEmployerWelcome({ orgName: name, email, contactName: name }).catch(() => {});
+    sendAdminNewSignup({ name, email, orgName: name, type: "upgrade", uid }).catch(() => {});
 
     return NextResponse.json({ success: true, slug });
   } catch (err) {

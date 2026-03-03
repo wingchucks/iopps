@@ -5,6 +5,7 @@ const resend = process.env.RESEND_API_KEY
   : null;
 
 const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
+const ADMIN_EMAIL = "nathan.arias@iopps.ca";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.iopps.ca";
 
 // ── Shared styles ──────────────────────────────────────────────
@@ -133,6 +134,50 @@ export async function sendEmployerWelcome(opts: {
   } catch (err) {
     console.error("[email] Welcome email failed:", err);
     return { success: false, error: String(err) };
+  }
+}
+
+export async function sendAdminNewSignup(opts: {
+  name: string;
+  email: string;
+  type: "community" | "employer" | "upgrade";
+  orgName?: string;
+  uid?: string;
+}): Promise<void> {
+  if (!resend) return;
+
+  const typeLabel = opts.type === "community" ? "Community Member" : opts.type === "employer" ? "New Employer" : "Employer Upgrade";
+  const typeColor = opts.type === "community" ? "#0D9488" : opts.type === "employer" ? "#7C3AED" : "#D97706";
+  const subject = opts.type === "community"
+    ? `🙋 New Member: ${opts.name}`
+    : opts.type === "employer"
+    ? `🏢 New Employer: ${opts.orgName || opts.name}`
+    : `⬆️ Upgrade: ${opts.orgName || opts.name}`;
+
+  const html = emailWrapper(`
+    <div style="background:${typeColor};color:#fff;display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:16px;">${typeLabel.toUpperCase()}</div>
+    <h2 style="${STYLES.h2}">New Signup on IOPPS.ca</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;color:#374151;margin-bottom:24px;">
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;width:40%;">Name</td><td style="padding:10px 0;font-weight:600;">${opts.name}</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Email</td><td style="padding:10px 0;">${opts.email}</td></tr>
+      ${opts.orgName ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Organization</td><td style="padding:10px 0;font-weight:600;">${opts.orgName}</td></tr>` : ""}
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Type</td><td style="padding:10px 0;">${typeLabel}</td></tr>
+      <tr><td style="padding:10px 0;color:#9ca3af;">Time</td><td style="padding:10px 0;">${new Date().toLocaleString("en-CA", { timeZone: "America/Regina" })} CST</td></tr>
+    </table>
+    <div style="text-align:center;margin:20px 0;">
+      <a href="${SITE_URL}/admin/users" style="${STYLES.button}">View in Admin</a>
+    </div>
+  `);
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: ADMIN_EMAIL,
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.error("[email] Admin signup notification failed:", err);
   }
 }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
 import { getApps } from "firebase-admin/app";
+import { sendAdminNewSignup } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -45,10 +46,21 @@ export async function PATCH(req: NextRequest) {
     delete data.email;
 
     const db = getAdminDb();
+    const isNew = data.onboardingComplete === true;
     await db.collection("users").doc(uid).set(
       { ...data, updatedAt: new Date().toISOString() },
       { merge: true }
     );
+    // Notify admin when a community member completes onboarding
+    if (isNew && data.displayName) {
+      const authUser = await getAuth(getApps()[0]).getUser(uid);
+      sendAdminNewSignup({
+        name: data.displayName,
+        email: authUser.email || "",
+        type: "community",
+        uid,
+      }).catch(() => {});
+    }
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("PATCH /api/profile error:", err);
