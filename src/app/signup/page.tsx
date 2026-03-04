@@ -246,7 +246,10 @@ export default function UnifiedSignupPage() {
             <div style={{ flex: 1, height: 1, background: CSS.border }} />
           </div>
           <div style={{ display: "grid", gap: 20 }}>
-            <FormInput label={orgType === "school" ? "Contact Name" : "Display Name"} required placeholder="Your full name" value={name} onChange={e => setName(e.target.value)} />
+            <div>
+              <FormInput label={role === "organization" ? "Your Name (Contact Person)" : orgType === "school" ? "Contact Name" : "Your Name"} required placeholder={role === "organization" ? "e.g., Jane Smith" : "Your full name"} value={name} onChange={e => setName(e.target.value)} />
+              {role === "organization" && <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 6, paddingLeft: 2 }}>📋 You&apos;ll enter your <strong style={{ color: CSS.textMuted }}>business name</strong> on the next step.</div>}
+            </div>
             <FormInput label="Email Address" required type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <div><FormInput label="Password" required type="password" placeholder="Min. 8 characters" value={password} onChange={e => setPassword(e.target.value)} /><PasswordStrength password={password} /></div>
