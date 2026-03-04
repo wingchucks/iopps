@@ -13,7 +13,7 @@ import type { Organization } from "@/lib/firestore/organizations";
 import { getVendors, type ShopVendor } from "@/lib/firestore/shop";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
-const typeFilters = ["All", "Jobs", "Events", "Scholarships", "Programs", "Organizations", "Businesses", "Stories"];
+const typeFilters = ["All", "Jobs", "Events", "Scholarships", "Programs", "Businesses", "Stories"];
 
 const salaryRanges = [
   { label: "Any salary", value: "any" },
@@ -77,7 +77,8 @@ function SearchContent() {
   const initialQuery = searchParams.get("q") || "";
 
   const [query, setQuery] = useState(initialQuery);
-  const [typeFilter, setTypeFilter] = useState(searchParams.get("type") || "All");
+  const rawType = searchParams.get("type") || "All";
+  const [typeFilter, setTypeFilter] = useState(rawType === "Organizations" ? "Businesses" : rawType);
   const [posts, setPosts] = useState<Post[]>([]);
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [vendors, setVendors] = useState<ShopVendor[]>([]);
@@ -94,6 +95,7 @@ function SearchContent() {
     return tags ? tags.split(",").filter(Boolean) : [];
   });
   const [sortBy, setSortBy] = useState(searchParams.get("sort") || "relevance");
+  const [indigenousOnly, setIndigenousOnly] = useState(searchParams.get("indigenous") === "true");
 
   useEffect(() => {
     async function load() {
@@ -133,6 +135,7 @@ function SearchContent() {
         org: orgFilter,
         tags: selectedTags.join(","),
         sort: sortBy,
+        indigenous: indigenousOnly ? "true" : "",
         ...overrides,
       };
       for (const [k, v] of Object.entries(state)) {
@@ -143,7 +146,7 @@ function SearchContent() {
       const qs = params.toString();
       router.replace(`/search${qs ? `?${qs}` : ""}`, { scroll: false });
     },
-    [query, typeFilter, location, salaryRange, dateRange, orgFilter, selectedTags, sortBy, router],
+    [query, typeFilter, location, salaryRange, dateRange, orgFilter, selectedTags, sortBy, indigenousOnly, router],
   );
 
   // Debounced URL update on filter changes
@@ -276,7 +279,7 @@ function SearchContent() {
     return arr;
   }, [advancedFilteredPosts, sortBy]);
 
-  // Org results filtered by location + org filter
+  // Org results filtered by location + org filter + indigenous
   const filteredOrgs = useMemo(() => {
     let result = textFilteredOrgs;
     if (location.trim()) {
@@ -286,8 +289,14 @@ function SearchContent() {
     if (orgFilter) {
       result = result.filter((o) => o.id === orgFilter);
     }
+    if (indigenousOnly) {
+      result = result.filter((o) =>
+        o.indigenousOwned === true ||
+        ensureTagsArray(o.tags).some((t) => t.toLowerCase().includes("indigenous"))
+      );
+    }
     return result;
-  }, [textFilteredOrgs, location, orgFilter]);
+  }, [textFilteredOrgs, location, orgFilter, indigenousOnly]);
 
   // Text-matched vendors
   const filteredVendors = useMemo(() => {
@@ -310,7 +319,7 @@ function SearchContent() {
     return result;
   }, [vendors, q, location]);
 
-  const showOrgs = typeFilter === "All" || typeFilter === "Organizations" || typeFilter === "Businesses";
+  const showOrgs = typeFilter === "All" || typeFilter === "Businesses";
   const showVendors = typeFilter === "All" || typeFilter === "Businesses";
   const totalResults = sortedPosts.length + (showOrgs ? filteredOrgs.length : 0) + (showVendors ? filteredVendors.length : 0);
 
@@ -321,6 +330,7 @@ function SearchContent() {
     dateRange !== "any" ? 1 : 0,
     orgFilter ? 1 : 0,
     selectedTags.length > 0 ? 1 : 0,
+    indigenousOnly ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
   function clearAllFilters() {
@@ -328,6 +338,7 @@ function SearchContent() {
     setSalaryRange("any");
     setDateRange("any");
     setOrgFilter("");
+    setIndigenousOnly(false);
     setSelectedTags([]);
   }
 
@@ -559,6 +570,21 @@ function SearchContent() {
                   ))}
                 </select>
               </div>
+
+              {/* Indigenous-owned filter (show for Businesses or All) */}
+              {(typeFilter === "All" || typeFilter === "Businesses") && (
+                <div className="flex items-center">
+                  <label className="flex items-center gap-2 cursor-pointer select-none mt-5">
+                    <input
+                      type="checkbox"
+                      checked={indigenousOnly}
+                      onChange={(e) => setIndigenousOnly(e.target.checked)}
+                      className="w-4 h-4 cursor-pointer accent-teal"
+                    />
+                    <span className="text-[13px] font-semibold text-text">Indigenous-owned only</span>
+                  </label>
+                </div>
+              )}
             </div>
 
             {/* Tags */}
@@ -622,7 +648,9 @@ function SearchContent() {
           {/* Organization Results */}
           {showOrgs && filteredOrgs.length > 0 && (
             <div className="mb-6">
-              <p className="text-xs font-bold text-text-muted tracking-[1px] mb-3">ORGANIZATIONS</p>
+              <p className="text-xs font-bold text-text-muted tracking-[1px] mb-3">
+                {typeFilter === "Businesses" ? "BUSINESSES & ORGANIZATIONS" : "ORGANIZATIONS"}
+              </p>
               <div className="flex flex-col gap-2">
                 {filteredOrgs.map((org) => (
                   <Link
@@ -643,9 +671,9 @@ function SearchContent() {
                               {org.name}
                             </h3>
                             <Badge
-                              text={org.tier === "school" ? "Education" : "Premium"}
-                              color={org.tier === "school" ? "var(--teal)" : "var(--gold)"}
-                              bg={org.tier === "school" ? "var(--teal-soft)" : "var(--gold-soft)"}
+                              text={org.tier === "premium" ? "Premium" : org.tier === "school" || org.type === "school" ? "Education" : "Partner"}
+                              color={org.tier === "premium" ? "var(--gold)" : org.tier === "school" || org.type === "school" ? "var(--teal)" : "var(--teal)"}
+                              bg={org.tier === "premium" ? "var(--gold-soft)" : org.tier === "school" || org.type === "school" ? "var(--teal-soft)" : "var(--teal-soft)"}
                               small
                             />
                           </div>
@@ -665,7 +693,7 @@ function SearchContent() {
           {/* Business/Vendor Results */}
           {showVendors && filteredVendors.length > 0 && (
             <div className="mb-6">
-              <p className="text-xs font-bold text-text-muted tracking-[1px] mb-3">BUSINESSES</p>
+              <p className="text-xs font-bold text-text-muted tracking-[1px] mb-3">INDIGENOUS BUSINESSES</p>
               <div className="flex flex-col gap-2">
                 {filteredVendors.map((vendor) => {
                   const initial = vendor.name?.charAt(0)?.toUpperCase() || "?";

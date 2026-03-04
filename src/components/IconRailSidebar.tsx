@@ -178,7 +178,7 @@ const navItems = [
   { href: "/events", label: "Events", icon: "calendar" },
   { href: "/scholarships", label: "Scholarships", icon: "award" },
   { href: "/schools", label: "Schools", icon: "building" },
-  { href: "/search", label: "Businesses", icon: "store" },
+  { href: "/search?type=Businesses", label: "Businesses", icon: "store" },
   { href: "/partners", label: "Partners", icon: "handshake" },
   { href: "/shop", label: "Shop", icon: "shopping" },
   { href: "/stories", label: "Stories", icon: "book" },

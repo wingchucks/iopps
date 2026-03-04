@@ -48,13 +48,22 @@ export async function GET(req: Request) {
       return NextResponse.json({ orgs });
     }
 
-    // Search / general: all orgs that completed onboarding
-    snapshot = await db
-      .collection("organizations")
-      .where("onboardingComplete", "==", true)
-      .get();
-
-    const orgs = snapshot.docs.map((doc) =>
+    // Search / general: orgs that completed onboarding OR are verified
+    const [onboardedSnap, verifiedSnap2] = await Promise.all([
+      db.collection("organizations")
+        .where("onboardingComplete", "==", true)
+        .get(),
+      db.collection("organizations")
+        .where("verified", "==", true)
+        .get(),
+    ]);
+    const seen2 = new Set<string>();
+    const allDocs = [...onboardedSnap.docs, ...verifiedSnap2.docs].filter(d => {
+      if (seen2.has(d.id)) return false;
+      seen2.add(d.id);
+      return true;
+    });
+    const orgs = allDocs.map((doc) =>
       serialize({ id: doc.id, ...doc.data() })
     );
 
