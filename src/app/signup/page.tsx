@@ -156,9 +156,12 @@ export default function UnifiedSignupPage() {
       const res = await fetch("/api/employer/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ ...orgData, displayName: name, email }),
+        body: JSON.stringify({ ...orgData, contactName: name || schoolName, contactEmail: email || user.email }),
       });
-      if (!res.ok) throw new Error("Failed to create school profile");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to create school profile");
+      }
       const checkoutRes = await fetch("/api/stripe/checkout", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planId: selectedPlan, orgId: user.uid }),
@@ -187,9 +190,12 @@ export default function UnifiedSignupPage() {
       const res = await fetch("/api/employer/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ ...orgData, displayName: name || orgName, email }),
+        body: JSON.stringify({ ...orgData, contactName: name || orgName, contactEmail: email || user.email }),
       });
-      if (!res.ok) throw new Error("Failed to create org");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to create org");
+      }
       router.push("/org/dashboard");
     } catch (err: unknown) { setError(err instanceof Error ? err.message : "Failed to submit"); }
     finally { setSubmitting(false); }
