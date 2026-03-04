@@ -196,7 +196,12 @@ export default function UnifiedSignupPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to create org");
       }
-      router.push("/org/dashboard");
+      // If email already verified, go straight to dashboard; otherwise stay in wizard verify step
+      if (user.emailVerified) {
+        router.push("/org/dashboard");
+      } else {
+        goTo(13); // success+verify step
+      }
     } catch (err: unknown) { setError(err instanceof Error ? err.message : "Failed to submit"); }
     finally { setSubmitting(false); }
   };
@@ -208,11 +213,13 @@ export default function UnifiedSignupPage() {
   const updateCampus = (i: number, f: keyof Campus, v: string) => setCampuses(p => p.map((c, idx) => idx === i ? { ...c, [f]: v } : c));
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", background: CSS.bg, color: CSS.text, minHeight: "100vh" }}>
+    <div style={{ fontFamily: "'Inter',sans-serif", background: CSS.bg, color: CSS.text, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <BackgroundMesh />
-      <TopBar stepLabel={`Step ${current} of ${total}`} />
-      <ProgressBar percent={percent} />
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 50, flexShrink: 0 }}>
+        <TopBar stepLabel={`Step ${current} of ${total}`} />
+        <ProgressBar percent={percent} />
+      </div>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px", flex: 1, width: "100%" }}>
         <StepDots labels={labels} current={current} />
 
         {error && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: CSS.error }}>{error}</div>}
@@ -248,7 +255,7 @@ export default function UnifiedSignupPage() {
           <div style={{ display: "grid", gap: 20 }}>
             <div>
               <FormInput label={role === "organization" ? "Your Name (Contact Person)" : orgType === "school" ? "Contact Name" : "Your Name"} required placeholder={role === "organization" ? "e.g., Jane Smith" : "Your full name"} value={name} onChange={e => setName(e.target.value)} />
-              {role === "organization" && <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 6, paddingLeft: 2 }}>📋 You&apos;ll enter your <strong style={{ color: CSS.textMuted }}>business name</strong> on the next step.</div>}
+              {role === "organization" && <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 6, paddingLeft: 2 }}>&#8594; You&apos;ll enter your <strong style={{ color: CSS.textMuted }}>business name</strong> on the next step.</div>}
             </div>
             <FormInput label="Email Address" required type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
@@ -282,14 +289,15 @@ export default function UnifiedSignupPage() {
           <StepHeader eyebrow="Verification" title="Check your" highlight="Inbox" desc={`We've sent a verification link to ${email || "your email"}.`} />
           <div style={{ textAlign: "center", padding: "32px 0" }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>📧</div>
-            <div style={{ fontSize: 14, color: CSS.textDim, marginBottom: 24 }}>Didn&apos;t receive it? Check spam or</div>
+            <div style={{ fontSize: 14, color: CSS.textDim, marginBottom: 8 }}>Didn&apos;t receive it? Check your spam folder.</div>
+            <div style={{ fontSize: 14, color: CSS.textDim, marginBottom: 24 }}>Still nothing? Click below to resend.</div>
             <BtnSecondary>Resend Verification Email</BtnSecondary>
           </div>
           {role === "community" && <InfoBanner icon="🎉"><strong style={{ color: CSS.text }}>You&apos;re all set!</strong> Once verified, explore jobs, events, and more.</InfoBanner>}
           {role === "organization" && (<div>
             <InfoBanner icon="🏢"><strong style={{ color: CSS.text }}>One more thing!</strong> Set up your organization profile next (~3 minutes).</InfoBanner>
             <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
-              <BtnPrimary onClick={() => goTo(orgType === "school" ? 4 : 10)}>Continue to Setup →</BtnPrimary>
+              <BtnPrimary onClick={() => goTo(orgType === "school" ? 4 : 10)}>Continue to Setup &rarr;</BtnPrimary>
             </div>
           </div>)}
         </div>)}
@@ -450,6 +458,48 @@ export default function UnifiedSignupPage() {
           </ReviewSection>
           <InfoBanner icon="✅"><strong style={{ color: CSS.text }}>Auto-approved!</strong> Your profile goes live immediately after verification.</InfoBanner>
           <div style={{ display: "flex", gap: 12, marginTop: 32, justifyContent: "center" }}><BtnGhost onClick={() => goTo(11)}>← Back</BtnGhost><BtnPrimary onClick={handleEmployerSubmit} disabled={submitting} style={{ flex: 1, justifyContent: "center" }}>{submitting ? "Creating..." : "Publish & Go Live 🚀"}</BtnPrimary></div>
+        </div>)}
+
+        {/* STEP 13: Post-launch success + email verify reminder (stays in wizard UI) */}
+        {step === 13 && (<div>
+          <div style={{ textAlign: "center", padding: "40px 0 32px" }}>
+            <div style={{ fontSize: 72, marginBottom: 16 }}>🎉</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: CSS.text, marginBottom: 8 }}>You&apos;re almost live!</div>
+            <div style={{ fontSize: 16, color: CSS.textMuted, marginBottom: 32, lineHeight: 1.6 }}>
+              <strong style={{ color: CSS.text }}>{orgName}</strong> has been created.<br />
+              One last step — verify your email to activate your profile.
+            </div>
+          </div>
+          <div style={{ background: CSS.card, border: `1px solid rgba(20,184,166,0.25)`, borderRadius: 16, padding: 24, marginBottom: 24 }}>
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div style={{ fontSize: 32 }}>📧</div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: CSS.text, marginBottom: 4 }}>Check your inbox</div>
+                <div style={{ fontSize: 13, color: CSS.textMuted, lineHeight: 1.5 }}>
+                  We sent a verification link to <strong style={{ color: CSS.accent }}>{email || "your email"}</strong>.<br />
+                  Check your spam folder if you don&apos;t see it within a minute.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style={{ background: CSS.card, border: `1px solid ${CSS.border}`, borderRadius: 16, padding: 24, marginBottom: 32 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: CSS.textMuted, marginBottom: 16 }}>What happens next</div>
+            <div style={{ display: "grid", gap: 12 }}>
+              {[
+                { icon: "✉️", text: "Click the verification link in your email" },
+                { icon: "🏢", text: "Your organization profile goes live immediately" },
+                { icon: "💼", text: "Start posting jobs and reaching Indigenous talent" },
+              ].map((item, i) => (
+                <div key={i} style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <span style={{ fontSize: 20 }}>{item.icon}</span>
+                  <span style={{ fontSize: 13, color: CSS.textMuted }}>{item.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <BtnPrimary onClick={() => router.push("/org/dashboard")}>Go to Dashboard &rarr;</BtnPrimary>
+          </div>
         </div>)}
 
       </div>
