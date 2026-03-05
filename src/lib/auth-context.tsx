@@ -96,9 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const resetPassword = async (email: string) => {
     await sendPasswordResetEmail(auth, email, {
-      url: process.env.NEXT_PUBLIC_SITE_URL
-        ? `${process.env.NEXT_PUBLIC_SITE_URL}/login`
-        : "https://iopps-fresh.vercel.app/login",
+      url: "https://iopps.ca/login",
       handleCodeInApp: false,
     });
   };
