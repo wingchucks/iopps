@@ -51,6 +51,7 @@ export const metadata: Metadata = {
     title: "IOPPS.CA — Empowering Indigenous Success",
     description:
       "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, schools, and livestreams — built for Indigenous communities across North America.",
+    images: ["https://www.iopps.ca/og-image.jpg"],
   },
 };
 
@@ -74,13 +75,16 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: swScript }} />
       </head>
       <body className={`${geistSans.variable} antialiased`}>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-navy">Skip to content</a>
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider>
               <OnboardingProvider>
                 <AuthErrorBoundary>
                   <SessionManager />
-                  {children}
+                  <div id="main-content">
+                    {children}
+                  </div>
                 </AuthErrorBoundary>
               </OnboardingProvider>
             </ToastProvider>
