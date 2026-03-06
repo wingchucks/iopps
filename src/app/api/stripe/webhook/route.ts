@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { sendSubscriptionConfirmation } from "@/lib/email";
+import { FieldValue } from "firebase-admin/firestore";
 
 /* ── Plan ID → tier label mapping ── */
 const PLAN_TO_TIER: Record<string, string> = {
@@ -56,6 +57,30 @@ export async function POST(req: NextRequest) {
 
     try {
       const db = getAdminDb();
+      const eventRef = db.collection("stripeEvents").doc(event.id);
+
+      try {
+        await eventRef.create({
+          type: event.type,
+          createdAt: FieldValue.serverTimestamp(),
+          status: "processing",
+          stripeObjectId: session.id,
+        });
+      } catch (err) {
+        const code =
+          typeof err === "object" &&
+          err !== null &&
+          "code" in err
+            ? String((err as { code?: unknown }).code)
+            : "";
+
+        if (code === "6" || code === "already-exists") {
+          return NextResponse.json({ received: true, deduped: true });
+        }
+
+        throw err;
+      }
+
       const now = new Date();
       const expiresAt = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
       const tier = PLAN_TO_TIER[planId];
@@ -132,13 +157,25 @@ export async function POST(req: NextRequest) {
           "standardPostCredits";
 
         const employerRef = db.collection("employers").doc(orgId);
-        const snap = await employerRef.get();
-        const current = snap.exists ? (snap.data()?.[creditField] ?? 0) : 0;
-        await employerRef.set({ [creditField]: current + 1, updatedAt: now }, { merge: true });
+        await employerRef.set({
+          [creditField]: FieldValue.increment(1),
+          updatedAt: now,
+        }, { merge: true });
 
         console.log(`[stripe/webhook] ✅ Added 1 ${planId} credit for org ${orgId}`);
       }
+
+      await eventRef.set({
+        processedAt: FieldValue.serverTimestamp(),
+        status: "processed",
+      }, { merge: true });
     } catch (err) {
+      try {
+        await getAdminDb().collection("stripeEvents").doc(event.id).delete();
+      } catch (cleanupErr) {
+        console.error("[stripe/webhook] Failed to release event lock:", cleanupErr);
+      }
+
       console.error("[stripe/webhook] Failed to process payment:", err);
       return NextResponse.json({ error: "Failed to process payment" }, { status: 500 });
     }

@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { requireAdminServiceRequest } from "@/lib/internal-auth";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireAdminServiceRequest(req);
+  if (unauthorized) return unauthorized;
 
   try {
     const { collection, docId, data } = await req.json();

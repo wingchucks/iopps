@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { requireAdminServiceRequest } from "@/lib/internal-auth";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const cronSecret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  if (auth !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireAdminServiceRequest(request);
+  if (unauthorized) return unauthorized;
 
   const body = await request.json();
   const { collection, field, value, action } = body;

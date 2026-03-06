@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { ToastProvider } from "@/lib/toast-context";
@@ -7,11 +6,6 @@ import { OnboardingProvider } from "@/lib/onboarding-context";
 import AuthErrorBoundary from "@/components/AuthErrorBoundary";
 import SessionManager from "@/components/SessionManager";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -74,7 +68,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script dangerouslySetInnerHTML={{ __html: swScript }} />
       </head>
-      <body className={`${geistSans.variable} antialiased`}>
+      <body className="antialiased">
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-navy">Skip to content</a>
         <ThemeProvider>
           <AuthProvider>

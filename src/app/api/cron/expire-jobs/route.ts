@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
+import { requireCronRequest } from "@/lib/internal-auth";
 
 export const runtime = "nodejs";
 
@@ -10,11 +12,8 @@ export const runtime = "nodejs";
  * Protected by CRON_SECRET header.
  */
 export async function GET(req: NextRequest) {
-  // Verify cron secret
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronRequest(req);
+  if (unauthorized) return unauthorized;
 
   try {
     const db = getAdminDb();
@@ -32,7 +31,11 @@ export async function GET(req: NextRequest) {
     for (const doc of postsSnap.docs) {
       const data = doc.data();
       if (data.closingDate && data.closingDate < todayStr) {
-        batch1.update(doc.ref, { status: "closed" });
+        batch1.update(doc.ref, {
+          status: "closed",
+          active: false,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
         closedCount++;
       }
     }
@@ -50,7 +53,11 @@ export async function GET(req: NextRequest) {
       const data = doc.data();
       const closingDate = data.closingDate || data.deadline;
       if (closingDate && closingDate < todayStr) {
-        batch2.update(doc.ref, { status: "closed" });
+        batch2.update(doc.ref, {
+          status: "closed",
+          active: false,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
         jobsClosed++;
       }
     }

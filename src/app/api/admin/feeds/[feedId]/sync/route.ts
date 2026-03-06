@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { FieldValue } from "firebase-admin/firestore";
+import { sanitizeJobHtml } from "@/lib/html";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +99,7 @@ export async function POST(
             const existingDoc = existingSnap.docs[0];
             await existingDoc.ref.update({
               title,
-              description: stripCdata(description),
+              description: sanitizeJobHtml(stripCdata(description)),
               updatedAt: FieldValue.serverTimestamp(),
             });
           }
@@ -107,7 +108,8 @@ export async function POST(
 
         const jobData: Record<string, unknown> = {
           title,
-          description: stripCdata(description),
+          description: sanitizeJobHtml(stripCdata(description)),
+          status: "active",
           active: true,
           source: "feed",
           feedId: feed.id,
@@ -120,9 +122,15 @@ export async function POST(
           updatedAt: FieldValue.serverTimestamp(),
         };
 
-        if (item.pubDate) {
+        const publishedAt =
+          item.pubdate ||
+          item.pubDate ||
+          item.date ||
+          item.published;
+
+        if (publishedAt) {
           try {
-            jobData.publishedAt = new Date(item.pubDate);
+            jobData.publishedAt = new Date(publishedAt);
           } catch {
             // ignore invalid date
           }
@@ -211,7 +219,7 @@ function parseSimpleXml(xml: string): Array<Record<string, string>> {
     // Normalize SmartJobBoard field names to RSS standard
     if (!item.link && item.url) item.link = item.url;
     if (!item.guid && item.referencenumber) item.guid = item.referencenumber;
-    if (!item.pubDate && item.date) item.pubDate = item.date;
+    if (!item.pubdate && item.date) item.pubdate = item.date;
     if (!item.location && (item.city || item.state)) {
       item.location = [item.city, item.state, item.country]
         .filter(Boolean)

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { requireCronRequest } from "@/lib/internal-auth";
 
 export const runtime = "nodejs";
 
@@ -9,11 +10,8 @@ export const runtime = "nodejs";
  * Protected by CRON_SECRET header.
  */
 export async function GET(req: NextRequest) {
-  // Verify cron secret
-  const secret = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronRequest(req);
+  if (unauthorized) return unauthorized;
 
   try {
     const db = getAdminDb();

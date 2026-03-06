@@ -7,7 +7,6 @@ import {
   updateDoc,
   serverTimestamp,
   query,
-  orderBy,
   where,
   type QueryConstraint,
 } from "firebase/firestore";
@@ -53,6 +52,7 @@ export interface Job {
   expiresAt?: unknown;
   createdAt?: unknown;
   postedAt?: unknown;
+  publishedAt?: unknown;
   order?: number;
   remoteFlag?: boolean;
   indigenousPreference?: boolean;
@@ -119,5 +119,17 @@ export async function updateJob(
   data: Partial<Omit<Job, "id">>
 ): Promise<void> {
   const ref = doc(col, id);
-  await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+  const patch: Record<string, unknown> = {
+    ...data,
+    updatedAt: serverTimestamp(),
+  };
+
+  if (typeof data.status === "string") {
+    patch.active = data.status === "active";
+    if (data.status === "active") {
+      patch.postedAt = serverTimestamp();
+    }
+  }
+
+  await updateDoc(ref, patch);
 }

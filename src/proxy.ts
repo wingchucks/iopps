@@ -48,7 +48,7 @@ function isUnverifiedAllowed(pathname: string): boolean {
   );
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const cookie = req.cookies.get(COOKIE_NAME)?.value;
 

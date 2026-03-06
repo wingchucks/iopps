@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createHmac } from "crypto";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { Resend } from "resend";
+import { requireCronRequest } from "@/lib/internal-auth";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,7 @@ function personalizeHtml(html: string, uid: string): string {
   return html.replace(/UNSUBSCRIBE_URL/g, unsubUrl);
 }
 
-function buildHtml(body: string, subject: string): string {
+function buildHtml(body: string): string {
   const year = new Date().getFullYear();
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:20px;background:#f3f4f6;">
@@ -40,10 +41,8 @@ function buildHtml(body: string, subject: string): string {
 }
 
 export async function GET(request: NextRequest) {
-  const secret = request.headers.get("x-cron-secret") || new URL(request.url).searchParams.get("secret");
-  if (!secret || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronRequest(request);
+  if (unauthorized) return unauthorized;
 
   if (!resend) return NextResponse.json({ error: "Resend not configured" }, { status: 500 });
 
@@ -78,7 +77,7 @@ export async function GET(request: NextRequest) {
       continue;
     }
 
-    const html = buildHtml(emailBody || "", subject);
+    const html = buildHtml(emailBody || "");
     const BATCH_SIZE = 50;
     let sent = 0;
 

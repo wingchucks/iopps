@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { sanitizeJobHtml } from "@/lib/html";
+import { requireCronRequest } from "@/lib/internal-auth";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -11,15 +13,8 @@ const FEED_FETCH_TIMEOUT_MS = 15_000;
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest) {
-  // Vercel Cron sends CRON_SECRET automatically if set.
-  // In production, also allow requests without secret for manual triggers.
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const unauthorized = requireCronRequest(request);
+  if (unauthorized) return unauthorized;
 
   if (!adminDb) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
@@ -106,7 +101,7 @@ export async function GET(request: NextRequest) {
                 const existingDoc = existingSnap.docs[0];
                 await existingDoc.ref.update({
                   title,
-                  description: stripCdata(description),
+                  description: sanitizeJobHtml(stripCdata(description)),
                   updatedAt: FieldValue.serverTimestamp(),
                 });
               }
@@ -115,7 +110,7 @@ export async function GET(request: NextRequest) {
 
             const jobData: Record<string, unknown> = {
               title,
-              description: stripCdata(description),
+              description: sanitizeJobHtml(stripCdata(description)),
               status: "active",
               active: true,
               source: "feed",
@@ -129,9 +124,15 @@ export async function GET(request: NextRequest) {
               updatedAt: FieldValue.serverTimestamp(),
             };
 
-            if (item.pubDate) {
+            const publishedAt =
+              item.pubdate ||
+              item.pubDate ||
+              item.date ||
+              item.published;
+
+            if (publishedAt) {
               try {
-                jobData.publishedAt = new Date(item.pubDate);
+                jobData.publishedAt = new Date(publishedAt);
               } catch {
                 // ignore
               }
@@ -213,7 +214,7 @@ function parseSimpleXml(xml: string): Array<Record<string, string>> {
     // Normalize SmartJobBoard field names to RSS standard
     if (!item.link && item.url) item.link = item.url;
     if (!item.guid && item.referencenumber) item.guid = item.referencenumber;
-    if (!item.pubDate && item.date) item.pubDate = item.date;
+    if (!item.pubdate && item.date) item.pubdate = item.date;
     if (!item.location && (item.city || item.state)) {
       item.location = [item.city, item.state, item.country]
         .filter(Boolean)

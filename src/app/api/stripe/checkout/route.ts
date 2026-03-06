@@ -19,6 +19,14 @@ function getStripe(): Stripe | null {
   return new Stripe(key);
 }
 
+function getCanonicalSiteUrl(): string {
+  return (
+    process.env.SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://iopps.ca"
+  ).replace(/\/$/, "");
+}
+
 export async function POST(req: NextRequest) {
   const stripe = getStripe();
   if (!stripe) {
@@ -49,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     const gstAmount = Math.round(plan.amount * GST_RATE);
 
-    const origin = req.headers.get("origin") || "https://iopps.ca";
+    const origin = getCanonicalSiteUrl();
 
     const session = await stripe.checkout.sessions.create({
       mode: plan.mode,

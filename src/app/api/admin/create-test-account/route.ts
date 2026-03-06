@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
+import { requireAdminServiceRequest } from "@/lib/internal-auth";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireAdminServiceRequest(req);
+  if (unauthorized) return unauthorized;
 
   const { email, password, displayName, orgData } = await req.json();
 
@@ -61,10 +60,8 @@ export async function POST(req: NextRequest) {
   }
 }
 export async function DELETE(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireAdminServiceRequest(req);
+  if (unauthorized) return unauthorized;
   const { uid } = await req.json();
   try {
     await getAuth().deleteUser(uid);

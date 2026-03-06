@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { sanitizeJobHtml } from "@/lib/html";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,10 @@ export async function GET(
 
     const data = docRef.data()!;
     const job = serialize({ id: docRef.id, ...data, _source: source }) as Record<string, unknown>;
+
+    if (typeof job.description === "string" && job.description.trim()) {
+      job.description = sanitizeJobHtml(job.description);
+    }
 
     // Normalize salary object to string
     if (job.salary && typeof job.salary === "object") {

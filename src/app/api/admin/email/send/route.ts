@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createHmac } from "crypto";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { Resend } from "resend";
+import { hasAdminServiceToken } from "@/lib/internal-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 300; // 5 min for large sends
@@ -82,11 +83,10 @@ function buildNewsletterHtml(body: string, subject: string): string {
 // POST /api/admin/email/send
 // ---------------------------------------------------------------------------
 export async function POST(request: NextRequest) {
-  // Auth: admin token OR CRON_SECRET header
+  // Auth: admin token or an internal service token.
   const admin = await verifyAdmin(request);
-  const cronSecret = request.headers.get("x-cron-secret");
-  const isCronAuth = cronSecret && cronSecret === process.env.CRON_SECRET;
-  if (!admin && !isCronAuth) {
+  const isServiceAuth = hasAdminServiceToken(request);
+  if (!admin && !isServiceAuth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

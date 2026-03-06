@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const revalidate = 60; // Cache for 60 seconds
 
 // Recursively convert Firestore Timestamps and non-serializable values to JSON-safe types
@@ -48,6 +49,19 @@ function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "job
   return serialized;
 }
 
+function getJobSortTimestamp(job: Record<string, unknown>): number {
+  if (typeof job.order === "number") return job.order;
+
+  for (const candidate of [job.publishedAt, job.postedAt, job.createdAt]) {
+    if (typeof candidate === "string") {
+      const parsed = Date.parse(candidate);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+  }
+
+  return 0;
+}
+
 export async function GET(request: Request) {
   try {
     const db = getAdminDb();
@@ -85,11 +99,11 @@ export async function GET(request: Request) {
       }
     });
 
-    // Sort: featured first, then by createdAt desc
+    // Sort: featured first, then newest jobs.
     jobs.sort((a, b) => {
       if (a.featured && !b.featured) return -1;
       if (!a.featured && b.featured) return 1;
-      return 0;
+      return getJobSortTimestamp(b) - getJobSortTimestamp(a);
     });
 
     return NextResponse.json({ jobs, count: jobs.length });

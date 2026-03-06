@@ -1,13 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { sanitizeJobHtml } from "@/lib/html";
+import { requireAdminServiceRequest } from "@/lib/internal-auth";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get("x-cron-secret");
-  if (!secret || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireAdminServiceRequest(request);
+  if (unauthorized) return unauthorized;
 
   try {
     const { jobs } = await request.json();
@@ -51,14 +51,14 @@ export async function POST(request: NextRequest) {
       const doc = db.collection("jobs").doc();
       const now = new Date().toISOString();
 
-      batch.set(doc, {
-        title: job.title,
-        company: job.company || "Unknown",
-        organization: job.company || "Unknown",
-        location: job.location || "",
-        description: job.description || "",
-        employmentType: job.employmentType || "",
-        salary: job.salary || "",
+        batch.set(doc, {
+          title: job.title,
+          company: job.company || "Unknown",
+          organization: job.company || "Unknown",
+          location: job.location || "",
+          description: sanitizeJobHtml(job.description || ""),
+          employmentType: job.employmentType || "",
+          salary: job.salary || "",
         externalUrl: job.externalUrl,
         applicationUrl: job.externalUrl,
         source: "google-alerts",
