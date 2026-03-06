@@ -70,6 +70,36 @@ async function getPartners(): Promise<PartnerData[]> {
 
 /* categories is built inside the component with live stats */
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "name": "IOPPS",
+      "url": "https://www.iopps.ca",
+      "description": "Canada's Indigenous professional platform",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.iopps.ca/search?q={search_term_string}",
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "Organization",
+      "name": "IOPPS",
+      "url": "https://www.iopps.ca",
+      "logo": "https://www.iopps.ca/logo.png",
+      "description": "Canada's Indigenous professional platform. Jobs, events, scholarships, businesses, schools, and livestreams for Indigenous communities across North America.",
+      "sameAs": [],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "url": "https://www.iopps.ca/contact",
+      },
+    },
+  ],
+};
+
 export default async function LandingPage() {
   const [stats, partners] = await Promise.all([getStats(), getPartners()]);
   const categories = [
@@ -82,6 +112,10 @@ export default async function LandingPage() {
   ];
   return (
     <div className="min-h-screen bg-bg">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
       <section
         className="relative overflow-hidden text-center"

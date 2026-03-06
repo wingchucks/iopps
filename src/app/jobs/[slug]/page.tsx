@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -16,13 +15,11 @@ import type { Job } from "@/lib/firestore/jobs";
 
 export default function JobDetailPage() {
   return (
-    <ProtectedRoute>
-      <AppShell>
-        <div className="min-h-screen bg-bg">
-          <JobDetailContent />
-        </div>
-      </AppShell>
-    </ProtectedRoute>
+    <AppShell>
+      <div className="min-h-screen bg-bg">
+        <JobDetailContent />
+      </div>
+    </AppShell>
   );
 }
 

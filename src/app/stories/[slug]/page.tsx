@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -19,13 +18,11 @@ import { displayLocation } from "@/lib/utils";
 
 export default function StoryDetailPage() {
   return (
-    <ProtectedRoute>
-      <AppShell>
+    <AppShell>
       <div className="min-h-screen bg-bg">
         <StoryDetailContent />
       </div>
     </AppShell>
-    </ProtectedRoute>
   );
 }
 

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
@@ -43,13 +42,11 @@ type EventData = {
 
 export default function EventDetailPage() {
   return (
-    <ProtectedRoute>
-      <AppShell>
+    <AppShell>
       <div className="min-h-screen bg-bg">
         <EventDetailContent />
       </div>
     </AppShell>
-    </ProtectedRoute>
   );
 }
 

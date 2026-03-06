@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -27,13 +26,11 @@ function isClosingSoon(deadline?: string): boolean {
 
 export default function ScholarshipDetailPage() {
   return (
-    <ProtectedRoute>
-      <AppShell>
+    <AppShell>
       <div className="min-h-screen bg-bg">
         <ScholarshipDetailContent />
       </div>
     </AppShell>
-    </ProtectedRoute>
   );
 }
 
