@@ -51,7 +51,7 @@ export default function PricingPage() {
               Sign In
             </Link>
             <Link
-              href="/signup"
+              href="/org/signup"
               className="text-sm font-semibold no-underline px-5 py-2 rounded-xl"
               style={{ background: "var(--teal)", color: "#fff" }}
             >
@@ -73,7 +73,7 @@ export default function PricingPage() {
           className="relative text-base md:text-lg mx-auto max-w-lg mb-0"
           style={{ color: "rgba(255,255,255,.65)" }}
         >
-          Choose the plan that works for your organization
+          Create your profile for free, then choose promotion only when your organization needs more visibility.
         </p>
       </section>
 

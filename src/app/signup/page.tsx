@@ -18,7 +18,30 @@ import {
 
 type Role = "" | "community" | "organization";
 type OrgType = "" | "employer" | "school";
+type BusinessIdentity = "indigenous" | "non_indigenous" | "not_specified";
 interface Campus { name: string; city: string; }
+
+const BUSINESS_IDENTITY_OPTIONS: Array<{
+  value: BusinessIdentity;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "indigenous",
+    label: "Indigenous business or employer",
+    description: "Create your organization profile for free.",
+  },
+  {
+    value: "non_indigenous",
+    label: "Non-Indigenous company or employer",
+    description: "Create your profile now and only pay when you want promoted visibility.",
+  },
+  {
+    value: "not_specified",
+    label: "Prefer not to say yet",
+    description: "You can update this later from your organization profile.",
+  },
+];
 
 export default function UnifiedSignupPage() {
   const router = useRouter();
@@ -57,6 +80,7 @@ export default function UnifiedSignupPage() {
 
   // Employer
   const [orgName, setOrgName] = useState("");
+  const [businessIdentity, setBusinessIdentity] = useState<BusinessIdentity>("indigenous");
   const [empProvince, setEmpProvince] = useState("");
   const [empCity, setEmpCity] = useState("");
   const [capabilities, setCapabilities] = useState<string[]>(["post_jobs"]);
@@ -181,6 +205,7 @@ export default function UnifiedSignupPage() {
       const idToken = await user.getIdToken();
       const orgData: Record<string, unknown> = {
         name: orgName, type: "employer",
+        businessIdentity,
         ...(empProvince || empCity ? { location: { ...(empProvince ? { province: empProvince } : {}), ...(empCity ? { city: empCity } : {}) } } : {}),
         ...(capabilities.length > 0 ? { capabilities } : {}),
         ...(logoUrl ? { logoUrl, logo: logoUrl } : {}),
@@ -427,6 +452,29 @@ export default function UnifiedSignupPage() {
           <StepHeader eyebrow="Employer Setup — 1 of 3" title="About your" highlight="Organization" desc="Tell us about your business." />
           <div style={{ display: "grid", gap: 20 }}>
             <FormInput label="Organization Name" required placeholder="e.g., Northern Resources Inc." value={orgName} onChange={e => setOrgName(e.target.value)} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>How should we represent your business?</div>
+              <div style={{ display: "grid", gap: 12 }}>
+                {BUSINESS_IDENTITY_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setBusinessIdentity(option.value)}
+                    style={{
+                      textAlign: "left",
+                      padding: "16px 18px",
+                      borderRadius: 14,
+                      border: `1px solid ${businessIdentity === option.value ? CSS.accent : CSS.border}`,
+                      background: businessIdentity === option.value ? "rgba(20,184,166,0.08)" : CSS.card,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ fontSize: 14, fontWeight: 600, color: CSS.text, marginBottom: 4 }}>{option.label}</div>
+                    <div style={{ fontSize: 12, color: CSS.textDim }}>{option.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <FormSelect label="Province / Territory" value={empProvince} onChange={e => setEmpProvince(e.target.value)} options={[{ value: "", label: "Select..." }, ...PROVINCES.map(p => ({ value: p, label: p }))]} />
               <FormInput label="City" placeholder="City" value={empCity} onChange={e => setEmpCity(e.target.value)} />
@@ -434,6 +482,11 @@ export default function UnifiedSignupPage() {
             <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>What do you want to do on IOPPS?</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{EMPLOYER_CAPABILITIES.map(c => <CheckboxItem key={c.id} icon={c.icon} label={c.label} checked={capabilities.includes(c.id)} onToggle={() => toggleCapability(c.id)} />)}</div>
             </div>
+          </div>
+          <div style={{ marginTop: 24 }}>
+            <InfoBanner icon="💡">
+              Indigenous businesses can stay on a free profile. Non-Indigenous companies only need a paid plan if they want promoted visibility.
+            </InfoBanner>
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(3)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(11)} disabled={!orgName}>Continue →</BtnPrimary></div>
         </div>)}
@@ -453,10 +506,11 @@ export default function UnifiedSignupPage() {
           <StepHeader eyebrow="Employer Setup — 3 of 3" title="Ready to" highlight="Launch?" desc="Your organization profile is ready." />
           <ReviewSection icon="🏢" title="Organization Summary" onEdit={() => goTo(10)}>
             <ReviewRow label="Name" value={orgName} />
+            <ReviewRow label="Business Identity" value={BUSINESS_IDENTITY_OPTIONS.find(option => option.value === businessIdentity)?.label || "Not set"} />
             <ReviewRow label="Location" value={[empCity, empProvince].filter(Boolean).join(", ") || "Not set"} />
             <ReviewRow label="Capabilities" value={<div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-end" }}>{capabilities.map(id => { const c = EMPLOYER_CAPABILITIES.find(x => x.id === id); return <span key={id} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: CSS.accentLight, color: CSS.accent, fontWeight: 500 }}>{c?.label || id}</span>; })}</div>} />
           </ReviewSection>
-          <InfoBanner icon="✅"><strong style={{ color: CSS.text }}>Auto-approved!</strong> Your profile goes live immediately after verification.</InfoBanner>
+          <InfoBanner icon="✅"><strong style={{ color: CSS.text }}>Auto-approved!</strong> Your profile goes live immediately after verification. Paid plans are only needed for extra promotion.</InfoBanner>
           <div style={{ display: "flex", gap: 12, marginTop: 32, justifyContent: "center" }}><BtnGhost onClick={() => goTo(11)}>← Back</BtnGhost><BtnPrimary onClick={handleEmployerSubmit} disabled={submitting} style={{ flex: 1, justifyContent: "center" }}>{submitting ? "Creating..." : "Publish & Go Live 🚀"}</BtnPrimary></div>
         </div>)}
 

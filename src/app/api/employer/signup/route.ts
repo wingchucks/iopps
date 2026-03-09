@@ -10,7 +10,7 @@ export const runtime = "nodejs";
  * Creates all required Firestore documents for a new employer account.
  * Must be called AFTER Firebase Auth account creation (user must send ID token).
  *
- * Body: { name, type, contactName, contactEmail }
+ * Body: { name, type, contactName, contactEmail, businessIdentity? }
  */
 export async function POST(req: NextRequest) {
   if (!adminAuth || !adminDb) {
@@ -33,14 +33,20 @@ export async function POST(req: NextRequest) {
   }
 
   // Parse body
-  let body: { name?: string; type?: string; contactName?: string; contactEmail?: string };
+  let body: {
+    name?: string;
+    type?: string;
+    contactName?: string;
+    contactEmail?: string;
+    businessIdentity?: "indigenous" | "non_indigenous" | "not_specified";
+  };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, type, contactName, contactEmail } = body;
+  const { name, type, contactName, contactEmail, businessIdentity = "not_specified" } = body;
   if (!name || !type || !contactName || !contactEmail) {
     return NextResponse.json({ error: "Missing required fields: name, type, contactName, contactEmail" }, { status: 400 });
   }
@@ -63,6 +69,7 @@ export async function POST(req: NextRequest) {
       contactName,
       contactEmail,
       slug,
+      businessIdentity,
       onboardingComplete: false,
       plan: null,
       status: "pending",
@@ -77,6 +84,7 @@ export async function POST(req: NextRequest) {
       name,
       slug,
       type,
+      businessIdentity,
       contactName,
       contactEmail,
       plan: "free",

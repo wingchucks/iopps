@@ -46,10 +46,10 @@ function PlansContent() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-text mb-1">
-          Plans &amp; Pricing
+          Promotion Plans
         </h1>
         <p className="text-sm text-text-muted m-0">
-          Choose the plan that works for your organization
+          Your profile can stay free. Choose a plan only when you want promoted visibility or featured reach.
         </p>
       </div>
 

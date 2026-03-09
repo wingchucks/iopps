@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Card from "@/components/Card";
 
-const tabs = ["Subscriptions", "Pay Per Post", "Conferences", "Shop Indigenous"] as const;
+const tabs = ["Promotion Plans", "Pay Per Post", "Conferences", "Businesses"] as const;
 type Tab = (typeof tabs)[number];
 
 function Check() {
@@ -171,7 +171,7 @@ export default function PricingTabs({
   variant?: "public" | "org";
   currentPlan?: string;
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>("Subscriptions");
+  const [activeTab, setActiveTab] = useState<Tab>("Promotion Plans");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const subHref = (plan: string) =>
@@ -207,30 +207,30 @@ export default function PricingTabs({
       </div>
 
       {/* Tab content */}
-      {activeTab === "Subscriptions" && (
+      {activeTab === "Promotion Plans" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <PlanCard
-            title="Standard"
+            title="Visibility Boost"
             price="$1,250"
             period="/year"
-            features={["15 job posts per year", "Basic analytics", "Email support", "Standard listing visibility"]}
+            features={["15 job posts per year", "Business profile promotion", "Basic analytics", "Standard directory visibility"]}
             cta={subCta}
             href={subHref("tier1")}
             current={currentPlan === "tier1"}
           />
           <PlanCard
-            title="Premium"
+            title="Featured Employer"
             price="$2,500"
             period="/year"
             badge="Most Popular"
             gold
-            features={["Unlimited job posts", "4 featured listings", "Talent search access", "Advanced analytics dashboard", "Priority support"]}
+            features={["Unlimited job posts", "Featured business placement", "Talent search access", "Advanced analytics dashboard", "Priority support"]}
             cta={subCta}
             href={subHref("tier2")}
             current={currentPlan === "tier2"}
           />
           <PlanCard
-            title="School"
+            title="School Growth"
             price="$5,500"
             period="/year"
             features={["20 program listings", "Unlimited job posts", "6 featured listings", "Dedicated account manager", "Custom branding"]}
@@ -282,14 +282,43 @@ export default function PricingTabs({
         />
       )}
 
-      {activeTab === "Shop Indigenous" && (
-        <FreeCard
-          title="Shop Indigenous"
-          description="Showcase and sell Indigenous products, art, and services at no cost. Our marketplace is free for all Indigenous vendors."
-          features={["Vendor profile", "Product listings", "Order management", "Analytics dashboard"]}
-          cta={variant === "org" ? "Open Shop" : `Get Started${freeSuffix}`}
-          href={freeHref}
-        />
+      {activeTab === "Businesses" && (
+        <div className="grid grid-cols-1 gap-6">
+          <FreeCard
+            title="Indigenous Businesses"
+            description="Indigenous businesses and employers can create a profile on IOPPS for free and join the opportunities network without a promotion fee."
+            features={["Free business profile", "Directory visibility", "Jobs and events listing", "Community discovery"]}
+            cta={variant === "org" ? "Manage Profile" : `Create Free Profile${freeSuffix}`}
+            href={freeHref}
+          />
+          <Card>
+            <div style={{ padding: "28px 24px" }}>
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-xs font-bold tracking-[2px] mb-2" style={{ color: "var(--gold)" }}>
+                    PROMOTED VISIBILITY
+                  </p>
+                  <h3 className="text-xl font-extrabold text-text mb-2">Non-Indigenous Companies</h3>
+                  <p className="text-sm text-text-sec max-w-2xl mb-0">
+                    Non-Indigenous companies can still create a profile and participate on IOPPS. Payment is only required when they want promoted visibility, featured placement, or campaign support.
+                  </p>
+                </div>
+                <div
+                  className="rounded-2xl"
+                  style={{
+                    padding: "14px 16px",
+                    background: "var(--gold-soft)",
+                    border: "1px solid rgba(217,119,6,.24)",
+                    minWidth: 220,
+                  }}
+                >
+                  <p className="text-xs font-bold mb-1" style={{ color: "var(--gold)" }}>How it works</p>
+                  <p className="text-sm text-text-sec mb-0">Profile creation is free. Promotion is optional and paid.</p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* IOPPS Spotlight */}

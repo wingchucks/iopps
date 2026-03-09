@@ -15,9 +15,31 @@ const ORG_TYPES = [
   { value: "professional", label: "Professional Services" },
 ] as const;
 
+const BUSINESS_IDENTITY_OPTIONS = [
+  {
+    value: "indigenous",
+    label: "Indigenous business or employer",
+    description: "Create your profile for free and join the directory without a promotion fee.",
+  },
+  {
+    value: "non_indigenous",
+    label: "Non-Indigenous company or employer",
+    description: "Create your profile now and only pay if you want promoted visibility later.",
+  },
+  {
+    value: "not_specified",
+    label: "Prefer not to say right now",
+    description: "You can set or update this later in your organization settings.",
+  },
+] as const;
+
+type OrgType = (typeof ORG_TYPES)[number]["value"];
+type BusinessIdentity = (typeof BUSINESS_IDENTITY_OPTIONS)[number]["value"];
+
 export default function OrgSignupPage() {
   const [orgName, setOrgName] = useState("");
-  const [orgType, setOrgType] = useState<"business" | "school" | "non-profit" | "government">("business");
+  const [orgType, setOrgType] = useState<OrgType>("business");
+  const [businessIdentity, setBusinessIdentity] = useState<BusinessIdentity>("indigenous");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +51,7 @@ export default function OrgSignupPage() {
   const { signUp, signInWithGoogle, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const signingUpRef = useRef(false); // Prevents useEffect redirect during signup
+  const showBusinessIdentity = orgType === "business" || orgType === "legal" || orgType === "professional";
 
   useEffect(() => {
     if (!authLoading && user && !signingUpRef.current) {
@@ -53,6 +76,10 @@ export default function OrgSignupPage() {
 
     if (!acceptTerms) {
       setError("You must accept the Terms of Service to continue.");
+      return;
+    }
+    if (showBusinessIdentity && !businessIdentity) {
+      setError("Please choose how your business should be represented.");
       return;
     }
     if (password !== confirm) {
@@ -85,6 +112,7 @@ export default function OrgSignupPage() {
         body: JSON.stringify({
           name: orgName,
           type: orgType,
+          businessIdentity: showBusinessIdentity ? businessIdentity : "not_specified",
           contactName,
           contactEmail: email,
         }),
@@ -132,14 +160,17 @@ export default function OrgSignupPage() {
           <h1 className="text-white font-black text-4xl tracking-[3px] mb-2 relative">IOPPS</h1>
         </Link>
         <p className="text-sm relative" style={{ color: "rgba(255,255,255,.6)" }}>
-          Register your organization
+          Register your organization or business
         </p>
       </div>
 
       {/* Form */}
       <div className="flex-1 flex justify-center" style={{ padding: "40px 24px" }}>
         <form onSubmit={handleSubmit} className="w-full max-w-md">
-          <h2 className="text-2xl font-bold text-text mb-6">Organization Registration</h2>
+          <h2 className="text-2xl font-bold text-text mb-2">Organization Registration</h2>
+          <p className="text-sm text-text-muted mb-6">
+            Indigenous businesses and employers can create their profile for free. Non-Indigenous companies only pay when they want promoted visibility.
+          </p>
 
           {/* Google OAuth */}
           <button
@@ -220,6 +251,33 @@ export default function OrgSignupPage() {
               ))}
             </select>
           </label>
+
+          {showBusinessIdentity && (
+            <div className="mb-4">
+              <span className="text-sm font-semibold text-text-sec mb-1.5 block">Business Identity</span>
+              <div className="space-y-2">
+                {BUSINESS_IDENTITY_OPTIONS.map((option) => (
+                  <label
+                    key={option.value}
+                    className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:border-teal"
+                  >
+                    <input
+                      type="radio"
+                      name="businessIdentity"
+                      value={option.value}
+                      checked={businessIdentity === option.value}
+                      onChange={(event) => setBusinessIdentity(event.target.value as BusinessIdentity)}
+                      className="mt-1 h-4 w-4 cursor-pointer accent-teal"
+                    />
+                    <span className="block">
+                      <span className="block text-sm font-semibold text-text">{option.label}</span>
+                      <span className="block text-xs text-text-muted">{option.description}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           <label className="block mb-4">
             <span className="text-sm font-semibold text-text-sec mb-1.5 block">Contact Name</span>

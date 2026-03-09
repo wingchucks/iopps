@@ -24,11 +24,14 @@ export interface OrganizationSocialLinks {
   twitter?: string;
 }
 
+export type BusinessIdentity = "indigenous" | "non_indigenous" | "not_specified";
+
 export interface Organization {
   id: string;
   name: string;
   slug?: string;
   type: "business" | "school" | "non-profit" | "government" | "employer" | "legal" | "professional";
+  businessIdentity?: BusinessIdentity;
   contactName?: string;
   contactEmail?: string;
   logo?: string;
