@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { normalizeImportedDescription } from "@/lib/server/imported-job-descriptions";
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
+import {
+  buildPublicJobRouteSlugMap,
+  isPublicJobVisible,
+  sortJobsByRecency,
+} from "@/lib/public-jobs";
 
 export const runtime = "nodejs";
 export const revalidate = 60; // Cache for 60 seconds
@@ -95,14 +100,24 @@ export async function GET(request: Request) {
       }
     });
 
-    // Sort: featured first, then by createdAt desc
-    jobs.sort((a, b) => {
-      if (a.featured && !b.featured) return -1;
-      if (!a.featured && b.featured) return 1;
-      return 0;
+    const publicJobs = jobs.filter((job) => isPublicJobVisible({
+      active: job.active as boolean | undefined,
+      status: typeof job.status === "string" ? job.status : undefined,
+    }));
+
+    const publicSlugMap = buildPublicJobRouteSlugMap(publicJobs.map((job) => ({
+      id: String(job.id),
+      slug: typeof job.slug === "string" ? job.slug : undefined,
+      title: typeof job.title === "string" ? job.title : undefined,
+    })));
+
+    publicJobs.forEach((job) => {
+      job.slug = publicSlugMap.get(String(job.id)) || String(job.slug || job.id);
     });
 
-    return NextResponse.json({ jobs, count: jobs.length });
+    const sortedJobs = sortJobsByRecency(publicJobs);
+
+    return NextResponse.json({ jobs: sortedJobs, count: sortedJobs.length });
   } catch (err) {
     console.error("Jobs API error:", err);
     return NextResponse.json({ error: "Failed to load jobs" }, { status: 500 });

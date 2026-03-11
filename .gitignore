@@ -51,4 +51,6 @@ playwright-report/
 test-results/
 e2e/auth-states/
 tmp_*.mjs
+output/
+.playwright-cli/
 

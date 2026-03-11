@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
 
 export const runtime = "nodejs";
 export const revalidate = 120;
@@ -131,7 +132,6 @@ function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "job
     serialized.employerName = serialized.orgName || serialized.companyName || "";
   }
   serialized._source = source;
-  serialized.href = `/jobs/${String(serialized.slug || serialized.id)}`;
   return serialized;
 }
 
@@ -174,20 +174,31 @@ async function loadJobs(
 
   const jobs = [
     ...jobsByIdSnap.docs
-      .filter((doc) => doc.data().active !== false)
+      .filter((doc) => isPublicJobVisible(doc.data()))
       .map((doc) => normalizeJob(doc, "jobs")),
     ...jobsByNameSnap.docs
-      .filter((doc) => doc.data().active !== false)
+      .filter((doc) => isPublicJobVisible(doc.data()))
       .map((doc) => normalizeJob(doc, "jobs")),
     ...postsByOrgSnap.docs
       .filter((doc) => {
         const data = doc.data();
-        return data.type === "job" && data.status !== "closed";
+        return data.type === "job" && isPublicJobVisible(data);
       })
       .map((doc) => normalizeJob(doc, "posts")),
   ];
 
-  return sortFeatured(dedupeByHref(jobs));
+  const publicJobs = dedupeByHref(jobs);
+  const slugMap = buildPublicJobRouteSlugMap(publicJobs.map((job) => ({
+    id: String(job.id),
+    slug: typeof job.slug === "string" ? job.slug : undefined,
+    title: typeof job.title === "string" ? job.title : undefined,
+  })));
+
+  publicJobs.forEach((job) => {
+    job.href = `/jobs/${slugMap.get(String(job.id)) || String(job.slug || job.id)}`;
+  });
+
+  return sortFeatured(publicJobs);
 }
 
 async function loadEvents(

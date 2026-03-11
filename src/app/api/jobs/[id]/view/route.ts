@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { findPublicJobDocument } from "@/lib/server/public-job-routing";
 
 export const runtime = "nodejs";
 
@@ -12,22 +13,10 @@ export async function POST(
 
   try {
     const db = getAdminDb();
+    const found = await findPublicJobDocument(db, id);
 
-    // Check jobs collection first
-    const jobRef = db.collection("jobs").doc(id);
-    const jobSnap = await jobRef.get();
-
-    if (jobSnap.exists) {
-      await jobRef.update({ viewCount: FieldValue.increment(1) });
-      return NextResponse.json({ ok: true });
-    }
-
-    // Fall back to posts collection
-    const postRef = db.collection("posts").doc(id);
-    const postSnap = await postRef.get();
-
-    if (postSnap.exists) {
-      await postRef.update({ viewCount: FieldValue.increment(1) });
+    if (found) {
+      await db.collection(found.source).doc(found.id).update({ viewCount: FieldValue.increment(1) });
       return NextResponse.json({ ok: true });
     }
 
