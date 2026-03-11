@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-
-// ── Types ────────────────────────────────────────────────────────────────────
+import {
+  selectFeaturedOpportunityItems,
+  sortByRecencyWithFeaturedBoost,
+} from "@/lib/public-featured";
 
 type FeedItemType = "job" | "program" | "event" | "scholarship";
 
@@ -15,57 +17,49 @@ interface FeedItem {
   orgName: string;
   orgLogo?: string;
   orgSlug?: string;
-  subtitle?: string;       // location, dates, category
-  detail?: string;         // salary, duration, amount
-  badge?: string;          // e.g. "Full-Time", "In-Person"
+  subtitle?: string;
+  detail?: string;
+  badge?: string;
   href: string;
   createdAt?: string;
   featured?: boolean;
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
 const TABS = [
-  { key: "all",         label: "All",          emoji: "🌐" },
-  { key: "job",         label: "Jobs",         emoji: "💼" },
-  { key: "program",     label: "Programs",     emoji: "📚" },
-  { key: "event",       label: "Events",       emoji: "📅" },
+  { key: "all", label: "All", emoji: "🌐" },
+  { key: "job", label: "Jobs", emoji: "💼" },
+  { key: "program", label: "Programs", emoji: "📚" },
+  { key: "event", label: "Events", emoji: "📅" },
   { key: "scholarship", label: "Scholarships", emoji: "🎓" },
 ] as const;
 
 type TabKey = typeof TABS[number]["key"];
 
-const TYPE_COLORS: Record<FeedItemType, { bg: string; text: string; border: string }> = {
-  job:         { bg: "rgba(20,184,166,.12)",  text: "#14B8A6", border: "rgba(20,184,166,.25)" },
-  program:     { bg: "rgba(99,102,241,.12)",  text: "#818CF8", border: "rgba(99,102,241,.25)" },
-  event:       { bg: "rgba(251,146,60,.12)",  text: "#FB923C", border: "rgba(251,146,60,.25)" },
-  scholarship: { bg: "rgba(250,204,21,.12)",  text: "#FBBF24", border: "rgba(250,204,21,.25)" },
+const TYPE_META: Record<FeedItemType, { label: string; icon: string }> = {
+  job: { label: "Jobs", icon: "💼" },
+  program: { label: "Programs", icon: "📚" },
+  event: { label: "Events", icon: "📅" },
+  scholarship: { label: "Scholarships", icon: "🎓" },
 };
-
-const TYPE_ICONS: Record<FeedItemType, string> = {
-  job: "💼", program: "📚", event: "📅", scholarship: "🎓",
-};
-
-// ── Data fetchers ─────────────────────────────────────────────────────────────
 
 async function fetchJobs(): Promise<FeedItem[]> {
   const res = await fetch("/api/jobs?limit=40");
   if (!res.ok) return [];
   const data = await res.json();
   const jobs = Array.isArray(data) ? data : (data.jobs || []);
-  return jobs.map((j: Record<string, unknown>) => ({
-    id: String(j.id || j.slug || ""),
+  return jobs.map((job: Record<string, unknown>) => ({
+    id: String(job.id || job.slug || ""),
     type: "job" as FeedItemType,
-    title: String(j.title || ""),
-    orgName: String(j.employerName || j.company || ""),
-    orgLogo: j.employerLogoUrl as string || j.logoUrl as string || "",
-    orgSlug: j.orgSlug as string || j.employerId as string || "",
-    subtitle: [j.location, j.employmentType].filter(Boolean).join(" · "),
-    detail: j.salary as string || "",
-    badge: j.featured ? "Featured" : (j.employmentType as string || ""),
-    href: `/jobs/${j.id || j.slug}`,
-    createdAt: j.createdAt as string || "",
-    featured: Boolean(j.featured),
+    title: String(job.title || ""),
+    orgName: String(job.employerName || job.company || job.orgName || ""),
+    orgLogo: (job.employerLogoUrl as string) || (job.logoUrl as string) || (job.companyLogoUrl as string) || "",
+    orgSlug: (job.orgSlug as string) || (job.employerId as string) || "",
+    subtitle: [job.location, job.workLocation].filter(Boolean).join(" · "),
+    detail: (job.salary as string) || "",
+    badge: (job.employmentType as string) || (job.jobType as string) || "",
+    href: `/jobs/${job.slug || job.id || ""}`,
+    createdAt: (job.createdAt as string) || (job.postedAt as string) || "",
+    featured: Boolean(job.featured),
   }));
 }
 
@@ -74,19 +68,19 @@ async function fetchPrograms(): Promise<FeedItem[]> {
   if (!res.ok) return [];
   const data = await res.json();
   const programs = data.programs || [];
-  return programs.map((p: Record<string, unknown>) => ({
-    id: String(p.id || ""),
+  return programs.map((program: Record<string, unknown>) => ({
+    id: String(program.id || ""),
     type: "program" as FeedItemType,
-    title: String(p.title || ""),
-    orgName: String(p.orgName || ""),
-    orgLogo: p.orgLogoUrl as string || "",
-    orgSlug: p.orgId as string || "",
-    subtitle: [p.location, p.format].filter(Boolean).join(" · "),
-    detail: p.duration as string || "",
-    badge: p.credential as string || p.category as string || "",
-    href: (p.externalUrl as string) || `/schools/${p.orgId}`,
-    createdAt: p.createdAt as string || "",
-    featured: Boolean(p.featured),
+    title: String(program.title || ""),
+    orgName: String(program.orgName || ""),
+    orgLogo: (program.orgLogoUrl as string) || "",
+    orgSlug: (program.orgId as string) || "",
+    subtitle: [program.location, program.format].filter(Boolean).join(" · "),
+    detail: (program.duration as string) || "",
+    badge: (program.credential as string) || (program.category as string) || "",
+    href: (program.externalUrl as string) || `/schools/${program.orgId}`,
+    createdAt: (program.createdAt as string) || "",
+    featured: Boolean(program.featured),
   }));
 }
 
@@ -95,18 +89,18 @@ async function fetchEvents(): Promise<FeedItem[]> {
   if (!res.ok) return [];
   const data = await res.json();
   const events = Array.isArray(data) ? data : (data.events || []);
-  return events.map((e: Record<string, unknown>) => ({
-    id: String(e.id || ""),
+  return events.map((event: Record<string, unknown>) => ({
+    id: String(event.id || ""),
     type: "event" as FeedItemType,
-    title: String(e.title || e.name || ""),
-    orgName: String(e.organizer || e.organization || "IOPPS"),
-    orgLogo: e.logoUrl as string || e.imageUrl as string || e.posterUrl as string || "",
-    subtitle: [e.location, e.city].filter(Boolean).join(", "),
-    detail: e.date as string || e.startDate as string || e.dates as string || "",
-    badge: e.eventType as string || e.type as string || "",
-    href: `/events/${e.id || e.slug}`,
-    createdAt: e.createdAt as string || e.date as string || "",
-    featured: Boolean(e.featured),
+    title: String(event.title || event.name || ""),
+    orgName: String(event.organizer || event.organization || "IOPPS"),
+    orgLogo: (event.logoUrl as string) || (event.imageUrl as string) || (event.posterUrl as string) || "",
+    subtitle: [event.location, event.city].filter(Boolean).join(", "),
+    detail: (event.date as string) || (event.startDate as string) || (event.dates as string) || "",
+    badge: (event.eventType as string) || (event.type as string) || "",
+    href: `/events/${event.id || event.slug}`,
+    createdAt: (event.createdAt as string) || (event.date as string) || (event.startDate as string) || "",
+    featured: Boolean(event.featured),
   }));
 }
 
@@ -116,27 +110,30 @@ async function fetchScholarships(): Promise<FeedItem[]> {
   const data = await res.json();
   const scholarships = Array.isArray(data) ? data : (data.scholarships || []);
   return scholarships
-    .filter((s: Record<string, unknown>) => s.status === "active" || !s.status)
-    .map((s: Record<string, unknown>) => ({
-      id: String(s.id || ""),
+    .filter((scholarship: Record<string, unknown>) => scholarship.status === "active" || !scholarship.status)
+    .map((scholarship: Record<string, unknown>) => ({
+      id: String(scholarship.id || ""),
       type: "scholarship" as FeedItemType,
-      title: String(s.title || s.name || ""),
-      orgName: String(s.provider || s.organization || s.orgName || ""),
-      orgLogo: s.logoUrl as string || "",
-      subtitle: s.deadline ? `Deadline: ${s.deadline}` : String(s.eligibility || ""),
-      detail: s.amount as string || s.value as string || "",
-      badge: s.category as string || s.type as string || "",
-      href: (s.applicationUrl as string) || (s.url as string) || `/scholarships`,
-      createdAt: s.createdAt as string || "",
-      featured: Boolean(s.featured),
+      title: String(scholarship.title || scholarship.name || ""),
+      orgName: String(scholarship.provider || scholarship.organization || scholarship.orgName || ""),
+      orgLogo: (scholarship.logoUrl as string) || "",
+      subtitle: scholarship.deadline ? `Deadline: ${scholarship.deadline}` : String(scholarship.eligibility || ""),
+      detail: (scholarship.amount as string) || (scholarship.value as string) || "",
+      badge: (scholarship.category as string) || (scholarship.type as string) || "",
+      href: (scholarship.applicationUrl as string) || (scholarship.url as string) || "/scholarships",
+      createdAt: (scholarship.createdAt as string) || "",
+      featured: Boolean(scholarship.featured),
     }));
 }
 
-// ── Components ────────────────────────────────────────────────────────────────
-
 function OrgAvatar({ logo, name, size = 40 }: { logo?: string; name: string; size?: number }) {
   const [imgError, setImgError] = useState(false);
-  const initials = name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  const initials = name
+    .split(/\s+/)
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   if (logo && !imgError) {
     return (
@@ -147,146 +144,188 @@ function OrgAvatar({ logo, name, size = 40 }: { logo?: string; name: string; siz
         height={size}
         onError={() => setImgError(true)}
         style={{
-          width: size, height: size, borderRadius: 10,
-          objectFit: "contain", background: "#1e2940", padding: 4, flexShrink: 0,
+          width: size,
+          height: size,
+          borderRadius: 12,
+          objectFit: "contain",
+          background: "#111827",
+          padding: 4,
+          flexShrink: 0,
         }}
       />
     );
   }
+
   return (
-    <div style={{
-      width: size, height: size, borderRadius: 10, flexShrink: 0,
-      background: "linear-gradient(135deg, #14B8A6, #3B82F6)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: size * 0.35, fontWeight: 700, color: "#fff",
-    }}>
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 12,
+        flexShrink: 0,
+        background: "linear-gradient(135deg, #14B8A6, #0F766E)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: size * 0.34,
+        fontWeight: 700,
+        color: "#FFFFFF",
+      }}
+    >
       {initials}
     </div>
   );
 }
 
 function TypeBadge({ type }: { type: FeedItemType }) {
-  const c = TYPE_COLORS[type];
+  const meta = TYPE_META[type];
   return (
-    <span style={{
-      fontSize: 10, fontWeight: 700, letterSpacing: "0.05em",
-      textTransform: "uppercase", padding: "2px 8px", borderRadius: 6,
-      background: c.bg, color: c.text, border: `1px solid ${c.border}`,
-    }}>
-      {TYPE_ICONS[type]} {type}
+    <span className="inline-flex items-center gap-1 rounded-full border border-[#14B8A6]/25 bg-[#0D9488]/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#99F6E4]">
+      <span>{meta.icon}</span>
+      <span>{meta.label}</span>
     </span>
   );
 }
 
-function FeedCard({ item }: { item: FeedItem }) {
-  const isExternal = item.href.startsWith("http");
-  const CardWrapper = ({ children }: { children: React.ReactNode }) =>
-    isExternal ? (
-      <a href={item.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+function FeaturedMarker() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/6 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/72">
+      <span className="h-1.5 w-1.5 rounded-full bg-[#14B8A6]" />
+      Featured
+    </span>
+  );
+}
+
+function CardLink({ href, children }: { href: string; children: ReactNode }) {
+  if (href.startsWith("http")) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="block no-underline">
         {children}
       </a>
-    ) : (
-      <Link href={item.href} style={{ textDecoration: "none" }}>
-        {children}
-      </Link>
     );
+  }
 
   return (
-    <CardWrapper>
-      <div style={{
-        background: "var(--card, #111827)",
-        border: "1px solid var(--border, rgba(255,255,255,.08))",
-        borderRadius: 16,
-        padding: "16px 18px",
-        cursor: "pointer",
-        transition: "border-color .15s, transform .15s",
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-      }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLDivElement).style.borderColor = TYPE_COLORS[item.type].border;
-          (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border, rgba(255,255,255,.08))";
-          (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-        }}
-      >
-        {/* Top row: logo + org + type badge */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <OrgAvatar logo={item.orgLogo} name={item.orgName} size={38} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "var(--text-sec, #9CA3AF)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {item.orgName}
+    <Link href={href} className="block no-underline">
+      {children}
+    </Link>
+  );
+}
+
+function getCtaLabel(type: FeedItemType): string {
+  if (type === "job") return "View & Apply";
+  if (type === "program") return "Learn More";
+  if (type === "event") return "View Details";
+  return "Apply Now";
+}
+
+function FeedCard({ item }: { item: FeedItem }) {
+  return (
+    <CardLink href={item.href}>
+      <article className="rounded-[24px] border border-white/8 bg-[#111111] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#14B8A6]/25 md:p-5">
+        <div className="flex items-start gap-3">
+          <OrgAvatar logo={item.orgLogo} name={item.orgName || "IOPPS"} size={42} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <TypeBadge type={item.type} />
+              {item.featured && <FeaturedMarker />}
+            </div>
+            <p className="mt-3 truncate text-sm font-semibold text-white/72">
+              {item.orgName || "IOPPS"}
             </p>
+            <h3 className="mt-1 text-lg font-semibold leading-snug text-white">
+              {item.title}
+            </h3>
           </div>
-          <TypeBadge type={item.type} />
         </div>
 
-        {/* Title */}
-        <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text, #F9FAFB)", lineHeight: 1.35 }}>
-          {item.title}
-        </p>
-
-        {/* Subtitle + detail row */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px" }}>
-          {item.subtitle && (
-            <span style={{ fontSize: 12, color: "var(--text-sec, #9CA3AF)" }}>
-              📍 {item.subtitle}
-            </span>
-          )}
-          {item.detail && (
-            <span style={{ fontSize: 12, color: "var(--text-sec, #9CA3AF)" }}>
-              {item.type === "scholarship" ? "💰" : item.type === "program" ? "⏱" : item.type === "job" ? "💵" : "📆"} {item.detail}
-            </span>
-          )}
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-white/62">
+          {item.subtitle && <span>{item.subtitle}</span>}
+          {item.detail && <span>{item.detail}</span>}
         </div>
 
-        {/* Badge + CTA */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 2 }}>
-          {item.badge ? (
-            <span style={{
-              fontSize: 11, fontWeight: 600,
-              padding: "3px 10px", borderRadius: 20,
-              background: "rgba(255,255,255,.06)", color: "var(--text-sec, #9CA3AF)",
-            }}>
-              {item.badge}
-            </span>
-          ) : <span />}
-          <span style={{ fontSize: 12, fontWeight: 700, color: TYPE_COLORS[item.type].text }}>
-            {item.type === "job" ? "View & Apply →" :
-             item.type === "program" ? "Learn More →" :
-             item.type === "event" ? "View Details →" :
-             "Apply Now →"}
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            {item.badge && (
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/74">
+                {item.badge}
+              </span>
+            )}
+          </div>
+          <span className="text-sm font-semibold text-[#99F6E4]">
+            {getCtaLabel(item.type)} &#8594;
           </span>
         </div>
-      </div>
-    </CardWrapper>
+      </article>
+    </CardLink>
+  );
+}
+
+function FeaturedOpportunityCard({ item }: { item: FeedItem }) {
+  return (
+    <CardLink href={item.href}>
+      <article
+        className="h-full rounded-[24px] p-5 transition-transform duration-200 hover:-translate-y-0.5"
+        style={{
+          border: "1px solid rgba(20,184,166,.22)",
+          background: "linear-gradient(145deg, rgba(13,148,136,.14) 0%, rgba(17,17,17,1) 46%, rgba(10,10,10,1) 100%)",
+        }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <TypeBadge type={item.type} />
+          <span className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/76">
+            Featured Opportunity
+          </span>
+        </div>
+
+        <div className="mt-4 flex items-center gap-3">
+          <OrgAvatar logo={item.orgLogo} name={item.orgName || "IOPPS"} size={48} />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white/76">
+              {item.orgName || "IOPPS"}
+            </p>
+            {item.badge && (
+              <p className="truncate text-sm text-[#CCFBF1]">
+                {item.badge}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <h3 className="mt-4 text-xl font-semibold leading-snug text-white">
+          {item.title}
+        </h3>
+
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-white/68">
+          {item.subtitle && <span>{item.subtitle}</span>}
+          {item.detail && <span>{item.detail}</span>}
+        </div>
+
+        <div className="mt-5 flex items-center justify-end">
+          <span className="text-sm font-semibold text-[#99F6E4]">
+            {getCtaLabel(item.type)} &#8594;
+          </span>
+        </div>
+      </article>
+    </CardLink>
   );
 }
 
 function SkeletonCard() {
   return (
-    <div style={{
-      background: "var(--card, #111827)",
-      border: "1px solid var(--border, rgba(255,255,255,.08))",
-      borderRadius: 16, padding: "16px 18px",
-    }}>
-      <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-        <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,255,255,.06)" }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ height: 10, width: "40%", background: "rgba(255,255,255,.06)", borderRadius: 4, marginBottom: 6 }} />
-          <div style={{ height: 8, width: "20%", background: "rgba(255,255,255,.04)", borderRadius: 4 }} />
+    <div className="rounded-[24px] border border-white/8 bg-[#111111] p-5">
+      <div className="mb-4 flex gap-3">
+        <div className="h-11 w-11 rounded-xl bg-white/6" />
+        <div className="flex-1">
+          <div className="mb-2 h-3 w-28 rounded bg-white/8" />
+          <div className="h-5 w-3/4 rounded bg-white/10" />
         </div>
       </div>
-      <div style={{ height: 14, width: "80%", background: "rgba(255,255,255,.06)", borderRadius: 4, marginBottom: 8 }} />
-      <div style={{ height: 10, width: "60%", background: "rgba(255,255,255,.04)", borderRadius: 4 }} />
+      <div className="mb-3 h-4 w-5/6 rounded bg-white/8" />
+      <div className="h-3 w-2/3 rounded bg-white/6" />
     </div>
   );
 }
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function FeedPage() {
   const [allItems, setAllItems] = useState<FeedItem[]>([]);
@@ -302,14 +341,16 @@ export default function FeedPage() {
           fetchEvents(),
           fetchScholarships(),
         ]);
-        // Merge and sort: featured first, then by createdAt desc
-        const merged = [...jobs, ...programs, ...events, ...scholarships].sort((a, b) => {
-          if (a.featured && !b.featured) return -1;
-          if (!a.featured && b.featured) return 1;
-          const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return db - da;
-        });
+
+        const merged = sortByRecencyWithFeaturedBoost(
+          [...jobs, ...programs, ...events, ...scholarships],
+          {
+            recencyKeys: ["createdAt"],
+            featuredKeys: ["featuredAt", "updatedAt", "createdAt"],
+            boostMs: 18 * 60 * 60 * 1000,
+          },
+        );
+
         setAllItems(merged);
       } catch (err) {
         console.error("Feed load error:", err);
@@ -317,81 +358,78 @@ export default function FeedPage() {
         setLoading(false);
       }
     }
+
     load();
   }, []);
 
-  const filtered = useMemo(() =>
-    activeTab === "all" ? allItems : allItems.filter((i) => i.type === activeTab),
-  [allItems, activeTab]);
+  const filtered = useMemo(() => (
+    activeTab === "all" ? allItems : allItems.filter((item) => item.type === activeTab)
+  ), [activeTab, allItems]);
+
+  const featuredItems = useMemo(() => (
+    selectFeaturedOpportunityItems(allItems, {
+      maxItems: 4,
+      getOrgKey: (item) => item.orgSlug || item.orgName || item.id,
+      getTypeKey: (item) => item.type,
+      recencyKeys: ["createdAt"],
+      featuredKeys: ["featuredAt", "updatedAt", "createdAt"],
+    })
+  ), [allItems]);
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: allItems.length };
+    const countMap: Record<string, number> = { all: allItems.length };
     for (const tab of TABS.slice(1)) {
-      c[tab.key] = allItems.filter((i) => i.type === tab.key).length;
+      countMap[tab.key] = allItems.filter((item) => item.type === tab.key).length;
     }
-    return c;
+    return countMap;
   }, [allItems]);
 
   return (
     <AppShell>
-      <div style={{ minHeight: "100vh", background: "var(--bg, #0B1120)" }}>
-
-        {/* Hero */}
-        <section style={{
-          background: "linear-gradient(160deg, #0D2137 0%, #0B1120 100%)",
-          borderBottom: "1px solid rgba(255,255,255,.06)",
-          padding: "28px 20px 20px",
-        }}>
-          <div style={{ maxWidth: 700, margin: "0 auto" }}>
-            <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#F9FAFB" }}>
+      <div className="min-h-screen bg-[#0A0A0A] text-white">
+        <section
+          className="border-b border-white/8 px-5 py-8"
+          style={{ background: "linear-gradient(135deg, #0D9488 0%, #0A0A0A 100%)" }}
+        >
+          <div className="mx-auto max-w-[860px]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#CCFBF1]">
+              Empowering Indigenous Success
+            </p>
+            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white md:text-4xl">
               Opportunities Feed
             </h1>
-            <p style={{ margin: 0, fontSize: 13, color: "#6B7280" }}>
-              Jobs, programs, events, and scholarships — all in one place
+            <p className="mt-2 max-w-[620px] text-base text-white/78">
+              Jobs, programs, events, and scholarships in one stream, with featured opportunities surfaced without taking over the feed.
             </p>
           </div>
         </section>
 
-        {/* Tabs */}
-        <div style={{
-          position: "sticky", top: 0, zIndex: 10,
-          background: "var(--bg, #0B1120)",
-          borderBottom: "1px solid rgba(255,255,255,.06)",
-          padding: "0 20px",
-        }}>
-          <div style={{
-            maxWidth: 700, margin: "0 auto",
-            display: "flex", gap: 4, overflowX: "auto",
-            padding: "10px 0",
-            scrollbarWidth: "none",
-          }}>
+        <div className="sticky top-0 z-10 border-b border-white/8 bg-[#0A0A0A]/95 px-5 backdrop-blur">
+          <div className="mx-auto flex max-w-[860px] gap-2 overflow-x-auto py-3 [scrollbar-width:none]">
             {TABS.map((tab) => {
               const active = activeTab === tab.key;
               return (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
+                  className="flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors"
                   style={{
-                    flexShrink: 0,
-                    padding: "7px 14px", borderRadius: 20,
                     border: active ? "1px solid #14B8A6" : "1px solid rgba(255,255,255,.08)",
-                    background: active ? "rgba(20,184,166,.15)" : "transparent",
-                    color: active ? "#14B8A6" : "#9CA3AF",
-                    fontSize: 13, fontWeight: active ? 700 : 500,
-                    cursor: "pointer",
-                    transition: "all .15s",
-                    display: "flex", alignItems: "center", gap: 5,
+                    background: active ? "rgba(13,148,136,.16)" : "transparent",
+                    color: active ? "#99F6E4" : "rgba(255,255,255,.72)",
+                    fontWeight: active ? 700 : 500,
                   }}
                 >
                   <span>{tab.emoji}</span>
                   <span>{tab.label}</span>
                   {!loading && counts[tab.key] > 0 && (
-                    <span style={{
-                      fontSize: 10, fontWeight: 700,
-                      padding: "1px 6px", borderRadius: 10,
-                      background: active ? "rgba(20,184,166,.25)" : "rgba(255,255,255,.08)",
-                      color: active ? "#14B8A6" : "#6B7280",
-                    }}>
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                      style={{
+                        background: active ? "rgba(20,184,166,.18)" : "rgba(255,255,255,.08)",
+                        color: active ? "#CCFBF1" : "rgba(255,255,255,.62)",
+                      }}
+                    >
                       {counts[tab.key]}
                     </span>
                   )}
@@ -401,25 +439,68 @@ export default function FeedPage() {
           </div>
         </div>
 
-        {/* Feed */}
-        <div style={{ maxWidth: 700, margin: "0 auto", padding: "16px 16px 48px" }}>
+        <div className="mx-auto max-w-[860px] px-4 py-5 md:px-5 md:py-6">
+          {!loading && activeTab === "all" && featuredItems.length > 0 && (
+            <section className="mb-6 rounded-[28px] border border-white/8 bg-[#111111] p-5 md:p-6">
+              <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#99F6E4]">
+                    Featured Opportunities
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-white">
+                    A curated mix from across the platform
+                  </h2>
+                  <p className="mt-1 max-w-[560px] text-sm text-white/66">
+                    Up to four featured picks, with organization and opportunity-type variety first.
+                  </p>
+                </div>
+                <p className="text-sm text-white/56">
+                  The main feed below still follows freshness first.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {featuredItems.map((item) => (
+                  <FeaturedOpportunityCard key={`${item.type}-${item.id}`} item={item} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold text-white">
+                {activeTab === "all" ? "Latest across IOPPS" : `Latest ${TYPE_META[activeTab].label.toLowerCase()}`}
+              </h2>
+              <p className="text-sm text-white/60">
+                {activeTab === "all"
+                  ? "Featured items get a light boost, but fresh opportunities still lead the stream."
+                  : `Fresh ${TYPE_META[activeTab].label.toLowerCase()} from public listings.`}
+              </p>
+            </div>
+          </div>
+
           {loading ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+            <div className="flex flex-col gap-3">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <SkeletonCard key={index} />
+              ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <p style={{ fontSize: 40, margin: "0 0 12px" }}>🌐</p>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#F9FAFB", margin: "0 0 8px" }}>
-                No {activeTab === "all" ? "opportunities" : activeTab + "s"} yet
+            <div className="rounded-[24px] border border-white/8 bg-[#111111] px-6 py-16 text-center">
+              <p className="mb-3 text-4xl">🌐</p>
+              <h3 className="text-lg font-semibold text-white">
+                No {activeTab === "all" ? "opportunities" : TYPE_META[activeTab].label.toLowerCase()} yet
               </h3>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>
-                Check back soon — new opportunities are added regularly.
+              <p className="mt-2 text-sm text-white/60">
+                Check back soon. New public opportunities are added regularly.
               </p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {filtered.map((item) => <FeedCard key={`${item.type}-${item.id}`} item={item} />)}
+            <div className="flex flex-col gap-3">
+              {filtered.map((item) => (
+                <FeedCard key={`${item.type}-${item.id}`} item={item} />
+              ))}
             </div>
           )}
         </div>

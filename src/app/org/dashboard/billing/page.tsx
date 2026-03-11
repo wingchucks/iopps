@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
+import type { FeaturedJobSummary } from "@/components/FeaturedJobControl";
 import { useAuth } from "@/lib/auth-context";
 
 interface EmployerData {
@@ -17,6 +18,7 @@ interface EmployerData {
   subscriptionEnd?: string;
   name?: string;
   openJobs?: number;
+  featuredSummary?: FeaturedJobSummary;
 }
 
 const PLAN_FEATURES: Record<string, { label: string; features: string[]; color: string; jobLimit: string }> = {
@@ -65,13 +67,20 @@ function BillingContent() {
 
   useEffect(() => {
     if (!user) return;
-    fetch("/api/employer/dashboard")
-      .then((r) => r.json())
-      .then((data) => {
-        setEmployer(data.employer || null);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    (async () => {
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch("/api/employer/dashboard", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        setEmployer((data.employer as EmployerData | null) || null);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [user]);
 
   const currentPlan = employer?.subscriptionTier || employer?.plan || "free";
@@ -111,6 +120,21 @@ function BillingContent() {
                 {!isActive && <Badge text="Inactive" color="var(--text-muted)" bg="var(--border)" />}
               </div>
               <p className="text-sm text-text-muted">{planInfo.jobLimit}</p>
+              {employer?.featuredSummary && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+                  {[
+                    { label: "Featured Used", value: `${employer.featuredSummary.featuredSlotsUsed}` },
+                    { label: "Plan Slots", value: `${employer.featuredSummary.featuredSlotsTotal}` },
+                    { label: "Slots Left", value: `${employer.featuredSummary.featuredSlotsRemaining}` },
+                    { label: "Credits", value: `${employer.featuredSummary.featuredPostCredits}` },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,.03)", border: "1px solid var(--border)" }}>
+                      <p className="text-[10px] font-bold tracking-widest text-text-muted mb-1 uppercase">{item.label}</p>
+                      <p className="text-sm font-extrabold text-text">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             {currentPlan !== "premium" && (
               <Link href="/org/plans">

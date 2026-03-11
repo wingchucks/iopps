@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { buildFeaturedJobSummary } from "@/lib/server/featured-job-entitlements";
 
 export async function GET(req: NextRequest) {
   try {
@@ -89,6 +90,7 @@ export async function GET(req: NextRequest) {
         authorName: userData.displayName || "",
         createdAt: d.createdAt || new Date().toISOString(),
         updatedAt: d.updatedAt || new Date().toISOString(),
+        featured: Boolean(d.featured),
         applicationCount: 0, // TODO: count from applications collection
       };
     });
@@ -114,16 +116,34 @@ export async function GET(req: NextRequest) {
       .limit(50)
       .get();
 
-    const posts = postsSnap.docs.map((doc) => ({
+    const posts: Array<Record<string, unknown> & { id: string; applicationCount: number }> = postsSnap.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
       applicationCount: 0,
     }));
 
+    const activeFeaturedCount =
+      jobs.filter((job) => job.status === "active" && job.featured).length +
+      posts.filter((post) => post.type === "job" && post.status === "active" && post.featured).length;
+
+    const orgPlan =
+      orgData && typeof (orgData as Record<string, unknown>).plan === "string"
+        ? ((orgData as Record<string, unknown>).plan as string)
+        : undefined;
+
+    const featuredSummary = buildFeaturedJobSummary({
+      plan: (empData?.plan as string | undefined) || orgPlan,
+      subscriptionTier: empData?.subscriptionTier as string | undefined,
+      featuredJobsUsed: activeFeaturedCount,
+      featuredPostCredits: empData?.featuredPostCredits as number | undefined,
+    });
+
     return NextResponse.json({
       org: orgData,
+      employer: empData ? { id: employerId, ...empData, featuredSummary } : { id: employerId, featuredSummary },
       jobs,
       posts,
+      featuredSummary,
       profile: {
         uid,
         email: userData.email,

@@ -1,21 +1,24 @@
 "use client";
-// Design: Jobs pages use blue gradient hero (--color-blue) — intentional per-content-type color scheme
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import Avatar from "@/components/Avatar";
 import type { Job } from "@/lib/firestore/jobs";
+import { mixJobsForBrowse, selectFeaturedStripItems } from "@/lib/public-featured";
 
 const employmentTypes = ["All", "Full-time", "Part-time", "Contract", "Temporary", "Internship"];
+const JOB_RECENCY_KEYS = ["createdAt", "postedAt", "order"];
 
 function daysAgo(job: Job): string {
   let ts = 0;
   const createdAt = job.createdAt || job.postedAt;
   if (createdAt && typeof createdAt === "object" && createdAt !== null && "seconds" in (createdAt as Record<string, unknown>)) {
     ts = ((createdAt as Record<string, unknown>).seconds as number) * 1000;
+  } else if (typeof createdAt === "string") {
+    ts = Date.parse(createdAt);
   } else if (job.order) {
     ts = job.order;
   }
@@ -36,6 +39,29 @@ function getSalaryDisplay(job: Job): string {
   if (sr.min) return `From ${fmt(sr.min)}`;
   if (sr.max) return `Up to ${fmt(sr.max)}`;
   return "";
+}
+
+function getEmployerKey(job: Job): string | undefined {
+  return job.employerId || job.orgId || job.employerName || job.orgName || job.orgShort || undefined;
+}
+
+function getJobHref(job: Job): string {
+  return `/jobs/${job.slug || job.id.replace(/^job-/, "")}`;
+}
+
+function getClosingSoonLabel(job: Job): string | null {
+  const rawDeadline = job.closingDate ?? ((job as unknown as Record<string, unknown>).deadline as string | undefined);
+  if (!rawDeadline) return null;
+
+  const deadlineDate = new Date(rawDeadline);
+  if (Number.isNaN(deadlineDate.getTime())) return null;
+
+  const daysLeft = Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  if (daysLeft > 0 && daysLeft <= 7) {
+    return daysLeft === 1 ? "Closes tomorrow" : "Closing Soon";
+  }
+
+  return null;
 }
 
 export default function JobsPage() {
@@ -64,317 +90,434 @@ export default function JobsPage() {
     load();
   }, []);
 
-  const filtered = useMemo(() => {
-    let result = jobs;
+  const hasActiveFilters = useMemo(() => (
+    Boolean(search.trim())
+    || Boolean(locationFilter.trim())
+    || typeFilter !== "All"
+    || Boolean(salaryMin.trim())
+    || Boolean(salaryMax.trim())
+    || remoteOnly
+  ), [locationFilter, remoteOnly, salaryMax, salaryMin, search, typeFilter]);
 
-    // Text search
+  const filtered = useMemo(() => {
+    let result = [...jobs];
+
     const q = search.toLowerCase().trim();
     if (q) {
-      result = result.filter((j) => {
-        const text = [j.title, j.employerName || j.orgName, j.orgShort, j.location, j.employmentType || j.jobType, j.salary]
+      result = result.filter((job) => {
+        const text = [
+          job.title,
+          job.employerName || job.orgName,
+          job.orgShort,
+          job.location,
+          job.employmentType || job.jobType,
+          job.salary,
+        ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
+
         return text.includes(q);
       });
     }
 
-    // Location
     if (locationFilter.trim()) {
-      const loc = locationFilter.toLowerCase().trim();
-      result = result.filter((j) => j.location?.toLowerCase().includes(loc));
+      const location = locationFilter.toLowerCase().trim();
+      result = result.filter((job) => job.location?.toLowerCase().includes(location));
     }
 
-    // Employment type
     if (typeFilter !== "All") {
-      result = result.filter((j) => (j.employmentType || j.jobType)?.toLowerCase() === typeFilter.toLowerCase());
+      result = result.filter((job) => (job.employmentType || job.jobType)?.toLowerCase() === typeFilter.toLowerCase());
     }
 
-    // Remote
     if (remoteOnly) {
-      result = result.filter(
-        (j) =>
-          j.location?.toLowerCase().includes("remote") ||
-          j.jobType?.toLowerCase().includes("remote")
-      );
+      result = result.filter((job) => (
+        job.location?.toLowerCase().includes("remote")
+        || job.jobType?.toLowerCase().includes("remote")
+        || job.workLocation?.toLowerCase().includes("remote")
+        || job.remoteFlag
+      ));
     }
 
-    // Salary filter (simple numeric parse)
     const min = parseFloat(salaryMin);
     const max = parseFloat(salaryMax);
-    if (!isNaN(min) || !isNaN(max)) {
-      result = result.filter((j) => {
-        const salStr = getSalaryDisplay(j);
-        if (!salStr) return false;
-        const nums = salStr.match(/[\d,.]+[kK]?/g);
-        if (!nums) return false;
-        const parsed = nums
-          .map((n) => {
-            const cleaned = n.replace(/[^0-9.kK]/g, "");
-            const kMatch = cleaned.match(/^([\d.]+)[kK]$/);
-            if (kMatch) return parseFloat(kMatch[1]) * 1000;
-            const val = parseFloat(cleaned);
-            return val > 0 && val < 1000 ? val * 1000 : val;
+    if (!Number.isNaN(min) || !Number.isNaN(max)) {
+      result = result.filter((job) => {
+        const salaryDisplay = getSalaryDisplay(job);
+        if (!salaryDisplay) return false;
+
+        const values = salaryDisplay.match(/[\d,.]+[kK]?/g);
+        if (!values) return false;
+
+        const parsed = values
+          .map((value) => {
+            const cleaned = value.replace(/[^0-9.kK]/g, "");
+            const thousands = cleaned.match(/^([\d.]+)[kK]$/);
+            if (thousands) return parseFloat(thousands[1]) * 1000;
+            const numeric = parseFloat(cleaned);
+            return numeric > 0 && numeric < 1000 ? numeric * 1000 : numeric;
           })
-          .filter((n): n is number => !isNaN(n));
+          .filter((value): value is number => !Number.isNaN(value));
+
         if (parsed.length === 0) return false;
+
         const highest = Math.max(...parsed);
         const lowest = Math.min(...parsed);
-        if (!isNaN(min) && highest < min) return false;
-        if (!isNaN(max) && lowest > max) return false;
+        if (!Number.isNaN(min) && highest < min) return false;
+        if (!Number.isNaN(max) && lowest > max) return false;
         return true;
       });
     }
 
-    // Sort: featured jobs first, then by recency
-    result.sort((a, b) => {
-      if (a.featured && !b.featured) return -1;
-      if (!a.featured && b.featured) return 1;
-      return 0;
-    });
-
     return result;
-  }, [jobs, search, locationFilter, typeFilter, salaryMin, salaryMax, remoteOnly]);
+  }, [jobs, locationFilter, remoteOnly, salaryMax, salaryMin, search, typeFilter]);
+
+  const featuredJobs = useMemo(() => {
+    if (hasActiveFilters) return [];
+
+    return selectFeaturedStripItems(jobs, {
+      maxItems: 4,
+      getOrgKey: getEmployerKey,
+      recencyKeys: JOB_RECENCY_KEYS,
+      featuredKeys: ["featuredAt", "updatedAt", "createdAt", "postedAt", "order"],
+    });
+  }, [hasActiveFilters, jobs]);
+
+  const mixedJobs = useMemo(() => (
+    mixJobsForBrowse(filtered, {
+      recencyKeys: JOB_RECENCY_KEYS,
+      leadingRegularCount: 2,
+      firstWindowSize: 12,
+      maxFeaturedInFirstWindow: 2,
+    })
+  ), [filtered]);
 
   return (
     <AppShell>
-    <div className="min-h-screen bg-bg">
-      {/* Hero */}
-      <section
-        className="text-center"
-        style={{
-          background: "linear-gradient(160deg, var(--blue) 0%, var(--navy) 60%, var(--navy-light) 100%)",
-          padding: "clamp(32px, 5vw, 60px) clamp(20px, 6vw, 80px)",
-        }}
-      >
-        <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-2">Jobs</h1>
-        <p className="text-base text-white/70 mb-0 max-w-[520px] mx-auto">
-          Find your next opportunity with Indigenous and allied organizations
-        </p>
-      </section>
-
-      {/* Search + Filters */}
-      <div className="max-w-[1000px] mx-auto px-4 md:px-10 py-6">
-        {/* Search bar */}
-        <div
-          className="flex items-center gap-3 rounded-2xl mb-4"
+      <div className="min-h-screen bg-[#FAFAFA]">
+        <section
+          className="text-center text-white"
           style={{
-            padding: "14px 20px",
-            background: "var(--card)",
-            border: "2px solid var(--border)",
+            background: "linear-gradient(135deg, #0D9488 0%, #0A0A0A 100%)",
+            padding: "clamp(32px, 5vw, 60px) clamp(20px, 6vw, 80px)",
           }}
         >
-          <span className="text-xl text-text-muted">&#128269;</span>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search job titles, organizations, locations..."
-            className="flex-1 border-none outline-none bg-transparent text-text text-base"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="text-text-muted text-lg border-none bg-transparent cursor-pointer"
-            >
-              &#10005;
-            </button>
-          )}
-        </div>
-
-        {/* Filter row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          {/* Location */}
-          <input
-            type="text"
-            value={locationFilter}
-            onChange={(e) => setLocationFilter(e.target.value)}
-            placeholder="City or province..."
-            className="outline-none rounded-xl text-sm"
-            style={{
-              padding: "10px 14px",
-              border: "1.5px solid var(--border)",
-              background: "var(--card)",
-              color: "var(--text)",
-            }}
-          />
-
-          {/* Employment type */}
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="rounded-xl text-sm cursor-pointer"
-            style={{
-              padding: "10px 14px",
-              border: "1.5px solid var(--border)",
-              background: "var(--card)",
-              color: "var(--text)",
-            }}
-          >
-            {employmentTypes.map((t) => (
-              <option key={t} value={t}>
-                {t === "All" ? "All types" : t}
-              </option>
-            ))}
-          </select>
-
-          {/* Salary range */}
-          <div className="flex gap-2">
-            <input
-              type="number"
-              value={salaryMin}
-              onChange={(e) => setSalaryMin(e.target.value)}
-              placeholder="Min $"
-              className="outline-none rounded-xl text-sm w-full"
-              style={{
-                padding: "10px 14px",
-                border: "1.5px solid var(--border)",
-                background: "var(--card)",
-                color: "var(--text)",
-              }}
-            />
-            <input
-              type="number"
-              value={salaryMax}
-              onChange={(e) => setSalaryMax(e.target.value)}
-              placeholder="Max $"
-              className="outline-none rounded-xl text-sm w-full"
-              style={{
-                padding: "10px 14px",
-                border: "1.5px solid var(--border)",
-                background: "var(--card)",
-                color: "var(--text)",
-              }}
-            />
-          </div>
-
-          {/* Remote toggle */}
-          <button
-            onClick={() => setRemoteOnly(!remoteOnly)}
-            className="flex items-center justify-center gap-2 rounded-xl text-sm font-semibold cursor-pointer transition-colors"
-            style={{
-              padding: "10px 14px",
-              border: remoteOnly ? "1.5px solid var(--blue)" : "1.5px solid var(--border)",
-              background: remoteOnly ? "var(--blue-soft)" : "var(--card)",
-              color: remoteOnly ? "var(--blue)" : "var(--text-sec)",
-            }}
-          >
-            <span
-              className="inline-block rounded-full"
-              style={{
-                width: 8,
-                height: 8,
-                background: remoteOnly ? "var(--blue)" : "var(--border)",
-              }}
-            />
-            Remote
-          </button>
-        </div>
-
-        {/* Results count */}
-        {!loading && (
-          <p className="text-sm text-text-muted mb-4">
-            {filtered.length} job{filtered.length !== 1 ? "s" : ""} found
+          <h1 className="mb-2 text-3xl font-extrabold md:text-4xl">Jobs</h1>
+          <p className="mx-auto mb-0 max-w-[560px] text-base text-white/78">
+            Discover Indigenous and allied employers hiring across Canada.
           </p>
-        )}
+        </section>
 
-        {/* Jobs grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="skeleton h-[180px] rounded-2xl" />
-            ))}
+        <div className="mx-auto max-w-[1100px] px-4 py-6 md:px-8">
+          <div
+            className="mb-4 flex items-center gap-3 rounded-[20px] bg-white px-5 py-4 shadow-sm"
+            style={{ border: "1px solid rgba(13,148,136,.16)" }}
+          >
+            <span className="text-xl text-[#0D9488]">&#128269;</span>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search job titles, employers, locations..."
+              className="flex-1 border-none bg-transparent text-base text-[#171717] outline-none placeholder:text-[#737373]"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="cursor-pointer border-none bg-transparent text-lg text-[#737373]"
+              >
+                &#10005;
+              </button>
+            )}
           </div>
-        ) : filtered.length === 0 ? (
-          <Card style={{ padding: 48, textAlign: "center" }}>
-            <p className="text-4xl mb-3">&#128188;</p>
-            <h3 className="text-lg font-bold text-text mb-2">No jobs found</h3>
-            <p className="text-sm text-text-muted max-w-[400px] mx-auto">
-              Check back soon or browse all opportunities in the{" "}
-              <Link href="/feed" className="font-semibold no-underline" style={{ color: "var(--blue)" }}>
-                feed
-              </Link>
-              .
-            </p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map((job) => {
-              const slug = job.id.replace(/^job-/, "");
-              const posted = daysAgo(job);
-              return (
-                <Link key={job.id} href={`/jobs/${slug}`} className="no-underline">
-                  <Card
-                    className="cursor-pointer hover:shadow-lg transition-shadow h-full"
-                    style={job.featured ? { borderLeft: '4px solid var(--gold)' } : undefined}
-                  >
-                    <div style={{ padding: "18px 20px" }}>
-                      <div className="flex items-start gap-3 mb-3">
-                        <Avatar
-                          name={job.employerName || job.orgShort || job.orgName || ""}
-                          size={40}
-                          gradient="linear-gradient(135deg, var(--navy), var(--blue))"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-base font-bold text-text m-0 mb-0.5 line-clamp-2">
-                            {job.title}
-                          </h3>
-                          <p className="text-sm text-teal font-semibold m-0">
-                            {job.employerName || job.orgName || job.orgShort}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {job.location && (
-                          <span className="text-xs text-text-sec">&#128205; {job.location}</span>
-                        )}
-                        {(job.employmentType || job.jobType) && (
-                          <Badge text={job.employmentType || job.jobType || ""} color="var(--blue)" bg="var(--blue-soft)" small />
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-wrap gap-2 items-center">
-                          {getSalaryDisplay(job) && (
-                            <span className="text-xs font-semibold text-text-sec">
-                              &#128176; {getSalaryDisplay(job)}
+
+          <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <input
+              type="text"
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              placeholder="City or province..."
+              className="rounded-xl bg-white px-4 py-3 text-sm text-[#171717] outline-none placeholder:text-[#737373]"
+              style={{ border: "1px solid #E5E5E5" }}
+            />
+
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="cursor-pointer rounded-xl bg-white px-4 py-3 text-sm text-[#171717]"
+              style={{ border: "1px solid #E5E5E5" }}
+            >
+              {employmentTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type === "All" ? "All types" : type}
+                </option>
+              ))}
+            </select>
+
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={salaryMin}
+                onChange={(e) => setSalaryMin(e.target.value)}
+                placeholder="Min $"
+                className="w-full rounded-xl bg-white px-4 py-3 text-sm text-[#171717] outline-none placeholder:text-[#737373]"
+                style={{ border: "1px solid #E5E5E5" }}
+              />
+              <input
+                type="number"
+                value={salaryMax}
+                onChange={(e) => setSalaryMax(e.target.value)}
+                placeholder="Max $"
+                className="w-full rounded-xl bg-white px-4 py-3 text-sm text-[#171717] outline-none placeholder:text-[#737373]"
+                style={{ border: "1px solid #E5E5E5" }}
+              />
+            </div>
+
+            <button
+              onClick={() => setRemoteOnly(!remoteOnly)}
+              className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold transition-colors"
+              style={{
+                border: remoteOnly ? "1px solid #0D9488" : "1px solid #E5E5E5",
+                background: remoteOnly ? "rgba(13,148,136,.08)" : "#FFFFFF",
+                color: remoteOnly ? "#0F766E" : "#404040",
+              }}
+            >
+              <span
+                className="inline-block rounded-full"
+                style={{
+                  width: 8,
+                  height: 8,
+                  background: remoteOnly ? "#0D9488" : "#D4D4D4",
+                }}
+              />
+              Remote only
+            </button>
+          </div>
+
+          {!loading && !hasActiveFilters && featuredJobs.length > 0 && (
+            <section className="mb-8 rounded-[28px] bg-[#0A0A0A] p-5 text-white shadow-sm md:p-6">
+              <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#99F6E4]">
+                    Featured Jobs
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-white">
+                    Promoted openings from hiring partners
+                  </h2>
+                  <p className="mt-1 max-w-[560px] text-sm text-white/70">
+                    Fresh featured placements, capped at one role per employer.
+                  </p>
+                </div>
+                <p className="text-sm text-white/60">
+                  The full results stay mixed below.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {featuredJobs.map((job) => {
+                  const employerName = job.employerName || job.orgName || job.orgShort || "Hiring organization";
+                  const salary = getSalaryDisplay(job);
+                  const posted = daysAgo(job);
+                  const closingSoon = getClosingSoonLabel(job);
+
+                  return (
+                    <Link key={job.id} href={getJobHref(job)} className="no-underline">
+                      <article
+                        className="h-full rounded-[24px] p-5 transition-transform duration-200 hover:-translate-y-0.5"
+                        style={{
+                          border: "1px solid rgba(45,212,191,.18)",
+                          background: "linear-gradient(145deg, rgba(20,184,166,.14) 0%, rgba(23,23,23,1) 45%, rgba(10,10,10,1) 100%)",
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Avatar
+                              name={employerName}
+                              src={job.companyLogoUrl}
+                              size={52}
+                              gradient="linear-gradient(135deg, #14B8A6, #0F766E)"
+                            />
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#99F6E4]">
+                                Featured Placement
+                              </p>
+                              <p className="truncate text-sm font-semibold text-white/78">
+                                {employerName}
+                              </p>
+                            </div>
+                          </div>
+                          {posted && (
+                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-white/70">
+                              {posted}
                             </span>
                           )}
-                          {posted && (
-                            <span className="text-xs text-text-muted">{posted}</span>
+                        </div>
+
+                        <h3 className="mt-4 text-xl font-semibold leading-snug text-white">
+                          {job.title}
+                        </h3>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {job.location && (
+                            <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-white/74">
+                              &#128205; {job.location}
+                            </span>
+                          )}
+                          {(job.employmentType || job.jobType) && (
+                            <Badge
+                              text={job.employmentType || job.jobType || ""}
+                              color="#99F6E4"
+                              bg="rgba(20,184,166,.16)"
+                              small
+                            />
+                          )}
+                          {salary && (
+                            <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs font-semibold text-white/80">
+                              &#128176; {salary}
+                            </span>
                           )}
                         </div>
-                        <span
-                          className="text-xs font-semibold whitespace-nowrap"
-                          style={{ color: "var(--blue)" }}
-                        >
-                          Apply &#8594;
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {job.featured && (
-                          <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
-                        )}
-                        {(() => {
-                          const deadline = (job as unknown as Record<string, unknown>).deadline ?? (job as unknown as Record<string, unknown>).closingDate;
-                          if (!deadline) return null;
-                          const deadlineDate = new Date(deadline as string);
-                          if (isNaN(deadlineDate.getTime())) return null;
-                          const daysLeft = Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                          if (daysLeft > 0 && daysLeft <= 7) {
-                            return <Badge text="Closing Soon" color="#C2410C" bg="rgba(251,146,60,.15)" small />;
-                          }
-                          return null;
-                        })()}
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              );
-            })}
+
+                        <div className="mt-5 flex items-center justify-between gap-3">
+                          <div className="flex flex-wrap gap-2">
+                            {closingSoon && (
+                              <span className="rounded-full bg-white/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#CCFBF1]">
+                                {closingSoon}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-sm font-semibold text-[#99F6E4]">
+                            View role &#8594;
+                          </span>
+                        </div>
+                      </article>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold text-[#171717]">
+                {hasActiveFilters ? "Matching jobs" : "Latest jobs"}
+              </h2>
+              <p className="text-sm text-[#525252]">
+                {hasActiveFilters
+                  ? "Featured placements are hidden while search or filters are active."
+                  : "Results stay mixed by recency so promoted jobs do not take over the browse list."}
+              </p>
+            </div>
+            {!loading && (
+              <p className="text-sm text-[#737373]">
+                {mixedJobs.length} job{mixedJobs.length !== 1 ? "s" : ""} found
+              </p>
+            )}
           </div>
-        )}
+
+          {loading ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {[1, 2, 3, 4, 5, 6].map((index) => (
+                <div key={index} className="skeleton h-[220px] rounded-2xl" />
+              ))}
+            </div>
+          ) : mixedJobs.length === 0 ? (
+            <Card style={{ padding: 48, textAlign: "center" }}>
+              <p className="mb-3 text-4xl">&#128188;</p>
+              <h3 className="mb-2 text-lg font-bold text-text">No jobs found</h3>
+              <p className="mx-auto max-w-[420px] text-sm text-text-muted">
+                Try adjusting your filters or browse all public opportunities in{" "}
+                <Link href="/feed" className="font-semibold no-underline" style={{ color: "#0D9488" }}>
+                  the feed
+                </Link>
+                .
+              </p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {mixedJobs.map((job) => {
+                const employerName = job.employerName || job.orgName || job.orgShort || "Hiring organization";
+                const salary = getSalaryDisplay(job);
+                const posted = daysAgo(job);
+                const closingSoon = getClosingSoonLabel(job);
+
+                return (
+                  <Link key={job.id} href={getJobHref(job)} className="no-underline">
+                    <Card
+                      className="h-full cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                      style={job.featured ? { border: "1px solid rgba(13,148,136,.22)" } : undefined}
+                    >
+                      <div className="flex h-full flex-col p-5">
+                        <div className="mb-4 flex items-start gap-3">
+                          <Avatar
+                            name={employerName}
+                            src={job.companyLogoUrl}
+                            size={42}
+                            gradient="linear-gradient(135deg, #14B8A6, #0F766E)"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                              <h3 className="flex-1 text-base font-bold leading-snug text-text">
+                                {job.title}
+                              </h3>
+                              {job.featured && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-[#99F6E4]/40 bg-[#CCFBF1] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#0F766E]">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-[#14B8A6]" />
+                                  Featured
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-sm font-semibold text-[#0F766E]">
+                              {employerName}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mb-4 flex flex-wrap gap-2">
+                          {job.location && (
+                            <span className="text-xs text-[#525252]">
+                              &#128205; {job.location}
+                            </span>
+                          )}
+                          {(job.employmentType || job.jobType) && (
+                            <Badge
+                              text={job.employmentType || job.jobType || ""}
+                              color="#0F766E"
+                              bg="rgba(13,148,136,.1)"
+                              small
+                            />
+                          )}
+                        </div>
+
+                        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-[#525252]">
+                          {salary && (
+                            <span className="font-semibold text-[#404040]">
+                              &#128176; {salary}
+                            </span>
+                          )}
+                          {posted && <span>{posted}</span>}
+                          {closingSoon && (
+                            <span className="rounded-full bg-[#CCFBF1] px-2.5 py-1 font-semibold text-[#0F766E]">
+                              {closingSoon}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-end border-t border-black/5 pt-3">
+                          <span className="text-sm font-semibold text-[#0D9488]">
+                            View details &#8594;
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </AppShell>
   );
 }

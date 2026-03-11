@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
+import FeaturedJobControl, { type FeaturedJobSummary } from "@/components/FeaturedJobControl";
 import { useAuth } from "@/lib/auth-context";
 import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
 import { getOrganization } from "@/lib/firestore/organizations";
 import type { Organization } from "@/lib/firestore/organizations";
-import { createJob } from "@/lib/firestore/jobs";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -611,6 +611,8 @@ export default function NewJobWizardPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [featuredSummary, setFeaturedSummary] = useState<FeaturedJobSummary | null>(null);
+  const [submitError, setSubmitError] = useState("");
 
   // Load org & profile
   useEffect(() => {
@@ -625,6 +627,7 @@ export default function NewJobWizardPage() {
           const data = await res.json();
           setProfile(data.profile as MemberProfile);
           setOrg(data.org as Organization);
+          setFeaturedSummary((data.featuredSummary as FeaturedJobSummary | null) ?? null);
           setLoading(false);
           return;
         }
@@ -678,6 +681,7 @@ export default function NewJobWizardPage() {
   /* ---- Save ---- */
   const handleSave = async (status: "active" | "draft") => {
     if (!profile?.orgId || !user) return;
+    setSubmitError("");
     setSaving(true);
     try {
       const salary = formatSalary(form.salaryMin, form.salaryMax, form.salaryPeriod);
@@ -689,11 +693,18 @@ export default function NewJobWizardPage() {
         "-" +
         Date.now().toString(36);
 
-      await createJob({
-        title: form.title,
-        slug,
-        department: form.department || undefined,
-        category: form.category,
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/employer/jobs", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: form.title,
+          slug,
+          department: form.department || undefined,
+          category: form.category,
         employmentType: form.employmentType,
         workLocation: form.workLocation,
         location: form.location,
@@ -717,20 +728,32 @@ export default function NewJobWizardPage() {
         driversLicense: form.driversLicense,
         featured: form.featured,
         requiresResume: form.requiresResume,
-        requiresCoverLetter: form.requiresCoverLetter,
-        requiresReferences: form.requiresReferences,
-        status,
-        employerId: profile.orgId,
-        orgId: profile.orgId,
-        orgName: org?.name,
-        orgShort: org?.shortName,
-        authorId: user.uid,
+          requiresCoverLetter: form.requiresCoverLetter,
+          requiresReferences: form.requiresReferences,
+          status,
+        }),
       });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setSubmitError(
+          typeof result.error === "string" ? result.error : "Failed to create job. Please try again."
+        );
+        if (result.featuredSummary) {
+          setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
+        }
+        return;
+      }
+
+      if (result.featuredSummary) {
+        setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
+      }
 
       setStep("success");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Failed to create job:", err);
+      setSubmitError("Failed to create job. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -1160,11 +1183,10 @@ export default function NewJobWizardPage() {
                           onChange={(v) => set("driversLicense", v)}
                           label="Driver's License Required"
                         />
-                        <Checkbox
+                        <FeaturedJobControl
+                          summary={featuredSummary}
                           checked={form.featured}
-                          onChange={(v) => set("featured", v)}
-                          label="Feature This Job"
-                          description="Highlighted in search results and job feeds"
+                          onChange={(value) => set("featured", value)}
                         />
                       </div>
                     </div>
@@ -1475,6 +1497,22 @@ export default function NewJobWizardPage() {
                 )}
 
                 {/* ============ NAV BUTTONS ============ */}
+                {submitError && (
+                  <div
+                    style={{
+                      marginTop: 18,
+                      padding: "12px 14px",
+                      borderRadius: 12,
+                      border: "1px solid rgba(220,38,38,.28)",
+                      background: "rgba(220,38,38,.08)",
+                      color: "#FCA5A5",
+                      fontSize: 13,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {submitError}
+                  </div>
+                )}
                 <div
                   style={{
                     display: "flex",

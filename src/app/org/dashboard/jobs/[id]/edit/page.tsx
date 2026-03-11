@@ -7,9 +7,30 @@ import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
-import { getPost, updatePost, deletePost } from "@/lib/firestore/posts";
-import type { Post, PostStatus } from "@/lib/firestore/posts";
+import FeaturedJobControl, { type FeaturedJobSummary } from "@/components/FeaturedJobControl";
+import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
+
+type PostStatus = "draft" | "active" | "closed";
+
+interface EditableJob {
+  id: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  salary?: string;
+  employmentType?: string;
+  jobType?: string;
+  qualifications?: string[];
+  responsibilities?: string[];
+  benefits?: string[];
+  badges?: string[];
+  closingDate?: string;
+  applicationUrl?: string;
+  externalApplyUrl?: string;
+  status?: PostStatus;
+  featured?: boolean;
+}
 
 const employmentTypes = [
   "Full-time",
@@ -22,10 +43,11 @@ const employmentTypes = [
 export default function JobEditPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const { showToast } = useToast();
   const postId = params.id as string;
 
-  const [post, setPost] = useState<Post | null>(null);
+  const [post, setPost] = useState<EditableJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -45,73 +67,62 @@ export default function JobEditPage() {
   const [closingDate, setClosingDate] = useState("");
   const [applicationUrl, setApplicationUrl] = useState("");
   const [status, setStatus] = useState<PostStatus>("draft");
+  const [featured, setFeatured] = useState(false);
+  const [featuredSummary, setFeaturedSummary] = useState<FeaturedJobSummary | null>(null);
 
   const [isImported, setIsImported] = useState(false);
 
   useEffect(() => {
+    if (!user) return;
     (async () => {
-      let p = await getPost(postId).catch(() => null);
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch(`/api/employer/jobs/${postId}`, {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
 
-      // Fallback: check jobs collection via API (imported/synced jobs)
-      if (!p) {
-        try {
-          const res = await fetch(`/api/jobs/${postId}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.job) {
-              p = {
-                id: data.job.id,
-                type: "job",
-                title: data.job.title || "",
-                description: data.job.description || "",
-                location: data.job.location || "",
-                salary: typeof data.job.salary === "string" ? data.job.salary : "",
-                jobType: data.job.employmentType || data.job.jobType || "Full-time",
-                qualifications: data.job.qualifications || [],
-                closingDate: data.job.closingDate || "",
-                applicationUrl: data.job.applicationUrl || "",
-                status: data.job.active ? "active" : "closed",
-                orgId: data.job.employerId || "",
-                orgName: data.job.employerName || "",
-              } as unknown as Post;
-              setIsImported(true);
-            }
-          }
-        } catch { /* ignore */ }
-      }
-
-      if (!p) {
-        router.replace("/org/dashboard");
-        return;
-      }
-      setPost(p);
-      setTitle(p.title || "");
-      setDescription(p.description || "");
-      // Parse location into city/province
-      const locParts = (p.location || "").split(",").map((s) => s.trim());
-      setLocationCity(locParts[0] || "");
-      setLocationProvince(locParts[1] || "");
-      setEmploymentType(p.jobType || "Full-time");
-      // Parse salary range
-      if (p.salary) {
-        const salaryMatch = p.salary.match(
-          /\$?([\d,]+)\s*-\s*\$?([\d,]+)/
-        );
-        if (salaryMatch) {
-          setSalaryMin(salaryMatch[1].replace(/,/g, ""));
-          setSalaryMax(salaryMatch[2].replace(/,/g, ""));
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.job) {
+          router.replace("/org/dashboard");
+          return;
         }
+
+        const p = data.job as EditableJob;
+        setFeaturedSummary((data.featuredSummary as FeaturedJobSummary | null) ?? null);
+        setIsImported(Boolean(data.readOnly));
+        setPost(p);
+        setTitle(p.title || "");
+        setDescription(p.description || "");
+        const locParts = (p.location || "").split(",").map((s) => s.trim());
+        setLocationCity(locParts[0] || "");
+        setLocationProvince(locParts[1] || "");
+        setEmploymentType(p.employmentType || p.jobType || "Full-time");
+        if (p.salary) {
+          const salaryMatch = p.salary.match(
+            /\$?([\d,]+)\s*-\s*\$?([\d,]+)/
+          );
+          if (salaryMatch) {
+            setSalaryMin(salaryMatch[1].replace(/,/g, ""));
+            setSalaryMax(salaryMatch[2].replace(/,/g, ""));
+          }
+        }
+        setRequirements(p.qualifications || []);
+        setSkills(p.badges || []);
+        setClosingDate(p.closingDate || "");
+        setApplicationUrl(p.applicationUrl || p.externalApplyUrl || "");
+        setStatus(p.status || "active");
+        setFeatured(Boolean(p.featured));
+      } catch (err) {
+        console.error("Failed to load employer job:", err);
+        router.replace("/org/dashboard");
+      } finally {
+        setLoading(false);
       }
-      setRequirements(p.qualifications || []);
-      setSkills(p.badges || []);
-      setClosingDate(p.closingDate || "");
-      setApplicationUrl(p.applicationUrl || "");
-      setStatus(p.status || "active");
-      setLoading(false);
     })();
-  }, [postId, router]);
+  }, [postId, router, user]);
 
   const handleSave = async () => {
+    if (!user) return;
     if (!title.trim()) {
       showToast("Title is required", "error");
       return;
@@ -127,18 +138,41 @@ export default function JobEditPage() {
           : salaryMin
             ? `$${Number(salaryMin).toLocaleString()}`
             : "";
-      await updatePost(postId, {
-        title,
-        description,
-        location,
-        jobType: employmentType,
-        salary,
-        qualifications: requirements.filter((r) => r.trim()),
-        badges: skills,
-        closingDate,
-        applicationUrl,
-        status,
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/employer/jobs/${postId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          location,
+          employmentType,
+          salary,
+          qualifications: requirements.filter((r) => r.trim()),
+          badges: skills,
+          closingDate,
+          applicationUrl,
+          status,
+          featured,
+        }),
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        showToast(
+          typeof result.error === "string" ? result.error : "Failed to save changes",
+          "error"
+        );
+        if (result.featuredSummary) {
+          setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
+        }
+        return;
+      }
+      if (result.featuredSummary) {
+        setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
+      }
       showToast("Job updated successfully", "success");
     } catch (err) {
       console.error("Failed to update post:", err);
@@ -149,42 +183,85 @@ export default function JobEditPage() {
   };
 
   const handleUnpublish = async () => {
+    if (!user) return;
     setSaving(true);
     try {
-      await updatePost(postId, { status: "draft" });
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/employer/jobs/${postId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "draft", featured }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(typeof result.error === "string" ? result.error : "Failed to unpublish");
+      }
+      if (result.featuredSummary) {
+        setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
+      }
       setStatus("draft");
       showToast("Job unpublished", "info");
-    } catch {
-      showToast("Failed to unpublish", "error");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to unpublish", "error");
     } finally {
       setSaving(false);
     }
   };
 
   const handleClosePosition = async () => {
+    if (!user) return;
     setSaving(true);
     try {
-      await updatePost(postId, {
-        status: "closed",
-        closingDate: new Date().toISOString().split("T")[0],
+      const closedOn = new Date().toISOString().split("T")[0];
+      const response = await fetch(`/api/employer/jobs/${postId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${await user.getIdToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "closed",
+          closingDate: closedOn,
+          featured,
+        }),
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(typeof result.error === "string" ? result.error : "Failed to close position");
+      }
+      if (result.featuredSummary) {
+        setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
+      }
       setStatus("closed");
-      setClosingDate(new Date().toISOString().split("T")[0]);
+      setClosingDate(closedOn);
       showToast("Position closed", "info");
-    } catch {
-      showToast("Failed to close position", "error");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to close position", "error");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
+    if (!user) return;
     try {
-      await deletePost(postId);
+      const response = await fetch(`/api/employer/jobs/${postId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${await user.getIdToken()}`,
+        },
+      });
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(typeof result.error === "string" ? result.error : "Failed to delete job");
+      }
       showToast("Job deleted", "success");
       router.push("/org/dashboard");
-    } catch {
-      showToast("Failed to delete job", "error");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to delete job", "error");
     }
   };
 
@@ -558,6 +635,13 @@ export default function JobEditPage() {
                     />
                   </div>
 
+                  <FeaturedJobControl
+                    summary={featuredSummary}
+                    checked={featured}
+                    onChange={setFeatured}
+                    disabled={isImported}
+                  />
+
                   {/* Status */}
                   <div>
                     <label
@@ -598,14 +682,14 @@ export default function JobEditPage() {
                     <Button
                       primary
                       onClick={handleSave}
-                      className={saving ? "opacity-50 pointer-events-none" : ""}
+                      className={saving || isImported ? "opacity-50 pointer-events-none" : ""}
                     >
-                      {saving ? "Saving..." : "Save Changes"}
+                      {isImported ? "Read Only" : saving ? "Saving..." : "Save Changes"}
                     </Button>
                     {status !== "draft" && (
                       <Button
                         onClick={handleUnpublish}
-                        className={saving ? "opacity-50 pointer-events-none" : ""}
+                        className={saving || isImported ? "opacity-50 pointer-events-none" : ""}
                       >
                         Unpublish
                       </Button>
@@ -613,17 +697,21 @@ export default function JobEditPage() {
                     {status !== "closed" && (
                       <Button
                         onClick={handleClosePosition}
-                        className={saving ? "opacity-50 pointer-events-none" : ""}
+                        className={saving || isImported ? "opacity-50 pointer-events-none" : ""}
                       >
                         Close Position
                       </Button>
                     )}
                     <button
-                      onClick={() => setShowDeleteConfirm(true)}
+                      onClick={() => {
+                        if (!isImported) setShowDeleteConfirm(true);
+                      }}
                       className="px-6 py-3 rounded-xl border-none cursor-pointer text-sm font-semibold transition-opacity hover:opacity-80"
                       style={{
-                        background: "rgba(220,38,38,.1)",
-                        color: "#DC2626",
+                        background: isImported ? "rgba(148,163,184,.14)" : "rgba(220,38,38,.1)",
+                        color: isImported ? "var(--text-muted)" : "#DC2626",
+                        opacity: isImported ? 0.65 : 1,
+                        cursor: isImported ? "not-allowed" : "pointer",
                       }}
                     >
                       Delete
