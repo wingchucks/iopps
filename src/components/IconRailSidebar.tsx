@@ -262,7 +262,7 @@ export default function IconRailSidebar() {
       {/* Logo */}
       <Link
         href="/feed"
-        className="flex items-center gap-3 px-4 py-4 no-underline shrink-0"
+        className="flex items-center justify-center px-4 py-4 no-underline shrink-0"
       >
         <div
           className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10"
@@ -288,26 +288,6 @@ export default function IconRailSidebar() {
             className="relative z-10 shrink-0"
             priority
           />
-        </div>
-        <div className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200">
-          <span
-            className="block whitespace-nowrap text-[1.35rem] font-black uppercase tracking-[0.28em] text-transparent"
-            style={{
-              backgroundImage:
-                "linear-gradient(90deg, rgba(255,255,255,0.98) 0%, color-mix(in srgb, var(--teal) 20%, white) 52%, var(--teal-light) 100%)",
-              WebkitBackgroundClip: "text",
-              backgroundClip: "text",
-              textShadow: "0 0 18px rgba(13, 148, 136, 0.22)",
-            }}
-          >
-            IOPPS
-          </span>
-          <span
-            className="mt-1 block whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.26em]"
-            style={{ color: "color-mix(in srgb, var(--teal-light) 68%, white)" }}
-          >
-            Empowering Indigenous Success
-          </span>
         </div>
       </Link>
 
