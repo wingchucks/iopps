@@ -17,17 +17,19 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 
 // Initialize Firebase App Check with reCAPTCHA Enterprise (client-side only)
 if (typeof window !== "undefined") {
-  if (process.env.NODE_ENV === "development") {
-    // @ts-expect-error — Firebase App Check debug token global
-    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-  }
-  try {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaEnterpriseProvider("6LeFMHosAAAAAFKTIgee7jESAYTypsH69SbjnbSF"),
-      isTokenAutoRefreshEnabled: true,
-    });
-  } catch {
-    // App Check already initialized (e.g., HMR in development)
+  const isLocalHost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+
+  if (!isLocalHost) {
+    try {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider("6LeFMHosAAAAAFKTIgee7jESAYTypsH69SbjnbSF"),
+        isTokenAutoRefreshEnabled: true,
+      });
+    } catch {
+      // App Check already initialized (e.g., HMR in development)
+    }
   }
 }
 

@@ -18,7 +18,6 @@ const PROTECTED_PREFIXES = [
   "/org/onboarding",
   "/org/checkout",
   "/org/plans",
-  "/org/signup",
   "/admin",
   "/setup",
   "/verify-email",
@@ -104,6 +103,7 @@ export function middleware(req: NextRequest) {
     const verifyUrl = req.nextUrl.clone();
     verifyUrl.pathname = "/verify-email";
     verifyUrl.search = "";
+    verifyUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(verifyUrl);
   }
 
