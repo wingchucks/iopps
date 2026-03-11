@@ -70,30 +70,47 @@ export interface Scholarship {
 
 const col = collection(db, "scholarships");
 
+function normalizeScholarship(id: string, data: Record<string, unknown>): Scholarship {
+  const normalized = { id, ...data } as Scholarship;
+  if (!normalized.slug) normalized.slug = id;
+  if (!normalized.orgName && typeof data.organization === "string") {
+    normalized.orgName = data.organization;
+  }
+  if (!normalized.applicationUrl && typeof data.url === "string") {
+    normalized.applicationUrl = data.url;
+  }
+  return normalized;
+}
+
 export async function getScholarships(): Promise<Scholarship[]> {
   const constraints: QueryConstraint[] = [orderBy("order", "asc")];
   const snap = await getDocs(query(col, ...constraints));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Scholarship);
+  return snap.docs.map((d) => normalizeScholarship(d.id, d.data()));
 }
 
 export async function getScholarship(id: string): Promise<Scholarship | null> {
   const snap = await getDoc(doc(col, id));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as Scholarship;
+  return normalizeScholarship(snap.id, snap.data());
 }
 
 export async function getScholarshipBySlug(
   slug: string
 ): Promise<Scholarship | null> {
+  const byId = await getDoc(doc(col, slug));
+  if (byId.exists()) {
+    return normalizeScholarship(byId.id, byId.data());
+  }
+
   const snap = await getDocs(query(col, where("slug", "==", slug)));
   if (snap.empty) return null;
   const d = snap.docs[0];
-  return { id: d.id, ...d.data() } as Scholarship;
+  return normalizeScholarship(d.id, d.data());
 }
 
 export async function getScholarshipsByOrg(orgId: string): Promise<Scholarship[]> {
   const snap = await getDocs(query(col, where("orgId", "==", orgId)));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Scholarship);
+  return snap.docs.map((d) => normalizeScholarship(d.id, d.data()));
 }
 
 export async function createScholarship(

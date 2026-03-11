@@ -20,6 +20,18 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
+function normalizeScholarship(doc: FirebaseFirestore.QueryDocumentSnapshot): Record<string, unknown> {
+  const serialized = serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>;
+  if (!serialized.slug) serialized.slug = doc.id;
+  if (!serialized.orgName && typeof serialized.organization === "string") {
+    serialized.orgName = serialized.organization;
+  }
+  if (!serialized.applicationUrl && typeof serialized.url === "string") {
+    serialized.applicationUrl = serialized.url;
+  }
+  return serialized;
+}
+
 export async function GET() {
   try {
     const db = getAdminDb();
@@ -27,7 +39,7 @@ export async function GET() {
       .where("status", "==", "active")
       .get();
 
-    const scholarships = snap.docs.map(doc => serialize({ id: doc.id, ...doc.data() }));
+    const scholarships = snap.docs.map((doc) => normalizeScholarship(doc));
     return NextResponse.json({ scholarships });
   } catch (err) {
     console.error("Scholarships API error:", err);
