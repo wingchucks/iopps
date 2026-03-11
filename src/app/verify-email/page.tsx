@@ -1,17 +1,28 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 
 export default function VerifyEmailPage() {
+  return (
+    <Suspense>
+      <VerifyEmailContent />
+    </Suspense>
+  );
+}
+
+function VerifyEmailContent() {
   const { user, loading: authLoading, sendVerificationEmail, reloadUser, signOut } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [checking, setChecking] = useState(false);
+  const nextPath = searchParams.get("next");
+  const redirectPath = nextPath && nextPath.startsWith("/") ? nextPath : "/setup";
 
   // If already verified, redirect
   useEffect(() => {
@@ -19,9 +30,9 @@ export default function VerifyEmailPage() {
       router.replace("/login");
     }
     if (user?.emailVerified) {
-      router.replace("/setup");
+      router.replace(redirectPath);
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, redirectPath, router]);
 
   // Poll for verification every 5 seconds
   useEffect(() => {

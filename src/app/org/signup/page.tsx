@@ -70,6 +70,28 @@ export default function OrgSignupPage() {
 
   if (authLoading || (user && !signingUpRef.current)) return null;
 
+  const createOrganizationProfile = async (idToken: string, contactEmailValue: string) => {
+    const res = await fetch("/api/employer/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        name: orgName,
+        type: orgType,
+        businessIdentity: showBusinessIdentity ? businessIdentity : "not_specified",
+        contactName,
+        contactEmail: contactEmailValue,
+      }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: "Server error" }));
+      throw new Error(data.error || "Failed to create organization");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -101,29 +123,10 @@ export default function OrgSignupPage() {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error("Failed to get user after signup");
       const idToken = await currentUser.getIdToken();
+      await createOrganizationProfile(idToken, email);
 
-      // Create org via server-side API (Admin SDK — atomic, secure)
-      const res = await fetch("/api/employer/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({
-          name: orgName,
-          type: orgType,
-          businessIdentity: showBusinessIdentity ? businessIdentity : "not_specified",
-          contactName,
-          contactEmail: email,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: "Server error" }));
-        throw new Error(data.error || "Failed to create organization");
-      }
-
-      router.push("/org/onboarding");
+      await currentUser.reload();
+      router.push(currentUser.emailVerified ? "/org/onboarding" : "/verify-email?next=/org/onboarding");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to create account";
       if (msg.includes("email-already-in-use")) {
@@ -177,13 +180,29 @@ export default function OrgSignupPage() {
             type="button"
             onClick={async () => {
               setError("");
+              if (!acceptTerms) {
+                setError("You must accept the Terms of Service to continue.");
+                return;
+              }
+              if (!orgName || !contactName) {
+                setError("Enter your organization name and contact name before continuing with Google.");
+                return;
+              }
               setLoading(true);
+              signingUpRef.current = true;
               try {
-                await signInWithGoogle();
-                // useEffect will handle redirect based on role
+                const cred = await signInWithGoogle();
+                const googleEmail = cred.user.email;
+                if (!googleEmail) {
+                  throw new Error("Google account is missing an email address.");
+                }
+                const idToken = await cred.user.getIdToken();
+                await createOrganizationProfile(idToken, googleEmail);
+                router.push("/org/onboarding");
               } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : "Something went wrong.";
                 if (!msg.includes("popup-closed")) setError(msg);
+                signingUpRef.current = false;
               } finally {
                 setLoading(false);
               }

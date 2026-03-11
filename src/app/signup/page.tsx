@@ -4,7 +4,7 @@ import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { auth, storage } from "@/lib/firebase";
 import {
   BackgroundMesh, TopBar, ProgressBar, StepDots, StepHeader,
   FormInput, FormSelect, FormTextarea, CheckboxItem, UploadZone,
@@ -45,7 +45,7 @@ const BUSINESS_IDENTITY_OPTIONS: Array<{
 
 export default function UnifiedSignupPage() {
   const router = useRouter();
-  const { signUp, signInWithGoogle, user } = useAuth();
+  const { signUp, signInWithGoogle, user, sendVerificationEmail, reloadUser } = useAuth();
 
   const [step, setStep] = useState(1);
   const [role, setRole] = useState<Role>("");
@@ -141,10 +141,52 @@ export default function UnifiedSignupPage() {
             await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn }) });
           }
         } catch { /* non-blocking */ }
-        goTo(3);
+        if (role === "organization") {
+          goTo(orgType === "school" ? 4 : 10);
+        } else {
+          router.push("/setup");
+        }
       }
     catch (err: unknown) { setError(err instanceof Error ? err.message : "Google sign-in failed"); }
     finally { setSubmitting(false); }
+  };
+
+  const handleContinueAfterVerification = async () => {
+    setError("");
+    if (!user) {
+      setError("Your session expired. Please sign in again.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await reloadUser();
+      if (!auth.currentUser?.emailVerified) {
+        setError("Please verify your email before continuing.");
+        return;
+      }
+
+      if (role === "organization") {
+        goTo(orgType === "school" ? 4 : 10);
+      } else {
+        router.push("/setup");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (submitting) return;
+    setError("");
+    setSubmitting(true);
+    try {
+      await sendVerificationEmail();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to resend verification email");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const uploadFile = async (file: File, path: string) => {
@@ -316,15 +358,19 @@ export default function UnifiedSignupPage() {
             <div style={{ fontSize: 64, marginBottom: 16 }}>📧</div>
             <div style={{ fontSize: 14, color: CSS.textDim, marginBottom: 8 }}>Didn&apos;t receive it? Check your spam folder.</div>
             <div style={{ fontSize: 14, color: CSS.textDim, marginBottom: 24 }}>Still nothing? Click below to resend.</div>
-            <BtnSecondary>Resend Verification Email</BtnSecondary>
+            <BtnSecondary onClick={handleResendVerification}>
+              {submitting ? "Sending..." : "Resend Verification Email"}
+            </BtnSecondary>
           </div>
-          {role === "community" && <InfoBanner icon="🎉"><strong style={{ color: CSS.text }}>You&apos;re all set!</strong> Once verified, explore jobs, events, and more.</InfoBanner>}
+          {role === "community" && <InfoBanner icon="🎉"><strong style={{ color: CSS.text }}>You&apos;re all set!</strong> Verify your email, then finish your member setup.</InfoBanner>}
           {role === "organization" && (<div>
             <InfoBanner icon="🏢"><strong style={{ color: CSS.text }}>One more thing!</strong> Set up your organization profile next (~3 minutes).</InfoBanner>
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
-              <BtnPrimary onClick={() => goTo(orgType === "school" ? 4 : 10)}>Continue to Setup &rarr;</BtnPrimary>
-            </div>
           </div>)}
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
+            <BtnPrimary onClick={handleContinueAfterVerification} disabled={submitting}>
+              {submitting ? "Checking..." : role === "organization" ? "I've Verified My Email →" : "Continue to Setup →"}
+            </BtnPrimary>
+          </div>
         </div>)}
 
         {/* STEP 4: School Details */}
@@ -541,7 +587,7 @@ export default function UnifiedSignupPage() {
             <div style={{ display: "grid", gap: 12 }}>
               {[
                 { icon: "✉️", text: "Click the verification link in your email" },
-                { icon: "🏢", text: "Your organization profile goes live immediately" },
+                { icon: "🏢", text: "After verification, your organization dashboard unlocks" },
                 { icon: "💼", text: "Start posting jobs and reaching Indigenous talent" },
               ].map((item, i) => (
                 <div key={i} style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -552,7 +598,10 @@ export default function UnifiedSignupPage() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-            <BtnPrimary onClick={() => router.push("/org/dashboard")}>Go to Dashboard &rarr;</BtnPrimary>
+            <BtnSecondary onClick={handleResendVerification}>
+              {submitting ? "Sending..." : "Resend Verification Email"}
+            </BtnSecondary>
+            <BtnPrimary onClick={() => router.push("/verify-email?next=/org/dashboard")}>Verify Email to Continue &rarr;</BtnPrimary>
           </div>
         </div>)}
 
