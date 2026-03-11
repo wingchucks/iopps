@@ -36,6 +36,7 @@ function JobDetailContent() {
 
   useEffect(() => {
     async function load() {
+      let loadedJob: Job | null = null;
       // Load job data
       try {
         const res = await fetch(`/api/jobs/${slug}`);
@@ -45,10 +46,11 @@ function JobDetailContent() {
           return;
         }
         const data = await res.json();
-        setJob(data.job ?? null);
+        loadedJob = data.job ?? null;
+        setJob(loadedJob);
 
         // Track view (fire-and-forget)
-        if (data.job) {
+        if (loadedJob) {
           fetch(`/api/jobs/${slug}/view`, { method: "POST" }).catch(() => {});
         }
       } catch (err) {
@@ -59,13 +61,14 @@ function JobDetailContent() {
       }
 
       // Check saved/applied status separately — don't let these crash the job display
-      if (user) {
+      const jobId = loadedJob?.id || slug;
+      if (user && jobId) {
         try {
-          const alreadyApplied = await hasApplied(user.uid, slug);
+          const alreadyApplied = await hasApplied(user.uid, jobId);
           setApplied(alreadyApplied);
         } catch { /* ignore — user just won't see applied state */ }
         try {
-          const alreadySaved = await isPostSaved(user.uid, slug);
+          const alreadySaved = await isPostSaved(user.uid, jobId);
           setSaved(alreadySaved);
         } catch { /* ignore — user just won't see saved state */ }
       }
@@ -75,13 +78,14 @@ function JobDetailContent() {
 
   const handleSave = async () => {
     if (!user || !job) return;
+    const jobId = job.id || slug;
     setActionLoading("save");
     try {
       if (saved) {
-        await unsavePost(user.uid, slug);
+        await unsavePost(user.uid, jobId);
         setSaved(false);
       } else {
-        await savePost(user.uid, slug, job.title, "job", job.employerName || job.orgName || "");
+        await savePost(user.uid, jobId, job.title, "job", job.employerName || job.orgName || "");
         setSaved(true);
       }
     } catch (err) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { normalizeImportedDescription } from "@/lib/server/imported-job-descriptions";
+import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 
 export const runtime = "nodejs";
 export const revalidate = 60; // Cache for 60 seconds
@@ -35,6 +36,11 @@ function serialize(value: unknown): unknown {
 function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "jobs" | "posts"): Record<string, unknown> {
   const data = doc.data();
   const serialized = serialize({ id: doc.id, ...data }) as Record<string, unknown>;
+  serialized.slug = buildJobRouteSlug({
+    id: doc.id,
+    slug: typeof serialized.slug === "string" ? serialized.slug : undefined,
+    title: typeof serialized.title === "string" ? serialized.title : undefined,
+  });
   // Normalize salary object to string
   if (serialized.salary && typeof serialized.salary === "object") {
     const salObj = serialized.salary as Record<string, unknown>;

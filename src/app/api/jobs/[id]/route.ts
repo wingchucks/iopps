@@ -4,6 +4,7 @@ import {
   fetchImportedDescriptionPatch,
   normalizeImportedDescription,
 } from "@/lib/server/imported-job-descriptions";
+import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 
 export const runtime = "nodejs";
 
@@ -26,21 +27,96 @@ function serialize(value: unknown): unknown {
 async function findJobDocument(
   db: FirebaseFirestore.Firestore,
   idOrSlug: string
-): Promise<{ docRef: FirebaseFirestore.DocumentSnapshot; source: "jobs" | "posts" } | null> {
+) {
   const jobsDoc = await db.collection("jobs").doc(idOrSlug).get();
-  if (jobsDoc.exists) return { docRef: jobsDoc, source: "jobs" };
+  if (jobsDoc.exists) {
+    return {
+      docRef: jobsDoc,
+      source: "jobs" as const,
+      routeSlug: buildJobRouteSlug({
+        id: jobsDoc.id,
+        slug: jobsDoc.data()?.slug as string | undefined,
+        title: jobsDoc.data()?.title as string | undefined,
+      }),
+    };
+  }
 
   const jobsBySlug = await db.collection("jobs").where("slug", "==", idOrSlug).limit(1).get();
   if (!jobsBySlug.empty) {
-    return { docRef: jobsBySlug.docs[0], source: "jobs" };
+    const docRef = jobsBySlug.docs[0];
+    return {
+      docRef,
+      source: "jobs" as const,
+      routeSlug: buildJobRouteSlug({
+        id: docRef.id,
+        slug: docRef.data().slug as string | undefined,
+        title: docRef.data().title as string | undefined,
+      }),
+    };
   }
 
   const postsDoc = await db.collection("posts").doc(idOrSlug).get();
-  if (postsDoc.exists) return { docRef: postsDoc, source: "posts" };
+  if (postsDoc.exists) {
+    return {
+      docRef: postsDoc,
+      source: "posts" as const,
+      routeSlug: buildJobRouteSlug({
+        id: postsDoc.id,
+        slug: postsDoc.data()?.slug as string | undefined,
+        title: postsDoc.data()?.title as string | undefined,
+      }),
+    };
+  }
 
   const postsBySlug = await db.collection("posts").where("slug", "==", idOrSlug).limit(1).get();
   if (!postsBySlug.empty) {
-    return { docRef: postsBySlug.docs[0], source: "posts" };
+    const docRef = postsBySlug.docs[0];
+    return {
+      docRef,
+      source: "posts" as const,
+      routeSlug: buildJobRouteSlug({
+        id: docRef.id,
+        slug: docRef.data().slug as string | undefined,
+        title: docRef.data().title as string | undefined,
+      }),
+    };
+  }
+
+  const [activeJobs, activePosts] = await Promise.all([
+    db.collection("jobs").where("active", "==", true).select("slug", "title").get(),
+    db.collection("posts").where("type", "==", "job").where("status", "==", "active").select("slug", "title").get(),
+  ]);
+
+  const matches: Array<{
+    docRef: FirebaseFirestore.QueryDocumentSnapshot;
+    source: "jobs" | "posts";
+    routeSlug: string;
+  }> = [];
+
+  for (const docRef of activeJobs.docs) {
+    const routeSlug = buildJobRouteSlug({
+      id: docRef.id,
+      slug: docRef.data().slug as string | undefined,
+      title: docRef.data().title as string | undefined,
+    });
+    if (routeSlug === idOrSlug) {
+      matches.push({ docRef, source: "jobs", routeSlug });
+    }
+  }
+
+  for (const docRef of activePosts.docs) {
+    const routeSlug = buildJobRouteSlug({
+      id: docRef.id,
+      slug: docRef.data().slug as string | undefined,
+      title: docRef.data().title as string | undefined,
+    });
+    if (routeSlug === idOrSlug) {
+      matches.push({ docRef, source: "posts", routeSlug });
+    }
+  }
+
+  if (matches.length === 1) {
+    return matches[0];
   }
 
   return null;
@@ -59,8 +135,13 @@ export async function GET(
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    const { docRef, source } = found;
+    const { docRef, source, routeSlug } = found;
     const data = docRef.data()!;
+
+    if (!data.slug && routeSlug && routeSlug !== docRef.id) {
+      await docRef.ref.set({ slug: routeSlug }, { merge: true });
+      data.slug = routeSlug;
+    }
 
     if (source === "jobs") {
       let feedUrl = "";
@@ -91,6 +172,11 @@ export async function GET(
     }
 
     const job = serialize({ id: docRef.id, ...data, _source: source }) as Record<string, unknown>;
+    job.slug = buildJobRouteSlug({
+      id: docRef.id,
+      slug: typeof job.slug === "string" ? job.slug : routeSlug,
+      title: typeof job.title === "string" ? job.title : undefined,
+    });
 
     // Normalize salary object to string
     if (job.salary && typeof job.salary === "object") {
