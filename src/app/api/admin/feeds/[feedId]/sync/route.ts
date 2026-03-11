@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { FieldValue } from "firebase-admin/firestore";
+import {
+  fetchImportedDescriptionPatch,
+  normalizeImportedDescription,
+} from "@/lib/server/imported-job-descriptions";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +76,7 @@ export async function POST(
     const items = feedType === "oracle-hcm"
       ? parseOracleHcm(responseText)
       : feedType === "adp"
-        ? parseAdp(responseText)
+        ? parseAdp(responseText, feed.feedUrl)
         : parseSimpleXml(responseText);
 
     let jobsImported = 0;
@@ -82,7 +86,14 @@ export async function POST(
         const externalId = item.guid || item.id || item.link || "";
         const externalUrl = item.link || item.url || "";
         const title = item.title || "Untitled Position";
-        const description = item.description || item.summary || item.content || "";
+        const feedDescription = item.description || item.summary || item.content || "";
+        const normalizedFeedDescription = normalizeImportedDescription(stripCdata(feedDescription));
+        const descriptionPatch = await fetchImportedDescriptionPatch({
+          description: normalizedFeedDescription,
+          externalUrl,
+          externalId,
+        });
+        const resolvedDescription = descriptionPatch?.description || normalizedFeedDescription;
 
         if (!externalId && !externalUrl) continue;
 
@@ -98,7 +109,8 @@ export async function POST(
             const existingDoc = existingSnap.docs[0];
             await existingDoc.ref.update({
               title,
-              description: stripCdata(description),
+              description: resolvedDescription,
+              ...(descriptionPatch ? descriptionPatch : {}),
               updatedAt: FieldValue.serverTimestamp(),
             });
           }
@@ -107,7 +119,7 @@ export async function POST(
 
         const jobData: Record<string, unknown> = {
           title,
-          description: stripCdata(description),
+          description: resolvedDescription,
           active: true,
           source: "feed",
           feedId: feed.id,
@@ -118,6 +130,7 @@ export async function POST(
           location: item.location || "Canada",
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
+          ...(descriptionPatch ? descriptionPatch : {}),
         };
 
         if (item.pubDate) {
@@ -228,20 +241,30 @@ function stripCdata(text: string): string {
   return text.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").trim();
 }
 
-function parseAdp(text: string): Array<Record<string, string>> {
+function parseAdp(text: string, feedUrl?: string): Array<Record<string, string>> {
   try {
     const json = JSON.parse(text);
     const requisitions = json.jobRequisitions || [];
+    const feedCid = (() => {
+      if (!feedUrl) return "";
+      try {
+        return new URL(feedUrl).searchParams.get("cid") || "";
+      } catch {
+        return "";
+      }
+    })();
     return requisitions.map((req: Record<string, unknown>) => {
       const itemID = String(req.itemID || "");
-      const cid = (req as Record<string, unknown>).clientRequisitionID || "";
+      const cid = feedCid || String((req as Record<string, unknown>).cid || "");
       return {
         title: String(req.requisitionTitle || ""),
         guid: itemID,
-        link: `https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=${cid}&jobId=${itemID}&lang=en_CA&source=CC2`,
+        link: cid
+          ? `https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=${cid}&jobId=${itemID}&lang=en_CA&source=CC2`
+          : "",
         pubDate: String((req.postDate as string)?.substring(0, 10) || ""),
-        description: "",
-        location: "Saskatoon, SK",
+        description: String(req.requisitionDescription || req.shortDescription || ""),
+        location: String(req.location || req.primaryLocation || "Canada"),
       };
     });
   } catch {

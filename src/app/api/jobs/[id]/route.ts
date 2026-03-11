@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import {
+  fetchImportedDescriptionPatch,
+  normalizeImportedDescription,
+} from "@/lib/server/imported-job-descriptions";
 
 export const runtime = "nodejs";
 
@@ -19,6 +23,29 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
+async function findJobDocument(
+  db: FirebaseFirestore.Firestore,
+  idOrSlug: string
+): Promise<{ docRef: FirebaseFirestore.DocumentSnapshot; source: "jobs" | "posts" } | null> {
+  const jobsDoc = await db.collection("jobs").doc(idOrSlug).get();
+  if (jobsDoc.exists) return { docRef: jobsDoc, source: "jobs" };
+
+  const jobsBySlug = await db.collection("jobs").where("slug", "==", idOrSlug).limit(1).get();
+  if (!jobsBySlug.empty) {
+    return { docRef: jobsBySlug.docs[0], source: "jobs" };
+  }
+
+  const postsDoc = await db.collection("posts").doc(idOrSlug).get();
+  if (postsDoc.exists) return { docRef: postsDoc, source: "posts" };
+
+  const postsBySlug = await db.collection("posts").where("slug", "==", idOrSlug).limit(1).get();
+  if (!postsBySlug.empty) {
+    return { docRef: postsBySlug.docs[0], source: "posts" };
+  }
+
+  return null;
+}
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -27,20 +54,31 @@ export async function GET(
     const { id } = await params;
     const db = getAdminDb();
 
-    // Check jobs collection first, then fall back to posts collection
-    let docRef = await db.collection("jobs").doc(id).get();
-    let source = "jobs";
-
-    if (!docRef.exists) {
-      docRef = await db.collection("posts").doc(id).get();
-      source = "posts";
-    }
-
-    if (!docRef.exists) {
+    const found = await findJobDocument(db, id);
+    if (!found) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
+    const { docRef, source } = found;
     const data = docRef.data()!;
+
+    if (source === "jobs") {
+      const hydratedPatch = await fetchImportedDescriptionPatch({
+        description: typeof data.description === "string" ? data.description : "",
+        externalUrl: typeof data.externalUrl === "string" ? data.externalUrl : "",
+        externalId: typeof data.externalId === "string" ? data.externalId : "",
+        location: typeof data.location === "string" ? data.location : "",
+        jobType: typeof data.jobType === "string" ? data.jobType : "",
+        department: typeof data.department === "string" ? data.department : "",
+      });
+
+      if (hydratedPatch) {
+        const firestorePatch: Record<string, unknown> = { ...hydratedPatch };
+        await docRef.ref.update(firestorePatch);
+        Object.assign(data, firestorePatch);
+      }
+    }
+
     const job = serialize({ id: docRef.id, ...data, _source: source }) as Record<string, unknown>;
 
     // Normalize salary object to string
@@ -52,6 +90,9 @@ export async function GET(
     // Normalize employer name
     if (!job.employerName) {
       job.employerName = job.orgName || job.companyName || "";
+    }
+    if (typeof job.description === "string") {
+      job.description = normalizeImportedDescription(job.description);
     }
 
     return NextResponse.json({ job });

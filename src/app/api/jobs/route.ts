@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { normalizeImportedDescription } from "@/lib/server/imported-job-descriptions";
 
 export const runtime = "nodejs";
 export const revalidate = 60; // Cache for 60 seconds
@@ -42,6 +43,9 @@ function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "job
   // Normalize employer name fields
   if (!serialized.employerName) {
     serialized.employerName = serialized.orgName || serialized.companyName || "";
+  }
+  if (typeof serialized.description === "string") {
+    serialized.description = normalizeImportedDescription(serialized.description);
   }
   // Tag source
   serialized._source = source;
