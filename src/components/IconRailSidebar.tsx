@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { getMemberProfile } from "@/lib/firestore/members";
-import { doc, getDoc, getDocFromServer } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Avatar from "./Avatar";
 import CreateChooserModal from "./CreateChooserModal";
@@ -261,21 +262,53 @@ export default function IconRailSidebar() {
       {/* Logo */}
       <Link
         href="/feed"
-        className="flex items-center h-16 px-5 gap-3 no-underline shrink-0"
+        className="flex items-center gap-3 px-4 py-4 no-underline shrink-0"
       >
-        <img
-          src="/logo.png"
-          alt="IOPPS"
-          width={32}
-          height={32}
-          className="shrink-0"
-        />
-        <span
-          className="opacity-0 group-hover/rail:opacity-100 font-black text-lg tracking-[2px] whitespace-nowrap transition-opacity duration-200"
-          style={{ color: "var(--navy)" }}
+        <div
+          className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10"
+          style={{
+            background:
+              "linear-gradient(145deg, color-mix(in srgb, var(--teal) 28%, #08111f) 0%, #07111e 100%)",
+            boxShadow:
+              "0 18px 34px -26px color-mix(in srgb, var(--teal) 85%, transparent), inset 0 1px 0 rgba(255,255,255,0.18)",
+          }}
         >
-          IOPPS
-        </span>
+          <span
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle at 28% 20%, rgba(255,255,255,0.24), transparent 50%)",
+            }}
+          />
+          <Image
+            src="/logo.png"
+            alt="IOPPS"
+            width={32}
+            height={32}
+            className="relative z-10 shrink-0"
+            priority
+          />
+        </div>
+        <div className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200">
+          <span
+            className="block whitespace-nowrap text-[1.35rem] font-black uppercase tracking-[0.28em] text-transparent"
+            style={{
+              backgroundImage:
+                "linear-gradient(90deg, rgba(255,255,255,0.98) 0%, color-mix(in srgb, var(--teal) 20%, white) 52%, var(--teal-light) 100%)",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              textShadow: "0 0 18px rgba(13, 148, 136, 0.22)",
+            }}
+          >
+            IOPPS
+          </span>
+          <span
+            className="mt-1 block whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.26em]"
+            style={{ color: "color-mix(in srgb, var(--teal-light) 68%, white)" }}
+          >
+            Empowering Indigenous Success
+          </span>
+        </div>
       </Link>
 
       {/* Create button — auth only */}
@@ -286,10 +319,19 @@ export default function IconRailSidebar() {
           style={{ background: "transparent" }}
         >
           <div
-            className="flex items-center gap-3 h-10 px-3 rounded-lg transition-colors"
-            style={{ background: "var(--teal)", color: "#fff" }}
+            className="flex items-center gap-3 h-11 px-3 rounded-xl transition-all duration-200"
+            style={{
+              background:
+                "linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 55%, var(--teal-dark) 100%)",
+              color: "#fff",
+              boxShadow:
+                "0 18px 34px -24px color-mix(in srgb, var(--teal) 88%, transparent), inset 0 1px 0 rgba(255,255,255,0.18)",
+            }}
           >
-            <span className="w-5 h-5 shrink-0 flex items-center justify-center">
+            <span
+              className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full"
+              style={{ background: "rgba(255,255,255,0.14)" }}
+            >
               <NavIcon name="plus" size={20} />
             </span>
             <span className="opacity-0 group-hover/rail:opacity-100 text-sm font-bold whitespace-nowrap transition-opacity duration-200">
