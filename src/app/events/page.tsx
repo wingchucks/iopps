@@ -6,6 +6,12 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { getEvents, type Event } from "@/lib/firestore/events";
 import { getPosts } from "@/lib/firestore/posts";
+import {
+  getEventDisplayDates,
+  getEventStartDate,
+  isPublicEventVisible,
+  normalizePublicEvent,
+} from "@/lib/public-events";
 import { displayLocation } from "@/lib/utils";
 
 const dateFilters = ["All Dates", "This Week", "This Month", "Upcoming"] as const;
@@ -26,7 +32,7 @@ export default function EventsBrowsePage() {
         // Fallback: posts collection if dedicated is empty
         if (items.length === 0) {
           const posts = await getPosts({ type: "event" });
-          items = posts.map((p) => ({
+          const fallbackItems: Event[] = posts.map((p) => ({
             id: p.id,
             title: p.title,
             slug: p.slug || p.id.replace(/^event-/, ""),
@@ -44,6 +50,9 @@ export default function EventsBrowsePage() {
             badges: p.badges,
             source: p.source,
           }));
+          items = fallbackItems
+            .map((event) => normalizePublicEvent(event))
+            .filter((event) => isPublicEventVisible(event));
         }
         setEvents(items);
       } catch (err) {
@@ -95,11 +104,8 @@ export default function EventsBrowsePage() {
     if (dateFilter !== "All Dates") {
       const now = new Date();
       result = result.filter((e) => {
-        if (!e.dates) return dateFilter === "Upcoming";
-        const match = e.dates.match(/(\w+)\s+(\d{1,2}),?\s*(\d{4})?/);
-        if (!match) return true;
-        const parsed = new Date(`${match[1]} ${match[2]}, ${match[3] || now.getFullYear()}`);
-        if (isNaN(parsed.getTime())) return true;
+        const parsed = getEventStartDate(e);
+        if (!parsed) return dateFilter === "Upcoming";
         if (dateFilter === "This Week") {
           const weekEnd = new Date(now);
           weekEnd.setDate(weekEnd.getDate() + 7);
@@ -249,7 +255,8 @@ export default function EventsBrowsePage() {
             {filtered.map((evt) => {
               const slug = evt.slug || evt.id;
               // Parse a short month/day from the dates string
-              const dateParts = evt.dates?.match(/(\w{3,})\s+(\d{1,2})/);
+              const displayDates = getEventDisplayDates(evt);
+              const dateParts = displayDates.match(/(\w{3,})\s+(\d{1,2})/);
               const month = dateParts?.[1]?.slice(0, 3).toUpperCase() || "";
               const day = dateParts?.[2] || "";
 
@@ -322,9 +329,9 @@ export default function EventsBrowsePage() {
                             <span>&#128205;</span> {displayLocation(evt.location)}
                           </p>
                         )}
-                        {evt.dates && (
+                        {displayDates && (
                           <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
-                            <span>&#128197;</span> {evt.dates}
+                            <span>&#128197;</span> {displayDates}
                           </p>
                         )}
                         {evt.orgName && (

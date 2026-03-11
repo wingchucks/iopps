@@ -7,8 +7,8 @@ import AppShell from "@/components/AppShell";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
-import { getEventBySlug, type Event as EventDoc } from "@/lib/firestore/events";
-import { getPost, type Post } from "@/lib/firestore/posts";
+import { getEventBySlug } from "@/lib/firestore/events";
+import { getPost } from "@/lib/firestore/posts";
 import { savePost, unsavePost } from "@/lib/firestore/savedItems";
 import {
   getRSVP,
@@ -19,6 +19,11 @@ import {
 } from "@/lib/firestore/rsvps";
 import { useAuth } from "@/lib/auth-context";
 import ReportButton from "@/components/ReportButton";
+import {
+  getEventDisplayDates,
+  isPublicEventVisible,
+  normalizePublicEvent,
+} from "@/lib/public-events";
 import { displayLocation } from "@/lib/utils";
 
 // Unified type for rendering — covers fields from both Event and Post
@@ -108,7 +113,7 @@ function EventDetailContent() {
         if (!data) {
           const post = await getPost(`event-${slug}`);
           if (post) {
-            data = {
+            data = normalizePublicEvent({
               id: post.id,
               title: post.title,
               slug: post.slug || slug,
@@ -122,11 +127,15 @@ function EventDetailContent() {
               highlights: post.highlights,
               type: post.type,
               rsvpLink: (post as unknown as Record<string, unknown>).rsvpLink as string | undefined,
-            };
+            }) as EventData;
           }
         }
 
-        setEvent(data);
+        if (data && !isPublicEventVisible(data)) {
+          data = null;
+        }
+
+        setEvent(data ? (normalizePublicEvent(data as unknown as Record<string, unknown>) as EventData) : null);
         if (data && user) {
           const [existingRsvp, count] = await Promise.all([
             getRSVP(user.uid, data.id),
@@ -224,6 +233,8 @@ function EventDetailContent() {
   }
 
   const emoji = event.eventType === "Pow Wow" ? "\u{1FAB6}" : event.eventType === "Career Fair" ? "\u{1F4BC}" : event.eventType === "Round Dance" ? "\u{1F483}" : "\u{1F3AA}";
+  const displayDates = getEventDisplayDates(event);
+  const descriptionHasHtml = typeof event.description === "string" && event.description.includes("<");
 
   const rsvpButtons: { status: RSVPStatus; label: string; icon: string }[] = [
     { status: "going", label: "Going", icon: "\u2714" },
@@ -261,7 +272,7 @@ function EventDetailContent() {
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-text mb-2">{event.title}</h1>
           <div className="flex flex-wrap justify-center gap-4 text-sm text-text-sec">
-            {event.dates && <span>&#128197; {event.dates}</span>}
+            {displayDates && <span>&#128197; {displayDates}</span>}
             {event.location && <span>&#128205; {displayLocation(event.location)}</span>}
             {event.price && <span>&#127915; {event.price}</span>}
           </div>
@@ -275,9 +286,16 @@ function EventDetailContent() {
           {event.description && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">About This Event</h3>
-              <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                {event.description}
-              </p>
+              {descriptionHasHtml ? (
+                <div
+                  className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: event.description }}
+                />
+              ) : (
+                <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
+                  {event.description}
+                </p>
+              )}
             </>
           )}
 
@@ -327,11 +345,11 @@ function EventDetailContent() {
 
           {/* Event Info Cards */}
           <div className="flex flex-col gap-3">
-            {event.dates && (
+            {displayDates && (
               <Card>
                 <div style={{ padding: 16 }}>
                   <p className="text-sm font-bold text-teal mb-1">&#128197; Date & Time</p>
-                  <p className="text-[13px] text-text-sec">{event.dates}</p>
+                  <p className="text-[13px] text-text-sec">{displayDates}</p>
                 </div>
               </Card>
             )}
@@ -340,6 +358,23 @@ function EventDetailContent() {
                 <div style={{ padding: 16 }}>
                   <p className="text-sm font-bold text-teal mb-1">&#128205; Location</p>
                   <p className="text-[13px] text-text-sec">{displayLocation(event.location)}</p>
+                </div>
+              </Card>
+            )}
+            {event.orgName && (
+              <Card>
+                <div style={{ padding: 16 }}>
+                  <p className="text-sm font-bold text-teal mb-1">&#127970; Organizer</p>
+                  <p className="text-[13px] text-text-sec">{event.orgName}</p>
+                </div>
+              </Card>
+            )}
+            {(event.contactEmail || event.contactPhone) && (
+              <Card>
+                <div style={{ padding: 16 }}>
+                  <p className="text-sm font-bold text-teal mb-1">Contact</p>
+                  {event.contactEmail && <p className="text-[13px] text-text-sec mb-1">Email: {event.contactEmail}</p>}
+                  {event.contactPhone && <p className="text-[13px] text-text-sec m-0">Phone: {event.contactPhone}</p>}
                 </div>
               </Card>
             )}

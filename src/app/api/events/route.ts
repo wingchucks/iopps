@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { isPublicEventVisible, normalizePublicEvent } from "@/lib/public-events";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
@@ -27,7 +28,10 @@ export async function GET() {
       .orderBy("order", "asc")
       .get();
 
-    const events = snap.docs.map(doc => serialize({ id: doc.id, ...doc.data() }));
+    const events = snap.docs
+      .map((doc) => serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+      .filter((event) => isPublicEventVisible(event))
+      .map((event) => normalizePublicEvent(event));
     return NextResponse.json({ events });
   } catch (err) {
     console.error("Events API error:", err);

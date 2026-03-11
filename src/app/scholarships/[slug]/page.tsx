@@ -163,6 +163,22 @@ function ScholarshipDetailContent() {
   const orgLink = org ? `/org/${org.id}` : "#";
   const isPremium = org?.tier === "premium";
   const closingSoon = isClosingSoon(scholarship.deadline);
+  const descriptionHasHtml = typeof scholarship.description === "string" && scholarship.description.includes("<");
+  const eligibilityHasHtml = typeof scholarship.eligibility === "string" && scholarship.eligibility.includes("<");
+  const applicationInstructionsHasHtml = typeof scholarship.applicationInstructions === "string" && scholarship.applicationInstructions.includes("<");
+
+  const scholarshipFacts = [
+    { label: "Education Level", value: scholarship.educationLevel },
+    { label: "Number of Awards", value: scholarship.numberOfAwards },
+    { label: "GPA Required", value: scholarship.gpaRequired },
+    { label: "Renewable", value: scholarship.renewable },
+    { label: "Indigenous-Specific", value: scholarship.indigenousSpecific },
+    { label: "Financial Need", value: scholarship.financialNeed },
+    { label: "Business Stage", value: scholarship.businessStage },
+    { label: "Max Funding", value: scholarship.maxFundingPerApplicant },
+    { label: "Project Duration", value: scholarship.projectDuration },
+    { label: "Reporting Required", value: scholarship.reportingRequired },
+  ].filter((fact): fact is { label: string; value: string } => Boolean(fact.value));
 
   return (
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
@@ -196,8 +212,8 @@ function ScholarshipDetailContent() {
           <h1 className="text-2xl sm:text-4xl font-extrabold text-text mb-2">{scholarship.title}</h1>
           <div className="flex flex-wrap justify-center gap-4 text-sm text-text-sec">
             {scholarship.orgName && <span>{scholarship.orgName}</span>}
-            {scholarship.amount && <span>&#128176; {scholarship.amount}</span>}
-            {scholarship.deadline && <span>&#128197; Deadline: {scholarship.deadline}</span>}
+            <span>&#128176; {scholarship.amount || "Funding varies"}</span>
+            <span>&#128197; {scholarship.deadline ? `Deadline: ${scholarship.deadline}` : "Check provider for deadline"}</span>
             {scholarship.location && <span>&#128205; {displayLocation(scholarship.location)}</span>}
           </div>
         </div>
@@ -231,9 +247,16 @@ function ScholarshipDetailContent() {
           {scholarship.description && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">About This Scholarship</h3>
-              <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                {scholarship.description}
-              </p>
+              {descriptionHasHtml ? (
+                <div
+                  className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: scholarship.description }}
+                />
+              ) : (
+                <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
+                  {scholarship.description}
+                </p>
+              )}
             </>
           )}
 
@@ -241,9 +264,32 @@ function ScholarshipDetailContent() {
           {scholarship.eligibility && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">Eligibility</h3>
-              <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                {scholarship.eligibility}
-              </p>
+              {eligibilityHasHtml ? (
+                <div
+                  className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: scholarship.eligibility }}
+                />
+              ) : (
+                <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
+                  {scholarship.eligibility}
+                </p>
+              )}
+            </>
+          )}
+
+          {scholarship.applicationInstructions && (
+            <>
+              <h3 className="text-lg font-bold text-text mb-2">Application Instructions</h3>
+              {applicationInstructionsHasHtml ? (
+                <div
+                  className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: scholarship.applicationInstructions }}
+                />
+              ) : (
+                <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
+                  {scholarship.applicationInstructions}
+                </p>
+              )}
             </>
           )}
 
@@ -262,6 +308,81 @@ function ScholarshipDetailContent() {
             </>
           )}
 
+          {(scholarshipFacts.length > 0
+            || (scholarship.fieldOfStudy && scholarship.fieldOfStudy.length > 0)
+            || (scholarship.priorityGroups && scholarship.priorityGroups.length > 0)
+            || (scholarship.industrySector && scholarship.industrySector.length > 0)
+            || (scholarship.fundingUse && scholarship.fundingUse.length > 0)
+            || (scholarship.projectType && scholarship.projectType.length > 0)
+            || (scholarship.applicantType && scholarship.applicantType.length > 0)) && (
+            <>
+              <h3 className="text-lg font-bold text-text mb-3">Eligibility & Award Details</h3>
+              {scholarshipFacts.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  {scholarshipFacts.map((fact) => (
+                    <Card key={fact.label}>
+                      <div style={{ padding: 14 }}>
+                        <p className="text-xs font-bold text-text-muted mb-1 tracking-[0.08em] uppercase">{fact.label}</p>
+                        <p className="text-sm text-text m-0">{fact.value}</p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3 mb-6">
+                {scholarship.fieldOfStudy && scholarship.fieldOfStudy.length > 0 && (
+                  <Card>
+                    <div style={{ padding: 14 }}>
+                      <p className="text-xs font-bold text-text-muted mb-2 tracking-[0.08em] uppercase">Field of Study</p>
+                      <p className="text-sm text-text-sec m-0">{scholarship.fieldOfStudy.join(", ")}</p>
+                    </div>
+                  </Card>
+                )}
+                {scholarship.priorityGroups && scholarship.priorityGroups.length > 0 && (
+                  <Card>
+                    <div style={{ padding: 14 }}>
+                      <p className="text-xs font-bold text-text-muted mb-2 tracking-[0.08em] uppercase">Priority Groups</p>
+                      <p className="text-sm text-text-sec m-0">{scholarship.priorityGroups.join(", ")}</p>
+                    </div>
+                  </Card>
+                )}
+                {scholarship.industrySector && scholarship.industrySector.length > 0 && (
+                  <Card>
+                    <div style={{ padding: 14 }}>
+                      <p className="text-xs font-bold text-text-muted mb-2 tracking-[0.08em] uppercase">Industry Sector</p>
+                      <p className="text-sm text-text-sec m-0">{scholarship.industrySector.join(", ")}</p>
+                    </div>
+                  </Card>
+                )}
+                {scholarship.fundingUse && scholarship.fundingUse.length > 0 && (
+                  <Card>
+                    <div style={{ padding: 14 }}>
+                      <p className="text-xs font-bold text-text-muted mb-2 tracking-[0.08em] uppercase">Eligible Funding Use</p>
+                      <p className="text-sm text-text-sec m-0">{scholarship.fundingUse.join(", ")}</p>
+                    </div>
+                  </Card>
+                )}
+                {scholarship.projectType && scholarship.projectType.length > 0 && (
+                  <Card>
+                    <div style={{ padding: 14 }}>
+                      <p className="text-xs font-bold text-text-muted mb-2 tracking-[0.08em] uppercase">Project Type</p>
+                      <p className="text-sm text-text-sec m-0">{scholarship.projectType.join(", ")}</p>
+                    </div>
+                  </Card>
+                )}
+                {scholarship.applicantType && scholarship.applicantType.length > 0 && (
+                  <Card>
+                    <div style={{ padding: 14 }}>
+                      <p className="text-xs font-bold text-text-muted mb-2 tracking-[0.08em] uppercase">Applicant Type</p>
+                      <p className="text-sm text-text-sec m-0">{scholarship.applicantType.join(", ")}</p>
+                    </div>
+                  </Card>
+                )}
+              </div>
+            </>
+          )}
+
           {/* How to Apply */}
           {scholarship.applicationUrl && (
             <>
@@ -269,6 +390,16 @@ function ScholarshipDetailContent() {
               <p className="text-sm text-text-sec leading-relaxed mb-6">
                 Apply directly through the organization&apos;s application portal using the button in the sidebar.
               </p>
+            </>
+          )}
+
+          {(scholarship.contactEmail || scholarship.contactPhone) && (
+            <>
+              <h3 className="text-lg font-bold text-text mb-2">Contact</h3>
+              <div className="flex flex-col gap-1 mb-6">
+                {scholarship.contactEmail && <p className="text-sm text-text-sec m-0">Email: {scholarship.contactEmail}</p>}
+                {scholarship.contactPhone && <p className="text-sm text-text-sec m-0">Phone: {scholarship.contactPhone}</p>}
+              </div>
             </>
           )}
 
@@ -391,18 +522,14 @@ function ScholarshipDetailContent() {
               <div className="border-t border-border pt-4">
                 <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">SCHOLARSHIP DETAILS</p>
                 <div className="flex flex-col gap-2.5">
-                  {scholarship.amount && (
-                    <div className="flex justify-between">
-                      <span className="text-xs text-text-muted">Value</span>
-                      <span className="text-xs font-semibold text-green">{scholarship.amount}</span>
-                    </div>
-                  )}
-                  {scholarship.deadline && (
-                    <div className="flex justify-between">
-                      <span className="text-xs text-text-muted">Deadline</span>
-                      <span className="text-xs font-semibold text-red">{scholarship.deadline}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between">
+                    <span className="text-xs text-text-muted">Value</span>
+                    <span className="text-xs font-semibold text-text">{scholarship.amount || "Funding varies"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-xs text-text-muted">Deadline</span>
+                    <span className="text-xs font-semibold text-text">{scholarship.deadline || "Check provider site"}</span>
+                  </div>
                   {scholarship.location && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Location</span>

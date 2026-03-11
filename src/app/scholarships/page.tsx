@@ -198,6 +198,8 @@ export default function ScholarshipsBrowsePage() {
             {filtered.map((sch) => {
               const slug = sch.slug || sch.id;
               const closingSoon = isClosingSoon(sch.deadline);
+              const amountLabel = sch.amount || "Funding varies";
+              const deadlineLabel = sch.deadline || "Check provider for deadline";
 
               return (
                 <Link
@@ -220,17 +222,15 @@ export default function ScholarshipsBrowsePage() {
                     <div className="p-5 flex-1 flex flex-col">
                       {/* Amount badge + closing soon */}
                       <div className="flex items-center gap-2 mb-3">
-                        {sch.amount && (
-                          <span
-                            className="inline-block text-sm font-extrabold rounded-xl px-3 py-1.5"
-                            style={{
-                              color: "var(--gold)",
-                              background: "var(--gold-soft)",
-                            }}
-                          >
-                            {sch.amount}
-                          </span>
-                        )}
+                        <span
+                          className="inline-block text-sm font-extrabold rounded-xl px-3 py-1.5"
+                          style={{
+                            color: sch.amount ? "var(--gold)" : "var(--text-sec)",
+                            background: sch.amount ? "var(--gold-soft)" : "var(--border)",
+                          }}
+                        >
+                          {amountLabel}
+                        </span>
                         {closingSoon && (
                           <span
                             className="inline-block text-[10px] font-bold rounded-lg px-2 py-1"
@@ -265,11 +265,9 @@ export default function ScholarshipsBrowsePage() {
 
                       {/* Details */}
                       <div className="flex flex-col gap-1.5 mt-auto">
-                        {sch.deadline && (
-                          <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
-                            <span>&#128197;</span> Deadline: {sch.deadline}
-                          </p>
-                        )}
+                        <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
+                          <span>&#128197;</span> {deadlineLabel}
+                        </p>
                         {sch.location && (
                           <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
                             <span>&#128205;</span> {displayLocation(sch.location)}

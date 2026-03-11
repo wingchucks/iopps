@@ -13,6 +13,7 @@ import {
   type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { isPublicEventVisible, normalizePublicEvent } from "../public-events";
 
 export interface Event {
   id: string;
@@ -57,20 +58,24 @@ const col = collection(db, "events");
 export async function getEvents(): Promise<Event[]> {
   const constraints: QueryConstraint[] = [orderBy("order", "asc")];
   const snap = await getDocs(query(col, ...constraints));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Event);
+  return snap.docs
+    .map((d) => normalizePublicEvent({ id: d.id, ...d.data() }) as Event)
+    .filter((event) => isPublicEventVisible(event));
 }
 
 export async function getEvent(id: string): Promise<Event | null> {
   const snap = await getDoc(doc(col, id));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as Event;
+  const event = normalizePublicEvent({ id: snap.id, ...snap.data() }) as Event;
+  return isPublicEventVisible(event) ? event : null;
 }
 
 export async function getEventBySlug(slug: string): Promise<Event | null> {
   const snap = await getDocs(query(col, where("slug", "==", slug)));
   if (snap.empty) return null;
   const d = snap.docs[0];
-  return { id: d.id, ...d.data() } as Event;
+  const event = normalizePublicEvent({ id: d.id, ...d.data() }) as Event;
+  return isPublicEventVisible(event) ? event : null;
 }
 
 export async function getEventsByOrg(orgId: string): Promise<Event[]> {
