@@ -1,8 +1,10 @@
 "use client";
 
+import type { CSSProperties, ReactNode } from "react";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { useAuth } from "@/lib/auth-context";
@@ -11,9 +13,17 @@ import type { Job } from "@/lib/firestore/jobs";
 import { displayLocation } from "@/lib/utils";
 
 // ── Types for opportunities ──
-interface OrgEvent { id: string; title: string; eventType?: string; date?: string; dates?: string; location?: string; employerId?: string; organizerName?: string; }
-interface OrgScholarship { id: string; title: string; amount?: string; deadline?: string; description?: string; employerId?: string; organization?: string; }
-interface OrgProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; campus?: string; location?: string; schoolId?: string; institutionName?: string; provider?: string; }
+interface LinkedItem { href?: string; }
+interface OrgEvent extends LinkedItem { id: string; title: string; eventType?: string; date?: string; dates?: string; location?: string; employerId?: string; organizerName?: string; }
+interface OrgScholarship extends LinkedItem { id: string; title: string; amount?: string; deadline?: string; description?: string; employerId?: string; organization?: string; }
+interface OrgProgram extends LinkedItem { id: string; title?: string; programName?: string; duration?: string; credential?: string; campus?: string; location?: string; schoolId?: string; institutionName?: string; provider?: string; _source?: string; }
+interface OrgContentResponse {
+  org: Organization | null;
+  jobs?: Job[];
+  events?: OrgEvent[];
+  scholarships?: OrgScholarship[];
+  programs?: OrgProgram[];
+}
 
 // ── Helpers ──
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -42,6 +52,18 @@ function getEventDay(ev: OrgEvent): string {
   return "";
 }
 
+function renderLinkedCard<T extends LinkedItem>(item: T, className: string, content: ReactNode, style?: CSSProperties) {
+  if (!item.href) {
+    return <div className={className} style={style}>{content}</div>;
+  }
+
+  return (
+    <Link href={item.href} className="no-underline block">
+      <div className={className} style={style}>{content}</div>
+    </Link>
+  );
+}
+
 export default function OrgProfilePage() {
   return (
     <AppShell>
@@ -63,14 +85,9 @@ function OrgProfileContent() {
   const [scholarships, setScholarships] = useState<OrgScholarship[]>([]);
   const [programs, setPrograms] = useState<OrgProgram[]>([]);
   const [loading, setLoading] = useState(true);
-  const [following, setFollowing] = useState(false);
   const [activeOppTab, setActiveOppTab] = useState<"jobs"|"events"|"scholarships"|"programs">("jobs");
+  const [expandedOppTab, setExpandedOppTab] = useState<"jobs"|"events"|"scholarships"|"programs"|null>(null);
   const [shareMsg, setShareMsg] = useState("");
-
-  const handleFollow = () => {
-    if (!user) { router.push("/login"); return; }
-    setFollowing(!following);
-  };
 
   const handleMessage = () => {
     if (!user) { router.push("/login"); return; }
@@ -93,60 +110,33 @@ function OrgProfileContent() {
       try {
         const orgRes = await fetch(`/api/org/${encodeURIComponent(slug)}`);
         if (!orgRes.ok) { setOrg(null); setLoading(false); return; }
-        const orgJson = await orgRes.json();
-        const orgData = orgJson.org as Organization | null;
+        const orgJson = await orgRes.json() as OrgContentResponse;
+        const orgData = orgJson.org;
         setOrg(orgData);
         if (orgData) {
-          const orgId = orgData.id;
-          const orgName = orgData.name;
+          const nextJobs = orgJson.jobs ?? [];
+          const nextEvents = orgJson.events ?? [];
+          const nextScholarships = orgJson.scholarships ?? [];
+          const nextPrograms = orgJson.programs ?? [];
 
-          // Fetch all data in parallel
-          const [jobsByIdRes, jobsByNameRes, eventsRes, scholarshipsRes, programsRes] = await Promise.all([
-            fetch(`/api/jobs?employerId=${encodeURIComponent(orgId)}`).then(r => r.json()).catch(() => ({ jobs: [] })),
-            fetch(`/api/jobs?employerName=${encodeURIComponent(orgName)}`).then(r => r.json()).catch(() => ({ jobs: [] })),
-            fetch(`/api/events`).then(r => r.json()).catch(() => []),
-            fetch(`/api/scholarships`).then(r => r.json()).catch(() => ({ scholarships: [] })),
-            fetch(`/api/programs`).then(r => r.json()).catch(() => ({ programs: [] })),
-          ]);
-
-          // Deduplicate jobs
-          const jobMap = new Map<string, Job>();
-          for (const j of [...(jobsByIdRes.jobs ?? []), ...(jobsByNameRes.jobs ?? [])]) {
-            jobMap.set(j.id, j);
-          }
-          setJobs(Array.from(jobMap.values()));
-
-          // Filter events by org
-          const allEvents: OrgEvent[] = Array.isArray(eventsRes) ? eventsRes : (eventsRes.events ?? []);
-          setEvents(allEvents.filter((e: OrgEvent) =>
-            e.employerId === orgId || (e.organizerName && e.organizerName.toLowerCase().includes(orgName.toLowerCase()))
-          ));
-
-          // Filter scholarships by org
-          const allScholarships: OrgScholarship[] = scholarshipsRes.scholarships ?? [];
-          setScholarships(allScholarships.filter((s: OrgScholarship) =>
-            s.employerId === orgId || (s.organization && s.organization.toLowerCase().includes(orgName.toLowerCase()))
-          ));
-
-          // Filter programs by org
-          const allPrograms: OrgProgram[] = programsRes.programs ?? [];
-          setPrograms(allPrograms.filter((p: OrgProgram) =>
-            p.schoolId === orgId || (p.institutionName && p.institutionName.toLowerCase().includes(orgName.toLowerCase())) || (p.provider && p.provider.toLowerCase().includes(orgName.toLowerCase()))
-          ));
+          setJobs(nextJobs);
+          setEvents(nextEvents);
+          setScholarships(nextScholarships);
+          setPrograms(nextPrograms);
+          setExpandedOppTab(null);
 
           // Track view
           fetch("/api/employer/views", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orgId, type: "profile" }),
+            body: JSON.stringify({ orgId: orgData.id, type: "profile" }),
           }).catch(() => {});
 
           // Default to first non-empty tab
-          const jobCount = jobMap.size;
-          if (jobCount > 0) setActiveOppTab("jobs");
-          else if (allEvents.filter((e: OrgEvent) => e.employerId === orgId || (e.organizerName && e.organizerName.toLowerCase().includes(orgName.toLowerCase()))).length > 0) setActiveOppTab("events");
-          else if (allScholarships.filter((s: OrgScholarship) => s.employerId === orgId).length > 0) setActiveOppTab("scholarships");
-          else if (allPrograms.filter((p: OrgProgram) => p.schoolId === orgId).length > 0) setActiveOppTab("programs");
+          if (nextJobs.length > 0) setActiveOppTab("jobs");
+          else if (nextEvents.length > 0) setActiveOppTab("events");
+          else if (nextScholarships.length > 0) setActiveOppTab("scholarships");
+          else if (nextPrograms.length > 0) setActiveOppTab("programs");
         }
       } catch (err) {
         console.error("Failed to load organization:", err);
@@ -177,23 +167,24 @@ function OrgProfileContent() {
         <p className="text-5xl mb-4">&#127970;</p>
         <h2 className="text-2xl font-extrabold text-text mb-2">Organization Not Found</h2>
         <p className="text-text-sec mb-6">This organization doesn&apos;t exist or hasn&apos;t been added yet.</p>
-        <Link href="/partners" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold bg-teal text-white no-underline hover:opacity-90 transition-opacity">
-          Browse Partners
+        <Link href="/organizations" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold bg-teal text-white no-underline hover:opacity-90 transition-opacity">
+          Browse Organizations
         </Link>
       </div>
     );
   }
 
   const websiteUrl = org.website ? (org.website.startsWith("http") ? org.website : `https://${org.website}`) : null;
-  const totalJobs = jobs.length || org.openJobs || 0;
+  const profileJobCount = jobs.length || org.openJobs || 0;
+  const relatedJobCount = jobs.length;
   const foundedYear = org.foundedYear ? String(org.foundedYear) : org.since || null;
   const employeeCount = org.employees || org.size || null;
   const isIndigenousOwned = org.indigenousOwned === true || org.tags?.some((t: string) => t === "Indigenous-Owned" || t === "Indigenous-Owned Business");
   const hasSocialLinks = org.socialLinks && Object.values(org.socialLinks).some(Boolean);
   const hasContact = websiteUrl || org.contactEmail || org.phone || org.address;
   const hasTags = org.tags && org.tags.length > 0;
-  const hasQuickStats = foundedYear || employeeCount || totalJobs > 0;
-  const hasOpportunities = totalJobs > 0 || events.length > 0 || scholarships.length > 0 || programs.length > 0;
+  const hasQuickStats = foundedYear || employeeCount || profileJobCount > 0;
+  const hasOpportunities = relatedJobCount > 0 || events.length > 0 || scholarships.length > 0 || programs.length > 0;
   const hasHours = org.hours && typeof org.hours === "object" && Object.keys(org.hours).length > 0;
   const hasGallery = org.gallery && Array.isArray(org.gallery) && org.gallery.length > 0;
 
@@ -208,14 +199,18 @@ function OrgProfileContent() {
 
   const oppColors = { jobs: "#14B8A6", events: "#F59E0B", scholarships: "#FBBF24", programs: "#A78BFA" };
   const oppLabels = { jobs: "💼 Open Jobs", events: "📅 Events", scholarships: "🎓 Scholarships", programs: "📚 Programs" };
-  const oppCounts = { jobs: totalJobs, events: events.length, scholarships: scholarships.length, programs: programs.length };
+  const oppCounts = { jobs: relatedJobCount, events: events.length, scholarships: scholarships.length, programs: programs.length };
+  const visibleJobs = expandedOppTab === "jobs" ? jobs : jobs.slice(0, 4);
+  const visibleEvents = expandedOppTab === "events" ? events : events.slice(0, 4);
+  const visibleScholarships = expandedOppTab === "scholarships" ? scholarships : scholarships.slice(0, 4);
+  const visiblePrograms = expandedOppTab === "programs" ? programs : programs.slice(0, 4);
 
   return (
     <div className="max-w-[960px] mx-auto pb-16">
       {/* Back Link */}
       <div className="px-4 pt-4">
-        <Link href="/partners" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal">
-          &#8592; Back to Directory
+        <Link href="/organizations" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal">
+          &#8592; Back to Organizations
         </Link>
       </div>
 
@@ -319,8 +314,8 @@ function OrgProfileContent() {
               {employeeCount && (
                 <span className="text-[13px] text-text-muted">👥 <strong className="text-text">{employeeCount}</strong> employees</span>
               )}
-              {totalJobs > 0 && (
-                <span className="text-[13px] text-text-muted">💼 <strong className="text-text">{totalJobs}</strong> open position{totalJobs !== 1 ? "s" : ""}</span>
+              {profileJobCount > 0 && (
+                <span className="text-[13px] text-text-muted">💼 <strong className="text-text">{profileJobCount}</strong> open position{profileJobCount !== 1 ? "s" : ""}</span>
               )}
             </div>
           )}
@@ -350,7 +345,10 @@ function OrgProfileContent() {
                   return (
                     <button
                       key={tab}
-                      onClick={() => setActiveOppTab(tab)}
+                      onClick={() => {
+                        setActiveOppTab(tab);
+                        setExpandedOppTab((current) => (current === tab ? current : null));
+                      }}
                       className="py-4 text-center cursor-pointer border-none transition-all border-r border-border last:border-r-0"
                       style={{
                         background: activeOppTab === tab ? "rgba(255,255,255,0.03)" : "transparent",
@@ -369,7 +367,7 @@ function OrgProfileContent() {
                 {/* Jobs Panel */}
                 {activeOppTab === "jobs" && (
                   <div className="flex flex-col gap-2.5">
-                    {jobs.slice(0, 4).map((j, i) => (
+                    {visibleJobs.map((j, i) => (
                       <Link key={j.id} href={`/jobs/${j.slug || j.id}`} className="no-underline block">
                         <div className="flex items-center justify-between px-4 py-3.5 rounded-xl cursor-pointer transition-all hover:-translate-y-0.5"
                           style={{
@@ -385,13 +383,15 @@ function OrgProfileContent() {
                         </div>
                       </Link>
                     ))}
-                    {totalJobs > 4 && (
-                      <Link href={`/jobs?employer=${encodeURIComponent(org.name)}`} className="no-underline">
-                        <div className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold text-teal"
-                          style={{ border: "1px solid rgba(20,184,166,0.2)", background: "rgba(20,184,166,0.04)" }}>
-                          View All {totalJobs} Jobs →
-                        </div>
-                      </Link>
+                    {relatedJobCount > 4 && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedOppTab((current) => (current === "jobs" ? null : "jobs"))}
+                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        style={{ color: "#14B8A6", border: "1px solid rgba(20,184,166,0.2)", background: "rgba(20,184,166,0.04)" }}
+                      >
+                        {expandedOppTab === "jobs" ? "Show fewer jobs" : `Show all ${relatedJobCount} jobs`}
+                      </button>
                     )}
                   </div>
                 )}
@@ -399,29 +399,39 @@ function OrgProfileContent() {
                 {/* Events Panel */}
                 {activeOppTab === "events" && (
                   <div className="flex flex-col gap-2.5">
-                    {events.slice(0, 4).map((ev, i) => (
-                      <div key={ev.id} className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl cursor-pointer"
-                        style={{
-                          background: i === 0 ? "rgba(245,158,11,0.06)" : "rgba(30,41,59,0.4)",
-                          border: i === 0 ? "1px solid rgba(245,158,11,0.15)" : "1px solid rgba(255,255,255,0.04)",
-                        }}>
-                        <div className="w-12 h-12 rounded-[10px] flex flex-col items-center justify-center shrink-0"
-                          style={{ background: i === 0 ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.08)" }}>
-                          <div className="text-[10px] font-bold leading-none" style={{ color: i === 0 ? "#F59E0B" : "var(--text-muted)" }}>{getEventMonth(ev)}</div>
-                          <div className="text-lg font-black leading-none" style={{ color: i === 0 ? "#F59E0B" : "var(--text-sec)" }}>{getEventDay(ev)}</div>
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-text">{ev.title}</p>
-                          <p className="text-xs text-text-muted mt-0.5">{formatEventDate(ev)}{ev.location ? ` · ${ev.location}` : ""}</p>
-                          {ev.eventType && <p className="text-[11px] mt-0.5" style={{ color: "#F59E0B" }}>🎪 {ev.eventType}</p>}
-                        </div>
+                    {visibleEvents.map((ev, i) => (
+                      <div key={ev.id}>
+                        {renderLinkedCard(
+                          ev,
+                          "flex items-center gap-3.5 px-4 py-3.5 rounded-xl cursor-pointer transition-all hover:-translate-y-0.5",
+                          <>
+                            <div className="w-12 h-12 rounded-[10px] flex flex-col items-center justify-center shrink-0"
+                              style={{ background: i === 0 ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.08)" }}>
+                              <div className="text-[10px] font-bold leading-none" style={{ color: i === 0 ? "#F59E0B" : "var(--text-muted)" }}>{getEventMonth(ev)}</div>
+                              <div className="text-lg font-black leading-none" style={{ color: i === 0 ? "#F59E0B" : "var(--text-sec)" }}>{getEventDay(ev)}</div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-text">{ev.title}</p>
+                              <p className="text-xs text-text-muted mt-0.5">{formatEventDate(ev)}{ev.location ? ` · ${ev.location}` : ""}</p>
+                              {ev.eventType && <p className="text-[11px] mt-0.5" style={{ color: "#F59E0B" }}>🎪 {ev.eventType}</p>}
+                            </div>
+                          </>,
+                          {
+                            background: i === 0 ? "rgba(245,158,11,0.06)" : "rgba(30,41,59,0.4)",
+                            border: i === 0 ? "1px solid rgba(245,158,11,0.15)" : "1px solid rgba(255,255,255,0.04)",
+                          },
+                        )}
                       </div>
                     ))}
                     {events.length > 4 && (
-                      <div className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold"
-                        style={{ color: "#F59E0B", border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.04)" }}>
-                        View All {events.length} Events →
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedOppTab((current) => (current === "events" ? null : "events"))}
+                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        style={{ color: "#F59E0B", border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.04)" }}
+                      >
+                        {expandedOppTab === "events" ? "Show fewer events" : `Show all ${events.length} events`}
+                      </button>
                     )}
                   </div>
                 )}
@@ -429,24 +439,34 @@ function OrgProfileContent() {
                 {/* Scholarships Panel */}
                 {activeOppTab === "scholarships" && (
                   <div className="flex flex-col gap-2.5">
-                    {scholarships.slice(0, 4).map((s, i) => (
-                      <div key={s.id} className="px-4 py-3.5 rounded-xl cursor-pointer"
-                        style={{
-                          background: i === 0 ? "rgba(251,191,36,0.06)" : "rgba(30,41,59,0.4)",
-                          border: i === 0 ? "1px solid rgba(251,191,36,0.15)" : "1px solid rgba(255,255,255,0.04)",
-                        }}>
-                        <p className="text-sm font-bold text-text">{s.title}</p>
-                        {s.description && <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{s.description}</p>}
-                        <p className="text-[11px] mt-1" style={{ color: i === 0 ? "#FBBF24" : "var(--text-muted)" }}>
-                          {s.amount ? `💰 ${s.amount}` : ""}{s.deadline ? ` · Deadline: ${s.deadline}` : ""}
-                        </p>
+                    {visibleScholarships.map((s, i) => (
+                      <div key={s.id}>
+                        {renderLinkedCard(
+                          s,
+                          "px-4 py-3.5 rounded-xl cursor-pointer transition-all hover:-translate-y-0.5",
+                          <>
+                            <p className="text-sm font-bold text-text">{s.title}</p>
+                            {s.description && <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{s.description}</p>}
+                            <p className="text-[11px] mt-1" style={{ color: i === 0 ? "#FBBF24" : "var(--text-muted)" }}>
+                              {s.amount ? `💰 ${s.amount}` : ""}{s.deadline ? ` · Deadline: ${s.deadline}` : ""}
+                            </p>
+                          </>,
+                          {
+                            background: i === 0 ? "rgba(251,191,36,0.06)" : "rgba(30,41,59,0.4)",
+                            border: i === 0 ? "1px solid rgba(251,191,36,0.15)" : "1px solid rgba(255,255,255,0.04)",
+                          },
+                        )}
                       </div>
                     ))}
                     {scholarships.length > 4 && (
-                      <div className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold"
-                        style={{ color: "#FBBF24", border: "1px solid rgba(251,191,36,0.2)", background: "rgba(251,191,36,0.04)" }}>
-                        View All {scholarships.length} Scholarships →
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedOppTab((current) => (current === "scholarships" ? null : "scholarships"))}
+                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        style={{ color: "#FBBF24", border: "1px solid rgba(251,191,36,0.2)", background: "rgba(251,191,36,0.04)" }}
+                      >
+                        {expandedOppTab === "scholarships" ? "Show fewer scholarships" : `Show all ${scholarships.length} scholarships`}
+                      </button>
                     )}
                   </div>
                 )}
@@ -454,24 +474,36 @@ function OrgProfileContent() {
                 {/* Programs Panel */}
                 {activeOppTab === "programs" && (
                   <div className="flex flex-col gap-2.5">
-                    {programs.slice(0, 4).map((p, i) => (
-                      <div key={p.id} className="px-4 py-3.5 rounded-xl cursor-pointer"
-                        style={{
-                          background: i === 0 ? "rgba(167,139,250,0.06)" : "rgba(30,41,59,0.4)",
-                          border: i === 0 ? "1px solid rgba(167,139,250,0.15)" : "1px solid rgba(255,255,255,0.04)",
-                        }}>
-                        <p className="text-sm font-bold text-text">{p.title || p.programName}</p>
-                        <p className="text-xs text-text-muted mt-0.5">
-                          {[p.duration, p.credential, p.campus || p.location].filter(Boolean).join(" · ")}
-                        </p>
-                        <p className="text-[11px] mt-1" style={{ color: i === 0 ? "#A78BFA" : "var(--text-muted)" }}>📚 {p.credential || "Program"}</p>
+                    {visiblePrograms.map((p, i) => (
+                      <div key={p.id}>
+                        {renderLinkedCard(
+                          p,
+                          "px-4 py-3.5 rounded-xl cursor-pointer transition-all hover:-translate-y-0.5",
+                          <>
+                            <p className="text-sm font-bold text-text">{p.title || p.programName}</p>
+                            <p className="text-xs text-text-muted mt-0.5">
+                              {[p.duration, p.credential, p.campus || p.location].filter(Boolean).join(" · ")}
+                            </p>
+                            <p className="text-[11px] mt-1" style={{ color: i === 0 ? "#A78BFA" : "var(--text-muted)" }}>
+                              📚 {p._source === "training" ? (p.credential || "Training Program") : (p.credential || "Program")}
+                            </p>
+                          </>,
+                          {
+                            background: i === 0 ? "rgba(167,139,250,0.06)" : "rgba(30,41,59,0.4)",
+                            border: i === 0 ? "1px solid rgba(167,139,250,0.15)" : "1px solid rgba(255,255,255,0.04)",
+                          },
+                        )}
                       </div>
                     ))}
                     {programs.length > 4 && (
-                      <div className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold"
-                        style={{ color: "#A78BFA", border: "1px solid rgba(167,139,250,0.2)", background: "rgba(167,139,250,0.04)" }}>
-                        View All {programs.length} Programs →
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedOppTab((current) => (current === "programs" ? null : "programs"))}
+                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        style={{ color: "#A78BFA", border: "1px solid rgba(167,139,250,0.2)", background: "rgba(167,139,250,0.04)" }}
+                      >
+                        {expandedOppTab === "programs" ? "Show fewer programs" : `Show all ${programs.length} programs`}
+                      </button>
                     )}
                   </div>
                 )}
@@ -516,10 +548,16 @@ function OrgProfileContent() {
                 {org.gallery!.slice(0, 5).map((url: string, i: number) => (
                   <div
                     key={i}
-                    className={`rounded-xl overflow-hidden cursor-pointer transition-transform hover:scale-[1.03] ${i === 0 ? "col-span-2 row-span-2" : ""}`}
+                    className={`rounded-xl overflow-hidden cursor-pointer transition-transform hover:scale-[1.03] relative ${i === 0 ? "col-span-2 row-span-2" : ""}`}
                     style={{ aspectRatio: i === 0 ? "auto" : "1", minHeight: i === 0 ? "200px" : "auto" }}
                   >
-                    <img src={url} alt={`${org.name} gallery ${i + 1}`} className="w-full h-full object-cover" />
+                    <Image
+                      src={url}
+                      alt={`${org.name} gallery ${i + 1}`}
+                      fill
+                      sizes={i === 0 ? "(max-width: 768px) 100vw, 66vw" : "(max-width: 768px) 33vw, 20vw"}
+                      className="object-cover"
+                    />
                   </div>
                 ))}
                 {org.gallery!.length > 5 && (
