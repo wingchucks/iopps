@@ -100,6 +100,7 @@ export async function GET(request: NextRequest) {
               description: normalizedFeedDescription,
               externalUrl,
               externalId,
+              feedUrl,
             });
             const resolvedDescription = descriptionPatch?.description || normalizedFeedDescription;
 

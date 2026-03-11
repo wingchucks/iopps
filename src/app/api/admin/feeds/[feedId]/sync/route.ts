@@ -92,6 +92,7 @@ export async function POST(
           description: normalizedFeedDescription,
           externalUrl,
           externalId,
+          feedUrl: feed.feedUrl,
         });
         const resolvedDescription = descriptionPatch?.description || normalizedFeedDescription;
 

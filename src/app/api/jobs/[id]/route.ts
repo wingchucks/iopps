@@ -63,6 +63,12 @@ export async function GET(
     const data = docRef.data()!;
 
     if (source === "jobs") {
+      let feedUrl = "";
+      if (typeof data.feedId === "string" && data.feedId) {
+        const feedDoc = await db.collection("rssFeeds").doc(data.feedId).get();
+        feedUrl = typeof feedDoc.data()?.feedUrl === "string" ? feedDoc.data()!.feedUrl : "";
+      }
+
       const hydratedPatch = await fetchImportedDescriptionPatch({
         description: typeof data.description === "string" ? data.description : "",
         externalUrl: typeof data.externalUrl === "string" ? data.externalUrl : "",
@@ -70,6 +76,7 @@ export async function GET(
         location: typeof data.location === "string" ? data.location : "",
         jobType: typeof data.jobType === "string" ? data.jobType : "",
         department: typeof data.department === "string" ? data.department : "",
+        feedUrl,
       });
 
       if (hydratedPatch) {

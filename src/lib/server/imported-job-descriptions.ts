@@ -18,6 +18,7 @@ export interface ImportedJobDescriptionInput {
   location?: MaybeString;
   jobType?: MaybeString;
   department?: MaybeString;
+  feedUrl?: MaybeString;
 }
 
 export interface ImportedJobDescriptionPatch {
@@ -156,9 +157,32 @@ function extractAdpDepartment(payload: AdpDetailResponse): string | undefined {
   return normalizeImportedDescription(field?.stringValue);
 }
 
-async function fetchAdpDescription(externalUrl: string): Promise<ImportedJobDescriptionPatch | null> {
+function extractCidFromUrl(value: MaybeString): string {
+  if (!value) return "";
+  try {
+    return new URL(value).searchParams.get("cid") || "";
+  } catch {
+    return "";
+  }
+}
+
+function resolveAdpCid(externalUrl: string, feedUrl?: MaybeString): string {
+  const urlCid = extractCidFromUrl(externalUrl);
+  const feedCid = extractCidFromUrl(feedUrl);
+
+  if (feedCid && (!urlCid || /^\d+$/.test(urlCid))) {
+    return feedCid;
+  }
+
+  return urlCid || feedCid;
+}
+
+async function fetchAdpDescription(
+  externalUrl: string,
+  feedUrl?: MaybeString
+): Promise<ImportedJobDescriptionPatch | null> {
   const parsedUrl = new URL(externalUrl);
-  const cid = parsedUrl.searchParams.get("cid");
+  const cid = resolveAdpCid(externalUrl, feedUrl);
   const jobId = parsedUrl.searchParams.get("jobId");
   const lang = parsedUrl.searchParams.get("lang") || "en_CA";
   const locale = parsedUrl.searchParams.get("locale") || lang;
@@ -228,7 +252,7 @@ export async function fetchImportedDescriptionPatch(
   try {
     const parsed = new URL(externalUrl);
     if (parsed.hostname.includes("workforcenow.adp.com")) {
-      return await fetchAdpDescription(externalUrl);
+      return await fetchAdpDescription(externalUrl, input.feedUrl);
     }
     if (parsed.hostname.includes("oraclecloud.com")) {
       return await fetchOracleDescription(externalUrl);
