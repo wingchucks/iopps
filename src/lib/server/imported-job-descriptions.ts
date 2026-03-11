@@ -22,12 +22,14 @@ export interface ImportedJobDescriptionInput {
 }
 
 export interface ImportedJobDescriptionPatch {
-  description: string;
+  description?: string;
   descriptionFetchedAt: Date;
-  descriptionSource: "adp-detail" | "oracle-meta";
+  descriptionSource: "adp-detail" | "oracle-meta" | "adp-closed";
   location?: string;
   jobType?: string;
   department?: string;
+  active?: boolean;
+  status?: string;
 }
 
 interface AdpDetailResponse {
@@ -198,6 +200,21 @@ async function fetchAdpDescription(
 
   const responseText = await fetchText(detailUrl.toString());
   const payload = JSON.parse(responseText) as AdpDetailResponse;
+  const hasVisiblePosting = Boolean(
+    normalizeImportedDescription((payload as Record<string, unknown>).requisitionTitle as string | undefined)
+    || payload.requisitionDescription
+  );
+
+  if (!hasVisiblePosting) {
+    return {
+      description: "",
+      descriptionFetchedAt: new Date(),
+      descriptionSource: "adp-closed",
+      active: false,
+      status: "expired",
+    };
+  }
+
   const description = htmlToText(payload.requisitionDescription || "");
 
   if (!description || looksLikeBrokenImportedDescription(description)) {

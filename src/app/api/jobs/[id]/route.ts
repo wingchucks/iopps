@@ -83,6 +83,10 @@ export async function GET(
         const firestorePatch: Record<string, unknown> = { ...hydratedPatch };
         await docRef.ref.update(firestorePatch);
         Object.assign(data, firestorePatch);
+
+        if (hydratedPatch.active === false || hydratedPatch.status === "expired") {
+          return NextResponse.json({ error: "Job not found" }, { status: 404 });
+        }
       }
     }
 

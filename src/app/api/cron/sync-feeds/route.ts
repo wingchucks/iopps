@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
               externalId,
               feedUrl,
             });
-            const resolvedDescription = descriptionPatch?.description || normalizedFeedDescription;
+            const resolvedDescription = descriptionPatch?.description ?? normalizedFeedDescription;
 
             if (!externalId && !externalUrl) continue;
 
@@ -123,6 +123,10 @@ export async function GET(request: NextRequest) {
                   updatedAt: FieldValue.serverTimestamp(),
                 });
               }
+              continue;
+            }
+
+            if (descriptionPatch?.active === false || descriptionPatch?.status === "expired") {
               continue;
             }
 

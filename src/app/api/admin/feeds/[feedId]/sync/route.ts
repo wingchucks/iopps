@@ -94,7 +94,7 @@ export async function POST(
           externalId,
           feedUrl: feed.feedUrl,
         });
-        const resolvedDescription = descriptionPatch?.description || normalizedFeedDescription;
+        const resolvedDescription = descriptionPatch?.description ?? normalizedFeedDescription;
 
         if (!externalId && !externalUrl) continue;
 
@@ -115,6 +115,10 @@ export async function POST(
               updatedAt: FieldValue.serverTimestamp(),
             });
           }
+          continue;
+        }
+
+        if (descriptionPatch?.active === false || descriptionPatch?.status === "expired") {
           continue;
         }
 
