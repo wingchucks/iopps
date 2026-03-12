@@ -24,7 +24,7 @@ import {
   normalizeEventTypeLabel,
   normalizePublicEvent,
 } from "@/lib/public-events";
-import { displayLocation } from "@/lib/utils";
+import { displayAmount, displayLocation } from "@/lib/utils";
 
 // Unified type for rendering — covers fields from both Event and Post
 type EventData = {
@@ -36,7 +36,7 @@ type EventData = {
   location?: string | { city?: string; venue?: string; province?: string; remote?: boolean };
   eventType?: string;
   orgName?: string;
-  price?: string;
+  price?: unknown;
   schedule?: { day: string; items: string[] }[];
   highlights?: string[];
   type?: string;
@@ -240,6 +240,7 @@ function EventDetailContent() {
   const eventTypeLabel = normalizeEventTypeLabel(event.eventType);
   const emoji = eventTypeLabel === "Pow Wow" ? "\u{1FAB6}" : eventTypeLabel === "Career Fair" ? "\u{1F4BC}" : eventTypeLabel === "Round Dance" ? "\u{1F483}" : "\u{1F3AA}";
   const displayDates = getEventDisplayDates(event);
+  const priceLabel = displayAmount(event.price);
   const descriptionHasHtml = typeof event.description === "string" && event.description.includes("<");
 
   const rsvpButtons: { status: RSVPStatus; label: string; icon: string }[] = [
@@ -272,7 +273,7 @@ function EventDetailContent() {
             {eventTypeLabel && (
               <Badge text={eventTypeLabel} color="var(--gold)" bg="var(--gold-soft)" small />
             )}
-            {event.price && event.price.toLowerCase() === "free" && (
+            {priceLabel && priceLabel.toLowerCase() === "free" && (
               <Badge text="Free Event" color="var(--green)" bg="var(--green-soft)" small />
             )}
           </div>
@@ -280,7 +281,7 @@ function EventDetailContent() {
           <div className="flex flex-wrap justify-center gap-4 text-sm text-text-sec">
             {displayDates && <span>&#128197; {displayDates}</span>}
             {event.location && <span>&#128205; {displayLocation(event.location)}</span>}
-            {event.price && <span>&#127915; {event.price}</span>}
+            {priceLabel && <span>&#127915; {priceLabel}</span>}
           </div>
         </div>
       </div>
@@ -489,10 +490,10 @@ function EventDetailContent() {
                       <span className="text-xs font-semibold text-text text-right max-w-[140px]">{displayLocation(event.location)}</span>
                     </div>
                   )}
-                  {event.price && (
+                  {priceLabel && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Price</span>
-                      <span className="text-xs font-semibold text-green">{event.price}</span>
+                      <span className="text-xs font-semibold text-green">{priceLabel}</span>
                     </div>
                   )}
                   {eventTypeLabel && (

@@ -10,12 +10,12 @@ import Avatar from "@/components/Avatar";
 import { useAuth } from "@/lib/auth-context";
 import type { Organization } from "@/lib/firestore/organizations";
 import type { Job } from "@/lib/firestore/jobs";
-import { displayLocation } from "@/lib/utils";
+import { displayAmount, displayLocation } from "@/lib/utils";
 
 // ── Types for opportunities ──
 interface LinkedItem { href?: string; }
 interface OrgEvent extends LinkedItem { id: string; title: string; eventType?: string; date?: string; dates?: string; location?: string; employerId?: string; organizerName?: string; }
-interface OrgScholarship extends LinkedItem { id: string; title: string; amount?: string; deadline?: string; description?: string; employerId?: string; organization?: string; }
+interface OrgScholarship extends LinkedItem { id: string; title: string; amount?: unknown; deadline?: string; description?: string; employerId?: string; organization?: string; }
 interface OrgTraining extends LinkedItem { id: string; title?: string; programName?: string; duration?: string; credential?: string; campus?: string; location?: string; schoolId?: string; institutionName?: string; provider?: string; _source?: string; ownerName?: string; }
 interface OrgContentResponse {
   org: Organization | null;
@@ -440,7 +440,10 @@ function OrgProfileContent() {
                 {/* Scholarships Panel */}
                 {activeOppTab === "scholarships" && (
                   <div className="flex flex-col gap-2.5">
-                    {visibleScholarships.map((s, i) => (
+                    {visibleScholarships.map((s, i) => {
+                      const scholarshipAmount = displayAmount(s.amount);
+
+                      return (
                       <div key={s.id}>
                         {renderLinkedCard(
                           s,
@@ -449,7 +452,7 @@ function OrgProfileContent() {
                             <p className="text-sm font-bold text-text">{s.title}</p>
                             {s.description && <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{s.description}</p>}
                             <p className="text-[11px] mt-1" style={{ color: i === 0 ? "#FBBF24" : "var(--text-muted)" }}>
-                              {s.amount ? `💰 ${s.amount}` : ""}{s.deadline ? ` · Deadline: ${s.deadline}` : ""}
+                              {scholarshipAmount ? `💰 ${scholarshipAmount}` : ""}{s.deadline ? ` · Deadline: ${s.deadline}` : ""}
                             </p>
                           </>,
                           {
@@ -458,7 +461,8 @@ function OrgProfileContent() {
                           },
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
                     {scholarships.length > 4 && (
                       <button
                         type="button"

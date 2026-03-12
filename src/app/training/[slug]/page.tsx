@@ -15,6 +15,7 @@ import {
   getUserEnrollments,
   type TrainingProgram,
 } from "@/lib/firestore/training";
+import { displayAmount } from "@/lib/utils";
 
 const categoryColors: Record<string, { color: string; bg: string }> = {
   Technology: { color: "var(--blue)", bg: "var(--blue-soft)" },
@@ -135,6 +136,7 @@ export default function TrainingDetailPage() {
     program.maxEnrollment != null
       ? Math.round((program.enrollmentCount / program.maxEnrollment) * 100)
       : null;
+  const priceLabel = displayAmount(program.price);
 
   return (
     <AppShell>
@@ -288,15 +290,10 @@ export default function TrainingDetailPage() {
                     <p
                       className="text-sm font-bold"
                       style={{
-                        color:
-                          program.price == null
-                            ? "var(--green)"
-                            : "var(--text)",
+                        color: priceLabel ? "var(--text)" : "var(--green)",
                       }}
                     >
-                      {program.price == null
-                        ? "Free"
-                        : `$${program.price}`}
+                      {priceLabel || "Free"}
                     </p>
                   </div>
                   <div>
@@ -423,11 +420,10 @@ export default function TrainingDetailPage() {
             <p
               className="text-lg font-bold"
               style={{
-                color:
-                  program.price == null ? "var(--green)" : "var(--text)",
+                color: priceLabel ? "var(--text)" : "var(--green)",
               }}
             >
-              {program.price == null ? "Free" : `$${program.price}`}
+              {priceLabel || "Free"}
             </p>
             <p className="text-xs text-text-muted">
               {program.enrollmentCount} enrolled
@@ -475,6 +471,8 @@ function EnrollSidebar({
   user: unknown;
   onEnroll: () => void;
 }) {
+  const priceLabel = displayAmount(program.price);
+
   return (
     <Card>
       <div style={{ padding: 24 }}>
@@ -482,11 +480,10 @@ function EnrollSidebar({
         <p
           className="text-2xl font-extrabold mb-4"
           style={{
-            color:
-              program.price == null ? "var(--green)" : "var(--text)",
+            color: priceLabel ? "var(--text)" : "var(--green)",
           }}
         >
-          {program.price == null ? "Free" : `$${program.price}`}
+          {priceLabel || "Free"}
         </p>
 
         {/* Enrollment progress */}
