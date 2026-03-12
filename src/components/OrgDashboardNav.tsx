@@ -68,6 +68,11 @@ const icons = {
       <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
     </svg>
   ),
+  briefcase: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+    </svg>
+  ),
 };
 
 interface OrgDashboardNavProps {
@@ -82,6 +87,7 @@ export default function OrgDashboardNav({
   onPostJob,
 }: OrgDashboardNavProps) {
   const items: NavItem[] = [
+    { href: "/org/dashboard/jobs", label: "Jobs", icon: icons.briefcase },
     { href: "/org/dashboard/applications", label: "Applications", icon: icons.applications, badge: pendingApps || undefined },
     { href: "/org/dashboard/events", label: "Events", icon: icons.calendar },
     { href: "/org/dashboard/scholarships", label: "Scholarships", icon: icons.graduation },

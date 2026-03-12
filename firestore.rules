@@ -35,12 +35,24 @@ service cloud.firestore {
 
     // ── Public content collections ──
 
-    // Jobs: public read, admin or employer can write
+    // Jobs: public read, admin write, org owner/admin can create/update their org's
     match /jobs/{jobId} {
       allow read: if true;
       allow write: if isAdmin();
-      allow create: if isSignedIn();
-      allow update: if isAdmin() || isSignedIn();
+      allow create: if isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        memberData().orgId == request.resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"];
+      allow update: if isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        memberData().orgId == resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"];
+      allow delete: if isAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        memberData().orgId == resource.data.orgId &&
+        memberData().orgRole in ["owner", "admin"]
+      );
     }
 
     // Employers: public read, employer can update own, admin can write any

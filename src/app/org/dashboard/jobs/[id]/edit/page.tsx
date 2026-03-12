@@ -259,7 +259,7 @@ export default function JobEditPage() {
         throw new Error(typeof result.error === "string" ? result.error : "Failed to delete job");
       }
       showToast("Job deleted", "success");
-      router.push("/org/dashboard");
+      router.push("/org/dashboard/jobs");
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Failed to delete job", "error");
     }
@@ -302,11 +302,11 @@ export default function JobEditPage() {
         <div className="max-w-[800px] mx-auto px-4 py-8 md:px-10">
           {/* Back link */}
           <Link
-            href="/org/dashboard"
+            href="/org/dashboard/jobs"
             className="inline-flex items-center gap-1.5 text-sm font-semibold no-underline mb-6 transition-opacity hover:opacity-70"
             style={{ color: "var(--teal)" }}
           >
-            &larr; Back to Dashboard
+            &larr; Back to Jobs
           </Link>
 
           {loading ? (
@@ -333,14 +333,14 @@ export default function JobEditPage() {
                 <div
                   className="rounded-xl px-5 py-4 mb-6 text-sm"
                   style={{
-                    background: "rgba(245,158,11,.1)",
-                    border: "1px solid rgba(245,158,11,.3)",
+                    background: "rgba(59,130,246,.08)",
+                    border: "1px solid rgba(59,130,246,.25)",
                     color: "var(--text-sec)",
                   }}
                 >
-                  <strong style={{ color: "#F59E0B" }}>⚡ Imported Job</strong>
+                  <strong style={{ color: "#3B82F6" }}>Imported Job</strong>
                   <span className="ml-2">
-                    This job was synced from an external feed. Edits here won&apos;t persist — the job is managed by the source system.
+                    This job was originally imported from an external feed. You can close or deactivate it, but some fields may not be editable.
                   </span>
                 </div>
               )}
