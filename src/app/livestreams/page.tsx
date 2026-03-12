@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
@@ -178,9 +177,48 @@ export default function LivestreamsPage() {
                     autoplay
                     live
                   />
-                  <p className="mt-3 font-bold text-text text-lg">
-                    {data.live.title}
-                  </p>
+                  <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                    <div>
+                      <p className="font-bold text-text text-lg">
+                        {data.live.title}
+                      </p>
+                      <p className="mt-1 text-sm text-text-sec">
+                        Watch on IOPPS or open the live stream directly on YouTube.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <a
+                        href={`https://www.youtube.com/watch?v=${data.live.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-[14px] px-5 py-3 font-bold text-sm no-underline text-white"
+                        style={{ background: "#DC2626" }}
+                      >
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.377.504A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.504 9.376.504 9.376.504s7.505 0 9.377-.504a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                        </svg>
+                        Watch live on YouTube
+                      </a>
+                      <a
+                        href="https://www.youtube.com/@iopps"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-[14px] px-5 py-3 font-bold text-sm no-underline"
+                        style={{
+                          background: "var(--card)",
+                          color: "var(--text)",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        Visit channel
+                      </a>
+                    </div>
+                  </div>
                 </section>
               )}
 
