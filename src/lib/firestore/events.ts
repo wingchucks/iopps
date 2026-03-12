@@ -71,11 +71,24 @@ export async function getEvent(id: string): Promise<Event | null> {
 }
 
 export async function getEventBySlug(slug: string): Promise<Event | null> {
+  const direct = await getDoc(doc(col, slug));
+  if (direct.exists()) {
+    const event = normalizePublicEvent({ id: direct.id, ...direct.data() }) as Event;
+    if (isPublicEventVisible(event)) {
+      return event;
+    }
+  }
+
   const snap = await getDocs(query(col, where("slug", "==", slug)));
-  if (snap.empty) return null;
-  const d = snap.docs[0];
-  const event = normalizePublicEvent({ id: d.id, ...d.data() }) as Event;
-  return isPublicEventVisible(event) ? event : null;
+  if (!snap.empty) {
+    const d = snap.docs[0];
+    const event = normalizePublicEvent({ id: d.id, ...d.data() }) as Event;
+    if (isPublicEventVisible(event)) {
+      return event;
+    }
+  }
+
+  return null;
 }
 
 export async function getEventsByOrg(orgId: string): Promise<Event[]> {
