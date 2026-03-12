@@ -7,6 +7,7 @@ import {
   selectFeaturedOpportunityItems,
   sortByRecencyWithFeaturedBoost,
 } from "@/lib/public-featured";
+import { displayAmount, displayLocation } from "@/lib/utils";
 
 type FeedItemType = "job" | "program" | "event" | "scholarship";
 
@@ -44,8 +45,8 @@ async function fetchJobs(): Promise<FeedItem[]> {
     orgName: String(job.employerName || job.company || job.orgName || ""),
     orgLogo: (job.employerLogoUrl as string) || (job.logoUrl as string) || (job.companyLogoUrl as string) || "",
     orgSlug: (job.orgSlug as string) || (job.employerId as string) || "",
-    subtitle: [job.location, job.workLocation].filter(Boolean).join(" · "),
-    detail: (job.salary as string) || "",
+    subtitle: [displayLocation(job.location), displayLocation(job.workLocation)].filter(Boolean).join(" · "),
+    detail: displayAmount(job.salary),
     badge: (job.employmentType as string) || (job.jobType as string) || "",
     href: `/jobs/${job.slug || job.id || ""}`,
     createdAt: (job.createdAt as string) || (job.postedAt as string) || "",
@@ -65,7 +66,7 @@ async function fetchPrograms(): Promise<FeedItem[]> {
     orgName: String(program.orgName || ""),
     orgLogo: (program.orgLogoUrl as string) || "",
     orgSlug: (program.orgId as string) || "",
-    subtitle: [program.location, program.format].filter(Boolean).join(" · "),
+    subtitle: [displayLocation(program.location), String(program.format || "")].filter(Boolean).join(" · "),
     detail: (program.duration as string) || "",
     badge: (program.credential as string) || (program.category as string) || "",
     href: (program.externalUrl as string) || `/schools/${program.orgId}`,
@@ -85,7 +86,7 @@ async function fetchEvents(): Promise<FeedItem[]> {
     title: String(event.title || event.name || ""),
     orgName: String(event.organizer || event.organization || "IOPPS"),
     orgLogo: (event.logoUrl as string) || (event.imageUrl as string) || (event.posterUrl as string) || "",
-    subtitle: [event.location, event.city].filter(Boolean).join(", "),
+    subtitle: [displayLocation(event.location), String(event.city || "")].filter(Boolean).join(", "),
     detail: (event.date as string) || (event.startDate as string) || (event.dates as string) || "",
     badge: (event.eventType as string) || (event.type as string) || "",
     href: `/events/${event.id || event.slug}`,
@@ -108,7 +109,7 @@ async function fetchScholarships(): Promise<FeedItem[]> {
       orgName: String(scholarship.provider || scholarship.organization || scholarship.orgName || ""),
       orgLogo: (scholarship.logoUrl as string) || "",
       subtitle: scholarship.deadline ? `Deadline: ${scholarship.deadline}` : String(scholarship.eligibility || ""),
-      detail: (scholarship.amount as string) || (scholarship.value as string) || "",
+      detail: displayAmount(scholarship.amount) || displayAmount(scholarship.value),
       badge: (scholarship.category as string) || (scholarship.type as string) || "",
       href: (scholarship.applicationUrl as string) || (scholarship.url as string) || "/scholarships",
       createdAt: (scholarship.createdAt as string) || "",

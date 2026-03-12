@@ -6,6 +6,7 @@ import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
+import { displayAmount } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
@@ -497,7 +498,7 @@ export default function OrgDashboardScholarshipsPage() {
                               title: editingScholarship.title,
                               slug: editingScholarship.slug || editingScholarship.id,
                               description: editingScholarship.description || "",
-                              amount: editingScholarship.amount || "",
+                              amount: displayAmount(editingScholarship.amount) || "",
                               deadline: editingScholarship.deadline || "",
                               eligibility: editingScholarship.eligibility || "",
                               requirements: editingScholarship.requirements?.length
@@ -544,12 +545,12 @@ export default function OrgDashboardScholarshipsPage() {
                                 {scholarship.title}
                               </h3>
                               <StatusBadge status={scholarship.status as ScholarshipStatus} />
-                              {scholarship.amount && (
+                              {displayAmount(scholarship.amount) && (
                                 <span
                                   className="px-2 py-0.5 rounded-full text-[10px] font-bold"
                                   style={{ background: "rgba(16,185,129,.12)", color: "#10B981" }}
                                 >
-                                  {scholarship.amount}
+                                  {displayAmount(scholarship.amount)}
                                 </span>
                               )}
                             </div>

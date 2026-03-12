@@ -8,6 +8,7 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
+import { displayAmount, displayLocation } from "@/lib/utils";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
@@ -142,6 +143,8 @@ function JobDetailContent() {
   const requiresResume = !!(job as unknown as Record<string, unknown>).requiresResume;
   const requiresCoverLetter = !!(job as unknown as Record<string, unknown>).requiresCoverLetter;
   const requiresReferences = !!(job as unknown as Record<string, unknown>).requiresReferences;
+  const salaryLabel = displayAmount(job.salary);
+  const locationLabel = displayLocation(job.location);
 
   return (
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
@@ -193,8 +196,8 @@ function JobDetailContent() {
             </div>
 
             <div className="flex flex-wrap gap-3 text-sm text-text-sec">
-              {job.location && <span>📍 {job.location}</span>}
-              {job.salary && typeof job.salary === "string" && <span>💰 {job.salary}</span>}
+              {locationLabel && <span>📍 {locationLabel}</span>}
+              {salaryLabel && <span>💰 {salaryLabel}</span>}
               {closingDate && <span>📅 Closes: {closingDate}</span>}
             </div>
           </div>
@@ -329,16 +332,16 @@ function JobDetailContent() {
                       <span className="text-xs font-semibold text-text">{jobType}</span>
                     </div>
                   )}
-                  {job.salary && typeof job.salary === "string" && (
+                  {salaryLabel && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Salary</span>
-                      <span className="text-xs font-semibold text-text">{job.salary}</span>
+                      <span className="text-xs font-semibold text-text">{salaryLabel}</span>
                     </div>
                   )}
-                  {job.location && (
+                  {locationLabel && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Location</span>
-                      <span className="text-xs font-semibold text-text">{job.location}</span>
+                      <span className="text-xs font-semibold text-text">{locationLabel}</span>
                     </div>
                   )}
                   {closingDate && (
