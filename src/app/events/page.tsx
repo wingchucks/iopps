@@ -10,6 +10,7 @@ import {
   getEventDisplayDates,
   getEventStartDate,
   isPublicEventVisible,
+  normalizeEventTypeLabel,
   normalizePublicEvent,
 } from "@/lib/public-events";
 import { displayLocation } from "@/lib/utils";
@@ -71,11 +72,13 @@ export default function EventsBrowsePage() {
 
   const eventTypes = useMemo(
     () => {
-      const fromEvents = events.map((e) => e.eventType).filter(Boolean) as string[];
+      const fromEvents = events
+        .map((e) => normalizeEventTypeLabel(e.eventType))
+        .filter(Boolean) as string[];
       const all = new Set(fromEvents);
       all.add("Pow Wow");
       all.add("Conference");
-      all.add("Cultural");
+      all.add("Round Dance");
       all.add("Career Fair");
       all.add("Sports");
       return [...all].sort();
@@ -99,7 +102,7 @@ export default function EventsBrowsePage() {
       result = result.filter((e) => displayLocation(e.location) === locationFilter);
     }
     if (typeFilter) {
-      result = result.filter((e) => e.eventType === typeFilter);
+      result = result.filter((e) => normalizeEventTypeLabel(e.eventType) === typeFilter);
     }
     if (dateFilter !== "All Dates") {
       const now = new Date();
@@ -316,7 +319,7 @@ export default function EventsBrowsePage() {
                                 background: "var(--purple-soft)",
                               }}
                             >
-                              {evt.eventType}
+                              {normalizeEventTypeLabel(evt.eventType)}
                             </span>
                           )}
                         </div>

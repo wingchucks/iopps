@@ -22,6 +22,7 @@ import ReportButton from "@/components/ReportButton";
 import {
   getEventDisplayDates,
   isPublicEventVisible,
+  normalizeEventTypeLabel,
   normalizePublicEvent,
 } from "@/lib/public-events";
 import { displayLocation } from "@/lib/utils";
@@ -232,7 +233,8 @@ function EventDetailContent() {
     );
   }
 
-  const emoji = event.eventType === "Pow Wow" ? "\u{1FAB6}" : event.eventType === "Career Fair" ? "\u{1F4BC}" : event.eventType === "Round Dance" ? "\u{1F483}" : "\u{1F3AA}";
+  const eventTypeLabel = normalizeEventTypeLabel(event.eventType);
+  const emoji = eventTypeLabel === "Pow Wow" ? "\u{1FAB6}" : eventTypeLabel === "Career Fair" ? "\u{1F4BC}" : eventTypeLabel === "Round Dance" ? "\u{1F483}" : "\u{1F3AA}";
   const displayDates = getEventDisplayDates(event);
   const descriptionHasHtml = typeof event.description === "string" && event.description.includes("<");
 
@@ -263,8 +265,8 @@ function EventDetailContent() {
         <div className="text-center">
           <span className="text-6xl sm:text-7xl block mb-4">{emoji}</span>
           <div className="flex flex-wrap justify-center gap-2 mb-3">
-            {event.eventType && (
-              <Badge text={event.eventType} color="var(--gold)" bg="var(--gold-soft)" small />
+            {eventTypeLabel && (
+              <Badge text={eventTypeLabel} color="var(--gold)" bg="var(--gold-soft)" small />
             )}
             {event.price && event.price.toLowerCase() === "free" && (
               <Badge text="Free Event" color="var(--green)" bg="var(--green-soft)" small />
@@ -489,10 +491,10 @@ function EventDetailContent() {
                       <span className="text-xs font-semibold text-green">{event.price}</span>
                     </div>
                   )}
-                  {event.eventType && (
+                  {eventTypeLabel && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Category</span>
-                      <span className="text-xs font-semibold text-text">{event.eventType}</span>
+                      <span className="text-xs font-semibold text-text">{eventTypeLabel}</span>
                     </div>
                   )}
                   {event.contactEmail && (

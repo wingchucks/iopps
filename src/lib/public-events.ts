@@ -9,6 +9,16 @@ type EventLike = {
   active?: boolean | null;
 };
 
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  "career fair": "Career Fair",
+  conference: "Conference",
+  cultural: "Round Dance",
+  powwow: "Pow Wow",
+  "pow wow": "Pow Wow",
+  "round dance": "Round Dance",
+  sports: "Sports",
+};
+
 const HIDDEN_STATUSES = new Set([
   "archived",
   "cancelled",
@@ -142,4 +152,10 @@ export function normalizePublicEvent<T extends object>(event: T & EventLike): T 
   if (!dates) return event;
   if (typeof event.dates === "string" && event.dates.trim()) return event;
   return { ...event, dates };
+}
+
+export function normalizeEventTypeLabel(value?: string | null): string {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (!normalized) return "";
+  return EVENT_TYPE_LABELS[normalized] || value!.trim();
 }
