@@ -25,16 +25,6 @@ interface FeedItem {
   featured?: boolean;
 }
 
-const TABS = [
-  { key: "all", label: "All", emoji: "🌐" },
-  { key: "job", label: "Jobs", emoji: "💼" },
-  { key: "program", label: "Programs", emoji: "📚" },
-  { key: "event", label: "Events", emoji: "📅" },
-  { key: "scholarship", label: "Scholarships", emoji: "🎓" },
-] as const;
-
-type TabKey = typeof TABS[number]["key"];
-
 const TYPE_META: Record<FeedItemType, { label: string; icon: string }> = {
   job: { label: "Jobs", icon: "💼" },
   program: { label: "Programs", icon: "📚" },
@@ -330,7 +320,6 @@ function SkeletonCard() {
 export default function FeedPage() {
   const [allItems, setAllItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabKey>("all");
 
   useEffect(() => {
     async function load() {
@@ -362,10 +351,6 @@ export default function FeedPage() {
     load();
   }, []);
 
-  const filtered = useMemo(() => (
-    activeTab === "all" ? allItems : allItems.filter((item) => item.type === activeTab)
-  ), [activeTab, allItems]);
-
   const featuredItems = useMemo(() => (
     selectFeaturedOpportunityItems(allItems, {
       maxItems: 4,
@@ -375,14 +360,6 @@ export default function FeedPage() {
       featuredKeys: ["featuredAt", "updatedAt", "createdAt"],
     })
   ), [allItems]);
-
-  const counts = useMemo(() => {
-    const countMap: Record<string, number> = { all: allItems.length };
-    for (const tab of TABS.slice(1)) {
-      countMap[tab.key] = allItems.filter((item) => item.type === tab.key).length;
-    }
-    return countMap;
-  }, [allItems]);
 
   return (
     <AppShell>
@@ -399,48 +376,13 @@ export default function FeedPage() {
               Opportunities Feed
             </h1>
             <p className="mt-2 max-w-[620px] text-base text-white/78">
-              Jobs, programs, events, and scholarships in one stream, with featured opportunities surfaced without taking over the feed.
+              Jobs, programs, events, and scholarships in one stream. Use the main site navigation to jump into dedicated category boards when you want to browse one area at a time.
             </p>
           </div>
         </section>
 
-        <div className="sticky top-0 z-10 border-b border-white/8 bg-[#0A0A0A]/95 px-5 backdrop-blur">
-          <div className="mx-auto flex max-w-[860px] gap-2 overflow-x-auto py-3 [scrollbar-width:none]">
-            {TABS.map((tab) => {
-              const active = activeTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className="flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors"
-                  style={{
-                    border: active ? "1px solid #14B8A6" : "1px solid rgba(255,255,255,.08)",
-                    background: active ? "rgba(13,148,136,.16)" : "transparent",
-                    color: active ? "#99F6E4" : "rgba(255,255,255,.72)",
-                    fontWeight: active ? 700 : 500,
-                  }}
-                >
-                  <span>{tab.emoji}</span>
-                  <span>{tab.label}</span>
-                  {!loading && counts[tab.key] > 0 && (
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                      style={{
-                        background: active ? "rgba(20,184,166,.18)" : "rgba(255,255,255,.08)",
-                        color: active ? "#CCFBF1" : "rgba(255,255,255,.62)",
-                      }}
-                    >
-                      {counts[tab.key]}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mx-auto max-w-[860px] px-4 py-5 md:px-5 md:py-6">
-          {!loading && activeTab === "all" && featuredItems.length > 0 && (
+        <div className="mx-auto max-w-[860px] px-4 py-5 md:px-5 md:py-6" data-tour-step="feed">
+          {!loading && featuredItems.length > 0 && (
             <section className="mb-6 rounded-[28px] border border-white/8 bg-[#111111] p-5 md:p-6">
               <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -470,12 +412,10 @@ export default function FeedPage() {
           <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-2xl font-semibold text-white">
-                {activeTab === "all" ? "Latest across IOPPS" : `Latest ${TYPE_META[activeTab].label.toLowerCase()}`}
+                Latest across IOPPS
               </h2>
               <p className="text-sm text-white/60">
-                {activeTab === "all"
-                  ? "Featured items get a light boost, but fresh opportunities still lead the stream."
-                  : `Fresh ${TYPE_META[activeTab].label.toLowerCase()} from public listings.`}
+                Featured items get a light boost, but fresh opportunities still lead the stream.
               </p>
             </div>
           </div>
@@ -486,11 +426,11 @@ export default function FeedPage() {
                 <SkeletonCard key={index} />
               ))}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : allItems.length === 0 ? (
             <div className="rounded-[24px] border border-white/8 bg-[#111111] px-6 py-16 text-center">
               <p className="mb-3 text-4xl">🌐</p>
               <h3 className="text-lg font-semibold text-white">
-                No {activeTab === "all" ? "opportunities" : TYPE_META[activeTab].label.toLowerCase()} yet
+                No opportunities yet
               </h3>
               <p className="mt-2 text-sm text-white/60">
                 Check back soon. New public opportunities are added regularly.
@@ -498,7 +438,7 @@ export default function FeedPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {filtered.map((item) => (
+              {allItems.map((item) => (
                 <FeedCard key={`${item.type}-${item.id}`} item={item} />
               ))}
             </div>

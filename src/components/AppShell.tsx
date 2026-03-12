@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+
 import NavBar from "./NavBar";
 import IconRailSidebar from "./IconRailSidebar";
 
@@ -11,11 +13,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <NavBar />
       </div>
 
-      {/* Desktop: icon rail sidebar (hidden below lg) */}
-      <IconRailSidebar />
+      {/* Desktop: persistent left navigation (hidden below lg) */}
+      <Suspense fallback={null}>
+        <IconRailSidebar />
+      </Suspense>
 
-      {/* Content area — offset for the fixed rail on desktop */}
-      <div className="lg:pl-[72px]">{children}</div>
+      {/* Content area — offset for the fixed sidebar on desktop */}
+      <div className="lg:pl-[240px]">{children}</div>
     </>
   );
 }

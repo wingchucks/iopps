@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
-import { getMemberProfile } from "@/lib/firestore/members";
-import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getMemberProfile } from "@/lib/firestore/members";
 import Avatar from "./Avatar";
 import CreateChooserModal from "./CreateChooserModal";
 import CreatePostModal from "./CreatePostModal";
 
-/* ── SVG icon component ── */
 function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
   const p = {
     width: size,
@@ -25,6 +24,7 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
   };
+
   switch (name) {
     case "home":
       return (
@@ -56,20 +56,27 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
           <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
         </svg>
       );
-    case "building":
+    case "dashboard":
       return (
         <svg {...p}>
-          <path d="M3 21h18" />
-          <path d="M5 21V7l8-4 8 4v14" />
-          <path d="M9 21v-6h6v6" />
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
         </svg>
       );
-    case "shopping":
+    case "settings":
       return (
         <svg {...p}>
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <path d="M16 10a4 4 0 0 1-8 0" />
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      );
+    case "search":
+      return (
+        <svg {...p}>
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
       );
     case "book":
@@ -98,51 +105,10 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
       );
-    case "dashboard":
-      return (
-        <svg {...p}>
-          <rect x="3" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="3" width="7" height="7" rx="1" />
-          <rect x="3" y="14" width="7" height="7" rx="1" />
-          <rect x="14" y="14" width="7" height="7" rx="1" />
-        </svg>
-      );
     case "shield":
       return (
         <svg {...p}>
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
-      );
-    case "settings":
-      return (
-        <svg {...p}>
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-        </svg>
-      );
-    case "search":
-      return (
-        <svg {...p}>
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-      );
-    case "handshake":
-      return (
-        <svg {...p}>
-          <path d="M20.5 11H3.5" />
-          <path d="M11.5 3l-4 8 6 2-4 8" />
-          <path d="M3.5 11l3.5-3.5L11 11" />
-          <path d="M20.5 11l-3.5-3.5L13 11" />
-          <path d="M7 7.5L11 11l-2 4" />
-          <path d="M17 7.5L13 11l2 4" />
-        </svg>
-      );
-    case "video":
-      return (
-        <svg {...p}>
-          <polygon points="23 7 16 12 23 17 23 7" />
-          <rect x="1" y="5" width="15" height="14" rx="2" />
         </svg>
       );
     case "plus":
@@ -158,36 +124,23 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016 2.993 2.993 0 0 0 2.25-1.016 3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
         </svg>
       );
-    case "user":
-      return (
-        <svg {...p}>
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      );
     default:
       return null;
   }
 }
 
-/* ── Nav item definitions ── */
 const navItems = [
-  { href: "/search", label: "Search", icon: "search" },
-  { href: "/feed", label: "Feed", icon: "home" },
-  // Admin injected dynamically below
-  { href: "/jobs", label: "Jobs", icon: "briefcase" },
-  { href: "/events", label: "Events", icon: "calendar" },
-  { href: "/scholarships", label: "Scholarships", icon: "award" },
-  { href: "/schools", label: "Schools", icon: "building" },
-  { href: "/search?type=Businesses", label: "Businesses", icon: "store" },
-  { href: "/partners", label: "Partners", icon: "handshake" },
-  { href: "/shop", label: "Shop", icon: "shopping" },
-  { href: "/stories", label: "Stories", icon: "book" },
-  { href: "/messages", label: "Messages", icon: "message" },
-  { href: "/saved", label: "Saved", icon: "bookmark" },
-  { href: "/notifications", label: "Notifications", icon: "bell" },
-  { href: "/livestreams", label: "Live", icon: "video" },
-];
+  { href: "/feed", label: "Feed", icon: "home", key: "feed" },
+  { href: "/search", label: "Search", icon: "search", key: "search" },
+  { href: "/jobs", label: "Jobs", icon: "briefcase", key: "jobs" },
+  { href: "/events", label: "Events", icon: "calendar", key: "events" },
+  { href: "/scholarships", label: "Scholarships", icon: "award", key: "scholarships" },
+  { href: "/programs", label: "Programs", icon: "book", key: "programs" },
+  { href: "/search?type=Businesses", label: "Businesses", icon: "store", key: "businesses" },
+  { href: "/messages", label: "Messages", icon: "message", key: "messages" },
+  { href: "/saved", label: "Saved", icon: "bookmark", key: "saved" },
+  { href: "/notifications", label: "Notifications", icon: "bell", key: "notifications" },
+] as const;
 
 export default function IconRailSidebar() {
   const [hasOrg, setHasOrg] = useState(false);
@@ -195,6 +148,7 @@ export default function IconRailSidebar() {
   const [showChooser, setShowChooser] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { theme, toggle } = useTheme();
@@ -202,28 +156,28 @@ export default function IconRailSidebar() {
 
   useEffect(() => {
     if (!user) return;
+    const currentUser = user;
 
     async function checkRoles() {
       try {
-        const profile = await getMemberProfile(user!.uid);
+        const profile = await getMemberProfile(currentUser.uid);
         if (profile?.orgId) {
           setHasOrg(true);
         } else {
-          // Fallback: check users collection for employer role
-          const userDoc = await getDoc(doc(db, "users", user!.uid));
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
           const userData = userDoc.data();
           if (userData?.employerId && userData?.role === "employer") {
             setHasOrg(true);
           }
         }
+
         if (profile?.role === "admin" || profile?.role === "moderator") {
           setIsAdmin(true);
           return;
         }
       } catch {
-        // Members profile failed — check users collection as fallback
         try {
-          const userDoc = await getDoc(doc(db, "users", user!.uid));
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
           const userData = userDoc.data();
           if (userData?.employerId && userData?.role === "employer") {
             setHasOrg(true);
@@ -231,9 +185,8 @@ export default function IconRailSidebar() {
         } catch {}
       }
 
-      // Check Firebase custom claims for admin
       try {
-        const result = await user!.getIdTokenResult();
+        const result = await currentUser.getIdTokenResult();
         if (result.claims.admin === true || result.claims.role === "admin") {
           setIsAdmin(true);
         }
@@ -250,286 +203,249 @@ export default function IconRailSidebar() {
 
   const allItems = [
     ...navItems,
-    ...(hasOrg
-      ? [{ href: "/org/dashboard", label: "Dashboard", icon: "dashboard" }]
-      : []),
-
+    ...(hasOrg ? [{ href: "/org/dashboard", label: "Dashboard", icon: "dashboard", key: "dashboard" as const }] : []),
   ];
 
-  return (
-  <>
-    <aside className="hidden lg:flex flex-col fixed top-0 left-0 h-screen w-[72px] hover:w-[220px] bg-card border-r border-border z-40 transition-[width] duration-200 group/rail overflow-hidden">
-      {/* Logo */}
-      <Link
-        href="/feed"
-        className="flex items-center justify-center px-4 py-4 no-underline shrink-0"
-      >
-        <div
-          className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10"
-          style={{
-            background:
-              "linear-gradient(145deg, color-mix(in srgb, var(--teal) 28%, #08111f) 0%, #07111e 100%)",
-            boxShadow:
-              "0 18px 34px -26px color-mix(in srgb, var(--teal) 85%, transparent), inset 0 1px 0 rgba(255,255,255,0.18)",
-          }}
-        >
-          <span
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(circle at 28% 20%, rgba(255,255,255,0.24), transparent 50%)",
-            }}
-          />
-          <Image
-            src="/logo.png"
-            alt="IOPPS"
-            width={32}
-            height={32}
-            className="relative z-10 shrink-0"
-            priority
-          />
-        </div>
-      </Link>
+  const searchType = searchParams.get("type")?.toLowerCase();
 
-      {/* Create button — auth only */}
-      {user && (
-        <button
-          onClick={() => setShowChooser(true)}
-          className="shrink-0 px-2 pt-2 border-none cursor-pointer"
-          style={{ background: "transparent" }}
-        >
+  const isItemActive = (href: string, key: string) => {
+    if (key === "businesses") {
+      return pathname === "/search" && searchType === "businesses";
+    }
+
+    if (key === "search") {
+      return pathname === "/search" && searchType !== "businesses";
+    }
+
+    return pathname === href || (href !== "/feed" && pathname.startsWith(`${href}/`));
+  };
+
+  return (
+    <>
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[240px] flex-col border-r border-border bg-card lg:flex">
+        <Link href="/feed" className="flex items-center px-4 py-4 no-underline shrink-0">
           <div
-            className="flex items-center gap-3 h-11 px-3 rounded-xl transition-all duration-200"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10"
             style={{
               background:
-                "linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 55%, var(--teal-dark) 100%)",
-              color: "#fff",
+                "linear-gradient(145deg, color-mix(in srgb, var(--teal) 28%, #08111f) 0%, #07111e 100%)",
               boxShadow:
-                "0 18px 34px -24px color-mix(in srgb, var(--teal) 88%, transparent), inset 0 1px 0 rgba(255,255,255,0.18)",
+                "0 18px 34px -26px color-mix(in srgb, var(--teal) 85%, transparent), inset 0 1px 0 rgba(255,255,255,0.18)",
             }}
           >
             <span
-              className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full"
-              style={{ background: "rgba(255,255,255,0.14)" }}
-            >
-              <NavIcon name="plus" size={20} />
-            </span>
-            <span className="opacity-0 group-hover/rail:opacity-100 text-sm font-bold whitespace-nowrap transition-opacity duration-200">
-              Create
-            </span>
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(circle at 28% 20%, rgba(255,255,255,0.24), transparent 50%)",
+              }}
+            />
+            <Image
+              src="/logo.png"
+              alt="IOPPS"
+              width={32}
+              height={32}
+              className="relative z-10 shrink-0"
+              priority
+            />
           </div>
-        </button>
-      )}
+        </Link>
 
-      {/* Separator */}
-      <div
-        className="h-px mx-3 shrink-0"
-        style={{ background: "var(--border)" }}
-      />
-
-      {/* Nav items */}
-      <nav
-        className="flex-1 flex flex-col gap-0.5 py-2 px-2 overflow-y-auto"
-        style={{ scrollbarWidth: "none" }}
-      >
-        {allItems.map(({ href, label, icon }) => {
-          const active =
-            pathname === href ||
-            (href !== "/feed" && pathname.startsWith(href + "/"));
-          const isLive = href === "/livestreams";
-          return (
-            <Link key={href} href={href} className="no-underline">
-              <div
-                className="flex items-center gap-3 h-10 px-3 rounded-lg transition-colors hover:bg-bg"
-                style={{
-                  background: active
-                    ? "color-mix(in srgb, var(--teal) 8%, transparent)"
-                    : undefined,
-                  borderLeft: active
-                    ? "3px solid var(--teal)"
-                    : "3px solid transparent",
-                  color: active ? "var(--teal)" : "var(--text-muted)",
-                }}
+        {user && (
+          <button
+            onClick={() => setShowChooser(true)}
+            className="shrink-0 border-none px-3 pt-2 text-left cursor-pointer"
+            style={{ background: "transparent" }}
+          >
+            <div
+              className="flex h-11 items-center gap-3 rounded-xl px-4 transition-all duration-200 hover:brightness-110"
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 55%, var(--teal-dark) 100%)",
+                color: "#fff",
+                boxShadow:
+                  "0 18px 34px -24px color-mix(in srgb, var(--teal) 88%, transparent), inset 0 1px 0 rgba(255,255,255,0.18)",
+              }}
+            >
+              <span
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                style={{ background: "rgba(255,255,255,0.14)" }}
               >
-                <span className="w-5 h-5 shrink-0 flex items-center justify-center relative">
-                  <NavIcon name={icon} size={20} />
-                  {isLive && (
-                    <span
-                      className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full"
-                      style={{
-                        background: "#DC2626",
-                        animation: "pulse-dot 2s ease-in-out infinite",
-                      }}
-                    />
-                  )}
-                </span>
-                <span
-                  className="opacity-0 group-hover/rail:opacity-100 text-sm font-medium whitespace-nowrap transition-opacity duration-200"
+                <NavIcon name="plus" size={20} />
+              </span>
+              <span className="whitespace-nowrap text-sm font-bold">Create</span>
+            </div>
+          </button>
+        )}
+
+        <div className="mx-3 h-px shrink-0" style={{ background: "var(--border)" }} />
+
+        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2" style={{ scrollbarWidth: "none" }}>
+          {allItems.map(({ href, label, icon, key }) => {
+            const active = isItemActive(href, key);
+
+            return (
+              <Link key={href} href={href} className="no-underline" data-nav-item={key}>
+                <div
+                  className="flex h-11 items-center gap-3 rounded-xl px-3.5 transition-colors hover:bg-bg"
                   style={{
-                    color: active ? "var(--teal)" : "var(--text-sec)",
+                    background: active ? "color-mix(in srgb, var(--teal) 10%, transparent)" : "transparent",
+                    boxShadow: active ? "inset 3px 0 0 var(--teal)" : "inset 3px 0 0 transparent",
+                    color: active ? "var(--teal)" : "var(--text-muted)",
                   }}
                 >
-                  {label}
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                    <NavIcon name={icon} size={20} />
+                  </span>
+                  <span
+                    className="whitespace-nowrap text-sm font-medium transition-colors duration-200"
+                    style={{ color: active ? "var(--teal)" : "var(--text-sec)" }}
+                  >
+                    {label}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex shrink-0 flex-col gap-1 border-t border-border px-2 py-3">
+          <button
+            onClick={toggle}
+            className="flex h-10 items-center gap-3 rounded-xl border-none px-3.5 cursor-pointer transition-colors hover:bg-bg"
+            style={{ background: "transparent", color: "var(--text-muted)" }}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center text-base">
+              {theme === "dark" ? "\u2600\uFE0F" : "\uD83C\uDF19"}
+            </span>
+            <span className="whitespace-nowrap text-sm font-medium" style={{ color: "var(--text-sec)" }}>
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </span>
+          </button>
+
+          {isAdmin && (
+            <Link href="/admin" className="no-underline" data-nav-item="admin">
+              <div
+                className="flex h-10 items-center gap-3 rounded-xl px-3.5 transition-colors hover:bg-bg"
+                style={{
+                  background:
+                    pathname === "/admin" || pathname.startsWith("/admin/")
+                      ? "color-mix(in srgb, var(--teal) 10%, transparent)"
+                      : "transparent",
+                  boxShadow:
+                    pathname === "/admin" || pathname.startsWith("/admin/")
+                      ? "inset 3px 0 0 var(--teal)"
+                      : "inset 3px 0 0 transparent",
+                  color:
+                    pathname === "/admin" || pathname.startsWith("/admin/")
+                      ? "var(--teal)"
+                      : "var(--text-muted)",
+                }}
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                  <NavIcon name="shield" size={20} />
+                </span>
+                <span
+                  className="whitespace-nowrap text-sm font-medium"
+                  style={{
+                    color:
+                      pathname === "/admin" || pathname.startsWith("/admin/")
+                        ? "var(--teal)"
+                        : "var(--text-sec)",
+                  }}
+                >
+                  Admin
                 </span>
               </div>
             </Link>
-          );
-        })}
-      </nav>
+          )}
 
-      {/* Bottom section */}
-      <div
-        className="shrink-0 px-2 py-3 flex flex-col gap-1"
-        style={{ borderTop: "1px solid var(--border)" }}
-      >
-        {/* Theme toggle */}
-        <button
-          onClick={toggle}
-          className="flex items-center gap-3 h-10 px-3 rounded-lg border-none cursor-pointer transition-colors hover:bg-bg"
-          style={{ background: "transparent", color: "var(--text-muted)" }}
-          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-        >
-          <span className="w-5 h-5 shrink-0 flex items-center justify-center text-base">
-            {theme === "dark" ? "\u2600\uFE0F" : "\uD83C\uDF19"}
-          </span>
-          <span
-            className="opacity-0 group-hover/rail:opacity-100 text-sm font-medium whitespace-nowrap transition-opacity duration-200"
-            style={{ color: "var(--text-sec)" }}
-          >
-            {theme === "dark" ? "Light mode" : "Dark mode"}
-          </span>
-        </button>
-
-        {/* Admin (visible for admin/moderator only) */}
-        {isAdmin && (
-          <Link href="/admin" className="no-underline">
+          <Link href="/settings" className="no-underline" data-nav-item="settings">
             <div
-              className="flex items-center gap-3 h-10 px-3 rounded-lg transition-colors hover:bg-bg"
+              className="flex h-10 items-center gap-3 rounded-xl px-3.5 transition-colors hover:bg-bg"
               style={{
                 background:
-                  pathname === "/admin" || pathname.startsWith("/admin/")
-                    ? "color-mix(in srgb, var(--teal) 8%, transparent)"
+                  pathname === "/settings" || pathname.startsWith("/settings/")
+                    ? "color-mix(in srgb, var(--teal) 10%, transparent)"
                     : "transparent",
-                borderLeft:
-                  pathname === "/admin" || pathname.startsWith("/admin/")
-                    ? "3px solid var(--teal)"
-                    : "3px solid transparent",
+                boxShadow:
+                  pathname === "/settings" || pathname.startsWith("/settings/")
+                    ? "inset 3px 0 0 var(--teal)"
+                    : "inset 3px 0 0 transparent",
                 color:
-                  pathname === "/admin" || pathname.startsWith("/admin/")
+                  pathname === "/settings" || pathname.startsWith("/settings/")
                     ? "var(--teal)"
                     : "var(--text-muted)",
               }}
             >
-              <span className="w-5 h-5 shrink-0 flex items-center justify-center">
-                <NavIcon name="shield" size={20} />
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                <NavIcon name="settings" size={20} />
               </span>
-              <span
-                className="opacity-0 group-hover/rail:opacity-100 text-sm font-medium whitespace-nowrap transition-opacity duration-200"
-                style={{
-                  color:
-                    pathname === "/admin" || pathname.startsWith("/admin/")
-                      ? "var(--teal)"
-                      : "var(--text-sec)",
-                }}
-              >
-                Admin
+              <span className="whitespace-nowrap text-sm font-medium" style={{ color: "var(--text-sec)" }}>
+                Settings
               </span>
             </div>
           </Link>
-        )}
 
-        {/* Settings */}
-        <Link href="/settings" className="no-underline">
-          <div
-            className="flex items-center gap-3 h-10 px-3 rounded-lg transition-colors hover:bg-bg"
-            style={{
-              background:
-                pathname === "/settings" || pathname.startsWith("/settings/")
-                  ? "color-mix(in srgb, var(--teal) 8%, transparent)"
-                  : "transparent",
-              color:
-                pathname === "/settings" || pathname.startsWith("/settings/")
-                  ? "var(--teal)"
-                  : "var(--text-muted)",
-            }}
-          >
-            <span className="w-5 h-5 shrink-0 flex items-center justify-center">
-              <NavIcon name="settings" size={20} />
-            </span>
-            <span
-              className="opacity-0 group-hover/rail:opacity-100 text-sm font-medium whitespace-nowrap transition-opacity duration-200"
-              style={{ color: "var(--text-sec)" }}
-            >
-              Settings
-            </span>
-          </div>
-        </Link>
-
-        {/* Profile / Sign out */}
-        {user ? (
-          <div className="flex items-center gap-3 h-10 px-3 rounded-lg">
-            <Link href={hasOrg ? "/org/dashboard" : "/profile"} className="shrink-0 no-underline">
-              <Avatar name={displayName} size={28} />
-            </Link>
-            <div className="opacity-0 group-hover/rail:opacity-100 flex items-center gap-2 transition-opacity duration-200 min-w-0">
-              <Link
-                href={hasOrg ? "/org/dashboard" : "/profile"}
-                className="text-sm font-medium no-underline truncate"
-                style={{ color: "var(--text-sec)" }}
-              >
-                {displayName}
+          {user ? (
+            <div className="flex items-center gap-3 rounded-xl px-3.5 py-2" data-nav-profile="true">
+              <Link href={hasOrg ? "/org/dashboard" : "/profile"} className="shrink-0 no-underline">
+                <Avatar name={displayName} size={28} />
               </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-[11px] font-semibold rounded-md border-none cursor-pointer whitespace-nowrap"
-                style={{
-                  padding: "3px 8px",
-                  background: "color-mix(in srgb, var(--red) 10%, transparent)",
-                  color: "var(--red)",
-                }}
-              >
-                Sign out
-              </button>
+              <div className="flex min-w-0 items-center gap-2">
+                <Link
+                  href={hasOrg ? "/org/dashboard" : "/profile"}
+                  className="truncate text-sm font-medium no-underline"
+                  style={{ color: "var(--text-sec)" }}
+                >
+                  {displayName}
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="whitespace-nowrap rounded-md border-none text-[11px] font-semibold cursor-pointer"
+                  style={{
+                    padding: "3px 8px",
+                    background: "color-mix(in srgb, var(--red) 10%, transparent)",
+                    color: "var(--red)",
+                  }}
+                >
+                  Sign out
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <Link
-            href="/signin"
-            className="flex items-center gap-3 h-10 px-3 rounded-lg no-underline"
-          >
-            <span className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full"
-              style={{ background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 600 }}>
-              ?
-            </span>
-            <span
-              className="opacity-0 group-hover/rail:opacity-100 text-sm font-medium whitespace-nowrap transition-opacity duration-200"
-              style={{ color: "var(--text-sec)" }}
+          ) : (
+            <Link
+              href="/signin"
+              className="flex h-10 items-center gap-3 rounded-xl px-3.5 no-underline"
+              data-nav-profile="true"
             >
-              Sign in
-            </span>
-          </Link>
-        )}
-      </div>
-      <style>{`
-        @keyframes pulse-dot {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.3); }
-        }
-      `}</style>
-    </aside>
-    <CreateChooserModal
-      open={showChooser}
-      onClose={() => setShowChooser(false)}
-      onShareStory={() => setShowCreatePost(true)}
-      hasOrg={hasOrg}
-    />
-    <CreatePostModal
-      open={showCreatePost}
-      onClose={() => setShowCreatePost(false)}
-      onPostCreated={() => setShowCreatePost(false)}
-    />
-  </>
+              <span
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                style={{ background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 600 }}
+              >
+                ?
+              </span>
+              <span className="whitespace-nowrap text-sm font-medium" style={{ color: "var(--text-sec)" }}>
+                Sign in
+              </span>
+            </Link>
+          )}
+        </div>
+      </aside>
+
+      <CreateChooserModal
+        open={showChooser}
+        onClose={() => setShowChooser(false)}
+        onShareStory={() => setShowCreatePost(true)}
+        hasOrg={hasOrg}
+      />
+      <CreatePostModal
+        open={showCreatePost}
+        onClose={() => setShowCreatePost(false)}
+        onPostCreated={() => setShowCreatePost(false)}
+      />
+    </>
   );
 }
-
