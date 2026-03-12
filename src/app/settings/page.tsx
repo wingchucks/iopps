@@ -1,17 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Footer from "@/components/Footer";
 import Card from "@/components/Card";
+import PageSkeleton from "@/components/PageSkeleton";
 import { useOnboarding } from "@/lib/onboarding-context";
-import { useAuth } from "@/lib/auth-context";
-import { getMemberProfile } from "@/lib/firestore/members";
+import { useAccountContext } from "@/lib/useAccountContext";
 
-const settingsLinks = [
+const memberSettingsLinks = [
   {
     href: "/settings/career",
     icon: "\u{1F4BC}",
@@ -38,16 +37,43 @@ const settingsLinks = [
   },
 ];
 
+const employerSettingsLinks = [
+  {
+    href: "/org/dashboard/profile",
+    icon: "\u{1F3E2}",
+    title: "Organization Profile",
+    desc: "Update your public business profile, branding, and contact details",
+  },
+  {
+    href: "/org/dashboard/billing",
+    icon: "\u{1F4B3}",
+    title: "Plan & Billing",
+    desc: "Manage your plan, promotion options, and featured posting access",
+  },
+  {
+    href: "/org/dashboard/team",
+    icon: "\u{1F465}",
+    title: "Team Access",
+    desc: "Manage teammates and who can access your organization dashboard",
+  },
+  {
+    href: "/settings/notifications",
+    icon: "\u{1F514}",
+    title: "Notifications",
+    desc: "Manage employer alerts for applications, messages, and posting activity",
+  },
+  {
+    href: "/settings/account",
+    icon: "\u{1F464}",
+    title: "Account",
+    desc: "Update your display name, email, password, and account security",
+  },
+];
+
 export default function SettingsPage() {
   const { resetTour } = useOnboarding();
   const router = useRouter();
-  const { user } = useAuth();
-  const [hasOrg, setHasOrg] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    getMemberProfile(user.uid).then((p) => { if (p?.orgId) setHasOrg(true); });
-  }, [user]);
+  const { loading, hasOrg, isEmployer } = useAccountContext();
 
   const handleRestartTour = () => {
     router.push("/feed");
@@ -60,19 +86,27 @@ export default function SettingsPage() {
       <AppShell>
       <div className="min-h-screen bg-bg flex flex-col">
         <div className="max-w-[700px] mx-auto px-4 py-8 md:px-10 flex-1">
+          {loading ? (
+            <PageSkeleton variant="list" />
+          ) : (
+            <>
           <Link
-            href={hasOrg ? "/org/dashboard" : "/profile"}
+            href={isEmployer ? "/org/dashboard" : hasOrg ? "/org/dashboard" : "/profile"}
             className="text-sm text-teal font-semibold no-underline hover:underline mb-4 inline-block"
           >
-            &larr; {hasOrg ? "Back to Dashboard" : "Back to Profile"}
+            &larr; {isEmployer || hasOrg ? "Back to Dashboard" : "Back to Profile"}
           </Link>
-          <h1 className="text-2xl font-extrabold text-text mb-1">Settings</h1>
+          <h1 className="text-2xl font-extrabold text-text mb-1">
+            {isEmployer ? "Employer Settings" : "Settings"}
+          </h1>
           <p className="text-sm text-text-muted mb-6">
-            Manage your privacy, notifications, and account preferences.
+            {isEmployer
+              ? "Manage your organization profile, plan, account access, and employer notifications."
+              : "Manage your privacy, notifications, and account preferences."}
           </p>
 
           <div className="flex flex-col gap-3">
-            {settingsLinks.map(({ href, icon, title, desc }) => (
+            {(isEmployer ? employerSettingsLinks : memberSettingsLinks).map(({ href, icon, title, desc }) => (
               <Link key={href} href={href} className="no-underline">
                 <Card
                   className="hover:border-teal/30 transition-colors"
@@ -92,7 +126,7 @@ export default function SettingsPage() {
             ))}
 
             {/* Upgrade to Org — only for community members */}
-            {!hasOrg && (
+            {!hasOrg && !isEmployer && (
               <Link href="/org/upgrade" className="no-underline">
                 <Card className="hover:border-teal/30 transition-colors border-dashed">
                   <div className="flex items-center gap-4 p-4">
@@ -130,6 +164,8 @@ export default function SettingsPage() {
               </button>
             </Card>
           </div>
+          </>
+          )}
         </div>
         <Footer />
       </div>

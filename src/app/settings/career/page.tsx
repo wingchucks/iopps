@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import {
   getMemberProfile,
   updateCareerPreferences,
-  type MemberProfile,
   type WorkPreference,
   type Education,
   type SalaryRange,
@@ -16,6 +16,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
+import PageSkeleton from "@/components/PageSkeleton";
+import { useAccountContext } from "@/lib/useAccountContext";
 
 const workPreferenceOptions: { value: WorkPreference; label: string }[] = [
   { value: "remote", label: "Remote" },
@@ -39,8 +41,10 @@ export default function CareerSettingsPage() {
 }
 
 function CareerSettingsContent() {
+  const router = useRouter();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { loading: roleLoading, isEmployer } = useAccountContext();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -80,6 +84,12 @@ function CareerSettingsContent() {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  useEffect(() => {
+    if (!roleLoading && isEmployer) {
+      router.replace("/settings");
+    }
+  }, [isEmployer, roleLoading, router]);
 
   const addRole = () => {
     const val = roleInput.trim();
@@ -145,16 +155,11 @@ function CareerSettingsContent() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="max-w-[700px] mx-auto px-4 py-8 md:px-10">
-        <div className="skeleton h-6 w-40 rounded mb-4" />
-        <div className="skeleton h-10 w-full rounded-xl mb-4" />
-        <div className="skeleton h-32 w-full rounded-2xl mb-4" />
-        <div className="skeleton h-32 w-full rounded-2xl" />
-      </div>
-    );
+  if (roleLoading || loading) {
+    return <PageSkeleton variant="list" />;
   }
+
+  if (isEmployer) return null;
 
   return (
     <div className="max-w-[700px] mx-auto px-4 py-8 md:px-10 pb-24">

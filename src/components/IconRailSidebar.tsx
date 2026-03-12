@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
-import { db } from "@/lib/firebase";
-import { getMemberProfile } from "@/lib/firestore/members";
+import { useAccountContext } from "@/lib/useAccountContext";
 import Avatar from "./Avatar";
 import CreateChooserModal from "./CreateChooserModal";
 import CreatePostModal from "./CreatePostModal";
@@ -143,8 +141,6 @@ const navItems = [
 ] as const;
 
 export default function IconRailSidebar() {
-  const [hasOrg, setHasOrg] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [showChooser, setShowChooser] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const pathname = usePathname();
@@ -152,49 +148,8 @@ export default function IconRailSidebar() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { theme, toggle } = useTheme();
+  const { hasOrg, isAdmin } = useAccountContext();
   const displayName = user?.displayName || user?.email || "U";
-
-  useEffect(() => {
-    if (!user) return;
-    const currentUser = user;
-
-    async function checkRoles() {
-      try {
-        const profile = await getMemberProfile(currentUser.uid);
-        if (profile?.orgId) {
-          setHasOrg(true);
-        } else {
-          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-          const userData = userDoc.data();
-          if (userData?.employerId && userData?.role === "employer") {
-            setHasOrg(true);
-          }
-        }
-
-        if (profile?.role === "admin" || profile?.role === "moderator") {
-          setIsAdmin(true);
-          return;
-        }
-      } catch {
-        try {
-          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-          const userData = userDoc.data();
-          if (userData?.employerId && userData?.role === "employer") {
-            setHasOrg(true);
-          }
-        } catch {}
-      }
-
-      try {
-        const result = await currentUser.getIdTokenResult();
-        if (result.claims.admin === true || result.claims.role === "admin") {
-          setIsAdmin(true);
-        }
-      } catch {}
-    }
-
-    checkRoles();
-  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import {
@@ -14,6 +15,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import PageSkeleton from "@/components/PageSkeleton";
+import { useAccountContext } from "@/lib/useAccountContext";
 
 const visibilityOptions: { value: FieldVisibility; label: string }[] = [
   { value: "everyone", label: "Everyone" },
@@ -60,8 +62,10 @@ export default function PrivacySettingsPage() {
 }
 
 function PrivacyContent() {
+  const router = useRouter();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { loading: roleLoading, isEmployer } = useAccountContext();
   const [settings, setSettings] = useState<MemberSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -81,6 +85,12 @@ function PrivacyContent() {
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  useEffect(() => {
+    if (!roleLoading && isEmployer) {
+      router.replace("/settings");
+    }
+  }, [isEmployer, roleLoading, router]);
 
   const handleSave = async () => {
     if (!user || !settings) return;
@@ -102,9 +112,11 @@ function PrivacyContent() {
     }
   };
 
-  if (loading) {
+  if (roleLoading || loading) {
     return <PageSkeleton variant="list" />;
   }
+
+  if (isEmployer) return null;
 
   if (!settings) return null;
 

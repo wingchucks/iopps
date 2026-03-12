@@ -14,8 +14,9 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import PageSkeleton from "@/components/PageSkeleton";
+import { useAccountContext } from "@/lib/useAccountContext";
 
-const categoryLabels: Record<NotificationCategory, { icon: string; title: string; desc: string }> = {
+const memberCategoryLabels: Record<NotificationCategory, { icon: string; title: string; desc: string }> = {
   applications: {
     icon: "\u{1F4CB}",
     title: "Applications",
@@ -43,6 +44,34 @@ const categoryLabels: Record<NotificationCategory, { icon: string; title: string
   },
 };
 
+const employerCategoryLabels: Record<NotificationCategory, { icon: string; title: string; desc: string }> = {
+  applications: {
+    icon: "\u{1F4CB}",
+    title: "Applications",
+    desc: "New candidates, application status activity, and employer hiring updates",
+  },
+  messages: {
+    icon: "\u{1F4AC}",
+    title: "Messages",
+    desc: "New messages from candidates and organization conversations",
+  },
+  community: {
+    icon: "\u{1F465}",
+    title: "Team Activity",
+    desc: "Updates tied to your employer team and shared organization activity",
+  },
+  events: {
+    icon: "\u{1F4C5}",
+    title: "Events",
+    desc: "Updates about organization events, reminders, and attendee activity",
+  },
+  opportunities: {
+    icon: "\u{2B50}",
+    title: "Posting Activity",
+    desc: "Featured placement, expiring posts, and job visibility updates",
+  },
+};
+
 const channelLabels = {
   email: "Email",
   push: "Push",
@@ -64,10 +93,12 @@ export default function NotificationSettingsPage() {
 function NotificationContent() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { loading: roleLoading, isEmployer } = useAccountContext();
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newsletterOptIn, setNewsletterOptIn] = useState(false);
+  const categoryLabels = isEmployer ? employerCategoryLabels : memberCategoryLabels;
 
   const loadPrefs = useCallback(async () => {
     if (!user) return;
@@ -124,7 +155,7 @@ function NotificationContent() {
     });
   };
 
-  if (loading) {
+  if (roleLoading || loading) {
     return <PageSkeleton variant="list" />;
   }
 
@@ -140,7 +171,9 @@ function NotificationContent() {
       </Link>
       <h1 className="text-2xl font-extrabold text-text mb-1">Notifications</h1>
       <p className="text-sm text-text-muted mb-6">
-        Choose how and when you want to be notified.
+        {isEmployer
+          ? "Choose how and when your organization receives hiring, posting, and employer activity updates."
+          : "Choose how and when you want to be notified."}
       </p>
 
       {/* Category Preferences */}
@@ -217,7 +250,11 @@ function NotificationContent() {
               <span className="text-xl">{"📬"}</span>
               <div>
                 <h3 className="text-[15px] font-bold text-text m-0">IOPPS Newsletter</h3>
-                <p className="text-xs text-text-muted m-0">Weekly digest of new jobs, events, scholarships, and community highlights</p>
+                <p className="text-xs text-text-muted m-0">
+                  {isEmployer
+                    ? "Weekly digest of employer activity, job visibility, and platform highlights"
+                    : "Weekly digest of new jobs, events, scholarships, and community highlights"}
+                </p>
               </div>
             </div>
             <button
