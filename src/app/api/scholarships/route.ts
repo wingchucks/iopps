@@ -1,26 +1,21 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import {
+  deriveOwnerType,
+  matchesOrgName,
+  serialize,
+  withPublicOwnership,
+  type JsonRecord,
+} from "@/lib/server/public-ownership";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
 
-function serialize(value: unknown): unknown {
-  if (value === null || value === undefined) return value;
-  if (typeof value === "object" && value !== null && typeof (value as Record<string, unknown>).toDate === "function") {
-    return ((value as Record<string, unknown>).toDate as () => Date)().toISOString();
-  }
-  if (Array.isArray(value)) return value.map(serialize);
-  if (typeof value === "object") {
-    const result: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      result[k] = serialize(v);
-    }
-    return result;
-  }
-  return value;
-}
-
-function normalizeScholarship(doc: FirebaseFirestore.QueryDocumentSnapshot): Record<string, unknown> {
+function normalizeScholarship(
+  doc: FirebaseFirestore.QueryDocumentSnapshot,
+  orgLookup: Map<string, JsonRecord>,
+  organizations: JsonRecord[],
+): Record<string, unknown> {
   const serialized = serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>;
   if (!serialized.slug) serialized.slug = doc.id;
   if (!serialized.orgName && typeof serialized.organization === "string") {
@@ -29,17 +24,40 @@ function normalizeScholarship(doc: FirebaseFirestore.QueryDocumentSnapshot): Rec
   if (!serialized.applicationUrl && typeof serialized.url === "string") {
     serialized.applicationUrl = serialized.url;
   }
-  return serialized;
+
+  const linkedOrg =
+    orgLookup.get(String(serialized.orgId || serialized.employerId || "")) ||
+    organizations.find((org) =>
+      matchesOrgName(serialized.orgName, String(org.name || "")) ||
+      matchesOrgName(serialized.organization, String(org.name || "")),
+    ) ||
+    null;
+
+  const ownerType = deriveOwnerType(linkedOrg);
+  const ownerId = String(serialized.orgId || serialized.employerId || linkedOrg?.id || "");
+  const ownerName = String(serialized.orgName || serialized.organization || linkedOrg?.name || "");
+  const ownerSlug = String(linkedOrg?.slug || ownerId);
+
+  return withPublicOwnership(serialized, {
+    contentType: "scholarship",
+    ownerType,
+    ownerId,
+    ownerName,
+    ownerSlug,
+  });
 }
 
 export async function GET() {
   try {
     const db = getAdminDb();
-    const snap = await db.collection("scholarships")
-      .where("status", "==", "active")
-      .get();
+    const [snap, organizationsSnap] = await Promise.all([
+      db.collection("scholarships").where("status", "==", "active").get(),
+      db.collection("organizations").get(),
+    ]);
+    const organizations = organizationsSnap.docs.map((doc) => serialize({ id: doc.id, ...doc.data() }) as JsonRecord);
+    const orgLookup = new Map(organizations.map((org) => [String(org.id || ""), org]));
 
-    const scholarships = snap.docs.map((doc) => normalizeScholarship(doc));
+    const scholarships = snap.docs.map((doc) => normalizeScholarship(doc, orgLookup, organizations));
     return NextResponse.json({ scholarships });
   } catch (err) {
     console.error("Scholarships API error:", err);

@@ -16,12 +16,31 @@ import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { getScholarshipBySlug, getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
 import { displayLocation } from "@/lib/utils";
 
+interface ScholarshipOwnerMeta {
+  ownerType?: "school" | "business" | "organization" | "unknown";
+  ownerSlug?: string;
+  ownerName?: string;
+}
+
 function isClosingSoon(deadline?: string): boolean {
   if (!deadline) return false;
   const d = new Date(deadline);
   if (Number.isNaN(d.getTime())) return false;
   const diff = d.getTime() - Date.now();
   return diff > 0 && diff < 14 * 24 * 60 * 60 * 1000;
+}
+
+function getSourceLabel(ownerType?: ScholarshipOwnerMeta["ownerType"]) {
+  switch (ownerType) {
+    case "school":
+      return "School Scholarship";
+    case "business":
+      return "Employer Scholarship";
+    case "organization":
+      return "Organization Scholarship";
+    default:
+      return "Scholarship";
+  }
 }
 
 export default function ScholarshipDetailClient() {
@@ -40,6 +59,7 @@ function ScholarshipDetailContent() {
   const [scholarship, setScholarship] = useState<Scholarship | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
   const [related, setRelated] = useState<Scholarship[]>([]);
+  const [ownerMeta, setOwnerMeta] = useState<ScholarshipOwnerMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [actionLoading, setActionLoading] = useState("");
@@ -78,6 +98,20 @@ function ScholarshipDetailContent() {
         if (data?.orgId) {
           const orgData = await getOrganization(data.orgId);
           setOrg(orgData);
+        }
+        const publicScholarshipsRes = await fetch("/api/scholarships").catch(() => null);
+        if (publicScholarshipsRes?.ok) {
+          const payload = await publicScholarshipsRes.json() as { scholarships?: Array<Record<string, unknown>> };
+          const normalized = (payload.scholarships || []).find((item) =>
+            String(item.slug || item.id || "") === slug || String(item.id || "") === data?.id,
+          );
+          if (normalized) {
+            setOwnerMeta({
+              ownerType: normalized.ownerType as ScholarshipOwnerMeta["ownerType"],
+              ownerSlug: typeof normalized.ownerSlug === "string" ? normalized.ownerSlug : undefined,
+              ownerName: typeof normalized.ownerName === "string" ? normalized.ownerName : undefined,
+            });
+          }
         }
         if (data && user) {
           const isSaved = await isPostSaved(user.uid, data.id);
@@ -155,7 +189,10 @@ function ScholarshipDetailContent() {
     );
   }
 
-  const orgLink = org ? `/org/${org.id}` : "#";
+  const ownerHref = ownerMeta?.ownerSlug ? (ownerMeta.ownerType === "school" ? `/schools/${ownerMeta.ownerSlug}` : `/org/${ownerMeta.ownerSlug}`) : (org ? `/org/${org.id}` : "#");
+  const ownerName = ownerMeta?.ownerName || scholarship.orgName || org?.name || "";
+  const sourceLabel = getSourceLabel(ownerMeta?.ownerType || (org?.type === "school" ? "school" : undefined));
+  const orgLink = ownerHref;
   const isPremium = org?.tier === "premium";
   const closingSoon = isClosingSoon(scholarship.deadline);
   const descriptionHasHtml = typeof scholarship.description === "string" && scholarship.description.includes("<");
@@ -196,7 +233,7 @@ function ScholarshipDetailContent() {
         <div className="text-center">
           <span className="text-6xl sm:text-7xl block mb-4">&#127891;</span>
           <div className="flex flex-wrap justify-center gap-2 mb-3">
-            <Badge text="Scholarship" color="var(--green)" bg="var(--green-soft)" small />
+            <Badge text={sourceLabel} color="var(--green)" bg="var(--green-soft)" small />
             {scholarship.featured && (
               <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
             )}
@@ -214,17 +251,18 @@ function ScholarshipDetailContent() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
-          {org && (
+          {(org || ownerName) && (
             <div className="flex items-center gap-3 mb-6">
               <Avatar
-                name={scholarship.orgShort || org.shortName}
+                name={scholarship.orgShort || org?.shortName || ownerName}
                 size={40}
                 gradient={isPremium ? "linear-gradient(135deg, var(--navy), var(--teal))" : undefined}
               />
               <div>
                 <Link href={orgLink} className="text-[15px] text-teal font-bold no-underline hover:underline">
-                  {scholarship.orgName || org.name}
+                  {ownerName}
                 </Link>
+                <p className="m-0 text-[11px] text-text-muted">{sourceLabel}</p>
                 {isPremium && (
                   <div className="flex items-center gap-1.5">
                     <Badge text="&#10003; Premium Partner" color="var(--gold)" bg="var(--gold-soft)" small />
@@ -518,13 +556,17 @@ function ScholarshipDetailContent() {
                   )}
                   {scholarship.orgName && (
                     <div className="flex justify-between">
-                      <span className="text-xs text-text-muted">Organization</span>
-                      <span className="text-xs font-semibold text-text">{scholarship.orgName}</span>
+                      <span className="text-xs text-text-muted">Awarded by</span>
+                      <span className="text-xs font-semibold text-text">{ownerName}</span>
                     </div>
                   )}
+                  <div className="flex justify-between">
+                    <span className="text-xs text-text-muted">Source</span>
+                    <span className="text-xs font-semibold text-text">{sourceLabel}</span>
+                  </div>
                   {scholarship.source && (
                     <div className="flex justify-between">
-                      <span className="text-xs text-text-muted">Source</span>
+                      <span className="text-xs text-text-muted">Original feed</span>
                       <span className="text-xs font-semibold text-text">{scholarship.source}</span>
                     </div>
                   )}
@@ -533,29 +575,37 @@ function ScholarshipDetailContent() {
             </div>
           </Card>
 
-          {org && (
+          {(org || ownerName) && (
             <Card>
               <div style={{ padding: 16 }}>
                 <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">ABOUT THE ORGANIZATION</p>
                 <div className="flex gap-2.5 items-center mb-2.5">
                   <Avatar
-                    name={org.shortName}
+                    name={org?.shortName || ownerName}
                     size={36}
                     gradient={isPremium ? "linear-gradient(135deg, var(--navy), var(--teal))" : undefined}
                   />
                   <div>
-                    <p className="text-sm font-bold text-text m-0">{org.shortName}</p>
+                    <p className="text-sm font-bold text-text m-0">{org?.shortName || ownerName}</p>
                     <p className="text-[11px] text-text-muted m-0">
-                      {org.openJobs} open roles
-                      {org.employees && <> &bull; {org.employees} employees</>}
+                      {org ? (
+                        <>
+                          {org.openJobs} open roles
+                          {org.employees && <> &bull; {org.employees} employees</>}
+                        </>
+                      ) : (
+                        sourceLabel
+                      )}
                     </p>
                   </div>
                 </div>
-                <p className="text-xs text-text-sec leading-relaxed mb-3">
-                  {(org.description || "").length > 120 ? `${(org.description || "").slice(0, 120)}...` : org.description}
-                </p>
+                {org?.description && (
+                  <p className="text-xs text-text-sec leading-relaxed mb-3">
+                    {(org.description || "").length > 120 ? `${(org.description || "").slice(0, 120)}...` : org.description}
+                  </p>
+                )}
                 <Link href={orgLink} className="text-xs text-teal font-semibold no-underline hover:underline">
-                  View Organization Profile &#8594;
+                  {ownerMeta?.ownerType === "school" ? "View School Profile" : "View Organization Profile"} &#8594;
                 </Link>
               </div>
             </Card>

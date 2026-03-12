@@ -150,14 +150,9 @@ function normalizeScholarship(item: JsonRecord): JsonRecord {
 }
 
 function normalizeProgram(item: JsonRecord): JsonRecord {
-  const href =
-    item._source === "training"
-      ? `/training/${String(item.slug || item.id)}`
-      : `/programs/${String(item.slug || item.id).replace(/^program-/, "")}`;
-
   return {
     ...item,
-    href,
+    href: `/training/${String(item.slug || item.id)}`,
   };
 }
 
@@ -282,60 +277,31 @@ async function loadScholarships(
   return sortRecent(dedupeByHref(fallbackMatches));
 }
 
-async function loadPrograms(
+async function loadTraining(
   db: FirebaseFirestore.Firestore,
   orgId: string,
   orgName: string,
 ): Promise<JsonRecord[]> {
-  const [trainingByOrgSnap, postsByOrgSnap] = await Promise.all([
-    db.collection("training_programs").where("orgId", "==", orgId).get(),
-    db.collection("posts").where("orgId", "==", orgId).get(),
-  ]);
+  const trainingByOrgSnap = await db.collection("training_programs").where("orgId", "==", orgId).get();
 
-  const exactMatches = [
-    ...trainingByOrgSnap.docs
-      .filter((doc) => doc.data().active !== false)
-      .map((doc) => normalizeProgram({ ...serializeDoc(doc), _source: "training" })),
-    ...postsByOrgSnap.docs
-      .filter((doc) => {
-        const data = doc.data();
-        return data.type === "program" && data.status !== "closed";
-      })
-      .map((doc) => normalizeProgram({ ...serializeDoc(doc), _source: "program" })),
-  ];
+  const exactMatches = trainingByOrgSnap.docs
+    .filter((doc) => doc.data().active !== false)
+    .map((doc) => normalizeProgram({ ...serializeDoc(doc), _source: "training" }));
 
   if (exactMatches.length > 0) {
     return sortRecent(dedupeByHref(exactMatches));
   }
 
-  const [allTrainingSnap, allProgramPostsSnap] = await Promise.all([
-    db.collection("training_programs").limit(500).get(),
-    db.collection("posts").where("type", "==", "program").get(),
-  ]);
-
-  const trainingFallback: JsonRecord[] = allTrainingSnap.docs.map((doc) => ({
-    ...serializeDoc(doc),
-    _source: "training",
-  }));
-  const postProgramFallback: JsonRecord[] = allProgramPostsSnap.docs.map((doc) => ({
-    ...serializeDoc(doc),
-    _source: "program",
-  }));
-
-  const fallbackMatches = [
-    ...trainingFallback
-      .filter((item) =>
-        matchesOrgName(item.orgName, orgName) ||
-        matchesOrgName(item.provider, orgName) ||
-        matchesOrgName(item.institutionName, orgName),
-      )
-      .map(normalizeProgram),
-    ...postProgramFallback
-      .filter((item) =>
-        matchesOrgName(item.orgName, orgName) || matchesOrgName(item.provider, orgName),
-      )
-      .map(normalizeProgram),
-  ];
+  const allTrainingSnap = await db.collection("training_programs").limit(500).get();
+  const fallbackMatches = allTrainingSnap.docs
+    .map((doc) => ({ ...serializeDoc(doc), _source: "training" } as JsonRecord))
+    .filter((item) => item.active !== false)
+    .filter((item) =>
+      matchesOrgName(item.orgName, orgName) ||
+      matchesOrgName(item.provider, orgName) ||
+      matchesOrgName(item.institutionName, orgName),
+    )
+    .map(normalizeProgram);
 
   return sortRecent(dedupeByHref(fallbackMatches));
 }
@@ -356,11 +322,11 @@ export async function GET(
     const orgId = String(org.id || "");
     const orgName = String(org.name || "");
 
-    const [jobs, events, scholarships, programs] = await Promise.all([
+    const [jobs, events, scholarships, training] = await Promise.all([
       loadJobs(db, orgId, orgName),
       loadEvents(db, orgId, orgName),
       loadScholarships(db, orgId, orgName),
-      loadPrograms(db, orgId, orgName),
+      loadTraining(db, orgId, orgName),
     ]);
 
     return NextResponse.json({
@@ -368,7 +334,8 @@ export async function GET(
       jobs,
       events,
       scholarships,
-      programs,
+      training,
+      programs: training,
     });
   } catch (err) {
     console.error("[api/org] Error:", err);

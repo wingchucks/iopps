@@ -77,7 +77,11 @@ export interface Organization {
   nation?: string;
   tags: string[];
   programCount?: number;
+  scholarshipCount?: number;
+  trainingCount?: number;
   programs?: string[];
+  keyStudyAreas?: string[];
+  ownerType?: "school" | "business" | "organization" | "unknown";
 }
 
 /**

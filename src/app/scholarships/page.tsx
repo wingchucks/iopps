@@ -1,22 +1,50 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
-import { getPosts } from "@/lib/firestore/posts";
 import { displayLocation } from "@/lib/utils";
+
+interface PublicScholarship {
+  id: string;
+  slug?: string;
+  title: string;
+  description?: string;
+  eligibility?: string;
+  amount?: string;
+  deadline?: string;
+  orgId?: string;
+  orgName?: string;
+  ownerType?: "school" | "business" | "organization" | "unknown";
+  ownerSlug?: string;
+  applicationUrl?: string;
+  location?: unknown;
+  featured?: boolean;
+}
 
 function isClosingSoon(deadline?: string): boolean {
   if (!deadline) return false;
-  const d = new Date(deadline);
-  if (isNaN(d.getTime())) return false;
-  const diff = d.getTime() - Date.now();
-  return diff > 0 && diff < 14 * 24 * 60 * 60 * 1000; // within 14 days
+  const date = new Date(deadline);
+  if (Number.isNaN(date.getTime())) return false;
+  const diff = date.getTime() - Date.now();
+  return diff > 0 && diff < 14 * 24 * 60 * 60 * 1000;
+}
+
+function getSourceLabel(ownerType?: PublicScholarship["ownerType"]) {
+  switch (ownerType) {
+    case "school":
+      return "School Scholarship";
+    case "business":
+      return "Employer Scholarship";
+    case "organization":
+      return "Organization Scholarship";
+    default:
+      return "Scholarship";
+  }
 }
 
 export default function ScholarshipsBrowsePage() {
-  const [scholarships, setScholarships] = useState<Scholarship[]>([]);
+  const [scholarships, setScholarships] = useState<PublicScholarship[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [eligibilityFilter, setEligibilityFilter] = useState("");
@@ -25,274 +53,219 @@ export default function ScholarshipsBrowsePage() {
   useEffect(() => {
     async function load() {
       try {
-        // Primary: dedicated scholarships collection
-        let items = await getScholarships();
-        // Fallback: posts collection if dedicated is empty
-        if (items.length === 0) {
-          const posts = await getPosts({ type: "scholarship" });
-          items = posts.map((p) => ({
-            id: p.id,
-            title: p.title,
-            slug: p.slug || p.id.replace(/^scholarship-/, ""),
-            description: p.description,
-            eligibility: p.eligibility,
-            amount: p.amount,
-            deadline: p.deadline,
-            orgId: p.orgId,
-            orgName: p.orgName,
-            orgShort: p.orgShort,
-            applicationUrl: p.applicationUrl,
-            requirements: p.requirements,
-            location: p.location,
-            featured: p.featured,
-            badges: p.badges,
-            source: p.source,
-          }));
-        }
-        setScholarships(items);
+        const response = await fetch("/api/scholarships");
+        const payload = response.ok ? await response.json() : { scholarships: [] };
+        setScholarships((payload.scholarships || []) as PublicScholarship[]);
       } catch (err) {
         console.error("Failed to load scholarships:", err);
       } finally {
         setLoading(false);
       }
     }
-    load();
+
+    void load();
   }, []);
 
   const eligibilities = useMemo(
-    () =>
-      [...new Set(scholarships.map((s) => s.eligibility).filter(Boolean))] as string[],
-    [scholarships]
+    () => [...new Set(scholarships.map((scholarship) => scholarship.eligibility).filter(Boolean))] as string[],
+    [scholarships],
   );
 
   const filtered = useMemo(() => {
     let result = scholarships;
     if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (s) =>
-          s.title.toLowerCase().includes(q) ||
-          s.orgName?.toLowerCase().includes(q) ||
-          s.eligibility?.toLowerCase().includes(q) ||
-          s.description?.toLowerCase().includes(q)
+      const query = search.toLowerCase();
+      result = result.filter((scholarship) =>
+        scholarship.title.toLowerCase().includes(query) ||
+        (scholarship.orgName || "").toLowerCase().includes(query) ||
+        (scholarship.eligibility || "").toLowerCase().includes(query) ||
+        (scholarship.description || "").toLowerCase().includes(query),
       );
     }
     if (eligibilityFilter) {
-      result = result.filter((s) => s.eligibility === eligibilityFilter);
+      result = result.filter((scholarship) => scholarship.eligibility === eligibilityFilter);
     }
     if (closingSoonOnly) {
-      result = result.filter((s) => isClosingSoon(s.deadline));
+      result = result.filter((scholarship) => isClosingSoon(scholarship.deadline));
     }
     return result;
-  }, [scholarships, search, eligibilityFilter, closingSoonOnly]);
+  }, [closingSoonOnly, eligibilityFilter, scholarships, search]);
 
   return (
     <AppShell>
-    <div className="min-h-screen bg-bg">
-      {/* Hero */}
-      <div
-        className="relative overflow-hidden"
-        style={{
-          background: "linear-gradient(135deg, var(--gold), var(--navy))",
-          padding: "clamp(32px, 5vw, 64px) clamp(16px, 4vw, 40px)",
-        }}
-      >
-        <div className="max-w-[1200px] mx-auto text-center">
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-white mb-3">
-            Scholarships
-          </h1>
-          <p
-            className="text-base sm:text-lg max-w-[600px] mx-auto mb-0"
-            style={{ color: "rgba(255,255,255,.75)" }}
-          >
-            Financial support for Indigenous students and learners
-          </p>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="max-w-[1200px] mx-auto px-4 md:px-10 py-6">
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <input
-            type="text"
-            placeholder="Search scholarships..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 px-4 py-3 rounded-xl text-sm font-medium"
-            style={{
-              background: "var(--card)",
-              border: "1.5px solid var(--border)",
-              color: "var(--text)",
-              outline: "none",
-            }}
-          />
-          <select
-            value={eligibilityFilter}
-            onChange={(e) => setEligibilityFilter(e.target.value)}
-            className="px-4 py-3 rounded-xl text-sm font-medium cursor-pointer"
-            style={{
-              background: "var(--card)",
-              border: "1.5px solid var(--border)",
-              color: "var(--text)",
-            }}
-          >
-            <option value="">All Eligibility</option>
-            {eligibilities.map((e) => (
-              <option key={e} value={e}>
-                {e}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={() => setClosingSoonOnly(!closingSoonOnly)}
-            className="px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer transition-all"
-            style={{
-              background: closingSoonOnly ? "var(--gold)" : "var(--card)",
-              border: closingSoonOnly
-                ? "1.5px solid var(--gold)"
-                : "1.5px solid var(--border)",
-              color: closingSoonOnly ? "#fff" : "var(--text)",
-            }}
-          >
-            &#9200; Closing Soon
-          </button>
-        </div>
-
-        {/* Loading Skeleton */}
-        {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="skeleton h-[280px] rounded-2xl" />
-            ))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && filtered.length === 0 && (
-          <div
-            className="rounded-2xl text-center py-16 px-6"
-            style={{ background: "var(--card)", border: "1.5px solid var(--border)" }}
-          >
-            <p className="text-5xl mb-4">&#127891;</p>
-            <h2 className="text-xl font-extrabold text-text mb-2">
-              No Scholarships Found
-            </h2>
-            <p className="text-sm text-text-sec mb-6">
-              {search || eligibilityFilter || closingSoonOnly
-                ? "Try adjusting your filters to find more scholarships."
-                : "There are no scholarships listed right now. Check back soon!"}
+      <div className="min-h-screen bg-bg">
+        <div
+          className="relative overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, var(--gold), var(--navy))",
+            padding: "clamp(32px, 5vw, 64px) clamp(16px, 4vw, 40px)",
+          }}
+        >
+          <div className="mx-auto max-w-[1200px] text-center">
+            <h1 className="mb-3 text-3xl font-extrabold text-white sm:text-5xl">Scholarships</h1>
+            <p className="mx-auto mb-0 max-w-[680px] text-base text-white/75 sm:text-lg">
+              Financial support from schools, employers, and organizations for Indigenous students and learners.
             </p>
-            <Link
-              href="/feed"
-              className="inline-block px-6 py-3 rounded-xl text-sm font-bold text-white no-underline"
-              style={{ background: "var(--gold)" }}
-            >
-              Back to Feed
-            </Link>
           </div>
-        )}
+        </div>
 
-        {/* Scholarships Grid */}
-        {!loading && filtered.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((sch) => {
-              const slug = sch.slug || sch.id;
-              const closingSoon = isClosingSoon(sch.deadline);
-              const amountLabel = sch.amount || "Funding varies";
-              const deadlineLabel = sch.deadline || "Check provider for deadline";
+        <div className="mx-auto max-w-[1200px] px-4 py-6 md:px-10">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+            <input
+              type="text"
+              placeholder="Search scholarships..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="flex-1 rounded-xl px-4 py-3 text-sm font-medium"
+              style={{
+                background: "var(--card)",
+                border: "1.5px solid var(--border)",
+                color: "var(--text)",
+                outline: "none",
+              }}
+            />
+            <select
+              value={eligibilityFilter}
+              onChange={(event) => setEligibilityFilter(event.target.value)}
+              className="rounded-xl px-4 py-3 text-sm font-medium"
+              style={{
+                background: "var(--card)",
+                border: "1.5px solid var(--border)",
+                color: "var(--text)",
+              }}
+            >
+              <option value="">All Eligibility</option>
+              {eligibilities.map((eligibility) => (
+                <option key={eligibility} value={eligibility}>
+                  {eligibility}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setClosingSoonOnly(!closingSoonOnly)}
+              className="rounded-xl px-4 py-3 text-sm font-semibold transition-all"
+              style={{
+                background: closingSoonOnly ? "var(--gold)" : "var(--card)",
+                border: closingSoonOnly ? "1.5px solid var(--gold)" : "1.5px solid var(--border)",
+                color: closingSoonOnly ? "#fff" : "var(--text)",
+              }}
+            >
+              &#9200; Closing Soon
+            </button>
+          </div>
 
-              return (
-                <Link
-                  key={sch.id}
-                  href={`/scholarships/${slug}`}
-                  className="no-underline group"
-                >
-                  <div
-                    className="rounded-2xl overflow-hidden transition-all duration-200 h-full flex flex-col"
-                    style={{
-                      background: "var(--card)",
-                      border: "1.5px solid var(--border)",
-                    }}
+          {loading ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="skeleton h-[280px] rounded-2xl" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div
+              className="rounded-2xl px-6 py-16 text-center"
+              style={{ background: "var(--card)", border: "1.5px solid var(--border)" }}
+            >
+              <p className="mb-4 text-5xl">&#127891;</p>
+              <h2 className="mb-2 text-xl font-extrabold text-text">No Scholarships Found</h2>
+              <p className="mb-6 text-sm text-text-sec">
+                {search || eligibilityFilter || closingSoonOnly
+                  ? "Try adjusting your filters to find more scholarships."
+                  : "There are no scholarships listed right now. Check back soon!"}
+              </p>
+              <Link
+                href="/feed"
+                className="inline-block rounded-xl px-6 py-3 text-sm font-bold text-white no-underline"
+                style={{ background: "var(--gold)" }}
+              >
+                Back to Feed
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((scholarship) => {
+                const slug = scholarship.slug || scholarship.id;
+                const closingSoon = isClosingSoon(scholarship.deadline);
+                const amountLabel = scholarship.amount || "Funding varies";
+                const deadlineLabel = scholarship.deadline || "Check provider for deadline";
+                const sourceLabel = getSourceLabel(scholarship.ownerType);
+
+                return (
+                  <Link
+                    key={scholarship.id}
+                    href={`/scholarships/${slug}`}
+                    className="no-underline group"
                   >
-                    {/* Top accent bar */}
                     <div
-                      className="h-1.5"
-                      style={{ background: "var(--gold)" }}
-                    />
-                    <div className="p-5 flex-1 flex flex-col">
-                      {/* Amount badge + closing soon */}
-                      <div className="flex items-center gap-2 mb-3">
-                        <span
-                          className="inline-block text-sm font-extrabold rounded-xl px-3 py-1.5"
-                          style={{
-                            color: sch.amount ? "var(--gold)" : "var(--text-sec)",
-                            background: sch.amount ? "var(--gold-soft)" : "var(--border)",
-                          }}
-                        >
-                          {amountLabel}
-                        </span>
-                        {closingSoon && (
+                      className="flex h-full flex-col overflow-hidden rounded-2xl transition-all duration-200"
+                      style={{
+                        background: "var(--card)",
+                        border: "1.5px solid var(--border)",
+                      }}
+                    >
+                      <div className="h-1.5" style={{ background: "var(--gold)" }} />
+                      <div className="flex flex-1 flex-col p-5">
+                        <div className="mb-3 flex items-center gap-2">
                           <span
-                            className="inline-block text-[10px] font-bold rounded-lg px-2 py-1"
+                            className="inline-block rounded-xl px-3 py-1.5 text-sm font-extrabold"
                             style={{
-                              color: "var(--red)",
-                              background: "var(--red-soft)",
+                              color: scholarship.amount ? "var(--gold)" : "var(--text-sec)",
+                              background: scholarship.amount ? "var(--gold-soft)" : "var(--border)",
                             }}
                           >
-                            Closing Soon
+                            {amountLabel}
                           </span>
+                          {closingSoon && (
+                            <span
+                              className="inline-block rounded-lg px-2 py-1 text-[10px] font-bold"
+                              style={{ color: "var(--red)", background: "var(--red-soft)" }}
+                            >
+                              Closing Soon
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: "var(--gold)" }}>
+                          {sourceLabel}
+                        </p>
+                        <h3 className="m-0 mb-2 text-[15px] font-bold text-text transition-colors group-hover:text-gold">
+                          {scholarship.title}
+                        </h3>
+
+                        {scholarship.orgName && (
+                          <p className="m-0 mb-2 text-xs text-text-sec">{scholarship.orgName}</p>
                         )}
-                      </div>
 
-                      {/* Title */}
-                      <h3 className="text-[15px] font-bold text-text m-0 mb-2 line-clamp-2 group-hover:text-gold transition-colors">
-                        {sch.title}
-                      </h3>
-
-                      {/* Org */}
-                      {sch.orgName && (
-                        <p className="text-xs text-text-sec m-0 mb-2">
-                          {sch.orgName}
-                        </p>
-                      )}
-
-                      {/* Eligibility snippet */}
-                      {sch.eligibility && (
-                        <p className="text-xs text-text-muted m-0 mb-3 line-clamp-2 leading-relaxed">
-                          {sch.eligibility}
-                        </p>
-                      )}
-
-                      {/* Details */}
-                      <div className="flex flex-col gap-1.5 mt-auto">
-                        <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
-                          <span>&#128197;</span> {deadlineLabel}
-                        </p>
-                        {sch.location && (
-                          <p className="text-xs text-text-sec m-0 flex items-center gap-1.5">
-                            <span>&#128205;</span> {displayLocation(sch.location)}
+                        {scholarship.eligibility && (
+                          <p className="m-0 mb-3 line-clamp-2 text-xs leading-relaxed text-text-muted">
+                            {scholarship.eligibility}
                           </p>
                         )}
-                      </div>
 
-                      {/* CTA */}
-                      <div className="mt-4 pt-3 border-t border-border">
-                        <span
-                          className="text-xs font-bold"
-                          style={{ color: "var(--gold)" }}
-                        >
-                          Apply &#8594;
-                        </span>
+                        <div className="mt-auto flex flex-col gap-1.5">
+                          <p className="m-0 flex items-center gap-1.5 text-xs text-text-sec">
+                            <span>&#128197;</span> {deadlineLabel}
+                          </p>
+                          {Boolean(scholarship.location) && (
+                            <p className="m-0 flex items-center gap-1.5 text-xs text-text-sec">
+                              <span>&#128205;</span> {displayLocation(scholarship.location)}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="mt-4 border-t border-border pt-3">
+                          <span className="text-xs font-bold" style={{ color: "var(--gold)" }}>
+                            View Scholarship &#8594;
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </AppShell>
   );
 }

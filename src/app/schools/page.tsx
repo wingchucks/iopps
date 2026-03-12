@@ -56,7 +56,7 @@ export default function SchoolsPage() {
       >
         <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-2">Schools</h1>
         <p className="text-base text-white/70 mb-0 max-w-[520px] mx-auto">
-          Explore Indigenous-focused educational institutions and training partners
+          Explore universities, colleges, and education partners through their programs, scholarships, and career pathways.
         </p>
       </section>
 
@@ -75,7 +75,7 @@ export default function SchoolsPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search schools by name, location, or program..."
+            placeholder="Search schools by name, location, or study area..."
             className="flex-1 border-none outline-none bg-transparent text-text text-base"
           />
           {search && (
@@ -91,7 +91,7 @@ export default function SchoolsPage() {
         {/* Results count */}
         {!loading && (
           <p className="text-sm text-text-muted mb-4">
-            {filtered.length} school{filtered.length !== 1 ? "s" : ""} found
+              {filtered.length} school{filtered.length !== 1 ? "s" : ""} found
           </p>
         )}
 
@@ -119,17 +119,6 @@ export default function SchoolsPage() {
             ))}
           </div>
         )}
-
-        {/* Browse all link */}
-        <div className="text-center mt-8">
-          <Link
-            href="/partners?filter=Schools"
-            className="text-sm font-semibold no-underline hover:underline"
-            style={{ color: "var(--teal)" }}
-          >
-            View all education partners &#8594;
-          </Link>
-        </div>
       </div>
     </div>
     </AppShell>
@@ -140,7 +129,7 @@ function SchoolCard({ school }: { school: Organization }) {
   const location = displayLocation(school.location);
 
   return (
-    <Link href={`/schools/${school.id}`} className="no-underline">
+    <Link href={`/schools/${school.slug || school.id}`} className="no-underline">
       <Card className="h-full hover:shadow-lg transition-shadow">
         <div style={{ padding: 20 }}>
           <div className="flex items-center gap-3 mb-3">
@@ -155,7 +144,7 @@ function SchoolCard({ school }: { school: Organization }) {
                 {school.name}
               </p>
               <div className="flex items-center gap-2 mt-0.5">
-                <Badge text="Education Partner" color="var(--teal)" bg="var(--teal-soft)" small />
+                <Badge text="School" color="var(--teal)" bg="var(--teal-soft)" small />
                 {school.verified && (
                   <span className="text-[11px] font-semibold" style={{ color: "var(--teal)" }}>
                     &#10003;
@@ -185,8 +174,8 @@ function SchoolCard({ school }: { school: Organization }) {
             </p>
           )}
 
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {school.tags?.slice(0, 3).map((tag) => (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {(school.keyStudyAreas || school.tags || []).slice(0, 3).map((tag) => (
               <span
                 key={tag}
                 className="text-[11px] font-semibold rounded-full text-teal"
@@ -201,12 +190,21 @@ function SchoolCard({ school }: { school: Organization }) {
             ))}
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap gap-3 text-xs font-semibold">
+            <span style={{ color: "var(--purple)" }}>
+              {school.programCount || 0} program{school.programCount === 1 ? "" : "s"}
+            </span>
+            <span style={{ color: "var(--gold)" }}>
+              {school.scholarshipCount || 0} scholarship{school.scholarshipCount === 1 ? "" : "s"}
+            </span>
             {school.openJobs > 0 && (
-              <span className="text-xs font-semibold" style={{ color: "var(--blue)" }}>
-                {school.openJobs} open position{school.openJobs !== 1 ? "s" : ""}
+              <span style={{ color: "var(--blue)" }}>
+                {school.openJobs} career{school.openJobs === 1 ? "" : "s"}
               </span>
             )}
+          </div>
+
+          <div className="flex items-center justify-between">
             <span className="text-xs font-semibold" style={{ color: "var(--teal)" }}>
               View School &#8594;
             </span>

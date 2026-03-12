@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
@@ -9,10 +9,26 @@ import { type Organization } from "@/lib/firestore/organizations";
 import { displayLocation } from "@/lib/utils";
 
 // ── Types ──
-interface SchoolProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; type?: string; campus?: string; location?: string; region?: string; schoolId?: string; institutionName?: string; provider?: string; description?: string; cost?: string; eligibility?: string; format?: string; applyUrl?: string; }
-interface SchoolJob { id: string; title: string; slug?: string; location?: string; jobType?: string; employmentType?: string; salary?: string; featured?: boolean; employerId?: string; employerName?: string; }
-interface SchoolScholarship { id: string; title: string; amount?: string; deadline?: string; description?: string; employerId?: string; organization?: string; }
+interface SchoolProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; type?: string; campus?: string; location?: string; region?: string; schoolId?: string; institutionName?: string; provider?: string; description?: string; cost?: string; eligibility?: string; format?: string; applyUrl?: string; href?: string; }
+interface SchoolJob { id: string; title: string; slug?: string; location?: string; jobType?: string; employmentType?: string; salary?: string; featured?: boolean; employerId?: string; employerName?: string; href?: string; }
+interface SchoolScholarship { id: string; title: string; amount?: string; deadline?: string; description?: string; employerId?: string; organization?: string; href?: string; }
 interface Campus { name: string; location: string; type?: string; }
+interface AccreditationRecord { name: string; description?: string; }
+interface SchoolOrganization extends Omit<Organization, "accreditation"> {
+  applyUrl?: string;
+  campuses?: Campus[];
+  accreditation?: string | AccreditationRecord[];
+  areasOfStudy?: string[];
+  studentCount?: string;
+  graduationRate?: string;
+  employmentRate?: string;
+}
+interface SchoolProfileResponse {
+  org: Organization | null;
+  programs?: SchoolProgram[];
+  jobs?: SchoolJob[];
+  scholarships?: SchoolScholarship[];
+}
 
 // ── Helpers ──
 function formatDeadline(d: string): string {
@@ -32,7 +48,9 @@ export default function SchoolProfilePage() {
 
 function SchoolProfileContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const slug = params.slug as string;
+  const requestedTab = searchParams.get("tab");
   const [org, setOrg] = useState<Organization | null>(null);
   const [programs, setPrograms] = useState<SchoolProgram[]>([]);
   const [jobs, setJobs] = useState<SchoolJob[]>([]);
@@ -46,42 +64,29 @@ function SchoolProfileContent() {
       try {
         const res = await fetch(`/api/schools/${slug}`);
         if (!res.ok) { setOrg(null); setLoading(false); return; }
-        const data = await res.json();
+        const data = await res.json() as SchoolProfileResponse;
         const orgData = data.org as Organization;
         setOrg(orgData);
 
         if (orgData) {
-          const orgId = orgData.id;
-          const orgName = orgData.name;
+          const nextPrograms = data.programs ?? [];
+          const nextJobs = data.jobs ?? [];
+          const nextScholarships = data.scholarships ?? [];
 
-          const [programsRes, jobsByIdRes, jobsByNameRes, scholarshipsRes] = await Promise.all([
-            fetch(`/api/programs`).then(r => r.json()).catch(() => ({ programs: [] })),
-            fetch(`/api/jobs?employerId=${encodeURIComponent(orgId)}`).then(r => r.json()).catch(() => ({ jobs: [] })),
-            fetch(`/api/jobs?employerName=${encodeURIComponent(orgName)}`).then(r => r.json()).catch(() => ({ jobs: [] })),
-            fetch(`/api/scholarships`).then(r => r.json()).catch(() => ({ scholarships: [] })),
-          ]);
-
-          // Filter programs
-          const allPrograms: SchoolProgram[] = programsRes.programs ?? [];
-          setPrograms(allPrograms.filter((p: SchoolProgram) =>
-            p.schoolId === orgId || (p.institutionName && p.institutionName.toLowerCase().includes(orgName.toLowerCase()))
-          ));
-
-          // Deduplicate jobs
-          const jobMap = new Map<string, SchoolJob>();
-          for (const j of [...(jobsByIdRes.jobs ?? []), ...(jobsByNameRes.jobs ?? [])]) jobMap.set(j.id, j);
-          setJobs(Array.from(jobMap.values()));
-
-          // Filter scholarships
-          const allScholarships: SchoolScholarship[] = scholarshipsRes.scholarships ?? [];
-          setScholarships(allScholarships.filter((s: SchoolScholarship) =>
-            s.employerId === orgId || (s.organization && s.organization.toLowerCase().includes(orgName.toLowerCase()))
-          ));
+          setPrograms(nextPrograms);
+          setJobs(nextJobs);
+          setScholarships(nextScholarships);
 
           // Default to first non-empty tab
-          if (allPrograms.filter((p: SchoolProgram) => p.schoolId === orgId || (p.institutionName && p.institutionName.toLowerCase().includes(orgName.toLowerCase())) || (p.provider && p.provider.toLowerCase().includes(orgName.toLowerCase()))).length > 0) {
+          if (requestedTab === "programs" && nextPrograms.length > 0) {
             setActiveTab("programs");
-          } else if (jobMap.size > 0) {
+          } else if (requestedTab === "careers" && nextJobs.length > 0) {
+            setActiveTab("careers");
+          } else if (requestedTab === "scholarships" && nextScholarships.length > 0) {
+            setActiveTab("scholarships");
+          } else if (nextPrograms.length > 0) {
+            setActiveTab("programs");
+          } else if (nextJobs.length > 0) {
             setActiveTab("careers");
           } else {
             setActiveTab("scholarships");
@@ -91,7 +96,7 @@ function SchoolProfileContent() {
           fetch("/api/employer/views", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orgId, type: "profile" }),
+            body: JSON.stringify({ orgId: orgData.id, type: "profile" }),
           }).catch(() => {});
         }
       } catch (err) {
@@ -101,7 +106,7 @@ function SchoolProfileContent() {
       }
     }
     load();
-  }, [slug]);
+  }, [requestedTab, slug]);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -141,16 +146,21 @@ function SchoolProfileContent() {
     );
   }
 
-  const websiteUrl = org.website ? (org.website.startsWith("http") ? org.website : `https://${org.website}`) : null;
-  const applyUrl = (org as any).applyUrl || websiteUrl;
-  const foundedYear = org.foundedYear ? String(org.foundedYear) : org.since || null;
-  const campuses: Campus[] = (org as any).campuses || [];
-  const accreditations: { name: string; description?: string }[] = (org as any).accreditation ? (typeof (org as any).accreditation === "string" ? [{ name: (org as any).accreditation }] : Array.isArray((org as any).accreditation) ? (org as any).accreditation : []) : [];
-  const areasOfStudy: string[] = (org as any).areasOfStudy || org.tags || [];
-  const studentCount = (org as any).studentCount || org.studentBodySize || null;
-  const graduationRate = (org as any).graduationRate || null;
-  const employmentRate = (org as any).employmentRate || null;
-  const enrollmentStatus = org.enrollmentStatus || (org as any).enrollmentStatus || null;
+  const schoolOrg = org as SchoolOrganization;
+  const websiteUrl = schoolOrg.website ? (schoolOrg.website.startsWith("http") ? schoolOrg.website : `https://${schoolOrg.website}`) : null;
+  const applyUrl = schoolOrg.applyUrl || websiteUrl;
+  const foundedYear = schoolOrg.foundedYear ? String(schoolOrg.foundedYear) : schoolOrg.since || null;
+  const campuses: Campus[] = schoolOrg.campuses || [];
+  const accreditations: AccreditationRecord[] = schoolOrg.accreditation
+    ? typeof schoolOrg.accreditation === "string"
+      ? [{ name: schoolOrg.accreditation }]
+      : schoolOrg.accreditation
+    : [];
+  const areasOfStudy: string[] = schoolOrg.areasOfStudy || schoolOrg.tags || [];
+  const studentCount = schoolOrg.studentCount || schoolOrg.studentBodySize || null;
+  const graduationRate = schoolOrg.graduationRate || null;
+  const employmentRate = schoolOrg.employmentRate || null;
+  const enrollmentStatus = schoolOrg.enrollmentStatus || null;
   const hasOpportunities = programs.length > 0 || jobs.length > 0 || scholarships.length > 0;
 
   const PURPLE = "#A78BFA";
@@ -214,7 +224,7 @@ function SchoolProfileContent() {
               )}
               {websiteUrl && (
                 <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:text-white" style={{ "--hover-border": PURPLE } as any}>
+                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:text-white">
                     🌐 Visit Website
                   </button>
                 </a>
@@ -287,21 +297,23 @@ function SchoolProfileContent() {
                 {activeTab === "programs" && (
                   <div className="flex flex-col gap-2.5">
                     {programs.slice(0, 6).map((p, i) => (
-                      <div key={p.id} className="px-4 py-3.5 rounded-xl transition-all"
-                        style={{
-                          background: i === 0 ? "rgba(167,139,250,0.06)" : "rgba(30,41,59,0.4)",
-                          border: i === 0 ? "1px solid rgba(167,139,250,0.15)" : "1px solid rgba(255,255,255,0.04)",
-                        }}>
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-bold text-text">{p.title || p.programName}</p>
-                          {(p.credential || p.type) && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 ml-2" style={{ background: PURPLE_SOFT, color: PURPLE }}>{p.type || p.credential}</span>}
+                      <Link key={p.id} href={p.href || `/programs/${p.id}`} className="no-underline block">
+                        <div className="px-4 py-3.5 rounded-xl transition-all hover:-translate-y-0.5"
+                          style={{
+                            background: i === 0 ? "rgba(167,139,250,0.06)" : "rgba(30,41,59,0.4)",
+                            border: i === 0 ? "1px solid rgba(167,139,250,0.15)" : "1px solid rgba(255,255,255,0.04)",
+                          }}>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-sm font-bold text-text">{p.title || p.programName}</p>
+                            {(p.credential || p.type) && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 ml-2" style={{ background: PURPLE_SOFT, color: PURPLE }}>{p.type || p.credential}</span>}
+                          </div>
+                          <p className="text-xs text-text-muted">
+                            {[p.duration, p.format, p.region || p.campus || p.location].filter(Boolean).join(" · ")}
+                          </p>
+                          {p.description && <p className="text-[11px] text-text-muted mt-1.5 line-clamp-2 leading-relaxed">{p.description}</p>}
+                          {p.cost && <p className="text-[11px] mt-1" style={{ color: PURPLE }}>💰 {p.cost}</p>}
                         </div>
-                        <p className="text-xs text-text-muted">
-                          {[p.duration, p.format, p.region || p.campus || p.location].filter(Boolean).join(" · ")}
-                        </p>
-                        {p.description && <p className="text-[11px] text-text-muted mt-1.5 line-clamp-2 leading-relaxed">{p.description}</p>}
-                        {p.cost && <p className="text-[11px] mt-1" style={{ color: PURPLE }}>💰 {p.cost}</p>}
-                      </div>
+                      </Link>
                     ))}
                     {programs.length > 6 && (
                       <div className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer"

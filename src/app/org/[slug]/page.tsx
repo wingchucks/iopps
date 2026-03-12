@@ -16,13 +16,14 @@ import { displayLocation } from "@/lib/utils";
 interface LinkedItem { href?: string; }
 interface OrgEvent extends LinkedItem { id: string; title: string; eventType?: string; date?: string; dates?: string; location?: string; employerId?: string; organizerName?: string; }
 interface OrgScholarship extends LinkedItem { id: string; title: string; amount?: string; deadline?: string; description?: string; employerId?: string; organization?: string; }
-interface OrgProgram extends LinkedItem { id: string; title?: string; programName?: string; duration?: string; credential?: string; campus?: string; location?: string; schoolId?: string; institutionName?: string; provider?: string; _source?: string; }
+interface OrgTraining extends LinkedItem { id: string; title?: string; programName?: string; duration?: string; credential?: string; campus?: string; location?: string; schoolId?: string; institutionName?: string; provider?: string; _source?: string; ownerName?: string; }
 interface OrgContentResponse {
   org: Organization | null;
   jobs?: Job[];
   events?: OrgEvent[];
   scholarships?: OrgScholarship[];
-  programs?: OrgProgram[];
+  training?: OrgTraining[];
+  programs?: OrgTraining[];
 }
 
 // ── Helpers ──
@@ -83,10 +84,10 @@ function OrgProfileContent() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [events, setEvents] = useState<OrgEvent[]>([]);
   const [scholarships, setScholarships] = useState<OrgScholarship[]>([]);
-  const [programs, setPrograms] = useState<OrgProgram[]>([]);
+  const [training, setTraining] = useState<OrgTraining[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeOppTab, setActiveOppTab] = useState<"jobs"|"events"|"scholarships"|"programs">("jobs");
-  const [expandedOppTab, setExpandedOppTab] = useState<"jobs"|"events"|"scholarships"|"programs"|null>(null);
+  const [activeOppTab, setActiveOppTab] = useState<"jobs"|"events"|"scholarships"|"training">("jobs");
+  const [expandedOppTab, setExpandedOppTab] = useState<"jobs"|"events"|"scholarships"|"training"|null>(null);
   const [shareMsg, setShareMsg] = useState("");
 
   const handleMessage = () => {
@@ -117,12 +118,12 @@ function OrgProfileContent() {
           const nextJobs = orgJson.jobs ?? [];
           const nextEvents = orgJson.events ?? [];
           const nextScholarships = orgJson.scholarships ?? [];
-          const nextPrograms = orgJson.programs ?? [];
+          const nextTraining = orgJson.training ?? orgJson.programs ?? [];
 
           setJobs(nextJobs);
           setEvents(nextEvents);
           setScholarships(nextScholarships);
-          setPrograms(nextPrograms);
+          setTraining(nextTraining);
           setExpandedOppTab(null);
 
           // Track view
@@ -136,7 +137,7 @@ function OrgProfileContent() {
           if (nextJobs.length > 0) setActiveOppTab("jobs");
           else if (nextEvents.length > 0) setActiveOppTab("events");
           else if (nextScholarships.length > 0) setActiveOppTab("scholarships");
-          else if (nextPrograms.length > 0) setActiveOppTab("programs");
+          else if (nextTraining.length > 0) setActiveOppTab("training");
         }
       } catch (err) {
         console.error("Failed to load organization:", err);
@@ -184,7 +185,7 @@ function OrgProfileContent() {
   const hasContact = websiteUrl || org.contactEmail || org.phone || org.address;
   const hasTags = org.tags && org.tags.length > 0;
   const hasQuickStats = foundedYear || employeeCount || profileJobCount > 0;
-  const hasOpportunities = relatedJobCount > 0 || events.length > 0 || scholarships.length > 0 || programs.length > 0;
+  const hasOpportunities = relatedJobCount > 0 || events.length > 0 || scholarships.length > 0 || training.length > 0;
   const hasHours = org.hours && typeof org.hours === "object" && Object.keys(org.hours).length > 0;
   const hasGallery = org.gallery && Array.isArray(org.gallery) && org.gallery.length > 0;
 
@@ -197,13 +198,13 @@ function OrgProfileContent() {
     : org.type === "professional" ? "Professional Services"
     : "Business";
 
-  const oppColors = { jobs: "#14B8A6", events: "#F59E0B", scholarships: "#FBBF24", programs: "#A78BFA" };
-  const oppLabels = { jobs: "💼 Open Jobs", events: "📅 Events", scholarships: "🎓 Scholarships", programs: "📚 Programs" };
-  const oppCounts = { jobs: relatedJobCount, events: events.length, scholarships: scholarships.length, programs: programs.length };
+  const oppColors = { jobs: "#14B8A6", events: "#F59E0B", scholarships: "#FBBF24", training: "#A78BFA" };
+  const oppLabels = { jobs: "💼 Open Jobs", events: "📅 Events", scholarships: "🎓 Scholarships", training: "📚 Training" };
+  const oppCounts = { jobs: relatedJobCount, events: events.length, scholarships: scholarships.length, training: training.length };
   const visibleJobs = expandedOppTab === "jobs" ? jobs : jobs.slice(0, 4);
   const visibleEvents = expandedOppTab === "events" ? events : events.slice(0, 4);
   const visibleScholarships = expandedOppTab === "scholarships" ? scholarships : scholarships.slice(0, 4);
-  const visiblePrograms = expandedOppTab === "programs" ? programs : programs.slice(0, 4);
+  const visibleTraining = expandedOppTab === "training" ? training : training.slice(0, 4);
 
   return (
     <div className="max-w-[960px] mx-auto pb-16">
@@ -340,7 +341,7 @@ function OrgProfileContent() {
 
               {/* Stat Cards */}
               <div className="grid grid-cols-4 border-b border-border">
-                {(["jobs", "events", "scholarships", "programs"] as const).map((tab) => {
+                {(["jobs", "events", "scholarships", "training"] as const).map((tab) => {
                   if (oppCounts[tab] === 0) return null;
                   return (
                     <button
@@ -471,10 +472,10 @@ function OrgProfileContent() {
                   </div>
                 )}
 
-                {/* Programs Panel */}
-                {activeOppTab === "programs" && (
+                {/* Training Panel */}
+                {activeOppTab === "training" && (
                   <div className="flex flex-col gap-2.5">
-                    {visiblePrograms.map((p, i) => (
+                    {visibleTraining.map((p, i) => (
                       <div key={p.id}>
                         {renderLinkedCard(
                           p,
@@ -485,7 +486,7 @@ function OrgProfileContent() {
                               {[p.duration, p.credential, p.campus || p.location].filter(Boolean).join(" · ")}
                             </p>
                             <p className="text-[11px] mt-1" style={{ color: i === 0 ? "#A78BFA" : "var(--text-muted)" }}>
-                              📚 {p._source === "training" ? (p.credential || "Training Program") : (p.credential || "Program")}
+                              📚 {p.ownerName || p.provider || org.name}
                             </p>
                           </>,
                           {
@@ -495,14 +496,14 @@ function OrgProfileContent() {
                         )}
                       </div>
                     ))}
-                    {programs.length > 4 && (
+                    {training.length > 4 && (
                       <button
                         type="button"
-                        onClick={() => setExpandedOppTab((current) => (current === "programs" ? null : "programs"))}
+                        onClick={() => setExpandedOppTab((current) => (current === "training" ? null : "training"))}
                         className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
                         style={{ color: "#A78BFA", border: "1px solid rgba(167,139,250,0.2)", background: "rgba(167,139,250,0.04)" }}
                       >
-                        {expandedOppTab === "programs" ? "Show fewer programs" : `Show all ${programs.length} programs`}
+                        {expandedOppTab === "training" ? "Show less training" : `Show all ${training.length} training opportunities`}
                       </button>
                     )}
                   </div>

@@ -10,7 +10,7 @@ import Card from "@/components/Card";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
-const typeFilters = ["All", "Jobs", "Events", "Scholarships", "Programs", "Schools", "Businesses"] as const;
+const typeFilters = ["All", "Jobs", "Events", "Scholarships", "Schools", "Training", "Businesses"] as const;
 const sortOptions = [
   { label: "Relevance", value: "relevance" },
   { label: "Newest first", value: "newest" },
@@ -32,7 +32,7 @@ const dateRanges = [
 ];
 
 type SearchFilter = (typeof typeFilters)[number];
-type OpportunityType = "job" | "event" | "scholarship" | "program";
+type OpportunityType = "job" | "event" | "scholarship" | "training";
 type DirectoryType = "school" | "business";
 
 interface SearchOpportunity {
@@ -70,7 +70,21 @@ interface DirectoryResult {
   openJobs: number;
   tier?: string;
   verified?: boolean;
+  programCount?: number;
+  scholarshipCount?: number;
+  trainingCount?: number;
+  matchingPrograms?: number;
   href: string;
+}
+
+interface SchoolProgramIndex {
+  id: string;
+  title: string;
+  ownerId?: string;
+  ownerName?: string;
+  ownerSlug?: string;
+  description: string;
+  tags: string[];
 }
 
 interface DirectoryFilterOption {
@@ -199,15 +213,15 @@ function normalizeScholarship(scholarship: Record<string, unknown>): SearchOppor
   };
 }
 
-function normalizeProgram(program: Record<string, unknown>): SearchOpportunity {
-  const orgId = text(program.schoolId) || text(program.orgId);
+function normalizeTraining(program: Record<string, unknown>): SearchOpportunity {
+  const orgId = text(program.ownerId) || text(program.orgId);
   return {
     id: String(program.id || ""),
-    type: "program",
+    type: "training",
     title: text(program.title) || text(program.programName),
-    orgName: text(program.orgName) || text(program.institutionName) || text(program.provider),
+    orgName: text(program.ownerName) || text(program.orgName) || text(program.provider),
     orgId,
-    orgSlug: orgId,
+    orgSlug: text(program.ownerSlug) || orgId,
     locationText: [displayLocation(program.location), text(program.region), text(program.campus), text(program.format)].filter(Boolean).join(" · "),
     description: text(program.description),
     duration: text(program.duration),
@@ -215,7 +229,19 @@ function normalizeProgram(program: Record<string, unknown>): SearchOpportunity {
     tags: extractTags(program, [program.credential, program.category, program.format]),
     featured: Boolean(program.featured),
     createdAt: text(program.createdAt),
-    href: text(program.externalUrl) || `/programs/${program.id || ""}`,
+    href: text(program.href) || text(program.externalUrl) || `/training/${program.slug || program.id || ""}`,
+  };
+}
+
+function normalizeSchoolProgram(program: Record<string, unknown>): SchoolProgramIndex {
+  return {
+    id: String(program.id || ""),
+    title: text(program.title) || text(program.programName),
+    ownerId: text(program.ownerId) || text(program.orgId),
+    ownerName: text(program.ownerName) || text(program.orgName) || text(program.institutionName),
+    ownerSlug: text(program.ownerSlug),
+    description: text(program.description),
+    tags: extractTags(program, [program.credential, program.category, program.format]),
   };
 }
 
@@ -232,6 +258,8 @@ function normalizeSchool(school: Record<string, unknown>): DirectoryResult {
     openJobs: Number(school.openJobs || 0),
     tier: text(school.tier) || text(school.plan),
     verified: Boolean(school.verified),
+    programCount: Number(school.programCount || 0),
+    scholarshipCount: Number(school.scholarshipCount || 0),
     href: `/schools/${school.slug || school.id || ""}`,
   };
 }
@@ -254,6 +282,8 @@ function normalizeBusiness(org: Record<string, unknown>): DirectoryResult | null
     openJobs: Number(org.openJobs || 0),
     tier: text(org.tier) || text(org.plan),
     verified: Boolean(org.verified),
+    trainingCount: Number(org.trainingCount || 0),
+    scholarshipCount: Number(org.scholarshipCount || 0),
     href: `/org/${org.slug || org.id || ""}`,
   };
 }
@@ -262,7 +292,7 @@ const typeMeta: Record<OpportunityType, { label: string; color: string; bg: stri
   job: { label: "Job", color: "var(--blue)", bg: "var(--blue-soft)", cta: "View & Apply" },
   event: { label: "Event", color: "var(--gold)", bg: "var(--gold-soft)", cta: "View Event" },
   scholarship: { label: "Scholarship", color: "var(--green)", bg: "var(--green-soft)", cta: "View Scholarship" },
-  program: { label: "Program", color: "var(--teal)", bg: "var(--teal-soft)", cta: "View Program" },
+  training: { label: "Training", color: "var(--teal)", bg: "var(--teal-soft)", cta: "View Training" },
 };
 
 export default function SearchPage() {
@@ -281,7 +311,7 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const rawType = searchParams.get("type") || "All";
-  const initialType = rawType === "Organizations" ? "Businesses" : rawType;
+  const initialType = rawType === "Organizations" ? "Businesses" : rawType === "Programs" ? "Schools" : rawType;
 
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [typeFilter, setTypeFilter] = useState<SearchFilter>(
@@ -302,7 +332,8 @@ function SearchContent() {
   const [jobs, setJobs] = useState<SearchOpportunity[]>([]);
   const [events, setEvents] = useState<SearchOpportunity[]>([]);
   const [scholarships, setScholarships] = useState<SearchOpportunity[]>([]);
-  const [programs, setPrograms] = useState<SearchOpportunity[]>([]);
+  const [training, setTraining] = useState<SearchOpportunity[]>([]);
+  const [schoolPrograms, setSchoolPrograms] = useState<SchoolProgramIndex[]>([]);
   const [schools, setSchools] = useState<DirectoryResult[]>([]);
   const [businesses, setBusinesses] = useState<DirectoryResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -313,11 +344,12 @@ function SearchContent() {
     setError("");
 
     try {
-      const [jobsRes, eventsRes, scholarshipsRes, programsRes, schoolsRes, orgsRes] = await Promise.all([
+      const [jobsRes, eventsRes, scholarshipsRes, programsRes, trainingRes, schoolsRes, orgsRes] = await Promise.all([
         fetchJson<{ jobs?: Record<string, unknown>[] }>("/api/jobs?limit=300", { jobs: [] }),
         fetchJson<{ events?: Record<string, unknown>[] }>("/api/events", { events: [] }),
         fetchJson<{ scholarships?: Record<string, unknown>[] }>("/api/scholarships", { scholarships: [] }),
         fetchJson<{ programs?: Record<string, unknown>[] }>("/api/programs", { programs: [] }),
+        fetchJson<{ training?: Record<string, unknown>[]; programs?: Record<string, unknown>[] }>("/api/training", { training: [] }),
         fetchJson<Record<string, unknown>[] | { schools?: Record<string, unknown>[] }>("/api/schools", []),
         fetchJson<{ orgs?: Record<string, unknown>[] }>("/api/organizations", { orgs: [] }),
       ]);
@@ -326,7 +358,8 @@ function SearchContent() {
       setJobs((jobsRes.jobs || []).map(normalizeJob).filter((item) => item.id && item.title));
       setEvents((eventsRes.events || []).map(normalizeEvent).filter((item) => item.id && item.title));
       setScholarships((scholarshipsRes.scholarships || []).map(normalizeScholarship).filter((item) => item.id && item.title));
-      setPrograms((programsRes.programs || []).map(normalizeProgram).filter((item) => item.id && item.title));
+      setTraining(((trainingRes.training || trainingRes.programs || []) as Record<string, unknown>[]).map(normalizeTraining).filter((item) => item.id && item.title));
+      setSchoolPrograms((programsRes.programs || []).map(normalizeSchoolProgram).filter((item) => item.id && item.title));
       setSchools(schoolRows.map(normalizeSchool).filter((item) => item.id && item.name));
       setBusinesses((orgsRes.orgs || []).map(normalizeBusiness).filter((item): item is DirectoryResult => Boolean(item && item.id && item.name)));
     } catch (loadError) {
@@ -375,7 +408,7 @@ function SearchContent() {
     return () => clearTimeout(timer);
   }, [updateUrl]);
 
-  const allOpportunities = useMemo(() => [...jobs, ...events, ...scholarships, ...programs], [jobs, events, scholarships, programs]);
+  const allOpportunities = useMemo(() => [...jobs, ...events, ...scholarships, ...training], [jobs, events, scholarships, training]);
   const allDirectoryOptions = useMemo(() => {
     const seen = new Set<string>();
     const options: DirectoryFilterOption[] = [...schools, ...businesses]
@@ -407,8 +440,8 @@ function SearchContent() {
       Jobs: "job",
       Events: "event",
       Scholarships: "scholarship",
-      Programs: "program",
       Schools: null,
+      Training: "training",
       Businesses: null,
     };
 
@@ -456,6 +489,24 @@ function SearchContent() {
       });
   }, [allDirectoryOptions, allOpportunities, cutoffMap, dateRange, location, normalizedQuery, orgFilter, salaryRange, selectedTags, sortBy, typeFilter]);
 
+  const matchingSchoolPrograms = useMemo(() => {
+    const matches = new Map<string, number>();
+    if (!normalizedQuery) return matches;
+
+    schoolPrograms.forEach((program) => {
+      const score = matchScore(normalizedQuery, [program.title, program.ownerName || "", program.description, ...program.tags]);
+      if (score <= 0) return;
+
+      [program.ownerId, program.ownerSlug, program.ownerName].forEach((key) => {
+        const normalizedKey = text(key).toLowerCase();
+        if (!normalizedKey) return;
+        matches.set(normalizedKey, (matches.get(normalizedKey) || 0) + 1);
+      });
+    });
+
+    return matches;
+  }, [normalizedQuery, schoolPrograms]);
+
   const sortDirectory = useCallback((items: DirectoryResult[]) => {
     return [...items].sort((a, b) => {
       if (sortBy === "az") return a.name.localeCompare(b.name);
@@ -469,13 +520,34 @@ function SearchContent() {
 
   const filteredSchools = useMemo(() => {
     if (!(typeFilter === "All" || typeFilter === "Schools")) return [];
-    return sortDirectory(schools.filter((item) => {
-      if (normalizedQuery && matchScore(normalizedQuery, [item.name, item.shortName || "", item.description, item.locationText, ...item.tags]) <= 0) return false;
-      if (location.trim() && !item.locationText.toLowerCase().includes(location.toLowerCase().trim())) return false;
-      if (orgFilter && item.id !== orgFilter) return false;
-      return true;
-    }));
-  }, [location, normalizedQuery, orgFilter, schools, sortDirectory, typeFilter]);
+    return [...schools]
+      .map((item) => {
+        const programMatches =
+          matchingSchoolPrograms.get(item.id.toLowerCase()) ||
+          matchingSchoolPrograms.get((item.href.split("/").pop() || "").toLowerCase()) ||
+          matchingSchoolPrograms.get(item.name.toLowerCase()) ||
+          0;
+
+        return { ...item, matchingPrograms: programMatches };
+      })
+      .filter((item) => {
+        const baseScore = normalizedQuery
+          ? matchScore(normalizedQuery, [item.name, item.shortName || "", item.description, item.locationText, ...item.tags])
+          : 0;
+        if (normalizedQuery && baseScore <= 0 && (item.matchingPrograms || 0) <= 0) return false;
+        if (location.trim() && !item.locationText.toLowerCase().includes(location.toLowerCase().trim())) return false;
+        if (orgFilter && item.id !== orgFilter) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "az") return a.name.localeCompare(b.name);
+        const aScore = matchScore(normalizedQuery, [a.name, a.shortName || "", a.description, a.locationText, ...a.tags]) + ((a.matchingPrograms || 0) * 8);
+        const bScore = matchScore(normalizedQuery, [b.name, b.shortName || "", b.description, b.locationText, ...b.tags]) + ((b.matchingPrograms || 0) * 8);
+        if (aScore !== bScore) return bScore - aScore;
+        if ((a.programCount || 0) !== (b.programCount || 0)) return (b.programCount || 0) - (a.programCount || 0);
+        return b.openJobs - a.openJobs;
+      });
+  }, [location, matchingSchoolPrograms, normalizedQuery, orgFilter, schools, sortBy, typeFilter]);
 
   const filteredBusinesses = useMemo(() => {
     if (!(typeFilter === "All" || typeFilter === "Businesses")) return [];
@@ -492,7 +564,8 @@ function SearchContent() {
   const activeFilterCount = [location.trim(), salaryRange !== "any", dateRange !== "any", orgFilter, selectedTags.length > 0, indigenousOnly]
     .filter(Boolean)
     .length;
-  const shouldLeadWithOpportunities = typeFilter === "All" && normalizedQuery.length > 0 && filteredOpportunities.length > 0;
+  const shouldLeadWithSchools = typeFilter === "All" && normalizedQuery.length > 0 && filteredSchools.some((school) => (school.matchingPrograms || 0) > 0);
+  const shouldLeadWithOpportunities = !shouldLeadWithSchools && typeFilter === "All" && normalizedQuery.length > 0 && filteredOpportunities.length > 0;
 
   function clearAllFilters() {
     setLocation("");
@@ -528,7 +601,7 @@ function SearchContent() {
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search jobs, events, scholarships, programs, schools, or businesses..."
+              placeholder="Search jobs, events, scholarships, schools, training, or businesses..."
               className="flex-1 border-none bg-transparent text-base text-text outline-none"
               autoFocus
             />
@@ -681,7 +754,7 @@ function SearchContent() {
         <div className="py-16 text-center">
           <p className="mb-4 text-5xl">&#128269;</p>
           <h2 className="mb-2 text-xl font-bold text-text">Search IOPPS</h2>
-          <p className="text-sm text-text-sec">Find jobs, events, scholarships, programs, schools, and businesses.</p>
+          <p className="text-sm text-text-sec">Find jobs, events, scholarships, schools, training, and businesses.</p>
         </div>
       ) : totalResults === 0 ? (
         <div className="py-16 text-center">
@@ -696,15 +769,23 @@ function SearchContent() {
             {activeFilterCount > 0 && <span> with {activeFilterCount} filter{activeFilterCount !== 1 ? "s" : ""} applied</span>}
           </p>
 
+          {shouldLeadWithSchools && filteredSchools.length > 0 && (
+            <ResultSection label="SCHOOLS" description="Colleges, universities, and education partners">
+              {filteredSchools.map((result) => (
+                <DirectoryResultCard key={`school-${result.id}`} result={result} />
+              ))}
+            </ResultSection>
+          )}
+
           {shouldLeadWithOpportunities && filteredOpportunities.length > 0 && (
-            <ResultSection label="OPPORTUNITIES" description="Top live matches across jobs, events, scholarships, and programs">
+            <ResultSection label="OPPORTUNITIES" description="Top live matches across jobs, events, scholarships, and training">
               {filteredOpportunities.map((result) => (
                 <SearchResultCard key={`${result.type}-${result.id}`} result={result} />
               ))}
             </ResultSection>
           )}
 
-          {filteredSchools.length > 0 && (
+          {!shouldLeadWithSchools && filteredSchools.length > 0 && (
             <ResultSection label="SCHOOLS" description="Colleges, universities, and education partners">
               {filteredSchools.map((result) => (
                 <DirectoryResultCard key={`school-${result.id}`} result={result} />
@@ -721,7 +802,7 @@ function SearchContent() {
           )}
 
           {!shouldLeadWithOpportunities && filteredOpportunities.length > 0 && (
-            <ResultSection label="OPPORTUNITIES" description="Live results from jobs, events, scholarships, and programs">
+            <ResultSection label="OPPORTUNITIES" description="Live results from jobs, events, scholarships, and training">
               {filteredOpportunities.map((result) => (
                 <SearchResultCard key={`${result.type}-${result.id}`} result={result} />
               ))}
@@ -749,9 +830,23 @@ function DirectoryResultCard({ result }: { result: DirectoryResult }) {
   const label = result.type === "school" ? "Education" : result.tier === "premium" ? "Premium" : "Business";
   const color = result.type === "school" ? "var(--teal)" : "var(--gold)";
   const bg = result.type === "school" ? "var(--teal-soft)" : "var(--gold-soft)";
+  const href = result.type === "school" && (result.matchingPrograms || 0) > 0 ? `${result.href}?tab=programs` : result.href;
+  const summaryBits = result.type === "school"
+    ? [
+        result.locationText,
+        result.programCount ? `${result.programCount} programs` : "",
+        result.scholarshipCount ? `${result.scholarshipCount} scholarships` : "",
+        result.openJobs > 0 ? `${result.openJobs} careers` : "",
+      ]
+    : [
+        result.locationText,
+        result.trainingCount ? `${result.trainingCount} training` : "",
+        result.scholarshipCount ? `${result.scholarshipCount} scholarships` : "",
+        result.openJobs > 0 ? `${result.openJobs} open jobs` : "",
+      ];
 
   return (
-    <Link href={result.href} className="no-underline">
+    <Link href={href} className="no-underline">
       <Card className="cursor-pointer">
         <div className="flex items-center gap-3 px-4 py-4">
           <Avatar
@@ -766,8 +861,13 @@ function DirectoryResultCard({ result }: { result: DirectoryResult }) {
               {result.verified && <span className="text-[11px] font-semibold text-teal">&#10003;</span>}
             </div>
             <p className="m-0 text-xs text-text-sec">
-              {[result.locationText, result.openJobs > 0 ? `${result.openJobs} open jobs` : ""].filter(Boolean).join(" · ")}
+              {summaryBits.filter(Boolean).join(" · ")}
             </p>
+            {result.type === "school" && (result.matchingPrograms || 0) > 0 && (
+              <p className="mt-1 text-[11px] font-semibold" style={{ color: "var(--purple)" }}>
+                {result.matchingPrograms} matching program{result.matchingPrograms === 1 ? "" : "s"}
+              </p>
+            )}
             {result.description && (
               <p className="mt-1 line-clamp-2 text-xs text-text-muted">{result.description}</p>
             )}

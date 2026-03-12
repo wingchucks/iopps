@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -149,10 +149,9 @@ const navItems = [
   { href: "/search", label: "Search", icon: "search", key: "search" },
   { href: "/jobs", label: "Jobs", icon: "briefcase", key: "jobs" },
   { href: "/events", label: "Events", icon: "calendar", key: "events" },
-  { href: "/livestreams", label: "Live", icon: "video", key: "livestreams" },
   { href: "/scholarships", label: "Scholarships", icon: "award", key: "scholarships" },
-  { href: "/programs", label: "Programs", icon: "book", key: "programs" },
   { href: "/schools", label: "Schools", icon: "school", key: "schools" },
+  { href: "/training", label: "Training", icon: "book", key: "training" },
   { href: "/search?type=Businesses", label: "Businesses", icon: "store", key: "businesses" },
   { href: "/messages", label: "Messages", icon: "message", key: "messages" },
   { href: "/saved", label: "Saved", icon: "bookmark", key: "saved" },
@@ -162,7 +161,6 @@ const navItems = [
 export default function IconRailSidebar() {
   const [showChooser, setShowChooser] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const [hasLiveNow, setHasLiveNow] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -170,25 +168,6 @@ export default function IconRailSidebar() {
   const { theme, toggle } = useTheme();
   const { hasOrg, isAdmin } = useAccountContext();
   const displayName = user?.displayName || user?.email || "U";
-
-  useEffect(() => {
-    let active = true;
-
-    fetch("/api/livestreams/youtube")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((payload) => {
-        if (!active) return;
-        setHasLiveNow(Boolean(payload?.live));
-      })
-      .catch(() => {
-        if (!active) return;
-        setHasLiveNow(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -277,8 +256,6 @@ export default function IconRailSidebar() {
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2" style={{ scrollbarWidth: "none" }}>
           {allItems.map(({ href, label, icon, key }) => {
             const active = isItemActive(href, key);
-            const showLiveDot = key === "livestreams" && hasLiveNow;
-
             return (
               <Link key={href} href={href} className="no-underline" data-nav-item={key}>
                 <div
@@ -298,18 +275,6 @@ export default function IconRailSidebar() {
                   >
                     {label}
                   </span>
-                  {showLiveDot && (
-                    <span
-                      className="ml-auto inline-block h-2.5 w-2.5 rounded-full"
-                      style={{
-                        background: "#DC2626",
-                        boxShadow: "0 0 0 6px rgba(220,38,38,.14)",
-                        animation: "pulse-nav-dot 2s ease-in-out infinite",
-                      }}
-                      aria-label="Live now"
-                      title="Live now"
-                    />
-                  )}
                 </div>
               </Link>
             );
@@ -453,12 +418,6 @@ export default function IconRailSidebar() {
         onClose={() => setShowCreatePost(false)}
         onPostCreated={() => setShowCreatePost(false)}
       />
-      <style>{`
-        @keyframes pulse-nav-dot {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.45; transform: scale(1.28); }
-        }
-      `}</style>
     </>
   );
 }
