@@ -14,7 +14,7 @@ import { getPost, getPosts } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { getScholarshipBySlug, getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
-import { displayLocation } from "@/lib/utils";
+import { displayAmount, displayLocation } from "@/lib/utils";
 
 interface ScholarshipOwnerMeta {
   ownerType?: "school" | "business" | "organization" | "unknown";
@@ -195,6 +195,7 @@ function ScholarshipDetailContent() {
   const orgLink = ownerHref;
   const isPremium = org?.tier === "premium";
   const closingSoon = isClosingSoon(scholarship.deadline);
+  const amountLabel = displayAmount(scholarship.amount) || "Funding varies";
   const descriptionHasHtml = typeof scholarship.description === "string" && scholarship.description.includes("<");
   const eligibilityHasHtml = typeof scholarship.eligibility === "string" && scholarship.eligibility.includes("<");
   const applicationInstructionsHasHtml =
@@ -242,7 +243,7 @@ function ScholarshipDetailContent() {
           <h1 className="text-2xl sm:text-4xl font-extrabold text-text mb-2">{scholarship.title}</h1>
           <div className="flex flex-wrap justify-center gap-4 text-sm text-text-sec">
             {scholarship.orgName && <span>{scholarship.orgName}</span>}
-            <span>&#128176; {scholarship.amount || "Funding varies"}</span>
+            <span>&#128176; {amountLabel}</span>
             <span>&#128197; {scholarship.deadline ? `Deadline: ${scholarship.deadline}` : "Check provider for deadline"}</span>
             {scholarship.location && <span>&#128205; {displayLocation(scholarship.location)}</span>}
           </div>
@@ -470,7 +471,7 @@ function ScholarshipDetailContent() {
                             <h4 className="text-sm font-bold text-text m-0 mb-0.5">{r.title}</h4>
                             <div className="flex flex-wrap gap-2 text-xs text-text-sec">
                               {r.orgName && <span>{r.orgName}</span>}
-                              {r.amount && <span>&#128176; {r.amount}</span>}
+                              {displayAmount(r.amount) && <span>&#128176; {displayAmount(r.amount)}</span>}
                               {r.deadline && <span>&#128197; {r.deadline}</span>}
                             </div>
                           </div>
@@ -542,7 +543,7 @@ function ScholarshipDetailContent() {
                 <div className="flex flex-col gap-2.5">
                   <div className="flex justify-between">
                     <span className="text-xs text-text-muted">Value</span>
-                    <span className="text-xs font-semibold text-text">{scholarship.amount || "Funding varies"}</span>
+                    <span className="text-xs font-semibold text-text">{amountLabel}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-xs text-text-muted">Deadline</span>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ScholarshipDetailClient from "./ScholarshipDetailClient";
 import { getPost } from "@/lib/firestore/posts";
 import { getScholarshipBySlug, type Scholarship } from "@/lib/firestore/scholarships";
+import { displayAmount } from "@/lib/utils";
 
 const SITE_URL = "https://www.iopps.ca";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
@@ -60,7 +61,7 @@ function buildScholarshipDescription(scholarship: Scholarship): string {
 
   const facts = [
     scholarship.orgName ? `from ${scholarship.orgName}` : "",
-    scholarship.amount ? `worth ${scholarship.amount}` : "",
+    displayAmount(scholarship.amount) ? `worth ${displayAmount(scholarship.amount)}` : "",
     scholarship.deadline ? `deadline ${scholarship.deadline}` : "",
   ].filter(Boolean);
 

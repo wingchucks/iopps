@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
+import { displayAmount } from "@/lib/utils";
 import {
   deriveOwnerType,
   matchesOrgName,
@@ -96,6 +97,7 @@ export async function GET(
             {
               ...program,
               slug: text(program.slug) || text(program.id).replace(/^program-/, ""),
+              cost: displayAmount(program.cost),
               href: `/programs/${text(program.slug) || text(program.id).replace(/^program-/, "")}`,
             },
             {
@@ -129,6 +131,7 @@ export async function GET(
             {
               ...scholarship,
               slug: text(scholarship.slug) || text(scholarship.id),
+              amount: displayAmount(scholarship.amount),
               href: `/scholarships/${text(scholarship.slug) || text(scholarship.id)}`,
             },
             {

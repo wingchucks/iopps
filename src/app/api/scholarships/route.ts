@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { displayAmount } from "@/lib/utils";
 import {
   deriveOwnerType,
   matchesOrgName,
@@ -23,6 +24,9 @@ function normalizeScholarship(
   }
   if (!serialized.applicationUrl && typeof serialized.url === "string") {
     serialized.applicationUrl = serialized.url;
+  }
+  if (serialized.amount != null) {
+    serialized.amount = displayAmount(serialized.amount);
   }
 
   const linkedOrg =

@@ -8,7 +8,7 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { displayLocation, ensureTagsArray } from "@/lib/utils";
+import { displayAmount, displayLocation, ensureTagsArray } from "@/lib/utils";
 
 const typeFilters = ["All", "Jobs", "Events", "Scholarships", "Schools", "Training", "Businesses"] as const;
 const sortOptions = [
@@ -203,7 +203,7 @@ function normalizeScholarship(scholarship: Record<string, unknown>): SearchOppor
     orgSlug: text(scholarship.orgSlug),
     locationText: displayLocation(scholarship.location),
     description: text(scholarship.description) || text(scholarship.eligibility) || text(scholarship.applicationInstructions),
-    amount: text(scholarship.amount) || text(scholarship.value),
+    amount: displayAmount(scholarship.amount) || displayAmount(scholarship.value),
     deadline: text(scholarship.deadline),
     category: text(scholarship.category) || text(scholarship.type),
     tags: extractTags(scholarship, [scholarship.category, scholarship.type]),

@@ -6,12 +6,12 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { type Organization } from "@/lib/firestore/organizations";
-import { displayLocation } from "@/lib/utils";
+import { displayAmount, displayLocation } from "@/lib/utils";
 
 // ── Types ──
-interface SchoolProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; type?: string; campus?: string; location?: string; region?: string; schoolId?: string; institutionName?: string; provider?: string; description?: string; cost?: string; eligibility?: string; format?: string; applyUrl?: string; href?: string; }
+interface SchoolProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; type?: string; campus?: string; location?: string; region?: string; schoolId?: string; institutionName?: string; provider?: string; description?: string; cost?: unknown; eligibility?: string; format?: string; applyUrl?: string; href?: string; }
 interface SchoolJob { id: string; title: string; slug?: string; location?: string; jobType?: string; employmentType?: string; salary?: string; featured?: boolean; employerId?: string; employerName?: string; href?: string; }
-interface SchoolScholarship { id: string; title: string; amount?: string; deadline?: string; description?: string; employerId?: string; organization?: string; href?: string; }
+interface SchoolScholarship { id: string; title: string; amount?: unknown; deadline?: string; description?: string; employerId?: string; organization?: string; href?: string; }
 interface Campus { name: string; location: string; type?: string; }
 interface AccreditationRecord { name: string; description?: string; }
 interface SchoolOrganization extends Omit<Organization, "accreditation"> {
@@ -296,7 +296,10 @@ function SchoolProfileContent() {
                 {/* Programs Panel */}
                 {activeTab === "programs" && (
                   <div className="flex flex-col gap-2.5">
-                    {programs.slice(0, 6).map((p, i) => (
+                    {programs.slice(0, 6).map((p, i) => {
+                      const programCost = displayAmount(p.cost);
+
+                      return (
                       <Link key={p.id} href={p.href || `/programs/${p.id}`} className="no-underline block">
                         <div className="px-4 py-3.5 rounded-xl transition-all hover:-translate-y-0.5"
                           style={{
@@ -311,10 +314,11 @@ function SchoolProfileContent() {
                             {[p.duration, p.format, p.region || p.campus || p.location].filter(Boolean).join(" · ")}
                           </p>
                           {p.description && <p className="text-[11px] text-text-muted mt-1.5 line-clamp-2 leading-relaxed">{p.description}</p>}
-                          {p.cost && <p className="text-[11px] mt-1" style={{ color: PURPLE }}>💰 {p.cost}</p>}
+                          {programCost && <p className="text-[11px] mt-1" style={{ color: PURPLE }}>💰 {programCost}</p>}
                         </div>
                       </Link>
-                    ))}
+                      );
+                    })}
                     {programs.length > 6 && (
                       <div className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer"
                         style={{ color: PURPLE, border: `1px solid rgba(167,139,250,0.2)`, background: "rgba(167,139,250,0.04)" }}>
@@ -356,7 +360,10 @@ function SchoolProfileContent() {
                 {/* Scholarships Panel */}
                 {activeTab === "scholarships" && (
                   <div className="flex flex-col gap-2.5">
-                    {scholarships.slice(0, 5).map((s, i) => (
+                    {scholarships.slice(0, 5).map((s, i) => {
+                      const scholarshipAmount = displayAmount(s.amount);
+
+                      return (
                       <div key={s.id} className="px-4 py-3.5 rounded-xl"
                         style={{
                           background: i === 0 ? "rgba(251,191,36,0.06)" : "rgba(30,41,59,0.4)",
@@ -365,10 +372,11 @@ function SchoolProfileContent() {
                         <p className="text-sm font-bold text-text">{s.title}</p>
                         {s.description && <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{s.description}</p>}
                         <p className="text-[11px] mt-1" style={{ color: GOLD }}>
-                          {s.amount ? `💰 ${s.amount}` : ""}{s.deadline ? ` · Deadline: ${formatDeadline(s.deadline)}` : ""}
+                          {scholarshipAmount ? `💰 ${scholarshipAmount}` : ""}{s.deadline ? ` · Deadline: ${formatDeadline(s.deadline)}` : ""}
                         </p>
                       </div>
-                    ))}
+                      );
+                    })}
                     {scholarships.length > 5 && (
                       <div className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer"
                         style={{ color: GOLD, border: "1px solid rgba(251,191,36,0.2)", background: "rgba(251,191,36,0.04)" }}>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
+import { displayAmount } from "@/lib/utils";
 
 const categories = ["All", "Technology", "Business", "Trades", "Health", "Culture"] as const;
 const formats = ["All", "Online", "In-Person", "Hybrid"] as const;
@@ -19,7 +20,7 @@ interface TrainingProgram {
   duration?: string;
   enrollmentCount?: number;
   maxEnrollment?: number;
-  price?: number | null;
+  price?: unknown;
   featured?: boolean;
   active?: boolean;
   provider?: string;
@@ -256,6 +257,7 @@ function ProgramCard({
       ? `${program.enrollmentCount || 0}/${program.maxEnrollment} enrolled`
       : `${program.enrollmentCount || 0} enrolled`;
   const providerName = program.ownerName || program.orgName || program.provider || "Training provider";
+  const priceLabel = displayAmount(program.price);
 
   return (
     <Link href={`/training/${program.slug || program.id}`} className="no-underline">
@@ -313,9 +315,9 @@ function ProgramCard({
             <span className="text-xs text-text-muted">{enrollText}</span>
             <span
               className="text-sm font-bold"
-              style={{ color: program.price == null ? "var(--green)" : "var(--teal)" }}
+              style={{ color: priceLabel ? "var(--teal)" : "var(--green)" }}
             >
-              {program.price == null ? "Free" : `$${program.price}`}
+              {priceLabel || "Free"}
             </span>
           </div>
         </div>

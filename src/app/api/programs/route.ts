@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { displayAmount } from "@/lib/utils";
 import {
   deriveOwnerType,
   matchesOrgName,
@@ -58,6 +59,7 @@ export async function GET() {
             id: String(program.id || ""),
             slug: String(program.slug || cleanId),
             href: `/programs/${String(program.slug || cleanId)}`,
+            cost: displayAmount(program.cost),
             orgId: ownerId,
             orgName: ownerName,
             institutionName: String(program.institutionName || ownerName),

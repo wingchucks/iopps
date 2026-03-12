@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { displayLocation } from "@/lib/utils";
+import { displayAmount, displayLocation } from "@/lib/utils";
 
 interface PublicScholarship {
   id: string;
@@ -11,7 +11,7 @@ interface PublicScholarship {
   title: string;
   description?: string;
   eligibility?: string;
-  amount?: string;
+  amount?: unknown;
   deadline?: string;
   orgId?: string;
   orgName?: string;
@@ -185,7 +185,7 @@ export default function ScholarshipsBrowsePage() {
               {filtered.map((scholarship) => {
                 const slug = scholarship.slug || scholarship.id;
                 const closingSoon = isClosingSoon(scholarship.deadline);
-                const amountLabel = scholarship.amount || "Funding varies";
+                const amountLabel = displayAmount(scholarship.amount) || "Funding varies";
                 const deadlineLabel = scholarship.deadline || "Check provider for deadline";
                 const sourceLabel = getSourceLabel(scholarship.ownerType);
 

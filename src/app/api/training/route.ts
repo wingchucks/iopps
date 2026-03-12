@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { displayAmount } from "@/lib/utils";
 import {
   deriveOwnerType,
   serialize,
@@ -42,6 +43,7 @@ export async function GET() {
         return withPublicOwnership(
           {
             ...program,
+            price: displayAmount(program.price),
             href: `/training/${String(program.slug || program.id || "")}`,
           },
           {
