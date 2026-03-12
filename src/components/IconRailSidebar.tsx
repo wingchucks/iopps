@@ -84,6 +84,15 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
           <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
         </svg>
       );
+    case "school":
+      return (
+        <svg {...p}>
+          <path d="M22 10 12 5 2 10l10 5 10-5Z" />
+          <path d="M6 12v5.5c0 .5.3 1 .8 1.2 1.7.9 3.5 1.3 5.2 1.3s3.5-.4 5.2-1.3c.5-.2.8-.7.8-1.2V12" />
+          <path d="M22 10v6" />
+          <circle cx="22" cy="17" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      );
     case "message":
       return (
         <svg {...p}>
@@ -134,6 +143,7 @@ const navItems = [
   { href: "/events", label: "Events", icon: "calendar", key: "events" },
   { href: "/scholarships", label: "Scholarships", icon: "award", key: "scholarships" },
   { href: "/programs", label: "Programs", icon: "book", key: "programs" },
+  { href: "/schools", label: "Schools", icon: "school", key: "schools" },
   { href: "/search?type=Businesses", label: "Businesses", icon: "store", key: "businesses" },
   { href: "/messages", label: "Messages", icon: "message", key: "messages" },
   { href: "/saved", label: "Saved", icon: "bookmark", key: "saved" },
