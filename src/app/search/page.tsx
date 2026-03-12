@@ -492,6 +492,7 @@ function SearchContent() {
   const activeFilterCount = [location.trim(), salaryRange !== "any", dateRange !== "any", orgFilter, selectedTags.length > 0, indigenousOnly]
     .filter(Boolean)
     .length;
+  const shouldLeadWithOpportunities = typeFilter === "All" && normalizedQuery.length > 0 && filteredOpportunities.length > 0;
 
   function clearAllFilters() {
     setLocation("");
@@ -695,6 +696,14 @@ function SearchContent() {
             {activeFilterCount > 0 && <span> with {activeFilterCount} filter{activeFilterCount !== 1 ? "s" : ""} applied</span>}
           </p>
 
+          {shouldLeadWithOpportunities && filteredOpportunities.length > 0 && (
+            <ResultSection label="OPPORTUNITIES" description="Top live matches across jobs, events, scholarships, and programs">
+              {filteredOpportunities.map((result) => (
+                <SearchResultCard key={`${result.type}-${result.id}`} result={result} />
+              ))}
+            </ResultSection>
+          )}
+
           {filteredSchools.length > 0 && (
             <ResultSection label="SCHOOLS" description="Colleges, universities, and education partners">
               {filteredSchools.map((result) => (
@@ -711,7 +720,7 @@ function SearchContent() {
             </ResultSection>
           )}
 
-          {filteredOpportunities.length > 0 && (
+          {!shouldLeadWithOpportunities && filteredOpportunities.length > 0 && (
             <ResultSection label="OPPORTUNITIES" description="Live results from jobs, events, scholarships, and programs">
               {filteredOpportunities.map((result) => (
                 <SearchResultCard key={`${result.type}-${result.id}`} result={result} />
