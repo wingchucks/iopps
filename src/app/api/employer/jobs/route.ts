@@ -119,6 +119,96 @@ function buildJobPayload(input: EmployerJobInput, authorContext: { uid: string; 
   return { payload, status, featured };
 }
 
+function serialize(value: unknown): unknown {
+  if (value === null || value === undefined) return value;
+  if (typeof value === "object" && value !== null && typeof (value as Record<string, unknown>).toDate === "function") {
+    return ((value as Record<string, unknown>).toDate as () => Date)().toISOString();
+  }
+  if (Array.isArray(value)) return value.map(serialize);
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, serialize(v)])
+    );
+  }
+  return value;
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const context = await requireEmployerContext(req);
+    const db = getAdminDb();
+
+    // Query both employerId and orgId matches
+    const jobsByEmployer = await db
+      .collection("jobs")
+      .where("employerId", "==", context.employerId)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const jobIds = new Set(jobsByEmployer.docs.map((doc) => doc.id));
+    const allDocs = [...jobsByEmployer.docs];
+
+    if (context.orgId && context.orgId !== context.employerId) {
+      const jobsByOrg = await db
+        .collection("jobs")
+        .where("orgId", "==", context.orgId)
+        .orderBy("createdAt", "desc")
+        .get();
+      for (const doc of jobsByOrg.docs) {
+        if (!jobIds.has(doc.id)) {
+          allDocs.push(doc);
+          jobIds.add(doc.id);
+        }
+      }
+    }
+
+    // Sort combined by createdAt desc
+    allDocs.sort((a, b) => {
+      const aTime = a.data().createdAt?.toMillis?.() ?? 0;
+      const bTime = b.data().createdAt?.toMillis?.() ?? 0;
+      return bTime - aTime;
+    });
+
+    // Build response with application counts
+    const jobs = await Promise.all(
+      allDocs.map(async (doc) => {
+        const d = doc.data();
+        let applicationCount = 0;
+        try {
+          const appsSnap = await db
+            .collection("applications")
+            .where("jobId", "==", doc.id)
+            .get();
+          applicationCount = appsSnap.size;
+        } catch { /* ignore */ }
+
+        return serialize({
+          id: doc.id,
+          title: d.title || "",
+          slug: d.slug || doc.id,
+          location: d.location || "",
+          employmentType: d.employmentType || d.jobType || "",
+          salary: d.salary || "",
+          status: d.status || "active",
+          active: d.active ?? true,
+          featured: Boolean(d.featured),
+          closingDate: d.closingDate || null,
+          createdAt: d.createdAt || null,
+          applicationCount,
+          employerName: d.employerName || d.orgName || "",
+        });
+      })
+    );
+
+    return NextResponse.json({ jobs });
+  } catch (error) {
+    const status = error instanceof EmployerApiError ? error.status : 500;
+    const message = error instanceof Error ? error.message : "Failed to load jobs.";
+    console.error("[api/employer/jobs][GET]", error);
+    return NextResponse.json({ error: message }, { status });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const context = await requireEmployerContext(req);

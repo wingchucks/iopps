@@ -5,10 +5,11 @@ import {
   doc,
   setDoc,
   updateDoc,
+  deleteDoc,
   serverTimestamp,
   query,
-  orderBy,
   where,
+  orderBy,
   type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -120,4 +121,15 @@ export async function updateJob(
 ): Promise<void> {
   const ref = doc(col, id);
   await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+}
+
+export async function getJobsByOrg(orgId: string): Promise<Job[]> {
+  const snap = await getDocs(
+    query(col, where("orgId", "==", orgId), orderBy("createdAt", "desc"))
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Job));
+}
+
+export async function deleteJob(id: string): Promise<void> {
+  await deleteDoc(doc(col, id));
 }
