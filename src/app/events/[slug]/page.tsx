@@ -7,7 +7,6 @@ import AppShell from "@/components/AppShell";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
-import { getEventBySlug } from "@/lib/firestore/events";
 import { getPost } from "@/lib/firestore/posts";
 import { savePost, unsavePost } from "@/lib/firestore/savedItems";
 import {
@@ -107,8 +106,13 @@ function EventDetailContent() {
   useEffect(() => {
     async function load() {
       try {
-        // Primary: dedicated events collection
-        let data: EventData | null = await getEventBySlug(slug);
+        let data: EventData | null = null;
+
+        const eventRes = await fetch(`/api/events/${slug}`);
+        if (eventRes.ok) {
+          const payload = await eventRes.json();
+          data = payload?.event ?? null;
+        }
 
         // Fallback: posts collection
         if (!data) {
