@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
+import ShareButton from "@/components/ShareButton";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import {
@@ -194,6 +195,13 @@ export default function TrainingDetailPage() {
               <h1 className="text-2xl sm:text-3xl font-extrabold text-text mb-2">
                 {program.title}
               </h1>
+              <div className="mt-3">
+                <ShareButton
+                  title={program.title}
+                  text="Share Training"
+                  style={{ borderRadius: 14, padding: "10px 18px", fontSize: 14 }}
+                />
+              </div>
             </div>
 
             {/* Instructor card */}

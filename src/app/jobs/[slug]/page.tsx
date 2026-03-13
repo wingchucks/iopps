@@ -8,6 +8,7 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
+import ShareButton from "@/components/ShareButton";
 import { displayAmount, displayLocation } from "@/lib/utils";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { hasApplied } from "@/lib/firestore/applications";
@@ -321,6 +322,18 @@ function JobDetailContent() {
               >
                 {saved ? "✓ Saved" : "🔖 Save Job"}
               </Button>
+
+              <ShareButton
+                title={job.title}
+                text="Share Job"
+                full
+                style={{
+                  borderRadius: 14,
+                  padding: "12px 24px",
+                  fontSize: 14,
+                  marginBottom: 16,
+                }}
+              />
 
               {/* Job Details */}
               <div className="border-t border-border pt-4">

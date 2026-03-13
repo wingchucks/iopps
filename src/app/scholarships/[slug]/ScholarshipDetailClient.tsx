@@ -9,6 +9,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ReportButton from "@/components/ReportButton";
+import ShareButton from "@/components/ShareButton";
 import { useAuth } from "@/lib/auth-context";
 import { getPost, getPosts } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
@@ -553,6 +554,18 @@ function ScholarshipDetailContent() {
               >
                 {saved ? "&#10004; Saved" : "&#128278; Save Scholarship"}
               </Button>
+
+              <ShareButton
+                title={scholarship.title}
+                text="Share Scholarship"
+                full
+                style={{
+                  borderRadius: 14,
+                  padding: "12px 24px",
+                  fontSize: 14,
+                  marginBottom: 16,
+                }}
+              />
 
               <div className="border-t border-border pt-4">
                 <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">SCHOLARSHIP DETAILS</p>

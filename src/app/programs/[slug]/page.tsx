@@ -9,6 +9,7 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
+import ShareButton from "@/components/ShareButton";
 import { getPost, getPosts, type Post } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
@@ -375,6 +376,18 @@ function ProgramDetailContent() {
               >
                 {saved ? "&#10004; Saved" : "&#128278; Save Program"}
               </Button>
+
+              <ShareButton
+                title={post.title}
+                text="Share Program"
+                full
+                style={{
+                  borderRadius: 14,
+                  padding: "12px 24px",
+                  fontSize: 14,
+                  marginBottom: 16,
+                }}
+              />
 
               <div className="border-t border-border pt-4">
                 <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">PROGRAM DETAILS</p>

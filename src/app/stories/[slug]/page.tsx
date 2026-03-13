@@ -8,11 +8,11 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
+import ShareButton from "@/components/ShareButton";
 import { getPost, getPosts, type Post } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { useAuth } from "@/lib/auth-context";
-import { useToast } from "@/lib/toast-context";
 import ReportButton from "@/components/ReportButton";
 import { displayLocation } from "@/lib/utils";
 
@@ -36,7 +36,6 @@ function StoryDetailContent() {
   const [saved, setSaved] = useState(false);
   const [actionLoading, setActionLoading] = useState("");
   const { user } = useAuth();
-  const { showToast } = useToast();
 
   useEffect(() => {
     async function load() {
@@ -89,15 +88,6 @@ function StoryDetailContent() {
       console.error("Save failed:", err);
     } finally {
       setActionLoading("");
-    }
-  };
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      showToast("Link copied to clipboard!", "success");
-    } catch {
-      showToast("Failed to copy link", "error");
     }
   };
 
@@ -354,18 +344,17 @@ function StoryDetailContent() {
                 {saved ? "&#10004; Saved" : "&#128278; Save Story"}
               </Button>
 
-              <Button
+              <ShareButton
+                title={post.title}
+                text="Share Story"
                 full
-                onClick={handleCopyLink}
                 style={{
                   borderRadius: 14,
                   padding: "12px 24px",
                   fontSize: 14,
                   marginBottom: 16,
                 }}
-              >
-                &#128279; Copy Link
-              </Button>
+              />
 
               <div className="border-t border-border pt-4">
                 <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">

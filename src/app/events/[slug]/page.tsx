@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
+import ShareButton from "@/components/ShareButton";
 import { getPost } from "@/lib/firestore/posts";
 import { savePost, unsavePost } from "@/lib/firestore/savedItems";
 import {
@@ -523,13 +524,7 @@ function EventDetailContent() {
           <Card>
             <div style={{ padding: 16 }}>
               <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">SHARE EVENT</p>
-              <div className="flex gap-2">
-                <button
-                  className="flex-1 py-2.5 rounded-xl border border-border bg-card text-sm font-semibold text-text-sec cursor-pointer"
-                >
-                  &#128279; Copy Link
-                </button>
-              </div>
+              <ShareButton title={event.title} text="Share Event" full />
             </div>
           </Card>
 
