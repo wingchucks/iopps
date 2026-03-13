@@ -259,7 +259,7 @@ function PartnersContent() {
               <span className="flex items-center gap-1.5">&#10003; Analytics dashboard</span>
             </div>
             <div className="flex justify-center gap-3">
-              <Link href={user ? "/employer/dashboard" : "/signup?type=employer"}>
+                  <Link href={user ? "/org/dashboard" : "/signup?type=employer"}>
                 <Button
                   primary
                   style={{
