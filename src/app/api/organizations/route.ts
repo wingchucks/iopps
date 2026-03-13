@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { applyNormalizedSubscriptionState } from "@/lib/server/subscription-state";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
@@ -24,9 +25,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const partnersOnly = searchParams.get("partners") === "true";
-
     const db = getAdminDb();
-    let snapshot;
 
     if (partnersOnly) {
       // Partners page: only paid plans or verified orgs
@@ -44,7 +43,7 @@ export async function GET(req: Request) {
         seen.add(d.id);
         return true;
       });
-      const orgs = docs.map(doc => serialize({ id: doc.id, ...doc.data() }));
+      const orgs = docs.map((doc) => applyNormalizedSubscriptionState(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>));
       return NextResponse.json({ orgs });
     }
 
@@ -64,7 +63,7 @@ export async function GET(req: Request) {
       return true;
     });
     const orgs = allDocs.map((doc) =>
-      serialize({ id: doc.id, ...doc.data() })
+      applyNormalizedSubscriptionState(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
     );
 
     return NextResponse.json({ orgs });

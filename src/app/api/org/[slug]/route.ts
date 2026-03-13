@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
+import { applyNormalizedSubscriptionState } from "@/lib/server/subscription-state";
 
 export const runtime = "nodejs";
 export const revalidate = 120;
@@ -97,7 +98,7 @@ async function resolveOrganization(
   slug: string,
 ): Promise<JsonRecord | null> {
   const directDoc = await db.collection("organizations").doc(slug).get();
-  if (directDoc.exists) return serializeDoc(directDoc);
+  if (directDoc.exists) return applyNormalizedSubscriptionState(serializeDoc(directDoc));
 
   const slugQuery = await db
     .collection("organizations")
@@ -106,7 +107,7 @@ async function resolveOrganization(
     .get();
 
   if (!slugQuery.empty) {
-    return serializeDoc(slugQuery.docs[0]);
+    return applyNormalizedSubscriptionState(serializeDoc(slugQuery.docs[0]));
   }
 
   const employerQuery = await db
@@ -116,7 +117,7 @@ async function resolveOrganization(
     .get();
 
   if (!employerQuery.empty) {
-    return serializeDoc(employerQuery.docs[0]);
+    return applyNormalizedSubscriptionState(serializeDoc(employerQuery.docs[0]));
   }
 
   return null;

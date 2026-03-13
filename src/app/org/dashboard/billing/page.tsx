@@ -16,6 +16,10 @@ interface EmployerData {
   subscriptionStatus?: string;
   subscriptionStart?: string;
   subscriptionEnd?: string;
+  billingStartAt?: string;
+  bonusAccessGrantedAt?: string;
+  bonusAccessEndsAt?: string;
+  bonusAccessReason?: string;
   name?: string;
   openJobs?: number;
   featuredSummary?: FeaturedJobSummary;
@@ -85,6 +89,14 @@ function BillingContent() {
 
   const currentPlan = employer?.subscriptionTier || employer?.plan || "free";
   const planInfo = PLAN_FEATURES[currentPlan] || PLAN_FEATURES.free;
+  const billingStart = employer?.billingStartAt || employer?.subscriptionStart;
+  const billingStartLabel = billingStart
+    ? new Date(billingStart).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })
+    : null;
+  const subscriptionEndLabel = employer?.subscriptionEnd
+    ? new Date(employer.subscriptionEnd).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })
+    : null;
+  const hasBonusAccess = Boolean(employer?.bonusAccessGrantedAt && billingStart && new Date(billingStart).getTime() > Date.now());
 
   const isActive = employer?.subscriptionStatus === "active" || ["standard", "premium", "school"].includes(currentPlan);
 
@@ -120,6 +132,24 @@ function BillingContent() {
                 {!isActive && <Badge text="Inactive" color="var(--text-muted)" bg="var(--border)" />}
               </div>
               <p className="text-sm text-text-muted">{planInfo.jobLimit}</p>
+              {hasBonusAccess && billingStartLabel && (
+                <div className="mt-3 rounded-xl border border-[var(--gold-soft)] px-4 py-3" style={{ background: "rgba(217,119,6,.08)" }}>
+                  <p className="mb-1 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: "var(--gold)" }}>
+                    Bonus early access
+                  </p>
+                  <p className="m-0 text-sm text-text">
+                    Your access is active now as a bonus. Your paid Premium term begins on <strong>{billingStartLabel}</strong>.
+                  </p>
+                  {employer?.bonusAccessReason && (
+                    <p className="mt-1 mb-0 text-xs text-text-muted">{employer.bonusAccessReason}</p>
+                  )}
+                </div>
+              )}
+              {!hasBonusAccess && billingStartLabel && (
+                <p className="mt-3 text-xs text-text-muted">
+                  Plan start: {billingStartLabel}{subscriptionEndLabel ? ` · Renews/expires: ${subscriptionEndLabel}` : ""}
+                </p>
+              )}
               {employer?.featuredSummary && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
                   {[
