@@ -45,23 +45,41 @@ export async function requireEmployerContext(req: Request): Promise<EmployerCont
   const memberData = (memberDoc.data() ?? {}) as Record<string, unknown>;
 
   const userRole = typeof userData.role === "string" ? userData.role : null;
+  const memberRole = typeof memberData.role === "string" ? memberData.role : null;
+  const claimRole = typeof decoded.role === "string" ? decoded.role : null;
+  const claimEmployerFlag = decoded.employer === true;
   const memberOrgId = typeof memberData.orgId === "string" && memberData.orgId
     ? memberData.orgId
     : null;
   const userEmployerId = typeof userData.employerId === "string" && userData.employerId
     ? userData.employerId
     : null;
+  const userOrgId = typeof userData.orgId === "string" && userData.orgId
+    ? userData.orgId
+    : null;
+  const claimEmployerId = typeof decoded.employerId === "string" && decoded.employerId
+    ? decoded.employerId
+    : null;
+  const claimOrgId = typeof decoded.orgId === "string" && decoded.orgId
+    ? decoded.orgId
+    : null;
 
-  if (!memberOrgId && !(userRole === "employer" && userEmployerId)) {
+  const hasEmployerRole =
+    userRole === "employer" ||
+    memberRole === "employer" ||
+    claimRole === "employer" ||
+    claimEmployerFlag;
+
+  const employerId = userEmployerId || userOrgId || claimEmployerId || claimOrgId || memberOrgId;
+  const orgId = memberOrgId || userOrgId || claimOrgId || employerId;
+
+  if (!orgId || !employerId || !hasEmployerRole) {
     throw new EmployerApiError(403, "Not an employer");
   }
-
-  const employerId = userEmployerId || memberOrgId!;
-  const orgId = memberOrgId || employerId;
   const orgRole =
     typeof memberData.orgRole === "string" && memberData.orgRole
       ? memberData.orgRole
-      : userRole === "employer"
+      : hasEmployerRole
         ? "owner"
         : "member";
 
