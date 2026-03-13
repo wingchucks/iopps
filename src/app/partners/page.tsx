@@ -10,6 +10,7 @@ import Link from "next/link";
 import type { Organization } from "@/lib/firestore/organizations";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { useAccountContext } from "@/lib/useAccountContext";
 
 type TierFilter = "All Partners" | "Premium" | "Education" | "Businesses";
 const tierFilters: TierFilter[] = ["All Partners", "Premium", "Education", "Businesses"];
@@ -26,10 +27,30 @@ export default function PartnersPage() {
 
 function PartnersContent() {
   const { user } = useAuth();
+  const { hasOrg, isEmployer, loading: accountLoading } = useAccountContext();
   const [filter, setFilter] = useState<TierFilter>("All Partners");
   const [search, setSearch] = useState("");
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const partnerCta = useMemo(() => {
+    if (accountLoading) {
+      return {
+        href: user ? "/org/dashboard" : "/signup?type=employer",
+        label: user ? "Loading..." : "Get Started",
+      };
+    }
+
+    if (isEmployer || hasOrg) {
+      return { href: "/org/plans", label: "Upgrade Your Plan" };
+    }
+
+    if (user) {
+      return { href: "/org/upgrade", label: "Set Up Organization" };
+    }
+
+    return { href: "/signup?type=employer", label: "Get Started" };
+  }, [accountLoading, hasOrg, isEmployer, user]);
 
   useEffect(() => {
     async function load() {
@@ -259,7 +280,7 @@ function PartnersContent() {
               <span className="flex items-center gap-1.5">&#10003; Analytics dashboard</span>
             </div>
             <div className="flex justify-center gap-3">
-                  <Link href={user ? "/org/dashboard" : "/signup?type=employer"}>
+              <Link href={partnerCta.href}>
                 <Button
                   primary
                   style={{
@@ -270,7 +291,7 @@ function PartnersContent() {
                     padding: "12px 28px",
                   }}
                 >
-                  {user ? "Upgrade Your Plan" : "Get Started"}
+                  {partnerCta.label}
                 </Button>
               </Link>
               <Link href="/pricing">
