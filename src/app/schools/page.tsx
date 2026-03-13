@@ -31,16 +31,24 @@ export default function SchoolsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return schools;
-    const q = search.toLowerCase();
-    return schools.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.shortName?.toLowerCase().includes(q) ||
-        s.description?.toLowerCase().includes(q) ||
-        displayLocation(s.location).toLowerCase().includes(q) ||
-        s.tags?.some((t) => t.toLowerCase().includes(q))
-    );
+    const q = search.trim().toLowerCase();
+    return schools
+      .filter((s) => {
+        if (!q) return true;
+        return (
+          s.name.toLowerCase().includes(q) ||
+          s.shortName?.toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q) ||
+          displayLocation(s.location).toLowerCase().includes(q) ||
+          s.tags?.some((t) => t.toLowerCase().includes(q))
+        );
+      })
+      .sort((left, right) => {
+        const leftWeight = Number(left.promotionWeight || 0);
+        const rightWeight = Number(right.promotionWeight || 0);
+        if (leftWeight !== rightWeight) return rightWeight - leftWeight;
+        return left.name.localeCompare(right.name);
+      });
   }, [schools, search]);
 
   return (
@@ -130,7 +138,10 @@ function SchoolCard({ school }: { school: Organization }) {
 
   return (
     <Link href={`/schools/${school.slug || school.id}`} className="no-underline">
-      <Card className="h-full hover:shadow-lg transition-shadow">
+      <Card
+        className="h-full hover:shadow-lg transition-shadow"
+        style={school.partnerTier === "school" ? { borderColor: "rgba(59,130,246,.22)", boxShadow: "0 18px 34px -28px rgba(59,130,246,.32)" } : undefined}
+      >
         <div style={{ padding: 20 }}>
           <div className="flex items-center gap-3 mb-3">
             <Avatar
@@ -144,7 +155,12 @@ function SchoolCard({ school }: { school: Organization }) {
                 {school.name}
               </p>
               <div className="flex items-center gap-2 mt-0.5">
-                <Badge text="School" color="var(--teal)" bg="var(--teal-soft)" small />
+                <Badge
+                  text={school.partnerTier === "school" ? (school.partnerBadgeLabel || "Education Partner") : "School"}
+                  color={school.partnerTier === "school" ? "var(--blue)" : "var(--teal)"}
+                  bg={school.partnerTier === "school" ? "var(--blue-soft)" : "var(--teal-soft)"}
+                  small
+                />
                 {school.verified && (
                   <span className="text-[11px] font-semibold" style={{ color: "var(--teal)" }}>
                     &#10003;

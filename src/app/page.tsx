@@ -8,6 +8,7 @@ import MobileMenu from "@/components/MobileMenu";
 import { HeroCTA, BottomCTA, PartnerStripCTA } from "@/components/HomepageCTA";
 import { adminDb } from "@/lib/firebase-admin";
 import { displayLocation } from "@/lib/utils";
+import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "@/lib/server/partner-promotion";
 
 async function getStats() {
   if (!adminDb) return { members: 0, jobs: 0, organizations: 0, events: 0, shops: 0 };
@@ -35,6 +36,7 @@ interface PartnerData {
   name: string;
   shortName: string;
   tier: string;
+  partnerLabel?: string;
   logoUrl?: string;
   location?: unknown;
   type?: string;
@@ -45,23 +47,20 @@ async function getPartners(): Promise<PartnerData[]> {
   try {
     const snap = await adminDb
       .collection("organizations")
-      .where("verified", "==", true)
       .get();
     const orgs = snap.docs
-      .map((d) => ({ id: d.id, ...d.data() }) as Record<string, unknown>)
-      .filter((o) => o.logoUrl || o.logo)
+      .map((d) => withPartnerPromotion({ id: d.id, ...d.data() } as Record<string, unknown>))
+      .filter((o) => isPaidPartner(o) && (o.logoUrl || o.logo))
+      .sort(comparePartnerPromotion)
       .map((o) => ({
         name: String(o.name || ""),
         shortName: String(o.shortName || o.name || ""),
-        tier: String(o.tier || "standard"),
+        tier: String(o.partnerTier || o.tier || "standard"),
+        partnerLabel: String(o.partnerBadgeLabel || o.partnerLabel || "Partner"),
         logoUrl: String(o.logoUrl || o.logo || ""),
         location: o.location,
         type: String(o.type || ""),
-      }))
-      .sort((a, b) => {
-        const tierOrder: Record<string, number> = { premium: 0, school: 1, standard: 2 };
-        return (tierOrder[a.tier] ?? 2) - (tierOrder[b.tier] ?? 2);
-      });
+      }));
     return orgs;
   } catch {
     return [];
@@ -270,7 +269,7 @@ export default async function LandingPage() {
                       <p className="text-[11px] text-text-muted m-0 truncate">&#128205; {displayLocation(p.location)}</p>
                     )}
                     <Badge
-                      text={p.tier === "premium" ? "\u2713 Premium" : p.tier === "school" ? "Education" : "Partner"}
+                      text={p.partnerLabel || (p.tier === "premium" ? "\u2713 Premium" : p.tier === "school" ? "Education Partner" : "Partner")}
                       color={p.tier === "premium" ? "var(--gold)" : p.tier === "school" ? "var(--blue)" : "var(--teal)"}
                       bg={p.tier === "premium" ? "var(--gold-soft)" : p.tier === "school" ? "var(--blue-soft)" : "var(--teal-soft)"}
                       small
@@ -293,9 +292,9 @@ export default async function LandingPage() {
                 <div>
                   <p className="text-[13px] font-semibold text-text m-0">{p.name}</p>
                   <Badge
-                    text={p.tier === "premium" ? "\u2713 Premium" : "Partner"}
-                    color={p.tier === "premium" ? "var(--gold)" : "var(--teal)"}
-                    bg={p.tier === "premium" ? "var(--gold-soft)" : "var(--teal-soft)"}
+                    text={p.partnerLabel || (p.tier === "premium" ? "\u2713 Premium" : p.tier === "school" ? "Education Partner" : "Partner")}
+                    color={p.tier === "premium" ? "var(--gold)" : p.tier === "school" ? "var(--blue)" : "var(--teal)"}
+                    bg={p.tier === "premium" ? "var(--gold-soft)" : p.tier === "school" ? "var(--blue-soft)" : "var(--teal-soft)"}
                     small
                   />
                 </div>

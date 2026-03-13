@@ -17,6 +17,10 @@ interface PublicScholarship {
   orgName?: string;
   ownerType?: "school" | "business" | "organization" | "unknown";
   ownerSlug?: string;
+  isPartner?: boolean;
+  partnerTier?: "standard" | "premium" | "school";
+  partnerLabel?: string;
+  partnerBadgeLabel?: string;
   applicationUrl?: string;
   location?: unknown;
   featured?: boolean;
@@ -227,6 +231,11 @@ export default function ScholarshipsBrowsePage() {
                         <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: "var(--gold)" }}>
                           {sourceLabel}
                         </p>
+                        {scholarship.isPartner && (
+                          <p className="mb-2 text-[11px] font-semibold" style={{ color: scholarship.partnerTier === "premium" ? "var(--gold)" : scholarship.partnerTier === "school" ? "var(--blue)" : "var(--teal)" }}>
+                            {scholarship.partnerBadgeLabel || scholarship.partnerLabel}
+                          </p>
+                        )}
                         <h3 className="m-0 mb-2 text-[15px] font-bold text-text transition-colors group-hover:text-gold">
                           {scholarship.title}
                         </h3>

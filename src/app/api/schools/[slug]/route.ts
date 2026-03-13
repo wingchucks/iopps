@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
+import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 import { displayAmount } from "@/lib/utils";
 import {
   deriveOwnerType,
@@ -65,11 +66,13 @@ export async function GET(
   try {
     const { slug } = await params;
     const db = getAdminDb();
-    const school = await resolveSchool(db, slug);
+    const schoolRecord = await resolveSchool(db, slug);
 
-    if (!school) {
+    if (!schoolRecord) {
       return NextResponse.json({ org: null, programs: [], scholarships: [], jobs: [] }, { status: 404 });
     }
+
+    const school = withPartnerPromotion(schoolRecord);
 
     const schoolId = text(school.id);
     const schoolName = text(school.name);

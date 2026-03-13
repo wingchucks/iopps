@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { isPublicJobVisible } from "@/lib/public-jobs";
+import { comparePartnerPromotion, withPartnerPromotion } from "@/lib/server/partner-promotion";
 import {
   deriveOwnerType,
   matchesOrgName,
@@ -37,10 +38,6 @@ export async function GET() {
       })
       .map((doc) => serialize({ id: doc.id, ...doc.data() }) as JsonRecord)
       .filter((school) => deriveOwnerType(school) === "school")
-      .filter((school) => {
-        const plan = text(school.plan).toLowerCase();
-        return !plan || plan !== "free";
-      })
       .map((school) => {
         const schoolId = text(school.id);
         const schoolName = text(school.name);
@@ -77,7 +74,7 @@ export async function GET() {
             return data.status !== "closed" && (text(data.orgId) === schoolId || matchesOrgName(data.orgName, schoolName));
           }).length;
 
-        return {
+        return withPartnerPromotion({
           ...school,
           ownerType: "school",
           ownerId: schoolId,
@@ -91,8 +88,9 @@ export async function GET() {
             : Array.isArray(school.tags)
               ? school.tags
               : [],
-        };
-      });
+        });
+      })
+      .sort(comparePartnerPromotion);
 
     return NextResponse.json({ schools });
   } catch (err) {

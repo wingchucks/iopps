@@ -82,6 +82,12 @@ export interface Organization {
   programs?: string[];
   keyStudyAreas?: string[];
   ownerType?: "school" | "business" | "organization" | "unknown";
+  isPartner?: boolean;
+  partnerTier?: "standard" | "premium" | "school";
+  partnerLabel?: string;
+  partnerBadgeLabel?: string;
+  partnerSection?: "premium" | "education" | "visibility";
+  promotionWeight?: number;
 }
 
 /**

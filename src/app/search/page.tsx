@@ -74,6 +74,11 @@ interface DirectoryResult {
   scholarshipCount?: number;
   trainingCount?: number;
   matchingPrograms?: number;
+  isPartner?: boolean;
+  partnerTier?: "standard" | "premium" | "school";
+  partnerLabel?: string;
+  partnerBadgeLabel?: string;
+  promotionWeight?: number;
   href: string;
 }
 
@@ -260,6 +265,11 @@ function normalizeSchool(school: Record<string, unknown>): DirectoryResult {
     verified: Boolean(school.verified),
     programCount: Number(school.programCount || 0),
     scholarshipCount: Number(school.scholarshipCount || 0),
+    isPartner: Boolean(school.isPartner),
+    partnerTier: (text(school.partnerTier) || undefined) as DirectoryResult["partnerTier"],
+    partnerLabel: text(school.partnerLabel) || undefined,
+    partnerBadgeLabel: text(school.partnerBadgeLabel) || undefined,
+    promotionWeight: Number(school.promotionWeight || 0),
     href: `/schools/${school.slug || school.id || ""}`,
   };
 }
@@ -284,6 +294,11 @@ function normalizeBusiness(org: Record<string, unknown>): DirectoryResult | null
     verified: Boolean(org.verified),
     trainingCount: Number(org.trainingCount || 0),
     scholarshipCount: Number(org.scholarshipCount || 0),
+    isPartner: Boolean(org.isPartner),
+    partnerTier: (text(org.partnerTier) || undefined) as DirectoryResult["partnerTier"],
+    partnerLabel: text(org.partnerLabel) || undefined,
+    partnerBadgeLabel: text(org.partnerBadgeLabel) || undefined,
+    promotionWeight: Number(org.promotionWeight || 0),
     href: `/org/${org.slug || org.id || ""}`,
   };
 }
@@ -511,6 +526,7 @@ function SearchContent() {
     return [...items].sort((a, b) => {
       if (sortBy === "az") return a.name.localeCompare(b.name);
       if (sortBy === "newest") return b.openJobs - a.openJobs;
+      if ((a.promotionWeight || 0) !== (b.promotionWeight || 0)) return (b.promotionWeight || 0) - (a.promotionWeight || 0);
       const aScore = matchScore(normalizedQuery, [a.name, a.shortName || "", a.description, a.locationText, ...a.tags]);
       const bScore = matchScore(normalizedQuery, [b.name, b.shortName || "", b.description, b.locationText, ...b.tags]);
       if (aScore !== bScore) return bScore - aScore;
@@ -541,6 +557,7 @@ function SearchContent() {
       })
       .sort((a, b) => {
         if (sortBy === "az") return a.name.localeCompare(b.name);
+        if ((a.promotionWeight || 0) !== (b.promotionWeight || 0)) return (b.promotionWeight || 0) - (a.promotionWeight || 0);
         const aScore = matchScore(normalizedQuery, [a.name, a.shortName || "", a.description, a.locationText, ...a.tags]) + ((a.matchingPrograms || 0) * 8);
         const bScore = matchScore(normalizedQuery, [b.name, b.shortName || "", b.description, b.locationText, ...b.tags]) + ((b.matchingPrograms || 0) * 8);
         if (aScore !== bScore) return bScore - aScore;
@@ -827,9 +844,25 @@ function ResultSection({ label, description, children }: { label: string; descri
 }
 
 function DirectoryResultCard({ result }: { result: DirectoryResult }) {
-  const label = result.type === "school" ? "Education" : result.tier === "premium" ? "Premium" : "Business";
-  const color = result.type === "school" ? "var(--teal)" : "var(--gold)";
-  const bg = result.type === "school" ? "var(--teal-soft)" : "var(--gold-soft)";
+  const label = result.type === "school"
+    ? (result.partnerTier === "school" ? (result.partnerBadgeLabel || "Education Partner") : "Education")
+    : result.isPartner
+      ? (result.partnerBadgeLabel || result.partnerLabel || "Partner")
+      : "Business";
+  const color = result.type === "school"
+    ? (result.partnerTier === "school" ? "var(--blue)" : "var(--teal)")
+    : result.partnerTier === "premium"
+      ? "var(--gold)"
+      : result.isPartner
+        ? "var(--teal)"
+        : "var(--blue)";
+  const bg = result.type === "school"
+    ? (result.partnerTier === "school" ? "var(--blue-soft)" : "var(--teal-soft)")
+    : result.partnerTier === "premium"
+      ? "var(--gold-soft)"
+      : result.isPartner
+        ? "var(--teal-soft)"
+        : "var(--blue-soft)";
   const href = result.type === "school" && (result.matchingPrograms || 0) > 0 ? `${result.href}?tab=programs` : result.href;
   const summaryBits = result.type === "school"
     ? [
@@ -847,7 +880,10 @@ function DirectoryResultCard({ result }: { result: DirectoryResult }) {
 
   return (
     <Link href={href} className="no-underline">
-      <Card className="cursor-pointer">
+      <Card
+        className="cursor-pointer"
+        style={result.isPartner ? { borderColor: result.partnerTier === "premium" ? "rgba(251,191,36,.24)" : "rgba(20,184,166,.2)" } : undefined}
+      >
         <div className="flex items-center gap-3 px-4 py-4">
           <Avatar
             name={result.shortName || result.name}
@@ -870,6 +906,11 @@ function DirectoryResultCard({ result }: { result: DirectoryResult }) {
             )}
             {result.description && (
               <p className="mt-1 line-clamp-2 text-xs text-text-muted">{result.description}</p>
+            )}
+            {result.isPartner && (
+              <p className="mt-1 text-[11px] font-semibold" style={{ color }}>
+                Promoted through IOPPS {result.partnerLabel?.toLowerCase() || "partner plan"}
+              </p>
             )}
           </div>
           <span className="text-text-muted">&#8250;</span>

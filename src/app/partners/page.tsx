@@ -11,8 +11,8 @@ import type { Organization } from "@/lib/firestore/organizations";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
-type TierFilter = "All Partners" | "Premium" | "Employers" | "Schools";
-const tierFilters: TierFilter[] = ["All Partners", "Premium", "Employers", "Schools"];
+type TierFilter = "All Partners" | "Premium" | "Education" | "Businesses";
+const tierFilters: TierFilter[] = ["All Partners", "Premium", "Education", "Businesses"];
 
 export default function PartnersPage() {
   return (
@@ -34,9 +34,9 @@ function PartnersContent() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/organizations?partners=true");
+        const res = await fetch("/api/partners");
         const data = await res.json();
-        setOrgs(data.orgs ?? []);
+        setOrgs(data.partners ?? data.orgs ?? []);
       } catch (err) {
         console.error("Failed to load organizations:", err);
       } finally {
@@ -49,13 +49,14 @@ function PartnersContent() {
   const filtered = useMemo(() => {
     let list = orgs;
 
-    // Tier/type filter
+    list = list.filter((o) => o.isPartner);
+
     if (filter === "Premium") {
-      list = list.filter((o) => o.tier === "premium");
-    } else if (filter === "Employers") {
-      list = list.filter((o) => o.type === "employer");
-    } else if (filter === "Schools") {
-      list = list.filter((o) => o.type === "school");
+      list = list.filter((o) => o.partnerTier === "premium");
+    } else if (filter === "Education") {
+      list = list.filter((o) => o.partnerTier === "school");
+    } else if (filter === "Businesses") {
+      list = list.filter((o) => o.partnerTier !== "school");
     }
 
     if (search.trim()) {
@@ -71,16 +72,17 @@ function PartnersContent() {
     return list;
   }, [orgs, filter, search]);
 
-  const premiumOrgs = useMemo(() => orgs.filter((o) => o.tier === "premium"), [orgs]);
-  const showSpotlight = filter === "All Partners" && !search && premiumOrgs.length > 0;
-  const gridOrgs = showSpotlight ? filtered.filter((o) => o.tier !== "premium") : filtered;
+  const premiumOrgs = useMemo(() => orgs.filter((o) => o.partnerTier === "premium"), [orgs]);
+  const educationOrgs = useMemo(() => orgs.filter((o) => o.partnerTier === "school"), [orgs]);
+  const visibilityOrgs = useMemo(() => orgs.filter((o) => o.partnerTier === "standard"), [orgs]);
+  const showSections = filter === "All Partners" && !search;
 
   const filterCounts: Record<TierFilter, number> = useMemo(() => ({
     "All Partners": orgs.length,
-    "Premium": orgs.filter((o) => o.tier === "premium").length,
-    "Employers": orgs.filter((o) => o.type === "employer").length,
-    "Schools": orgs.filter((o) => o.type === "school").length,
-  }), [orgs]);
+    "Premium": premiumOrgs.length,
+    "Education": educationOrgs.length,
+    "Businesses": orgs.filter((o) => o.partnerTier !== "school").length,
+  }), [educationOrgs.length, orgs, premiumOrgs.length]);
 
   return (
     <>
@@ -103,7 +105,7 @@ function PartnersContent() {
           <span style={{ color: "var(--gold)" }}>Indigenous Talent</span>
         </h1>
         <p className="text-base text-white/65 mb-0 max-w-[520px] mx-auto">
-          Employers, schools, and organizations partnering with IOPPS to create opportunities for Indigenous communities across Canada.
+          Paid business and school subscribers promoted across IOPPS to help members discover trusted organizations creating opportunities.
         </p>
       </section>
 
@@ -162,28 +164,6 @@ function PartnersContent() {
           </div>
         ) : (
           <>
-            {/* Premium Partners Spotlight */}
-            {showSpotlight && (
-              <div
-                className="rounded-2xl p-5 mb-6"
-                style={{
-                  background: "var(--spotlight-bg)",
-                  border: "1.5px solid var(--gold-soft)",
-                }}
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-lg">&#11088;</span>
-                  <h3 className="text-base font-extrabold text-text m-0">Premium Partners</h3>
-                  <Badge text={`${premiumOrgs.length}`} color="var(--gold)" bg="var(--gold-soft)" small />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {premiumOrgs.map((org) => (
-                    <PremiumSpotlightCard key={org.id} org={org} />
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Search results count */}
             {search && (
               <p className="text-sm text-text-muted mb-4">
@@ -191,8 +171,41 @@ function PartnersContent() {
               </p>
             )}
 
-            {/* Org Cards Grid */}
-            {gridOrgs.length === 0 && !showSpotlight ? (
+            {showSections ? (
+              <div className="flex flex-col gap-6">
+                <PartnerSection
+                  title="Premium Partners"
+                  description="Highest-visibility partners with premium placement across IOPPS."
+                  icon="&#11088;"
+                  count={premiumOrgs.length}
+                  color="var(--gold)"
+                  bg="var(--spotlight-bg)"
+                  border="1.5px solid var(--gold-soft)"
+                  items={premiumOrgs}
+                  spotlight
+                />
+                <PartnerSection
+                  title="Education Partners"
+                  description="Schools and education institutions with active partner visibility."
+                  icon="&#127891;"
+                  count={educationOrgs.length}
+                  color="var(--blue)"
+                  bg="var(--card)"
+                  border="1.5px solid var(--blue-soft)"
+                  items={educationOrgs}
+                />
+                <PartnerSection
+                  title="Visibility Partners"
+                  description="Businesses and employers investing in promoted visibility across IOPPS."
+                  icon="&#128188;"
+                  count={visibilityOrgs.length}
+                  color="var(--teal)"
+                  bg="var(--card)"
+                  border="1.5px solid var(--teal-soft)"
+                  items={visibilityOrgs}
+                />
+              </div>
+            ) : filtered.length === 0 ? (
               <Card style={{ padding: 40, textAlign: "center" }}>
                 <p className="text-text-muted text-sm mb-2">
                   {search
@@ -208,17 +221,12 @@ function PartnersContent() {
                   </button>
                 )}
               </Card>
-            ) : gridOrgs.length > 0 ? (
-              <>
-                {showSpotlight && (
-                  <h3 className="text-base font-extrabold text-text mb-4">All Partners</h3>
-                )}
+            ) : filtered.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {gridOrgs.map((org) => (
+                  {filtered.map((org) => (
                     <OrgCard key={org.id} org={org} />
                   ))}
                 </div>
-              </>
             ) : null}
           </>
         )}
@@ -246,7 +254,7 @@ function PartnersContent() {
             </p>
             <div className="flex flex-wrap justify-center gap-3 text-[13px] text-white/50 mb-6 max-w-[500px] mx-auto">
               <span className="flex items-center gap-1.5">&#10003; Unlimited job postings</span>
-              <span className="flex items-center gap-1.5">&#10003; Featured profile</span>
+              <span className="flex items-center gap-1.5">&#10003; Partner directory placement</span>
               <span className="flex items-center gap-1.5">&#10003; Talent access</span>
               <span className="flex items-center gap-1.5">&#10003; Analytics dashboard</span>
             </div>
@@ -287,9 +295,50 @@ function PartnersContent() {
   );
 }
 
-function PremiumSpotlightCard({ org }: { org: Organization }) {
+function PartnerSection({
+  title,
+  description,
+  icon,
+  count,
+  color,
+  bg,
+  border,
+  items,
+  spotlight = false,
+}: {
+  title: string;
+  description: string;
+  icon: string;
+  count: number;
+  color: string;
+  bg: string;
+  border: string;
+  items: Organization[];
+  spotlight?: boolean;
+}) {
+  if (items.length === 0) return null;
+
   return (
-    <Link href={`/org/${org.id}`} className="no-underline">
+    <div className="rounded-2xl p-5" style={{ background: bg, border }}>
+      <div className="mb-4 flex items-center gap-2">
+        <span className="text-lg">{icon}</span>
+        <h3 className="m-0 text-base font-extrabold text-text">{title}</h3>
+        <Badge text={`${count}`} color={color} bg={`${color}20`} small />
+      </div>
+      <p className="mb-4 text-sm text-text-sec">{description}</p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {items.map((org) => (
+          spotlight ? <PremiumSpotlightCard key={org.id} org={org} /> : <OrgCard key={org.id} org={org} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PremiumSpotlightCard({ org }: { org: Organization }) {
+  const href = org.ownerType === "school" ? `/schools/${org.slug || org.id}` : `/org/${org.slug || org.id}`;
+  return (
+    <Link href={href} className="no-underline">
       <Card gold className="h-full hover:shadow-md">
         <div style={{ padding: 20 }}>
           <div className="flex gap-4 items-start mb-3">
@@ -302,7 +351,7 @@ function PremiumSpotlightCard({ org }: { org: Organization }) {
             <div className="flex-1 min-w-0">
               <h3 className="text-[15px] font-bold text-text mb-1 truncate">{org.name}</h3>
               <div className="flex flex-wrap items-center gap-1.5">
-                <Badge text="&#10003; Premium Partner" color="var(--gold)" bg="var(--gold-soft)" small />
+                <Badge text={org.partnerBadgeLabel || "Premium Partner"} color="var(--gold)" bg="var(--gold-soft)" small />
                 {org.verified && (
                   <Badge text="&#10003; Verified" color="var(--green)" bg="var(--green-soft)" small />
                 )}
@@ -343,9 +392,10 @@ function PremiumSpotlightCard({ org }: { org: Organization }) {
 }
 
 function OrgCard({ org }: { org: Organization }) {
-  const isSchool = org.type === "school" || org.tier === "school";
+  const isSchool = org.ownerType === "school" || org.type === "school" || org.partnerTier === "school";
+  const href = isSchool ? `/schools/${org.slug || org.id}` : `/org/${org.slug || org.id}`;
   return (
-    <Link href={`/org/${org.id}`} className="no-underline">
+    <Link href={href} className="no-underline">
       <Card className="cursor-pointer h-full hover:shadow-md">
         <div style={{ padding: 20 }}>
           <div className="flex gap-3 items-start mb-3">
@@ -358,12 +408,12 @@ function OrgCard({ org }: { org: Organization }) {
             <div className="flex-1 min-w-0">
               <h3 className="text-[15px] font-bold text-text mb-1 truncate">{org.name}</h3>
               <div className="flex flex-wrap items-center gap-1.5">
-                {org.tier === "premium" ? (
-                  <Badge text="Premium Partner" color="var(--gold)" bg="var(--gold-soft)" small />
+                {org.partnerTier === "premium" ? (
+                  <Badge text={org.partnerBadgeLabel || "Premium Partner"} color="var(--gold)" bg="var(--gold-soft)" small />
                 ) : isSchool ? (
-                  <Badge text="Education Partner" color="var(--blue)" bg="var(--blue-soft)" small />
+                  <Badge text={org.partnerBadgeLabel || "Education Partner"} color="var(--blue)" bg="var(--blue-soft)" small />
                 ) : (
-                  <Badge text="Partner" color="var(--teal)" bg="var(--teal-soft)" small />
+                  <Badge text={org.partnerBadgeLabel || "Partner"} color="var(--teal)" bg="var(--teal-soft)" small />
                 )}
                 {org.verified && (
                   <Badge text="&#10003; Verified" color="var(--green)" bg="var(--green-soft)" small />

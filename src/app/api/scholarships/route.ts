@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 import { displayAmount } from "@/lib/utils";
 import {
   deriveOwnerType,
@@ -29,26 +30,34 @@ function normalizeScholarship(
     serialized.amount = displayAmount(serialized.amount);
   }
 
-  const linkedOrg =
+  const linkedOrgRecord =
     orgLookup.get(String(serialized.orgId || serialized.employerId || "")) ||
     organizations.find((org) =>
       matchesOrgName(serialized.orgName, String(org.name || "")) ||
       matchesOrgName(serialized.organization, String(org.name || "")),
     ) ||
     null;
+  const linkedOrg = linkedOrgRecord ? withPartnerPromotion(linkedOrgRecord) : null;
 
   const ownerType = deriveOwnerType(linkedOrg);
   const ownerId = String(serialized.orgId || serialized.employerId || linkedOrg?.id || "");
   const ownerName = String(serialized.orgName || serialized.organization || linkedOrg?.name || "");
   const ownerSlug = String(linkedOrg?.slug || ownerId);
 
-  return withPublicOwnership(serialized, {
-    contentType: "scholarship",
-    ownerType,
-    ownerId,
-    ownerName,
-    ownerSlug,
-  });
+  return {
+    ...withPublicOwnership(serialized, {
+      contentType: "scholarship",
+      ownerType,
+      ownerId,
+      ownerName,
+      ownerSlug,
+    }),
+    isPartner: Boolean(linkedOrg?.isPartner),
+    partnerTier: linkedOrg?.partnerTier,
+    partnerLabel: linkedOrg?.partnerLabel,
+    partnerBadgeLabel: linkedOrg?.partnerBadgeLabel,
+    promotionWeight: linkedOrg?.promotionWeight || 0,
+  };
 }
 
 export async function GET() {

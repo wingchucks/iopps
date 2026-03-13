@@ -20,6 +20,10 @@ interface ScholarshipOwnerMeta {
   ownerType?: "school" | "business" | "organization" | "unknown";
   ownerSlug?: string;
   ownerName?: string;
+  isPartner?: boolean;
+  partnerTier?: "standard" | "premium" | "school";
+  partnerLabel?: string;
+  partnerBadgeLabel?: string;
 }
 
 function isClosingSoon(deadline?: string): boolean {
@@ -110,6 +114,10 @@ function ScholarshipDetailContent() {
               ownerType: normalized.ownerType as ScholarshipOwnerMeta["ownerType"],
               ownerSlug: typeof normalized.ownerSlug === "string" ? normalized.ownerSlug : undefined,
               ownerName: typeof normalized.ownerName === "string" ? normalized.ownerName : undefined,
+              isPartner: Boolean(normalized.isPartner),
+              partnerTier: typeof normalized.partnerTier === "string" ? normalized.partnerTier as ScholarshipOwnerMeta["partnerTier"] : undefined,
+              partnerLabel: typeof normalized.partnerLabel === "string" ? normalized.partnerLabel : undefined,
+              partnerBadgeLabel: typeof normalized.partnerBadgeLabel === "string" ? normalized.partnerBadgeLabel : undefined,
             });
           }
         }
@@ -235,6 +243,14 @@ function ScholarshipDetailContent() {
           <span className="text-6xl sm:text-7xl block mb-4">&#127891;</span>
           <div className="flex flex-wrap justify-center gap-2 mb-3">
             <Badge text={sourceLabel} color="var(--green)" bg="var(--green-soft)" small />
+            {ownerMeta?.isPartner && (
+              <Badge
+                text={ownerMeta.partnerBadgeLabel || ownerMeta.partnerLabel || "Partner"}
+                color={ownerMeta.partnerTier === "premium" ? "var(--gold)" : ownerMeta.partnerTier === "school" ? "var(--blue)" : "var(--teal)"}
+                bg={ownerMeta.partnerTier === "premium" ? "var(--gold-soft)" : ownerMeta.partnerTier === "school" ? "var(--blue-soft)" : "var(--teal-soft)"}
+                small
+              />
+            )}
             {scholarship.featured && (
               <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>&#11088;</span>} />
             )}

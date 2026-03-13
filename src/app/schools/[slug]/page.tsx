@@ -204,9 +204,19 @@ function SchoolProfileContent() {
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl sm:text-[28px] font-extrabold text-text leading-tight">{org.name}</h1>
-              <p className="mt-1 text-sm font-semibold" style={{ color: PURPLE }}>
-                🎓 {org.institutionType || "Education"}{org.industry ? ` · ${org.industry}` : ""}
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <p className="text-sm font-semibold" style={{ color: PURPLE }}>
+                  🎓 {org.institutionType || "Education"}{org.industry ? ` · ${org.industry}` : ""}
+                </p>
+                {org.partnerTier === "school" && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold"
+                    style={{ color: "var(--blue)", background: "var(--blue-soft)" }}
+                  >
+                    {org.partnerBadgeLabel || org.partnerLabel || "Education Partner"}
+                  </span>
+                )}
+              </div>
               <p className="mt-1.5 text-[13px] text-text-muted flex items-center gap-1">
                 📍 {displayLocation(org.location) || "Canada"}
                 {org.treatyTerritory && <span> · {org.treatyTerritory}</span>}
@@ -242,6 +252,11 @@ function SchoolProfileContent() {
 
           {/* Quick Stats */}
           <div className="flex gap-6 flex-wrap mt-4 pt-4 border-t border-border">
+            {org.partnerTier === "school" && (
+              <span className="text-[13px] text-text-muted">
+                ✨ <strong className="text-text">{org.partnerLabel || "Education Partner"}</strong>
+              </span>
+            )}
             {programs.length > 0 && (
               <span className="text-[13px] text-text-muted">📚 <strong className="text-text">{programs.length}</strong> program{programs.length !== 1 ? "s" : ""}</span>
             )}

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
 import { applyNormalizedSubscriptionState } from "@/lib/server/subscription-state";
+import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 
 export const runtime = "nodejs";
 export const revalidate = 120;
@@ -314,11 +315,13 @@ export async function GET(
   try {
     const { slug } = await params;
     const db = getAdminDb();
-    const org = await resolveOrganization(db, slug);
+    const orgRecord = await resolveOrganization(db, slug);
 
-    if (!org) {
+    if (!orgRecord) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
+
+    const org = withPartnerPromotion(orgRecord);
 
     const orgId = String(org.id || "");
     const orgName = String(org.name || "");

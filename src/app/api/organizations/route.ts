@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { applyNormalizedSubscriptionState } from "@/lib/server/subscription-state";
+import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "@/lib/server/partner-promotion";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 function serialize(value: unknown): unknown {
   if (value === null || value === undefined) return value;
@@ -28,22 +29,11 @@ export async function GET(req: Request) {
     const db = getAdminDb();
 
     if (partnersOnly) {
-      // Partners page: only paid plans or verified orgs
-      const [premiumSnap, verifiedSnap] = await Promise.all([
-        db.collection("organizations")
-          .where("plan", "in", ["premium", "standard", "school"])
-          .get(),
-        db.collection("organizations")
-          .where("verified", "==", true)
-          .get(),
-      ]);
-      const seen = new Set<string>();
-      const docs = [...premiumSnap.docs, ...verifiedSnap.docs].filter(d => {
-        if (seen.has(d.id)) return false;
-        seen.add(d.id);
-        return true;
-      });
-      const orgs = docs.map((doc) => applyNormalizedSubscriptionState(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>));
+      const snapshot = await db.collection("organizations").get();
+      const orgs = snapshot.docs
+        .map((doc) => withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>))
+        .filter((org) => isPaidPartner(org))
+        .sort(comparePartnerPromotion);
       return NextResponse.json({ orgs });
     }
 
@@ -62,9 +52,9 @@ export async function GET(req: Request) {
       seen2.add(d.id);
       return true;
     });
-    const orgs = allDocs.map((doc) =>
-      applyNormalizedSubscriptionState(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
-    );
+    const orgs = allDocs
+      .map((doc) => withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>))
+      .sort(comparePartnerPromotion);
 
     return NextResponse.json({ orgs });
   } catch (err) {

@@ -152,7 +152,8 @@ const navItems = [
   { href: "/scholarships", label: "Scholarships", icon: "award", key: "scholarships" },
   { href: "/schools", label: "Schools", icon: "school", key: "schools" },
   { href: "/training", label: "Training", icon: "book", key: "training" },
-  { href: "/search?type=Businesses", label: "Businesses", icon: "store", key: "businesses" },
+  { href: "/businesses", label: "Businesses", icon: "store", key: "businesses" },
+  { href: "/partners", label: "Partners", icon: "shield", key: "partners" },
   { href: "/messages", label: "Messages", icon: "message", key: "messages" },
   { href: "/saved", label: "Saved", icon: "bookmark", key: "saved" },
   { href: "/notifications", label: "Notifications", icon: "bell", key: "notifications" },
@@ -182,12 +183,8 @@ export default function IconRailSidebar() {
   const searchType = searchParams.get("type")?.toLowerCase();
 
   const isItemActive = (href: string, key: string) => {
-    if (key === "businesses") {
-      return pathname === "/search" && searchType === "businesses";
-    }
-
     if (key === "search") {
-      return pathname === "/search" && searchType !== "businesses";
+      return pathname === "/search" && searchType !== "businesses" && searchType !== "partners";
     }
 
     return pathname === href || (href !== "/feed" && pathname.startsWith(`${href}/`));
