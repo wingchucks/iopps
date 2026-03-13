@@ -9,7 +9,6 @@ import { useTheme } from "@/lib/theme-context";
 import { useAccountContext } from "@/lib/useAccountContext";
 import Avatar from "./Avatar";
 import CreateChooserModal from "./CreateChooserModal";
-import CreatePostModal from "./CreatePostModal";
 
 function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
   const p = {
@@ -162,7 +161,6 @@ const navItems = [
 
 export default function IconRailSidebar() {
   const [showChooser, setShowChooser] = useState(false);
-  const [showCreatePost, setShowCreatePost] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -222,7 +220,7 @@ export default function IconRailSidebar() {
           </div>
         </Link>
 
-        {user && (
+        {user && hasOrg && (
           <button
             onClick={() => setShowChooser(true)}
             className="shrink-0 border-none px-3 pt-2 text-left cursor-pointer"
@@ -408,13 +406,7 @@ export default function IconRailSidebar() {
       <CreateChooserModal
         open={showChooser}
         onClose={() => setShowChooser(false)}
-        onShareStory={() => setShowCreatePost(true)}
         hasOrg={hasOrg}
-      />
-      <CreatePostModal
-        open={showCreatePost}
-        onClose={() => setShowCreatePost(false)}
-        onPostCreated={() => setShowCreatePost(false)}
       />
     </>
   );

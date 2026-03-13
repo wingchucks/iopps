@@ -5,18 +5,10 @@ import { useRouter } from "next/navigation";
 interface CreateChooserModalProps {
   open: boolean;
   onClose: () => void;
-  onShareStory: () => void;
   hasOrg: boolean;
 }
 
 const options = [
-  {
-    id: "story",
-    icon: "\u270F\uFE0F",
-    label: "Share a Story",
-    description: "Share an update with the community",
-    orgOnly: false,
-  },
   {
     id: "job",
     icon: "\uD83D\uDCBC",
@@ -46,7 +38,6 @@ const options = [
 export default function CreateChooserModal({
   open,
   onClose,
-  onShareStory,
   hasOrg,
 }: CreateChooserModalProps) {
   const router = useRouter();
@@ -58,9 +49,7 @@ export default function CreateChooserModal({
 
   const handleSelect = (option: (typeof options)[number]) => {
     onClose();
-    if (option.id === "story") {
-      onShareStory();
-    } else if (option.href) {
+    if (option.href) {
       router.push(option.href);
     }
   };
@@ -94,45 +83,6 @@ export default function CreateChooserModal({
 
         {/* Options */}
         <div style={{ padding: "8px 12px" }}>
-          {/* Community options */}
-          {visibleOptions
-            .filter((o) => !o.orgOnly)
-            .map((option) => (
-              <button
-                key={option.id}
-                onClick={() => handleSelect(option)}
-                className="flex items-center gap-3 w-full text-left rounded-xl border-none cursor-pointer transition-colors hover:bg-bg"
-                style={{
-                  padding: "12px 12px",
-                  background: "transparent",
-                }}
-              >
-                <span
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
-                  style={{
-                    background:
-                      "color-mix(in srgb, var(--teal) 10%, transparent)",
-                  }}
-                >
-                  {option.icon}
-                </span>
-                <div>
-                  <p
-                    className="text-sm font-semibold m-0"
-                    style={{ color: "var(--text)" }}
-                  >
-                    {option.label}
-                  </p>
-                  <p
-                    className="text-xs m-0 mt-0.5"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    {option.description}
-                  </p>
-                </div>
-              </button>
-            ))}
-
           {/* Org section divider */}
           {hasOrgOptions && (
             <div className="flex items-center gap-3 my-1 px-3">
@@ -191,6 +141,29 @@ export default function CreateChooserModal({
                 </div>
               </button>
             ))}
+
+          {!hasOrgOptions && (
+            <div
+              className="rounded-xl text-center"
+              style={{
+                padding: "16px 14px",
+                background: "color-mix(in srgb, var(--navy) 5%, transparent)",
+              }}
+            >
+              <p
+                className="text-sm font-semibold m-0"
+                style={{ color: "var(--text)" }}
+              >
+                Community profiles only for now
+              </p>
+              <p
+                className="text-xs m-0 mt-1"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Story posting is paused while we focus on profiles and employer opportunities.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Bottom padding */}

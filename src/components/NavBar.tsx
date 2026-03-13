@@ -11,7 +11,6 @@ import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import ChatButton from "./ChatButton";
 import CreateChooserModal from "./CreateChooserModal";
-import CreatePostModal from "./CreatePostModal";
 
 const baseNavLinks = [
   { href: "/feed", label: "Home" },
@@ -31,7 +30,6 @@ export default function NavBar() {
   const [hasOrg, setHasOrg] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showChooser, setShowChooser] = useState(false);
-  const [showCreatePost, setShowCreatePost] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
@@ -117,7 +115,7 @@ export default function NavBar() {
 
         {/* Right: search + actions + avatar (desktop) */}
         <div className="hidden md:flex items-center gap-3">
-          {user && (
+          {user && hasOrg && (
             <button
               onClick={() => setShowChooser(true)}
               className="flex items-center justify-center w-9 h-9 rounded-[10px] border-none cursor-pointer transition-all hover:brightness-110"
@@ -282,13 +280,7 @@ export default function NavBar() {
     <CreateChooserModal
       open={showChooser}
       onClose={() => setShowChooser(false)}
-      onShareStory={() => setShowCreatePost(true)}
       hasOrg={hasOrg}
-    />
-    <CreatePostModal
-      open={showCreatePost}
-      onClose={() => setShowCreatePost(false)}
-      onPostCreated={() => setShowCreatePost(false)}
     />
   </>
   );
