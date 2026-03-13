@@ -1,58 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 
 export async function GET(req: NextRequest) {
   try {
-    if (!adminAuth || !adminDb) {
-      return NextResponse.json({ error: "Server not configured" }, { status: 500 });
-    }
+    const context = await requireEmployerContext(req);
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.split("Bearer ")[1];
-    const decoded = await adminAuth.verifyIdToken(token);
-    const uid = decoded.uid;
-
-    // Check members collection first
-    const memberDoc = await adminDb.collection("members").doc(uid).get();
-    if (memberDoc.exists) {
-      const data = memberDoc.data()!;
-      if (data.orgId) {
-        return NextResponse.json({
-          authorized: true,
-          profile: {
-            uid,
-            email: data.email || "",
-            displayName: data.displayName || "",
-            orgId: data.orgId,
-            orgRole: data.orgRole || "member",
-          },
-        });
-      }
-    }
-
-    // Fallback: check users collection for employer
-    const userDoc = await adminDb.collection("users").doc(uid).get();
-    const userData = userDoc.data();
-    if (userData?.employerId && userData?.role === "employer") {
-      return NextResponse.json({
-        authorized: true,
-        profile: {
-          uid,
-          email: userData.email || "",
-          displayName: userData.displayName || "",
-          orgId: userData.employerId,
-          orgRole: "owner",
-        },
-      });
-    }
-
-    return NextResponse.json({ authorized: false }, { status: 403 });
+    return NextResponse.json({
+      authorized: true,
+      profile: {
+        uid: context.uid,
+        email:
+          (context.userData.email as string | undefined) ||
+          (context.memberData.email as string | undefined) ||
+          "",
+        displayName:
+          (context.userData.displayName as string | undefined) ||
+          (context.memberData.displayName as string | undefined) ||
+          "",
+        orgId: context.orgId,
+        orgRole: context.orgRole,
+      },
+    });
   } catch (err: unknown) {
+    const status = err instanceof EmployerApiError ? err.status : 500;
     const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ authorized: false, error: message }, { status });
   }
 }

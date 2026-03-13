@@ -1,68 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { buildFeaturedJobSummary } from "@/lib/server/featured-job-entitlements";
+import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 
 export async function GET(req: NextRequest) {
   try {
-    if (!adminAuth || !adminDb) {
-      return NextResponse.json({ error: "Server not configured" }, { status: 500 });
-    }
+    const context = await requireEmployerContext(req);
+    const adminDb = getAdminDb();
 
-    // Verify auth token
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const uid = context.uid;
+    const userData = context.userData;
+    const employerId = context.employerId;
+    const memberOrgId = context.orgId;
+    const empData = Object.keys(context.employerData).length ? context.employerData : null;
 
-    const token = authHeader.split("Bearer ")[1];
-    const decoded = await adminAuth.verifyIdToken(token);
-    const uid = decoded.uid;
+    let orgData: Record<string, unknown> | null =
+      Object.keys(context.organizationData).length
+        ? { id: context.orgId, ...context.organizationData }
+        : null;
 
-    // Get user profile
-    const userDoc = await adminDb.collection("users").doc(uid).get();
-    const userData = userDoc.data();
-
-    if (!userData || userData.role !== "employer" || !userData.employerId) {
-      return NextResponse.json({ error: "Not an employer" }, { status: 403 });
-    }
-
-    const employerId = userData.employerId;
-
-    // Also check members collection for orgId (profile page uses this)
-    const memberDoc = await adminDb.collection("members").doc(uid).get();
-    const memberOrgId = memberDoc.exists ? memberDoc.data()?.orgId : null;
-
-    // Get employer data
-    const empDoc = await adminDb.collection("employers").doc(employerId).get();
-    const empData = empDoc.exists ? empDoc.data() : null;
-
-    // Try organizations collection — prefer member's orgId, then employerId
-    let orgData = null;
-    const orgId = memberOrgId || employerId;
-    const orgDoc = await adminDb.collection("organizations").doc(orgId).get();
-    if (orgDoc.exists) {
-      orgData = { id: orgDoc.id, ...orgDoc.data() };
-    } else if (orgId !== employerId) {
-      // Fallback: try employerId if memberOrgId didn't match
-      const empOrgDoc = await adminDb.collection("organizations").doc(employerId).get();
-      if (empOrgDoc.exists) {
-        orgData = { id: empOrgDoc.id, ...empOrgDoc.data() };
-      }
-    }
     if (!orgData && empData) {
+      const companyName =
+        typeof empData.companyName === "string" && empData.companyName
+          ? empData.companyName
+          : typeof empData.name === "string" && empData.name
+            ? empData.name
+            : "My Organization";
+
       orgData = {
         id: employerId,
-        name: empData.companyName || empData.name || "My Organization",
-        slug: (empData.companyName || "org").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        description: empData.description || "",
-        logoUrl: empData.logoUrl || "",
-        website: empData.website || "",
-        email: empData.email || "",
-        phone: empData.phone || "",
-        location: empData.location || "",
+        name: companyName,
+        slug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        description: typeof empData.description === "string" ? empData.description : "",
+        logoUrl: typeof empData.logoUrl === "string" ? empData.logoUrl : "",
+        website: typeof empData.website === "string" ? empData.website : "",
+        email: typeof empData.email === "string" ? empData.email : "",
+        phone: typeof empData.phone === "string" ? empData.phone : "",
+        location: typeof empData.location === "string" ? empData.location : "",
         type: "employer",
-        status: empData.status || "approved",
-        verified: empData.verified || false,
+        status: typeof empData.status === "string" ? empData.status : "approved",
+        verified: empData.verified === true,
       };
     }
 
@@ -149,12 +126,13 @@ export async function GET(req: NextRequest) {
         email: userData.email,
         displayName: userData.displayName,
         orgId: memberOrgId || employerId,
-        orgRole: "owner",
+        orgRole: context.orgRole,
       },
     });
   } catch (err: unknown) {
+    const status = err instanceof EmployerApiError ? err.status : 500;
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[employer/dashboard]", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status });
   }
 }

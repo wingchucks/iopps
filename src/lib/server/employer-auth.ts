@@ -13,6 +13,7 @@ export interface EmployerContext {
   uid: string;
   employerId: string;
   orgId: string;
+  orgRole: string;
   userData: Record<string, unknown>;
   memberData: Record<string, unknown>;
   employerData: Record<string, unknown>;
@@ -43,25 +44,51 @@ export async function requireEmployerContext(req: Request): Promise<EmployerCont
   const userData = (userDoc.data() ?? {}) as Record<string, unknown>;
   const memberData = (memberDoc.data() ?? {}) as Record<string, unknown>;
 
-  if (userData.role !== "employer" || typeof userData.employerId !== "string" || !userData.employerId) {
+  const userRole = typeof userData.role === "string" ? userData.role : null;
+  const memberOrgId = typeof memberData.orgId === "string" && memberData.orgId
+    ? memberData.orgId
+    : null;
+  const userEmployerId = typeof userData.employerId === "string" && userData.employerId
+    ? userData.employerId
+    : null;
+
+  if (!memberOrgId && !(userRole === "employer" && userEmployerId)) {
     throw new EmployerApiError(403, "Not an employer");
   }
 
-  const employerId = userData.employerId;
-  const orgId = (typeof memberData.orgId === "string" && memberData.orgId) || employerId;
+  const employerId = userEmployerId || memberOrgId!;
+  const orgId = memberOrgId || employerId;
+  const orgRole =
+    typeof memberData.orgRole === "string" && memberData.orgRole
+      ? memberData.orgRole
+      : userRole === "employer"
+        ? "owner"
+        : "member";
 
-  const [employerDoc, organizationDoc] = await Promise.all([
-    adminDb.collection("employers").doc(employerId).get(),
-    adminDb.collection("organizations").doc(orgId).get(),
+  const organizationDocPromise = adminDb.collection("organizations").doc(orgId).get();
+  const employerDocPromise = adminDb.collection("employers").doc(employerId).get();
+  const [organizationDoc, primaryEmployerDoc] = await Promise.all([
+    organizationDocPromise,
+    employerDocPromise,
   ]);
+
+  let employerData = (primaryEmployerDoc.data() ?? {}) as Record<string, unknown>;
+
+  if (!primaryEmployerDoc.exists && orgId !== employerId) {
+    const orgEmployerDoc = await adminDb.collection("employers").doc(orgId).get();
+    if (orgEmployerDoc.exists) {
+      employerData = (orgEmployerDoc.data() ?? {}) as Record<string, unknown>;
+    }
+  }
 
   return {
     uid,
     employerId,
     orgId,
+    orgRole,
     userData,
     memberData,
-    employerData: (employerDoc.data() ?? {}) as Record<string, unknown>,
+    employerData,
     organizationData: (organizationDoc.data() ?? {}) as Record<string, unknown>,
     emailVerified: decoded.email_verified === true,
   };
