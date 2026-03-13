@@ -149,6 +149,7 @@ const navItems = [
   { href: "/search", label: "Search", icon: "search", key: "search" },
   { href: "/jobs", label: "Jobs", icon: "briefcase", key: "jobs" },
   { href: "/events", label: "Events", icon: "calendar", key: "events" },
+  { href: "/livestreams", label: "Live", icon: "video", key: "live" },
   { href: "/scholarships", label: "Scholarships", icon: "award", key: "scholarships" },
   { href: "/schools", label: "Schools", icon: "school", key: "schools" },
   { href: "/training", label: "Training", icon: "book", key: "training" },
