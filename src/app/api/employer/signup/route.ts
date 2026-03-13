@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendEmployerWelcome, sendAdminNewSignup } from "@/lib/email";
+import { verifyAppCheckFromRequest } from "@/lib/server/app-check";
 import {
   evaluateEmployerSignupProtection,
   getSignupClientIp,
@@ -25,6 +26,11 @@ export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const appCheckValid = await verifyAppCheckFromRequest(req);
+  if (!appCheckValid) {
+    return NextResponse.json({ error: "Security check failed. Please refresh the page and try again." }, { status: 403 });
   }
 
   let uid: string;

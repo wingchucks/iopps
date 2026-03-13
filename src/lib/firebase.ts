@@ -2,7 +2,7 @@ import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
+import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,6 +14,7 @@ const firebaseConfig = {
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+let appCheckInstance: AppCheck | null = null;
 
 // Initialize Firebase App Check with reCAPTCHA Enterprise (client-side only)
 if (typeof window !== "undefined") {
@@ -23,7 +24,7 @@ if (typeof window !== "undefined") {
 
   if (!isLocalHost) {
     try {
-      initializeAppCheck(app, {
+      appCheckInstance = initializeAppCheck(app, {
         provider: new ReCaptchaEnterpriseProvider("6LeFMHosAAAAAFKTIgee7jESAYTypsH69SbjnbSF"),
         isTokenAutoRefreshEnabled: true,
       });
@@ -36,4 +37,21 @@ if (typeof window !== "undefined") {
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+export async function getAppCheckTokenValue(forceRefresh = false): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  const isLocalHost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+
+  if (isLocalHost || !appCheckInstance) return null;
+
+  try {
+    const result = await getToken(appCheckInstance, forceRefresh);
+    return result.token || null;
+  } catch {
+    return null;
+  }
+}
+
 export default app;

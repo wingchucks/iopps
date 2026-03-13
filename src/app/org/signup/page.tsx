@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { getAppCheckTokenValue } from "@/lib/firebase";
 import Button from "@/components/Button";
 
 const ORG_TYPES = [
@@ -73,11 +74,13 @@ export default function OrgSignupPage() {
   if (authLoading || (user && !signingUpRef.current)) return null;
 
   const createOrganizationProfile = async (idToken: string, contactEmailValue: string) => {
+    const appCheckToken = await getAppCheckTokenValue();
     const res = await fetch("/api/employer/signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${idToken}`,
+        ...(appCheckToken ? { "X-Firebase-AppCheck": appCheckToken } : {}),
       },
       body: JSON.stringify({
         name: orgName,

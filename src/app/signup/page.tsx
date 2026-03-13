@@ -4,7 +4,7 @@ import React, { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { auth, storage } from "@/lib/firebase";
+import { auth, getAppCheckTokenValue, storage } from "@/lib/firebase";
 import {
   BackgroundMesh, TopBar, ProgressBar, StepDots, StepHeader,
   FormInput, FormSelect, FormTextarea, CheckboxItem, UploadZone,
@@ -204,6 +204,7 @@ export default function UnifiedSignupPage() {
       const logoUrl = logoFile ? await uploadFile(logoFile, `org-logos/${user.uid}`) : "";
       const bannerUrl = bannerFile ? await uploadFile(bannerFile, `org-banners/${user.uid}`) : "";
       const idToken = await user.getIdToken();
+      const appCheckToken = await getAppCheckTokenValue();
       const orgData: Record<string, unknown> = {
         name: schoolName, type: "school",
         ...(institutionType ? { institutionType } : {}),
@@ -223,7 +224,11 @@ export default function UnifiedSignupPage() {
       };
       const res = await fetch("/api/employer/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+          ...(appCheckToken ? { "X-Firebase-AppCheck": appCheckToken } : {}),
+        },
         body: JSON.stringify({
           ...orgData,
           contactName: name || schoolName,
@@ -253,6 +258,7 @@ export default function UnifiedSignupPage() {
       const logoUrl = empLogoFile ? await uploadFile(empLogoFile, `org-logos/${user.uid}`) : "";
       const bannerUrl = empBannerFile ? await uploadFile(empBannerFile, `org-banners/${user.uid}`) : "";
       const idToken = await user.getIdToken();
+      const appCheckToken = await getAppCheckTokenValue();
       const orgData: Record<string, unknown> = {
         name: orgName, type: "employer",
         businessIdentity,
@@ -264,7 +270,11 @@ export default function UnifiedSignupPage() {
       };
       const res = await fetch("/api/employer/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+          ...(appCheckToken ? { "X-Firebase-AppCheck": appCheckToken } : {}),
+        },
         body: JSON.stringify({
           ...orgData,
           contactName: name || orgName,

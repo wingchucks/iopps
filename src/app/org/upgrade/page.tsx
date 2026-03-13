@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { getAppCheckTokenValue } from "@/lib/firebase";
 
 const ORG_TYPES = [
   { value: "employer", label: "Employer / Business", desc: "Post jobs and find Indigenous talent" },
@@ -49,11 +50,13 @@ export default function OrgUpgradePage() {
     setError("");
     try {
       const token = await user!.getIdToken();
+      const appCheckToken = await getAppCheckTokenValue();
       const res = await fetch("/api/employer/upgrade", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          ...(appCheckToken ? { "X-Firebase-AppCheck": appCheckToken } : {}),
         },
         body: JSON.stringify({
           ...form,
