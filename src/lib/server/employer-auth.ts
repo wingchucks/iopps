@@ -17,6 +17,7 @@ export interface EmployerContext {
   memberData: Record<string, unknown>;
   employerData: Record<string, unknown>;
   organizationData: Record<string, unknown>;
+  emailVerified: boolean;
 }
 
 function getBearerToken(req: Request): string {
@@ -62,5 +63,29 @@ export async function requireEmployerContext(req: Request): Promise<EmployerCont
     memberData,
     employerData: (employerDoc.data() ?? {}) as Record<string, unknown>,
     organizationData: (organizationDoc.data() ?? {}) as Record<string, unknown>,
+    emailVerified: decoded.email_verified === true,
   };
+}
+
+function hasCompletedEmployerOnboarding(context: EmployerContext): boolean {
+  return (
+    context.organizationData.onboardingComplete === true ||
+    context.employerData.onboardingComplete === true ||
+    context.userData.onboardingComplete === true ||
+    context.memberData.onboardingComplete === true
+  );
+}
+
+export async function requireEmployerPublishingContext(req: Request): Promise<EmployerContext> {
+  const context = await requireEmployerContext(req);
+
+  if (!context.emailVerified) {
+    throw new EmployerApiError(403, "Verify your email before posting public content.");
+  }
+
+  if (!hasCompletedEmployerOnboarding(context)) {
+    throw new EmployerApiError(403, "Complete your organization setup before posting public content.");
+  }
+
+  return context;
 }

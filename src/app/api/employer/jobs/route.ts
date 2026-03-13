@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
+import {
+  EmployerApiError,
+  requireEmployerContext,
+  requireEmployerPublishingContext,
+} from "@/lib/server/employer-auth";
 import {
   buildFeaturedJobSummary,
   evaluateFeaturedActivation,
@@ -211,7 +215,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const context = await requireEmployerContext(req);
+    const context = await requireEmployerPublishingContext(req);
     const body = (await req.json()) as EmployerJobInput;
     const title = normalizeString(body.title);
 

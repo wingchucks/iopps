@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
+import {
+  EmployerApiError,
+  requireEmployerContext,
+  requireEmployerPublishingContext,
+} from "@/lib/server/employer-auth";
 import {
   buildFeaturedJobSummary,
   evaluateFeaturedActivation,
@@ -156,7 +160,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const context = await requireEmployerContext(req);
+    const context = await requireEmployerPublishingContext(req);
     const { id } = await params;
     const body = (await req.json()) as EmployerJobInput;
     const db = getAdminDb();
@@ -289,7 +293,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const context = await requireEmployerContext(req);
+    const context = await requireEmployerPublishingContext(req);
     const { id } = await params;
     const job = await getOwnedJobOrThrow(id, context);
 
