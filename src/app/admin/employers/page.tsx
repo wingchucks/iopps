@@ -118,9 +118,13 @@ function RejectModal({
 }) {
   const [reason, setReason] = useState("");
 
+  const handleClose = useCallback(() => {
+    setReason("");
+    onClose();
+  }, [onClose]);
+
   useEffect(() => {
     if (isOpen) {
-      setReason("");
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -133,11 +137,11 @@ function RejectModal({
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleClose();
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
+  }, [handleClose, isOpen]);
 
   if (!isOpen) return null;
 
@@ -145,7 +149,7 @@ function RejectModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="fixed inset-0 bg-black/60 animate-fade-in"
-        onClick={onClose}
+        onClick={handleClose}
         aria-hidden="true"
       />
       <div
@@ -157,7 +161,7 @@ function RejectModal({
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">Reject Employer</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--card-bg)] hover:text-foreground"
             aria-label="Close"
           >
@@ -181,7 +185,7 @@ function RejectModal({
 
         <div className="mt-4 flex gap-3 justify-end">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-muted"
           >
             Cancel
@@ -346,10 +350,10 @@ export default function AdminEmployersPage() {
       {/* ---- Header ---- */}
       <div className="animate-fade-in">
         <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
-          Employer Management
+          Businesses &amp; Schools
         </h1>
         <p className="mt-1 text-[var(--text-secondary)]">
-          Review and manage employer applications
+          Review and manage business and school accounts
         </p>
       </div>
 
@@ -376,7 +380,7 @@ export default function AdminEmployersPage() {
         <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
         <input
           type="search"
-          placeholder="Search employers by name..."
+          placeholder="Search businesses and schools by name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-[var(--text-muted)] focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20 sm:max-w-sm"

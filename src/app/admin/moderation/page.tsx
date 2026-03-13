@@ -98,8 +98,8 @@ export default function ModerationPage() {
             <ShieldIcon />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Content Moderation</h1>
-            <p className="text-sm text-[var(--text-secondary)]">Review and resolve reported content</p>
+            <h1 className="text-2xl font-bold text-foreground">Moderation Queue</h1>
+            <p className="text-sm text-[var(--text-secondary)]">Review and resolve reported content and risk flags</p>
           </div>
         </div>
       </div>

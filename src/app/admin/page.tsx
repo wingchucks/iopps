@@ -241,9 +241,9 @@ export default function AdminDashboard() {
   const stats: StatCardProps[] = [
     { icon: <UsersIcon />, label: "Total Users", value: counts?.users ?? "—", delay: 0 },
     { icon: <BriefcaseIcon />, label: "Active Jobs", value: counts?.jobs?.active ?? "—", badge: counts?.jobs ? `${counts.jobs.total} total` : undefined, delay: 80 },
-    { icon: <BuildingIcon />, label: "Employers", value: counts?.employers?.total ?? "—", badge: pendingEmployers ? `${pendingEmployers} pending` : undefined, badgeColor: "bg-warning/10 text-warning", delay: 160 },
+    { icon: <BuildingIcon />, label: "Businesses & Schools", value: counts?.employers?.total ?? "—", badge: pendingEmployers ? `${pendingEmployers} need review` : undefined, badgeColor: "bg-warning/10 text-warning", delay: 160 },
     { icon: <ShopIcon />, label: "Shop Listings", value: counts?.vendors ?? "—", delay: 240 },
-    { icon: <ShieldIcon />, label: "Open Reports", value: openReports || "—", badge: openReports ? "Action needed" : undefined, badgeColor: "bg-red-500/10 text-red-400", delay: 320 },
+    { icon: <ShieldIcon />, label: "Moderation Reports", value: openReports || "—", badge: openReports ? "Action needed" : undefined, badgeColor: "bg-red-500/10 text-red-400", delay: 320 },
     { icon: <CheckCircleIcon />, label: "Pending Verifications", value: pendingVerifications || "—", delay: 400 },
     { icon: <CalendarIcon />, label: "Conferences", value: counts?.conferences ?? "—", delay: 480 },
     { icon: <AwardIcon />, label: "Scholarships", value: counts?.scholarships ?? "—", delay: 560 },
@@ -251,8 +251,8 @@ export default function AdminDashboard() {
   ];
 
   const quickActions = [
-    { label: "Manage Employers", href: "/admin/employers", icon: <BuildingIcon /> },
-    { label: "Review Reports", href: "/admin/moderation", icon: <ShieldIcon /> },
+    { label: "Manage Businesses & Schools", href: "/admin/employers", icon: <BuildingIcon /> },
+    { label: "Moderation Queue", href: "/admin/moderation", icon: <ShieldIcon /> },
     { label: "Feed Sync", href: "/admin/feed-sync", icon: <RssIcon /> },
     { label: "Jobs", href: "/admin/jobs", icon: <BriefcaseIcon /> },
     { label: "Users", href: "/admin/users", icon: <UsersIcon /> },
@@ -264,7 +264,7 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="animate-fade-in">
         <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Admin Dashboard</h1>
-        <p className="mt-1 text-[var(--text-secondary)]">Platform overview and moderation tools</p>
+        <p className="mt-1 text-[var(--text-secondary)]">Platform overview, moderation, and operational tools</p>
       </div>
 
       {/* Platform Status Bar */}
@@ -311,20 +311,20 @@ export default function AdminDashboard() {
           <div className="flex-1">
             <p className="text-sm font-medium text-amber-300">Needs your attention</p>
             <p className="text-sm text-amber-400/80">
-              {pendingEmployers > 0 && `${pendingEmployers} employer${pendingEmployers > 1 ? "s" : ""} pending approval`}
+              {pendingEmployers > 0 && `${pendingEmployers} business or school account${pendingEmployers > 1 ? "s" : ""} need review`}
               {pendingEmployers > 0 && openReports > 0 && " · "}
-              {openReports > 0 && `${openReports} open content report${openReports > 1 ? "s" : ""}`}
+              {openReports > 0 && `${openReports} open moderation report${openReports > 1 ? "s" : ""}`}
             </p>
           </div>
           <div className="flex gap-2">
             {pendingEmployers > 0 && (
               <Link href="/admin/employers?status=pending" className="rounded-lg bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 hover:bg-amber-500/30 transition-colors">
-                Review Employers
+                Review Accounts
               </Link>
             )}
             {openReports > 0 && (
               <Link href="/admin/moderation" className="rounded-lg bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 hover:bg-amber-500/30 transition-colors">
-                Review Reports
+                Open Moderation Queue
               </Link>
             )}
           </div>

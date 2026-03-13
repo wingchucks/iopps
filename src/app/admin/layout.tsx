@@ -217,14 +217,14 @@ const NAV_GROUPS: NavGroup[] = [
     title: "Overview",
     items: [
       { label: "Dashboard", href: "/admin", icon: "\u25A3" },
-      { label: "Reports", href: "/admin/reports", icon: "\u2630" },
+      { label: "Analytics", href: "/admin/reports", icon: "\u2630" },
     ],
   },
   {
     title: "People",
     items: [
       { label: "Users", href: "/admin/users", icon: "\u2603" },
-      { label: "Organizations", href: "/admin/employers", icon: "\u2616" },
+      { label: "Businesses & Schools", href: "/admin/employers", icon: "\u2616" },
       { label: "Verification", href: "/admin/verification", icon: "\u2713" },
     ],
   },
@@ -245,9 +245,15 @@ const NAV_GROUPS: NavGroup[] = [
     title: "Commerce",
     items: [
       { label: "Payments", href: "/admin/payments", icon: "\u2B24" },
-      { label: "Shop Indigenous", href: "/admin/shop", icon: "\u2302" },
       { label: "Featured & Pinned", href: "/admin/pinned", icon: "\u272A" },
       { label: "Partners", href: "/admin/partners", icon: "\u2764" },
+    ],
+  },
+  {
+    title: "Legacy Tools",
+    items: [
+      { label: "Stories", href: "/admin/stories", icon: "\u270E" },
+      { label: "Shop Indigenous", href: "/admin/shop", icon: "\u2302" },
     ],
   },
   {
@@ -329,11 +335,13 @@ function SidebarContent({
   pathname,
   onNavigate,
   onSignOut,
+  role,
   user,
 }: {
   pathname: string;
   onNavigate?: () => void;
   onSignOut: () => void;
+  role: "admin" | "moderator";
   user: { displayName: string | null; email: string | null; getIdToken: () => Promise<string> };
 }) {
   /** Check if a nav item is the "active" route */
@@ -415,7 +423,7 @@ function SidebarContent({
         <div className="flex items-center justify-between px-3">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center rounded-full border border-[#D97706]/20 bg-[#D97706]/10 px-2.5 py-0.5 text-xs font-medium text-[#D97706]">
-              Super Admin
+              {role === "admin" ? "Super Admin" : "Moderator"}
             </span>
             <span className="text-[10px] text-[var(--text-muted)]">v1.0.0</span>
           </div>
@@ -493,11 +501,6 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Close mobile drawer on route change
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
-
   // Lock body scroll when drawer is open
   useEffect(() => {
     if (drawerOpen) {
@@ -536,6 +539,7 @@ export default function AdminLayout({
         <SidebarContent
           pathname={pathname}
           onSignOut={signOut}
+          role={role}
           user={user}
         />
       </aside>
@@ -555,6 +559,7 @@ export default function AdminLayout({
               pathname={pathname}
               onNavigate={closeDrawer}
               onSignOut={signOut}
+              role={role}
               user={user}
             />
           </aside>

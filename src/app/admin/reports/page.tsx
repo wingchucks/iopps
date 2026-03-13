@@ -251,7 +251,7 @@ export default function ReportsPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Reports &amp; Analytics</h1>
+        <h1 className="text-2xl font-bold">Analytics</h1>
         <div className="flex items-center gap-3">
           {/* Date range pills */}
           <div className="flex rounded-lg border border-[var(--card-border)] overflow-hidden">
