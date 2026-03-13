@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendEmployerWelcome, sendAdminNewSignup } from "@/lib/email";
+import {
+  evaluateEmployerSignupProtection,
+  getSignupClientIp,
+} from "@/lib/server/signup-protection";
 
 export const runtime = "nodejs";
 
@@ -39,6 +43,10 @@ export async function POST(req: NextRequest) {
     contactName?: string;
     contactEmail?: string;
     businessIdentity?: "indigenous" | "non_indigenous" | "not_specified";
+    website?: string;
+    description?: string;
+    honeypot?: string;
+    formStartedAt?: number | string;
   };
   try {
     body = await req.json();
@@ -49,6 +57,31 @@ export async function POST(req: NextRequest) {
   const { name, type, contactName, contactEmail, businessIdentity = "not_specified" } = body;
   if (!name || !type || !contactName || !contactEmail) {
     return NextResponse.json({ error: "Missing required fields: name, type, contactName, contactEmail" }, { status: 400 });
+  }
+
+  const protection = await evaluateEmployerSignupProtection(adminDb, {
+    uid,
+    kind: "employer_signup",
+    name,
+    contactName,
+    contactEmail,
+    website: body.website,
+    description: body.description,
+    honeypot: body.honeypot,
+    formStartedAt: body.formStartedAt,
+    clientIp: getSignupClientIp(req),
+  });
+
+  if (!protection.allow) {
+    if (protection.hardBlock) {
+      try {
+        await adminAuth.deleteUser(uid);
+      } catch (deleteError) {
+        console.error("[employer/signup] Failed to delete blocked auth user:", deleteError);
+      }
+    }
+
+    return NextResponse.json({ error: protection.message }, { status: protection.status });
   }
 
   const slug = name

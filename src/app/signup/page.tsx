@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -48,7 +48,9 @@ export default function UnifiedSignupPage() {
   const { signUp, signInWithGoogle, user, sendVerificationEmail, reloadUser } = useAuth();
 
   const [step, setStep] = useState(1);
+  const formStartedAtRef = useRef(Date.now());
   const [role, setRole] = useState<Role>("");
+  const [websiteTrap, setWebsiteTrap] = useState("");
   const [orgType, setOrgType] = useState<OrgType>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -222,7 +224,13 @@ export default function UnifiedSignupPage() {
       const res = await fetch("/api/employer/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ ...orgData, contactName: name || schoolName, contactEmail: email || user.email }),
+        body: JSON.stringify({
+          ...orgData,
+          contactName: name || schoolName,
+          contactEmail: email || user.email,
+          honeypot: websiteTrap,
+          formStartedAt: formStartedAtRef.current,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -257,7 +265,13 @@ export default function UnifiedSignupPage() {
       const res = await fetch("/api/employer/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ ...orgData, contactName: name || orgName, contactEmail: email || user.email }),
+        body: JSON.stringify({
+          ...orgData,
+          contactName: name || orgName,
+          contactEmail: email || user.email,
+          honeypot: websiteTrap,
+          formStartedAt: formStartedAtRef.current,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -287,6 +301,26 @@ export default function UnifiedSignupPage() {
         <ProgressBar percent={percent} />
       </div>
       <div style={{ position: "relative", zIndex: 1, maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px", flex: 1, width: "100%" }}>
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            left: "-10000px",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+          }}
+        >
+          <label htmlFor="unified-signup-website-trap">Website</label>
+          <input
+            id="unified-signup-website-trap"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={websiteTrap}
+            onChange={(event) => setWebsiteTrap(event.target.value)}
+          />
+        </div>
         <StepDots labels={labels} current={current} />
 
         {error && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: CSS.error }}>{error}</div>}

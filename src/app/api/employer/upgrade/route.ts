@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendEmployerWelcome, sendAdminNewSignup } from "@/lib/email";
+import {
+  evaluateEmployerSignupProtection,
+  getSignupClientIp,
+} from "@/lib/server/signup-protection";
 
 export const runtime = "nodejs";
 
@@ -40,7 +44,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Account is already an employer" }, { status: 400 });
   }
 
-  let body: { name?: string; type?: string; website?: string; location?: string; description?: string };
+  let body: {
+    name?: string;
+    type?: string;
+    website?: string;
+    location?: string;
+    description?: string;
+    honeypot?: string;
+    formStartedAt?: number | string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -50,6 +62,23 @@ export async function POST(req: NextRequest) {
   const { name, type, website, location, description } = body;
   if (!name || !type) {
     return NextResponse.json({ error: "Missing required fields: name, type" }, { status: 400 });
+  }
+
+  const protection = await evaluateEmployerSignupProtection(adminDb, {
+    uid,
+    kind: "employer_upgrade",
+    name,
+    contactName: userData?.displayName || name,
+    contactEmail: email,
+    website,
+    description,
+    honeypot: body.honeypot,
+    formStartedAt: body.formStartedAt,
+    clientIp: getSignupClientIp(req),
+  });
+
+  if (!protection.allow) {
+    return NextResponse.json({ error: protection.message }, { status: protection.status });
   }
 
   const slug = name

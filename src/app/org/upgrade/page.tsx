@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
@@ -15,9 +16,11 @@ const ORG_TYPES = [
 export default function OrgUpgradePage() {
   const { user } = useAuth();
   const router = useRouter();
+  const formStartedAtRef = useRef(Date.now());
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [websiteTrap, setWebsiteTrap] = useState("");
   const [form, setForm] = useState({
     name: "",
     type: "",
@@ -52,7 +55,11 @@ export default function OrgUpgradePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          honeypot: websiteTrap,
+          formStartedAt: formStartedAtRef.current,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upgrade failed");
@@ -90,6 +97,26 @@ export default function OrgUpgradePage() {
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6">
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              left: "-10000px",
+              width: 1,
+              height: 1,
+              overflow: "hidden",
+            }}
+          >
+            <label htmlFor="org-upgrade-website-trap">Website</label>
+            <input
+              id="org-upgrade-website-trap"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={websiteTrap}
+              onChange={(event) => setWebsiteTrap(event.target.value)}
+            />
+          </div>
           {step === 1 && (
             <div className="space-y-4">
               <h2 className="font-bold text-text text-lg">Organization Details</h2>
@@ -204,7 +231,7 @@ export default function OrgUpgradePage() {
 
         <p className="text-center text-xs text-text-muted mt-4">
           Already have an org account?{" "}
-          <a href="/org/dashboard" className="text-teal underline">Go to Dashboard</a>
+          <Link href="/org/dashboard" className="text-teal underline">Go to Dashboard</Link>
         </p>
       </div>
     </div>

@@ -51,6 +51,8 @@ export default function OrgSignupPage() {
   const { signUp, signInWithGoogle, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const signingUpRef = useRef(false); // Prevents useEffect redirect during signup
+  const formStartedAtRef = useRef(Date.now());
+  const [websiteTrap, setWebsiteTrap] = useState("");
   const showBusinessIdentity = orgType === "business" || orgType === "legal" || orgType === "professional";
 
   useEffect(() => {
@@ -83,6 +85,8 @@ export default function OrgSignupPage() {
         businessIdentity: showBusinessIdentity ? businessIdentity : "not_specified",
         contactName,
         contactEmail: contactEmailValue,
+        honeypot: websiteTrap,
+        formStartedAt: formStartedAtRef.current,
       }),
     });
 
@@ -170,6 +174,26 @@ export default function OrgSignupPage() {
       {/* Form */}
       <div className="flex-1 flex justify-center" style={{ padding: "40px 24px" }}>
         <form onSubmit={handleSubmit} className="w-full max-w-md">
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              left: "-10000px",
+              width: 1,
+              height: 1,
+              overflow: "hidden",
+            }}
+          >
+            <label htmlFor="org-signup-website-trap">Website</label>
+            <input
+              id="org-signup-website-trap"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={websiteTrap}
+              onChange={(event) => setWebsiteTrap(event.target.value)}
+            />
+          </div>
           <h2 className="text-2xl font-bold text-text mb-2">Organization Registration</h2>
           <p className="text-sm text-text-muted mb-6">
             Indigenous businesses and employers can create their profile for free. Non-Indigenous companies only pay when they want promoted visibility.
