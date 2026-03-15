@@ -28,7 +28,12 @@ jobs:
       - name: Send job alerts
         run: |
           FREQUENCY="${{ steps.frequency.outputs.frequency }}"
-          curl -X GET \
+          if [ "$FREQUENCY" == "instant" ]; then
+            METHOD="GET"
+          else
+            METHOD="POST"
+          fi
+          curl -sf -X $METHOD \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             "${{ secrets.APP_URL }}/api/emails/send-job-alerts/${FREQUENCY}"
         env:
