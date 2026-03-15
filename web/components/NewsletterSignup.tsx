@@ -42,7 +42,7 @@ export default function NewsletterSignup() {
     return (
       <div className="bg-[#1C1C1C] border border-[#00EDBA33] rounded-xl p-8 text-center">
         <div className="text-4xl mb-3">🎉</div>
-        <h3 className="text-xl font-bold text-[#00EDBA] mb-2">You're In!</h3>
+        <h3 className="text-xl font-bold text-[#00EDBA] mb-2">You&apos;re In!</h3>
         <p className="text-gray-400">{message}</p>
       </div>
     );
