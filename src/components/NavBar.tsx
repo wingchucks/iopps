@@ -173,8 +173,22 @@ export default function NavBar() {
           </Link>
         </div>
 
-        {/* Mobile: avatar + hamburger */}
+        {/* Mobile: create + avatar + hamburger */}
         <div className="flex md:hidden items-center gap-2">
+          {user && (
+            <button
+              onClick={() => { setMenuOpen(false); setShowChooser(true); }}
+              className="flex items-center justify-center w-9 h-9 rounded-[10px] border-none cursor-pointer transition-all hover:brightness-110"
+              style={{ background: "var(--teal)", color: "#fff" }}
+              title="Create"
+              aria-label="Create"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          )}
           <Link href={hasOrg ? "/org/dashboard" : "/profile"}>
             <Avatar name={displayName} size={32} />
           </Link>
@@ -182,7 +196,7 @@ export default function NavBar() {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle navigation menu"
             className="w-10 h-10 rounded-[10px] border-none cursor-pointer text-xl text-white flex items-center justify-center"
-            style={{ background: "rgba(255,255,255,.08)" }}
+            style={{ background: menuOpen ? "rgba(255,255,255,.15)" : "rgba(255,255,255,.08)" }}
           >
             {menuOpen ? "\u2715" : "\u2630"}
           </button>
@@ -191,34 +205,15 @@ export default function NavBar() {
 
       {/* Mobile dropdown menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-white/10 pb-3">
-          {navLinks.map(({ href, label, dot }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 px-4 py-3 font-semibold text-sm no-underline transition-all"
-                style={{
-                  color: active ? "#fff" : "rgba(255,255,255,.6)",
-                  background: active ? "rgba(255,255,255,.08)" : "transparent",
-                }}
-              >
-                {label}
-                {dot && (
-                  <span
-                    className="inline-block w-1.5 h-1.5 rounded-full"
-                    style={{ background: "#DC2626" }}
-                  />
-                )}
-              </Link>
-            );
-          })}
+        <div
+          className="md:hidden border-t border-white/10 pb-3 overflow-y-auto"
+          style={{ maxHeight: "calc(100vh - 64px)" }}
+        >
+          {/* Search */}
           <Link
             href="/search"
             onClick={() => setMenuOpen(false)}
-            className="mx-4 mt-2 flex items-center gap-2 px-4 py-2.5 rounded-[10px] no-underline"
+            className="mx-4 mt-3 flex items-center gap-2 px-4 py-2.5 rounded-[10px] no-underline"
             style={{
               background: "rgba(255,255,255,.08)",
               border: "1px solid rgba(255,255,255,.1)",
@@ -227,28 +222,71 @@ export default function NavBar() {
             <span style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>&#128269;</span>
             <span style={{ color: "rgba(255,255,255,.3)", fontSize: 13 }}>Search IOPPS...</span>
           </Link>
+
+          {/* Nav links */}
+          <div className="mt-2">
+            {navLinks.map(({ href, label, dot }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2 px-4 py-3 font-semibold text-sm no-underline transition-all"
+                  style={{
+                    color: active ? "#fff" : "rgba(255,255,255,.6)",
+                    background: active ? "rgba(255,255,255,.08)" : "transparent",
+                  }}
+                >
+                  {label}
+                  {dot && (
+                    <span
+                      className="inline-block w-1.5 h-1.5 rounded-full"
+                      style={{ background: "#DC2626" }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Divider + Utility section */}
+          <div className="mx-4 my-2 h-px" style={{ background: "rgba(255,255,255,.1)" }} />
+          <p className="px-4 pt-1 pb-1 text-[10px] font-bold tracking-[1.5px] uppercase" style={{ color: "rgba(255,255,255,.3)" }}>
+            Utility
+          </p>
           <Link
             href="/saved"
             onClick={() => setMenuOpen(false)}
-            className="block px-4 py-3 font-semibold text-sm no-underline transition-all"
+            className="flex items-center gap-2 px-4 py-3 font-semibold text-sm no-underline transition-all"
             style={{
               color: pathname === "/saved" ? "#fff" : "rgba(255,255,255,.6)",
               background: pathname === "/saved" ? "rgba(255,255,255,.08)" : "transparent",
             }}
           >
-            Saved Items
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+            Saved
           </Link>
           <Link
             href="/settings"
             onClick={() => setMenuOpen(false)}
-            className="block px-4 py-3 font-semibold text-sm no-underline transition-all"
+            className="flex items-center gap-2 px-4 py-3 font-semibold text-sm no-underline transition-all"
             style={{
               color: pathname === "/settings" ? "#fff" : "rgba(255,255,255,.6)",
               background: pathname === "/settings" ? "rgba(255,255,255,.08)" : "transparent",
             }}
           >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
             Settings
           </Link>
+
+          {/* Divider + Account section */}
+          <div className="mx-4 my-2 h-px" style={{ background: "rgba(255,255,255,.1)" }} />
           <div className="mx-4 mt-2 flex items-center gap-2">
             <ThemeToggle />
             {user ? (
