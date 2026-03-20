@@ -174,6 +174,32 @@ export async function getOrganizationByUserId(
 }
 
 /**
+ * Get an organization by its slug field.
+ * Queries the "employers" collection where slug == slug, limit 1.
+ */
+export async function getOrganizationBySlug(
+  slug: string
+): Promise<OrganizationProfile | null> {
+  if (!adminDb) return null;
+
+  try {
+    const snap = await adminDb
+      .collection(EMPLOYER_COLLECTION)
+      .where("slug", "==", slug)
+      .limit(1)
+      .get();
+
+    if (snap.empty) return null;
+
+    const doc = snap.docs[0];
+    return { ...(doc.data() as OrganizationProfile), id: doc.id };
+  } catch (error) {
+    console.error("[getOrganizationBySlug] Error:", error);
+    return null;
+  }
+}
+
+/**
  * Create a new organization/employer document in the "employers" collection.
  *
  * @param data - Organization profile data (userId required)

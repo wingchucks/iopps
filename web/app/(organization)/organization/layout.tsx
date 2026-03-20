@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 // ---------------------------------------------------------------------------
 // Navigation configuration
@@ -14,6 +16,8 @@ interface NavItem {
   href: string;
   /** Simple SVG path for the icon (24x24 viewBox, stroke-based) */
   iconPath: string;
+  /** If set, only show for these org types */
+  schoolOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -28,6 +32,13 @@ const NAV_ITEMS: NavItem[] = [
     href: "/organization/jobs",
     iconPath:
       "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+  },
+  {
+    label: "Programs",
+    href: "/organization/programs",
+    iconPath:
+      "M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342",
+    schoolOnly: true,
   },
   {
     label: "Billing",
@@ -114,11 +125,54 @@ export default function OrganizationLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [orgType, setOrgType] = useState<string | null>(null);
+  const [orgSlug, setOrgSlug] = useState<string | null>(null);
+  const [orgDisplayName, setOrgDisplayName] = useState<string | null>(null);
+
+  const isSchoolOrg = orgType === "school" || orgType === "SCHOOL";
 
   // Close mobile sidebar on route change
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
+
+  // Fetch org type, slug, and display name
+  useEffect(() => {
+    if (!user || !db) return;
+    (async () => {
+      try {
+        let orgData: Record<string, unknown> | undefined;
+
+        // Step 1: Try users/{uid}.orgId
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userData = userDoc.data();
+        const orgId = userData?.orgId || userData?.employerId;
+
+        if (orgId) {
+          const orgDoc = await getDoc(doc(db, "employers", orgId));
+          if (orgDoc.exists()) {
+            orgData = orgDoc.data();
+          }
+        }
+
+        // Step 2: Fallback — try employers/{uid} directly (doc ID = owner UID)
+        if (!orgData) {
+          const directDoc = await getDoc(doc(db, "employers", user.uid));
+          if (directDoc.exists()) {
+            orgData = directDoc.data();
+          }
+        }
+
+        if (orgData) {
+          setOrgType((orgData.type as string) || (orgData.orgType as string) || null);
+          setOrgSlug((orgData.slug as string) || null);
+          setOrgDisplayName((orgData.organizationName as string) || null);
+        }
+      } catch {
+        // silently fail — defaults to employer view
+      }
+    })();
+  }, [user]);
 
   // Auth gate: redirect unauthenticated users
   useEffect(() => {
@@ -144,7 +198,7 @@ export default function OrganizationLayout({
     return <LayoutLoadingState />;
   }
 
-  const displayName = userProfile?.displayName || "Organization";
+  const displayName = orgDisplayName || userProfile?.displayName || "Organization";
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -179,7 +233,7 @@ export default function OrganizationLayout({
               <p className="truncate text-sm font-semibold text-text-primary">
                 {displayName}
               </p>
-              <p className="text-xs text-text-muted">Employer</p>
+              <p className="text-xs text-text-muted">{isSchoolOrg ? "School" : "Employer"}</p>
             </div>
           </div>
           {/* Close button (mobile only) */}
@@ -208,7 +262,9 @@ export default function OrganizationLayout({
 
         {/* Navigation links */}
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Organization navigation">
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS
+            .filter((item) => !item.schoolOnly || isSchoolOrg)
+            .map((item) => (
             <SidebarLink
               key={item.href}
               item={item}
@@ -218,7 +274,34 @@ export default function OrganizationLayout({
         </nav>
 
         {/* Sidebar footer */}
-        <div className="border-t border-card-border p-4">
+        <div className="border-t border-card-border p-4 space-y-2">
+          {orgSlug && (
+            <Link
+              href={`/organizations/${orgSlug}`}
+              className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.577 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.577-3.007-9.963-7.178z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              View Profile
+            </Link>
+          )}
           <Link
             href="/"
             className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors"
