@@ -126,7 +126,10 @@ export default async function LandingPage() {
       >
         {/* Top nav */}
         <div className="relative flex items-center justify-between mb-0 z-10">
-          <div />
+          <Link href="/" className="flex items-center gap-2 no-underline">
+            <Image src="/logo.png" alt="IOPPS" width={32} height={32} className="shrink-0" />
+            <span className="text-white font-black text-lg tracking-[2px] hidden sm:inline">IOPPS</span>
+          </Link>
           <div className="flex items-center gap-4">
             <Link
               href="/jobs"

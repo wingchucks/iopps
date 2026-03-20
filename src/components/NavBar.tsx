@@ -45,6 +45,16 @@ export default function NavBar() {
     });
   }, [user]);
 
+  /* Escape key closes mobile menu */
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [menuOpen]);
+
   const navLinks = [
     ...baseNavLinks,
     ...(hasOrg ? [{ href: "/org/dashboard", label: "Dashboard", dot: false }] : []),
@@ -194,7 +204,8 @@ export default function NavBar() {
           </Link>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle navigation menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
             className="w-10 h-10 rounded-[10px] border-none cursor-pointer text-xl text-white flex items-center justify-center"
             style={{ background: menuOpen ? "rgba(255,255,255,.15)" : "rgba(255,255,255,.08)" }}
           >
@@ -206,6 +217,9 @@ export default function NavBar() {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
           className="md:hidden border-t border-white/10 pb-3 overflow-y-auto"
           style={{ maxHeight: "calc(100vh - 64px)" }}
         >
