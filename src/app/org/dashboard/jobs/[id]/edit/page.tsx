@@ -1,0 +1,765 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import OrgRoute from "@/components/OrgRoute";
+import AppShell from "@/components/AppShell";
+import Card from "@/components/Card";
+import Button from "@/components/Button";
+import FeaturedJobControl, { type FeaturedJobSummary } from "@/components/FeaturedJobControl";
+import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
+
+type PostStatus = "draft" | "active" | "closed";
+
+interface EditableJob {
+  id: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  salary?: string;
+  employmentType?: string;
+  jobType?: string;
+  qualifications?: string[];
+  responsibilities?: string[];
+  benefits?: string[];
+  badges?: string[];
+  closingDate?: string;
+  applicationUrl?: string;
+  externalApplyUrl?: string;
+  status?: PostStatus;
+  featured?: boolean;
+}
+
+const employmentTypes = [
+  "Full-time",
+  "Part-time",
+  "Contract",
+  "Temporary",
+  "Internship",
+];
+
+export default function JobEditPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const postId = params.id as string;
+
+  const [post, setPost] = useState<EditableJob | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Form state
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [locationCity, setLocationCity] = useState("");
+  const [locationProvince, setLocationProvince] = useState("");
+  const [employmentType, setEmploymentType] = useState("Full-time");
+  const [salaryMin, setSalaryMin] = useState("");
+  const [salaryMax, setSalaryMax] = useState("");
+  const [requirements, setRequirements] = useState<string[]>([]);
+  const [requirementInput, setRequirementInput] = useState("");
+  const [skills, setSkills] = useState<string[]>([]);
+  const [skillInput, setSkillInput] = useState("");
+  const [closingDate, setClosingDate] = useState("");
+  const [applicationUrl, setApplicationUrl] = useState("");
+  const [status, setStatus] = useState<PostStatus>("draft");
+  const [featured, setFeatured] = useState(false);
+  const [featuredSummary, setFeaturedSummary] = useState<FeaturedJobSummary | null>(null);
+
+  const [isImported, setIsImported] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch(`/api/employer/jobs/${postId}`, {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.job) {
+          router.replace("/org/dashboard");
+          return;
+        }
+
+        const p = data.job as EditableJob;
+        setFeaturedSummary((data.featuredSummary as FeaturedJobSummary | null) ?? null);
+        setIsImported(Boolean(data.readOnly));
+        setPost(p);
+        setTitle(p.title || "");
+        setDescription(p.description || "");
+        const locParts = (p.location || "").split(",").map((s) => s.trim());
+        setLocationCity(locParts[0] || "");
+        setLocationProvince(locParts[1] || "");
+        setEmploymentType(p.employmentType || p.jobType || "Full-time");
+        if (p.salary) {
+          const salaryMatch = p.salary.match(
+            /\$?([\d,]+)\s*-\s*\$?([\d,]+)/
+          );
+          if (salaryMatch) {
+            setSalaryMin(salaryMatch[1].replace(/,/g, ""));
+            setSalaryMax(salaryMatch[2].replace(/,/g, ""));
+          }
+        }
+        setRequirements(p.qualifications || []);
+        setSkills(p.badges || []);
+        setClosingDate(p.closingDate || "");
+        setApplicationUrl(p.applicationUrl || p.externalApplyUrl || "");
+        setStatus(p.status || "active");
+        setFeatured(Boolean(p.featured));
+      } catch (err) {
+        console.error("Failed to load employer job:", err);
+        router.replace("/org/dashboard");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [postId, router, user]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    if (!title.trim()) {
+      showToast("Title is required", "error");
+      return;
+    }
+    setSaving(true);
+    try {
+      const location = [locationCity, locationProvince]
+        .filter(Boolean)
+        .join(", ");
+      const salary =
+        salaryMin && salaryMax
+          ? `$${Number(salaryMin).toLocaleString()} - $${Number(salaryMax).toLocaleString()}`
+          : salaryMin
+            ? `$${Number(salaryMin).toLocaleString()}`
+            : "";
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/employer/jobs/${postId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          location,
+          employmentType,
+          salary,
+          qualifications: requirements.filter((r) => r.trim()),
+          badges: skills,
+          closingDate,
+          applicationUrl,
+          status,
+          featured,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        showToast(
+          typeof result.error === "string" ? result.error : "Failed to save changes",
+          "error"
+        );
+        if (result.featuredSummary) {
+          setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
+        }
+        return;
+      }
+      if (result.featuredSummary) {
+        setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
+      }
+      showToast("Job updated successfully", "success");
+    } catch (err) {
+      console.error("Failed to update post:", err);
+      showToast("Failed to save changes", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUnpublish = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/employer/jobs/${postId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "draft", featured }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(typeof result.error === "string" ? result.error : "Failed to unpublish");
+      }
+      if (result.featuredSummary) {
+        setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
+      }
+      setStatus("draft");
+      showToast("Job unpublished", "info");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to unpublish", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClosePosition = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const closedOn = new Date().toISOString().split("T")[0];
+      const response = await fetch(`/api/employer/jobs/${postId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${await user.getIdToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "closed",
+          closingDate: closedOn,
+          featured,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(typeof result.error === "string" ? result.error : "Failed to close position");
+      }
+      if (result.featuredSummary) {
+        setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
+      }
+      setStatus("closed");
+      setClosingDate(closedOn);
+      showToast("Position closed", "info");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to close position", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!user) return;
+    try {
+      const response = await fetch(`/api/employer/jobs/${postId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${await user.getIdToken()}`,
+        },
+      });
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(typeof result.error === "string" ? result.error : "Failed to delete job");
+      }
+      showToast("Job deleted", "success");
+      router.push("/org/dashboard/jobs");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to delete job", "error");
+    }
+  };
+
+  const addRequirement = () => {
+    const trimmed = requirementInput.trim();
+    if (trimmed) {
+      setRequirements((prev) => [...prev, trimmed]);
+      setRequirementInput("");
+    }
+  };
+
+  const removeRequirement = (index: number) => {
+    setRequirements((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addSkill = () => {
+    const trimmed = skillInput.trim();
+    if (trimmed && !skills.includes(trimmed)) {
+      setSkills((prev) => [...prev, trimmed]);
+      setSkillInput("");
+    }
+  };
+
+  const removeSkill = (skill: string) => {
+    setSkills((prev) => prev.filter((s) => s !== skill));
+  };
+
+  const inputStyle = {
+    background: "var(--bg)",
+    border: "1px solid var(--border)",
+    color: "var(--text)",
+  };
+
+  return (
+    <OrgRoute>
+      <AppShell>
+      <div className="min-h-screen bg-bg">
+        <div className="max-w-[800px] mx-auto px-4 py-8 md:px-10">
+          {/* Back link */}
+          <Link
+            href="/org/dashboard/jobs"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold no-underline mb-6 transition-opacity hover:opacity-70"
+            style={{ color: "var(--teal)" }}
+          >
+            &larr; Back to Jobs
+          </Link>
+
+          {loading ? (
+            <div className="flex flex-col gap-4">
+              <div className="h-10 w-64 rounded-xl skeleton" />
+              <div className="h-[600px] rounded-2xl skeleton" />
+            </div>
+          ) : !post ? (
+            <Card className="p-8 text-center">
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                Job posting not found.
+              </p>
+            </Card>
+          ) : (
+            <>
+              <h1
+                className="text-2xl font-bold mb-6"
+                style={{ color: "var(--text)" }}
+              >
+                Edit Job Posting
+              </h1>
+
+              {isImported && (
+                <div
+                  className="rounded-xl px-5 py-4 mb-6 text-sm"
+                  style={{
+                    background: "rgba(59,130,246,.08)",
+                    border: "1px solid rgba(59,130,246,.25)",
+                    color: "var(--text-sec)",
+                  }}
+                >
+                  <strong style={{ color: "#3B82F6" }}>Imported Job</strong>
+                  <span className="ml-2">
+                    This job was originally imported from an external feed. You can close or deactivate it, but some fields may not be editable.
+                  </span>
+                </div>
+              )}
+
+              <Card className="p-6">
+                <div className="flex flex-col gap-5">
+                  {/* Title */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-1.5"
+                      style={{ color: "var(--text)" }}
+                    >
+                      Title *
+                    </label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g. Senior Software Developer"
+                      className="w-full px-4 py-3 rounded-xl text-sm"
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-1.5"
+                      style={{ color: "var(--text)" }}
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Describe the role, team, and expectations..."
+                      rows={5}
+                      className="w-full px-4 py-3 rounded-xl text-sm resize-y"
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  {/* Location */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        className="block text-sm font-semibold mb-1.5"
+                        style={{ color: "var(--text)" }}
+                      >
+                        City
+                      </label>
+                      <input
+                        type="text"
+                        value={locationCity}
+                        onChange={(e) => setLocationCity(e.target.value)}
+                        placeholder="e.g. Toronto"
+                        className="w-full px-4 py-3 rounded-xl text-sm"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className="block text-sm font-semibold mb-1.5"
+                        style={{ color: "var(--text)" }}
+                      >
+                        Province
+                      </label>
+                      <input
+                        type="text"
+                        value={locationProvince}
+                        onChange={(e) => setLocationProvince(e.target.value)}
+                        placeholder="e.g. ON"
+                        className="w-full px-4 py-3 rounded-xl text-sm"
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Employment Type */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-1.5"
+                      style={{ color: "var(--text)" }}
+                    >
+                      Employment Type
+                    </label>
+                    <select
+                      value={employmentType}
+                      onChange={(e) => setEmploymentType(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl text-sm cursor-pointer"
+                      style={inputStyle}
+                    >
+                      {employmentTypes.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Salary Range */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        className="block text-sm font-semibold mb-1.5"
+                        style={{ color: "var(--text)" }}
+                      >
+                        Salary Min ($)
+                      </label>
+                      <input
+                        type="number"
+                        value={salaryMin}
+                        onChange={(e) => setSalaryMin(e.target.value)}
+                        placeholder="e.g. 60000"
+                        className="w-full px-4 py-3 rounded-xl text-sm"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className="block text-sm font-semibold mb-1.5"
+                        style={{ color: "var(--text)" }}
+                      >
+                        Salary Max ($)
+                      </label>
+                      <input
+                        type="number"
+                        value={salaryMax}
+                        onChange={(e) => setSalaryMax(e.target.value)}
+                        placeholder="e.g. 90000"
+                        className="w-full px-4 py-3 rounded-xl text-sm"
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Requirements */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-1.5"
+                      style={{ color: "var(--text)" }}
+                    >
+                      Requirements
+                    </label>
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={requirementInput}
+                        onChange={(e) => setRequirementInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addRequirement();
+                          }
+                        }}
+                        placeholder="Add a requirement..."
+                        className="flex-1 px-4 py-2.5 rounded-xl text-sm"
+                        style={inputStyle}
+                      />
+                      <button
+                        onClick={addRequirement}
+                        className="px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
+                        style={{
+                          background: "rgba(13,148,136,.1)",
+                          color: "var(--teal)",
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                    {requirements.length > 0 && (
+                      <div className="flex flex-col gap-1.5">
+                        {requirements.map((req, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                            style={{
+                              background: "var(--bg)",
+                              border: "1px solid var(--border)",
+                            }}
+                          >
+                            <span
+                              className="text-sm flex-1"
+                              style={{ color: "var(--text)" }}
+                            >
+                              {req}
+                            </span>
+                            <button
+                              onClick={() => removeRequirement(i)}
+                              className="border-none bg-transparent cursor-pointer text-sm font-semibold"
+                              style={{ color: "#DC2626" }}
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Skills */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-1.5"
+                      style={{ color: "var(--text)" }}
+                    >
+                      Skills
+                    </label>
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={skillInput}
+                        onChange={(e) => setSkillInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addSkill();
+                          }
+                        }}
+                        placeholder="Add a skill..."
+                        className="flex-1 px-4 py-2.5 rounded-xl text-sm"
+                        style={inputStyle}
+                      />
+                      <button
+                        onClick={addSkill}
+                        className="px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
+                        style={{
+                          background: "rgba(13,148,136,.1)",
+                          color: "var(--teal)",
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                    {skills.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {skills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                            style={{
+                              background: "rgba(13,148,136,.1)",
+                              color: "var(--teal)",
+                            }}
+                          >
+                            {skill}
+                            <button
+                              onClick={() => removeSkill(skill)}
+                              className="border-none bg-transparent cursor-pointer text-xs leading-none p-0"
+                              style={{ color: "var(--teal)" }}
+                            >
+                              &times;
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Closing Date */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-1.5"
+                      style={{ color: "var(--text)" }}
+                    >
+                      Closing Date
+                    </label>
+                    <input
+                      type="date"
+                      value={closingDate}
+                      onChange={(e) => setClosingDate(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl text-sm"
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  {/* Application URL */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-1.5"
+                      style={{ color: "var(--text)" }}
+                    >
+                      Application URL (external)
+                    </label>
+                    <input
+                      type="url"
+                      value={applicationUrl}
+                      onChange={(e) => setApplicationUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full px-4 py-3 rounded-xl text-sm"
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  <FeaturedJobControl
+                    summary={featuredSummary}
+                    checked={featured}
+                    onChange={setFeatured}
+                    disabled={isImported}
+                  />
+
+                  {/* Status */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-2"
+                      style={{ color: "var(--text)" }}
+                    >
+                      Status
+                    </label>
+                    <div className="flex gap-4">
+                      {(["draft", "active", "closed"] as PostStatus[]).map(
+                        (s) => (
+                          <label
+                            key={s}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              name="status"
+                              value={s}
+                              checked={status === s}
+                              onChange={() => setStatus(s)}
+                              className="accent-teal-600"
+                            />
+                            <span
+                              className="text-sm font-medium capitalize"
+                              style={{ color: "var(--text)" }}
+                            >
+                              {s}
+                            </span>
+                          </label>
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex flex-wrap gap-3 pt-3 border-t" style={{ borderColor: "var(--border)" }}>
+                    <Button
+                      primary
+                      onClick={handleSave}
+                      className={saving || isImported ? "opacity-50 pointer-events-none" : ""}
+                    >
+                      {isImported ? "Read Only" : saving ? "Saving..." : "Save Changes"}
+                    </Button>
+                    {status !== "draft" && (
+                      <Button
+                        onClick={handleUnpublish}
+                        className={saving || isImported ? "opacity-50 pointer-events-none" : ""}
+                      >
+                        Unpublish
+                      </Button>
+                    )}
+                    {status !== "closed" && (
+                      <Button
+                        onClick={handleClosePosition}
+                        className={saving || isImported ? "opacity-50 pointer-events-none" : ""}
+                      >
+                        Close Position
+                      </Button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (!isImported) setShowDeleteConfirm(true);
+                      }}
+                      className="px-6 py-3 rounded-xl border-none cursor-pointer text-sm font-semibold transition-opacity hover:opacity-80"
+                      style={{
+                        background: isImported ? "rgba(148,163,184,.14)" : "rgba(220,38,38,.1)",
+                        color: isImported ? "var(--text-muted)" : "#DC2626",
+                        opacity: isImported ? 0.65 : 1,
+                        cursor: isImported ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Delete confirmation dialog */}
+              {showDeleteConfirm && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                  style={{ background: "rgba(0,0,0,.5)" }}
+                >
+                  <Card className="p-6 max-w-sm w-full">
+                    <h3
+                      className="text-lg font-bold mb-2"
+                      style={{ color: "var(--text)" }}
+                    >
+                      Delete Job Posting?
+                    </h3>
+                    <p
+                      className="text-sm mb-5"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      This action cannot be undone. The job posting &quot;{title}&quot; will
+                      be permanently removed.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleDelete}
+                        className="flex-1 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold text-white"
+                        style={{ background: "#DC2626" }}
+                      >
+                        Yes, Delete
+                      </button>
+                      <Button onClick={() => setShowDeleteConfirm(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </AppShell>
+    </OrgRoute>
+  );
+}

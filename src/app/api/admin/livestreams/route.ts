@@ -1,0 +1,86 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { verifyAdminToken } from "@/lib/api-auth";
+import { adminDb } from "@/lib/firebase-admin";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
+  const auth = await verifyAdminToken(request);
+  if (!auth.success) return auth.response;
+
+  if (!adminDb) {
+    return NextResponse.json({ error: "Firestore not initialized" }, { status: 500 });
+  }
+
+  const status = request.nextUrl.searchParams.get("status");
+
+  try {
+    let query: FirebaseFirestore.Query = adminDb.collection("livestreams");
+    if (status === "live") query = query.where("status", "==", "live");
+    else if (status === "archived") query = query.where("status", "==", "archived");
+    else if (status === "ended") query = query.where("status", "==", "ended");
+
+    // Try with ordering; fall back without if composite index is missing
+    let snap;
+    try {
+      snap = await query.orderBy("startedAt", "desc").limit(100).get();
+    } catch {
+      snap = await query.limit(100).get();
+    }
+
+    const livestreams = snap.docs.map((doc) => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        title: d.title || "Untitled",
+        thumbnail: d.thumbnail || "",
+        category: d.category || "Unknown",
+        duration: d.duration || "",
+        viewCount: d.viewCount || d.views || 0,
+        peakViewers: d.peakViewers || d.peakViewCount || 0,
+        status: d.status || "ended",
+        startedAt: d.startedAt?.toDate?.()?.toISOString() || d.startedAt || null,
+        endedAt: d.endedAt?.toDate?.()?.toISOString() || d.endedAt || null,
+      };
+    });
+    return NextResponse.json({ livestreams });
+  } catch {
+    return NextResponse.json({ livestreams: [] });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const auth = await verifyAdminToken(request);
+  if (!auth.success) return auth.response;
+
+  if (!adminDb) {
+    return NextResponse.json({ error: "Firestore not initialized" }, { status: 500 });
+  }
+
+  const { action, id, category } = await request.json();
+  if (!action || !id) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+
+  const ref = adminDb.collection("livestreams").doc(id);
+  const doc = await ref.get();
+  if (!doc.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  switch (action) {
+    case "archive":
+      await ref.update({ status: "archived" });
+      break;
+    case "restore":
+      await ref.update({ status: "ended" });
+      break;
+    case "remove":
+      await ref.delete();
+      break;
+    case "update-category":
+      if (!category) return NextResponse.json({ error: "Missing category" }, { status: 400 });
+      await ref.update({ category });
+      break;
+    default:
+      return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+  }
+
+  return NextResponse.json({ success: true });
+}
