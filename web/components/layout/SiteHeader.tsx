@@ -22,7 +22,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { user, userProfile, loading, signOut } = useAuth();
+  const { user, userProfile, role, loading, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-card/80 backdrop-blur-md">
@@ -85,7 +85,7 @@ export function SiteHeader() {
                   />
                   <div className="absolute right-0 top-full z-20 mt-2 w-48 rounded-lg border border-card-border bg-card p-1 shadow-lg">
                     <Link
-                      href="/member/dashboard"
+                      href={role === "employer" ? "/organization/dashboard" : role === "admin" ? "/admin" : "/member/dashboard"}
                       className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-border-lt hover:text-text-primary"
                       onClick={() => setUserMenuOpen(false)}
                     >
@@ -172,7 +172,7 @@ export function SiteHeader() {
           )}
           {!loading && user && (
             <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-              <Button variant="ghost" size="md" href="/member/dashboard" fullWidth>
+              <Button variant="ghost" size="md" href={role === "employer" ? "/organization/dashboard" : role === "admin" ? "/admin" : "/member/dashboard"} fullWidth>
                 Dashboard
               </Button>
               <Button variant="ghost" size="md" fullWidth onClick={() => { setMobileMenuOpen(false); signOut(); }}>

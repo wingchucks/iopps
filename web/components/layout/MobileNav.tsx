@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Briefcase, GraduationCap, Users, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const tabs = [
   { label: "Home", href: "/", icon: Home },
@@ -15,6 +16,13 @@ const tabs = [
 
 export function MobileNav() {
   const pathname = usePathname();
+  const { role } = useAuth();
+
+  const profileHref = role === "employer"
+    ? "/organization/dashboard"
+    : role === "admin"
+      ? "/admin"
+      : "/member/dashboard";
 
   return (
     <nav
@@ -24,15 +32,16 @@ export function MobileNav() {
       <div className="flex items-center justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
+          const href = tab.label === "Profile" ? profileHref : tab.href;
           const isActive =
-            tab.href === "/"
+            href === "/"
               ? pathname === "/"
-              : pathname === tab.href || pathname.startsWith(tab.href + "/");
+              : pathname === href || pathname.startsWith(href + "/");
 
           return (
             <Link
-              key={tab.href}
-              href={tab.href}
+              key={tab.label}
+              href={href}
               className={cn(
                 "flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors",
                 isActive
