@@ -46,12 +46,62 @@ function parseBase64Credential(): { projectId: string; clientEmail: string; priv
   }
 }
 
+function shouldUseEmulators(): boolean {
+  const explicitFlag = process.env.NEXT_PUBLIC_USE_EMULATORS ?? process.env.USE_EMULATOR;
+  if (explicitFlag !== undefined) {
+    return explicitFlag === "true";
+  }
+
+  return (
+    Boolean(
+      process.env.FIRESTORE_EMULATOR_HOST ||
+      process.env.FIREBASE_AUTH_EMULATOR_HOST ||
+      process.env.FIREBASE_STORAGE_EMULATOR_HOST
+    )
+  );
+}
+
+export function hasAdminRuntimeSupport(): boolean {
+  if (shouldUseEmulators()) return true;
+
+  return Boolean(
+    process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 ||
+    (
+      (process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) &&
+      process.env.FIREBASE_CLIENT_EMAIL &&
+      process.env.FIREBASE_PRIVATE_KEY
+    )
+  );
+}
+
+function configureEmulatorEnv(): string {
+  const projectId =
+    process.env.GCLOUD_PROJECT ||
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+    process.env.FIREBASE_PROJECT_ID ||
+    "demo-iopps";
+
+  process.env.GCLOUD_PROJECT = projectId;
+  process.env.FIRESTORE_EMULATOR_HOST ||= "127.0.0.1:8080";
+  process.env.FIREBASE_AUTH_EMULATOR_HOST ||= "127.0.0.1:9099";
+  process.env.FIREBASE_STORAGE_EMULATOR_HOST ||= "127.0.0.1:9199";
+
+  return projectId;
+}
+
 export function getAdminApp(): App {
   if (_app) return _app;
 
   const existing = getApps();
   if (existing.length > 0) {
     _app = existing[0];
+    return _app;
+  }
+
+  if (shouldUseEmulators()) {
+    _app = initializeApp({
+      projectId: configureEmulatorEnv(),
+    });
     return _app;
   }
 

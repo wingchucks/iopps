@@ -10,6 +10,7 @@ import {
   withPublicOwnership,
   type JsonRecord,
 } from "@/lib/server/public-ownership";
+import { isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
 
@@ -68,7 +69,7 @@ export async function GET(
     const db = getAdminDb();
     const schoolRecord = await resolveSchool(db, slug);
 
-    if (!schoolRecord) {
+    if (!schoolRecord || !isSchoolPubliclyVisible(schoolRecord)) {
       return NextResponse.json({ org: null, programs: [], scholarships: [], jobs: [] }, { status: 404 });
     }
 

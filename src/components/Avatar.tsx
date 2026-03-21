@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 interface AvatarProps {
-  name: string;
+  name?: string;
   size?: number;
   gradient?: string;
   src?: string;
@@ -15,8 +15,9 @@ function isValidImageUrl(url: string): boolean {
 
 export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) {
   const [imgError, setImgError] = useState(false);
+  const safeName = name?.trim() || "Profile";
 
-  const initials = (name || "")
+  const initials = safeName
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -28,7 +29,7 @@ export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) 
     return (
       <img
         src={src}
-        alt={name}
+        alt={safeName}
         className="shrink-0 object-cover"
         style={{
           width: size,

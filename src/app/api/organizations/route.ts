@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
+import { getLocalDevOrganizations } from "@/lib/local-dev-business-data";
 import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "@/lib/server/partner-promotion";
+import { normalizeOrganizationRecord } from "@/lib/organization-profile";
+import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
@@ -23,15 +26,25 @@ function serialize(value: unknown): unknown {
 }
 
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const partnersOnly = searchParams.get("partners") === "true";
+
+  if (process.env.NODE_ENV !== "production" && !hasAdminRuntimeSupport()) {
+    return NextResponse.json({ orgs: getLocalDevOrganizations(partnersOnly) });
+  }
+
   try {
-    const { searchParams } = new URL(req.url);
-    const partnersOnly = searchParams.get("partners") === "true";
     const db = getAdminDb();
 
     if (partnersOnly) {
       const snapshot = await db.collection("organizations").get();
       const orgs = snapshot.docs
-        .map((doc) => withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>))
+        .map((doc) =>
+          normalizeOrganizationRecord(
+            withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+          )
+        )
+        .filter((org) => !isSchoolOrganization(org) || isSchoolPubliclyVisible(org))
         .filter((org) => isPaidPartner(org))
         .sort(comparePartnerPromotion);
       return NextResponse.json({ orgs });
@@ -53,7 +66,12 @@ export async function GET(req: Request) {
       return true;
     });
     const orgs = allDocs
-      .map((doc) => withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>))
+      .map((doc) =>
+        normalizeOrganizationRecord(
+          withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+        )
+      )
+      .filter((org) => !isSchoolOrganization(org) || isSchoolPubliclyVisible(org))
       .sort(comparePartnerPromotion);
 
     return NextResponse.json({ orgs });

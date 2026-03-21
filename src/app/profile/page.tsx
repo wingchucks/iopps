@@ -98,7 +98,7 @@ function ProfileContent() {
       const data = await getMemberProfile(user.uid);
       // Redirect org users to the org dashboard profile
       if (data?.orgId) {
-        router.replace("/org/dashboard/profile");
+        router.replace("/org/dashboard?tab=Edit%20Profile&section=Identity");
         return;
       }
       setProfile(data);
@@ -131,7 +131,7 @@ function ProfileContent() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [router, user]);
 
   useEffect(() => {
     loadProfile();

@@ -11,18 +11,12 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { db } from "../firebase";
-
-export interface OrganizationLocation {
-  city: string;
-  province: string;
-}
-
-export interface OrganizationSocialLinks {
-  facebook?: string;
-  linkedin?: string;
-  instagram?: string;
-  twitter?: string;
-}
+import type {
+  OrganizationHours,
+  OrganizationLocation,
+  OrganizationSocialLinks,
+} from "@/lib/organization-profile";
+import { normalizeOrganizationRecord } from "@/lib/organization-profile";
 
 export type BusinessIdentity = "indigenous" | "non_indigenous" | "not_specified";
 
@@ -37,13 +31,13 @@ export interface Organization {
   logo?: string;
   logoUrl?: string;
   bannerUrl?: string;
+  tagline?: string;
   description: string;
-  foundedYear?: number;
+  foundedYear?: number | null;
   communityAffiliation?: string;
   industry?: string;
   size?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  location?: any;
+  location?: OrganizationLocation;
   website?: string;
   services?: string[];
   hiringStatus?: string;
@@ -51,6 +45,7 @@ export interface Organization {
   phone?: string;
   address?: string;
   socialLinks?: OrganizationSocialLinks;
+  indigenousGroups?: string[];
   // School-specific fields
   institutionType?: string;
   studentBodySize?: string;
@@ -61,21 +56,25 @@ export interface Organization {
   updatedAt?: unknown;
   onboardingComplete?: boolean;
   plan?: string | null;
+  isPublished?: boolean;
+  publicationStatus?: "DRAFT" | "PUBLISHED" | "PENDING_APPROVAL" | "REJECTED" | "SUSPENDED";
+  directoryVisible?: boolean;
+  isDirectoryVisible?: boolean;
   emailTemplates?: Record<string, string>;
   // Legacy fields used by admin/seed pages
-  shortName: string;
-  tier: "premium" | "school" | "standard";
+  shortName?: string;
+  tier?: "premium" | "school" | "standard";
   openJobs: number;
   employees?: string;
-  since: string;
-  verified: boolean;
+  since?: string;
+  verified?: boolean;
   indigenousOwned?: boolean;
-  hours?: Record<string, string>;
+  hours?: OrganizationHours;
   gallery?: string[];
   videos?: string[];
   treatyTerritory?: string;
   nation?: string;
-  tags: string[];
+  tags?: string[];
   programCount?: number;
   scholarshipCount?: number;
   trainingCount?: number;
@@ -118,7 +117,10 @@ export async function getOrganization(
 ): Promise<Organization | null> {
   const snap = await getDoc(doc(db, "organizations", orgId));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as Organization;
+  return normalizeOrganizationRecord({
+    id: snap.id,
+    ...snap.data(),
+  } as Organization);
 }
 
 export async function updateOrganization(
@@ -137,7 +139,12 @@ export async function getOrganizations(): Promise<Organization[]> {
   );
   // Filter client-side to only show verified orgs (avoids Firestore composite index)
   return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }) as Organization)
+    .map((d) =>
+      normalizeOrganizationRecord({
+        id: d.id,
+        ...d.data(),
+      } as Organization)
+    )
     .filter((org) => org.verified === true);
 }
 

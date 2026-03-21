@@ -194,7 +194,7 @@ function MemberProfileContent() {
           </div>
           <div className="flex gap-2.5 mt-2 sm:mt-0">
             {isOwnProfile ? (
-              <Link href={profile.orgId ? "/org/dashboard/profile" : "/profile"}>
+              <Link href={profile.orgId ? "/org/dashboard?tab=Edit%20Profile&section=Identity" : "/profile"}>
                 <Button
                   small
                   style={{

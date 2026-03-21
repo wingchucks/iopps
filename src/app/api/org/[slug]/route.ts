@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
+import { getLocalDevOrganizationPayload } from "@/lib/local-dev-business-data";
 import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
 import { applyNormalizedSubscriptionState } from "@/lib/server/subscription-state";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
+import { normalizeOrganizationRecord } from "@/lib/organization-profile";
+import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
 export const revalidate = 120;
@@ -99,7 +102,11 @@ async function resolveOrganization(
   slug: string,
 ): Promise<JsonRecord | null> {
   const directDoc = await db.collection("organizations").doc(slug).get();
-  if (directDoc.exists) return applyNormalizedSubscriptionState(serializeDoc(directDoc));
+  if (directDoc.exists) {
+    return normalizeOrganizationRecord(
+      applyNormalizedSubscriptionState(serializeDoc(directDoc))
+    );
+  }
 
   const slugQuery = await db
     .collection("organizations")
@@ -108,7 +115,9 @@ async function resolveOrganization(
     .get();
 
   if (!slugQuery.empty) {
-    return applyNormalizedSubscriptionState(serializeDoc(slugQuery.docs[0]));
+    return normalizeOrganizationRecord(
+      applyNormalizedSubscriptionState(serializeDoc(slugQuery.docs[0]))
+    );
   }
 
   const employerQuery = await db
@@ -118,7 +127,9 @@ async function resolveOrganization(
     .get();
 
   if (!employerQuery.empty) {
-    return applyNormalizedSubscriptionState(serializeDoc(employerQuery.docs[0]));
+    return normalizeOrganizationRecord(
+      applyNormalizedSubscriptionState(serializeDoc(employerQuery.docs[0]))
+    );
   }
 
   return null;
@@ -312,16 +323,29 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  const { slug } = await params;
+
+  if (process.env.NODE_ENV !== "production" && !hasAdminRuntimeSupport()) {
+    const payload = getLocalDevOrganizationPayload(slug);
+    if (payload) {
+      return NextResponse.json({
+        ...payload,
+        programs: payload.training,
+      });
+    }
+
+    return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+  }
+
   try {
-    const { slug } = await params;
     const db = getAdminDb();
     const orgRecord = await resolveOrganization(db, slug);
 
-    if (!orgRecord) {
+    if (!orgRecord || isSchoolOrganization(orgRecord) || !isSchoolPubliclyVisible(orgRecord)) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
-    const org = withPartnerPromotion(orgRecord);
+    const org = normalizeOrganizationRecord(withPartnerPromotion(orgRecord));
 
     const orgId = String(org.id || "");
     const orgName = String(org.name || "");

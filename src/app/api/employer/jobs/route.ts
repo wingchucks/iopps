@@ -10,6 +10,7 @@ import {
   buildFeaturedJobSummary,
   evaluateFeaturedActivation,
 } from "@/lib/server/featured-job-entitlements";
+import { isSchoolOrganization } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
 
@@ -204,7 +205,27 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    return NextResponse.json({ jobs });
+    const orgType = isSchoolOrganization(context.organizationData) || isSchoolOrganization(context.employerData)
+      ? "school"
+      : String(
+          context.organizationData.type ||
+          context.employerData.type ||
+          context.employerData.orgType ||
+          "employer"
+        );
+
+    return NextResponse.json({
+      jobs,
+      orgName:
+        String(context.organizationData.name || context.employerData.name || context.employerData.companyName || ""),
+      orgSlug:
+        String(context.organizationData.slug || context.employerData.slug || "") || undefined,
+      orgLogo:
+        String(context.organizationData.logoUrl || context.organizationData.logo || context.employerData.logoUrl || ""),
+      orgType,
+      orgPlan: (context.organizationData.plan as string | undefined) || (context.employerData.plan as string | undefined),
+      orgTier: (context.organizationData.tier as string | undefined) || (context.employerData.tier as string | undefined),
+    });
   } catch (error) {
     const status = error instanceof EmployerApiError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Failed to load jobs.";

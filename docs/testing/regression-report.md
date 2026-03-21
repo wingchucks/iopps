@@ -365,7 +365,7 @@ Use this for click-through verification:
 - [ ] Cover image uploads and persists
 
 ### Profile & Visibility
-- [ ] Published profile visible at `/businesses/[slug]`
+- [ ] Published profile visible at `/org/[slug]`
 - [ ] Unpublished profile shows "Profile Not Available"
 
 ### Admin Gates (as non-admin employer)
