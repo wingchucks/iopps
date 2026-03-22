@@ -73,6 +73,9 @@ export default function OrgDashboardJobsPage() {
   const [orgName, setOrgName] = useState("");
   const [orgSlug, setOrgSlug] = useState<string | undefined>();
   const [orgLogo, setOrgLogo] = useState<string | undefined>();
+  const [orgType, setOrgType] = useState<string | undefined>();
+  const [orgPlan, setOrgPlan] = useState<string | null>(null);
+  const [orgTier, setOrgTier] = useState<string | null>(null);
 
   const fetchJobs = useCallback(async () => {
     if (!user) return;
@@ -91,6 +94,9 @@ export default function OrgDashboardJobsPage() {
       if (data.orgName) setOrgName(data.orgName);
       if (data.orgSlug) setOrgSlug(data.orgSlug);
       if (data.orgLogo) setOrgLogo(data.orgLogo);
+      if (data.orgType) setOrgType(data.orgType);
+      if (data.orgPlan !== undefined) setOrgPlan(data.orgPlan);
+      if (data.orgTier !== undefined) setOrgTier(data.orgTier);
     } catch (err) {
       console.error("Failed to fetch jobs:", err);
       setError(err instanceof Error ? err.message : "Failed to load jobs");
@@ -238,7 +244,7 @@ export default function OrgDashboardJobsPage() {
                       </p>
                     </div>
                   </div>
-                  <OrgDashboardNav orgSlug={orgSlug} />
+                  <OrgDashboardNav orgSlug={orgSlug} orgType={orgType} orgPlan={orgPlan} orgTier={orgTier} />
                 </div>
 
                 {/* Stats */}

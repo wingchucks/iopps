@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
+import { SUBSCRIPTION_PLANS } from "@/lib/pricing";
 
 const valueProps = [
   {
@@ -29,22 +29,20 @@ const valueProps = [
 ];
 
 const standardFeatures = [
-  "Up to 10 active job postings",
-  "Basic organization profile",
-  "Event listings",
+  "15 job postings per year",
+  "Business profile promotion",
+  "Basic analytics",
   "Community feed access",
-  "Email support",
+  "Standard directory visibility",
 ];
 
 const premiumFeatures = [
   "Unlimited job postings",
-  "Premium profile with featured badge",
-  "Priority event placement",
-  "Analytics dashboard",
-  "Dedicated account manager",
-  "Custom branding options",
-  "Scholarship program listing",
-  "Live stream hosting",
+  "4 featured job slots",
+  "Talent search access",
+  "Advanced analytics dashboard",
+  "Priority support",
+  "Premium Partner badge",
 ];
 
 export default function ForEmployersPage() {
@@ -203,7 +201,7 @@ export default function ForEmployersPage() {
               </span>
             </p>
             <p className="text-sm text-text-sec mb-6">
-              Everything you need to get started
+              {SUBSCRIPTION_PLANS.tier1.shortDescription}
             </p>
             <ul className="space-y-3 mb-8">
               {standardFeatures.map((f) => (
@@ -265,7 +263,7 @@ export default function ForEmployersPage() {
               </span>
             </p>
             <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,.6)" }}>
-              Maximum visibility and impact
+              {SUBSCRIPTION_PLANS.tier2.shortDescription}
             </p>
             <ul className="space-y-3 mb-8">
               {premiumFeatures.map((f) => (

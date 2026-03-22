@@ -28,9 +28,12 @@ export async function GET(request: NextRequest) {
     const snap = await query.limit(100).get();
     const campaigns = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-    // Get subscriber count
-    const subscribersSnap = await adminDb.collection("users").where("emailOptIn", "==", true).count().get();
-    const subscriberCount = subscribersSnap.data().count;
+    // Count newsletter subscribers using the live field, while honoring older emailOptIn records.
+    const subscribersSnap = await adminDb.collection("users").select("newsletterOptIn", "emailOptIn").get();
+    const subscriberCount = subscribersSnap.docs.reduce((count, doc) => {
+      const data = doc.data() as { newsletterOptIn?: boolean; emailOptIn?: boolean };
+      return count + (data.newsletterOptIn === true || (data.newsletterOptIn == null && data.emailOptIn === true) ? 1 : 0);
+    }, 0);
 
     return NextResponse.json({ campaigns, subscriberCount });
   } catch (err) {

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { getOrganizationPublicHref, isSchoolOrganization } from "@/lib/school-visibility";
 
 interface NavItem {
   href: string;
@@ -77,30 +78,56 @@ const icons = {
 
 interface OrgDashboardNavProps {
   orgSlug?: string;
+  orgType?: string;
+  orgPlan?: string | null;
+  orgTier?: string | null;
   pendingApps?: number;
   onPostJob?: () => void;
 }
 
 export default function OrgDashboardNav({
   orgSlug,
+  orgType,
+  orgPlan,
+  orgTier,
   pendingApps = 0,
   onPostJob,
 }: OrgDashboardNavProps) {
-  const items: NavItem[] = [
-    { href: "/org/dashboard/jobs", label: "Jobs", icon: icons.briefcase },
-    { href: "/org/dashboard/applications", label: "Applications", icon: icons.applications, badge: pendingApps || undefined },
-    { href: "/org/dashboard/events", label: "Events", icon: icons.calendar },
-    { href: "/org/dashboard/scholarships", label: "Scholarships", icon: icons.graduation },
-    { href: "/org/dashboard/talent", label: "Talent Search", icon: icons.talent },
-    { href: "/org/dashboard/analytics", label: "Analytics", icon: icons.analytics },
-    { href: "/org/dashboard/profile", label: "Edit Profile", icon: icons.profile },
-    { href: "/org/dashboard/team", label: "Team", icon: icons.team },
-    { href: "/org/dashboard/templates", label: "Templates", icon: icons.templates },
-    { href: "/org/dashboard/billing", label: "Billing", icon: icons.billing },
-    ...(orgSlug
-      ? [{ href: `/org/${orgSlug}`, label: "Public Page", icon: icons.external, external: true }]
-      : []),
-  ];
+  const isSchool = isSchoolOrganization({ type: orgType, plan: orgPlan, tier: orgTier });
+  const publicHref = orgSlug
+    ? getOrganizationPublicHref({ slug: orgSlug, type: orgType, plan: orgPlan, tier: orgTier })
+    : undefined;
+
+  const items: NavItem[] = isSchool
+    ? [
+        { href: "/org/dashboard?tab=Programs", label: "Programs", icon: icons.graduation },
+        { href: "/org/dashboard?tab=Student%20Inquiries", label: "Student Inquiries", icon: icons.applications, badge: pendingApps || undefined },
+        { href: "/org/dashboard/jobs", label: "Jobs", icon: icons.briefcase },
+        { href: "/org/dashboard/events", label: "Events", icon: icons.calendar },
+        { href: "/org/dashboard/scholarships", label: "Scholarships", icon: icons.graduation },
+        { href: "/org/dashboard/analytics", label: "Analytics", icon: icons.analytics },
+        { href: "/org/dashboard?tab=Edit%20Profile&section=Identity", label: "Edit Profile", icon: icons.profile },
+        { href: "/org/dashboard/team", label: "Team", icon: icons.team },
+        { href: "/org/dashboard/billing", label: "Billing", icon: icons.billing },
+        ...(publicHref
+          ? [{ href: publicHref, label: "Public School Page", icon: icons.external, external: true }]
+          : []),
+      ]
+    : [
+        { href: "/org/dashboard/jobs", label: "Jobs", icon: icons.briefcase },
+        { href: "/org/dashboard/applications", label: "Applications", icon: icons.applications, badge: pendingApps || undefined },
+        { href: "/org/dashboard/events", label: "Events", icon: icons.calendar },
+        { href: "/org/dashboard/scholarships", label: "Scholarships", icon: icons.graduation },
+        { href: "/org/dashboard/talent", label: "Talent Search", icon: icons.talent },
+        { href: "/org/dashboard/analytics", label: "Analytics", icon: icons.analytics },
+        { href: "/org/dashboard?tab=Edit%20Profile&section=Identity", label: "Edit Profile", icon: icons.profile },
+        { href: "/org/dashboard/team", label: "Team", icon: icons.team },
+        { href: "/org/dashboard/templates", label: "Templates", icon: icons.templates },
+        { href: "/org/dashboard/billing", label: "Billing", icon: icons.billing },
+        ...(publicHref
+          ? [{ href: publicHref, label: "Public Page", icon: icons.external, external: true }]
+          : []),
+      ];
 
   return (
     <div className="flex gap-2 flex-wrap">

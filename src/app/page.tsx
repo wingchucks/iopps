@@ -213,11 +213,11 @@ export default async function LandingPage() {
         </p>
 
         <h2 className="relative text-white text-xl md:text-[28px] font-semibold mx-auto mb-4 leading-snug max-w-[600px]">
-          Where Indigenous Communities Connect with Opportunities
+          Where Opportunity Becomes Action...
         </h2>
 
         <p className="relative text-base leading-relaxed mx-auto mb-3 max-w-[520px]" style={{ color: "rgba(255,255,255,.65)" }}>
-          Jobs, events, scholarships, businesses, schools, and livestreams — all in one place for Indigenous people across North America.
+          Jobs, events, scholarships, businesses, schools, and livestreams — bringing Indigenous people and partners together across North America.
         </p>
         <p className="relative text-sm font-bold tracking-[2px] mb-10" style={{ color: "rgba(255,255,255,.45)" }}>
           iopps.ca

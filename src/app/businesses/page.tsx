@@ -7,9 +7,10 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import { type Organization } from "@/lib/firestore/organizations";
+import { hasOrganizationIndigenousIdentity } from "@/lib/organization-profile";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
-type BusinessFilter = "All Businesses" | "Partners";
+type BusinessFilter = "All Businesses" | "Partners" | "Verified" | "Indigenous";
 
 export default function BusinessesPage() {
   const [orgs, setOrgs] = useState<Organization[]>([]);
@@ -43,14 +44,21 @@ export default function BusinessesPage() {
     return businesses
       .filter((org) => {
         if (filter === "Partners" && !org.isPartner) return false;
+        if (filter === "Verified" && !org.verified) return false;
+        if (filter === "Indigenous" && !hasOrganizationIndigenousIdentity(org)) return false;
         if (!normalizedQuery) return true;
 
         return (
           org.name.toLowerCase().includes(normalizedQuery) ||
           org.shortName?.toLowerCase().includes(normalizedQuery) ||
+          org.tagline?.toLowerCase().includes(normalizedQuery) ||
           org.description?.toLowerCase().includes(normalizedQuery) ||
+          org.industry?.toLowerCase().includes(normalizedQuery) ||
+          org.nation?.toLowerCase().includes(normalizedQuery) ||
+          org.treatyTerritory?.toLowerCase().includes(normalizedQuery) ||
           displayLocation(org.location).toLowerCase().includes(normalizedQuery) ||
-          ensureTagsArray(org.tags).some((tag) => tag.toLowerCase().includes(normalizedQuery))
+          ensureTagsArray(org.tags).some((tag) => tag.toLowerCase().includes(normalizedQuery)) ||
+          ensureTagsArray(org.services).some((service) => service.toLowerCase().includes(normalizedQuery))
         );
       })
       .sort((left, right) => {
@@ -62,6 +70,8 @@ export default function BusinessesPage() {
   }, [businesses, filter, search]);
 
   const partnerCount = businesses.filter((org) => org.isPartner).length;
+  const verifiedCount = businesses.filter((org) => org.verified).length;
+  const indigenousCount = businesses.filter((org) => hasOrganizationIndigenousIdentity(org)).length;
 
   return (
     <AppShell>
@@ -110,8 +120,8 @@ export default function BusinessesPage() {
             )}
           </div>
 
-          <div className="mb-5 flex gap-2">
-            {(["All Businesses", "Partners"] as const).map((option) => (
+          <div className="mb-5 flex flex-wrap gap-2">
+            {(["All Businesses", "Partners", "Verified", "Indigenous"] as const).map((option) => (
               <button
                 key={option}
                 onClick={() => setFilter(option)}
@@ -123,6 +133,8 @@ export default function BusinessesPage() {
               >
                 {option}
                 {option === "Partners" ? ` (${partnerCount})` : ""}
+                {option === "Verified" ? ` (${verifiedCount})` : ""}
+                {option === "Indigenous" ? ` (${indigenousCount})` : ""}
               </button>
             ))}
           </div>
@@ -165,6 +177,16 @@ export default function BusinessesPage() {
 function BusinessCard({ org }: { org: Organization }) {
   const location = displayLocation(org.location);
   const isPremium = org.partnerTier === "premium";
+  const summary = org.tagline || org.description;
+  const trustSignals = [
+    org.verified ? "Verified" : "",
+    hasOrganizationIndigenousIdentity(org) ? "Indigenous-led" : "",
+    org.nation || "",
+  ].filter(Boolean);
+  const surfaceTags = [
+    ...ensureTagsArray(org.tags).slice(0, 2),
+    ...ensureTagsArray(org.services).slice(0, 1),
+  ];
 
   return (
     <Link href={`/org/${org.slug || org.id}`} className="no-underline">
@@ -184,7 +206,7 @@ function BusinessCard({ org }: { org: Organization }) {
               <p className="m-0 overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-bold text-text">
                 {org.name}
               </p>
-              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 {org.isPartner ? (
                   <Badge
                     text={org.partnerBadgeLabel || org.partnerLabel || "Partner"}
@@ -195,14 +217,28 @@ function BusinessCard({ org }: { org: Organization }) {
                 ) : (
                   <Badge text="Business" color="var(--blue)" bg="var(--blue-soft)" small />
                 )}
-                {org.verified && (
-                  <span className="text-[11px] font-semibold" style={{ color: "var(--teal)" }}>
-                    &#10003; Verified
+                {org.industry ? (
+                  <span className="text-[11px] font-semibold" style={{ color: "var(--text-sec)" }}>
+                    {org.industry}
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
+
+          {trustSignals.length > 0 && (
+            <div className="mb-2.5 flex flex-wrap gap-1.5">
+              {trustSignals.map((signal) => (
+                <span
+                  key={signal}
+                  className="rounded-full text-[11px] font-semibold"
+                  style={{ padding: "3px 10px", background: "rgba(13,148,136,.08)", border: "1px solid rgba(13,148,136,.12)", color: "var(--teal)" }}
+                >
+                  {signal}
+                </span>
+              ))}
+            </div>
+          )}
 
           {location && (
             <p className="m-0 mb-2.5 text-xs text-text-sec">
@@ -210,7 +246,7 @@ function BusinessCard({ org }: { org: Organization }) {
             </p>
           )}
 
-          {org.description && (
+          {summary && (
             <p
               className="m-0 mb-3 text-xs leading-relaxed text-text-sec"
               style={{
@@ -220,7 +256,7 @@ function BusinessCard({ org }: { org: Organization }) {
                 overflow: "hidden",
               }}
             >
-              {org.description}
+              {summary}
             </p>
           )}
 
@@ -237,7 +273,7 @@ function BusinessCard({ org }: { org: Organization }) {
           </div>
 
           <div className="flex flex-wrap gap-1.5">
-            {ensureTagsArray(org.tags).slice(0, 3).map((tag) => (
+            {surfaceTags.map((tag) => (
               <span
                 key={tag}
                 className="rounded-full text-[11px] font-semibold text-teal"

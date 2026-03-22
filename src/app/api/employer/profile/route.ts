@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { normalizeOrganizationProfilePatch } from "@/lib/organization-profile";
+import { buildSchoolVisibilityPatch, isSchoolOrganization } from "@/lib/school-visibility";
 
 export async function PUT(req: NextRequest) {
   try {
@@ -29,40 +31,33 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Not an employer" }, { status: 403 });
     }
 
+    const orgRef = adminDb.collection("organizations").doc(orgId);
+    const orgDoc = await orgRef.get();
+    const orgData = orgDoc.exists ? ({ id: orgDoc.id, ...orgDoc.data() } as Record<string, unknown>) : null;
+
     const body = await req.json();
+    const { updates, touchedFields } = normalizeOrganizationProfilePatch(body as Record<string, unknown>);
 
-    // Allowed fields to update
-    const allowedFields = [
-      "name", "tagline", "description", "location", "website",
-      "contactEmail", "phone", "hours", "gallery",
-      "indigenousGroups", "nation", "treatyTerritory",
-      "tags", "services", "socialLinks",
-      "logoUrl", "bannerUrl",
-    ];
-
-    const updates: Record<string, unknown> = {};
-    for (const key of allowedFields) {
-      if (body[key] !== undefined) {
-        updates[key] = body[key];
-      }
+    if (touchedFields.length === 0) {
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
     }
 
-    if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+    if (orgData && isSchoolOrganization(orgData) && typeof updates.isPublished === "boolean") {
+      Object.assign(updates, buildSchoolVisibilityPatch(updates.isPublished));
     }
 
     updates.updatedAt = FieldValue.serverTimestamp();
 
-    await adminDb.collection("organizations").doc(orgId).update(updates);
+    await orgRef.update(updates);
 
     // Log activity
     await adminDb
       .collection("organizations")
       .doc(orgId)
       .collection("activity")
-      .add({
+        .add({
         type: "profile_update",
-        message: `Profile updated: ${Object.keys(updates).filter(k => k !== "updatedAt").join(", ")}`,
+        message: `Profile updated: ${touchedFields.join(", ")}`,
         timestamp: FieldValue.serverTimestamp(),
       });
 

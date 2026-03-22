@@ -34,11 +34,13 @@ export async function POST(req: NextRequest) {
 
   let uid: string;
   let email: string;
+  let emailVerified = false;
   try {
     const token = authHeader.split("Bearer ")[1];
     const decoded = await adminAuth.verifyIdToken(token);
     uid = decoded.uid;
     email = decoded.email || "";
+    emailVerified = decoded.email_verified === true;
   } catch {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
@@ -94,6 +96,7 @@ export async function POST(req: NextRequest) {
     .substring(0, 60);
 
   const now = FieldValue.serverTimestamp();
+  const signupStatus = emailVerified ? "approved" : "pending";
 
   try {
     const batch = adminDb.batch();
@@ -103,13 +106,19 @@ export async function POST(req: NextRequest) {
       id: uid,
       employerId: uid,
       name,
+      contactName: userData?.displayName || name,
+      contactEmail: email,
       slug,
       type,
       website: website || "",
       location: location || "",
       description: description || "",
       plan: "free",
+      emailVerified,
+      onboardingComplete: false,
+      status: signupStatus,
       verified: false,
+      ...(emailVerified ? { approvedAt: now } : {}),
       openJobs: 0,
       createdAt: now,
       updatedAt: now,
@@ -120,6 +129,8 @@ export async function POST(req: NextRequest) {
       id: uid,
       uid,
       email,
+      contactName: userData?.displayName || name,
+      contactEmail: email,
       orgName: name,
       slug,
       type,
@@ -128,8 +139,11 @@ export async function POST(req: NextRequest) {
       description: description || "",
       plan: "free",
       subscriptionTier: "free",
-      status: "approved",
+      emailVerified,
+      onboardingComplete: false,
+      status: signupStatus,
       verified: false,
+      ...(emailVerified ? { approvedAt: now } : {}),
       openJobs: 0,
       createdAt: now,
       updatedAt: now,
@@ -139,6 +153,7 @@ export async function POST(req: NextRequest) {
     batch.set(adminDb.collection("users").doc(uid), {
       role: "employer",
       employerId: uid,
+      emailVerified,
       updatedAt: now,
     }, { merge: true });
 
@@ -146,6 +161,7 @@ export async function POST(req: NextRequest) {
     batch.set(adminDb.collection("members").doc(uid), {
       orgId: uid,
       orgRole: "owner",
+      emailVerified,
       updatedAt: now,
     }, { merge: true });
 

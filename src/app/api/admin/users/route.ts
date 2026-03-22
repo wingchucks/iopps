@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
+import { normalizeAdminUserRow } from "@/lib/admin/users";
 
 export const dynamic = "force-dynamic";
 
@@ -69,10 +70,9 @@ export async function GET(request: NextRequest) {
     }
 
     const snapshot = await query.get();
-    const users = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const users = snapshot.docs.map((doc) =>
+      normalizeAdminUserRow({ id: doc.id, ...doc.data() }, doc.id),
+    );
 
     return NextResponse.json({ users });
   } catch (error) {

@@ -451,7 +451,7 @@ export default function OrgDashboardScholarshipsPage() {
                       </p>
                     </div>
                   </div>
-                  <OrgDashboardNav orgSlug={org?.slug} />
+                  <OrgDashboardNav orgSlug={org?.slug} orgType={org?.type} orgPlan={org?.plan} orgTier={org?.tier} />
                 </div>
 
                 {/* Stats */}

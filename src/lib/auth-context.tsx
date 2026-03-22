@@ -30,26 +30,65 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs = 8000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      credentials: "same-origin",
+      cache: "no-store",
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 /** Sync Firebase ID token to httpOnly session cookie */
-async function syncSessionCookie(user: User | null) {
+async function syncSessionCookie(
+  user: User | null,
+  options?: { forceRefresh?: boolean },
+): Promise<boolean> {
   if (user) {
     try {
-      const idToken = await user.getIdToken();
-      await fetch("/api/auth/session", {
+      const idToken = await user.getIdToken(options?.forceRefresh === true);
+      const response = await fetchWithTimeout("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken }),
       });
+      return response.ok;
     } catch {
-      // Cookie sync failed — middleware will redirect on next protected navigation
+      return false;
     }
   } else {
     try {
-      await fetch("/api/auth/session", { method: "DELETE" });
+      const response = await fetchWithTimeout("/api/auth/session", { method: "DELETE" });
+      return response.ok;
     } catch {
-      // Best effort
+      return false;
     }
   }
+
+  return false;
+}
+
+async function ensureSessionCookie(user: User | null): Promise<boolean> {
+  if (!user) {
+    await syncSessionCookie(null);
+    return true;
+  }
+
+  const firstAttempt = await syncSessionCookie(user);
+  if (firstAttempt) return true;
+
+  return syncSessionCookie(user, { forceRefresh: true });
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -58,10 +97,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
+
       // Sync session cookie BEFORE updating user state so the middleware
       // cookie is ready by the time any component tries to navigate to a
       // protected route (prevents the black-screen race condition).
-      await syncSessionCookie(firebaseUser);
+      const sessionReady = await ensureSessionCookie(firebaseUser);
+
+      if (firebaseUser && !sessionReady) {
+        await firebaseSignOut(auth).catch(() => {});
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       setUser(firebaseUser);
       setLoading(false);
     });
@@ -70,7 +119,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
-    await syncSessionCookie(cred.user);
+    const sessionReady = await ensureSessionCookie(cred.user);
+    if (!sessionReady) {
+      await firebaseSignOut(auth).catch(() => {});
+      throw new Error("We signed you in, but could not start a secure session. Please try again.");
+    }
     return cred;
   };
 
@@ -78,14 +131,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
     await sendEmailVerification(cred.user);
-    await syncSessionCookie(cred.user);
+    const sessionReady = await ensureSessionCookie(cred.user);
+    if (!sessionReady) {
+      await firebaseSignOut(auth).catch(() => {});
+      throw new Error("Your account was created, but we could not start a secure session. Please sign in again.");
+    }
   };
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     const cred = await signInWithPopup(auth, provider);
-    await syncSessionCookie(cred.user);
+    const sessionReady = await ensureSessionCookie(cred.user);
+    if (!sessionReady) {
+      await firebaseSignOut(auth).catch(() => {});
+      throw new Error("We signed you in, but could not start a secure session. Please try again.");
+    }
     return cred;
   };
 
@@ -112,7 +173,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await auth.currentUser.reload();
       setUser(auth.currentUser);
       // Re-sync cookie after reload to update email_verified claim
-      await syncSessionCookie(auth.currentUser);
+      const sessionReady = await ensureSessionCookie(auth.currentUser);
+      if (!sessionReady) {
+        throw new Error("Unable to refresh your secure session right now.");
+      }
     }
   };
 

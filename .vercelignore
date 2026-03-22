@@ -14,3 +14,6 @@ mobile/expo-dev.log
 firestore-debug.log
 ui-debug.log
 nul
+.vercel-env-fix
+firebase-emulators*.log
+next-dev*.log

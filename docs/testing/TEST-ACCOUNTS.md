@@ -48,7 +48,7 @@ These test accounts are designed for automated QA testing with the Claude Chrome
 | **Role** | Employer (Organization) |
 | **Indigenous Affiliation** | Metis Nation-Saskatchewan |
 | **Location** | Saskatoon, Saskatchewan |
-| **Public URL** | `/organizations/northern-lights-indigenous-consulting` |
+| **Public URL** | `/org/northern-lights-indigenous-consulting` |
 
 ### Account Status
 - **Approval Status**: Approved (bypasses admin approval)
@@ -141,7 +141,7 @@ Community Member Login:
 Organization Login:
   Email: hello@northernlightsconsulting.ca
   Password: TestIOPPS2025!
-  Public URL: /organizations/northern-lights-indigenous-consulting
+  Public URL: /org/northern-lights-indigenous-consulting
 ```
 
 ---

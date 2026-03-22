@@ -2,6 +2,44 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildFeaturedJobSummary } from "@/lib/server/featured-job-entitlements";
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
+import { normalizeOrganizationRecord } from "@/lib/organization-profile";
+import { isSchoolOrganization } from "@/lib/school-visibility";
+
+function text(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function serialize(value: unknown): unknown {
+  if (value === null || value === undefined) return value;
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Record<string, unknown>).toDate === "function"
+  ) {
+    return ((value as Record<string, unknown>).toDate as () => Date)().toISOString();
+  }
+  if (Array.isArray(value)) return value.map(serialize);
+  if (typeof value === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      result[key] = serialize(entry);
+    }
+    return result;
+  }
+  return value;
+}
+
+function inferOrganizationType(
+  orgData: Record<string, unknown> | null,
+  employerData: Record<string, unknown> | null,
+): string {
+  if (isSchoolOrganization(orgData) || isSchoolOrganization(employerData)) {
+    return "school";
+  }
+
+  const explicitType = text(orgData?.type) || text(employerData?.type) || text(employerData?.orgType);
+  return explicitType || "employer";
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -37,11 +75,18 @@ export async function GET(req: NextRequest) {
         email: typeof empData.email === "string" ? empData.email : "",
         phone: typeof empData.phone === "string" ? empData.phone : "",
         location: typeof empData.location === "string" ? empData.location : "",
-        type: "employer",
+        type: inferOrganizationType(null, empData),
         status: typeof empData.status === "string" ? empData.status : "approved",
         verified: empData.verified === true,
       };
     }
+
+    if (orgData) {
+      orgData.type = inferOrganizationType(orgData, empData);
+      orgData = normalizeOrganizationRecord(orgData);
+    }
+
+    const isSchoolDashboard = isSchoolOrganization(orgData);
 
     // Get jobs for this employer
     const jobsSnap = await adminDb
@@ -99,6 +144,54 @@ export async function GET(req: NextRequest) {
       applicationCount: 0,
     }));
 
+    const schoolPrograms = posts
+      .filter((post) => post.type === "program" && post.status !== "closed")
+      .map((post) => serialize(post) as Record<string, unknown>);
+
+    let studentInquiries: Array<Record<string, unknown>> = [];
+
+    if (isSchoolDashboard) {
+      const ownerIds = Array.from(new Set([context.orgId, employerId, memberOrgId].filter(Boolean))) as string[];
+      const inquiryCollections = ["student_inquiries", "school_inquiries"];
+
+      const inquirySnapshots = await Promise.all(
+        inquiryCollections.map(async (collectionName) => {
+          try {
+            return await adminDb.collection(collectionName).limit(200).get();
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      const seenInquiryIds = new Set<string>();
+      studentInquiries = inquirySnapshots
+        .flatMap((snap) => (snap ? snap.docs : []))
+        .map((doc) => serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+        .filter((inquiry) => {
+          const inquiryId = text(inquiry.id);
+          if (!inquiryId || seenInquiryIds.has(inquiryId)) return false;
+
+          const linkedIds = [
+            text(inquiry.schoolId),
+            text(inquiry.orgId),
+            text(inquiry.organizationId),
+            text(inquiry.employerId),
+          ].filter(Boolean);
+
+          const matchesOwner = linkedIds.some((linkedId) => ownerIds.includes(linkedId));
+          if (!matchesOwner) return false;
+
+          seenInquiryIds.add(inquiryId);
+          return true;
+        })
+        .sort((left, right) => {
+          const rightDate = Date.parse(text(right.createdAt) || text(right.updatedAt) || "");
+          const leftDate = Date.parse(text(left.createdAt) || text(left.updatedAt) || "");
+          return (Number.isNaN(rightDate) ? 0 : rightDate) - (Number.isNaN(leftDate) ? 0 : leftDate);
+        });
+    }
+
     const activeFeaturedCount =
       jobs.filter((job) => job.status === "active" && job.featured).length +
       posts.filter((post) => post.type === "job" && post.status === "active" && post.featured).length;
@@ -120,6 +213,8 @@ export async function GET(req: NextRequest) {
       employer: empData ? { id: employerId, ...empData, featuredSummary } : { id: employerId, featuredSummary },
       jobs,
       posts,
+      schoolPrograms,
+      studentInquiries,
       featuredSummary,
       profile: {
         uid,

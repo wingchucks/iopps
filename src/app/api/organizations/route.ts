@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
+import { getLocalDevOrganizations } from "@/lib/local-dev-business-data";
 import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "@/lib/server/partner-promotion";
+import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
+import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
@@ -23,37 +26,57 @@ function serialize(value: unknown): unknown {
 }
 
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const partnersOnly = searchParams.get("partners") === "true";
+
+  if (process.env.NODE_ENV !== "production" && !hasAdminRuntimeSupport()) {
+    return NextResponse.json({ orgs: getLocalDevOrganizations(partnersOnly) });
+  }
+
   try {
-    const { searchParams } = new URL(req.url);
-    const partnersOnly = searchParams.get("partners") === "true";
     const db = getAdminDb();
 
     if (partnersOnly) {
       const snapshot = await db.collection("organizations").get();
       const orgs = snapshot.docs
-        .map((doc) => withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>))
+        .map((doc) =>
+          normalizeOrganizationRecord(
+            withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+          )
+        )
+        .filter((org) => isSchoolOrganization(org) || isOrganizationPubliclyVisible(org))
+        .filter((org) => !isSchoolOrganization(org) || isSchoolPubliclyVisible(org))
         .filter((org) => isPaidPartner(org))
         .sort(comparePartnerPromotion);
       return NextResponse.json({ orgs });
     }
 
-    // Search / general: orgs that completed onboarding OR are verified
-    const [onboardedSnap, verifiedSnap2] = await Promise.all([
+    // Search / general: orgs that completed onboarding, are verified, or have been accepted
+    const [onboardedSnap, verifiedSnap2, approvedSnap] = await Promise.all([
       db.collection("organizations")
         .where("onboardingComplete", "==", true)
         .get(),
       db.collection("organizations")
         .where("verified", "==", true)
         .get(),
+      db.collection("organizations")
+        .where("status", "==", "approved")
+        .get(),
     ]);
     const seen2 = new Set<string>();
-    const allDocs = [...onboardedSnap.docs, ...verifiedSnap2.docs].filter(d => {
+    const allDocs = [...onboardedSnap.docs, ...verifiedSnap2.docs, ...approvedSnap.docs].filter(d => {
       if (seen2.has(d.id)) return false;
       seen2.add(d.id);
       return true;
     });
     const orgs = allDocs
-      .map((doc) => withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>))
+      .map((doc) =>
+        normalizeOrganizationRecord(
+          withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+        )
+      )
+      .filter((org) => isSchoolOrganization(org) || isOrganizationPubliclyVisible(org))
+      .filter((org) => !isSchoolOrganization(org) || isSchoolPubliclyVisible(org))
       .sort(comparePartnerPromotion);
 
     return NextResponse.json({ orgs });

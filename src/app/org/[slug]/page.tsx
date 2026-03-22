@@ -10,6 +10,7 @@ import Avatar from "@/components/Avatar";
 import { useAuth } from "@/lib/auth-context";
 import type { Organization } from "@/lib/firestore/organizations";
 import type { Job } from "@/lib/firestore/jobs";
+import { formatOrganizationHoursDay, hasOrganizationIndigenousIdentity } from "@/lib/organization-profile";
 import { displayAmount, displayLocation } from "@/lib/utils";
 
 // ── Types for opportunities ──
@@ -168,23 +169,25 @@ function OrgProfileContent() {
         <p className="text-5xl mb-4">&#127970;</p>
         <h2 className="text-2xl font-extrabold text-text mb-2">Organization Not Found</h2>
         <p className="text-text-sec mb-6">This organization doesn&apos;t exist or hasn&apos;t been added yet.</p>
-        <Link href="/organizations" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold bg-teal text-white no-underline hover:opacity-90 transition-opacity">
-          Browse Organizations
+        <Link href="/businesses" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold bg-teal text-white no-underline hover:opacity-90 transition-opacity">
+          Browse Businesses
         </Link>
       </div>
     );
   }
 
   const websiteUrl = org.website ? (org.website.startsWith("http") ? org.website : `https://${org.website}`) : null;
+  const location = displayLocation(org.location);
   const profileJobCount = jobs.length || org.openJobs || 0;
   const relatedJobCount = jobs.length;
   const foundedYear = org.foundedYear ? String(org.foundedYear) : org.since || null;
   const employeeCount = org.employees || org.size || null;
-  const isIndigenousOwned = org.indigenousOwned === true || org.tags?.some((t: string) => t === "Indigenous-Owned" || t === "Indigenous-Owned Business");
+  const isIndigenousOwned = hasOrganizationIndigenousIdentity(org);
   const hasSocialLinks = org.socialLinks && Object.values(org.socialLinks).some(Boolean);
   const hasContact = websiteUrl || org.contactEmail || org.phone || org.address;
-  const hasTags = org.tags && org.tags.length > 0;
+  const hasTags = Boolean(org.tags?.length);
   const hasQuickStats = foundedYear || employeeCount || profileJobCount > 0;
+  const hasStory = Boolean(org.tagline || org.description);
   const hasOpportunities = relatedJobCount > 0 || events.length > 0 || scholarships.length > 0 || training.length > 0;
   const hasHours = org.hours && typeof org.hours === "object" && Object.keys(org.hours).length > 0;
   const hasGallery = org.gallery && Array.isArray(org.gallery) && org.gallery.length > 0;
@@ -205,13 +208,21 @@ function OrgProfileContent() {
   const visibleEvents = expandedOppTab === "events" ? events : events.slice(0, 4);
   const visibleScholarships = expandedOppTab === "scholarships" ? scholarships : scholarships.slice(0, 4);
   const visibleTraining = expandedOppTab === "training" ? training : training.slice(0, 4);
+  const proofItems = [
+    org.verified ? "Verified organization" : "",
+    org.isPartner ? org.partnerLabel || org.partnerBadgeLabel || "Partner" : "",
+    foundedYear ? `Founded ${foundedYear}` : "",
+    employeeCount ? `${employeeCount} employees` : "",
+    location ? location : "",
+    org.nation ? org.nation : "",
+  ].filter((item): item is string => Boolean(item));
 
   return (
     <div className="max-w-[960px] mx-auto pb-16">
       {/* Back Link */}
       <div className="px-4 pt-4">
-        <Link href="/organizations" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal">
-          &#8592; Back to Organizations
+        <Link href="/businesses" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal">
+          &#8592; Back to Businesses
         </Link>
       </div>
 
@@ -260,6 +271,11 @@ function OrgProfileContent() {
                   </span>
                 )}
               </div>
+              {org.tagline && (
+                <p className="mt-2 max-w-[560px] text-sm font-medium text-white/80">
+                  {org.tagline}
+                </p>
+              )}
               <p className="mt-1.5 text-[13px] text-text-muted flex items-center gap-1">
                 📍 {displayLocation(org.location) || "Canada"}
                 {org.treatyTerritory && <span> · {org.treatyTerritory}</span>}
@@ -267,6 +283,13 @@ function OrgProfileContent() {
             </div>
             {/* Action Buttons */}
             <div className="flex gap-2 flex-wrap shrink-0">
+              {hasOpportunities && (
+                <a href="#opportunities" className="no-underline">
+                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-white text-[#0f172a] transition-all hover:-translate-y-0.5">
+                    ✨ Explore Opportunities
+                  </button>
+                </a>
+              )}
               {websiteUrl && (
                 <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
                   <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-teal text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)] hover:-translate-y-0.5">
@@ -341,14 +364,48 @@ function OrgProfileContent() {
         </div>
       </div>
 
+      {proofItems.length > 0 && (
+        <div className="px-4 mt-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {proofItems.map((item) => (
+              <div
+                key={item}
+                className="rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-text"
+                style={{ background: "rgba(255,255,255,0.02)" }}
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Content: Main + Sidebar */}
       <div className="px-4 mt-6 grid grid-cols-1 md:grid-cols-[1fr_320px] gap-6">
         {/* Main Column */}
         <div className="flex flex-col gap-6">
 
+          {hasStory && (
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="text-base font-bold text-text mb-4 flex items-center gap-2">
+                <span className="text-lg">🧭</span> Why Members Connect Here
+              </h2>
+              {org.tagline && (
+                <p className="mb-3 text-lg font-semibold text-text">
+                  {org.tagline}
+                </p>
+              )}
+              {org.description && (
+                <p className="text-sm text-text-muted leading-[1.7] whitespace-pre-wrap">
+                  {org.description}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* ═══════ OPPORTUNITIES IMPACT HUB ═══════ */}
           {hasOpportunities && (
-            <div className="bg-card rounded-2xl border border-border overflow-hidden">
+            <div id="opportunities" className="bg-card rounded-2xl border border-border overflow-hidden">
               {/* Banner */}
               <div className="px-6 py-5" style={{ background: "linear-gradient(135deg, rgba(20,184,166,0.08), rgba(59,130,246,0.05))", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                 <h2 className="text-lg font-extrabold text-text">Opportunities at {org.shortName || org.name}</h2>
@@ -534,16 +591,6 @@ function OrgProfileContent() {
             </div>
           )}
 
-          {/* About Section */}
-          {org.description && (
-            <div className="bg-card rounded-2xl border border-border p-6">
-              <h2 className="text-base font-bold text-text mb-4 flex items-center gap-2">
-                <span className="text-lg">📖</span> About
-              </h2>
-              <p className="text-sm text-text-muted leading-[1.7] whitespace-pre-wrap">{org.description}</p>
-            </div>
-          )}
-
           {/* Services Section */}
           {org.services && org.services.length > 0 && (
             <div className="bg-card rounded-2xl border border-border p-6">
@@ -663,7 +710,9 @@ function OrgProfileContent() {
                 {DAY_NAMES.map((day) => {
                   const today = new Date().getDay();
                   const isToday = DAY_NAMES[today] === day;
-                  const hours = (org.hours as Record<string, string>)?.[day.toLowerCase()] || "Closed";
+                  const hours = formatOrganizationHoursDay(
+                    (org.hours as Record<string, unknown>)?.[day.toLowerCase()]
+                  );
                   return (
                     <div key={day} className="flex justify-between py-1.5 text-[13px]">
                       <span className={isToday ? "text-teal font-semibold" : "text-text-muted"}>{day}{isToday ? " ← Today" : ""}</span>
@@ -676,7 +725,7 @@ function OrgProfileContent() {
           )}
 
           {/* Location Card */}
-          {org.address && (
+          {(org.address || displayLocation(org.location)) && (
             <div className="bg-card rounded-2xl border border-border p-5">
               <h3 className="text-[13px] font-bold uppercase tracking-wider text-text-muted mb-3.5">Location</h3>
               <div className="h-[140px] rounded-xl flex items-center justify-center text-sm text-text-muted border border-border"
@@ -694,7 +743,7 @@ function OrgProfileContent() {
             <div className="bg-card rounded-2xl border border-border p-5">
               <h3 className="text-[13px] font-bold uppercase tracking-wider text-text-muted mb-3.5">Tags</h3>
               <div className="flex flex-wrap gap-1.5">
-                {org.tags.map((tag) => (
+                {org.tags?.map((tag) => (
                   <span key={tag} className="px-3 py-1 rounded-full text-[11px] font-medium text-text-muted bg-bg border border-border">{tag}</span>
                 ))}
               </div>
