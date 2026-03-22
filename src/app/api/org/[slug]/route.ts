@@ -4,7 +4,7 @@ import { getLocalDevOrganizationPayload } from "@/lib/local-dev-business-data";
 import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
 import { applyNormalizedSubscriptionState } from "@/lib/server/subscription-state";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
-import { normalizeOrganizationRecord } from "@/lib/organization-profile";
+import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
 import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
@@ -341,7 +341,15 @@ export async function GET(
     const db = getAdminDb();
     const orgRecord = await resolveOrganization(db, slug);
 
-    if (!orgRecord || isSchoolOrganization(orgRecord) || !isSchoolPubliclyVisible(orgRecord)) {
+    if (!orgRecord) {
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+    }
+
+    if (isSchoolOrganization(orgRecord)) {
+      if (!isSchoolPubliclyVisible(orgRecord)) {
+        return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+      }
+    } else if (!isOrganizationPubliclyVisible(orgRecord)) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 

@@ -103,8 +103,27 @@ function NotificationContent() {
   const loadPrefs = useCallback(async () => {
     if (!user) return;
     try {
-      const data = await getNotificationPreferences(user.uid);
-      setPrefs(data);
+      const [prefsData, token] = await Promise.all([
+        getNotificationPreferences(user.uid),
+        user.getIdToken(),
+      ]);
+      setPrefs(prefsData);
+
+      try {
+        const profileRes = await fetch("/api/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setNewsletterOptIn(
+            Boolean(profileData?.user?.newsletterOptIn ?? profileData?.user?.emailOptIn ?? true)
+          );
+        } else {
+          setNewsletterOptIn(true);
+        }
+      } catch {
+        setNewsletterOptIn(true);
+      }
     } catch (err) {
       console.error("Failed to load notification preferences:", err);
     } finally {

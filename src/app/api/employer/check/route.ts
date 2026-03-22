@@ -1,9 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
+import { getBusinessProfileReadiness, normalizeOrganizationRecord } from "@/lib/organization-profile";
+import { isSchoolOrganization } from "@/lib/school-visibility";
 
 export async function GET(req: NextRequest) {
   try {
     const context = await requireEmployerContext(req);
+    const rawOrganization =
+      Object.keys(context.organizationData).length > 0
+        ? {
+            id: context.orgId,
+            ...context.organizationData,
+          }
+        : {
+            id: context.employerId,
+            ...context.employerData,
+            contactEmail:
+              context.employerData.contactEmail ||
+              context.employerData.email ||
+              context.userData.email ||
+              context.memberData.email,
+          };
+    const org = normalizeOrganizationRecord(rawOrganization as Record<string, unknown>);
+    const school = isSchoolOrganization(org);
+    const readiness = getBusinessProfileReadiness(org);
 
     return NextResponse.json({
       authorized: true,
@@ -20,6 +40,9 @@ export async function GET(req: NextRequest) {
         orgId: context.orgId,
         orgRole: context.orgRole,
       },
+      organizationType: school ? "school" : "business",
+      profileReady: readiness.isReady,
+      missingProfileFields: readiness.missingFields,
     });
   } catch (err: unknown) {
     const status = err instanceof EmployerApiError ? err.status : 500;

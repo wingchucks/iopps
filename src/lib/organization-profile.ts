@@ -25,6 +25,11 @@ export interface OrganizationProfilePatchResult {
   touchedFields: string[];
 }
 
+export interface BusinessProfileReadiness {
+  isReady: boolean;
+  missingFields: string[];
+}
+
 const HOURS_DAY_KEYS = [
   "monday",
   "tuesday",
@@ -217,6 +222,81 @@ export function hasOrganizationIndigenousIdentity(org: {
     const normalized = tag.toLowerCase();
     return normalized.includes("indigenous");
   });
+}
+
+export function getBusinessProfileReadiness(org: {
+  type?: unknown;
+  ownerType?: unknown;
+  partnerTier?: unknown;
+  plan?: unknown;
+  logo?: unknown;
+  logoUrl?: unknown;
+  description?: unknown;
+  tagline?: unknown;
+  contactEmail?: unknown;
+  phone?: unknown;
+  website?: unknown;
+}): BusinessProfileReadiness {
+  const type = normalizeString(org.type).toLowerCase();
+  const ownerType = normalizeString(org.ownerType).toLowerCase();
+  const partnerTier = normalizeString(org.partnerTier).toLowerCase();
+  const plan = normalizeString(org.plan).toLowerCase();
+
+  if ([type, ownerType, partnerTier, plan].includes("school")) {
+    return { isReady: true, missingFields: [] };
+  }
+
+  const missingFields: string[] = [];
+  const hasLogo = Boolean(normalizeOptionalString(org.logoUrl) || normalizeOptionalString(org.logo));
+  const hasStory = Boolean(normalizeString(org.description) || normalizeString(org.tagline));
+  const hasContactMethod = Boolean(
+    normalizeString(org.contactEmail) ||
+    normalizeString(org.phone) ||
+    normalizeString(org.website)
+  );
+
+  if (!hasLogo) missingFields.push("logo");
+  if (!hasStory) missingFields.push("description");
+  if (!hasContactMethod) missingFields.push("contact");
+
+  return {
+    isReady: missingFields.length === 0,
+    missingFields,
+  };
+}
+
+export function isOrganizationPubliclyVisible(org: {
+  type?: unknown;
+  ownerType?: unknown;
+  partnerTier?: unknown;
+  plan?: unknown;
+  logo?: unknown;
+  logoUrl?: unknown;
+  description?: unknown;
+  tagline?: unknown;
+  contactEmail?: unknown;
+  phone?: unknown;
+  website?: unknown;
+  onboardingComplete?: unknown;
+  verified?: unknown;
+  disabled?: unknown;
+  status?: unknown;
+  emailVerified?: unknown;
+}): boolean {
+  if (org.disabled === true) return false;
+
+  const status = normalizeString(org.status).toLowerCase();
+  if (status === "disabled" || status === "rejected") return false;
+
+  const accepted =
+    org.onboardingComplete === true ||
+    org.verified === true ||
+    status === "approved" ||
+    org.emailVerified === true;
+
+  if (!accepted) return false;
+
+  return getBusinessProfileReadiness(org).isReady;
 }
 
 export function normalizeOrganizationRecord<T extends object>(record: T): T {

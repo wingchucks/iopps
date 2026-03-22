@@ -1,10 +1,10 @@
-# 🎉 IOPPS Platform - Development Complete!
+# IOPPS Platform
 
 ## Project Summary
 
 **IOPPS** (Indigenous Opportunities & Partnerships Platform) is a comprehensive web platform empowering Indigenous success across Canada through jobs, conferences, scholarships, pow wows, Indigenous-owned businesses, and live streams.
 
-**Current Status**: ✅ **Ready for Production Deployment**
+**Current Status**: Live on `https://iopps.ca`
 
 ---
 
@@ -214,18 +214,14 @@ iopps/
 
 ---
 
-## 🚀 Deployment Status
+## 🚀 Production Truth
 
-**Environment**: Development ✅
-- Local server running on http://localhost:3000
-- Firebase connected
-- Stripe in test mode
-- All features functional
+- Canonical stable branch: `master`
+- Canonical rollback tag: `rollback-live-2026-03-22-master-baseline`
+- Production recovery runbook: `docs/production-truth-and-recovery.md`
+- Branch workflow: `docs/git-branch-policy.md`
 
-**Production**: ⏳ Ready to Deploy
-- See `DEPLOYMENT_CHECKLIST.md` for step-by-step instructions
-- Estimated deployment time: 2-3 hours
-- Recommended platform: Vercel
+The approved live website state must always be represented by `master`. If production needs to be restored, recover from the canonical rollback tag and follow the runbook.
 
 ---
 
@@ -233,10 +229,12 @@ iopps/
 
 1. **DEPLOYMENT_CHECKLIST.md** - Complete deployment guide
 2. **ADMIN_GUIDE.md** - Admin features reference
-3. **SEO_OPTIMIZATION.md** - SEO implementation details
-4. **.env.example** - Environment variables template
-5. **firestore.rules** - Firestore security rules
-6. **storage.rules** - Storage security rules
+3. **docs/production-truth-and-recovery.md** - Canonical production truth, rollback tag, and recovery steps
+4. **docs/git-branch-policy.md** - Required branch workflow for stable work vs rollback snapshots
+5. **SEO_OPTIMIZATION.md** - SEO implementation details
+6. **.env.example** - Environment variables template
+7. **firestore.rules** - Firestore security rules
+8. **storage.rules** - Storage security rules
 
 ---
 
@@ -256,11 +254,9 @@ npm run dev
 3. Refer to `ADMIN_GUIDE.md` for features
 
 ### For Deployment
-1. Follow `DEPLOYMENT_CHECKLIST.md`
-2. Configure environment variables
-3. Deploy Firebase security rules
-4. Deploy to Vercel
-5. Configure custom domain
+1. Follow `docs/production-truth-and-recovery.md`
+2. Keep `master` as the approved live state
+3. Use the canonical rollback tag if recovery is needed
 
 ---
 

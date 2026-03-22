@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase-admin";
+import { normalizeAdminEmployerRow } from "@/lib/admin/employers";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,17 @@ export async function GET(
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
-    const employer = { id: employerDoc.id, ...employerDoc.data() };
+    const rawEmployer = { id: employerDoc.id, ...employerDoc.data() } as Record<string, unknown>;
+    const normalizedEmployer = normalizeAdminEmployerRow(rawEmployer, employerDoc.id);
+    const employer = {
+      ...rawEmployer,
+      ...normalizedEmployer,
+      name: normalizedEmployer.displayName,
+      logo:
+        (typeof rawEmployer.logoUrl === "string" && rawEmployer.logoUrl) ||
+        (typeof rawEmployer.logo === "string" && rawEmployer.logo) ||
+        null,
+    };
 
     // Get team members
     const usersSnap = await adminDb
@@ -100,22 +111,33 @@ export async function PATCH(
 
   try {
     const updateData: Record<string, unknown> = {};
+    const organizationUpdateData: Record<string, unknown> = {};
 
     if (body.verified !== undefined) {
       updateData.verified = body.verified;
       updateData.verificationStatus = body.verified ? "verified" : "unverified";
+      organizationUpdateData.verified = body.verified;
+      organizationUpdateData.verificationStatus = body.verified ? "verified" : "unverified";
     }
     if (body.disabled !== undefined) {
       updateData.disabled = body.disabled;
       updateData.status = body.disabled ? "disabled" : "active";
+      organizationUpdateData.disabled = body.disabled;
+      organizationUpdateData.status = body.disabled ? "disabled" : "approved";
     }
     if (body.plan) {
       updateData.plan = body.plan;
+      organizationUpdateData.plan = body.plan;
     }
 
-    updateData.updatedAt = new Date().toISOString();
+    const updatedAt = new Date().toISOString();
+    updateData.updatedAt = updatedAt;
+    organizationUpdateData.updatedAt = updatedAt;
 
-    await adminDb.collection("employers").doc(orgId).update(updateData);
+    await Promise.all([
+      adminDb.collection("employers").doc(orgId).update(updateData),
+      adminDb.collection("organizations").doc(orgId).set(organizationUpdateData, { merge: true }),
+    ]);
 
     // Log action
     await adminDb

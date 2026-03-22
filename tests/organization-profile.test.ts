@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 
 import {
   formatOrganizationHoursDay,
+  getBusinessProfileReadiness,
   hasOrganizationIndigenousIdentity,
+  isOrganizationPubliclyVisible,
   normalizeOrganizationLocation,
   normalizeOrganizationProfilePatch,
   normalizeOrganizationRecord,
@@ -96,5 +98,106 @@ test("hasOrganizationIndigenousIdentity detects multiple signal shapes", () => {
       tags: ["Recruitment"],
     }),
     false
+  );
+});
+
+test("isOrganizationPubliclyVisible only allows public-ready business organizations", () => {
+  assert.equal(
+    isOrganizationPubliclyVisible({
+      type: "business",
+      onboardingComplete: false,
+      verified: false,
+      status: "pending",
+    }),
+    false
+  );
+
+  assert.equal(
+    isOrganizationPubliclyVisible({
+      type: "business",
+      onboardingComplete: false,
+      verified: false,
+      status: "approved",
+      logoUrl: "https://cdn.example.com/logo.png",
+      description: "Indigenous emergency response services.",
+      contactEmail: "team@example.com",
+    }),
+    true
+  );
+
+  assert.equal(
+    isOrganizationPubliclyVisible({
+      type: "business",
+      onboardingComplete: true,
+      verified: false,
+      status: "approved",
+      logoUrl: "https://cdn.example.com/logo.png",
+      description: "Indigenous emergency response services.",
+      contactEmail: "team@example.com",
+    }),
+    true
+  );
+
+  assert.equal(
+    isOrganizationPubliclyVisible({
+      type: "business",
+      onboardingComplete: false,
+      verified: false,
+      status: "approved",
+      description: "Accepted but incomplete business profile.",
+      contactEmail: "team@example.com",
+    }),
+    false
+  );
+
+  assert.equal(
+    isOrganizationPubliclyVisible({
+      type: "school",
+      onboardingComplete: false,
+      verified: false,
+      status: "approved",
+    }),
+    true
+  );
+
+  assert.equal(
+    isOrganizationPubliclyVisible({
+      type: "business",
+      onboardingComplete: true,
+      verified: true,
+      status: "disabled",
+      logoUrl: "https://cdn.example.com/logo.png",
+      description: "Disabled organization.",
+      contactEmail: "team@example.com",
+    }),
+    false
+  );
+});
+
+test("getBusinessProfileReadiness requires logo, story, and contact for businesses", () => {
+  assert.deepEqual(
+    getBusinessProfileReadiness({
+      type: "business",
+      description: "",
+      contactEmail: "",
+      logoUrl: "",
+    }),
+    {
+      isReady: false,
+      missingFields: ["logo", "description", "contact"],
+    }
+  );
+
+  assert.deepEqual(
+    getBusinessProfileReadiness({
+      type: "business",
+      logoUrl: "https://cdn.example.com/logo.png",
+      description: "Emergency response services for northern communities.",
+      contactEmail: "team@example.com",
+    }),
+    {
+      isReady: true,
+      missingFields: [],
+    }
   );
 });

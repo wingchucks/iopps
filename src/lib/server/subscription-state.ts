@@ -21,8 +21,14 @@ function iso(value: unknown): string | undefined {
 export function normalizePlanTier(...values: unknown[]): NormalizedPlanTier {
   for (const value of values) {
     const candidate = text(value).toLowerCase();
-    if (candidate === "standard" || candidate === "premium" || candidate === "school") {
-      return candidate;
+    if (candidate === "standard" || candidate === "tier1" || candidate === "essential") {
+      return "standard";
+    }
+    if (candidate === "premium" || candidate === "tier2" || candidate === "professional") {
+      return "premium";
+    }
+    if (candidate === "school" || candidate === "tier3") {
+      return "school";
     }
     if (candidate === "free" || candidate === "none" || candidate === "basic") {
       return "free";

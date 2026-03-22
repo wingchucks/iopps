@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, getAppCheckTokenValue, storage } from "@/lib/firebase";
+import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 import {
   BackgroundMesh, TopBar, ProgressBar, StepDots, StepHeader,
   FormInput, FormSelect, FormTextarea, CheckboxItem, UploadZone,
@@ -488,10 +489,10 @@ export default function UnifiedSignupPage() {
           <div onClick={() => setSelectedPlan("tier3")} style={{ background: CSS.card, border: `1px solid ${selectedPlan === "tier3" ? CSS.accent : CSS.border}`, borderRadius: 16, padding: 24, cursor: "pointer", position: "relative", boxShadow: selectedPlan === "tier3" ? `0 0 0 1px ${CSS.accent}, 0 8px 32px rgba(20,184,166,0.12)` : "none" }}>
             <div style={{ position: "absolute", top: 12, right: 12, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", padding: "4px 10px", borderRadius: 20, background: `linear-gradient(135deg,${CSS.accent},${CSS.blue})`, color: "#fff" }}>School Plan</div>
             <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>School Subscription</div>
-            <div style={{ fontSize: 32, fontWeight: 800 }}>$5,500 <span style={{ fontSize: 14, fontWeight: 400, color: CSS.textMuted }}>CAD</span></div>
+            <div style={{ fontSize: 32, fontWeight: 800 }}>{SUBSCRIPTION_PLANS.tier3.priceLabel} <span style={{ fontSize: 14, fontWeight: 400, color: CSS.textMuted }}>CAD</span></div>
             <div style={{ fontSize: 12, color: CSS.textDim, marginBottom: 16 }}>per year</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 32px" }}>
-              {[["20 program listings","Unlimited job posts","6 featured listings","Dedicated account manager"],["Custom branding","Advanced analytics","Student inquiry inbox","Public school profile"]].map((col,ci) => (
+              {[SUBSCRIPTION_PLANS.tier3.features.slice(0, 3), SUBSCRIPTION_PLANS.tier3.features.slice(3)].map((col,ci) => (
                 <ul key={ci} style={{ listStyle: "none", padding: 0, margin: 0 }}>{col.map(f => <li key={f} style={{ fontSize: 13, color: CSS.textMuted, padding: "6px 0", display: "flex", gap: 8 }}><span style={{ color: CSS.accent, fontWeight: 700, fontSize: 12 }}>✓</span>{f}</li>)}</ul>
               ))}
             </div>
@@ -499,7 +500,11 @@ export default function UnifiedSignupPage() {
           <div style={{ marginTop: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: CSS.textMuted }}>Or: Pay Per Post</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-              {[{ id: "standard-post", l: "Standard Job Post", p: "$125", n: "per post · 45 days" },{ id: "featured-post", l: "Featured Job Post", p: "$200", n: "per post · 45 days", b: "Best Value" },{ id: "program-post", l: "Program Post", p: "$50", n: "per post · 45 days" }].map(x => (
+              {[
+                { id: "standard-post", l: ONE_TIME_PLANS["standard-post"].title, p: ONE_TIME_PLANS["standard-post"].priceLabel, n: "per post · 45 days" },
+                { id: "featured-post", l: ONE_TIME_PLANS["featured-post"].title, p: ONE_TIME_PLANS["featured-post"].priceLabel, n: "per post · 45 days", b: ONE_TIME_PLANS["featured-post"].badge },
+                { id: "program-post", l: ONE_TIME_PLANS["program-post"].title, p: ONE_TIME_PLANS["program-post"].priceLabel, n: "per post · 45 days" },
+              ].map(x => (
                 <div key={x.id} onClick={() => setSelectedPlan(x.id)} style={{ background: CSS.card, border: `1px solid ${selectedPlan === x.id ? CSS.accent : x.b ? "rgba(245,158,11,0.3)" : CSS.border}`, borderRadius: 12, padding: 16, textAlign: "center", cursor: "pointer", boxShadow: selectedPlan === x.id ? `0 0 0 1px ${CSS.accent}` : "none" }}>
                   {x.b && <div style={{ fontSize: 10, fontWeight: 600, color: CSS.amber, textTransform: "uppercase", marginBottom: 4 }}>{x.b}</div>}
                   <div style={{ fontSize: 12, color: CSS.textDim, marginBottom: 4 }}>{x.l}</div>
@@ -530,7 +535,7 @@ export default function UnifiedSignupPage() {
               : "None selected"} />
           </ReviewSection>
           <ReviewSection icon="💳" title="Selected Plan" onEdit={() => goTo(8)}>
-            <ReviewRow label="Plan" value={<span style={{ color: CSS.accent, fontWeight: 600 }}>{selectedPlan === "tier3" ? "School — $5,500/yr" : selectedPlan === "program-post" ? "Program Post — $50" : selectedPlan === "standard-post" ? "Job Post — $125" : "Featured — $200"}</span>} />
+            <ReviewRow label="Plan" value={<span style={{ color: CSS.accent, fontWeight: 600 }}>{selectedPlan === "tier3" ? `School - ${SUBSCRIPTION_PLANS.tier3.priceLabel}/yr` : selectedPlan === "program-post" ? `${ONE_TIME_PLANS["program-post"].title} - ${ONE_TIME_PLANS["program-post"].priceLabel}` : selectedPlan === "standard-post" ? `${ONE_TIME_PLANS["standard-post"].title} - ${ONE_TIME_PLANS["standard-post"].priceLabel}` : `${ONE_TIME_PLANS["featured-post"].title} - ${ONE_TIME_PLANS["featured-post"].priceLabel}`}</span>} />
             {selectedPlan === "tier3" && <><ReviewRow label="Programs" value="20 program listings" /><ReviewRow label="Jobs" value="Unlimited" /><ReviewRow label="Featured" value="6 included" /></>}
           </ReviewSection>
           <InfoBanner icon="💳"><strong style={{ color: CSS.text }}>Ready to pay?</strong> Secure Stripe checkout. Account activates immediately after payment.</InfoBanner>

@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { getOrganization, updateOrganization } from "@/lib/firestore/organizations";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
+import { getBusinessProfileReadiness } from "@/lib/organization-profile";
 import Button from "@/components/Button";
 
 const INDUSTRIES = [
@@ -108,6 +109,7 @@ export default function OrgOnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [loadingData, setLoadingData] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [orgType, setOrgType] = useState("");
@@ -139,12 +141,15 @@ export default function OrgOnboardingPage() {
   const [partnershipInterests, setPartnershipInterests] = useState<string[]>([]);
 
   // Step 4 — Contact
+  const [contactEmail, setContactEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [facebook, setFacebook] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [instagram, setInstagram] = useState("");
   const [twitter, setTwitter] = useState("");
+  const [requiredFields, setRequiredFields] = useState<string[]>([]);
+  const [profileIncomplete, setProfileIncomplete] = useState(false);
 
   // Load existing data so user can resume
   useEffect(() => {
@@ -160,7 +165,8 @@ export default function OrgOnboardingPage() {
         router.replace("/org/signup");
         return;
       }
-      if (org.onboardingComplete) {
+      const readiness = getBusinessProfileReadiness(org);
+      if (org.onboardingComplete && (org.type === "school" || readiness.isReady)) {
         router.replace("/org/plans");
         return;
       }
@@ -175,6 +181,8 @@ export default function OrgOnboardingPage() {
       if (org.location?.city) setCity(org.location.city);
       if (org.location?.province) setProvince(org.location.province);
       if (org.website) setWebsite(org.website);
+      if (org.contactEmail) setContactEmail(org.contactEmail);
+      else if (user.email) setContactEmail(user.email);
       if (org.services) setServices(org.services);
       if (org.hiringStatus) setHiringStatus(org.hiringStatus);
       if (org.partnershipInterests) setPartnershipInterests(org.partnershipInterests);
@@ -193,6 +201,32 @@ export default function OrgOnboardingPage() {
       setLoadingData(false);
     })();
   }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const nextRequiredFields = (params.get("required") || "")
+      .split(",")
+      .map((field) => field.trim())
+      .filter(Boolean);
+
+    setRequiredFields(nextRequiredFields);
+    setProfileIncomplete(
+      params.get("reason") === "incomplete-profile" && nextRequiredFields.length > 0
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!profileIncomplete) return;
+
+    if (requiredFields.includes("contact") && !requiredFields.includes("logo") && !requiredFields.includes("description")) {
+      setStep(3);
+      return;
+    }
+
+    setStep(0);
+  }, [profileIncomplete, requiredFields]);
 
   if (authLoading || loadingData) {
     return (
@@ -232,6 +266,7 @@ export default function OrgOnboardingPage() {
       if (hiringStatus) data.hiringStatus = hiringStatus;
       if (partnershipInterests.length > 0) data.partnershipInterests = partnershipInterests;
       if (phone) data.phone = phone;
+      if (contactEmail) data.contactEmail = contactEmail;
       if (address) data.address = address;
       data.socialLinks = { facebook, linkedin, instagram, twitter };
       // School-specific fields (conditional inclusion)
@@ -250,8 +285,21 @@ export default function OrgOnboardingPage() {
   };
 
   const handleNext = async () => {
-    await saveStepProgress();
-    setStep((s) => s + 1);
+    try {
+      setSubmitError("");
+      if (orgType !== "school" && step === 0) {
+        const missing: string[] = [];
+        if (!(logoPreview || logoFile)) missing.push("upload your logo");
+        if (!description.trim()) missing.push("add a description");
+        if (missing.length > 0) {
+          throw new Error(`Before moving on, please ${missing.join(" and ")}.`);
+        }
+      }
+      await saveStepProgress();
+      setStep((s) => s + 1);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Failed to save your organization details.");
+    }
   };
 
   const handleBack = () => {
@@ -259,10 +307,48 @@ export default function OrgOnboardingPage() {
   };
 
   const handleComplete = async () => {
-    await saveStepProgress();
-    if (!user) return;
-    await updateOrganization(user.uid, { onboardingComplete: true });
-    router.push("/org/plans");
+    try {
+      setSubmitError("");
+      if (orgType !== "school") {
+        const readiness = getBusinessProfileReadiness({
+          type: orgType,
+          logoUrl: logoPreview,
+          description,
+          contactEmail,
+          phone,
+          website,
+        });
+
+        if (!readiness.isReady) {
+          const messages: Record<string, string> = {
+            logo: "upload your logo",
+            description: "add a description",
+            contact: "add a public contact method",
+          };
+          throw new Error(
+            `Before finishing setup, please ${readiness.missingFields.map((field) => messages[field] || field).join(", ")}.`
+          );
+        }
+      }
+      await saveStepProgress();
+      if (!user) return;
+      const idToken = await user.getIdToken();
+      const res = await fetch("/api/employer/onboarding/complete", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Failed to finish organization setup" }));
+        throw new Error(data.error || "Failed to finish organization setup");
+      }
+
+      router.push("/org/plans");
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Failed to finish organization setup");
+    }
   };
 
   const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,6 +368,14 @@ export default function OrgOnboardingPage() {
     "w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal";
 
   const progressPct = ((step + 1) / STEPS.length) * 100;
+  const requiredFieldLabels: Record<string, string> = {
+    logo: "upload your logo",
+    description: "add a description",
+    contact: "add a public contact method",
+  };
+  const requiredFieldMessage = profileIncomplete
+    ? requiredFields.map((field) => requiredFieldLabels[field] || field).join(", ")
+    : "";
 
   return (
     <div className="min-h-screen bg-bg flex flex-col">
@@ -336,6 +430,18 @@ export default function OrgOnboardingPage() {
               </div>
             ))}
           </div>
+
+          {submitError ? (
+            <div className="mb-6 rounded-xl bg-red-soft px-4 py-3 text-sm font-medium text-red">
+              {submitError}
+            </div>
+          ) : null}
+
+          {profileIncomplete ? (
+            <div className="mb-6 rounded-xl border border-[rgba(20,184,166,0.2)] bg-[rgba(20,184,166,0.08)] px-4 py-3 text-sm font-medium text-text">
+              Before you can continue to your dashboard or show on the business directory, please {requiredFieldMessage}.
+            </div>
+          ) : null}
 
           {/* Step 1 — Identity */}
           {step === 0 && (
@@ -653,6 +759,19 @@ export default function OrgOnboardingPage() {
           {/* Step 4 — Contact */}
           {step === 3 && (
             <div className="space-y-5">
+              <label className="block">
+                <span className="text-sm font-semibold text-text-sec mb-1.5 block">
+                  Public Contact Email {orgType !== "school" ? <span className="text-red-500">*</span> : null}
+                </span>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className={inputClass}
+                  placeholder="team@yourorg.ca"
+                />
+              </label>
+
               <label className="block">
                 <span className="text-sm font-semibold text-text-sec mb-1.5 block">Phone Number</span>
                 <input

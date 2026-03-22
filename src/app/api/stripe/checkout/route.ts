@@ -1,20 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS, type BillingPlanId } from "@/lib/pricing";
+
+export const runtime = "nodejs";
 
 /* ── Plan → Stripe price mapping ── */
-const PLAN_PRICES: Record<string, { amount: number; name: string; mode: Stripe.Checkout.SessionCreateParams.Mode }> = {
-  tier1:           { amount: 125000, name: "Standard Plan (Annual)",       mode: "payment" },
-  tier2:           { amount: 250000, name: "Premium Plan (Annual)",        mode: "payment" },
-  tier3:           { amount: 550000, name: "School Plan (Annual)",         mode: "payment" },
-  "standard-post": { amount: 12500,  name: "Standard Job Post",           mode: "payment" },
-  "featured-post": { amount: 20000,  name: "Featured Job Post",           mode: "payment" },
-  "program-post":  { amount: 5000,   name: "Program Post",                mode: "payment" },
+const PLAN_PRICES: Record<BillingPlanId, { amount: number; name: string; mode: Stripe.Checkout.SessionCreateParams.Mode }> = {
+  tier1: { amount: SUBSCRIPTION_PLANS.tier1.amount * 100, name: `${SUBSCRIPTION_PLANS.tier1.title} Plan (Annual)`, mode: "payment" },
+  tier2: { amount: SUBSCRIPTION_PLANS.tier2.amount * 100, name: `${SUBSCRIPTION_PLANS.tier2.title} Plan (Annual)`, mode: "payment" },
+  tier3: { amount: SUBSCRIPTION_PLANS.tier3.amount * 100, name: `${SUBSCRIPTION_PLANS.tier3.title} Plan (Annual)`, mode: "payment" },
+  "standard-post": { amount: ONE_TIME_PLANS["standard-post"].amount * 100, name: ONE_TIME_PLANS["standard-post"].title, mode: "payment" },
+  "featured-post": { amount: ONE_TIME_PLANS["featured-post"].amount * 100, name: ONE_TIME_PLANS["featured-post"].title, mode: "payment" },
+  "program-post": { amount: ONE_TIME_PLANS["program-post"].amount * 100, name: ONE_TIME_PLANS["program-post"].title, mode: "payment" },
 };
 
 const GST_RATE = 0.05;
 
+function normalizeStripeSecret(value: string | undefined): string | null {
+  if (!value) return null;
+  const normalized = value.trim().replace(/\\r\\n/g, "");
+  return normalized || null;
+}
+
 function getStripe(): Stripe | null {
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = normalizeStripeSecret(process.env.STRIPE_SECRET_KEY);
   if (!key) return null;
   return new Stripe(key);
 }
@@ -39,7 +48,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const plan = PLAN_PRICES[planId];
+    const plan = PLAN_PRICES[planId as BillingPlanId];
     if (!plan) {
       return NextResponse.json(
         { error: `Unknown plan: ${planId}` },
@@ -77,7 +86,7 @@ export async function POST(req: NextRequest) {
         amount: String(plan.amount),
         gstAmount: String(gstAmount),
       },
-      success_url: `${origin}/org/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/org/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan=${planId}`,
       cancel_url: `${origin}/org/checkout/cancel?plan=${planId}`,
     });
 

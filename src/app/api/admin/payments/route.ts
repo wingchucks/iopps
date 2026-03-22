@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase-admin";
+import { getAnnualPlanAmount, normalizePaidTier } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +23,12 @@ export async function GET(request: NextRequest) {
     employersSnap.docs.forEach((doc) => {
       const data = doc.data();
       if (!data.stripeSubscriptionId && !data.plan) return;
+      const normalizedPlan = normalizePaidTier(data.subscriptionTier || data.plan);
 
       const sub = {
         id: doc.id,
         name: data.name || data.organizationName || "Unknown",
-        plan: data.plan || "essential",
+        plan: normalizedPlan || data.plan || "unknown",
         stripeSubscriptionId: data.stripeSubscriptionId || null,
         stripeCustomerId: data.stripeCustomerId || null,
         subscriptionStatus: data.subscriptionStatus || "unknown",
@@ -109,20 +111,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate summary
-    const planPrices: Record<string, number> = {
-      essential: 1250,
-      professional: 2500,
-      school: 5500,
-    };
-
     const monthlyRevenue = active.reduce((sum, s) => {
-      const annual = planPrices[(s.plan as string)?.toLowerCase()] || 0;
+      const annual = getAnnualPlanAmount(s.plan) || 0;
       return sum + annual / 12;
     }, 0);
 
     // Total revenue = annual from active subs + one-time + school program
     const annualSubRevenue = active.reduce((sum, s) => {
-      return sum + (planPrices[(s.plan as string)?.toLowerCase()] || 0);
+      return sum + (getAnnualPlanAmount(s.plan) || 0);
     }, 0);
     const oneTimeTotal = oneTime.reduce((sum, p) => sum + (p.amount || 0), 0);
     const schoolProgramRevenue = schoolProgram.reduce((sum, p) => sum + ((p.amount as number) || 50), 0);

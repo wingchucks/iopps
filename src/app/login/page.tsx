@@ -21,7 +21,7 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
-  const { user, loading: authLoading, signIn, signInWithGoogle } = useAuth();
+  const { user, loading: authLoading, signIn, signInWithGoogle, reloadUser, signOut } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
@@ -31,12 +31,65 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [slowRedirect, setSlowRedirect] = useState(false);
+
+  const buildOnboardingRedirect = (missingFields?: unknown) => {
+    const params = new URLSearchParams({ reason: "incomplete-profile" });
+    if (Array.isArray(missingFields) && missingFields.length > 0) {
+      params.set(
+        "required",
+        missingFields
+          .filter((field): field is string => typeof field === "string" && field.trim().length > 0)
+          .join(",")
+      );
+    }
+    return `/org/onboarding?${params.toString()}`;
+  };
+
+  const resolvePostAuthDestination = async (
+    currentUser: { uid: string; getIdToken: () => Promise<string> },
+  ) => {
+    const profile = await getMemberProfile(currentUser.uid);
+    if (!profile) return "/setup";
+
+    if (profile.orgId) {
+      const idToken = await currentUser.getIdToken();
+      if (idToken) {
+        const res = await fetch("/api/employer/check", {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authorized) {
+            if (data.organizationType !== "school" && data.profileReady === false) {
+              return buildOnboardingRedirect(data.missingProfileFields);
+            }
+
+            return redirectTo || "/org/dashboard";
+          }
+        }
+      }
+    }
+
+    return redirectTo || "/feed";
+  };
 
   useEffect(() => {
-    if (!authLoading && user) router.replace(redirectTo || "/feed");
+    if (authLoading || !user) {
+      setSlowRedirect(false);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setSlowRedirect(true), 3500);
+    void resolvePostAuthDestination(user).then((destination) => {
+      router.replace(destination);
+    });
+
+    return () => window.clearTimeout(timeout);
   }, [user, authLoading, router, redirectTo]);
 
-  if (authLoading || user) {
+  if (authLoading || (user && !slowRedirect)) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
         <div className="flex flex-col items-center gap-3">
@@ -47,10 +100,122 @@ function LoginForm() {
     );
   }
 
-  const navigateAfterAuth = async (uid: string) => {
-    const profile = await getMemberProfile(uid);
-    router.push(redirectTo || (profile ? "/feed" : "/setup"));
+  const handleSessionRecovery = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await reloadUser();
+      if (user) {
+        router.replace(await resolvePostAuthDestination(user));
+      }
+      setSlowRedirect(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unable to refresh your secure session.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleStartOver = async () => {
+    setLoading(true);
+    try {
+      await signOut();
+      setSlowRedirect(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (user && slowRedirect) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "var(--bg)" }}>
+        <div
+          className="w-full max-w-md rounded-2xl"
+          style={{
+            background: "var(--card)",
+            border: "1px solid var(--border)",
+            padding: "28px 24px",
+          }}
+        >
+          <h1 className="text-xl font-extrabold text-text mb-2">Almost there</h1>
+          <p className="text-text-sec text-sm leading-relaxed mb-5">
+            Your account is signed in, but the secure redirect is taking longer than expected. You can retry the session refresh or start over.
+          </p>
+
+          {error && (
+            <div
+              className="text-sm font-medium mb-4 auth-scale-in"
+              style={{
+                padding: "12px 16px",
+                borderRadius: 10,
+                background: "var(--red-soft)",
+                color: "var(--red)",
+                border: "1px solid rgba(220,38,38,.15)",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={handleSessionRecovery}
+              disabled={loading}
+              className="w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
+              style={{
+                padding: "13px 18px",
+                borderRadius: 12,
+                border: "none",
+                background: "var(--teal)",
+                color: "#fff",
+                fontSize: 15,
+              }}
+            >
+              {loading ? "Refreshing session..." : "Retry secure redirect"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void resolvePostAuthDestination(user).then((destination) => {
+                  router.replace(destination);
+                });
+              }}
+              disabled={loading}
+              className="w-full font-semibold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
+              style={{
+                padding: "13px 18px",
+                borderRadius: 12,
+                border: "1.5px solid var(--border)",
+                background: "var(--card)",
+                color: "var(--text)",
+                fontSize: 15,
+              }}
+            >
+              Continue anyway
+            </button>
+            <button
+              type="button"
+              onClick={handleStartOver}
+              disabled={loading}
+              className="w-full font-semibold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
+              style={{
+                padding: "13px 18px",
+                borderRadius: 12,
+                border: "1.5px solid rgba(220,38,38,.18)",
+                background: "var(--red-soft)",
+                color: "var(--red)",
+                fontSize: 15,
+              }}
+            >
+              Start over
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +223,7 @@ function LoginForm() {
     setLoading(true);
     try {
       const cred = await signIn(email, password);
-      await navigateAfterAuth(cred.user.uid);
+      router.push(await resolvePostAuthDestination(cred.user));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (msg.includes("user-not-found") || msg.includes("wrong-password") || msg.includes("invalid-credential"))
@@ -76,7 +241,7 @@ function LoginForm() {
     setLoading(true);
     try {
       const cred = await signInWithGoogle();
-      await navigateAfterAuth(cred.user.uid);
+      router.push(await resolvePostAuthDestination(cred.user));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (!msg.includes("popup-closed")) setError(msg);

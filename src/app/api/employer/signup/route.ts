@@ -34,10 +34,12 @@ export async function POST(req: NextRequest) {
   }
 
   let uid: string;
+  let emailVerified = false;
   try {
     const token = authHeader.split("Bearer ")[1];
     const decoded = await adminAuth.verifyIdToken(token);
     uid = decoded.uid;
+    emailVerified = decoded.email_verified === true;
   } catch {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
@@ -97,6 +99,7 @@ export async function POST(req: NextRequest) {
     .substring(0, 60);
 
   const now = FieldValue.serverTimestamp();
+  const signupStatus = emailVerified ? "approved" : "pending";
 
   try {
     const batch = adminDb.batch();
@@ -111,8 +114,10 @@ export async function POST(req: NextRequest) {
       businessIdentity,
       onboardingComplete: false,
       plan: null,
-      status: "pending",
+      status: signupStatus,
+      emailVerified,
       verified: false,
+      ...(emailVerified ? { approvedAt: now } : {}),
       createdAt: now,
       updatedAt: now,
     });
@@ -128,9 +133,11 @@ export async function POST(req: NextRequest) {
       contactEmail,
       plan: "free",
       subscriptionTier: "free",
-      status: "pending",
+      status: signupStatus,
+      emailVerified,
       verified: false,
       onboardingComplete: false,
+      ...(emailVerified ? { approvedAt: now } : {}),
       createdAt: now,
       updatedAt: now,
     });
@@ -141,6 +148,7 @@ export async function POST(req: NextRequest) {
       employerId: uid,
       displayName: contactName,
       email: contactEmail,
+      emailVerified,
       updatedAt: now,
     }, { merge: true });
 
@@ -150,6 +158,7 @@ export async function POST(req: NextRequest) {
       email: contactEmail,
       orgId: uid,
       role: "employer",
+      emailVerified,
       createdAt: now,
       updatedAt: now,
     }, { merge: true });
