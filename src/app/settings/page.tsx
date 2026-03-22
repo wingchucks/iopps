@@ -39,7 +39,7 @@ const memberSettingsLinks = [
 
 const employerSettingsLinks = [
   {
-    href: "/org/dashboard/profile",
+    href: "/org/dashboard?tab=Edit%20Profile&section=Identity",
     icon: "\u{1F3E2}",
     title: "Organization Profile",
     desc: "Update your public business profile, branding, and contact details",

@@ -1,10 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { cn } from "@/lib/utils";
-import { formatDate } from "@/lib/format-date";
+import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import toast from "react-hot-toast";
+import { useAuth } from "@/components/auth/AuthProvider";
+import {
+  AdminEmptyState,
+  AdminFilterBar,
+  AdminFilterTabs,
+  AdminPageHeader,
+  AdminStatGrid,
+  type AdminFilterOption,
+} from "@/components/admin";
+import { formatDate } from "@/lib/format-date";
+import { PLAN_TIER_COLORS, PLAN_TIER_LABELS, normalizePaidTier } from "@/lib/pricing";
+import { cn } from "@/lib/utils";
 
 interface Subscription {
   id: string;
@@ -41,24 +51,46 @@ interface Summary {
 
 type Tab = "active" | "expired" | "onetime" | "school-program";
 
-const PLAN_LABELS: Record<string, string> = {
-  essential: "Essential -- $1,250/yr",
-  professional: "Professional -- $2,500/yr",
-  school: "School Tier -- $5,500/yr",
-};
-
-const PLAN_COLORS: Record<string, string> = {
-  school: "bg-amber-500/15 text-amber-600",
-  professional: "bg-blue-500/15 text-blue-500",
-  essential: "bg-green-500/15 text-green-600",
-};
-
 function maskId(id: string | null): string {
   if (!id) return "--";
   if (id.length <= 8) return id;
-  return id.slice(0, 4) + "****" + id.slice(-4);
+  return `${id.slice(0, 4)}****${id.slice(-4)}`;
 }
 
+function getPlanPresentation(plan: string): { label: string; color: string } {
+  const normalized = normalizePaidTier(plan);
+  if (!normalized) {
+    return {
+      label: plan || "Unknown",
+      color: "bg-success/10 text-success",
+    };
+  }
+
+  return {
+    label: PLAN_TIER_LABELS[normalized],
+    color: PLAN_TIER_COLORS[normalized],
+  };
+}
+
+function TableShell({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="border-b border-[var(--card-border)] px-5 py-4">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">{description}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function PaymentsPage() {
   const { user } = useAuth();
@@ -71,10 +103,12 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    const currentUser = user;
+    if (!currentUser) return;
+
     (async () => {
       try {
-        const token = await user.getIdToken();
+        const token = await currentUser!.getIdToken();
         const res = await fetch("/api/admin/payments", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -100,364 +134,389 @@ export default function PaymentsPage() {
     }
     window.open(
       `mailto:${email}?subject=IOPPS Subscription Renewal&body=Hi ${name},%0D%0A%0D%0AWe noticed your IOPPS subscription has expired. We would love to help you renew.%0D%0A%0D%0ABest regards,%0D%0AIOPPS Team`,
-      "_self"
+      "_self",
     );
   };
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: "active", label: `Active Subs (${active.length})` },
-    { key: "expired", label: `Expired (${expired.length})` },
-    { key: "onetime", label: `One-Time (${oneTime.length})` },
-    { key: "school-program", label: `School Program (${schoolProgram.length})` },
+  const tabs = useMemo<AdminFilterOption[]>(
+    () => [
+      { label: "Active subscriptions", value: "active", count: active.length },
+      { label: "Expired", value: "expired", count: expired.length },
+      { label: "One-time", value: "onetime", count: oneTime.length },
+      { label: "School program", value: "school-program", count: schoolProgram.length },
+    ],
+    [active.length, expired.length, oneTime.length, schoolProgram.length],
+  );
+
+  const statItems = [
+    {
+      label: "MRR",
+      value: `$${(summary?.monthlyRevenue ?? 0).toLocaleString("en-CA", { minimumFractionDigits: 0 })}`,
+      helper: "Recurring subscription revenue this month",
+      tone: "success" as const,
+      icon: (
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <line x1="12" y1="1" x2="12" y2="23" />
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      ),
+    },
+    {
+      label: "Total revenue",
+      value: `$${(summary?.totalRevenue ?? 0).toLocaleString("en-CA", { minimumFractionDigits: 0 })}`,
+      helper: "Subscriptions plus one-time payments",
+      icon: (
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+          <polyline points="17 6 23 6 23 12" />
+        </svg>
+      ),
+    },
+    {
+      label: "Growth",
+      value:
+        summary?.growthPercent !== undefined
+          ? `${summary.growthPercent >= 0 ? "+" : ""}${summary.growthPercent.toFixed(1)}%`
+          : "--",
+      helper: "Month-over-month trend",
+      tone: (summary?.growthPercent ?? 0) >= 0 ? ("success" as const) : ("danger" as const),
+      icon: (
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <path d="M18 15l-6-6-6 6" />
+        </svg>
+      ),
+    },
+    {
+      label: "Active subscriptions",
+      value: summary?.activeSubscriptions ?? 0,
+      helper: "Currently paying subscription accounts",
+      tone: "info" as const,
+      icon: (
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+        </svg>
+      ),
+    },
   ];
 
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-6xl space-y-6">
-        <h1 className="text-2xl font-bold">Payments & Revenue</h1>
-        <p className="text-[var(--text-muted)]">Loading...</p>
-      </div>
-    );
-  }
+  const secondaryStats = [
+    {
+      label: "Expired / lapsed",
+      value: summary?.expiredSubscriptions ?? 0,
+      classes: "border-error/20 bg-error/5 text-error",
+      helper: "Accounts to follow up for renewal",
+    },
+    {
+      label: "One-time payments",
+      value: summary?.oneTimePayments ?? 0,
+      classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground",
+      helper: "Completed non-subscription payments",
+    },
+    {
+      label: "School program revenue",
+      value: `$${(summary?.schoolProgramRevenue ?? 0).toLocaleString("en-CA")}`,
+      classes: "border-warning/20 bg-warning/5 text-warning",
+      helper: `${summary?.schoolProgramPayments ?? 0} payments at the school-program rate`,
+    },
+  ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <h1 className="text-2xl font-bold">Payments & Revenue</h1>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <AdminPageHeader
+        eyebrow="Commerce"
+        title="Payments & Revenue"
+        description="Track subscription health, inspect one-time purchases, and follow up on expired accounts without leaving the admin area."
+      />
 
-      {/* Revenue summary cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          {
-            label: "MRR (Monthly Recurring)",
-            value: `$${(summary?.monthlyRevenue ?? 0).toLocaleString("en-CA", { minimumFractionDigits: 0 })}`,
-            color: "text-green-500",
-            icon: (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500">
-                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-              </svg>
-            ),
-          },
-          {
-            label: "Total Revenue",
-            value: `$${(summary?.totalRevenue ?? 0).toLocaleString("en-CA", { minimumFractionDigits: 0 })}`,
-            color: "text-accent",
-            icon: (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent">
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-              </svg>
-            ),
-          },
-          {
-            label: "Growth (MoM)",
-            value: summary?.growthPercent !== undefined ? `${summary.growthPercent >= 0 ? "+" : ""}${summary.growthPercent.toFixed(1)}%` : "--",
-            color: (summary?.growthPercent ?? 0) >= 0 ? "text-green-500" : "text-red-500",
-            icon: (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={(summary?.growthPercent ?? 0) >= 0 ? "text-green-500" : "text-red-500"}>
-                <path d="M18 15l-6-6-6 6"/>
-              </svg>
-            ),
-          },
-          {
-            label: "Active Subscriptions",
-            value: summary?.activeSubscriptions ?? 0,
-            color: "text-blue-500",
-            icon: (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-500">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
-              </svg>
-            ),
-          },
-        ].map((card) => (
-          <div
-            key={card.label}
-            className="rounded-xl border border-[var(--card-border)] bg-surface p-5"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-                {card.label}
-              </p>
-              {card.icon}
-            </div>
-            <p className={cn("mt-2 text-2xl font-bold", card.color)}>
-              {card.value}
-            </p>
+      {loading ? (
+        <div className="grid gap-3">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-28 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] skeleton" />
+          ))}
+        </div>
+      ) : (
+        <>
+          <AdminStatGrid items={statItems} />
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {secondaryStats.map((stat) => (
+              <div key={stat.label} className={cn("rounded-2xl border p-4", stat.classes)}>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em]">{stat.label}</p>
+                <p className="mt-2 text-2xl font-bold">{stat.value}</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{stat.helper}</p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* Secondary stats row */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-red-400">Expired / Lapsed</p>
-          <p className="mt-1 text-xl font-bold text-red-500">{summary?.expiredSubscriptions ?? 0}</p>
-        </div>
-        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">One-Time Payments</p>
-          <p className="mt-1 text-xl font-bold text-[var(--text-muted)]">{summary?.oneTimePayments ?? 0}</p>
-        </div>
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-amber-400">School Program ($50 ea)</p>
-          <p className="mt-1 text-xl font-bold text-amber-500">
-            {summary?.schoolProgramPayments ?? 0}
-            <span className="ml-2 text-sm font-normal text-[var(--text-muted)]">
-              = ${((summary?.schoolProgramRevenue ?? 0)).toLocaleString()}
-            </span>
-          </p>
-        </div>
-      </div>
+          <AdminFilterBar>
+            <AdminFilterTabs
+              options={tabs}
+              value={tab}
+              onChange={(value) => setTab(value as Tab)}
+            />
+          </AdminFilterBar>
 
-      {/* Tabs */}
-      <div className="flex gap-1 rounded-lg border border-[var(--card-border)] bg-surface p-1">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={cn(
-              "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              tab === t.key
-                ? t.key === "expired"
-                  ? "bg-red-500/20 text-red-400"
-                  : "bg-accent text-white"
-                : "text-[var(--text-muted)] hover:text-foreground"
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tables */}
-      <div className="overflow-x-auto rounded-xl border border-[var(--card-border)] bg-surface">
-        {tab === "active" && (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                <th className="px-4 py-3">Organization</th>
-                <th className="px-4 py-3">Plan</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Start Date</th>
-                <th className="px-4 py-3">Renewal</th>
-                <th className="px-4 py-3">Stripe Sub ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {active.map((s) => (
-                <tr
-                  key={s.id}
-                  className={cn(
-                    "border-b border-[var(--card-border)] transition-colors hover:bg-[var(--card-bg)]",
-                    s.plan?.toLowerCase() === "school" && "bg-amber-500/5"
-                  )}
-                >
-                  <td className="px-4 py-3 font-medium">{s.name}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={cn(
-                        "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
-                        PLAN_COLORS[s.plan?.toLowerCase()] || "bg-green-500/15 text-green-600"
-                      )}
-                    >
-                      {PLAN_LABELS[s.plan?.toLowerCase()] || s.plan}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1.5 text-green-500">
-                      <span className="h-2 w-2 rounded-full bg-green-500" />
-                      {s.subscriptionStatus}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">
-                    {formatDate(s.subscriptionStartDate)}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">
-                    {formatDate(s.subscriptionEndDate)}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
-                    {maskId(s.stripeSubscriptionId)}
-                  </td>
-                </tr>
-              ))}
-              {active.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-[var(--text-muted)]">
-                    No active subscriptions found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
-
-        {tab === "expired" && (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                <th className="px-4 py-3">Organization</th>
-                <th className="px-4 py-3">Plan</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Expired</th>
-                <th className="px-4 py-3">Stripe Sub ID</th>
-                <th className="px-4 py-3">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {expired.map((s) => {
-                // Days since expiration for visual urgency
-                const endDate = s.subscriptionEndDate ? new Date(s.subscriptionEndDate) : null;
-                const daysSince = endDate ? Math.floor((Date.now() - endDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-                const isRecent = daysSince <= 30;
-                const isCritical = daysSince > 90;
-
-                return (
-                  <tr
-                    key={s.id}
-                    className={cn(
-                      "border-b border-[var(--card-border)] transition-colors hover:bg-[var(--card-bg)]",
-                      isCritical && "bg-red-500/5"
-                    )}
-                  >
-                    <td className="px-4 py-3 font-medium">{s.name}</td>
-                    <td className="px-4 py-3 text-[var(--text-muted)]">
-                      {PLAN_LABELS[s.plan?.toLowerCase()] || s.plan}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn(
-                        "inline-flex items-center gap-1.5",
-                        isCritical ? "text-red-600" : isRecent ? "text-amber-500" : "text-red-500"
-                      )}>
-                        <span className={cn(
-                          "h-2 w-2 rounded-full",
-                          isCritical ? "bg-red-600" : isRecent ? "bg-amber-500" : "bg-red-500"
-                        )} />
-                        {s.subscriptionStatus}
-                        {isCritical && (
-                          <span className="rounded bg-red-600/20 px-1.5 py-0.5 text-[10px] font-bold text-red-500">
-                            {daysSince}d
-                          </span>
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-red-400">
-                      {formatDate(s.subscriptionEndDate)}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
-                      {maskId(s.stripeSubscriptionId)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleContact(s.email, s.name)}
-                        className="rounded-md bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20"
-                      >
-                        <span className="flex items-center gap-1">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                          Contact
-                        </span>
-                      </button>
-                    </td>
+          {tab === "active" && (
+            <TableShell
+              title="Active subscriptions"
+              description="Current annual plans that are billing successfully."
+            >
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                    <th className="px-4 py-3">Organization</th>
+                    <th className="px-4 py-3">Plan</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Start Date</th>
+                    <th className="px-4 py-3">Renewal</th>
+                    <th className="px-4 py-3">Stripe Sub ID</th>
                   </tr>
-                );
-              })}
-              {expired.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-[var(--text-muted)]">
-                    No expired subscriptions
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
+                </thead>
+                <tbody>
+                  {active.map((subscription) => {
+                    const presentation = getPlanPresentation(subscription.plan);
+                    return (
+                      <tr
+                        key={subscription.id}
+                        className={cn(
+                          "border-b border-[var(--card-border)] transition-colors hover:bg-[var(--muted)]",
+                          normalizePaidTier(subscription.plan) === "school" && "bg-warning/5",
+                        )}
+                      >
+                        <td className="px-4 py-3 font-medium text-foreground">{subscription.name}</td>
+                        <td className="px-4 py-3">
+                          <span className={cn("inline-block rounded-full px-2 py-0.5 text-xs font-medium", presentation.color)}>
+                            {presentation.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1.5 text-success">
+                            <span className="h-2 w-2 rounded-full bg-success" />
+                            {subscription.subscriptionStatus}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">
+                          {formatDate(subscription.subscriptionStartDate)}
+                        </td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">
+                          {formatDate(subscription.subscriptionEndDate)}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
+                          {maskId(subscription.stripeSubscriptionId)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {active.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8">
+                        <AdminEmptyState
+                          title="No active subscriptions"
+                          description="There are currently no active subscription records to display."
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </TableShell>
+          )}
 
-        {tab === "onetime" && (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                <th className="px-4 py-3">Job Title</th>
-                <th className="px-4 py-3">Employer</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Paid</th>
-                <th className="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {oneTime.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b border-[var(--card-border)] transition-colors hover:bg-[var(--card-bg)]"
-                >
-                  <td className="px-4 py-3 font-medium">{p.title}</td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">{p.employer}</td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">{p.paymentType}</td>
-                  <td className="px-4 py-3">
-                    {p.amount ? `$${p.amount.toLocaleString()}` : "--"}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">
-                    {formatDate(p.paidAt)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-block rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-600">
-                      {p.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {oneTime.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-[var(--text-muted)]">
-                    No one-time payments found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
+          {tab === "expired" && (
+            <TableShell
+              title="Expired subscriptions"
+              description="Lapsed accounts that may need a renewal follow-up."
+            >
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                    <th className="px-4 py-3">Organization</th>
+                    <th className="px-4 py-3">Plan</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Expired</th>
+                    <th className="px-4 py-3">Stripe Sub ID</th>
+                    <th className="px-4 py-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {expired.map((subscription) => {
+                    const endDate = subscription.subscriptionEndDate
+                      ? new Date(subscription.subscriptionEndDate)
+                      : null;
+                    const daysSince = endDate
+                      ? Math.floor((Date.now() - endDate.getTime()) / (1000 * 60 * 60 * 24))
+                      : 0;
+                    const isCritical = daysSince > 90;
+                    const isRecent = daysSince <= 30;
 
-        {tab === "school-program" && (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                <th className="px-4 py-3">Student / Participant</th>
-                <th className="px-4 py-3">School</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Paid</th>
-                <th className="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {schoolProgram.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b border-[var(--card-border)] transition-colors hover:bg-[var(--card-bg)]"
-                >
-                  <td className="px-4 py-3 font-medium">{p.title}</td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">{p.employer}</td>
-                  <td className="px-4 py-3">
-                    <span className="text-amber-500 font-medium">
-                      ${(p.amount ?? 50).toLocaleString()}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-[var(--text-muted)]">
-                    {formatDate(p.paidAt)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-block rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-600">
-                      {p.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {schoolProgram.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-[var(--text-muted)]">
-                    No school program payments found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
-      </div>
+                    return (
+                      <tr
+                        key={subscription.id}
+                        className={cn(
+                          "border-b border-[var(--card-border)] transition-colors hover:bg-[var(--muted)]",
+                          isCritical && "bg-error/5",
+                        )}
+                      >
+                        <td className="px-4 py-3 font-medium text-foreground">{subscription.name}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">
+                          {getPlanPresentation(subscription.plan).label}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1.5",
+                              isCritical ? "text-error" : isRecent ? "text-warning" : "text-error",
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "h-2 w-2 rounded-full",
+                                isCritical ? "bg-error" : isRecent ? "bg-warning" : "bg-error",
+                              )}
+                            />
+                            {subscription.subscriptionStatus}
+                            {isCritical && (
+                              <span className="rounded bg-error/15 px-1.5 py-0.5 text-[10px] font-bold text-error">
+                                {daysSince}d
+                              </span>
+                            )}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-error">
+                          {formatDate(subscription.subscriptionEndDate)}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
+                          {maskId(subscription.stripeSubscriptionId)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleContact(subscription.email, subscription.name)}
+                            className="rounded-xl bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/15"
+                          >
+                            Contact
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {expired.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8">
+                        <AdminEmptyState
+                          title="No expired subscriptions"
+                          description="All tracked subscriptions are currently active."
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </TableShell>
+          )}
+
+          {tab === "onetime" && (
+            <TableShell
+              title="One-time payments"
+              description="Completed standalone purchases such as job posts."
+            >
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                    <th className="px-4 py-3">Job Title</th>
+                    <th className="px-4 py-3">Employer</th>
+                    <th className="px-4 py-3">Type</th>
+                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Paid</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {oneTime.map((payment) => (
+                    <tr
+                      key={payment.id}
+                      className="border-b border-[var(--card-border)] transition-colors hover:bg-[var(--muted)]"
+                    >
+                      <td className="px-4 py-3 font-medium text-foreground">{payment.title}</td>
+                      <td className="px-4 py-3 text-[var(--text-secondary)]">{payment.employer}</td>
+                      <td className="px-4 py-3 text-[var(--text-secondary)]">{payment.paymentType}</td>
+                      <td className="px-4 py-3 text-foreground">
+                        {payment.amount ? `$${payment.amount.toLocaleString()}` : "--"}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--text-secondary)]">{formatDate(payment.paidAt)}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-block rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                          {payment.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {oneTime.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8">
+                        <AdminEmptyState
+                          title="No one-time payments"
+                          description="No completed standalone payments were found."
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </TableShell>
+          )}
+
+          {tab === "school-program" && (
+            <TableShell
+              title="School program payments"
+              description="Program-level payments from schools and participants."
+            >
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                    <th className="px-4 py-3">Student / Participant</th>
+                    <th className="px-4 py-3">School</th>
+                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Paid</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schoolProgram.map((payment) => (
+                    <tr
+                      key={payment.id}
+                      className="border-b border-[var(--card-border)] transition-colors hover:bg-[var(--muted)]"
+                    >
+                      <td className="px-4 py-3 font-medium text-foreground">{payment.title}</td>
+                      <td className="px-4 py-3 text-[var(--text-secondary)]">{payment.employer}</td>
+                      <td className="px-4 py-3 font-medium text-warning">
+                        ${(payment.amount ?? 50).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--text-secondary)]">{formatDate(payment.paidAt)}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-block rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                          {payment.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {schoolProgram.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8">
+                        <AdminEmptyState
+                          title="No school program payments"
+                          description="There are no school program payments to show right now."
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </TableShell>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import NavBar from "@/components/NavBar";
 import PricingTabs from "@/components/PricingTabs";
 import { useAuth } from "@/lib/auth-context";
 import { getOrgSubscriptions } from "@/lib/firestore/subscriptions";
+import { isSubscriptionPlanId } from "@/lib/pricing";
 
 export default function PlansPage() {
   return (
@@ -27,7 +28,9 @@ function PlansContent() {
     if (!user) return;
     getOrgSubscriptions(user.uid)
       .then((subs) => {
-        const active = subs.find((s) => s.status === "active" || s.status === "pending");
+        const active = subs.find(
+          (s) => (s.status === "active" || s.status === "pending") && isSubscriptionPlanId(s.plan)
+        );
         if (active) setCurrentPlan(active.plan);
       })
       .catch(() => {});

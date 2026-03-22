@@ -246,7 +246,7 @@ async function main() {
   await testPage(context, '/search', { notes: 'Search' });
   await testPage(context, '/radar', { notes: 'Radar' });
   await testPage(context, '/map', { notes: 'Map' });
-  await testPage(context, '/organizations', { notes: 'Organizations' });
+  await testPage(context, '/businesses', { notes: 'Businesses directory' });
   await testPage(context, '/members', { notes: 'Members' });
   await testPage(context, '/members/discover', { notes: 'Members discover' });
   await testPage(context, '/news', { notes: 'News' });

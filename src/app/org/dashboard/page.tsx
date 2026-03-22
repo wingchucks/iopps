@@ -3,11 +3,20 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import { useAuth } from "@/lib/auth-context";
 import type { Organization } from "@/lib/firestore/organizations";
 import Avatar from "@/components/Avatar";
+import CanonicalEditProfileTab from "@/components/org-dashboard/CanonicalEditProfileTab";
+import { normalizeOrganizationRecord } from "@/lib/organization-profile";
+import {
+  buildSchoolVisibilityPatch,
+  getOrganizationPublicHref,
+  isSchoolOrganization,
+  isSchoolPubliclyVisible,
+} from "@/lib/school-visibility";
 
 /* ─── types ─── */
 interface DashboardStats {
@@ -34,10 +43,33 @@ interface DashJob {
   createdAt?: unknown;
 }
 
+interface SchoolProgramItem {
+  id: string;
+  title: string;
+  slug?: string;
+  status?: string;
+  credential?: string;
+  format?: string;
+  location?: string;
+  description?: string;
+  createdAt?: unknown;
+}
+
+interface StudentInquiryItem {
+  id: string;
+  name?: string;
+  email?: string;
+  message?: string;
+  programName?: string;
+  status?: string;
+  createdAt?: unknown;
+}
+
 interface HoursDay {
   open: string;
   close: string;
   isOpen: boolean;
+  label?: string;
 }
 type HoursMap = Record<string, HoursDay>;
 
@@ -47,12 +79,32 @@ const DAY_LABELS: Record<string, string> = {
   thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday",
 };
 
-const TABS = [
+function createDefaultHours(): HoursMap {
+  const hours: HoursMap = {};
+  DAYS.forEach((day) => {
+    hours[day] = {
+      open: "9:00 AM",
+      close: "5:00 PM",
+      isOpen: day !== "saturday" && day !== "sunday",
+    };
+  });
+  return hours;
+}
+
+const ORG_TABS = [
   "Overview", "Jobs", "Applications", "Events", "Scholarships",
   "Talent Search", "Analytics", "Edit Profile", "Team", "Templates", "Billing",
-];
+ ] as const;
 
-const PROFILE_SUBS = ["General", "Hours", "Photo Gallery", "Service Tags", "Indigenous Identity", "Contact & Social"];
+const SCHOOL_TABS = [
+  "Overview", "Programs", "Student Inquiries", "Jobs", "Applications",
+  "Events", "Scholarships", "Analytics", "Edit Profile", "Team", "Billing",
+] as const;
+
+type DashboardTab = (typeof ORG_TABS)[number] | (typeof SCHOOL_TABS)[number];
+const ALL_TABS = [...new Set<DashboardTab>([...ORG_TABS, ...SCHOOL_TABS])];
+
+const PROFILE_SUBS = ["Identity", "Story", "Credibility", "Discoverability", "Contact", "Media"] as const;
 
 const SUGGESTED_TAGS = [
   "Recruitment", "Training", "Hospitality", "Human Resources",
@@ -68,6 +120,37 @@ const TREATY_OPTIONS = [
 /* ─── amber accent color ─── */
 const AMBER = "#D97706";
 const AMBER_RGB = "217,119,6";
+const MS_PER_DAY = 86_400_000;
+
+function SectionNumberBadge({
+  n,
+  accentColor,
+  accentRgb,
+}: {
+  n: number;
+  accentColor: string;
+  accentRgb: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 mb-1">
+      <div
+        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+        style={{ background: `rgba(${accentRgb},0.15)`, color: accentColor }}
+      >
+        {n}
+      </div>
+    </div>
+  );
+}
+
+function getDaysUntilDate(date: string | undefined, referenceTime: number): number | null {
+  if (!date) return null;
+
+  const targetTime = new Date(date).getTime();
+  if (Number.isNaN(targetTime)) return null;
+
+  return Math.ceil((targetTime - referenceTime) / MS_PER_DAY);
+}
 
 /* ─── main export ─── */
 export default function OrgDashboardPage() {
@@ -85,29 +168,44 @@ function OrgDashboardContent() {
 
   const [org, setOrg] = useState<Organization | null>(null);
   const [jobs, setJobs] = useState<DashJob[]>([]);
+  const [schoolPrograms, setSchoolPrograms] = useState<SchoolProgramItem[]>([]);
+  const [studentInquiries, setStudentInquiries] = useState<StudentInquiryItem[]>([]);
   const [stats, setStats] = useState<DashboardStats>({ totalPosts: 0, activePosts: 0, applications: 0, profileViews: 0 });
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("Overview");
-  const [profileSub, setProfileSub] = useState("General");
-  const [orgId, setOrgId] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("Overview");
+  const [profileSub, setProfileSub] = useState<(typeof PROFILE_SUBS)[number]>("Identity");
+  const isSchoolOrg = isSchoolOrganization(org);
+  const schoolIsPublic = isSchoolPubliclyVisible(org);
+  const availableTabs = isSchoolOrg ? SCHOOL_TABS : ORG_TABS;
 
   // Edit profile state
   const [profileForm, setProfileForm] = useState({
-    name: "", tagline: "", description: "", location: "", website: "",
-    contactEmail: "", phone: "",
-    instagram: "", facebook: "", tiktok: "",
+    name: "",
+    tagline: "",
+    description: "",
+    industry: "",
+    size: "",
+    foundedYear: "",
+    city: "",
+    province: "",
+    address: "",
+    website: "",
+    contactEmail: "",
+    phone: "",
+    linkedin: "",
+    instagram: "",
+    facebook: "",
+    twitter: "",
+    logoUrl: "",
+    bannerUrl: "",
   });
-  const [hours, setHours] = useState<HoursMap>(() => {
-    const h: HoursMap = {};
-    DAYS.forEach((d) => {
-      h[d] = { open: "9:00 AM", close: "5:00 PM", isOpen: d !== "saturday" && d !== "sunday" };
-    });
-    return h;
-  });
+  const [hours, setHours] = useState<HoursMap>(createDefaultHours);
   const [gallery, setGallery] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [services, setServices] = useState<string[]>([]);
+  const [serviceInput, setServiceInput] = useState("");
   const [indigenousGroups, setIndigenousGroups] = useState<string[]>([]);
   const [nation, setNation] = useState("");
   const [treatyTerritory, setTreatyTerritory] = useState("");
@@ -120,6 +218,28 @@ function OrgDashboardContent() {
       router.push("/org/dashboard/jobs/new");
     }
   }, [searchParams, router]);
+
+  useEffect(() => {
+    const requestedTab = searchParams.get("tab");
+    const requestedSection = searchParams.get("section");
+
+    if (requestedTab && ALL_TABS.includes(requestedTab as DashboardTab)) {
+      setActiveTab(requestedTab as DashboardTab);
+    }
+    if (
+      requestedSection &&
+      PROFILE_SUBS.includes(requestedSection as (typeof PROFILE_SUBS)[number])
+    ) {
+      setActiveTab("Edit Profile");
+      setProfileSub(requestedSection as (typeof PROFILE_SUBS)[number]);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!availableTabs.some((tab) => tab === activeTab)) {
+      setActiveTab("Overview");
+    }
+  }, [activeTab, availableTabs]);
 
   const getToken = useCallback(async () => {
     if (!user) return "";
@@ -139,31 +259,46 @@ function OrgDashboardContent() {
         if (!dashRes.ok) throw new Error("Dashboard fetch failed");
         const dashData = await dashRes.json();
 
-        setOrg(dashData.org as Organization);
-        setOrgId(dashData.profile?.orgId || "");
-        setJobs([...(dashData.jobs || []), ...(dashData.posts || [])] as DashJob[]);
+        const normalizedOrg = normalizeOrganizationRecord(dashData.org as Organization);
+        setOrg(normalizedOrg);
+        const jobPosts = (dashData.posts || []).filter((post: Record<string, unknown>) => post.type === "job");
+        const programPosts = (dashData.schoolPrograms || dashData.posts || []).filter(
+          (post: Record<string, unknown>) => post.type === "program" || !post.type,
+        );
+
+        setJobs([...(dashData.jobs || []), ...jobPosts] as DashJob[]);
+        setSchoolPrograms(programPosts as SchoolProgramItem[]);
+        setStudentInquiries((dashData.studentInquiries || []) as StudentInquiryItem[]);
 
         // Populate profile form from org data
-        const o = dashData.org || {};
+        const o = normalizedOrg;
         setProfileForm({
           name: o.name || "",
           tagline: o.tagline || "",
           description: o.description || "",
-          location: typeof o.location === "string" ? o.location : o.location?.city ? `${o.location.city}, ${o.location.province}` : "",
+          industry: o.industry || "",
+          size: o.size || "",
+          foundedYear: o.foundedYear ? String(o.foundedYear) : "",
+          city: o.location?.city || "",
+          province: o.location?.province || "",
+          address: o.address || "",
           website: o.website || "",
-          contactEmail: o.contactEmail || o.email || "",
+          contactEmail: o.contactEmail || "",
           phone: o.phone || "",
+          linkedin: o.socialLinks?.linkedin || "",
           instagram: o.socialLinks?.instagram || "",
           facebook: o.socialLinks?.facebook || "",
-          tiktok: o.socialLinks?.twitter || "",
+          twitter: o.socialLinks?.twitter || "",
+          logoUrl: o.logoUrl || o.logo || "",
+          bannerUrl: o.bannerUrl || "",
         });
-        if (o.hours) setHours(o.hours);
-        if (o.gallery) setGallery(o.gallery);
-        if (o.tags) setTags(o.tags);
-        if (o.services) setTags(o.services);
-        if (o.indigenousGroups) setIndigenousGroups(o.indigenousGroups);
-        if (o.nation) setNation(o.nation);
-        if (o.treatyTerritory) setTreatyTerritory(o.treatyTerritory);
+        setHours(o.hours || createDefaultHours());
+        setGallery(o.gallery || []);
+        setTags(o.tags || []);
+        setServices(o.services || []);
+        setIndigenousGroups(o.indigenousGroups || []);
+        setNation(o.nation || "");
+        setTreatyTerritory(o.treatyTerritory || "");
 
         // Fetch stats
         const statsRes = await fetch("/api/employer/stats", { headers });
@@ -187,7 +322,7 @@ function OrgDashboardContent() {
   }, [user]);
 
   // Gate: schools must have an active plan before accessing dashboard
-  if (!loading && org && org.type === "school" && !org.plan) {
+  if (!loading && org && isSchoolOrganization(org) && !org.plan) {
     return (
       <AppShell>
         <div className="max-w-lg mx-auto px-4 py-20 text-center">
@@ -212,29 +347,107 @@ function OrgDashboardContent() {
     );
   }
 
+  const showSaveMessage = (message: string) => {
+    setSaveMsg(message);
+    setTimeout(() => setSaveMsg(""), 2500);
+  };
+
+  const putProfileFields = async (fields: Record<string, unknown>) => {
+    const token = await getToken();
+    const res = await fetch("/api/employer/profile", {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(fields),
+    });
+
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(payload?.error || "Error saving");
+    }
+
+    setOrg((prev) => {
+      if (!prev) return prev;
+
+      const nextFields =
+        isSchoolOrganization(prev) && typeof fields.isPublished === "boolean"
+          ? { ...fields, ...buildSchoolVisibilityPatch(fields.isPublished) }
+          : fields;
+
+      return normalizeOrganizationRecord({
+        ...prev,
+        ...nextFields,
+      } as Organization);
+    });
+  };
+
   /* ─── profile save handler ─── */
   const saveProfile = async (fields: Record<string, unknown>) => {
     setSaving(true);
     setSaveMsg("");
     try {
-      const token = await getToken();
-      const res = await fetch("/api/employer/profile", {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
-      });
-      if (res.ok) {
-        setSaveMsg("Saved!");
-        setTimeout(() => setSaveMsg(""), 2000);
-      } else {
-        setSaveMsg("Error saving");
-      }
-    } catch {
-      setSaveMsg("Error saving");
+      await putProfileFields(fields);
+      showSaveMessage("Saved!");
+    } catch (error) {
+      showSaveMessage(error instanceof Error ? error.message : "Error saving");
     } finally {
       setSaving(false);
     }
   };
+
+  const persistSingleMedia = async (slot: "logo" | "banner", url: string) => {
+    const field = slot === "logo" ? "logoUrl" : "bannerUrl";
+
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      await putProfileFields({ [field]: url });
+      setProfileForm((prev) => ({ ...prev, [field]: url }));
+      showSaveMessage("Saved!");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : `Failed to save ${slot}`;
+      showSaveMessage(message);
+      throw error instanceof Error ? error : new Error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const hasCredibilityOrMediaSignal =
+    gallery.length > 0 ||
+    nation.trim().length > 0 ||
+    treatyTerritory.trim().length > 0 ||
+    DAYS.some((day) => {
+      const current = hours[day];
+      return current?.isOpen && Boolean(current.open || current.close || current.label);
+    });
+
+  const profileChecks = (() => {
+    const checks = [
+      { label: "Logo", done: Boolean(profileForm.logoUrl) },
+      { label: "Banner", done: Boolean(profileForm.bannerUrl) },
+      { label: "Story", done: Boolean(profileForm.description.trim() || profileForm.tagline.trim()) },
+      { label: "Industry", done: Boolean(profileForm.industry.trim()) },
+      { label: "Location", done: Boolean(profileForm.city.trim() || profileForm.province.trim()) },
+      {
+        label: "Contact",
+        done: Boolean(
+          profileForm.website.trim() ||
+          profileForm.contactEmail.trim() ||
+          profileForm.phone.trim() ||
+          profileForm.address.trim()
+        ),
+      },
+      { label: "Tags / Services", done: tags.length > 0 || services.length > 0 },
+      { label: "Credibility / Media", done: hasCredibilityOrMediaSignal },
+    ];
+    const completed = checks.filter((check) => check.done).length;
+    return {
+      checks,
+      completed,
+      total: checks.length,
+      percent: Math.round((completed / checks.length) * 100),
+    };
+  })();
 
   /* ─── helpers ─── */
   const formatTimestamp = (ts: unknown): string => {
@@ -268,6 +481,22 @@ function OrgDashboardContent() {
     return base + i * 3;
   });
   const maxBar = Math.max(...chartBars, 1);
+  const publicProfileHref = getOrganizationPublicHref(org);
+  const heroDescription = isSchoolOrg
+    ? "Manage your school profile, programs, scholarships, and student recruitment."
+    : "Manage your organization, jobs, and applications";
+  const primaryActionLabel = isSchoolOrg ? "Manage Programs" : "Post a Job";
+  const primaryAction = () => {
+    if (isSchoolOrg) {
+      setActiveTab("Programs");
+      return;
+    }
+
+    router.push("/org/dashboard/jobs/new");
+  };
+  const schoolStatusSummary = schoolIsPublic
+    ? "Your school profile is live on the public schools directory."
+    : "Your school profile is hidden from public view until you publish it again.";
 
   /* ─── render ─── */
   return (
@@ -308,20 +537,30 @@ function OrgDashboardContent() {
                           {org?.name || "Dashboard"}
                         </h1>
                         <p className="text-sm mt-1" style={{ color: "var(--text-muted, #94a3b8)" }}>
-                          Manage your organization, jobs, and applications
+                          {heroDescription}
                         </p>
-                        {org?.plan && (
-                          <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{
-                            background: `rgba(${AMBER_RGB},0.12)`, color: AMBER,
-                          }}>
-                            {org.plan} plan
-                          </span>
-                        )}
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          {org?.plan && (
+                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{
+                              background: `rgba(${AMBER_RGB},0.12)`, color: AMBER,
+                            }}>
+                              {org.plan} plan
+                            </span>
+                          )}
+                          {isSchoolOrg && (
+                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{
+                              background: schoolIsPublic ? "rgba(34,197,94,0.12)" : "rgba(251,191,36,0.12)",
+                              color: schoolIsPublic ? "#4ADE80" : "#FBBF24",
+                            }}>
+                              {schoolIsPublic ? "Profile Live" : "Profile Hidden"}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      {org?.slug && (
-                        <Link href={`/org/${org.slug}`} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold no-underline transition-all hover:-translate-y-0.5" style={{
+                      {org && (
+                        <Link href={publicProfileHref} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold no-underline transition-all hover:-translate-y-0.5" style={{
                           background: "rgba(255,255,255,0.05)",
                           backdropFilter: "blur(12px)",
                           border: "1px solid rgba(255,255,255,0.1)",
@@ -332,7 +571,7 @@ function OrgDashboardContent() {
                         </Link>
                       )}
                       <button
-                        onClick={() => router.push("/org/dashboard/jobs/new")}
+                        onClick={primaryAction}
                         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer transition-all hover:-translate-y-0.5"
                         style={{
                           background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`,
@@ -341,15 +580,51 @@ function OrgDashboardContent() {
                         }}
                       >
                         <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                        Post a Job
+                        {primaryActionLabel}
                       </button>
                     </div>
                   </div>
                 </div>
 
+                {isSchoolOrg && !schoolIsPublic && (
+                  <div className="mb-6 rounded-2xl p-5" style={{
+                    background: "rgba(251,191,36,0.08)",
+                    border: "1px solid rgba(251,191,36,0.24)",
+                  }}>
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "#FBBF24" }}>
+                          School Visibility
+                        </div>
+                        <h3 className="text-lg font-bold mt-2" style={{ color: "var(--text, #f8fafc)" }}>
+                          Your school profile is hidden
+                        </h3>
+                        <p className="text-sm mt-2" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                          {schoolStatusSummary}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("Edit Profile");
+                          setProfileSub("Identity");
+                        }}
+                        className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none"
+                        style={{
+                          background: "rgba(255,255,255,0.06)",
+                          color: "var(--text-sec, #cbd5e1)",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                        }}
+                      >
+                        Review School Profile
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* ─── TAB PILLS ─── */}
                 <div className="flex flex-wrap gap-2 mb-8">
-                  {TABS.map((tab) => (
+                  {availableTabs.map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
@@ -375,7 +650,21 @@ function OrgDashboardContent() {
 
                 {/* ─── TAB CONTENT ─── */}
                 {activeTab === "Overview" && (
-                  <OverviewTab stats={stats} chartBars={chartBars} maxBar={maxBar} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
+                  isSchoolOrg ? (
+                    <SchoolOverviewTab
+                      org={org}
+                      stats={stats}
+                      schoolPrograms={schoolPrograms}
+                      studentInquiries={studentInquiries}
+                      jobs={jobs}
+                      schoolIsPublic={schoolIsPublic}
+                      publicProfileHref={publicProfileHref}
+                      setActiveTab={setActiveTab}
+                      timeAgo={timeAgo}
+                    />
+                  ) : (
+                    <OverviewTab stats={stats} chartBars={chartBars} maxBar={maxBar} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
+                  )
                 )}
 
                 {activeTab === "Analytics" && (
@@ -383,30 +672,39 @@ function OrgDashboardContent() {
                 )}
 
                 {activeTab === "Edit Profile" && (
-                  <EditProfileTab
+                  <CanonicalEditProfileTab
                     profileSub={profileSub} setProfileSub={setProfileSub}
                     profileForm={profileForm} setProfileForm={setProfileForm}
                     hours={hours} setHours={setHours}
                     gallery={gallery} setGallery={setGallery}
                     tags={tags} setTags={setTags}
                     tagInput={tagInput} setTagInput={setTagInput}
+                    services={services} setServices={setServices}
+                    serviceInput={serviceInput} setServiceInput={setServiceInput}
                     indigenousGroups={indigenousGroups} setIndigenousGroups={setIndigenousGroups}
                     nation={nation} setNation={setNation}
                     treatyTerritory={treatyTerritory} setTreatyTerritory={setTreatyTerritory}
                     saving={saving} saveMsg={saveMsg}
                     saveProfile={saveProfile}
-                    org={org}
+                    profileChecks={profileChecks}
+                    getToken={getToken}
+                    persistSingleMedia={persistSingleMedia}
+                    isSchool={isSchoolOrg}
+                    schoolIsPublished={schoolIsPublic}
+                    toggleSchoolPublished={(next) => saveProfile({ isPublished: next })}
                   />
                 )}
 
-                {activeTab === "Jobs" && <JobsTab jobs={jobs} orgId={orgId} getToken={getToken} formatTimestamp={formatTimestamp} />}
-                {activeTab === "Applications" && <ApplicationsTab jobs={jobs} getToken={getToken} />}
-                {activeTab === "Events" && <EventsTab orgId={orgId} getToken={getToken} />}
-                {activeTab === "Scholarships" && <ScholarshipsTab orgId={orgId} getToken={getToken} />}
+                {activeTab === "Programs" && <ProgramsTab programs={schoolPrograms} formatTimestamp={formatTimestamp} />}
+                {activeTab === "Student Inquiries" && <StudentInquiriesTab inquiries={studentInquiries} timeAgo={timeAgo} />}
+                {activeTab === "Jobs" && <JobsTab jobs={jobs} formatTimestamp={formatTimestamp} />}
+                {activeTab === "Applications" && <ApplicationsTab getToken={getToken} />}
+                {activeTab === "Events" && <EventsTab getToken={getToken} />}
+                {activeTab === "Scholarships" && <ScholarshipsTab getToken={getToken} />}
                 {activeTab === "Talent Search" && <TalentSearchTab />}
-                {activeTab === "Team" && <TeamTab orgId={orgId} getToken={getToken} />}
+                {activeTab === "Team" && <TeamTab />}
                 {activeTab === "Templates" && <TemplatesTab />}
-                {activeTab === "Billing" && <BillingTab org={org} orgId={orgId} />}
+                {activeTab === "Billing" && <BillingTab org={org} />}
               </>
             )}
           </div>
@@ -554,6 +852,360 @@ function OverviewTab({ stats, chartBars, maxBar, activity, jobs, timeAgo, format
           </div>
         )}
       </DashCard>
+    </>
+  );
+}
+
+function SchoolOverviewTab({
+  org,
+  stats,
+  schoolPrograms,
+  studentInquiries,
+  jobs,
+  schoolIsPublic,
+  publicProfileHref,
+  setActiveTab,
+  timeAgo,
+}: {
+  org: Organization | null;
+  stats: DashboardStats;
+  schoolPrograms: SchoolProgramItem[];
+  studentInquiries: StudentInquiryItem[];
+  jobs: DashJob[];
+  schoolIsPublic: boolean;
+  publicProfileHref: string;
+  setActiveTab: (tab: DashboardTab) => void;
+  timeAgo: (ts: unknown) => string;
+}) {
+  const unreadInquiryCount = studentInquiries.filter((inquiry) => {
+    const status = String(inquiry.status || "").toLowerCase();
+    return !status || status === "new" || status === "unread";
+  }).length;
+
+  const statCards = [
+    { label: "Programs", value: schoolPrograms.length, color: AMBER, rgb: AMBER_RGB, icon: "🎓" },
+    { label: "New Inquiries", value: unreadInquiryCount, color: "#3B82F6", rgb: "59,130,246", icon: "✉️" },
+    { label: "Profile Views", value: stats.profileViews, color: "#A78BFA", rgb: "167,139,250", icon: "👀" },
+    { label: "Open Jobs", value: jobs.filter((job) => !job.status || job.status === "active").length, color: "#22C55E", rgb: "34,197,94", icon: "💼" },
+  ];
+
+  const actionCards = [
+    {
+      title: "Manage Programs",
+      description: "Review your active school programs and the opportunities attached to them.",
+      accent: AMBER,
+      bg: `rgba(${AMBER_RGB},0.08)`,
+      action: () => setActiveTab("Programs"),
+      meta: `${schoolPrograms.length} program${schoolPrograms.length === 1 ? "" : "s"}`,
+    },
+    {
+      title: "Student Inquiries",
+      description: "See incoming student messages and keep follow-up from slipping through.",
+      accent: "#3B82F6",
+      bg: "rgba(59,130,246,0.08)",
+      action: () => setActiveTab("Student Inquiries"),
+      meta: unreadInquiryCount > 0 ? `${unreadInquiryCount} new` : "No unread inquiries",
+    },
+    {
+      title: "Scholarships",
+      description: "Keep bursaries and scholarship offers current for student discovery.",
+      accent: "#A78BFA",
+      bg: "rgba(167,139,250,0.08)",
+      action: () => setActiveTab("Scholarships"),
+      meta: "Manage scholarship posts",
+    },
+    {
+      title: "View Public Profile",
+      description: "Check how your school appears in the public schools directory and profile.",
+      accent: "#22C55E",
+      bg: "rgba(34,197,94,0.08)",
+      href: publicProfileHref,
+      meta: schoolIsPublic ? "Live on /schools" : "Currently hidden",
+    },
+  ] as const;
+
+  return (
+    <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {statCards.map((card) => (
+          <DashCard key={card.label}>
+            <div className="w-11 h-11 rounded-xl mb-4 flex items-center justify-center text-lg" style={{ background: `rgba(${card.rgb},0.1)` }}>
+              {card.icon}
+            </div>
+            <div className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted, #64748b)" }}>
+              {card.label}
+            </div>
+            <div className="text-3xl font-black tracking-tight" style={{
+              background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}>
+              {card.value}
+            </div>
+          </DashCard>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_0.95fr] gap-4 mb-4">
+        <DashCard>
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-5">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: AMBER }}>
+                School Status
+              </div>
+              <h3 className="text-xl font-bold mt-2" style={{ color: "var(--text, #f8fafc)" }}>
+                {org?.name || "School Dashboard"}
+              </h3>
+              <p className="text-sm mt-2" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                {schoolIsPublic
+                  ? "Your school profile is visible in the public directory and ready for student discovery."
+                  : "Your school profile is hidden. Publish it when you are ready for students to see it."}
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-lg text-[11px] font-semibold uppercase tracking-wider" style={{
+              background: schoolIsPublic ? "rgba(34,197,94,0.1)" : "rgba(251,191,36,0.12)",
+              color: schoolIsPublic ? "#4ADE80" : "#FBBF24",
+            }}>
+              {schoolIsPublic ? "Published" : "Hidden"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab("Edit Profile")}
+              className="rounded-2xl p-4 text-left cursor-pointer border-none transition-all hover:-translate-y-0.5"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <div className="text-sm font-bold" style={{ color: "var(--text, #f8fafc)" }}>Edit School Profile</div>
+              <div className="text-xs mt-1" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                Update the story, contact details, visibility, and media that students see.
+              </div>
+            </button>
+            <Link
+              href={publicProfileHref}
+              className="rounded-2xl p-4 text-left no-underline transition-all hover:-translate-y-0.5"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <div className="text-sm font-bold" style={{ color: "var(--text, #f8fafc)" }}>Open Public School Profile</div>
+              <div className="text-xs mt-1" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                Preview the live `/schools` experience students will land on.
+              </div>
+            </Link>
+          </div>
+        </DashCard>
+
+        <DashCard>
+          <div className="flex items-center justify-between mb-5">
+            <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Recent Student Inquiries</span>
+            <button
+              type="button"
+              onClick={() => setActiveTab("Student Inquiries")}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none"
+              style={{ background: `rgba(${AMBER_RGB},0.08)`, color: AMBER }}
+            >
+              View all
+            </button>
+          </div>
+          {studentInquiries.length === 0 ? (
+            <div className="py-10 text-center">
+              <p className="text-4xl mb-3 opacity-30">✉️</p>
+              <p className="text-sm" style={{ color: "var(--text-sec, #cbd5e1)" }}>No student inquiries yet</p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                Student questions will appear here once they reach out through your school presence.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {studentInquiries.slice(0, 4).map((inquiry) => (
+                <div
+                  key={inquiry.id}
+                  className="rounded-xl px-4 py-3"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold truncate" style={{ color: "var(--text, #f8fafc)" }}>
+                        {inquiry.name || inquiry.email || "Prospective student"}
+                      </div>
+                      <div className="text-xs mt-0.5 truncate" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                        {[inquiry.programName, inquiry.email].filter(Boolean).join(" · ") || "General inquiry"}
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider shrink-0" style={{ color: AMBER }}>
+                      {timeAgo(inquiry.createdAt)}
+                    </span>
+                  </div>
+                  {inquiry.message && (
+                    <p className="text-xs mt-2 line-clamp-2" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                      {inquiry.message}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </DashCard>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {actionCards.map((card) =>
+          "href" in card ? (
+            <Link
+              key={card.title}
+              href={card.href}
+              className="no-underline"
+            >
+              <DashCard>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-lg" style={{ background: card.bg, color: card.accent }}>
+                  ↗
+                </div>
+                <h3 className="text-base font-bold mt-5" style={{ color: "var(--text, #f8fafc)" }}>{card.title}</h3>
+                <p className="text-sm mt-2" style={{ color: "var(--text-muted, #94a3b8)" }}>{card.description}</p>
+                <p className="text-xs font-semibold mt-4" style={{ color: card.accent }}>{card.meta}</p>
+              </DashCard>
+            </Link>
+          ) : (
+            <button
+              key={card.title}
+              type="button"
+              onClick={() => {
+                card.action?.();
+              }}
+              className="text-left cursor-pointer border-none bg-transparent p-0"
+            >
+              <DashCard>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-lg" style={{ background: card.bg, color: card.accent }}>
+                  →
+                </div>
+                <h3 className="text-base font-bold mt-5" style={{ color: "var(--text, #f8fafc)" }}>{card.title}</h3>
+                <p className="text-sm mt-2" style={{ color: "var(--text-muted, #94a3b8)" }}>{card.description}</p>
+                <p className="text-xs font-semibold mt-4" style={{ color: card.accent }}>{card.meta}</p>
+              </DashCard>
+            </button>
+          ),
+        )}
+      </div>
+    </>
+  );
+}
+
+function ProgramsTab({ programs, formatTimestamp }: {
+  programs: SchoolProgramItem[];
+  formatTimestamp: (ts: unknown) => string;
+}) {
+  return (
+    <>
+      <div className="flex items-center justify-between mb-5 gap-3">
+        <h2 className="text-xl font-extrabold tracking-tight text-text">Programs</h2>
+        <span className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: `rgba(${AMBER_RGB},0.08)`, color: AMBER }}>
+          {programs.length} total
+        </span>
+      </div>
+      {programs.length === 0 ? (
+        <DashCard>
+          <div className="text-center py-12">
+            <p className="text-4xl mb-3 opacity-30">🎓</p>
+            <p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No school programs yet</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              Programs linked to your school will appear here once they are published through the IOPPS program workflow.
+            </p>
+          </div>
+        </DashCard>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {programs.map((program) => (
+            <DashCard key={program.id}>
+              <div className="flex items-start gap-4">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: `rgba(${AMBER_RGB},0.08)` }}>
+                  🎓
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-bold truncate" style={{ color: "var(--text)" }}>{program.title}</p>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase" style={{
+                      background: program.status === "draft" ? "rgba(251,191,36,0.1)" : "rgba(34,197,94,0.1)",
+                      color: program.status === "draft" ? "#FBBF24" : "#22C55E",
+                    }}>
+                      {program.status || "Active"}
+                    </span>
+                  </div>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                    {[program.credential, program.format, program.location, formatTimestamp(program.createdAt)].filter(Boolean).join(" · ")}
+                  </p>
+                  {program.description && (
+                    <p className="text-xs mt-2 line-clamp-2" style={{ color: "var(--text-muted)" }}>{program.description}</p>
+                  )}
+                </div>
+              </div>
+            </DashCard>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function StudentInquiriesTab({ inquiries, timeAgo }: {
+  inquiries: StudentInquiryItem[];
+  timeAgo: (ts: unknown) => string;
+}) {
+  return (
+    <>
+      <div className="flex items-center justify-between mb-5 gap-3">
+        <h2 className="text-xl font-extrabold tracking-tight text-text">Student Inquiries</h2>
+        <span className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: `rgba(${AMBER_RGB},0.08)`, color: AMBER }}>
+          {inquiries.length} total
+        </span>
+      </div>
+      {inquiries.length === 0 ? (
+        <DashCard>
+          <div className="text-center py-12">
+            <p className="text-4xl mb-3 opacity-30">📨</p>
+            <p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No student inquiries yet</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              When students contact your school through IOPPS, their messages will land here.
+            </p>
+          </div>
+        </DashCard>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {inquiries.map((inquiry) => {
+            const status = String(inquiry.status || "new").toLowerCase();
+            const statusStyles = status === "replied"
+              ? { bg: "rgba(34,197,94,0.1)", text: "#22C55E" }
+              : { bg: `rgba(${AMBER_RGB},0.1)`, text: AMBER };
+
+            return (
+              <DashCard key={inquiry.id}>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: statusStyles.bg, color: statusStyles.text }}>
+                    {(inquiry.name || inquiry.email || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-bold" style={{ color: "var(--text)" }}>
+                        {inquiry.name || inquiry.email || "Prospective student"}
+                      </p>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase" style={{ background: statusStyles.bg, color: statusStyles.text }}>
+                        {status}
+                      </span>
+                    </div>
+                    <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                      {[inquiry.programName, inquiry.email, timeAgo(inquiry.createdAt)].filter(Boolean).join(" · ")}
+                    </p>
+                    {inquiry.message && (
+                      <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--text-sec)" }}>
+                        {inquiry.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </DashCard>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }
@@ -711,6 +1363,7 @@ function AnalyticsTab({ stats, chartBars, maxBar, jobs, formatTimestamp }: {
 /* ═══════════════════════════════════════════════════════════
    EDIT PROFILE TAB
    ═══════════════════════════════════════════════════════════ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function EditProfileTab({
   profileSub, setProfileSub, profileForm, setProfileForm,
   hours, setHours, gallery, setGallery, tags, setTags,
@@ -923,7 +1576,13 @@ function EditProfileTab({
                 border: "1px solid var(--border, rgba(30,41,59,0.6))",
               }}>
                 {url.startsWith("http") ? (
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <Image
+                    src={url}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover"
+                  />
                 ) : (
                   <span className="text-4xl opacity-20">📷</span>
                 )}
@@ -1101,7 +1760,7 @@ function EditProfileTab({
 /* ═══════════════════════════════════════════════════════════
    BILLING TAB
    ═══════════════════════════════════════════════════════════ */
-function BillingTab({ org, orgId }: { org: Organization | null; orgId: string }) {
+function BillingTab({ org }: { org: Organization | null }) {
   return (
     <>
       <h2 className="text-xl font-extrabold tracking-tight mb-5" style={{
@@ -1136,8 +1795,8 @@ function BillingTab({ org, orgId }: { org: Organization | null; orgId: string })
 /* ═══════════════════════════════════════════════════════════
    JOBS TAB
    ═══════════════════════════════════════════════════════════ */
-function JobsTab({ jobs, orgId, getToken, formatTimestamp }: {
-  jobs: DashJob[]; orgId: string; getToken: () => Promise<string>; formatTimestamp: (ts: unknown) => string;
+function JobsTab({ jobs, formatTimestamp }: {
+  jobs: DashJob[]; formatTimestamp: (ts: unknown) => string;
 }) {
   const [filter, setFilter] = useState<"all"|"active"|"draft"|"expired">("all");
   const router = useRouter();
@@ -1217,7 +1876,7 @@ function JobsTab({ jobs, orgId, getToken, formatTimestamp }: {
 /* ═══════════════════════════════════════════════════════════
    APPLICATIONS TAB
    ═══════════════════════════════════════════════════════════ */
-function ApplicationsTab({ jobs, getToken }: { jobs: DashJob[]; getToken: () => Promise<string> }) {
+function ApplicationsTab({ getToken }: { getToken: () => Promise<string> }) {
   const [applications, setApplications] = useState<Array<{id:string; jobTitle:string; applicantName:string; email:string; status:string; appliedAt:string; resumeUrl?:string}>>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -1307,7 +1966,7 @@ function ApplicationsTab({ jobs, getToken }: { jobs: DashJob[]; getToken: () => 
 /* ═══════════════════════════════════════════════════════════
    EVENTS TAB
    ═══════════════════════════════════════════════════════════ */
-function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise<string> }) {
+function EventsTab({ getToken }: { getToken: () => Promise<string> }) {
   const [events, setEvents] = useState<Array<{id:string;title:string;eventType?:string;date?:string;location?:string;status?:string}>>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -1364,6 +2023,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
     try {
       const token = await getToken();
       const { highlightInput, ...payload } = form;
+      void highlightInput;
       // posterUrl included in payload
       const res = await fetch("/api/employer/events", {
         method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -1383,14 +2043,6 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
   // Progress calculation
   const filledFields = [form.eventType, form.title, form.description, form.date, form.location].filter(Boolean).length;
   const progress = Math.round((filledFields / 5) * 100);
-
-  // Section number indicator
-  const SectionNum = ({ n }: { n: number }) => (
-    <div className="flex items-center gap-3 mb-1">
-      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-        style={{ background: `rgba(${AMBER_RGB},0.15)`, color: AMBER }}>{n}</div>
-    </div>
-  );
 
   return (
     <>
@@ -1430,7 +2082,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
           <div className="p-6" style={{ background: "rgba(2,6,23,0.5)" }}>
 
             {/* Section 1: Event Type */}
-            <SectionNum n={1} />
+            <SectionNumberBadge n={1} accentColor={AMBER} accentRgb={AMBER_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">What type of event?</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>Choose the category that best fits</p>
             <div className="grid grid-cols-2 gap-3 mb-8 ml-10">
@@ -1453,7 +2105,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
             </div>
 
             {/* Section 2: Basic Information */}
-            <SectionNum n={2} />
+            <SectionNumberBadge n={2} accentColor={AMBER} accentRgb={AMBER_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">Basic Information</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>Tell people what this event is about</p>
             <div className="ml-10 mb-8">
@@ -1475,7 +2127,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
             </div>
 
             {/* Section 3: Date & Time */}
-            <SectionNum n={3} />
+            <SectionNumberBadge n={3} accentColor={AMBER} accentRgb={AMBER_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">Date & Location</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>When and where is this happening?</p>
             <div className="ml-10 mb-8">
@@ -1518,7 +2170,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
             </div>
 
             {/* Section 4: Highlights */}
-            <SectionNum n={4} />
+            <SectionNumberBadge n={4} accentColor={AMBER} accentRgb={AMBER_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">Highlights</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>Key features or attractions (optional)</p>
             <div className="ml-10 mb-8">
@@ -1549,7 +2201,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
             </div>
 
             {/* Section 5: RSVP Link */}
-            <SectionNum n={5} />
+            <SectionNumberBadge n={5} accentColor={AMBER} accentRgb={AMBER_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">RSVP / Registration Link</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>Link to external registration page, Eventbrite, etc.</p>
             <div className="ml-10 mb-8">
@@ -1559,7 +2211,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
             </div>
 
             {/* Section 6: Contact */}
-            <SectionNum n={6} />
+            <SectionNumberBadge n={6} accentColor={AMBER} accentRgb={AMBER_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">Registration & Contact</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>How people can register or get more info</p>
             <div className="ml-10 mb-8">
@@ -1583,13 +2235,21 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
 
 
             {/* Section 7: Event Poster */}
-            <SectionNum n={7} />
+            <SectionNumberBadge n={7} accentColor={AMBER} accentRgb={AMBER_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">Event Poster / Image</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>Upload a poster or banner image for your event (optional)</p>
             <div className="ml-10 mb-8">
               {form.posterUrl ? (
                 <div className="relative rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)", maxWidth: 400 }}>
-                  <img src={form.posterUrl} alt="Event poster" className="w-full h-auto rounded-xl" style={{ maxHeight: 300, objectFit: "cover" }} />
+                  <Image
+                    src={form.posterUrl}
+                    alt="Event poster"
+                    width={1200}
+                    height={900}
+                    className="w-full h-auto rounded-xl"
+                    sizes="(max-width: 768px) 100vw, 400px"
+                    style={{ maxHeight: 300, objectFit: "cover" }}
+                  />
                   <button type="button" onClick={() => setForm(p => ({ ...p, posterUrl: "" }))}
                     className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer"
                     style={{ background: "rgba(0,0,0,0.7)", color: "#fff", border: "none" }}>✕</button>
@@ -1715,7 +2375,7 @@ function EventsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise
 /* ═══════════════════════════════════════════════════════════
    SCHOLARSHIPS TAB
    ═══════════════════════════════════════════════════════════ */
-function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => Promise<string> }) {
+function ScholarshipsTab({ getToken }: { getToken: () => Promise<string> }) {
   const [scholarships, setScholarships] = useState<Array<{id:string;title:string;amount?:string;deadline?:string;status?:string}>>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -1747,8 +2407,8 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
   const FIELDS_OF_STUDY = ["Any Field", "STEM", "Business", "Health Sciences", "Education", "Arts & Humanities", "Social Sciences", "Trades & Technology", "Environmental Studies", "Indigenous Studies", "Law"];
 
   const toggleTag = (arr: string[], val: string) => arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
-
-  const daysUntilDeadline = form.deadline ? Math.ceil((new Date(form.deadline).getTime() - Date.now()) / 86400000) : null;
+  const [deadlineReferenceTime] = useState(() => Date.now());
+  const daysUntilDeadline = getDaysUntilDate(form.deadline, deadlineReferenceTime);
 
   useEffect(() => {
     (async () => {
@@ -1794,13 +2454,6 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
   const filledFields = [form.opportunityType, form.title, form.amount, form.deadline, form.description].filter(Boolean).length;
   const progress = Math.round((filledFields / 5) * 100);
 
-  const SectionNum = ({ n }: { n: number }) => (
-    <div className="flex items-center gap-3 mb-1">
-      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-        style={{ background: `rgba(${GOLD_RGB},0.15)`, color: GOLD }}>{n}</div>
-    </div>
-  );
-
   return (
     <>
       <div className="flex items-center justify-between mb-5 gap-3">
@@ -1839,7 +2492,7 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
           <div className="p-6" style={{ background: "rgba(2,6,23,0.5)" }}>
 
             {/* Section 1: Opportunity Type */}
-            <SectionNum n={1} />
+            <SectionNumberBadge n={1} accentColor={GOLD} accentRgb={GOLD_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">What type of opportunity?</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>Select the category that best describes this funding</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8 ml-10">
@@ -1861,7 +2514,7 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
             </div>
 
             {/* Section 2: Scholarship Details */}
-            <SectionNum n={2} />
+            <SectionNumberBadge n={2} accentColor={GOLD} accentRgb={GOLD_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">Scholarship Details</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>Help students find the right fit</p>
             <div className="ml-10 mb-8">
@@ -1921,7 +2574,7 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
             </div>
 
             {/* Section 3: Award Details */}
-            <SectionNum n={3} />
+            <SectionNumberBadge n={3} accentColor={GOLD} accentRgb={GOLD_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">Award Details</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>The funding details</p>
             <div className="ml-10 mb-8">
@@ -1962,7 +2615,7 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
             </div>
 
             {/* Section 4: Eligibility & How to Apply */}
-            <SectionNum n={4} />
+            <SectionNumberBadge n={4} accentColor={GOLD} accentRgb={GOLD_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">Eligibility & Application</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>Requirements and instructions</p>
             <div className="ml-10 mb-8">
@@ -1989,7 +2642,7 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
             </div>
 
             {/* Section 5: Location & Contact */}
-            <SectionNum n={5} />
+            <SectionNumberBadge n={5} accentColor={GOLD} accentRgb={GOLD_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">Location & Contact</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>For applicant inquiries</p>
             <div className="ml-10 mb-8">
@@ -2019,13 +2672,21 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
 
 
             {/* Section 6: Poster / Image */}
-            <SectionNum n={6} />
+            <SectionNumberBadge n={6} accentColor={GOLD} accentRgb={GOLD_RGB} />
             <h4 className="text-base font-bold text-text mb-1 ml-10">Poster / Image</h4>
             <p style={{ ...helpSt, marginLeft: 40 }}>Upload a promotional image (optional)</p>
             <div className="ml-10 mb-8">
               {form.posterUrl ? (
                 <div className="relative rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)", maxWidth: 400 }}>
-                  <img src={form.posterUrl} alt="Scholarship poster" className="w-full h-auto rounded-xl" style={{ maxHeight: 300, objectFit: "cover" }} />
+                  <Image
+                    src={form.posterUrl}
+                    alt="Scholarship poster"
+                    width={1200}
+                    height={900}
+                    className="w-full h-auto rounded-xl"
+                    sizes="(max-width: 768px) 100vw, 400px"
+                    style={{ maxHeight: 300, objectFit: "cover" }}
+                  />
                   <button type="button" onClick={() => setForm(p => ({ ...p, posterUrl: "" }))}
                     className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer"
                     style={{ background: "rgba(0,0,0,0.7)", color: "#fff", border: "none" }}>✕</button>
@@ -2119,7 +2780,7 @@ function ScholarshipsTab({ orgId, getToken }: { orgId: string; getToken: () => P
       ) : !showForm ? (
         <div className="flex flex-col gap-2 mt-4">
           {scholarships.map((s) => {
-            const days = s.deadline ? Math.ceil((new Date(s.deadline).getTime() - Date.now()) / 86400000) : null;
+            const days = getDaysUntilDate(s.deadline, deadlineReferenceTime);
             return (
               <DashCard key={s.id}>
                 <div className="flex items-center gap-4">
@@ -2210,7 +2871,7 @@ function TalentSearchTab() {
 /* ═══════════════════════════════════════════════════════════
    TEAM TAB
    ═══════════════════════════════════════════════════════════ */
-function TeamTab({ orgId, getToken }: { orgId: string; getToken: () => Promise<string> }) {
+function TeamTab() {
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("editor");
@@ -2310,6 +2971,7 @@ function TemplatesTab() {
 /* ═══════════════════════════════════════════════════════════
    PLACEHOLDER TAB
    ═══════════════════════════════════════════════════════════ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PlaceholderTab({ title, desc, icon }: { title: string; desc: string; icon: string }) {
   const iconMap: Record<string, React.ReactNode> = {
     clipboard: <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />,

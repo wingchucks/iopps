@@ -9,6 +9,7 @@ import Button from "@/components/Button";
 import Badge from "@/components/Badge";
 import type { FeaturedJobSummary } from "@/components/FeaturedJobControl";
 import { useAuth } from "@/lib/auth-context";
+import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 
 interface EmployerData {
   plan?: string;
@@ -27,22 +28,22 @@ interface EmployerData {
 
 const PLAN_FEATURES: Record<string, { label: string; features: string[]; color: string; jobLimit: string }> = {
   standard: {
-    label: "Standard",
+    label: SUBSCRIPTION_PLANS.tier1.title,
     color: "var(--teal)",
-    jobLimit: "15 job postings",
-    features: ["15 job postings/year", "Basic analytics", "Employer profile", "Community feed access"],
+    jobLimit: SUBSCRIPTION_PLANS.tier1.jobLimit,
+    features: SUBSCRIPTION_PLANS.tier1.features,
   },
   premium: {
-    label: "Premium",
+    label: SUBSCRIPTION_PLANS.tier2.title,
     color: "var(--gold)",
-    jobLimit: "Unlimited job postings",
-    features: ["Unlimited job postings", "4 featured job slots", "Talent search", "Advanced analytics", "Priority support", "Premium Partner badge"],
+    jobLimit: SUBSCRIPTION_PLANS.tier2.jobLimit,
+    features: SUBSCRIPTION_PLANS.tier2.features,
   },
   school: {
-    label: "School",
+    label: SUBSCRIPTION_PLANS.tier3.title,
     color: "#8B5CF6",
-    jobLimit: "Unlimited jobs + programs",
-    features: ["Unlimited job postings", "20 program listings", "6 featured slots", "Education Partner badge", "Student pipeline tools"],
+    jobLimit: SUBSCRIPTION_PLANS.tier3.jobLimit,
+    features: SUBSCRIPTION_PLANS.tier3.features,
   },
   free: {
     label: "Free",
@@ -196,9 +197,9 @@ function BillingContent() {
       <h2 className="text-lg font-bold text-text mb-4">Available Plans</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
-          { key: "tier1", name: "Standard", price: "$1,250/yr", desc: "15 job postings, basic analytics", highlight: false },
-          { key: "tier2", name: "Premium", price: "$2,500/yr", desc: "Unlimited jobs, talent search, featured", highlight: true },
-          { key: "tier3", name: "School", price: "$5,500/yr", desc: "Programs, 20 listings, education tools", highlight: false },
+          { key: "tier1", name: SUBSCRIPTION_PLANS.tier1.title, price: `${SUBSCRIPTION_PLANS.tier1.priceLabel}${SUBSCRIPTION_PLANS.tier1.periodLabel}`, desc: SUBSCRIPTION_PLANS.tier1.shortDescription, highlight: false },
+          { key: "tier2", name: SUBSCRIPTION_PLANS.tier2.title, price: `${SUBSCRIPTION_PLANS.tier2.priceLabel}${SUBSCRIPTION_PLANS.tier2.periodLabel}`, desc: SUBSCRIPTION_PLANS.tier2.shortDescription, highlight: true },
+          { key: "tier3", name: SUBSCRIPTION_PLANS.tier3.title, price: `${SUBSCRIPTION_PLANS.tier3.priceLabel}${SUBSCRIPTION_PLANS.tier3.periodLabel}`, desc: SUBSCRIPTION_PLANS.tier3.shortDescription, highlight: false },
         ].map((p) => (
           <Card key={p.key} className={p.highlight ? "ring-2 ring-teal" : ""}>
             <div className="p-4 text-center">
@@ -222,9 +223,9 @@ function BillingContent() {
         <div className="p-5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { key: "standard-post", name: "Standard Job Post", price: "$125", desc: "45 days, standard listing" },
-              { key: "featured-post", name: "Featured Job Post", price: "$200", desc: "45 days, pinned at top" },
-              { key: "program-post", name: "Program Post", price: "$50", desc: "List a training program" },
+              { key: "standard-post", name: ONE_TIME_PLANS["standard-post"].title, price: ONE_TIME_PLANS["standard-post"].priceLabel, desc: ONE_TIME_PLANS["standard-post"].shortDescription },
+              { key: "featured-post", name: ONE_TIME_PLANS["featured-post"].title, price: ONE_TIME_PLANS["featured-post"].priceLabel, desc: ONE_TIME_PLANS["featured-post"].shortDescription },
+              { key: "program-post", name: ONE_TIME_PLANS["program-post"].title, price: ONE_TIME_PLANS["program-post"].priceLabel, desc: ONE_TIME_PLANS["program-post"].shortDescription },
             ].map((p) => (
               <div key={p.key} className="flex flex-col gap-1">
                 <p className="font-bold text-text text-sm">{p.name}</p>

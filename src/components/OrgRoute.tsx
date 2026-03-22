@@ -17,6 +17,19 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
   const [authorized, setAuthorized] = useState(false);
   const [profile, setProfile] = useState<MemberProfile | null>(null);
 
+  const buildOnboardingRedirect = (missingFields?: unknown) => {
+    const params = new URLSearchParams({ reason: "incomplete-profile" });
+    if (Array.isArray(missingFields) && missingFields.length > 0) {
+      params.set(
+        "required",
+        missingFields
+          .filter((field): field is string => typeof field === "string" && field.trim().length > 0)
+          .join(",")
+      );
+    }
+    return `/org/onboarding?${params.toString()}`;
+  };
+
   useEffect(() => {
     if (loading) return;
 
@@ -37,6 +50,13 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
           const data = await res.json();
           if (data.authorized && data.profile) {
             const memberProfile = data.profile as MemberProfile;
+            const organizationType = data.organizationType as string | undefined;
+            const profileReady = data.profileReady !== false;
+
+            if (organizationType !== "school" && !profileReady) {
+              router.replace(buildOnboardingRedirect(data.missingProfileFields));
+              return;
+            }
 
             if (requiredRole) {
               const role = memberProfile.orgRole;

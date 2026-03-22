@@ -364,7 +364,7 @@ function PremiumSpotlightCard({ org }: { org: Organization }) {
         <div style={{ padding: 20 }}>
           <div className="flex gap-4 items-start mb-3">
             <Avatar
-              name={org.shortName}
+              name={org.shortName || org.name}
               size={56}
               src={org.logoUrl}
               gradient="linear-gradient(135deg, var(--gold), var(--navy))"
@@ -421,7 +421,7 @@ function OrgCard({ org }: { org: Organization }) {
         <div style={{ padding: 20 }}>
           <div className="flex gap-3 items-start mb-3">
             <Avatar
-              name={org.shortName}
+              name={org.shortName || org.name}
               size={48}
               src={org.logoUrl}
               gradient={isSchool ? "linear-gradient(135deg, var(--teal), var(--blue))" : undefined}

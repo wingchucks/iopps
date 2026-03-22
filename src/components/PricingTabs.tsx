@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Card from "@/components/Card";
+import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 
 const tabs = ["Promotion Plans", "Pay Per Post", "Conferences", "Businesses"] as const;
 type Tab = (typeof tabs)[number];
@@ -210,30 +211,30 @@ export default function PricingTabs({
       {activeTab === "Promotion Plans" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <PlanCard
-            title="Visibility Boost"
-            price="$1,250"
-            period="/year"
-            features={["15 job posts per year", "Business profile promotion", "Basic analytics", "Standard directory visibility"]}
+            title={SUBSCRIPTION_PLANS.tier1.title}
+            price={SUBSCRIPTION_PLANS.tier1.priceLabel}
+            period={SUBSCRIPTION_PLANS.tier1.periodLabel}
+            features={SUBSCRIPTION_PLANS.tier1.features}
             cta={subCta}
             href={subHref("tier1")}
             current={currentPlan === "tier1"}
           />
           <PlanCard
-            title="Featured Employer"
-            price="$2,500"
-            period="/year"
-            badge="Most Popular"
+            title={SUBSCRIPTION_PLANS.tier2.title}
+            price={SUBSCRIPTION_PLANS.tier2.priceLabel}
+            period={SUBSCRIPTION_PLANS.tier2.periodLabel}
+            badge={SUBSCRIPTION_PLANS.tier2.badge}
             gold
-            features={["Unlimited job posts", "Featured business placement", "Talent search access", "Advanced analytics dashboard", "Priority support"]}
+            features={SUBSCRIPTION_PLANS.tier2.features}
             cta={subCta}
             href={subHref("tier2")}
             current={currentPlan === "tier2"}
           />
           <PlanCard
-            title="School Growth"
-            price="$5,500"
-            period="/year"
-            features={["20 program listings", "Unlimited job posts", "6 featured listings", "Dedicated account manager", "Custom branding"]}
+            title={SUBSCRIPTION_PLANS.tier3.title}
+            price={SUBSCRIPTION_PLANS.tier3.priceLabel}
+            period={SUBSCRIPTION_PLANS.tier3.periodLabel}
+            features={SUBSCRIPTION_PLANS.tier3.features}
             cta={subCta}
             href={subHref("tier3")}
             current={currentPlan === "tier3"}
@@ -242,30 +243,30 @@ export default function PricingTabs({
       )}
 
       {activeTab === "Pay Per Post" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           <PlanCard
-            title="Standard Job Post"
-            price="$125"
-            period="/post"
-            features={["45-day listing", "Basic visibility", "Application tracking"]}
+            title={ONE_TIME_PLANS["standard-post"].title}
+            price={ONE_TIME_PLANS["standard-post"].priceLabel}
+            period={ONE_TIME_PLANS["standard-post"].periodLabel}
+            features={ONE_TIME_PLANS["standard-post"].features}
             cta={postCta}
             href={postHref("standard-post")}
           />
           <PlanCard
-            title="Featured Job Post"
-            price="$200"
-            period="/post"
-            badge="Best Value"
+            title={ONE_TIME_PLANS["featured-post"].title}
+            price={ONE_TIME_PLANS["featured-post"].priceLabel}
+            period={ONE_TIME_PLANS["featured-post"].periodLabel}
+            badge={ONE_TIME_PLANS["featured-post"].badge}
             gold
-            features={["45-day listing", "Homepage featured placement", "Highlighted in search", "Priority in feed"]}
+            features={ONE_TIME_PLANS["featured-post"].features}
             cta={postCta}
             href={postHref("featured-post")}
           />
           <PlanCard
-            title="Program Post"
-            price="$50"
-            period="/post"
-            features={["45-day listing", "Program directory placement", "Application tracking"]}
+            title={ONE_TIME_PLANS["program-post"].title}
+            price={ONE_TIME_PLANS["program-post"].priceLabel}
+            period={ONE_TIME_PLANS["program-post"].periodLabel}
+            features={ONE_TIME_PLANS["program-post"].features}
             cta={postCta}
             href={postHref("program-post")}
           />

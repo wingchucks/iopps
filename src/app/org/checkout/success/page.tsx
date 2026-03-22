@@ -6,14 +6,21 @@ import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
+import { getPlanById, isSubscriptionPlanId } from "@/lib/pricing";
 
 export default function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session_id?: string }>;
+  searchParams: Promise<{ session_id?: string; plan?: string }>;
 }) {
   const params = use(searchParams);
   const router = useRouter();
+  const plan = getPlanById(params.plan);
+  const isSubscription = isSubscriptionPlanId(params.plan);
+  const successTitle = isSubscription ? "Payment Successful!" : "Purchase Successful!";
+  const successMessage = isSubscription
+    ? "Your subscription has been activated. You'll receive a confirmation email shortly."
+    : `${plan?.title || "Your purchase"} has been added to your account and is ready to use.`;
 
   return (
     <ProtectedRoute>
@@ -39,12 +46,9 @@ export default function CheckoutSuccessPage({
                 </svg>
               </div>
 
-              <h1 className="text-2xl font-bold text-text mb-2">
-                Payment Successful!
-              </h1>
+              <h1 className="text-2xl font-bold text-text mb-2">{successTitle}</h1>
               <p className="text-sm text-text-sec mb-6">
-                Your subscription has been activated. You&apos;ll receive a
-                confirmation email shortly.
+                {successMessage}
               </p>
 
               {params.session_id && (

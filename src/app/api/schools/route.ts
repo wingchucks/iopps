@@ -8,6 +8,7 @@ import {
   serialize,
   type JsonRecord,
 } from "@/lib/server/public-ownership";
+import { isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +39,7 @@ export async function GET() {
       })
       .map((doc) => serialize({ id: doc.id, ...doc.data() }) as JsonRecord)
       .filter((school) => deriveOwnerType(school) === "school")
+      .filter((school) => isSchoolPubliclyVisible(school))
       .map((school) => {
         const schoolId = text(school.id);
         const schoolName = text(school.name);

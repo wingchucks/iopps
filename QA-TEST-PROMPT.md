@@ -203,7 +203,7 @@
 ### Test 7.1: Header Navigation Links
 - [ ] **Feed** → navigates to `/discover`
 - [ ] **Careers** → navigates to `/careers`
-- [ ] **Directory** → navigates to `/organizations`
+- [ ] **Directory** → navigates to `/businesses`
 - [ ] **Education** → navigates to `/education`
 - [ ] **Conferences** → navigates to `/conferences`
 - [ ] **Connect** → navigates to `/community`
@@ -488,27 +488,27 @@
 
 ---
 
-## 17. Organizations Directory
+## 17. Businesses Directory
 
 ### Test 17.1: Directory Listing
-- [ ] Navigate to `/organizations`
-- [ ] Subtitle: "Discover organizations committed to Indigenous employment..."
-- [ ] Organization cards load with logo, name, industry, location, company size
-- [ ] "Approved" badge visible on verified organizations
+- [ ] Navigate to `/businesses`
+- [ ] Subtitle communicates employers, organizations, and partner businesses
+- [ ] Business cards load with logo, name, summary, location, and trust signals
+- [ ] Verified and partner badges render when present
 
 ### Test 17.2: Directory Filters
-- [ ] **Industry filter** — select an industry → results filter
-- [ ] **Location filter** — select a province → results filter
-- [ ] **Company size filter** — select a size → results filter
+- [ ] **Partners filter** — shows partner businesses only
+- [ ] **Verified filter** — shows verified businesses only
+- [ ] **Indigenous filter** — shows businesses with Indigenous identity signals only
 - [ ] Clear filters → shows all results
-- [ ] Sort options work (relevance, newest, most active)
+- [ ] Search matches name, story, tags, services, and location
 
 ### Test 17.3: Organization Profile
-- [ ] Click an organization → `/organizations/[slug]`
-- [ ] Profile renders: banner, logo, name, description, social links
-- [ ] "About" / company story section displays
+- [ ] Click a business → `/org/[slug]`
+- [ ] Profile renders: banner, logo, name, tagline, social links
+- [ ] Story section displays before opportunities
 - [ ] Active jobs listed (if any)
-- [ ] Team members displayed (if public)
+- [ ] Proof strip renders trust signals such as verified, partner, location, or Nation context
 - [ ] Contact information visible
 - [ ] TRC alignment statement visible (if provided)
 
@@ -1366,7 +1366,7 @@
 ### Test 51.4: Expired/Invalid Content
 - [ ] Navigate to `/careers/invalid-job-id` → graceful error (not crash)
 - [ ] Navigate to `/education/scholarships/invalid-id` → graceful error
-- [ ] Navigate to `/organizations/invalid-slug` → graceful error
+- [ ] Navigate to `/org/invalid-slug` → graceful error
 
 ### Test 51.5: Console Error Check
 - [ ] Review browser console across all tested pages

@@ -1,10 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { cn } from "@/lib/utils";
+import {
+  AdminEmptyState,
+  AdminFilterBar,
+  AdminFilterTabs,
+  AdminPageHeader,
+  AdminSearchField,
+  AdminSelectField,
+  AdminStatGrid,
+  type AdminFilterOption,
+} from "@/components/admin";
 import { formatDate } from "@/lib/format-date";
+import { cn } from "@/lib/utils";
 
 interface Report {
   id: string;
@@ -18,23 +28,23 @@ interface Report {
   createdAt?: string;
 }
 
-const SEVERITY_STYLES: Record<string, string> = {
-  high: "bg-red-500/10 text-red-400",
-  medium: "bg-yellow-500/10 text-yellow-400",
-  low: "bg-gray-500/10 text-gray-400",
+const STATUS_TABS: AdminFilterOption[] = [
+  { label: "All", value: "all" },
+  { label: "Pending", value: "pending" },
+  { label: "Resolved", value: "resolved" },
+];
+
+const severityStyles: Record<string, string> = {
+  high: "bg-error/10 text-error",
+  medium: "bg-warning/10 text-warning",
+  low: "bg-[var(--muted)] text-[var(--text-secondary)]",
 };
-
-const STATUS_TABS = ["all", "pending", "resolved"] as const;
-
-function SearchIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-  );
-}
 
 function ShieldIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
   );
 }
 
@@ -42,20 +52,20 @@ export default function ModerationPage() {
   const { user } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<(typeof STATUS_TABS)[number]>("all");
+  const [tab, setTab] = useState("all");
   const [search, setSearch] = useState("");
+  const [severityFilter, setSeverityFilter] = useState("all");
 
   useEffect(() => {
-    if (!user) return;
+    const currentUser = user;
+    if (!currentUser) return;
     let cancelled = false;
 
     async function load() {
       setLoading(true);
       try {
-        const token = await user!.getIdToken();
-        const params = new URLSearchParams();
-        if (tab !== "all") params.set("status", tab);
-        const res = await fetch(`/api/admin/moderation?${params}`, {
+        const token = await currentUser!.getIdToken();
+        const res = await fetch("/api/admin/moderation", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed");
@@ -69,132 +79,213 @@ export default function ModerationPage() {
     }
 
     load();
-    return () => { cancelled = true; };
-  }, [user, tab]);
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
-  // Sort: cultural_concern to top, then by date
-  const sorted = [...reports]
-    .filter((r) => {
-      if (!search) return true;
-      const s = search.toLowerCase();
-      return (
-        r.reporterName?.toLowerCase().includes(s) ||
-        r.description?.toLowerCase().includes(s) ||
-        r.category?.toLowerCase().includes(s)
-      );
-    })
-    .sort((a, b) => {
-      const aCultural = a.category === "cultural_concern" ? 0 : 1;
-      const bCultural = b.category === "cultural_concern" ? 0 : 1;
-      if (aCultural !== bCultural) return aCultural - bCultural;
-      return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
-    });
+  const queueCounts = useMemo(() => {
+    return reports.reduce(
+      (acc, report) => {
+        const severity = (report.severity || "low").toLowerCase();
+        const status = (report.status || "pending").toLowerCase();
+        if (status === "pending") acc.pending += 1;
+        if (status === "resolved") acc.resolved += 1;
+        if (severity === "high") acc.high += 1;
+        if ((report.category || "").toLowerCase() === "cultural_concern") acc.cultural += 1;
+        return acc;
+      },
+      { pending: 0, resolved: 0, high: 0, cultural: 0 },
+    );
+  }, [reports]);
+
+  const filteredReports = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return [...reports]
+      .filter((report) => {
+        const status = (report.status || "pending").toLowerCase();
+        const severity = (report.severity || "low").toLowerCase();
+
+        if (tab !== "all" && status !== tab) return false;
+        if (severityFilter !== "all" && severity !== severityFilter) return false;
+        if (!normalizedSearch) return true;
+
+        return [
+          report.reporterName,
+          report.reporter,
+          report.description,
+          report.category,
+          report.subjectType,
+        ]
+          .filter((value): value is string => Boolean(value))
+          .some((value) => value.toLowerCase().includes(normalizedSearch));
+      })
+      .sort((a, b) => {
+        const aCultural = (a.category || "").toLowerCase() === "cultural_concern" ? 0 : 1;
+        const bCultural = (b.category || "").toLowerCase() === "cultural_concern" ? 0 : 1;
+        if (aCultural !== bCultural) return aCultural - bCultural;
+        return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+      });
+  }, [reports, search, severityFilter, tab]);
+
+  const tabOptions = useMemo(
+    () =>
+      STATUS_TABS.map((option) => ({
+        ...option,
+        count:
+          option.value === "all"
+            ? reports.length
+            : reports.filter((report) => (report.status || "pending").toLowerCase() === option.value).length,
+      })),
+    [reports],
+  );
+
+  const severityOptions: AdminFilterOption[] = [
+    { label: "All severities", value: "all" },
+    { label: "High", value: "high" },
+    { label: "Medium", value: "medium" },
+    { label: "Low", value: "low" },
+  ];
+
+  const statItems = [
+    {
+      label: "Pending reports",
+      value: queueCounts.pending,
+      helper: "Still waiting on moderation action",
+      tone: "warning" as const,
+      icon: <ShieldIcon />,
+    },
+    {
+      label: "High severity",
+      value: queueCounts.high,
+      helper: "Needs fast admin review",
+      tone: "danger" as const,
+      icon: <ShieldIcon />,
+    },
+    {
+      label: "Cultural concerns",
+      value: queueCounts.cultural,
+      helper: "Prioritized to the top of the queue",
+      tone: "info" as const,
+      icon: <ShieldIcon />,
+    },
+    {
+      label: "Resolved",
+      value: queueCounts.resolved,
+      helper: "Handled and closed reports",
+      tone: "success" as const,
+      icon: <ShieldIcon />,
+    },
+  ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="animate-fade-in">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent">
-            <ShieldIcon />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Moderation Queue</h1>
-            <p className="text-sm text-[var(--text-secondary)]">Review and resolve reported content and risk flags</p>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <AdminPageHeader
+        eyebrow="Content"
+        title="Moderation Queue"
+        description="Review reported content, prioritize cultural concerns, and work from the highest-risk issues down without losing the surrounding context."
+      />
+
+      <AdminStatGrid items={statItems} />
+
+      <AdminFilterBar>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <AdminFilterTabs options={tabOptions} value={tab} onChange={setTab} />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center xl:w-[28rem]">
+            <AdminSelectField
+              value={severityFilter}
+              onChange={setSeverityFilter}
+              options={severityOptions}
+              ariaLabel="Filter by report severity"
+            />
+            <AdminSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Search reporter, category, or report text"
+            />
           </div>
         </div>
-      </div>
+      </AdminFilterBar>
 
-      {/* Tabs + Search */}
-      <div className="animate-fade-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-1 rounded-xl bg-[var(--input-bg)] p-1">
-          {STATUS_TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cn(
-                "rounded-lg px-4 py-2 text-sm font-medium capitalize transition-colors",
-                tab === t
-                  ? "bg-accent text-white"
-                  : "text-[var(--text-muted)] hover:text-foreground"
-              )}
-            >
-              {t}
-            </button>
+      {loading ? (
+        <div className="grid gap-3">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-32 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] skeleton" />
           ))}
         </div>
-        <div className="relative">
-          <SearchIcon />
-          <input
-            type="text"
-            placeholder="Search reports..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] py-2 pl-9 pr-4 text-sm text-foreground placeholder:text-[var(--text-muted)] focus:border-[var(--input-focus)] focus:outline-none sm:w-64 [&~svg]:absolute [&~svg]:left-3 [&~svg]:top-1/2 [&~svg]:-translate-y-1/2"
-            style={{ paddingLeft: "2.25rem" }}
-          />
-          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
-            <SearchIcon />
-          </div>
-        </div>
-      </div>
+      ) : filteredReports.length === 0 ? (
+        <AdminEmptyState
+          title="No reports in this queue"
+          description="There are no moderation reports matching the current filters."
+        />
+      ) : (
+        <div className="space-y-3">
+          {filteredReports.map((report) => {
+            const severity = (report.severity || "low").toLowerCase();
+            const status = (report.status || "pending").toLowerCase();
+            const isCulturalConcern = (report.category || "").toLowerCase() === "cultural_concern";
 
-      {/* Reports List */}
-      <div className="space-y-3">
-        {loading ? (
-          <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-8 text-center text-sm text-[var(--text-muted)]">Loading...</div>
-        ) : sorted.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[var(--card-border)] bg-[var(--card-bg)] p-8 text-center text-sm text-[var(--text-muted)]">No reports found</div>
-        ) : (
-          sorted.map((report, i) => (
-            <Link
-              key={report.id}
-              href={`/admin/moderation/${report.id}`}
-              className="animate-fade-up block rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4 transition-all hover:border-accent/40"
-              style={{ animationDelay: `${i * 50}ms` }}
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  {report.category === "cultural_concern" && (
-                    <span className="text-lg" title="Cultural concern — priority">🪶</span>
-                  )}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-foreground truncate">
-                        {report.reporterName || report.reporter || "Anonymous"}
+            return (
+              <Link
+                key={report.id}
+                href={`/admin/moderation/${report.id}`}
+                className="block rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4 transition-colors hover:border-[var(--card-border-hover)]"
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isCulturalConcern && (
+                        <span className="rounded-full bg-info/10 px-2.5 py-1 text-xs font-medium text-info">
+                          Cultural concern
+                        </span>
+                      )}
+                      <span className="rounded-full bg-[var(--muted)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] capitalize">
+                        {(report.subjectType || "content").replace(/_/g, " ")}
                       </span>
-                      <span className="rounded-full bg-[var(--input-bg)] px-2 py-0.5 text-xs text-[var(--text-muted)] capitalize">
-                        {report.subjectType || "content"}
-                      </span>
-                      <span className="rounded-full bg-[var(--input-bg)] px-2 py-0.5 text-xs text-[var(--text-muted)] capitalize">
-                        {report.category?.replace(/_/g, " ") || "other"}
+                      <span className="rounded-full bg-[var(--muted)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] capitalize">
+                        {(report.category || "other").replace(/_/g, " ")}
                       </span>
                     </div>
-                    {report.description && (
-                      <p className="mt-1 text-sm text-[var(--text-muted)] truncate">{report.description}</p>
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        {report.reporterName || report.reporter || "Anonymous reporter"}
+                      </p>
+                      {report.description && (
+                        <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                          {report.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium capitalize", severityStyles[severity] || severityStyles.low)}>
+                      {severity}
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-1 text-xs font-medium capitalize",
+                        status === "resolved"
+                          ? "bg-success/10 text-success"
+                          : "bg-warning/10 text-warning",
+                      )}
+                    >
+                      {status}
+                    </span>
+                    {report.createdAt && (
+                      <span className="text-xs text-[var(--text-muted)]">
+                        {formatDate(report.createdAt)}
+                      </span>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium capitalize", SEVERITY_STYLES[report.severity || "low"])}>
-                    {report.severity || "low"}
-                  </span>
-                  <span className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                    report.status === "resolved" ? "bg-green-500/10 text-green-400" : "bg-orange-500/10 text-orange-400"
-                  )}>
-                    {report.status || "pending"}
-                  </span>
-                  {report.createdAt && (
-                    <span className="text-xs text-[var(--text-muted)] hidden sm:inline">
-                      {formatDate(report.createdAt)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))
-        )}
-      </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

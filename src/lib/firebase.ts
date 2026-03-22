@@ -1,7 +1,7 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
+import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
 
 const firebaseConfig = {
@@ -15,6 +15,7 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 let appCheckInstance: AppCheck | null = null;
+const useEmulators = process.env.NEXT_PUBLIC_USE_EMULATORS === "true";
 
 // Initialize Firebase App Check with reCAPTCHA Enterprise (client-side only)
 if (typeof window !== "undefined") {
@@ -37,6 +38,31 @@ if (typeof window !== "undefined") {
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+if (typeof window !== "undefined" && useEmulators) {
+  const emulatorHost =
+    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "127.0.0.1"
+      : window.location.hostname;
+
+  try {
+    connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: true });
+  } catch {
+    // Auth emulator may already be connected during HMR.
+  }
+
+  try {
+    connectFirestoreEmulator(db, emulatorHost, 8080);
+  } catch {
+    // Firestore emulator may already be connected during HMR.
+  }
+
+  try {
+    connectStorageEmulator(storage, emulatorHost, 9199);
+  } catch {
+    // Storage emulator may already be connected during HMR.
+  }
+}
 
 export async function getAppCheckTokenValue(forceRefresh = false): Promise<string | null> {
   if (typeof window === "undefined") return null;

@@ -7,6 +7,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
+import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS, getPlanById, type BillingPlanId } from "@/lib/pricing";
 
 /* ── Plan configuration ── */
 interface PlanConfig {
@@ -16,13 +17,13 @@ interface PlanConfig {
   period: string;
 }
 
-const plans: Record<string, PlanConfig> = {
-  tier1: { name: "Standard", price: 1250, billingCycle: "annual", period: "/year" },
-  tier2: { name: "Premium", price: 2500, billingCycle: "annual", period: "/year" },
-  tier3: { name: "School", price: 5500, billingCycle: "annual", period: "/year" },
-  "standard-post": { name: "Standard Job Post", price: 125, billingCycle: "one-time", period: "/post" },
-  "featured-post": { name: "Featured Job Post", price: 200, billingCycle: "one-time", period: "/post" },
-  "program-post": { name: "Program Post", price: 50, billingCycle: "one-time", period: "/post" },
+const plans: Record<BillingPlanId, PlanConfig> = {
+  tier1: { name: SUBSCRIPTION_PLANS.tier1.title, price: SUBSCRIPTION_PLANS.tier1.amount, billingCycle: "annual", period: SUBSCRIPTION_PLANS.tier1.periodLabel },
+  tier2: { name: SUBSCRIPTION_PLANS.tier2.title, price: SUBSCRIPTION_PLANS.tier2.amount, billingCycle: "annual", period: SUBSCRIPTION_PLANS.tier2.periodLabel },
+  tier3: { name: SUBSCRIPTION_PLANS.tier3.title, price: SUBSCRIPTION_PLANS.tier3.amount, billingCycle: "annual", period: SUBSCRIPTION_PLANS.tier3.periodLabel },
+  "standard-post": { name: ONE_TIME_PLANS["standard-post"].title, price: ONE_TIME_PLANS["standard-post"].amount, billingCycle: "one-time", period: ONE_TIME_PLANS["standard-post"].periodLabel },
+  "featured-post": { name: ONE_TIME_PLANS["featured-post"].title, price: ONE_TIME_PLANS["featured-post"].amount, billingCycle: "one-time", period: ONE_TIME_PLANS["featured-post"].periodLabel },
+  "program-post": { name: ONE_TIME_PLANS["program-post"].title, price: ONE_TIME_PLANS["program-post"].amount, billingCycle: "one-time", period: ONE_TIME_PLANS["program-post"].periodLabel },
 };
 
 const GST_RATE = 0.05;
@@ -49,7 +50,9 @@ function CheckoutContent({ planKey }: { planKey: string }) {
   const router = useRouter();
   const { user } = useAuth();
 
-  const plan = plans[planKey] || plans.tier1;
+  const plan = getPlanById(planKey)
+    ? plans[planKey as BillingPlanId]
+    : plans.tier1;
   const gst = plan.price * GST_RATE;
   const total = plan.price + gst;
 

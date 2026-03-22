@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { sendSubscriptionConfirmation } from "@/lib/email";
 
+export const runtime = "nodejs";
+
 /* ── Plan ID → tier label mapping ── */
 const PLAN_TO_TIER: Record<string, string> = {
   tier1: "standard",
@@ -12,8 +14,14 @@ const PLAN_TO_TIER: Record<string, string> = {
 
 const ONE_TIME_POSTS = new Set(["standard-post", "featured-post", "program-post"]);
 
+function normalizeStripeSecret(value: string | undefined): string | null {
+  if (!value) return null;
+  const normalized = value.trim().replace(/\\r\\n/g, "");
+  return normalized || null;
+}
+
 function getStripe(): Stripe | null {
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = normalizeStripeSecret(process.env.STRIPE_SECRET_KEY);
   if (!key) return null;
   return new Stripe(key);
 }
@@ -24,7 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payment not configured" }, { status: 503 });
   }
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = normalizeStripeSecret(process.env.STRIPE_WEBHOOK_SECRET);
   if (!webhookSecret) {
     console.error("[stripe/webhook] STRIPE_WEBHOOK_SECRET not set");
     return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });
@@ -73,6 +81,7 @@ export async function POST(req: NextRequest) {
         billingCycle: isSubscription ? "annual" : "one-time",
         stripeSessionId: session.id,
         stripePaymentIntent: session.payment_intent,
+        kind: isSubscription ? "subscription" : "purchase",
         createdAt: now,
         expiresAt: isSubscription ? expiresAt : null,
       });

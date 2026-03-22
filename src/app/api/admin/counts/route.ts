@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
       powwowsSnap,
       contentFlagsSnap,
       verificationsPendingSnap,
+      unreadNotificationsSnap,
     ] = await Promise.all([
       adminDb.collection("users").count().get(),
       adminDb.collection("memberProfiles").count().get(),
@@ -64,6 +65,11 @@ export async function GET(request: NextRequest) {
         .where("status", "==", "pending")
         .count()
         .get(),
+      adminDb
+        .collection("adminNotifications")
+        .where("read", "==", false)
+        .count()
+        .get(),
     ]);
 
     const counts = {
@@ -85,6 +91,7 @@ export async function GET(request: NextRequest) {
       verificationRequests: {
         pending: verificationsPendingSnap.data().count,
       },
+      unreadNotifications: unreadNotificationsSnap.data().count,
     };
 
     return NextResponse.json({

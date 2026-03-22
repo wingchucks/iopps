@@ -126,7 +126,7 @@ export default function EducationPage() {
         {/* Browse all organizations link */}
         <div className="text-center mt-8">
           <Link
-            href="/organizations"
+            href="/businesses"
             className="text-sm font-semibold no-underline hover:underline"
             style={{ color: "var(--teal)" }}
           >
