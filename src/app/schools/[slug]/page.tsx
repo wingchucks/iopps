@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
+import { trackApplyIntent } from "@/lib/analytics/client";
 import { type Organization } from "@/lib/firestore/organizations";
 import { displayAmount, displayLocation } from "@/lib/utils";
 
@@ -171,6 +172,7 @@ function SchoolProfileContent() {
   const oppCounts = { programs: programs.length, careers: jobs.length, scholarships: scholarships.length };
   const oppColors = { programs: PURPLE, careers: TEAL, scholarships: GOLD };
   const oppLabels = { programs: "📚 Programs", careers: "💼 Careers", scholarships: "🎓 Scholarships" };
+  const handleApplyIntent = () => trackApplyIntent("school");
 
   return (
     <div className="max-w-[960px] mx-auto pb-16">
@@ -225,7 +227,13 @@ function SchoolProfileContent() {
             {/* Action Buttons */}
             <div className="flex gap-2 flex-wrap shrink-0">
               {applyUrl && (
-                <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+                <a
+                  href={applyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="no-underline"
+                  onClick={handleApplyIntent}
+                >
                   <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none text-white transition-all hover:-translate-y-0.5"
                     style={{ background: PURPLE, boxShadow: "0 0 16px rgba(167,139,250,0.3)" }}>
                     🎓 Apply Now
@@ -476,7 +484,13 @@ function SchoolProfileContent() {
               <p className="text-lg mb-1">🎓</p>
               <h3 className="text-base font-bold text-text mb-1.5">Start Your Journey</h3>
               <p className="text-xs text-text-muted mb-3">Begin your path to an exciting career with {org.shortName || org.name}.</p>
-              <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+              <a
+                href={applyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="no-underline"
+                onClick={handleApplyIntent}
+              >
                 <button className="w-full py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none text-white transition-all hover:-translate-y-0.5"
                   style={{ background: PURPLE }}>
                   Start Application →

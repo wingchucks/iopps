@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import TrackedMailtoLink from "@/components/TrackedMailtoLink";
 import ContactForm from "./ContactForm";
 
 export const metadata: Metadata = {
@@ -50,12 +51,13 @@ export default function ContactPage() {
               Have a question about IOPPS? Want to learn more about what we
               offer? Drop us a line.
             </p>
-            <a
+            <TrackedMailtoLink
+              category="general"
               href="mailto:info@iopps.ca"
               className="text-teal font-bold text-sm no-underline hover:underline"
             >
               info@iopps.ca
-            </a>
+            </TrackedMailtoLink>
           </div>
 
           {/* Partnerships */}
@@ -67,12 +69,13 @@ export default function ContactPage() {
               Interested in partnering with IOPPS to reach Indigenous
               communities? Let us know about your organization.
             </p>
-            <a
+            <TrackedMailtoLink
+              category="partnership"
               href="mailto:partnership@iopps.ca?subject=Partnership%20Inquiry"
               className="text-teal font-bold text-sm no-underline hover:underline"
             >
               partnership@iopps.ca
-            </a>
+            </TrackedMailtoLink>
           </div>
 
           {/* Support */}
@@ -84,12 +87,13 @@ export default function ContactPage() {
               Having trouble with your account or need help navigating the
               platform? We are here to help.
             </p>
-            <a
+            <TrackedMailtoLink
+              category="support"
               href="mailto:support@iopps.ca?subject=Support%20Request"
               className="text-teal font-bold text-sm no-underline hover:underline"
             >
               support@iopps.ca
-            </a>
+            </TrackedMailtoLink>
           </div>
 
           {/* Post a Listing */}

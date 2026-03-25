@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { trackOrganizationSignupCompleted } from "@/lib/analytics/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendEmployerWelcome, sendAdminNewSignup } from "@/lib/email";
 import { verifyAppCheckFromRequest } from "@/lib/server/app-check";
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
     businessIdentity?: "indigenous" | "non_indigenous" | "not_specified";
     website?: string;
     description?: string;
+    signupMethod?: "email" | "google";
     honeypot?: string;
     formStartedAt?: number | string;
   };
@@ -62,7 +64,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, type, contactName, contactEmail, businessIdentity = "not_specified" } = body;
+  const {
+    name,
+    type,
+    contactName,
+    contactEmail,
+    businessIdentity = "not_specified",
+  } = body;
+  const signupMethod = body.signupMethod === "google" ? "google" : "email";
   if (!name || !type || !contactName || !contactEmail) {
     return NextResponse.json({ error: "Missing required fields: name, type, contactName, contactEmail" }, { status: 400 });
   }
@@ -167,6 +176,7 @@ export async function POST(req: NextRequest) {
 
     // Set custom claims so auth token reflects employer role
     await adminAuth.setCustomUserClaims(uid, { role: "employer", employerId: uid });
+    await trackOrganizationSignupCompleted(signupMethod, req.headers);
 
     // Send welcome email (non-blocking)
     sendEmployerWelcome({ email: contactEmail, contactName, orgName: name }).catch(() => {});

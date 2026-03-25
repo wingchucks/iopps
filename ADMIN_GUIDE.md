@@ -173,13 +173,23 @@
 
 **Access Level**: Admin, Moderator
 
-### Metrics:
-- User growth over time
-- Job posting trends
-- Application conversion rates
-- Popular job categories
-- Geographic distribution
-- Employer activity
+### Source of Truth:
+- **Vercel Web Analytics** is the only traffic reporting source for v1
+- Use **production only**
+- Use a **rolling 30-day window**
+
+### What to quote to customers:
+- **Primary KPI**: Unique visitors
+- **Secondary KPI**: Pageviews
+- **Supporting events**: Partner interest, contact intent, apply intent, signup completed
+
+### Recommended wording:
+- "We had X unique visitors and Y pageviews in the last 30 days."
+
+### What `/admin/analytics` now does:
+- Defines the KPI terms the team should use
+- Links admins to the Vercel dashboard
+- Removes all placeholder analytics cards and fake charts
 
 ---
 

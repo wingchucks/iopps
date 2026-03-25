@@ -9,6 +9,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ShareButton from "@/components/ShareButton";
+import { trackApplyIntent } from "@/lib/analytics/client";
 import { displayAmount, displayLocation } from "@/lib/utils";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { hasApplied } from "@/lib/firestore/applications";
@@ -146,6 +147,12 @@ function JobDetailContent() {
   const requiresReferences = !!(job as unknown as Record<string, unknown>).requiresReferences;
   const salaryLabel = displayAmount(job.salary);
   const locationLabel = displayLocation(job.location);
+  const handleApplyIntent = () => trackApplyIntent("job");
+  const handleInternalApply = () => {
+    if (applied) return;
+    handleApplyIntent();
+    router.push(`/jobs/${slug}/apply`);
+  };
 
   return (
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
@@ -223,7 +230,13 @@ function JobDetailContent() {
               <p className="text-sm text-text-sec mb-4">
                 Full job details are available on the employer&apos;s career site.
               </p>
-              <a href={applicationUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+              <a
+                href={applicationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="no-underline"
+                onClick={handleApplyIntent}
+              >
                 <Button primary style={{ borderRadius: 12, padding: "12px 24px", fontSize: 15, fontWeight: 700 }}>
                   View Full Details &amp; Apply ↗
                 </Button>
@@ -280,7 +293,13 @@ function JobDetailContent() {
             <div style={{ padding: 20 }}>
               {/* Apply button */}
               {applicationUrl ? (
-                <a href={applicationUrl} target="_blank" rel="noopener noreferrer" className="block no-underline mb-3">
+                <a
+                  href={applicationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block no-underline mb-3"
+                  onClick={handleApplyIntent}
+                >
                   <Button
                     primary
                     full
@@ -293,7 +312,7 @@ function JobDetailContent() {
                 <Button
                   primary
                   full
-                  onClick={() => { if (!applied) router.push(`/jobs/${slug}/apply`); }}
+                  onClick={handleInternalApply}
                   style={{
                     background: applied ? "var(--green)" : "var(--teal)",
                     padding: "14px 24px",

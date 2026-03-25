@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import type { SignupCompletedMethod } from "@/lib/analytics/events";
 import { getAppCheckTokenValue } from "@/lib/firebase";
 import Button from "@/components/Button";
 
@@ -73,7 +74,11 @@ export default function OrgSignupPage() {
 
   if (authLoading || (user && !signingUpRef.current)) return null;
 
-  const createOrganizationProfile = async (idToken: string, contactEmailValue: string) => {
+  const createOrganizationProfile = async (
+    idToken: string,
+    contactEmailValue: string,
+    signupMethod: SignupCompletedMethod,
+  ) => {
     const appCheckToken = await getAppCheckTokenValue();
     const res = await fetch("/api/employer/signup", {
       method: "POST",
@@ -88,6 +93,7 @@ export default function OrgSignupPage() {
         businessIdentity: showBusinessIdentity ? businessIdentity : "not_specified",
         contactName,
         contactEmail: contactEmailValue,
+        signupMethod,
         honeypot: websiteTrap,
         formStartedAt: formStartedAtRef.current,
       }),
@@ -130,7 +136,7 @@ export default function OrgSignupPage() {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error("Failed to get user after signup");
       const idToken = await currentUser.getIdToken();
-      await createOrganizationProfile(idToken, email);
+      await createOrganizationProfile(idToken, email, "email");
 
       await currentUser.reload();
       router.push(currentUser.emailVerified ? "/org/onboarding" : "/verify-email?next=/org/onboarding");
@@ -224,7 +230,7 @@ export default function OrgSignupPage() {
                   throw new Error("Google account is missing an email address.");
                 }
                 const idToken = await cred.user.getIdToken();
-                await createOrganizationProfile(idToken, googleEmail);
+                await createOrganizationProfile(idToken, googleEmail, "google");
                 router.push("/org/onboarding");
               } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : "Something went wrong.";

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { ToastProvider } from "@/lib/toast-context";
@@ -85,6 +86,7 @@ export default function RootLayout({
                   <div id="main-content">
                     {children}
                   </div>
+                  <Analytics />
                 </AuthErrorBoundary>
               </OnboardingProvider>
             </ToastProvider>

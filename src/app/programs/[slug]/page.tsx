@@ -10,6 +10,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ShareButton from "@/components/ShareButton";
+import { trackApplyIntent } from "@/lib/analytics/client";
 import { getPost, getPosts, type Post } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
@@ -39,6 +40,7 @@ function ProgramDetailContent() {
   const [saved, setSaved] = useState(false);
   const [actionLoading, setActionLoading] = useState("");
   const { user } = useAuth();
+  const handleApplyIntent = () => trackApplyIntent("program");
 
   useEffect(() => {
     async function load() {
@@ -329,7 +331,13 @@ function ProgramDetailContent() {
                   </Button>
                 </a>
               ) : post.applicationUrl ? (
-                <a href={post.applicationUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+                <a
+                  href={post.applicationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="no-underline"
+                  onClick={handleApplyIntent}
+                >
                   <Button
                     primary
                     full

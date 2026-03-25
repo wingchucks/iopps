@@ -3,6 +3,8 @@
 import React, { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { trackSignupCompleted } from "@/lib/analytics/client";
+import type { SignupCompletedMethod } from "@/lib/analytics/events";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, getAppCheckTokenValue, storage } from "@/lib/firebase";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
@@ -53,6 +55,7 @@ export default function UnifiedSignupPage() {
   const [role, setRole] = useState<Role>("");
   const [websiteTrap, setWebsiteTrap] = useState("");
   const [orgType, setOrgType] = useState<OrgType>("");
+  const [signupMethod, setSignupMethod] = useState<SignupCompletedMethod>("email");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -120,6 +123,7 @@ export default function UnifiedSignupPage() {
     setSubmitting(true);
     try {
         await signUp(name, email, password);
+        setSignupMethod("email");
         try {
           const { getAuth } = await import("firebase/auth");
           const cu = getAuth().currentUser;
@@ -128,6 +132,9 @@ export default function UnifiedSignupPage() {
             await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn }) });
           }
         } catch { /* non-blocking */ }
+        if (role === "community") {
+          trackSignupCompleted("community", "email");
+        }
         goTo(3);
       }
     catch (err: unknown) { setError(err instanceof Error ? err.message : "Signup failed"); }
@@ -138,6 +145,7 @@ export default function UnifiedSignupPage() {
     setError(""); setSubmitting(true);
     try {
         const cred = await signInWithGoogle();
+        setSignupMethod("google");
         try {
           if (cred?.user) {
             const t = await cred.user.getIdToken();
@@ -147,6 +155,7 @@ export default function UnifiedSignupPage() {
         if (role === "organization") {
           goTo(orgType === "school" ? 4 : 10);
         } else {
+          trackSignupCompleted("community", "google");
           router.push("/setup");
         }
       }
@@ -234,6 +243,7 @@ export default function UnifiedSignupPage() {
           ...orgData,
           contactName: name || schoolName,
           contactEmail: email || user.email,
+          signupMethod,
           honeypot: websiteTrap,
           formStartedAt: formStartedAtRef.current,
         }),
@@ -280,6 +290,7 @@ export default function UnifiedSignupPage() {
           ...orgData,
           contactName: name || orgName,
           contactEmail: email || user.email,
+          signupMethod,
           honeypot: websiteTrap,
           formStartedAt: formStartedAtRef.current,
         }),

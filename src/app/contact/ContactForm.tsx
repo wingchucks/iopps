@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import Button from "@/components/Button";
+import { trackContactIntent } from "@/lib/analytics/client";
+import type { ContactIntentCategory } from "@/lib/analytics/events";
 
 const categories = [
   { value: "general", label: "General Inquiry" },
   { value: "partnership", label: "Partnership" },
   { value: "support", label: "Support" },
   { value: "listing", label: "Post a Listing" },
-];
+] as const;
 
-const emailMap: Record<string, string> = {
+const emailMap: Record<ContactIntentCategory, string> = {
   general: "info@iopps.ca",
   partnership: "partnership@iopps.ca",
   support: "support@iopps.ca",
@@ -20,19 +22,20 @@ const emailMap: Record<string, string> = {
 export default function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [category, setCategory] = useState("general");
+  const [category, setCategory] = useState<ContactIntentCategory>("general");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const to = emailMap[category] || "info@iopps.ca";
+    const to = emailMap[category];
     const subject = encodeURIComponent(
       `[IOPPS ${categories.find((c) => c.value === category)?.label}] from ${name}`
     );
     const body = encodeURIComponent(
       `Name: ${name}\nEmail: ${email}\nCategory: ${category}\n\n${message}`
     );
+    trackContactIntent(category);
     window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
     setSent(true);
   };
@@ -49,6 +52,7 @@ export default function ContactForm() {
           open, you can email us directly at{" "}
           <a
             href={`mailto:${emailMap[category]}`}
+            onClick={() => trackContactIntent(category)}
             className="text-teal font-semibold no-underline hover:underline"
           >
             {emailMap[category]}
@@ -101,7 +105,7 @@ export default function ContactForm() {
         </span>
         <select
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(e) => setCategory(e.target.value as ContactIntentCategory)}
           className="w-full px-4 py-3 rounded-xl border border-border bg-bg text-text text-sm outline-none cursor-pointer"
         >
           {categories.map((c) => (

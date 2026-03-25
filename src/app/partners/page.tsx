@@ -8,6 +8,7 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Link from "next/link";
 import type { Organization } from "@/lib/firestore/organizations";
+import { trackPartnerInterest } from "@/lib/analytics/client";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useAccountContext } from "@/lib/useAccountContext";
@@ -282,6 +283,11 @@ function PartnersContent() {
             <div className="flex justify-center gap-3">
               <Link href={partnerCta.href}>
                 <Button
+                  onClick={() => {
+                    if (!user) {
+                      trackPartnerInterest("partners_page");
+                    }
+                  }}
                   primary
                   style={{
                     background: "var(--gold)",

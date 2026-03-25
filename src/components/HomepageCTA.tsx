@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import Button from "@/components/Button";
+import { trackPartnerInterest } from "@/lib/analytics/client";
 import { useAuth } from "@/lib/auth-context";
 import { useAccountContext } from "@/lib/useAccountContext";
 
@@ -65,6 +66,7 @@ export function HeroCTA() {
 export function PartnerStripCTA() {
   const { user } = useAuth();
   const { hasOrg } = useAccountContext();
+  const shouldTrackPartnerInterest = !user;
 
   const cta = user
     ? hasOrg
@@ -79,6 +81,11 @@ export function PartnerStripCTA() {
       </Link>
       <Link href={cta.href}>
         <Button
+          onClick={() => {
+            if (shouldTrackPartnerInterest) {
+              trackPartnerInterest("partner_strip");
+            }
+          }}
           small
           primary
           style={{

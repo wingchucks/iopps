@@ -133,10 +133,12 @@ pm2 startup
 - [ ] Submit sitemap: https://iopps.ca/sitemap.xml
 - [ ] Request indexing for homepage
 
-#### Google Analytics (Optional)
-- [ ] Create GA4 property
-- [ ] Add measurement ID to environment variables
-- [ ] Verify tracking works
+#### Vercel Web Analytics
+- [x] Install `@vercel/analytics`
+- [ ] Enable Web Analytics in the Vercel project dashboard
+- [ ] If custom events are blocked by plan limits, upgrade the project to Pro
+- [ ] Verify pageviews appear in the Analytics dashboard
+- [ ] Verify custom events appear: `partner_interest`, `contact_intent`, `apply_intent`, `signup_completed`
 
 #### Social Media
 - [ ] Test OpenGraph tags (share on Facebook/Twitter)
@@ -174,6 +176,7 @@ pm2 startup
 - [ ] Monitor error logs daily
 - [ ] Check Firebase usage/quota
 - [ ] Verify Stripe payments processing correctly
+- [ ] Check Vercel Analytics for live pageviews and custom events
 - [ ] Respond to user feedback
 - [ ] Fix any critical bugs immediately
 
@@ -181,6 +184,7 @@ pm2 startup
 - [ ] Set up uptime monitoring (e.g., UptimeRobot, Pingdom)
 - [ ] Configure error tracking (e.g., Sentry)
 - [ ] Monitor Core Web Vitals (PageSpeed Insights)
+- [ ] Review unique visitors and pageviews in Vercel Analytics monthly
 - [ ] Review Firebase costs monthly
 - [ ] Update dependencies quarterly: `npm outdated`
 
@@ -226,6 +230,7 @@ When you're ready to announce:
 - [ ] Email announcement ready (if you have a mailing list)
 - [ ] Press release (if applicable)
 - [ ] Monitor traffic and server load
+- [ ] Use: "We had X unique visitors and Y pageviews in the last 30 days."
 
 ---
 

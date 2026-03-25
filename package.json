@@ -13,6 +13,7 @@
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "firebase": "^12.9.0",
     "firebase-admin": "^13.6.1",
     "jose": "^6.1.3",

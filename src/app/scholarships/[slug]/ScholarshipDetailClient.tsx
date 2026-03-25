@@ -10,6 +10,7 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ReportButton from "@/components/ReportButton";
 import ShareButton from "@/components/ShareButton";
+import { trackApplyIntent } from "@/lib/analytics/client";
 import { useAuth } from "@/lib/auth-context";
 import { getPost, getPosts } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
@@ -210,6 +211,7 @@ function ScholarshipDetailContent() {
   const applicationInstructionsHasHtml =
     typeof scholarship.applicationInstructions === "string" &&
     scholarship.applicationInstructions.includes("<");
+  const handleApplyIntent = () => trackApplyIntent("scholarship");
 
   const scholarshipFacts = [
     { label: "Education Level", value: scholarship.educationLevel },
@@ -507,7 +509,13 @@ function ScholarshipDetailContent() {
           <Card className="mb-4" style={{ position: "sticky", top: 80 }}>
             <div style={{ padding: 20 }}>
               {scholarship.applicationUrl ? (
-                <a href={scholarship.applicationUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+                <a
+                  href={scholarship.applicationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="no-underline"
+                  onClick={handleApplyIntent}
+                >
                   <Button
                     primary
                     full
