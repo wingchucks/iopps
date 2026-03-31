@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "if [ \"$VERCEL_ENV\" = \"production\" ]; then exit 1; fi; if [ \"$VERCEL_GIT_PULL_REQUEST_ID\" != \"\" ]; then exit 1; fi; exit 0",
   "crons": [
     { "path": "/api/emails/send-job-alerts/instant", "schedule": "*/15 * * * *" },
     { "path": "/api/emails/send-job-alerts/daily", "schedule": "0 9 * * *" },
