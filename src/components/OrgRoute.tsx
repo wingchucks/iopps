@@ -53,6 +53,12 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
             const organizationType = data.organizationType as string | undefined;
             const profileReady = data.profileReady !== false;
 
+            const userRole = data.userRole as string | undefined;
+            if (userRole === "admin" || userRole === "moderator") {
+              router.replace("/admin");
+              return;
+            }
+
             if (organizationType !== "school" && !profileReady) {
               router.replace(buildOnboardingRedirect(data.missingProfileFields));
               return;

@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
       organizationType: school ? "school" : "business",
       profileReady: readiness.isReady,
       missingProfileFields: readiness.missingFields,
+      userRole: (context.userData.role as string | undefined) || null,
     });
   } catch (err: unknown) {
     const status = err instanceof EmployerApiError ? err.status : 500;

@@ -52,6 +52,10 @@ function LoginForm() {
     const profile = await getMemberProfile(currentUser.uid);
     if (!profile) return "/setup";
 
+    if (profile.role === "admin" || profile.role === "moderator") {
+      return redirectTo || "/admin";
+    }
+
     if (profile.orgId) {
       const idToken = await currentUser.getIdToken();
       if (idToken) {
