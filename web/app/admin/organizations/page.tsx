@@ -4,11 +4,39 @@ import { useEffect, useState, useCallback } from "react";
 import { auth } from "@/lib/firebase";
 import type { Organization } from "@/lib/types";
 
+type OrgTab = "pending" | "all" | "unlinked";
+
+interface OrgWithOwner extends Organization {
+  ownerInfo?: { displayName: string; email: string } | null;
+}
+
 export default function AdminOrganizationsPage() {
-  const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [orgs, setOrgs] = useState<OrgWithOwner[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"pending" | "all">("pending");
+  const [tab, setTab] = useState<OrgTab>("pending");
   const [search, setSearch] = useState("");
+  const [tabCounts, setTabCounts] = useState<{ pending: number; all: number; unlinked: number }>({ pending: 0, all: 0, unlinked: 0 });
+
+  // Fetch tab counts
+  useEffect(() => {
+    async function loadCounts() {
+      try {
+        const token = await auth?.currentUser?.getIdToken();
+        const res = await fetch("/api/admin/counts", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setTabCounts({
+            pending: data.pendingOrgs ?? 0,
+            all: data.totalOrgs ?? 0,
+            unlinked: data.unlinkedOrgs ?? 0,
+          });
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadCounts();
+  }, []);
 
   const fetchOrgs = useCallback(async () => {
     setLoading(true);
@@ -16,8 +44,10 @@ export default function AdminOrganizationsPage() {
       const token = await auth?.currentUser?.getIdToken();
       const params = new URLSearchParams();
       if (tab === "pending") params.set("verification", "unverified");
+      if (tab === "unlinked") params.set("unlinked", "true");
       if (search) params.set("search", search);
       params.set("sort", "createdAt_desc");
+      params.set("includeOwner", "true");
       const res = await fetch(`/api/admin/employers?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -43,17 +73,22 @@ export default function AdminOrganizationsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Organizations</h1>
+      <h1 className="text-2xl font-bold mb-6">Businesses & Schools</h1>
 
       <div className="flex gap-2 mb-4">
-        <button onClick={() => setTab("pending")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === "pending" ? "bg-[var(--accent)] text-white" : "bg-[var(--card-bg)] border border-[var(--card-border)]"}`}>
-          Pending Verification
-        </button>
-        <button onClick={() => setTab("all")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === "all" ? "bg-[var(--accent)] text-white" : "bg-[var(--card-bg)] border border-[var(--card-border)]"}`}>
-          All Organizations
-        </button>
+        {([
+          { key: "pending" as OrgTab, label: "Pending Verification" },
+          { key: "all" as OrgTab, label: "All Organizations" },
+          { key: "unlinked" as OrgTab, label: "Unlinked" },
+        ]).map((t) => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${tab === t.key ? "bg-[var(--accent)] text-white" : "bg-[var(--card-bg)] border border-[var(--card-border)]"}`}>
+            {t.label}
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === t.key ? "bg-white/20" : "bg-[var(--surface-raised)]"}`}>
+              {tabCounts[t.key]}
+            </span>
+          </button>
+        ))}
         <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)}
           className="ml-auto px-3 py-2 border border-[var(--input-border)] rounded-lg bg-[var(--card-bg)] min-w-[200px]" />
       </div>
@@ -79,6 +114,11 @@ export default function AdminOrganizationsPage() {
                   {org.primaryType} · {org.city}, {org.province} · {org.industry}
                 </div>
                 <div className="text-sm text-[var(--text-muted)] mt-1">{org.website}</div>
+                {org.ownerInfo ? (
+                  <div className="text-xs text-[var(--text-secondary)] mt-1">Owner: {org.ownerInfo.displayName} ({org.ownerInfo.email})</div>
+                ) : !org.ownerUid ? (
+                  <div className="text-xs text-[var(--danger)] mt-1">No linked owner</div>
+                ) : null}
               </div>
               <div className="flex gap-2 flex-shrink-0">
                 {org.verification === "unverified" && (
