@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ organizations: [{ id: doc.id, ...doc.data() }] });
   }
 
+  const unlinked = searchParams.get("unlinked");
+  const includeOwner = searchParams.get("includeOwner");
+
   let query: FirebaseFirestore.Query = adminDb.collection("organizations");
 
   if (verification) query = query.where("verification", "==", verification);
@@ -31,6 +34,7 @@ export async function GET(request: NextRequest) {
     const tiers = tier.split(",");
     query = query.where("subscription.tier", "in", tiers);
   }
+  if (unlinked === "true") query = query.where("ownerUid", "==", "");
 
   const [sortField, sortDir] = sort.split("_");
   query = query.orderBy(sortField || "createdAt", (sortDir as "asc" | "desc") || "desc");
@@ -44,6 +48,25 @@ export async function GET(request: NextRequest) {
     orgs = orgs.filter((o: Record<string, unknown>) =>
       (o.name as string)?.toLowerCase().includes(q)
     );
+  }
+
+  // Optionally resolve owner info
+  if (includeOwner === "true") {
+    const ownerUids = [...new Set(orgs.map((o: Record<string, unknown>) => o.ownerUid as string).filter(Boolean))];
+    const ownerMap: Record<string, { displayName: string; email: string }> = {};
+    // Firestore 'in' queries support max 30 items per batch
+    for (let i = 0; i < ownerUids.length; i += 30) {
+      const batch = ownerUids.slice(i, i + 30);
+      const usersSnap = await adminDb.collection("users").where("uid", "in", batch).get();
+      usersSnap.docs.forEach((doc) => {
+        const d = doc.data();
+        ownerMap[d.uid] = { displayName: d.displayName || `${d.firstName} ${d.lastName}`, email: d.email };
+      });
+    }
+    orgs = orgs.map((o: Record<string, unknown>) => ({
+      ...o,
+      ownerInfo: o.ownerUid ? ownerMap[o.ownerUid as string] || null : null,
+    }));
   }
 
   return NextResponse.json({ organizations: orgs });

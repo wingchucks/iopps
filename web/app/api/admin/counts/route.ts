@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const include = searchParams.get("include");
 
   // Base counts
-  const [members, orgs, verifiedOrgs, pendingOrgs, jobs, events, scholarships, programs, pendingMod] = await Promise.all([
+  const [members, orgs, verifiedOrgs, pendingOrgs, jobs, events, scholarships, programs, pendingMod, memberRoleCount, adminRoleCount, employerAccountCount, unlinkedOrgsCount] = await Promise.all([
     adminDb.collection("users").where("disabled", "==", false).count().get(),
     adminDb.collection("organizations").where("disabled", "==", false).count().get(),
     adminDb.collection("organizations").where("verification", "==", "verified").count().get(),
@@ -21,6 +21,10 @@ export async function GET(request: NextRequest) {
     adminDb.collection("posts").where("type", "==", "scholarship").where("status", "==", "active").count().get(),
     adminDb.collection("posts").where("type", "==", "program").where("status", "==", "active").count().get(),
     adminDb.collection("posts").where("status", "==", "draft").count().get(),
+    adminDb.collection("users").where("role", "==", "member").count().get(),
+    adminDb.collection("users").where("role", "==", "admin").count().get(),
+    adminDb.collection("users").where("accountType", "==", "organization").count().get(),
+    adminDb.collection("organizations").where("ownerUid", "==", "").count().get(),
   ]);
 
   const result: Record<string, unknown> = {
@@ -33,6 +37,10 @@ export async function GET(request: NextRequest) {
     activeScholarships: scholarships.data().count,
     activePrograms: programs.data().count,
     pendingModeration: pendingMod.data().count,
+    memberCount: memberRoleCount.data().count,
+    adminCount: adminRoleCount.data().count,
+    employerCount: employerAccountCount.data().count,
+    unlinkedOrgs: unlinkedOrgsCount.data().count,
     revenueMonth: 0,
     revenueYear: 0,
   };

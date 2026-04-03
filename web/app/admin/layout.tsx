@@ -9,7 +9,7 @@ import { onAuthStateChanged } from "firebase/auth";
 const NAV_SECTIONS = [
   { label: "Dashboard", href: "/admin", icon: "📊" },
   { label: "Users", href: "/admin/users", icon: "👥" },
-  { label: "Organizations", href: "/admin/organizations", icon: "🏢" },
+  { label: "Businesses & Schools", href: "/admin/organizations", icon: "🏢" },
   { label: "Moderation", href: "/admin/moderation", icon: "🛡️" },
   { label: "Posts", href: "/admin/posts", icon: "📝" },
   { label: "Stories", href: "/admin/stories", icon: "📖" },
