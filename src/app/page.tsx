@@ -7,26 +7,30 @@ import ThemeToggle from "@/components/ThemeToggle";
 import MobileMenu from "@/components/MobileMenu";
 import { HeroCTA, BottomCTA, PartnerStripCTA } from "@/components/HomepageCTA";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { getLandingInlineNavItems } from "@/lib/navigation";
+import { getPublicSchoolRecords } from "@/lib/server/public-schools";
 import { displayLocation } from "@/lib/utils";
 import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "@/lib/server/partner-promotion";
 
 async function getStats() {
   try {
     const adminDb = getAdminDb();
-    const [usersSnap, jobsSnap, employersSnap, eventsSnap] = await Promise.all([
+    const [usersSnap, jobsSnap, employersSnap, eventsSnap, schools] = await Promise.all([
       adminDb.collection("users").count().get(),
       adminDb.collection("jobs").where("status", "==", "active").count().get(),
       adminDb.collection("employers").where("status", "==", "approved").count().get(),
       adminDb.collection("events").count().get(),
+      getPublicSchoolRecords(adminDb),
     ]);
     return {
       members: usersSnap.data().count,
       jobs: jobsSnap.data().count,
       organizations: employersSnap.data().count,
       events: eventsSnap.data().count,
+      schools: schools.length,
     };
   } catch {
-    return { members: 0, jobs: 0, organizations: 0, events: 0 };
+    return { members: 0, jobs: 0, organizations: 0, events: 0, schools: 0 };
   }
 }
 
@@ -97,14 +101,17 @@ const jsonLd = {
   ],
 };
 
+const landingNavItems = getLandingInlineNavItems();
+
 export default async function LandingPage() {
   const [stats, partners] = await Promise.all([getStats(), getPartners()]);
+  const schoolsCountLabel = stats.schools > 0 ? String(stats.schools) : "Updating";
   const categories = [
     { icon: "\u{1F4BC}", title: "Jobs & Careers", count: String(stats.jobs || 0), cta: "Browse Jobs", desc: "Indigenous-focused job postings and career opportunities", href: "/jobs" },
     { icon: "\u{1FAB6}", title: "Events & Pow Wows", count: String(stats.events || 0), cta: "Browse Events", desc: "Pow wows, hockey, career fairs, round dances", href: "/events" },
     { icon: "\u{1F393}", title: "Scholarships & Grants", count: "17", cta: "Browse Scholarships", desc: "Funding for students and entrepreneurs", href: "/scholarships" },
     { icon: "\u{1F3EA}", title: "Businesses & Employers", count: String(stats.organizations || 0), cta: "Browse Businesses", desc: "Explore employers, organizations, and business partners", href: "/businesses" },
-    { icon: "\u{1F4DA}", title: "Schools & Programs", count: "190+", cta: "Browse Schools", desc: "Training and education programs", href: "/schools" },
+    { icon: "\u{1F4DA}", title: "Schools", count: schoolsCountLabel, cta: "Browse Schools", desc: "Explore Indigenous-focused schools, colleges, and education partners", href: "/schools" },
     { icon: "\u{1F4FA}", title: "Livestreams", count: "Live", cta: "Watch Streams", desc: "Live streams, interviews, and community coverage", href: "/livestreams" },
   ];
   return (
@@ -125,55 +132,18 @@ export default async function LandingPage() {
         <div className="relative flex items-center justify-between mb-0 z-10">
           <div />
           <div className="flex items-center gap-4">
-            <Link
-              href="/jobs"
-              className="text-sm font-semibold no-underline hidden sm:inline"
-              style={{ color: "rgba(255,255,255,.7)" }}
-            >
-              Jobs
-            </Link>
-            <Link
-              href="/events"
-              className="text-sm font-semibold no-underline hidden sm:inline"
-              style={{ color: "rgba(255,255,255,.7)" }}
-            >
-              Events
-            </Link>
-            <Link
-              href="/partners"
-              className="text-sm font-semibold no-underline hidden sm:inline"
-              style={{ color: "rgba(255,255,255,.7)" }}
-            >
-              Partners
-            </Link>
-            <Link
-              href="/schools"
-              className="text-sm font-semibold no-underline hidden sm:inline"
-              style={{ color: "rgba(255,255,255,.7)" }}
-            >
-              Schools
-            </Link>
-            <Link
-              href="/businesses"
-              className="text-sm font-semibold no-underline hidden sm:inline"
-              style={{ color: "rgba(255,255,255,.7)" }}
-            >
-              Businesses
-            </Link>
-            <Link
-              href="/livestreams"
-              className="text-sm font-semibold no-underline hidden sm:inline"
-              style={{ color: "rgba(255,255,255,.7)" }}
-            >
-              Live
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-sm font-semibold no-underline hidden md:inline"
-              style={{ color: "rgba(255,255,255,.7)" }}
-            >
-              Pricing
-            </Link>
+            {landingNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`text-sm font-semibold no-underline ${
+                  item.key === "pricing" ? "hidden xl:inline" : "hidden lg:inline"
+                }`}
+                style={{ color: "rgba(255,255,255,.7)" }}
+              >
+                {item.label}
+              </Link>
+            ))}
             <ThemeToggle />
             <MobileMenu />
           </div>

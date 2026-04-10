@@ -2,16 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { getPublicAuthNavItems, getPublicExploreNavItems } from "@/lib/navigation";
 
-const NAV_LINKS = [
-  { href: "/livestreams", label: "Live" },
-  { href: "/jobs", label: "Jobs" },
-  { href: "/events", label: "Events" },
-  { href: "/partners", label: "Partners" },
-  { href: "/schools", label: "Schools" },
-  { href: "/businesses", label: "Businesses" },
-  { href: "/pricing", label: "Pricing" },
-];
+const NAV_LINKS = getPublicExploreNavItems();
+const AUTH_LINKS = getPublicAuthNavItems();
 
 export default function MobileMenu() {
   const [open, setOpen] = useState(false);
@@ -73,22 +67,17 @@ export default function MobileMenu() {
             </Link>
           ))}
           <div className="mx-4 my-2 h-px" style={{ background: "rgba(255,255,255,.1)" }} />
-          <Link
-            href="/login"
-            onClick={() => setOpen(false)}
-            className="block px-5 py-3 text-sm font-semibold no-underline transition-all hover:bg-white/10"
-            style={{ color: "var(--teal)" }}
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/signup"
-            onClick={() => setOpen(false)}
-            className="block px-5 py-3 text-sm font-semibold no-underline transition-all hover:bg-white/10"
-            style={{ color: "var(--teal)" }}
-          >
-            Join Free
-          </Link>
+          {AUTH_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setOpen(false)}
+              className="block px-5 py-3 text-sm font-semibold no-underline transition-all hover:bg-white/10"
+              style={{ color: "var(--teal)" }}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
       )}
     </div>

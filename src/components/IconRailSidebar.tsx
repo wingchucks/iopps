@@ -8,10 +8,17 @@ import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { useAccountContext } from "@/lib/useAccountContext";
 import { getAccountProfileHref, getAccountProfileLabel } from "@/lib/account-navigation";
+import {
+  getBrandHref,
+  getMemberUtilityNavItems,
+  getPublicAuthNavItems,
+  getRailNavItems,
+  type NavigationIconName,
+} from "@/lib/navigation";
 import Avatar from "./Avatar";
 import CreateChooserModal from "./CreateChooserModal";
 
-function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
+function NavIcon({ name, size = 20 }: { name: NavigationIconName | "plus"; size?: number }) {
   const p = {
     width: size,
     height: size,
@@ -101,12 +108,6 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
           <circle cx="22" cy="17" r="1" fill="currentColor" stroke="none" />
         </svg>
       );
-    case "message":
-      return (
-        <svg {...p}>
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-      );
     case "bookmark":
       return (
         <svg {...p}>
@@ -139,25 +140,44 @@ function NavIcon({ name, size = 20 }: { name: string; size?: number }) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016 2.993 2.993 0 0 0 2.25-1.016 3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
         </svg>
       );
+    case "users":
+      return (
+        <svg {...p}>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    case "handshake":
+      return (
+        <svg {...p}>
+          <path d="M11 12 8 15a2 2 0 1 1-3-3l4-4" />
+          <path d="m13 10 3-3a2.83 2.83 0 1 1 4 4l-6 6" />
+          <path d="m8 8 3-3a2 2 0 1 1 3 3l-1 1" />
+          <path d="m2 14 6 6" />
+          <path d="m22 10-6-6" />
+        </svg>
+      );
+    case "tag":
+      return (
+        <svg {...p}>
+          <path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82Z" />
+          <circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none" />
+        </svg>
+      );
     default:
       return null;
   }
 }
 
-const navItems = [
-  { href: "/feed", label: "Feed", icon: "home", key: "feed" },
-  { href: "/livestreams", label: "Live", icon: "video", key: "live" },
-  { href: "/search", label: "Search", icon: "search", key: "search" },
-  { href: "/jobs", label: "Jobs", icon: "briefcase", key: "jobs" },
-  { href: "/events", label: "Events", icon: "calendar", key: "events" },
-  { href: "/scholarships", label: "Scholarships", icon: "award", key: "scholarships" },
-  { href: "/schools", label: "Schools", icon: "school", key: "schools" },
-  { href: "/businesses", label: "Businesses", icon: "store", key: "businesses" },
-  { href: "/partners", label: "Partners", icon: "shield", key: "partners" },
-  { href: "/messages", label: "Messages", icon: "message", key: "messages" },
-  { href: "/saved", label: "Saved", icon: "bookmark", key: "saved" },
-  { href: "/notifications", label: "Notifications", icon: "bell", key: "notifications" },
-] as const;
+function isRailItemActive(pathname: string, href: string, key: string, searchType: string | null): boolean {
+  if (key === "search") {
+    return pathname === "/search" && searchType !== "businesses" && searchType !== "partners";
+  }
+
+  return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
+}
 
 export default function IconRailSidebar() {
   const [showChooser, setShowChooser] = useState(false);
@@ -170,10 +190,15 @@ export default function IconRailSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { theme, toggle } = useTheme();
   const { hasOrg, isAdmin, orgId, orgSlug, orgName, orgType } = useAccountContext();
-  const displayName = user?.displayName || user?.email || "U";
+  const isAuthenticated = Boolean(user);
+  const navItems = getRailNavItems({ isAuthenticated, hasOrg, isAdmin });
+  const utilityItems = isAuthenticated ? getMemberUtilityNavItems() : [];
+  const publicAuthItems = getPublicAuthNavItems();
+  const brandHref = getBrandHref(isAuthenticated);
+  const displayName = user?.displayName || user?.email || "Account";
   const profileHref = getAccountProfileHref({ hasOrg, orgId, orgSlug, orgType });
   const profileLabel = getAccountProfileLabel({ hasOrg, orgType });
   const profileSubLabel = hasOrg ? orgName || displayName : user?.email || displayName;
@@ -183,12 +208,7 @@ export default function IconRailSidebar() {
     router.push("/");
   };
 
-  const allItems = [
-    ...navItems,
-    ...(hasOrg ? [{ href: "/org/dashboard", label: "Dashboard", icon: "dashboard", key: "dashboard" as const }] : []),
-  ];
-
-  const searchType = searchParams.get("type")?.toLowerCase();
+  const searchType = searchParams.get("type")?.toLowerCase() ?? null;
 
   useEffect(() => {
     const nav = navRef.current;
@@ -219,7 +239,7 @@ export default function IconRailSidebar() {
       window.removeEventListener("resize", updateOverflow);
       resizeObserver?.disconnect();
     };
-  }, [allItems.length, hasOrg, isAdmin, user]);
+  }, [navItems.length]);
 
   const scrollHintText = menuOverflow.canScrollUp && menuOverflow.canScrollDown
     ? "More menu items above and below"
@@ -227,18 +247,10 @@ export default function IconRailSidebar() {
       ? "More menu items above"
       : "More menu items below";
 
-  const isItemActive = (href: string, key: string) => {
-    if (key === "search") {
-      return pathname === "/search" && searchType !== "businesses" && searchType !== "partners";
-    }
-
-    return pathname === href || (href !== "/feed" && pathname.startsWith(`${href}/`));
-  };
-
   return (
     <>
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[240px] flex-col border-r border-border bg-card lg:flex">
-        <Link href="/feed" className="flex items-center px-4 py-4 no-underline shrink-0">
+        <Link href={brandHref} className="flex items-center px-4 py-4 no-underline shrink-0">
           <div
             className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10"
             style={{
@@ -266,7 +278,7 @@ export default function IconRailSidebar() {
           </div>
         </Link>
 
-        {user && hasOrg && (
+        {isAuthenticated && hasOrg && (
           <button
             onClick={() => setShowChooser(true)}
             className="shrink-0 border-none px-3 pt-2 text-left cursor-pointer"
@@ -337,8 +349,9 @@ export default function IconRailSidebar() {
             className="flex h-full flex-col gap-0.5 overflow-y-auto px-2 py-2"
             style={{ scrollbarWidth: "thin", scrollbarColor: "var(--teal) transparent" }}
           >
-            {allItems.map(({ href, label, icon, key }) => {
-              const active = isItemActive(href, key);
+            {navItems.map(({ href, label, icon, key }) => {
+              const active = isRailItemActive(pathname, href, key, searchType);
+
               return (
                 <Link key={href} href={href} className="no-underline" data-nav-item={key}>
                   <div
@@ -350,7 +363,7 @@ export default function IconRailSidebar() {
                     }}
                   >
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-                      <NavIcon name={icon} size={20} />
+                      <NavIcon name={icon || "home"} size={20} />
                     </span>
                     <span
                       className="whitespace-nowrap text-sm font-medium transition-colors duration-200"
@@ -391,80 +404,39 @@ export default function IconRailSidebar() {
             </span>
           </button>
 
-          {isAdmin && (
-            <Link href="/admin" className="no-underline" data-nav-item="admin">
-              <div
-                className="flex h-10 items-center gap-3 rounded-xl px-3.5 transition-colors hover:bg-bg"
-                style={{
-                  background:
-                    pathname === "/admin" || pathname.startsWith("/admin/")
-                      ? "color-mix(in srgb, var(--teal) 10%, transparent)"
-                      : "transparent",
-                  boxShadow:
-                    pathname === "/admin" || pathname.startsWith("/admin/")
-                      ? "inset 3px 0 0 var(--teal)"
-                      : "inset 3px 0 0 transparent",
-                  color:
-                    pathname === "/admin" || pathname.startsWith("/admin/")
-                      ? "var(--teal)"
-                      : "var(--text-muted)",
-                }}
-              >
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-                  <NavIcon name="shield" size={20} />
-                </span>
-                <span
-                  className="whitespace-nowrap text-sm font-medium"
+          {utilityItems.map(({ href, label, icon, key }) => {
+            const active = pathname === href || pathname.startsWith(`${href}/`);
+
+            return (
+              <Link key={href} href={href} className="no-underline" data-nav-item={key}>
+                <div
+                  className="flex h-10 items-center gap-3 rounded-xl px-3.5 transition-colors hover:bg-bg"
                   style={{
-                    color:
-                      pathname === "/admin" || pathname.startsWith("/admin/")
-                        ? "var(--teal)"
-                        : "var(--text-sec)",
+                    background:
+                      active ? "color-mix(in srgb, var(--teal) 10%, transparent)" : "transparent",
+                    boxShadow:
+                      active ? "inset 3px 0 0 var(--teal)" : "inset 3px 0 0 transparent",
+                    color: active ? "var(--teal)" : "var(--text-muted)",
                   }}
                 >
-                  Admin
-                </span>
-              </div>
-            </Link>
-          )}
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                    <NavIcon name={icon || "settings"} size={20} />
+                  </span>
+                  <span className="whitespace-nowrap text-sm font-medium" style={{ color: "var(--text-sec)" }}>
+                    {label}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
 
-          <Link href="/settings" className="no-underline" data-nav-item="settings">
-            <div
-              className="flex h-10 items-center gap-3 rounded-xl px-3.5 transition-colors hover:bg-bg"
-              style={{
-                background:
-                  pathname === "/settings" || pathname.startsWith("/settings/")
-                    ? "color-mix(in srgb, var(--teal) 10%, transparent)"
-                    : "transparent",
-                boxShadow:
-                  pathname === "/settings" || pathname.startsWith("/settings/")
-                    ? "inset 3px 0 0 var(--teal)"
-                    : "inset 3px 0 0 transparent",
-                color:
-                  pathname === "/settings" || pathname.startsWith("/settings/")
-                    ? "var(--teal)"
-                    : "var(--text-muted)",
-              }}
-            >
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-                <NavIcon name="settings" size={20} />
-              </span>
-              <span className="whitespace-nowrap text-sm font-medium" style={{ color: "var(--text-sec)" }}>
-                Settings
-              </span>
-            </div>
-          </Link>
-
-          {user ? (
+          {isAuthenticated ? (
             <div className="flex items-center gap-3 rounded-xl px-3.5 py-2" data-nav-profile="true">
               <Link href={profileHref} className="shrink-0 no-underline">
                 <Avatar name={displayName} size={28} />
               </Link>
               <div className="flex min-w-0 items-center gap-2">
-                <Link
-                  href={profileHref}
-                  className="min-w-0 flex-1 no-underline"
-                >
+                <Link href={profileHref} className="min-w-0 flex-1 no-underline">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold m-0" style={{ color: "var(--text-sec)" }}>
                       {profileLabel}
@@ -488,21 +460,23 @@ export default function IconRailSidebar() {
               </div>
             </div>
           ) : (
-            <Link
-              href="/signin"
-              className="flex h-10 items-center gap-3 rounded-xl px-3.5 no-underline"
-              data-nav-profile="true"
-            >
-              <span
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                style={{ background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 600 }}
-              >
-                ?
-              </span>
-              <span className="whitespace-nowrap text-sm font-medium" style={{ color: "var(--text-sec)" }}>
-                Sign in
-              </span>
-            </Link>
+            !authLoading && (
+              <div className="flex flex-col gap-2 px-2 pt-2" data-nav-profile="true">
+                {publicAuthItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="rounded-xl px-3.5 py-2.5 text-center text-sm font-semibold no-underline"
+                    style={{
+                      background: item.key === "signup" ? "var(--teal)" : "var(--border)",
+                      color: item.key === "signup" ? "#fff" : "var(--text)",
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )
           )}
         </div>
       </aside>
