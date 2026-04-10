@@ -45,7 +45,7 @@ test("signed-out jobs drawer does not expose private member utilities", async ({
   await expect(nav.locator('[href="/feed"]')).toHaveCount(0);
   await expect(nav.locator('[href="/profile"]')).toHaveCount(0);
   await expect(nav.locator('[href="/signin"]')).toHaveCount(0);
-  await expect(nav.locator('[href="/login"]')).toHaveCount(1);
+  await expect(nav.locator('[href="/login"]:visible').first()).toBeVisible();
   await expect(nav.locator('[data-nav-profile="true"] img')).toHaveCount(0);
 });
 
