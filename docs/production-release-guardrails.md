@@ -12,7 +12,7 @@ This file defines the minimum rules for shipping `iopps.ca` without reintroducin
 ## Required Deployment Flow
 
 1. Merge approved code into `release/production`.
-2. GitHub Actions builds the app and creates a Vercel preview deployment.
+2. GitHub Actions validates the Vercel release secrets, pulls production env from Vercel, and creates a Vercel preview deployment.
 3. The preview deployment must pass `npm run qa:production:smoke`.
 4. Only after the preview smoke passes may the workflow promote that preview to production.
 5. The workflow must then run `npm run qa:production:smoke` against `https://iopps.ca`.
@@ -40,6 +40,14 @@ It currently verifies:
 - Pull requests are required for `release/production`
 - At least one review is required before merge
 - Required status checks must pass before merge
+
+## Required GitHub Secrets
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+If any of these are missing, the deploy workflow must fail before it tries to build or promote anything.
 
 ## Known Good Recovery Points
 
