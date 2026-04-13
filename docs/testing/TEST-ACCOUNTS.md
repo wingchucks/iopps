@@ -81,6 +81,27 @@ These test accounts are designed for automated QA testing with the Claude Chrome
 - Subscription management
 - Indigenous verification display
 
+### Permanent QA Smoke Target
+- **Permanent QA Job**: `QA - Standard Job`
+- **Job Slug**: `qa-standard-job-northern-lights`
+- **Purpose**: Production rollback smoke test for employer login -> jobs dashboard -> `Edit` route
+
+### One-Command Production Smoke Test
+Run this from the repo root:
+
+```bash
+npm run qa:production:smoke
+```
+
+The script checks:
+- employer login lands on `/org/dashboard`
+- `/org/dashboard/jobs` shows `QA - Standard Job`
+- the `Edit` link opens `/org/dashboard/jobs/qa-standard-job-northern-lights/edit`
+- the edit form loads the saved title and location fields
+- `/jobs` search for `Westland` shows the expected location on the card
+- the public `Senior Insurance Advisor` job detail shows `Rimbey, AB`
+- `Apply Now` points to Dayforce
+
 ---
 
 ## Running the Seed Script

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "audit:public-links": "node scripts/audit-public-detail-links.mjs",
+    "qa:production:smoke": "node scripts/qa-production-smoke.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report"
