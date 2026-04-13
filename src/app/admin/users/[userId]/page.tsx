@@ -30,6 +30,9 @@ interface UserDetail {
   applications: Application[];
   applicationCount: number;
   isSuperAdmin: boolean;
+  capabilities?: {
+    canDelete?: boolean;
+  };
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -124,6 +127,8 @@ export default function UserDetailPage() {
 
   const isSuperAdmin = userData.isSuperAdmin;
   const isSuspended = userData.status === "suspended";
+  const isDeleted = userData.status === "deleted";
+  const canDelete = userData.capabilities?.canDelete === true;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -171,6 +176,11 @@ export default function UserDetailPage() {
                   Suspended
                 </span>
               )}
+              {isDeleted && (
+                <span className="rounded-full bg-red-500/15 px-2.5 py-0.5 text-xs font-bold text-red-500">
+                  Deleted
+                </span>
+              )}
             </div>
             <p className="text-sm text-[var(--text-muted)]">{userData.email}</p>
             <div className="flex flex-wrap gap-4 pt-2 text-sm text-[var(--text-muted)]">
@@ -201,7 +211,7 @@ export default function UserDetailPage() {
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
                 className="rounded-md border border-[var(--card-border)] bg-background px-3 py-1.5 text-sm"
-                disabled={isSuperAdmin}
+                disabled={isSuperAdmin || isDeleted}
               >
                 <option value="member">Member</option>
                 <option value="moderator">Moderator</option>
@@ -209,7 +219,7 @@ export default function UserDetailPage() {
               </select>
               <button
                 onClick={() => apiCall("PATCH", { role: selectedRole })}
-                disabled={actionLoading || isSuperAdmin}
+                disabled={actionLoading || isSuperAdmin || isDeleted}
                 className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
               >
                 Save
@@ -224,7 +234,7 @@ export default function UserDetailPage() {
           ) : (
             <button
               onClick={() => setEditingRole(true)}
-              disabled={isSuperAdmin}
+              disabled={isSuperAdmin || isDeleted}
               className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--card-bg)] disabled:opacity-50"
             >
               Edit Role
@@ -235,7 +245,7 @@ export default function UserDetailPage() {
           {isSuspended ? (
             <button
               onClick={() => apiCall("PATCH", { action: "unsuspend" })}
-              disabled={actionLoading || isSuperAdmin}
+              disabled={actionLoading || isSuperAdmin || isDeleted}
               className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
             >
               Unsuspend
@@ -251,7 +261,7 @@ export default function UserDetailPage() {
               />
               <button
                 onClick={() => apiCall("PATCH", { action: "suspend", reason: suspendReason })}
-                disabled={actionLoading || isSuperAdmin}
+                disabled={actionLoading || isSuperAdmin || isDeleted}
                 className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
                 Confirm
@@ -266,7 +276,7 @@ export default function UserDetailPage() {
           ) : (
             <button
               onClick={() => setShowSuspend(true)}
-              disabled={isSuperAdmin}
+              disabled={isSuperAdmin || isDeleted}
               className="rounded-md border border-red-500/30 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
             >
               Suspend
@@ -274,25 +284,31 @@ export default function UserDetailPage() {
           )}
 
           {/* Delete */}
-          <button
-            onClick={() => {
-              if (deleteConfirm === 0) {
-                setDeleteConfirm(1);
-                toast("Click again to confirm deletion", { icon: "⚠️" });
-              } else {
-                apiCall("DELETE");
-              }
-            }}
-            disabled={isSuperAdmin || actionLoading}
-            className={cn(
-              "rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50",
-              deleteConfirm > 0
-                ? "bg-red-600 text-white hover:bg-red-700"
-                : "border border-red-500/30 text-red-500 hover:bg-red-500/10"
-            )}
-          >
-            {deleteConfirm > 0 ? "Confirm Delete" : "Delete Account"}
-          </button>
+          {canDelete ? (
+            <button
+              onClick={() => {
+                if (deleteConfirm === 0) {
+                  setDeleteConfirm(1);
+                  toast("Click again to confirm deletion", { icon: "⚠️" });
+                } else {
+                  apiCall("DELETE");
+                }
+              }}
+              disabled={isSuperAdmin || actionLoading || isDeleted}
+              className={cn(
+                "rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50",
+                deleteConfirm > 0
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "border border-red-500/30 text-red-500 hover:bg-red-500/10"
+              )}
+            >
+              {deleteConfirm > 0 ? "Confirm Delete" : "Delete Account"}
+            </button>
+          ) : (
+            <p className="text-sm text-[var(--text-muted)]">
+              Only the super admin can delete accounts.
+            </p>
+          )}
         </div>
       </div>
 

@@ -6,6 +6,9 @@ import { useAuth } from "@/lib/auth-context";
 import { db } from "@/lib/firebase";
 import { getMemberProfile, type MemberProfile } from "@/lib/firestore/members";
 import { getOrganization } from "@/lib/firestore/organizations";
+import { resolveLinkedOrganizationId } from "@/lib/account-state";
+import { isOrganizationAccessBlocked } from "@/lib/access-state";
+import { fetchWithTimeout, isAbortError } from "@/lib/client/fetch-with-timeout";
 
 interface AccountContextState {
   loading: boolean;
@@ -78,6 +81,11 @@ export function useAccountContext(): AccountContextState {
       let orgSlug: string | null = null;
       let orgName: string | null = null;
       let orgType: string | null = null;
+      let activeOrgId: string | null = null;
+      let claimOrgId: string | null = null;
+      let claimEmployerId: string | null = null;
+      let claimRole: string | null = null;
+      let idToken = "";
 
       try {
         memberProfile = await getMemberProfile(currentUser.uid);
@@ -95,10 +103,36 @@ export function useAccountContext(): AccountContextState {
       }
 
       try {
-        const idToken = await currentUser.getIdToken();
-        const res = await fetch("/api/employer/check", {
-          headers: { Authorization: `Bearer ${idToken}` },
-        });
+        const idTokenResult = await currentUser.getIdTokenResult();
+        idToken = idTokenResult.token;
+        claimOrgId =
+          typeof idTokenResult.claims.orgId === "string"
+            ? (idTokenResult.claims.orgId as string)
+            : null;
+        claimEmployerId =
+          typeof idTokenResult.claims.employerId === "string"
+            ? (idTokenResult.claims.employerId as string)
+            : null;
+        claimRole =
+          typeof idTokenResult.claims.role === "string"
+            ? (idTokenResult.claims.role as string)
+            : null;
+      } catch {
+        idToken = "";
+      }
+
+      try {
+        if (!idToken) {
+          idToken = await currentUser.getIdToken();
+        }
+
+        const res = await fetchWithTimeout(
+          "/api/employer/check",
+          {
+            headers: { Authorization: `Bearer ${idToken}` },
+          },
+          4500,
+        );
 
         if (res.ok) {
           const data = (await res.json()) as {
@@ -108,22 +142,30 @@ export function useAccountContext(): AccountContextState {
           employerAuthorized = data.authorized === true;
           employerOrgId = data.profile?.orgId ?? null;
         }
-      } catch {
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error("[useAccountContext] employer check failed:", error);
+        }
         employerAuthorized = false;
       }
 
       const userRole =
-        typeof userData?.role === "string" ? (userData.role as string) : null;
-      const fallbackOrgId =
-        (typeof memberProfile?.orgId === "string" && memberProfile.orgId) ||
-        (typeof userData?.employerId === "string" && (userData.employerId as string)) ||
-        null;
-      const orgId = employerOrgId || fallbackOrgId;
+        typeof userData?.role === "string"
+          ? (userData.role as string)
+          : claimRole;
+      const orgId = resolveLinkedOrganizationId({
+        memberOrgId: employerOrgId || memberProfile?.orgId,
+        userOrgId: userData?.orgId,
+        userEmployerId: userData?.employerId,
+        claimOrgId,
+        claimEmployerId,
+      });
 
       if (orgId) {
         try {
           const organization = await getOrganization(orgId);
-          if (organization) {
+          if (organization && !isOrganizationAccessBlocked(organization)) {
+            activeOrgId = orgId;
             orgSlug = organization.slug || orgId;
             orgName = organization.name || null;
             orgType = organization.type || null;
@@ -133,7 +175,15 @@ export function useAccountContext(): AccountContextState {
         }
       }
 
-      const isEmployer = employerAuthorized || userRole === "employer" || Boolean(orgId);
+      const hasLinkedOrg = Boolean(orgId);
+      const hasEmployerRole =
+        userRole === "employer" ||
+        userRole === "school" ||
+        userRole === "organization";
+      const isEmployer =
+        employerAuthorized ||
+        Boolean(activeOrgId) ||
+        (hasEmployerRole && !hasLinkedOrg);
       const isAdmin =
         memberProfile?.role === "admin" ||
         memberProfile?.role === "moderator" ||
@@ -144,10 +194,10 @@ export function useAccountContext(): AccountContextState {
         setState({
           loading: false,
           memberProfile,
-          hasOrg: Boolean(orgId),
+          hasOrg: Boolean(activeOrgId),
           isEmployer,
           isAdmin,
-          orgId,
+          orgId: activeOrgId,
           orgSlug,
           orgName,
           orgType,
