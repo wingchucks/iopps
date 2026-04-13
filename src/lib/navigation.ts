@@ -1,4 +1,5 @@
 export type NavigationAudience = "public" | "member";
+export type NavigationSectionKey = "explore" | "account" | "auth";
 export type NavigationIconName =
   | "home"
   | "video"
@@ -27,6 +28,7 @@ interface NavItemDefinition {
   icon?: NavigationIconName;
   dot?: boolean;
   priority: number;
+  mobileGroup?: NavigationSectionKey;
 }
 
 export interface NavItem {
@@ -38,6 +40,12 @@ export interface NavItem {
   priority: number;
 }
 
+export interface NavSection {
+  key: NavigationSectionKey;
+  label: string;
+  items: NavItem[];
+}
+
 const NAV_ITEM_DEFINITIONS = {
   home: {
     key: "home",
@@ -45,6 +53,14 @@ const NAV_ITEM_DEFINITIONS = {
     href: { public: "/", member: "/feed" },
     icon: "home",
     priority: 10,
+  },
+  feed: {
+    key: "feed",
+    label: "Feed",
+    href: "/feed",
+    icon: "home",
+    priority: 15,
+    mobileGroup: "account",
   },
   live: {
     key: "live",
@@ -60,6 +76,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/jobs",
     icon: "briefcase",
     priority: 30,
+    mobileGroup: "explore",
   },
   events: {
     key: "events",
@@ -67,6 +84,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/events",
     icon: "calendar",
     priority: 40,
+    mobileGroup: "explore",
   },
   scholarships: {
     key: "scholarships",
@@ -81,6 +99,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/training",
     icon: "book",
     priority: 60,
+    mobileGroup: "explore",
   },
   schools: {
     key: "schools",
@@ -88,6 +107,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/schools",
     icon: "school",
     priority: 70,
+    mobileGroup: "explore",
   },
   businesses: {
     key: "businesses",
@@ -95,6 +115,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/businesses",
     icon: "store",
     priority: 80,
+    mobileGroup: "explore",
   },
   partners: {
     key: "partners",
@@ -102,6 +123,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/partners",
     icon: "shield",
     priority: 90,
+    mobileGroup: "explore",
   },
   search: {
     key: "search",
@@ -130,6 +152,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/pricing",
     icon: "tag",
     priority: 130,
+    mobileGroup: "explore",
   },
   saved: {
     key: "saved",
@@ -137,6 +160,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/saved",
     icon: "bookmark",
     priority: 140,
+    mobileGroup: "account",
   },
   notifications: {
     key: "notifications",
@@ -144,6 +168,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/notifications",
     icon: "bell",
     priority: 150,
+    mobileGroup: "account",
   },
   settings: {
     key: "settings",
@@ -151,6 +176,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/settings",
     icon: "settings",
     priority: 160,
+    mobileGroup: "account",
   },
   dashboard: {
     key: "dashboard",
@@ -158,6 +184,7 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/org/dashboard",
     icon: "dashboard",
     priority: 170,
+    mobileGroup: "account",
   },
   admin: {
     key: "admin",
@@ -165,18 +192,21 @@ const NAV_ITEM_DEFINITIONS = {
     href: "/admin",
     icon: "shield",
     priority: 180,
+    mobileGroup: "account",
   },
   login: {
     key: "login",
     label: "Sign In",
     href: "/login",
     priority: 190,
+    mobileGroup: "auth",
   },
   signup: {
     key: "signup",
     label: "Join Free",
     href: "/signup",
     priority: 200,
+    mobileGroup: "auth",
   },
 } as const satisfies Record<string, NavItemDefinition>;
 
@@ -216,7 +246,6 @@ const MEMBER_EXPLORE_KEYS: NavigationKey[] = [
   "search",
   "partners",
   "schools",
-  "members",
   "training",
   "mentorship",
   "businesses",
@@ -235,6 +264,21 @@ const MEMBER_DESKTOP_TOP_KEYS: NavigationKey[] = [
 
 const MEMBER_UTILITY_KEYS: NavigationKey[] = ["saved", "notifications", "settings"];
 const PUBLIC_AUTH_KEYS: NavigationKey[] = ["login", "signup"];
+const MOBILE_EXPLORE_KEYS: NavigationKey[] = [
+  "jobs",
+  "events",
+  "businesses",
+  "schools",
+  "training",
+  "partners",
+  "pricing",
+];
+const MOBILE_ACCOUNT_BASE_KEYS: NavigationKey[] = [
+  "feed",
+  "saved",
+  "notifications",
+  "settings",
+];
 
 function resolveHref(href: NavHref, audience: NavigationAudience): string {
   if (typeof href === "string") return href;
@@ -318,6 +362,46 @@ export function getDesktopTopNavItems(options: { isAuthenticated: boolean }): Na
   }
 
   return getMemberDesktopTopNavItems();
+}
+
+export function getMobileNavigationSections(options: {
+  isAuthenticated: boolean;
+  hasOrg?: boolean;
+  isAdmin?: boolean;
+}): NavSection[] {
+  const sections: NavSection[] = [
+    {
+      key: "explore",
+      label: "Explore",
+      items: buildNavItems(MOBILE_EXPLORE_KEYS, "public"),
+    },
+  ];
+
+  if (options.isAuthenticated) {
+    const accountKeys = [...MOBILE_ACCOUNT_BASE_KEYS];
+
+    if (options.hasOrg) {
+      accountKeys.push("dashboard");
+    }
+
+    if (options.isAdmin) {
+      accountKeys.push("admin");
+    }
+
+    sections.push({
+      key: "account",
+      label: "Your account",
+      items: buildNavItems(accountKeys, "member"),
+    });
+  } else {
+    sections.push({
+      key: "auth",
+      label: "Auth",
+      items: buildNavItems(PUBLIC_AUTH_KEYS, "public"),
+    });
+  }
+
+  return sections;
 }
 
 export function getRailNavItems(options: {

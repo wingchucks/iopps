@@ -77,6 +77,8 @@ export async function GET(
 
     const schoolId = text(school.id);
     const schoolName = text(school.name);
+    const isClaimablePreview =
+      school.claimable === true || text(school.profileMode) === "claimable-preview";
 
     const [programPostsSnap, scholarshipsSnap, scholarshipPostsSnap, jobsSnap, jobPostsSnap] = await Promise.all([
       db.collection("posts").where("type", "==", "program").get(),
@@ -102,7 +104,10 @@ export async function GET(
               ...program,
               slug: text(program.slug) || text(program.id).replace(/^program-/, ""),
               cost: displayAmount(program.cost),
-              href: `/programs/${text(program.slug) || text(program.id).replace(/^program-/, "")}`,
+              href:
+                (isClaimablePreview &&
+                  (text(program.programUrl) || text(program.applicationUrl) || text(program.url))) ||
+                `/programs/${text(program.slug) || text(program.id).replace(/^program-/, "")}`,
             },
             {
               contentType: "program",

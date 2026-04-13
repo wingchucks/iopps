@@ -52,6 +52,14 @@ export interface Organization {
   accreditation?: string;
   campusCount?: number;
   enrollmentStatus?: string;
+  areasOfStudy?: string[];
+  previewHighlights?: string[];
+  sourceUrls?: string[];
+  showcaseRank?: number;
+  claimable?: boolean;
+  profileMode?: "claimable-preview" | "claimed-live";
+  applyUrl?: string;
+  careersUrl?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
   onboardingComplete?: boolean;

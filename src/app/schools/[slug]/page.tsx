@@ -6,22 +6,30 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { type Organization } from "@/lib/firestore/organizations";
+import {
+  getSchoolPreviewHighlights,
+  isClaimableSchoolPreview,
+} from "@/lib/school-preview";
 import { displayAmount, displayLocation } from "@/lib/utils";
 
 // ── Types ──
-interface SchoolProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; type?: string; campus?: string; location?: string; region?: string; schoolId?: string; institutionName?: string; provider?: string; description?: string; cost?: unknown; eligibility?: string; format?: string; applyUrl?: string; href?: string; }
+interface SchoolProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; type?: string; campus?: string; location?: string; region?: string; schoolId?: string; institutionName?: string; provider?: string; description?: string; cost?: unknown; eligibility?: string; format?: string; applyUrl?: string; applicationUrl?: string; programUrl?: string; url?: string; href?: string; }
 interface SchoolJob { id: string; title: string; slug?: string; location?: string; jobType?: string; employmentType?: string; salary?: string; featured?: boolean; employerId?: string; employerName?: string; href?: string; }
 interface SchoolScholarship { id: string; title: string; amount?: unknown; deadline?: string; description?: string; employerId?: string; organization?: string; href?: string; }
 interface Campus { name: string; location: string; type?: string; }
 interface AccreditationRecord { name: string; description?: string; }
 interface SchoolOrganization extends Omit<Organization, "accreditation"> {
   applyUrl?: string;
+  careersUrl?: string;
   campuses?: Campus[];
   accreditation?: string | AccreditationRecord[];
   areasOfStudy?: string[];
   studentCount?: string;
   graduationRate?: string;
   employmentRate?: string;
+  previewHighlights?: string[];
+  sourceUrls?: string[];
+  profileMode?: "claimable-preview" | "claimed-live";
 }
 interface SchoolProfileResponse {
   org: Organization | null;
@@ -148,7 +156,8 @@ function SchoolProfileContent() {
 
   const schoolOrg = org as SchoolOrganization;
   const websiteUrl = schoolOrg.website ? (schoolOrg.website.startsWith("http") ? schoolOrg.website : `https://${schoolOrg.website}`) : null;
-  const applyUrl = schoolOrg.applyUrl || websiteUrl;
+  const applyUrl = schoolOrg.applyUrl ? (schoolOrg.applyUrl.startsWith("http") ? schoolOrg.applyUrl : `https://${schoolOrg.applyUrl}`) : null;
+  const careersUrl = schoolOrg.careersUrl ? (schoolOrg.careersUrl.startsWith("http") ? schoolOrg.careersUrl : `https://${schoolOrg.careersUrl}`) : null;
   const foundedYear = schoolOrg.foundedYear ? String(schoolOrg.foundedYear) : schoolOrg.since || null;
   const campuses: Campus[] = schoolOrg.campuses || [];
   const accreditations: AccreditationRecord[] = schoolOrg.accreditation
@@ -161,6 +170,8 @@ function SchoolProfileContent() {
   const graduationRate = schoolOrg.graduationRate || null;
   const employmentRate = schoolOrg.employmentRate || null;
   const enrollmentStatus = schoolOrg.enrollmentStatus || null;
+  const isClaimablePreview = isClaimableSchoolPreview(schoolOrg);
+  const previewHighlights = getSchoolPreviewHighlights(schoolOrg);
   const hasOpportunities = programs.length > 0 || jobs.length > 0 || scholarships.length > 0;
 
   const PURPLE = "#A78BFA";
@@ -208,19 +219,34 @@ function SchoolProfileContent() {
                 <p className="text-sm font-semibold" style={{ color: PURPLE }}>
                   🎓 {org.institutionType || "Education"}{org.industry ? ` · ${org.industry}` : ""}
                 </p>
-                {org.partnerTier === "school" && (
+                {isClaimablePreview ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold"
+                    style={{
+                      color: "var(--navy)",
+                      background: "color-mix(in srgb, var(--navy) 10%, var(--card))",
+                    }}
+                  >
+                    School Preview
+                  </span>
+                ) : org.partnerTier === "school" ? (
                   <span
                     className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold"
                     style={{ color: "var(--blue)", background: "var(--blue-soft)" }}
                   >
                     {org.partnerBadgeLabel || org.partnerLabel || "Education Partner"}
                   </span>
-                )}
+                ) : null}
               </div>
               <p className="mt-1.5 text-[13px] text-text-muted flex items-center gap-1">
                 📍 {displayLocation(org.location) || "Canada"}
                 {org.treatyTerritory && <span> · {org.treatyTerritory}</span>}
               </p>
+              {isClaimablePreview && (
+                <p className="mt-2 max-w-[620px] text-[12px] leading-relaxed text-text-sec">
+                  Built from official public school information to show how {org.shortName || org.name} appears in the national IOPPS school showcase.
+                </p>
+              )}
             </div>
             {/* Action Buttons */}
             <div className="flex gap-2 flex-wrap shrink-0">
@@ -232,9 +258,17 @@ function SchoolProfileContent() {
                   </button>
                 </a>
               )}
+              {careersUrl && (
+                <a href={careersUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none text-white transition-all hover:-translate-y-0.5"
+                    style={{ background: TEAL, boxShadow: "0 0 16px rgba(20,184,166,0.24)" }}>
+                    💼 Career Pathways
+                  </button>
+                </a>
+              )}
               {websiteUrl && (
                 <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:text-white">
+                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:text-text">
                     🌐 Visit Website
                   </button>
                 </a>
@@ -252,11 +286,15 @@ function SchoolProfileContent() {
 
           {/* Quick Stats */}
           <div className="flex gap-6 flex-wrap mt-4 pt-4 border-t border-border">
-            {org.partnerTier === "school" && (
+            {isClaimablePreview ? (
+              <span className="text-[13px] text-text-muted">
+                ✨ <strong className="text-text">Public school preview</strong>
+              </span>
+            ) : org.partnerTier === "school" ? (
               <span className="text-[13px] text-text-muted">
                 ✨ <strong className="text-text">{org.partnerLabel || "Education Partner"}</strong>
               </span>
-            )}
+            ) : null}
             {programs.length > 0 && (
               <span className="text-[13px] text-text-muted">📚 <strong className="text-text">{programs.length}</strong> program{programs.length !== 1 ? "s" : ""}</span>
             )}
@@ -313,9 +351,25 @@ function SchoolProfileContent() {
                   <div className="flex flex-col gap-2.5">
                     {programs.slice(0, 6).map((p, i) => {
                       const programCost = displayAmount(p.cost);
+                      const previewProgramHref =
+                        p.programUrl ||
+                        p.applicationUrl ||
+                        p.url ||
+                        p.href ||
+                        `/programs/${p.id}`;
+                      const programHref = isClaimablePreview
+                        ? previewProgramHref
+                        : (p.href || `/programs/${p.id}`);
+                      const isExternalProgramHref = /^https?:\/\//.test(programHref);
 
                       return (
-                      <Link key={p.id} href={p.href || `/programs/${p.id}`} className="no-underline block">
+                      <Link
+                        key={p.id}
+                        href={programHref}
+                        className="no-underline block"
+                        target={isExternalProgramHref ? "_blank" : undefined}
+                        rel={isExternalProgramHref ? "noreferrer" : undefined}
+                      >
                         <div className="px-4 py-3.5 rounded-xl transition-all hover:-translate-y-0.5"
                           style={{
                             background: i === 0 ? "rgba(167,139,250,0.06)" : "rgba(30,41,59,0.4)",
@@ -404,6 +458,29 @@ function SchoolProfileContent() {
             </div>
           )}
 
+          {isClaimablePreview && (
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="text-base font-bold text-text mb-2 flex items-center gap-2">
+                <span className="text-lg">🪶</span> Why this school is featured
+              </h2>
+              <p className="text-sm text-text-muted leading-[1.7] mb-4">
+                This preview was built from official public information to help learners discover more schools, supports, and pathways in one place.
+              </p>
+              {previewHighlights.length > 0 && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {previewHighlights.map((highlight) => (
+                    <div
+                      key={highlight}
+                      className="rounded-xl border border-border/30 bg-bg px-4 py-3 text-[13px] font-medium text-text-sec"
+                    >
+                      {highlight}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* About Section */}
           {org.description && (
             <div className="bg-card rounded-2xl border border-border p-6">
@@ -471,15 +548,19 @@ function SchoolProfileContent() {
         <div className="flex flex-col gap-5">
 
           {/* Start Your Journey CTA */}
-          {applyUrl && (
+          {(applyUrl || careersUrl) && (
             <div className="rounded-2xl p-5 text-center border" style={{ borderColor: "rgba(167,139,250,0.2)", background: "linear-gradient(135deg, rgba(167,139,250,0.08), rgba(59,130,246,0.05))" }}>
-              <p className="text-lg mb-1">🎓</p>
-              <h3 className="text-base font-bold text-text mb-1.5">Start Your Journey</h3>
-              <p className="text-xs text-text-muted mb-3">Begin your path to an exciting career with {org.shortName || org.name}.</p>
-              <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+              <p className="text-lg mb-1">{applyUrl ? "🎓" : "💼"}</p>
+              <h3 className="text-base font-bold text-text mb-1.5">{applyUrl ? "Start Your Journey" : "Explore Career Pathways"}</h3>
+              <p className="text-xs text-text-muted mb-3">
+                {applyUrl
+                  ? `Begin your path with ${org.shortName || org.name}.`
+                  : `See how ${org.shortName || org.name} connects learners to career opportunities.`}
+              </p>
+              <a href={applyUrl || careersUrl || "#"} target="_blank" rel="noopener noreferrer" className="no-underline">
                 <button className="w-full py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none text-white transition-all hover:-translate-y-0.5"
                   style={{ background: PURPLE }}>
-                  Start Application →
+                  {applyUrl ? "Start Application" : "Explore Career Pathways"} →
                 </button>
               </a>
             </div>
@@ -543,7 +624,7 @@ function SchoolProfileContent() {
           )}
 
           {/* Contact Card */}
-          {(websiteUrl || org.contactEmail || org.phone || org.address) && (
+          {(websiteUrl || careersUrl || org.contactEmail || org.phone || org.address) && (
             <div className="bg-card rounded-2xl border border-border p-5">
               <h3 className="text-[13px] font-bold uppercase tracking-wider text-text-muted mb-3.5">Contact</h3>
               <div className="flex flex-col">
@@ -552,6 +633,17 @@ function SchoolProfileContent() {
                     <span className="text-base w-5 text-center shrink-0">🌐</span>
                     <div><p className="text-[11px] text-text-muted">Website</p>
                       <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-[13px] no-underline hover:underline" style={{ color: PURPLE }}>{org.website}</a>
+                    </div>
+                  </div>
+                )}
+                {careersUrl && (
+                  <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
+                    <span className="text-base w-5 text-center shrink-0">💼</span>
+                    <div>
+                      <p className="text-[11px] text-text-muted">Career Pathways</p>
+                      <a href={careersUrl} target="_blank" rel="noopener noreferrer" className="text-[13px] no-underline hover:underline" style={{ color: PURPLE }}>
+                        Explore career supports
+                      </a>
                     </div>
                   </div>
                 )}
