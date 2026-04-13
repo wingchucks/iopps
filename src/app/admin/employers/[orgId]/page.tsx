@@ -58,6 +58,10 @@ interface OrgData {
   team: TeamMember[];
   stats: { jobsPosted: number; applicationsReceived: number; profileViews: number };
   actionHistory: ActionHistoryItem[];
+  capabilities?: {
+    canAssignSubscription?: boolean;
+    canDelete?: boolean;
+  };
 }
 
 const SUBSCRIPTION_TIER_OPTIONS: Array<{ value: SubscriptionTier; label: string }> = [
@@ -79,8 +83,11 @@ export default function OrganizationDetailPage() {
   const [data, setData] = useState<OrgData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDisableModal, setShowDisableModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [subscriptionSaving, setSubscriptionSaving] = useState(false);
+  const [deleteConfirmValue, setDeleteConfirmValue] = useState("");
+  const [linkedUserPolicy, setLinkedUserPolicy] = useState<"unlink" | "delete">("unlink");
   const [subscriptionDraft, setSubscriptionDraft] = useState<AdminSubscriptionDraft>(() =>
     buildAdminSubscriptionDraft({ accountType: "business" }),
   );
@@ -119,6 +126,7 @@ export default function OrganizationDetailPage() {
       toast.success("Updated successfully");
       await fetchData();
       setShowDisableModal(false);
+      setShowDeleteModal(false);
     } catch {
       toast.error("Action failed");
     } finally {
@@ -192,6 +200,43 @@ export default function OrganizationDetailPage() {
     }
   };
 
+  const handleSoftDelete = async () => {
+    if (deleteConfirmValue.trim() !== orgId) {
+      toast.error("Enter the exact organization id to confirm deletion");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const token = await user?.getIdToken();
+      const res = await fetch(`/api/admin/employers/${orgId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "softDelete",
+          confirmOrgId: orgId,
+          linkedUserPolicy,
+        }),
+      });
+
+      const payload = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        throw new Error(payload.error || "Failed to delete organization");
+      }
+
+      toast.success("Organization deleted");
+      router.push("/admin/employers");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Delete failed";
+      toast.error(message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl space-y-6">
@@ -226,6 +271,8 @@ export default function OrganizationDetailPage() {
   const currentStatus = employer.subscriptionStatus || (currentPlan ? "active" : "inactive");
   const selectedPlan = SUBSCRIPTION_PLANS[PLAN_ID_BY_TIER[subscriptionDraft.subscriptionTier]];
   const isComplimentaryDraft = Number(subscriptionDraft.amount) <= 0;
+  const canAssignSubscription = data.capabilities?.canAssignSubscription === true;
+  const canDelete = data.capabilities?.canDelete === true;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -361,159 +408,168 @@ export default function OrganizationDetailPage() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] p-5">
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h3 className="text-base font-semibold">Manual Subscription Assignment</h3>
-              <p className="mt-1 text-sm leading-6" style={{ color: "var(--text-muted)" }}>
-                Use this when you need to grant or renew access manually for an organization or school.
+        {canAssignSubscription ? (
+          <div className="mt-6 rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] p-5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-base font-semibold">Manual Subscription Assignment</h3>
+                <p className="mt-1 text-sm leading-6" style={{ color: "var(--text-muted)" }}>
+                  Use this when you need to grant or renew access manually for an organization or school.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSubscriptionDraft(buildAdminSubscriptionDraft(employer))}
+                className="rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors hover:border-[var(--card-border-hover)]"
+                style={{ borderColor: "var(--input-border)", background: "var(--card-bg)" }}
+              >
+                Reset Defaults
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <label className="space-y-2">
+                <span className="text-sm font-medium">Plan</span>
+                <select
+                  value={subscriptionDraft.subscriptionTier}
+                  onChange={(event) =>
+                    setSubscriptionDraft((current) =>
+                      applyAdminSubscriptionTier(current, event.target.value as SubscriptionTier),
+                    )
+                  }
+                  className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
+                >
+                  {SUBSCRIPTION_TIER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs leading-5" style={{ color: "var(--text-muted)" }}>
+                  {selectedPlan.shortDescription}
+                </p>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium">Start Date</span>
+                <input
+                  type="date"
+                  value={subscriptionDraft.subscriptionStart}
+                  onChange={(event) =>
+                    setSubscriptionDraft((current) => ({ ...current, subscriptionStart: event.target.value }))
+                  }
+                  className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium">End Date</span>
+                <input
+                  type="date"
+                  value={subscriptionDraft.subscriptionEnd}
+                  onChange={(event) =>
+                    setSubscriptionDraft((current) => ({ ...current, subscriptionEnd: event.target.value }))
+                  }
+                  className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium">Amount</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={subscriptionDraft.amount}
+                  onChange={(event) =>
+                    setSubscriptionDraft((current) => ({
+                      ...current,
+                      ...recalculateAdminSubscriptionTotals(event.target.value, current.gstAmount),
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium">GST</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={subscriptionDraft.gstAmount}
+                  onChange={(event) =>
+                    setSubscriptionDraft((current) => ({
+                      ...current,
+                      ...recalculateAdminSubscriptionTotals(current.amount, event.target.value),
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium">Total</span>
+                <input
+                  type="text"
+                  value={subscriptionDraft.totalAmount}
+                  readOnly
+                  className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground/90 focus:outline-none"
+                />
+              </label>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-dashed p-4" style={{ borderColor: isComplimentaryDraft ? "var(--warning)" : "var(--card-border)" }}>
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={subscriptionDraft.createSubscriptionRecord}
+                  onChange={(event) =>
+                    setSubscriptionDraft((current) => ({
+                      ...current,
+                      createSubscriptionRecord: event.target.checked,
+                    }))
+                  }
+                  className="mt-1 h-4 w-4 rounded border-[var(--input-border)] bg-[var(--card-bg)]"
+                />
+                <span className="text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
+                  Create or update the matching subscription record in the `subscriptions` collection.
+                  Leave this on for normal admin grants and renewals.
+                </span>
+              </label>
+
+              <p className={cn(
+                "text-sm leading-6",
+                isComplimentaryDraft ? "text-amber-300" : "text-[var(--text-secondary)]",
+              )}>
+                {isComplimentaryDraft
+                  ? "Amount is set to $0.00. This will create complimentary admin-grant access and it will not count as a paid public-partner subscription."
+                  : `This will apply the ${selectedPlan.title} annual plan at ${selectedPlan.priceLabel}${selectedPlan.periodLabel}.`}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setSubscriptionDraft(buildAdminSubscriptionDraft(employer))}
-              className="rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors hover:border-[var(--card-border-hover)]"
-              style={{ borderColor: "var(--input-border)", background: "var(--card-bg)" }}
-            >
-              Reset Defaults
-            </button>
-          </div>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <label className="space-y-2">
-              <span className="text-sm font-medium">Plan</span>
-              <select
-                value={subscriptionDraft.subscriptionTier}
-                onChange={(event) =>
-                  setSubscriptionDraft((current) =>
-                    applyAdminSubscriptionTier(current, event.target.value as SubscriptionTier),
-                  )
-                }
-                className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void handleSubscriptionSubmit()}
+                disabled={subscriptionSaving}
+                className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {SUBSCRIPTION_TIER_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                {subscriptionSaving ? "Applying..." : `Apply ${selectedPlan.title}`}
+              </button>
               <p className="text-xs leading-5" style={{ color: "var(--text-muted)" }}>
-                {selectedPlan.shortDescription}
+                The organization profile and employer profile will both be updated when you apply this change.
               </p>
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">Start Date</span>
-              <input
-                type="date"
-                value={subscriptionDraft.subscriptionStart}
-                onChange={(event) =>
-                  setSubscriptionDraft((current) => ({ ...current, subscriptionStart: event.target.value }))
-                }
-                className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">End Date</span>
-              <input
-                type="date"
-                value={subscriptionDraft.subscriptionEnd}
-                onChange={(event) =>
-                  setSubscriptionDraft((current) => ({ ...current, subscriptionEnd: event.target.value }))
-                }
-                className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">Amount</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={subscriptionDraft.amount}
-                onChange={(event) =>
-                  setSubscriptionDraft((current) => ({
-                    ...current,
-                    ...recalculateAdminSubscriptionTotals(event.target.value, current.gstAmount),
-                  }))
-                }
-                className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">GST</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={subscriptionDraft.gstAmount}
-                onChange={(event) =>
-                  setSubscriptionDraft((current) => ({
-                    ...current,
-                    ...recalculateAdminSubscriptionTotals(current.amount, event.target.value),
-                  }))
-                }
-                className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">Total</span>
-              <input
-                type="text"
-                value={subscriptionDraft.totalAmount}
-                readOnly
-                className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground/90 focus:outline-none"
-              />
-            </label>
+            </div>
           </div>
-
-          <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-dashed p-4" style={{ borderColor: isComplimentaryDraft ? "var(--warning)" : "var(--card-border)" }}>
-            <label className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                checked={subscriptionDraft.createSubscriptionRecord}
-                onChange={(event) =>
-                  setSubscriptionDraft((current) => ({
-                    ...current,
-                    createSubscriptionRecord: event.target.checked,
-                  }))
-                }
-                className="mt-1 h-4 w-4 rounded border-[var(--input-border)] bg-[var(--card-bg)]"
-              />
-              <span className="text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-                Create or update the matching subscription record in the `subscriptions` collection.
-                Leave this on for normal admin grants and renewals.
-              </span>
-            </label>
-
-            <p className={cn(
-              "text-sm leading-6",
-              isComplimentaryDraft ? "text-amber-300" : "text-[var(--text-secondary)]",
-            )}>
-              {isComplimentaryDraft
-                ? "Amount is set to $0.00. This will create complimentary admin-grant access and it will not count as a paid public-partner subscription."
-                : `This will apply the ${selectedPlan.title} annual plan at ${selectedPlan.priceLabel}${selectedPlan.periodLabel}.`}
+        ) : (
+          <div className="mt-6 rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] p-5">
+            <h3 className="text-base font-semibold">Manual Subscription Assignment</h3>
+            <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-muted)" }}>
+              Only the super admin can grant or renew subscriptions from this screen.
             </p>
           </div>
-
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => void handleSubscriptionSubmit()}
-              disabled={subscriptionSaving}
-              className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {subscriptionSaving ? "Applying..." : `Apply ${selectedPlan.title}`}
-            </button>
-            <p className="text-xs leading-5" style={{ color: "var(--text-muted)" }}>
-              The organization profile and employer profile will both be updated when you apply this change.
-            </p>
-          </div>
-        </div>
+        )}
 
         {employer.stripeCustomerId && (
           <a
@@ -563,6 +619,26 @@ export default function OrganizationDetailPage() {
           )}
         </div>
       </div>
+
+      {canDelete && (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/5 p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-red-200">Danger Zone</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-red-100/80">
+                Soft delete this organization, hide all linked public content, and choose whether linked user accounts should be unlinked or deleted as part of the process.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+            >
+              Delete Organization
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Action History */}
       <div className="rounded-2xl p-6" style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)" }}>
@@ -621,6 +697,71 @@ export default function OrganizationDetailPage() {
                 )}
               >
                 {actionLoading ? "Processing..." : isDisabled ? "Enable" : "Disable"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl p-6"
+            style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)" }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-2 text-red-200">Delete Organization</h3>
+            <p className="text-sm leading-6 mb-5" style={{ color: "var(--text-muted)" }}>
+              This performs a soft delete. The organization will be disabled, public visibility will be removed, and linked content will be hidden immediately.
+            </p>
+
+            <div className="space-y-4">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Linked user handling</span>
+                <select
+                  value={linkedUserPolicy}
+                  onChange={(event) => setLinkedUserPolicy(event.target.value as "unlink" | "delete")}
+                  className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                >
+                  <option value="unlink">Keep users and unlink them from this organization</option>
+                  <option value="delete">Delete linked user accounts too</option>
+                </select>
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">
+                  Type <span className="font-mono text-red-200">{orgId}</span> to confirm
+                </span>
+                <input
+                  type="text"
+                  value={deleteConfirmValue}
+                  onChange={(event) => setDeleteConfirmValue(event.target.value)}
+                  className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                />
+              </label>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmValue("");
+                  setLinkedUserPolicy("unlink");
+                }}
+                className="rounded-lg px-4 py-2 text-sm font-medium"
+                style={{ background: "var(--input-bg)", border: "1px solid var(--input-border)" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void handleSoftDelete()}
+                disabled={actionLoading || deleteConfirmValue.trim() !== orgId}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {actionLoading ? "Deleting..." : "Delete Organization"}
               </button>
             </div>
           </div>
