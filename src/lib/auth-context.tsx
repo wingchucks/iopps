@@ -96,23 +96,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
-
-      // Sync session cookie BEFORE updating user state so the middleware
-      // cookie is ready by the time any component tries to navigate to a
-      // protected route (prevents the black-screen race condition).
-      const sessionReady = await ensureSessionCookie(firebaseUser);
-
-      if (firebaseUser && !sessionReady) {
-        await firebaseSignOut(auth).catch(() => {});
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
+
+      // Sign-in flows already wait for a synced session cookie before redirecting.
+      // Do not block subsequent page renders on another client-side sync attempt.
+      void ensureSessionCookie(firebaseUser).catch(() => {});
     });
     return unsubscribe;
   }, []);
