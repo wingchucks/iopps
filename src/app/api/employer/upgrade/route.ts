@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendEmployerWelcome, sendAdminNewSignup } from "@/lib/email";
-import { verifyAppCheckFromRequest } from "@/lib/server/app-check";
+import { getAppCheckVerificationResult } from "@/lib/server/app-check";
 import {
   evaluateEmployerSignupProtection,
   getSignupClientIp,
@@ -27,11 +27,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const appCheckValid = await verifyAppCheckFromRequest(req);
-  if (!appCheckValid) {
-    return NextResponse.json({ error: "Security check failed. Please refresh the page and try again." }, { status: 403 });
-  }
-
   let uid: string;
   let email: string;
   let emailVerified = false;
@@ -43,6 +38,14 @@ export async function POST(req: NextRequest) {
     emailVerified = decoded.email_verified === true;
   } catch {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  }
+
+  const appCheck = await getAppCheckVerificationResult(req);
+  if (!appCheck.ok) {
+    console.warn("[employer/upgrade] proceeding without valid app check", {
+      uid,
+      reason: appCheck.reason,
+    });
   }
 
   // Check they're not already an employer
