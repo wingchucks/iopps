@@ -5,10 +5,20 @@ on:
     branches: [master]
   workflow_dispatch:
 
+concurrency:
+  group: root-web-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -17,7 +27,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20.x'
+          node-version: '24.x'
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
@@ -27,23 +37,54 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
       - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel build --prod --token="$VERCEL_TOKEN"
 
-      - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy preview build
+        id: preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREVIEW_URL="$(vercel deploy --prebuilt --token="$VERCEL_TOKEN" --yes | grep -Eo 'https://[^ ]+\.vercel\.app' | tail -n 1)"
+          if [ -z "$PREVIEW_URL" ]; then
+            echo "Failed to capture preview deployment URL" >&2
+            exit 1
+          fi
+          echo "url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
+          echo "Preview deployment: $PREVIEW_URL"
+
+      - name: Smoke test preview
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          QA_BASE_URL: ${{ steps.preview.outputs.url }}
+        run: npm run qa:production:smoke
+
+      - name: Promote preview to production
+        run: vercel promote "${{ steps.preview.outputs.url }}" --yes --token="$VERCEL_TOKEN"
+
+      - name: Resolve latest production deployment
+        id: production
+        shell: bash
+        run: |
+          set -euo pipefail
+          vercel list iopps --environment production --status READY --format json > deployments.json
+          PROD_URL="$(node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync('deployments.json','utf8')); const url=data.deployments?.[0]?.url; if (!url) process.exit(1); process.stdout.write(url.startsWith('http') ? url : 'https://' + url);")"
+          echo "url=$PROD_URL" >> "$GITHUB_OUTPUT"
+          echo "Production deployment: $PROD_URL"
+
+      - name: Point production domains at latest deployment
+        run: |
+          vercel alias set "${{ steps.production.outputs.url }}" iopps.ca --token="$VERCEL_TOKEN"
+          vercel alias set "${{ steps.production.outputs.url }}" www.iopps.ca --token="$VERCEL_TOKEN"
+          vercel alias set "${{ steps.production.outputs.url }}" jobs.iopps.ca --token="$VERCEL_TOKEN"
+
+      - name: Smoke test live production
+        run: npm run qa:production:smoke
