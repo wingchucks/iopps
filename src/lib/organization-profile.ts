@@ -30,6 +30,13 @@ export interface BusinessProfileReadiness {
   missingFields: string[];
 }
 
+export interface NormalizedPartnerDirectorySettings {
+  enabled?: boolean;
+  visibleAt?: string;
+  sectionOverride?: "premium" | "education" | "visibility";
+  spotlight?: boolean;
+}
+
 const HOURS_DAY_KEYS = [
   "monday",
   "tuesday",
@@ -47,6 +54,24 @@ function normalizeString(value: unknown): string {
 function normalizeOptionalString(value: unknown): string | undefined {
   const normalized = normalizeString(value);
   return normalized || undefined;
+}
+
+function normalizePartnerDirectorySettings(value: unknown): NormalizedPartnerDirectorySettings | undefined {
+  if (!value || typeof value !== "object") return undefined;
+
+  const record = value as Record<string, unknown>;
+  const visibleAt = normalizeOptionalString(record.visibleAt);
+  const sectionOverride = normalizeOptionalString(record.sectionOverride)?.toLowerCase();
+  const normalized: NormalizedPartnerDirectorySettings = {};
+
+  if (typeof record.enabled === "boolean") normalized.enabled = record.enabled;
+  if (visibleAt) normalized.visibleAt = visibleAt;
+  if (sectionOverride === "premium" || sectionOverride === "education" || sectionOverride === "visibility") {
+    normalized.sectionOverride = sectionOverride;
+  }
+  if (typeof record.spotlight === "boolean") normalized.spotlight = record.spotlight;
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
 }
 
 function normalizeNumericYear(value: unknown): number | null {
@@ -282,11 +307,36 @@ export function isOrganizationPubliclyVisible(org: {
   disabled?: unknown;
   status?: unknown;
   emailVerified?: unknown;
+  publicVisibility?: unknown;
+  isPublished?: unknown;
+  publicationStatus?: unknown;
+  directoryVisible?: unknown;
+  isDirectoryVisible?: unknown;
 }): boolean {
   if (org.disabled === true) return false;
 
   const status = normalizeString(org.status).toLowerCase();
   if (status === "disabled" || status === "rejected") return false;
+
+  const visibilitySignals: boolean[] = [];
+  const publicVisibility = normalizeString(org.publicVisibility).toLowerCase();
+  if (publicVisibility) {
+    visibilitySignals.push(!(publicVisibility === "hidden" || publicVisibility === "private"));
+  }
+  if (typeof org.isPublished === "boolean") {
+    visibilitySignals.push(org.isPublished);
+  }
+  const publicationStatus = normalizeString(org.publicationStatus).toUpperCase();
+  if (publicationStatus) {
+    visibilitySignals.push(publicationStatus === "PUBLISHED");
+  }
+  if (typeof org.directoryVisible === "boolean") {
+    visibilitySignals.push(org.directoryVisible);
+  }
+  if (typeof org.isDirectoryVisible === "boolean") {
+    visibilitySignals.push(org.isDirectoryVisible);
+  }
+  if (visibilitySignals.some((signal) => signal === false)) return false;
 
   const accepted =
     org.onboardingComplete === true ||
@@ -326,6 +376,19 @@ export function normalizeOrganizationRecord<T extends object>(record: T): T {
   const hours = normalizeOrganizationHours(source.hours);
   const foundedYear = normalizeNumericYear(source.foundedYear);
   const publicationStatus = normalizeOptionalString(source.publicationStatus)?.toUpperCase();
+  const areasOfStudy = normalizeStringArray(source.areasOfStudy);
+  const previewHighlights = normalizeStringArray(source.previewHighlights);
+  const sourceUrls = normalizeStringArray(source.sourceUrls);
+  const profileMode = normalizeOptionalString(source.profileMode);
+  const seedSource = normalizeOptionalString(source.seedSource);
+  const careersUrl = normalizeOptionalString(source.careersUrl);
+  const studentCount = normalizeOptionalString(source.studentCount);
+  const graduationRate = normalizeOptionalString(source.graduationRate);
+  const employmentRate = normalizeOptionalString(source.employmentRate);
+  const showcaseRank =
+    typeof source.showcaseRank === "number" && Number.isFinite(source.showcaseRank)
+      ? source.showcaseRank
+      : undefined;
 
   if (name) next.name = name;
   if (tagline) next.tagline = tagline;
@@ -346,13 +409,26 @@ export function normalizeOrganizationRecord<T extends object>(record: T): T {
   if (gallery.length > 0) next.gallery = gallery;
   if (tags.length > 0) next.tags = tags;
   if (services.length > 0) next.services = services;
+  if (areasOfStudy.length > 0) next.areasOfStudy = areasOfStudy;
   if (indigenousGroups.length > 0) next.indigenousGroups = indigenousGroups;
+  if (previewHighlights.length > 0) next.previewHighlights = previewHighlights;
+  if (sourceUrls.length > 0) next.sourceUrls = sourceUrls;
   if (hours) next.hours = hours;
   if (foundedYear !== null) next.foundedYear = foundedYear;
+  if (profileMode) next.profileMode = profileMode;
+  if (seedSource) next.seedSource = seedSource;
+  if (careersUrl) next.careersUrl = careersUrl;
+  if (studentCount) next.studentCount = studentCount;
+  if (graduationRate) next.graduationRate = graduationRate;
+  if (employmentRate) next.employmentRate = employmentRate;
+  if (showcaseRank !== undefined) next.showcaseRank = showcaseRank;
+  if (typeof source.claimable === "boolean") next.claimable = source.claimable;
   if (typeof source.isPublished === "boolean") next.isPublished = source.isPublished;
   if (publicationStatus) next.publicationStatus = publicationStatus;
   if (typeof source.directoryVisible === "boolean") next.directoryVisible = source.directoryVisible;
   if (typeof source.isDirectoryVisible === "boolean") next.isDirectoryVisible = source.isDirectoryVisible;
+  const partnerDirectory = normalizePartnerDirectorySettings(source.partnerDirectory);
+  if (partnerDirectory) next.partnerDirectory = partnerDirectory;
 
   return next as T;
 }
