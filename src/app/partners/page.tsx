@@ -77,7 +77,7 @@ function PartnersContent() {
     } else if (filter === "Schools") {
       list = list.filter((o) => o.partnerTier === "school");
     } else if (filter === "Employers") {
-      list = list.filter((o) => o.partnerTier !== "school");
+      list = list.filter((o) => o.partnerTier === "standard");
     }
 
     if (search.trim()) {
@@ -95,7 +95,7 @@ function PartnersContent() {
 
   const premiumOrgs = useMemo(() => orgs.filter((o) => o.partnerTier === "premium"), [orgs]);
   const schoolOrgs = useMemo(() => orgs.filter((o) => o.partnerTier === "school"), [orgs]);
-  const employerOrgs = useMemo(() => orgs.filter((o) => o.partnerTier !== "school"), [orgs]);
+  const employerOrgs = useMemo(() => orgs.filter((o) => o.partnerTier === "standard"), [orgs]);
   const showSections = filter === "All Partners" && !search && orgs.length > 0;
 
   const filterCounts: Record<TierFilter, number> = useMemo(() => ({
