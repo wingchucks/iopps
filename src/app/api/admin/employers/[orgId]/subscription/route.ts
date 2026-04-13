@@ -45,6 +45,10 @@ function normalizeName(value: unknown): string {
 }
 
 async function resolveOrganizationRef(orgId: string, employerName: string, employerSlug: string) {
+  if (!adminDb) {
+    throw new Error("Firestore not initialized");
+  }
+
   const directRef = adminDb.collection("organizations").doc(orgId);
   const directSnap = await directRef.get();
   if (directSnap.exists) return directRef;
