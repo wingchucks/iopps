@@ -235,7 +235,34 @@ export default async function LandingPage() {
               Discover opportunities, community updates, and partner organizations built for Indigenous success across Canada.
             </p>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 lg:hidden">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link href="/signup" className="block sm:flex-1">
+                  <Button full variant="primary-teal" size="lg">
+                    Sign Up Free
+                  </Button>
+                </Link>
+                <Link href="/login" className="block sm:flex-1">
+                  <Button
+                    full
+                    variant="outline"
+                    size="lg"
+                    className="border-white/18 text-white"
+                    style={{ background: "rgba(255,255,255,.05)" }}
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+              </div>
+              <Link
+                href="/jobs"
+                className="mt-3 inline-flex items-center text-sm font-semibold text-white/82 no-underline transition-colors hover:text-white"
+              >
+                Explore Jobs &rarr;
+              </Link>
+            </div>
+
+            <div className="mt-6 hidden lg:flex lg:flex-row lg:gap-3">
               <Link href="/signup">
                 <Button variant="primary-teal" size="lg">
                   Join Free
