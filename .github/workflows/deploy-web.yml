@@ -91,11 +91,8 @@ jobs:
           echo "url=$PROD_URL" >> "$GITHUB_OUTPUT"
           echo "Production deployment: $PROD_URL"
 
-      - name: Point production domains at latest deployment
-        run: |
-          vercel alias set "${{ steps.production.outputs.url }}" iopps.ca --token="$VERCEL_TOKEN"
-          vercel alias set "${{ steps.production.outputs.url }}" www.iopps.ca --token="$VERCEL_TOKEN"
-          vercel alias set "${{ steps.production.outputs.url }}" jobs.iopps.ca --token="$VERCEL_TOKEN"
+      - name: Confirm production deployment URL
+        run: echo "Live production deployment is ${{ steps.production.outputs.url }}"
 
       - name: Smoke test live production
         run: npm run qa:production:smoke

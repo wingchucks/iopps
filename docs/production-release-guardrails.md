@@ -15,7 +15,8 @@ This file defines the minimum rules for shipping `iopps.ca` without reintroducin
 2. GitHub Actions validates the Vercel release secrets, pulls preview env from Vercel, and creates a Vercel preview deployment.
 3. The preview deployment must pass `npm run qa:production:smoke`.
 4. Only after the preview smoke passes may the workflow pull production env, build production artifacts, and deploy production.
-5. The workflow must then run `npm run qa:production:smoke` against `https://iopps.ca`.
+5. Vercel applies the project's configured production domains as part of the production deploy.
+6. The workflow must then run `npm run qa:production:smoke` against `https://iopps.ca`.
 
 If either smoke step fails, the release is not considered good.
 
