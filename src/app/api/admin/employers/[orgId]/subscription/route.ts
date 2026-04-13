@@ -36,6 +36,54 @@ function toDateOrNull(value?: string): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function text(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeName(value: unknown): string {
+  return text(value).toLowerCase().replace(/\s+/g, " ");
+}
+
+async function resolveOrganizationRef(orgId: string, employerName: string, employerSlug: string) {
+  const directRef = adminDb.collection("organizations").doc(orgId);
+  const directSnap = await directRef.get();
+  if (directSnap.exists) return directRef;
+
+  const linkedByEmployerId = await adminDb
+    .collection("organizations")
+    .where("employerId", "==", orgId)
+    .limit(2)
+    .get();
+  if (linkedByEmployerId.size === 1) return linkedByEmployerId.docs[0].ref;
+
+  if (employerSlug) {
+    const linkedBySlug = await adminDb
+      .collection("organizations")
+      .where("slug", "==", employerSlug)
+      .limit(2)
+      .get();
+    if (linkedBySlug.size === 1) return linkedBySlug.docs[0].ref;
+  }
+
+  if (employerName) {
+    const linkedByName = await adminDb
+      .collection("organizations")
+      .where("name", "==", employerName)
+      .limit(2)
+      .get();
+    if (linkedByName.size === 1) return linkedByName.docs[0].ref;
+
+    const normalizedEmployerName = normalizeName(employerName);
+    if (normalizedEmployerName) {
+      const snapshot = await adminDb.collection("organizations").limit(1000).get();
+      const candidates = snapshot.docs.filter((doc) => normalizeName(doc.data().name) === normalizedEmployerName);
+      if (candidates.length === 1) return candidates[0].ref;
+    }
+  }
+
+  return directRef;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ orgId: string }> },
@@ -79,16 +127,33 @@ export async function POST(
   const planId = body.planId || (normalizedTier === "school" ? "tier3" : normalizedTier === "standard" ? "tier1" : "tier2");
 
   const employerRef = adminDb.collection("employers").doc(orgId);
-  const orgRef = adminDb.collection("organizations").doc(orgId);
+  const employerSnap = await employerRef.get();
+  if (!employerSnap.exists) {
+    return NextResponse.json({ error: "Organization not found." }, { status: 404 });
+  }
 
+  const employerData = employerSnap.data() ?? {};
+  const employerName =
+    text(employerData.name) ||
+    text(employerData.organizationName) ||
+    text(employerData.companyName);
+  const employerSlug = text(employerData.slug);
+  const orgRef = await resolveOrganizationRef(orgId, employerName, employerSlug);
+
+  const paymentId = amount <= 0 ? `admin-grant-${planId}` : `admin-manual-${planId}`;
   const subscriptionPayload = {
     tier: normalizedTier,
     status: "active",
     billingStartAt: subscriptionStart.toISOString(),
     subscriptionEnd: subscriptionEnd.toISOString(),
+    expiresAt: subscriptionEnd.toISOString(),
     bonusAccessGrantedAt: bonusAccessGrantedAt.toISOString(),
     ...(bonusAccessEndsAt ? { bonusAccessEndsAt: bonusAccessEndsAt.toISOString() } : {}),
     bonusAccessReason,
+    paymentId,
+    amountPaid: amount,
+    gstAmount,
+    totalAmount,
   };
 
   await employerRef.set(
@@ -112,7 +177,13 @@ export async function POST(
     {
       plan: normalizedTier,
       subscriptionTier: normalizedTier,
+      subscriptionStatus: "active",
+      employerId: orgId,
       tier: normalizedTier,
+      ...(employerName ? { name: employerName } : {}),
+      ...(employerSlug ? { slug: employerSlug } : {}),
+      subscriptionStart: subscriptionStart.toISOString(),
+      subscriptionEnd: subscriptionEnd.toISOString(),
       billingStartAt: subscriptionStart.toISOString(),
       bonusAccessGrantedAt: bonusAccessGrantedAt.toISOString(),
       ...(bonusAccessEndsAt ? { bonusAccessEndsAt: bonusAccessEndsAt.toISOString() } : {}),
