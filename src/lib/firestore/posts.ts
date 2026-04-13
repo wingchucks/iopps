@@ -14,6 +14,7 @@ import {
   type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { isPublicPostVisible } from "@/lib/access-state";
 
 export type PostType =
   | "job"
@@ -98,7 +99,9 @@ export async function getPosts(opts?: {
   if (opts?.type) constraints.unshift(where("type", "==", opts.type));
   if (opts?.max) constraints.push(limit(opts.max));
   const snap = await getDocs(query(col, ...constraints));
-  return snap.docs.map((d) => normalizePost(d.id, d.data()));
+  return snap.docs
+    .map((d) => normalizePost(d.id, d.data()))
+    .filter((post) => isPublicPostVisible(post));
 }
 
 export async function getPostsByOrg(orgId: string): Promise<Post[]> {
@@ -111,7 +114,8 @@ export async function getPostsByOrg(orgId: string): Promise<Post[]> {
 export async function getPost(id: string): Promise<Post | null> {
   const snap = await getDoc(doc(db, "posts", id));
   if (!snap.exists()) return null;
-  return normalizePost(snap.id, snap.data());
+  const post = normalizePost(snap.id, snap.data());
+  return isPublicPostVisible(post) ? post : null;
 }
 
 export async function setPost(

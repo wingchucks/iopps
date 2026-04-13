@@ -1,8 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { verifyAdminToken } from "@/lib/api-auth";
-import { adminDb } from "@/lib/firebase-admin";
+import { verifyAdminToken, verifySuperAdminToken } from "@/lib/api-auth";
+import { adminDb, getAdminAuth } from "@/lib/firebase-admin";
+import { isSuperAdminEmail } from "@/lib/server/super-admin";
 
 export const dynamic = "force-dynamic";
+
+export function buildAdminUserSoftDeleteUpdate(adminId: string, deletedAt: string) {
+  return {
+    status: "deleted",
+    deletedAt,
+    deletedBy: adminId,
+    updatedAt: deletedAt,
+  };
+}
 
 export async function GET(
   request: NextRequest,
@@ -24,6 +34,10 @@ export async function GET(
     }
 
     const userData = userDoc.data()!;
+    const targetIsSuperAdmin = isSuperAdminEmail(userData.email);
+    const viewerIsSuperAdmin = isSuperAdminEmail(
+      auth.viewerEmail ?? auth.decodedToken.email ?? null,
+    );
 
     // Fetch member profile
     const profileDoc = await adminDb.collection("memberProfiles").doc(userId).get();
@@ -60,7 +74,13 @@ export async function GET(
       lastLoginAt: userData.lastLoginAt?.toDate?.()?.toISOString() || userData.lastLoginAt || null,
       applications,
       applicationCount: applications.length,
-      isSuperAdmin: userData.email === "nathan.arias@iopps.ca",
+      isSuperAdmin: targetIsSuperAdmin,
+      capabilities: {
+        canDelete:
+          viewerIsSuperAdmin &&
+          !targetIsSuperAdmin &&
+          userData.status !== "deleted",
+      },
     });
   } catch (error) {
     console.error("Error fetching user:", error);
@@ -85,7 +105,7 @@ export async function PATCH(
   try {
     // Super admin protection
     const userDoc = await adminDb.collection("users").doc(userId).get();
-    if (userDoc.exists && userDoc.data()?.email === "nathan.arias@iopps.ca") {
+    if (userDoc.exists && isSuperAdminEmail(userDoc.data()?.email)) {
       return NextResponse.json(
         { error: "Cannot modify super admin account" },
         { status: 403 }
@@ -121,7 +141,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
-  const auth = await verifyAdminToken(request);
+  const auth = await verifySuperAdminToken(request);
   if (!auth.success) return auth.response;
 
   if (!adminDb) {
@@ -131,22 +151,43 @@ export async function DELETE(
   const { userId } = await params;
 
   try {
-    // Super admin protection
-    const userDoc = await adminDb.collection("users").doc(userId).get();
-    if (userDoc.exists && userDoc.data()?.email === "nathan.arias@iopps.ca") {
+    const userRef = adminDb.collection("users").doc(userId);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (isSuperAdminEmail(userDoc.data()?.email)) {
       return NextResponse.json(
         { error: "Cannot delete super admin account" },
         { status: 403 }
       );
     }
 
-    // Soft delete
-    await adminDb.collection("users").doc(userId).update({
-      status: "deleted",
-      deletedAt: new Date().toISOString(),
-    });
+    const deletedAt = new Date().toISOString();
+    await userRef.set(
+      buildAdminUserSoftDeleteUpdate(auth.decodedToken.uid, deletedAt),
+      { merge: true },
+    );
 
-    return NextResponse.json({ success: true });
+    try {
+      const adminAuth = getAdminAuth();
+      await adminAuth.updateUser(userId, { disabled: true });
+      await adminAuth.revokeRefreshTokens(userId);
+    } catch (error) {
+      if (
+        !(
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          (error as { code?: string }).code === "auth/user-not-found"
+        )
+      ) {
+        throw error;
+      }
+    }
+
+    return NextResponse.json({ success: true, userId, deletedAt });
   } catch (error) {
     console.error("Error deleting user:", error);
     return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
