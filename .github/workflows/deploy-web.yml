@@ -2,7 +2,7 @@ name: Deploy Root App to Vercel
 
 on:
   push:
-    branches: [master]
+    branches: [release/production]
   workflow_dispatch:
 
 concurrency:
