@@ -10,6 +10,8 @@ import {
   buildFeaturedJobSummary,
   evaluateFeaturedActivation,
 } from "@/lib/server/featured-job-entitlements";
+import { applyJobDisplayFallbacks } from "@/lib/job-record-utils";
+import { applyNormalizedSubscriptionState } from "@/lib/server/subscription-state";
 
 export const runtime = "nodejs";
 
@@ -92,9 +94,16 @@ function isEditableEmployerJob(
   return false;
 }
 
-async function getOwnedJobOrThrow(id: string, context: Awaited<ReturnType<typeof requireEmployerContext>>) {
+function isLimitedManagedEmployerJobUpdate(input: EmployerJobInput): boolean {
+  const allowedKeys = new Set(["status", "closingDate"]);
+  return Object.entries(input)
+    .filter(([, value]) => value !== undefined)
+    .every(([key]) => allowedKeys.has(key));
+}
+
+async function getOwnedJobOrThrow(routeKey: string, context: Awaited<ReturnType<typeof requireEmployerContext>>) {
   const db = getAdminDb();
-  const jobSnap = await db.collection("jobs").doc(id).get();
+  const jobSnap = await db.collection("jobs").doc(routeKey).get();
   if (jobSnap.exists) {
     const data = (jobSnap.data() ?? {}) as Record<string, unknown>;
     if (!isJobOwnedByEmployer(data, context.employerId, context.orgId)) {
@@ -103,13 +112,41 @@ async function getOwnedJobOrThrow(id: string, context: Awaited<ReturnType<typeof
     return { ref: jobSnap.ref, data, source: "jobs" as const };
   }
 
-  const postSnap = await db.collection("posts").doc(id).get();
+  const postSnap = await db.collection("posts").doc(routeKey).get();
   if (postSnap.exists) {
     const data = (postSnap.data() ?? {}) as Record<string, unknown>;
     if (data.type !== "job" || !isJobOwnedByEmployer(data, context.employerId, context.orgId)) {
       throw new EmployerApiError(404, "Job not found.");
     }
     return { ref: postSnap.ref, data, source: "posts" as const };
+  }
+
+  const [jobSlugSnap, postSlugSnap] = await Promise.all([
+    db.collection("jobs").where("slug", "==", routeKey).limit(10).get(),
+    db.collection("posts").where("slug", "==", routeKey).limit(10).get(),
+  ]);
+
+  const matchingJob = jobSlugSnap.docs.find((doc) =>
+    isJobOwnedByEmployer((doc.data() ?? {}) as Record<string, unknown>, context.employerId, context.orgId)
+  );
+  if (matchingJob) {
+    return {
+      ref: matchingJob.ref,
+      data: (matchingJob.data() ?? {}) as Record<string, unknown>,
+      source: "jobs" as const,
+    };
+  }
+
+  const matchingPost = postSlugSnap.docs.find((doc) => {
+    const data = (doc.data() ?? {}) as Record<string, unknown>;
+    return data.type === "job" && isJobOwnedByEmployer(data, context.employerId, context.orgId);
+  });
+  if (matchingPost) {
+    return {
+      ref: matchingPost.ref,
+      data: (matchingPost.data() ?? {}) as Record<string, unknown>,
+      source: "posts" as const,
+    };
   }
 
   throw new EmployerApiError(404, "Job not found.");
@@ -135,16 +172,21 @@ export async function GET(
       ...postsSnap.docs.map((doc) => doc.data()).filter((doc) => doc.type === "job"),
     ].filter((doc) => isActiveFeaturedJob(doc as Record<string, unknown>)).length;
 
+    const normalizedEmployerData = applyNormalizedSubscriptionState(context.employerData);
+
     const featuredSummary = buildFeaturedJobSummary({
-      plan: context.employerData.plan as string | undefined,
-      subscriptionTier: context.employerData.subscriptionTier as string | undefined,
+      plan: normalizedEmployerData.plan as string | undefined,
+      subscriptionTier: normalizedEmployerData.subscriptionTier as string | undefined,
       featuredJobsUsed: activeFeaturedCount,
-      featuredPostCredits: context.employerData.featuredPostCredits as number | undefined,
+      featuredPostCredits: normalizedEmployerData.featuredPostCredits as number | undefined,
     });
 
     return NextResponse.json({
-      job: serialize({ id, ...job.data, _source: job.source }),
+      job: applyJobDisplayFallbacks(
+        serialize({ id: job.ref.id, ...job.data, _source: job.source }) as Record<string, unknown>
+      ),
       readOnly: !isEditableEmployerJob(job.source, job.data, context.uid),
+      statusOnly: !isEditableEmployerJob(job.source, job.data, context.uid),
       featuredSummary,
     });
   } catch (error) {
@@ -193,11 +235,14 @@ export async function PUT(
         throw new EmployerApiError(404, "Job not found.");
       }
 
-      if (!isEditableEmployerJob(current.source, current.data, context.uid)) {
-        throw new EmployerApiError(403, "This job is managed by an external source and cannot be edited here.");
+      const editableJob = isEditableEmployerJob(current.source, current.data, context.uid);
+      const limitedManagedUpdate = isLimitedManagedEmployerJobUpdate(body);
+
+      if (!editableJob && !limitedManagedUpdate) {
+        throw new EmployerApiError(403, "This job is managed by an external source. Only status changes are available here.");
       }
 
-      const employerData = employerSnap.data() ?? {};
+      const employerData = applyNormalizedSubscriptionState((employerSnap.data() ?? {}) as Record<string, unknown>);
       const activeFeaturedJobs = [
         ...jobsSnap.docs.map((doc) => ({ id: doc.id, source: "jobs" as const, data: doc.data() })),
         ...postsSnap.docs
@@ -209,6 +254,12 @@ export async function PUT(
         (doc) => !(doc.id === id && doc.source === current.source)
       ).length;
 
+      const requestedStatus = normalizeStatus(body.status ?? current.data.status);
+      const requestedFeatured = editableJob
+        ? (typeof body.featured === "boolean" ? body.featured : Boolean(current.data.featured))
+        : Boolean(current.data.featured);
+      const existingActiveFeatured = isActiveFeaturedJob(current.data);
+
       const featuredSummary = buildFeaturedJobSummary({
         plan: employerData.plan as string | undefined,
         subscriptionTier: employerData.subscriptionTier as string | undefined,
@@ -216,9 +267,31 @@ export async function PUT(
         featuredPostCredits: employerData.featuredPostCredits as number | undefined,
       });
 
-      const requestedStatus = normalizeStatus(body.status ?? current.data.status);
-      const requestedFeatured = typeof body.featured === "boolean" ? body.featured : Boolean(current.data.featured);
-      const existingActiveFeatured = isActiveFeaturedJob(current.data);
+      if (!editableJob) {
+        transaction.set(
+          current.ref,
+          stripUndefined({
+            status: requestedStatus,
+            active: requestedStatus === "active",
+            closingDate: normalizeString(body.closingDate),
+            updatedAt: FieldValue.serverTimestamp(),
+          }),
+          { merge: true },
+        );
+
+        const nextFeaturedCount =
+          activeFeaturedCountExcludingCurrent +
+          (Boolean(current.data.featured) && requestedStatus === "active" ? 1 : 0);
+
+        nextFeaturedSummary = buildFeaturedJobSummary({
+          plan: employerData.plan as string | undefined,
+          subscriptionTier: employerData.subscriptionTier as string | undefined,
+          featuredJobsUsed: nextFeaturedCount,
+          featuredPostCredits: employerData.featuredPostCredits as number | undefined,
+        });
+
+        return;
+      }
 
       const decision = evaluateFeaturedActivation({
         requestedActiveFeatured: requestedFeatured && requestedStatus === "active",

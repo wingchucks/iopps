@@ -3,11 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { useAccountContext } from "@/lib/useAccountContext";
 import { getOrganization, updateOrganization } from "@/lib/firestore/organizations";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { getBusinessProfileReadiness } from "@/lib/organization-profile";
 import Button from "@/components/Button";
+
+const ORG_LOAD_TIMEOUT = Symbol("org-load-timeout");
+const ORG_LOAD_TIMEOUT_MS = 8000;
 
 const INDUSTRIES = [
   "Technology",
@@ -106,6 +110,7 @@ const STEPS = ["Identity", "Details", "Capabilities", "Contact"];
 
 export default function OrgOnboardingPage() {
   const { user, loading: authLoading } = useAuth();
+  const { orgId, loading: accountLoading } = useAccountContext();
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -153,14 +158,35 @@ export default function OrgOnboardingPage() {
 
   // Load existing data so user can resume
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || accountLoading) return;
     if (!user) {
       router.replace("/org/signup");
       return;
     }
 
     (async () => {
-      const org = await getOrganization(user.uid);
+      const scopedOrgId = orgId || user.uid;
+      let orgResult: Awaited<ReturnType<typeof getOrganization>> | typeof ORG_LOAD_TIMEOUT =
+        ORG_LOAD_TIMEOUT;
+
+      try {
+        orgResult = await Promise.race([
+          getOrganization(scopedOrgId),
+          new Promise<typeof ORG_LOAD_TIMEOUT>((resolve) =>
+            setTimeout(() => resolve(ORG_LOAD_TIMEOUT), ORG_LOAD_TIMEOUT_MS)
+          ),
+        ]);
+      } catch {
+        orgResult = ORG_LOAD_TIMEOUT;
+      }
+
+      if (orgResult === ORG_LOAD_TIMEOUT) {
+        if (user.email) setContactEmail(user.email);
+        setLoadingData(false);
+        return;
+      }
+
+      const org = orgResult;
       if (!org) {
         router.replace("/org/signup");
         return;
@@ -200,7 +226,7 @@ export default function OrgOnboardingPage() {
       if (org.enrollmentStatus) setEnrollmentStatus(org.enrollmentStatus);
       setLoadingData(false);
     })();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, accountLoading, orgId, router]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -228,7 +254,7 @@ export default function OrgOnboardingPage() {
     setStep(0);
   }, [profileIncomplete, requiredFields]);
 
-  if (authLoading || loadingData) {
+  if (authLoading || accountLoading || loadingData) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="text-text-sec text-sm">Loading...</div>
@@ -238,6 +264,7 @@ export default function OrgOnboardingPage() {
 
   const saveStepProgress = async () => {
     if (!user) return;
+    const scopedOrgId = orgId || user.uid;
     setSaving(true);
     try {
       let logoUrl = logoPreview;
@@ -278,7 +305,7 @@ export default function OrgOnboardingPage() {
         ...(enrollmentStatus ? { enrollmentStatus } : {}),
       });
 
-      await updateOrganization(user.uid, data);
+      await updateOrganization(scopedOrgId, data);
     } finally {
       setSaving(false);
     }
