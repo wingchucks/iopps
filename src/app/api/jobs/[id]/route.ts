@@ -5,6 +5,7 @@ import {
   normalizeImportedDescription,
 } from "@/lib/server/imported-job-descriptions";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
+import { applyJobDisplayFallbacks } from "@/lib/job-record-utils";
 
 export const runtime = "nodejs";
 
@@ -78,7 +79,9 @@ export async function GET(
       }
     }
 
-    const job = serialize({ id: docRef.id, ...data, _source: source }) as Record<string, unknown>;
+    const job = applyJobDisplayFallbacks(
+      serialize({ id: docRef.id, ...data, _source: source }) as Record<string, unknown>
+    );
     job.slug = routeSlug;
 
     // Normalize salary object to string

@@ -7,6 +7,7 @@ import {
   isPublicJobVisible,
   sortJobsByRecency,
 } from "@/lib/public-jobs";
+import { applyJobDisplayFallbacks } from "@/lib/job-record-utils";
 
 export const runtime = "nodejs";
 export const revalidate = 60; // Cache for 60 seconds
@@ -40,7 +41,9 @@ function serialize(value: unknown): unknown {
 
 function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "jobs" | "posts"): Record<string, unknown> {
   const data = doc.data();
-  const serialized = serialize({ id: doc.id, ...data }) as Record<string, unknown>;
+  const serialized = applyJobDisplayFallbacks(
+    serialize({ id: doc.id, ...data }) as Record<string, unknown>
+  );
   serialized.slug = buildJobRouteSlug({
     id: doc.id,
     slug: typeof serialized.slug === "string" ? serialized.slug : undefined,
