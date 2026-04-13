@@ -10,6 +10,7 @@ jobs:
   root-build:
     name: Root App - Build Check
     runs-on: ubuntu-latest
+    if: github.ref_name == 'master' || github.base_ref == 'master'
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
