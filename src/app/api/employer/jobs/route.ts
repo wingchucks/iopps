@@ -10,7 +10,9 @@ import {
   buildFeaturedJobSummary,
   evaluateFeaturedActivation,
 } from "@/lib/server/featured-job-entitlements";
+import { applyNormalizedSubscriptionState } from "@/lib/server/subscription-state";
 import { isSchoolOrganization } from "@/lib/school-visibility";
+import { applyJobDisplayFallbacks } from "@/lib/job-record-utils";
 
 export const runtime = "nodejs";
 
@@ -187,7 +189,7 @@ export async function GET(req: NextRequest) {
           applicationCount = appsSnap.size;
         } catch { /* ignore */ }
 
-        return serialize({
+        return applyJobDisplayFallbacks(serialize({
           id: doc.id,
           title: d.title || "",
           slug: d.slug || doc.id,
@@ -201,16 +203,26 @@ export async function GET(req: NextRequest) {
           createdAt: d.createdAt || null,
           applicationCount,
           employerName: d.employerName || d.orgName || "",
-        });
+          source: d.source || "",
+          managedBy: d.managedBy || "",
+          applyUrl: d.applyUrl || "",
+          sourceUrl: d.sourceUrl || "",
+          applicationUrl: d.applicationUrl || "",
+          externalApplyUrl: d.externalApplyUrl || "",
+          description: d.description || "",
+        }) as Record<string, unknown>);
       })
     );
 
-    const orgType = isSchoolOrganization(context.organizationData) || isSchoolOrganization(context.employerData)
+    const normalizedOrganizationData = applyNormalizedSubscriptionState(context.organizationData);
+    const normalizedEmployerData = applyNormalizedSubscriptionState(context.employerData);
+
+    const orgType = isSchoolOrganization(normalizedOrganizationData) || isSchoolOrganization(normalizedEmployerData)
       ? "school"
       : String(
-          context.organizationData.type ||
-          context.employerData.type ||
-          context.employerData.orgType ||
+          normalizedOrganizationData.type ||
+          normalizedEmployerData.type ||
+          normalizedEmployerData.orgType ||
           "employer"
         );
 
@@ -221,10 +233,12 @@ export async function GET(req: NextRequest) {
       orgSlug:
         String(context.organizationData.slug || context.employerData.slug || "") || undefined,
       orgLogo:
-        String(context.organizationData.logoUrl || context.organizationData.logo || context.employerData.logoUrl || ""),
+        String(normalizedOrganizationData.logoUrl || normalizedOrganizationData.logo || normalizedEmployerData.logoUrl || ""),
       orgType,
-      orgPlan: (context.organizationData.plan as string | undefined) || (context.employerData.plan as string | undefined),
-      orgTier: (context.organizationData.tier as string | undefined) || (context.employerData.tier as string | undefined),
+      orgPlan: (normalizedOrganizationData.plan as string | undefined) || (normalizedEmployerData.plan as string | undefined),
+      orgTier:
+        (normalizedOrganizationData.subscriptionTier as string | undefined) ||
+        (normalizedEmployerData.subscriptionTier as string | undefined),
     });
   } catch (error) {
     const status = error instanceof EmployerApiError ? error.status : 500;

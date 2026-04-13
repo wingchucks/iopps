@@ -70,14 +70,15 @@ export default function JobEditPage() {
   const [featured, setFeatured] = useState(false);
   const [featuredSummary, setFeaturedSummary] = useState<FeaturedJobSummary | null>(null);
 
-  const [isImported, setIsImported] = useState(false);
+  const [resolvedJobId, setResolvedJobId] = useState("");
+  const [statusOnlyManagement, setStatusOnlyManagement] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
         const idToken = await user.getIdToken();
-        const res = await fetch(`/api/employer/jobs/${postId}`, {
+        const res = await fetch(`/api/employer/jobs/${encodeURIComponent(postId)}`, {
           headers: { Authorization: `Bearer ${idToken}` },
         });
 
@@ -89,7 +90,8 @@ export default function JobEditPage() {
 
         const p = data.job as EditableJob;
         setFeaturedSummary((data.featuredSummary as FeaturedJobSummary | null) ?? null);
-        setIsImported(Boolean(data.readOnly));
+        setResolvedJobId(String(p.id || postId));
+        setStatusOnlyManagement(Boolean(data.statusOnly));
         setPost(p);
         setTitle(p.title || "");
         setDescription(p.description || "");
@@ -123,7 +125,7 @@ export default function JobEditPage() {
 
   const handleSave = async () => {
     if (!user) return;
-    if (!title.trim()) {
+    if (!statusOnlyManagement && !title.trim()) {
       showToast("Title is required", "error");
       return;
     }
@@ -139,25 +141,32 @@ export default function JobEditPage() {
             ? `$${Number(salaryMin).toLocaleString()}`
             : "";
       const idToken = await user.getIdToken();
-      const response = await fetch(`/api/employer/jobs/${postId}`, {
+      const response = await fetch(`/api/employer/jobs/${encodeURIComponent(resolvedJobId || postId)}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${idToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          title,
-          description,
-          location,
-          employmentType,
-          salary,
-          qualifications: requirements.filter((r) => r.trim()),
-          badges: skills,
-          closingDate,
-          applicationUrl,
-          status,
-          featured,
-        }),
+        body: JSON.stringify(
+          statusOnlyManagement
+            ? {
+                status,
+                closingDate,
+              }
+            : {
+                title,
+                description,
+                location,
+                employmentType,
+                salary,
+                qualifications: requirements.filter((r) => r.trim()),
+                badges: skills,
+                closingDate,
+                applicationUrl,
+                status,
+                featured,
+              }
+        ),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -173,7 +182,7 @@ export default function JobEditPage() {
       if (result.featuredSummary) {
         setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
       }
-      showToast("Job updated successfully", "success");
+      showToast(statusOnlyManagement ? "Job status updated" : "Job updated successfully", "success");
     } catch (err) {
       console.error("Failed to update post:", err);
       showToast("Failed to save changes", "error");
@@ -187,13 +196,17 @@ export default function JobEditPage() {
     setSaving(true);
     try {
       const idToken = await user.getIdToken();
-      const response = await fetch(`/api/employer/jobs/${postId}`, {
+      const response = await fetch(`/api/employer/jobs/${encodeURIComponent(resolvedJobId || postId)}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${idToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "draft", featured }),
+        body: JSON.stringify(
+          statusOnlyManagement
+            ? { status: "draft" }
+            : { status: "draft", featured }
+        ),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -216,17 +229,24 @@ export default function JobEditPage() {
     setSaving(true);
     try {
       const closedOn = new Date().toISOString().split("T")[0];
-      const response = await fetch(`/api/employer/jobs/${postId}`, {
+      const response = await fetch(`/api/employer/jobs/${encodeURIComponent(resolvedJobId || postId)}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${await user.getIdToken()}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          status: "closed",
-          closingDate: closedOn,
-          featured,
-        }),
+        body: JSON.stringify(
+          statusOnlyManagement
+            ? {
+                status: "closed",
+                closingDate: closedOn,
+              }
+            : {
+                status: "closed",
+                closingDate: closedOn,
+                featured,
+              }
+        ),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -248,7 +268,7 @@ export default function JobEditPage() {
   const handleDelete = async () => {
     if (!user) return;
     try {
-      const response = await fetch(`/api/employer/jobs/${postId}`, {
+      const response = await fetch(`/api/employer/jobs/${encodeURIComponent(resolvedJobId || postId)}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${await user.getIdToken()}`,
@@ -329,7 +349,7 @@ export default function JobEditPage() {
                 Edit Job Posting
               </h1>
 
-              {isImported && (
+              {statusOnlyManagement && (
                 <div
                   className="rounded-xl px-5 py-4 mb-6 text-sm"
                   style={{
@@ -340,7 +360,7 @@ export default function JobEditPage() {
                 >
                   <strong style={{ color: "#3B82F6" }}>Imported Job</strong>
                   <span className="ml-2">
-                    This job was originally imported from an external feed. You can close or deactivate it, but some fields may not be editable.
+                    This job is synced from an external careers feed. You can update its status here, but title, description, location, and apply settings need to be changed in the source system.
                   </span>
                 </div>
               )}
@@ -362,6 +382,7 @@ export default function JobEditPage() {
                       placeholder="e.g. Senior Software Developer"
                       className="w-full px-4 py-3 rounded-xl text-sm"
                       style={inputStyle}
+                      disabled={statusOnlyManagement}
                     />
                   </div>
 
@@ -380,6 +401,7 @@ export default function JobEditPage() {
                       rows={5}
                       className="w-full px-4 py-3 rounded-xl text-sm resize-y"
                       style={inputStyle}
+                      disabled={statusOnlyManagement}
                     />
                   </div>
 
@@ -399,6 +421,7 @@ export default function JobEditPage() {
                         placeholder="e.g. Toronto"
                         className="w-full px-4 py-3 rounded-xl text-sm"
                         style={inputStyle}
+                        disabled={statusOnlyManagement}
                       />
                     </div>
                     <div>
@@ -415,6 +438,7 @@ export default function JobEditPage() {
                         placeholder="e.g. ON"
                         className="w-full px-4 py-3 rounded-xl text-sm"
                         style={inputStyle}
+                        disabled={statusOnlyManagement}
                       />
                     </div>
                   </div>
@@ -432,6 +456,7 @@ export default function JobEditPage() {
                       onChange={(e) => setEmploymentType(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl text-sm cursor-pointer"
                       style={inputStyle}
+                      disabled={statusOnlyManagement}
                     >
                       {employmentTypes.map((t) => (
                         <option key={t} value={t}>
@@ -457,6 +482,7 @@ export default function JobEditPage() {
                         placeholder="e.g. 60000"
                         className="w-full px-4 py-3 rounded-xl text-sm"
                         style={inputStyle}
+                        disabled={statusOnlyManagement}
                       />
                     </div>
                     <div>
@@ -473,6 +499,7 @@ export default function JobEditPage() {
                         placeholder="e.g. 90000"
                         className="w-full px-4 py-3 rounded-xl text-sm"
                         style={inputStyle}
+                        disabled={statusOnlyManagement}
                       />
                     </div>
                   </div>
@@ -499,9 +526,11 @@ export default function JobEditPage() {
                         placeholder="Add a requirement..."
                         className="flex-1 px-4 py-2.5 rounded-xl text-sm"
                         style={inputStyle}
+                        disabled={statusOnlyManagement}
                       />
                       <button
                         onClick={addRequirement}
+                        disabled={statusOnlyManagement}
                         className="px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
                         style={{
                           background: "rgba(13,148,136,.1)",
@@ -563,9 +592,11 @@ export default function JobEditPage() {
                         placeholder="Add a skill..."
                         className="flex-1 px-4 py-2.5 rounded-xl text-sm"
                         style={inputStyle}
+                        disabled={statusOnlyManagement}
                       />
                       <button
                         onClick={addSkill}
+                        disabled={statusOnlyManagement}
                         className="px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
                         style={{
                           background: "rgba(13,148,136,.1)",
@@ -632,6 +663,7 @@ export default function JobEditPage() {
                       placeholder="https://..."
                       className="w-full px-4 py-3 rounded-xl text-sm"
                       style={inputStyle}
+                      disabled={statusOnlyManagement}
                     />
                   </div>
 
@@ -639,7 +671,7 @@ export default function JobEditPage() {
                     summary={featuredSummary}
                     checked={featured}
                     onChange={setFeatured}
-                    disabled={isImported}
+                    disabled={statusOnlyManagement}
                   />
 
                   {/* Status */}
@@ -682,14 +714,14 @@ export default function JobEditPage() {
                     <Button
                       primary
                       onClick={handleSave}
-                      className={saving || isImported ? "opacity-50 pointer-events-none" : ""}
+                      className={saving ? "opacity-50 pointer-events-none" : ""}
                     >
-                      {isImported ? "Read Only" : saving ? "Saving..." : "Save Changes"}
+                      {saving ? "Saving..." : statusOnlyManagement ? "Save Status" : "Save Changes"}
                     </Button>
                     {status !== "draft" && (
                       <Button
                         onClick={handleUnpublish}
-                        className={saving || isImported ? "opacity-50 pointer-events-none" : ""}
+                        className={saving ? "opacity-50 pointer-events-none" : ""}
                       >
                         Unpublish
                       </Button>
@@ -697,21 +729,21 @@ export default function JobEditPage() {
                     {status !== "closed" && (
                       <Button
                         onClick={handleClosePosition}
-                        className={saving || isImported ? "opacity-50 pointer-events-none" : ""}
+                        className={saving ? "opacity-50 pointer-events-none" : ""}
                       >
                         Close Position
                       </Button>
                     )}
                     <button
                       onClick={() => {
-                        if (!isImported) setShowDeleteConfirm(true);
+                        if (!statusOnlyManagement) setShowDeleteConfirm(true);
                       }}
                       className="px-6 py-3 rounded-xl border-none cursor-pointer text-sm font-semibold transition-opacity hover:opacity-80"
                       style={{
-                        background: isImported ? "rgba(148,163,184,.14)" : "rgba(220,38,38,.1)",
-                        color: isImported ? "var(--text-muted)" : "#DC2626",
-                        opacity: isImported ? 0.65 : 1,
-                        cursor: isImported ? "not-allowed" : "pointer",
+                        background: statusOnlyManagement ? "rgba(148,163,184,.14)" : "rgba(220,38,38,.1)",
+                        color: statusOnlyManagement ? "var(--text-muted)" : "#DC2626",
+                        opacity: statusOnlyManagement ? 0.65 : 1,
+                        cursor: statusOnlyManagement ? "not-allowed" : "pointer",
                       }}
                     >
                       Delete

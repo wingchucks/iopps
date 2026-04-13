@@ -119,7 +119,7 @@ export default function OrgDashboardJobsPage() {
     setActionLoading(jobId);
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`/api/employer/jobs/${jobId}`, {
+      const res = await fetch(`/api/employer/jobs/${encodeURIComponent(jobId)}`, {
         method,
         headers: {
           Authorization: "Bearer " + token,
@@ -421,7 +421,7 @@ export default function OrgDashboardJobsPage() {
                             {/* Action buttons */}
                             <div className="flex items-center gap-2 shrink-0 flex-wrap">
                               <Link
-                                href={`/org/dashboard/jobs/${job.id}/edit`}
+                                href={`/org/dashboard/jobs/${encodeURIComponent(job.slug || job.id)}/edit`}
                                 className="px-3 py-1.5 rounded-lg no-underline text-xs font-semibold transition-all hover:opacity-80"
                                 style={{
                                   background: "rgba(13,148,136,.1)",
