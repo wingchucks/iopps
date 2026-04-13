@@ -236,7 +236,6 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Pow Wows", href: "/admin/powwows", icon: "🪶" },
       { label: "Conferences", href: "/admin/conferences", icon: "\u2609" },
       { label: "Scholarships", href: "/admin/scholarships", icon: "\u2605" },
-      { label: "Stories", href: "/admin/stories", icon: "\u270E" },
       { label: "Livestreams", href: "/admin/livestreams", icon: "\u25B6" },
       { label: "Moderation", href: "/admin/moderation", icon: "\u26A0" },
     ],
@@ -247,13 +246,6 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Payments", href: "/admin/payments", icon: "\u2B24" },
       { label: "Featured & Pinned", href: "/admin/pinned", icon: "\u272A" },
       { label: "Partners", href: "/admin/partners", icon: "\u2764" },
-    ],
-  },
-  {
-    title: "Legacy Tools",
-    items: [
-      { label: "Stories", href: "/admin/stories", icon: "\u270E" },
-      { label: "Shop Indigenous", href: "/admin/shop", icon: "\u2302" },
     ],
   },
   {
@@ -423,7 +415,7 @@ function SidebarContent({
         <div className="flex items-center justify-between px-3">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center rounded-full border border-[#D97706]/20 bg-[#D97706]/10 px-2.5 py-0.5 text-xs font-medium text-[#D97706]">
-              {role === "admin" ? "Super Admin" : "Moderator"}
+              {role === "admin" ? "Admin" : "Moderator"}
             </span>
             <span className="text-[10px] text-[var(--text-muted)]">v1.0.0</span>
           </div>

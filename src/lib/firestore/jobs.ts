@@ -13,6 +13,7 @@ import {
   type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { isPublicJobVisible } from "../public-jobs";
 
 export interface Job {
   id: string;
@@ -83,7 +84,8 @@ export async function getJobs(): Promise<Job[]> {
 export async function getJobById(id: string): Promise<Job | null> {
   const snap = await getDoc(doc(col, id));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as Job;
+  const job = { id: snap.id, ...snap.data() } as Job;
+  return isPublicJobVisible(job) ? job : null;
 }
 
 export async function getJobsByEmployer(employerId: string): Promise<Job[]> {
