@@ -9,6 +9,9 @@ import { storage } from "@/lib/firebase";
 import { getBusinessProfileReadiness } from "@/lib/organization-profile";
 import Button from "@/components/Button";
 
+const ORG_LOAD_TIMEOUT = Symbol("org-load-timeout");
+const ORG_LOAD_TIMEOUT_MS = 8000;
+
 const INDUSTRIES = [
   "Technology",
   "Healthcare",
@@ -160,7 +163,27 @@ export default function OrgOnboardingPage() {
     }
 
     (async () => {
-      const org = await getOrganization(user.uid);
+      let orgResult: Awaited<ReturnType<typeof getOrganization>> | typeof ORG_LOAD_TIMEOUT =
+        ORG_LOAD_TIMEOUT;
+
+      try {
+        orgResult = await Promise.race([
+          getOrganization(user.uid),
+          new Promise<typeof ORG_LOAD_TIMEOUT>((resolve) =>
+            setTimeout(() => resolve(ORG_LOAD_TIMEOUT), ORG_LOAD_TIMEOUT_MS)
+          ),
+        ]);
+      } catch {
+        orgResult = ORG_LOAD_TIMEOUT;
+      }
+
+      if (orgResult === ORG_LOAD_TIMEOUT) {
+        if (user.email) setContactEmail(user.email);
+        setLoadingData(false);
+        return;
+      }
+
+      const org = orgResult;
       if (!org) {
         router.replace("/org/signup");
         return;
