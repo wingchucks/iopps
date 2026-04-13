@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   formatOrganizationHoursDay,
   getBusinessProfileReadiness,
+  hasOrganizationVisibilityBlock,
   hasOrganizationIndigenousIdentity,
   isOrganizationPubliclyVisible,
   normalizeOrganizationLocation,
@@ -185,6 +186,28 @@ test("public visibility honors explicit hidden flags even for approved organizat
   });
 
   assert.equal(visible, false);
+});
+
+test("hasOrganizationVisibilityBlock only flags explicit public hide signals", () => {
+  assert.equal(
+    hasOrganizationVisibilityBlock({
+      status: "approved",
+      publicVisibility: "hidden",
+    }),
+    true,
+  );
+
+  assert.equal(
+    hasOrganizationVisibilityBlock({
+      status: "approved",
+      publicVisibility: "public",
+      isPublished: true,
+      publicationStatus: "PUBLISHED",
+      directoryVisible: true,
+      isDirectoryVisible: true,
+    }),
+    false,
+  );
 });
 
 test("getBusinessProfileReadiness requires logo, story, and contact for businesses", () => {

@@ -150,6 +150,57 @@ test("hidden organizations do not qualify even with an active paid subscription"
   assert.equal(eligibility.reason, "not_public");
 });
 
+test("legacy premium directory partners can qualify even when their subscription status is none", () => {
+  const eligibility = getPartnerEligibility({
+    id: "siga-like",
+    name: "Saskatchewan Indian Gaming Authority",
+    type: "employer",
+    status: "approved",
+    verified: true,
+    description: "Premier casino and hospitality employer across Saskatchewan.",
+    website: "https://www.siga.ca/",
+    logoUrl: "https://cdn.example.com/siga.png",
+    phone: "(306) 244-1777",
+    partnerDirectory: {
+      enabled: true,
+      visibleAt: "2026-04-13T00:00:00.000Z",
+    },
+    subscription: {
+      tier: "premium",
+      status: "none",
+    },
+  });
+
+  assert.equal(eligibility.isEligible, true);
+  assert.equal(eligibility.reason, "legacy_directory_partner");
+  assert.equal(eligibility.tier, "premium");
+});
+
+test("directory-enabled records still stay hidden when explicit public visibility flags block them", () => {
+  const eligibility = getPartnerEligibility({
+    id: "hidden-partner",
+    name: "Hidden Partner",
+    type: "business",
+    status: "approved",
+    publicVisibility: "hidden",
+    partnerDirectory: {
+      enabled: true,
+      visibleAt: "2026-04-13T00:00:00.000Z",
+    },
+    subscription: {
+      tier: "premium",
+      status: "active",
+      billingStartAt: "2026-01-01T00:00:00.000Z",
+      subscriptionEnd: "2026-12-31T00:00:00.000Z",
+      paymentId: "pi_hidden",
+      amountPaid: 2500,
+    },
+  });
+
+  assert.equal(eligibility.isEligible, false);
+  assert.equal(eligibility.reason, "not_public");
+});
+
 test("legacy paid tier fields without real subscription evidence do not qualify", () => {
   const eligibility = getPartnerEligibility({
     id: "legacy-partner",

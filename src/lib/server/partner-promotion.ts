@@ -1,4 +1,4 @@
-import { isOrganizationPubliclyVisible } from "@/lib/organization-profile";
+import { hasOrganizationVisibilityBlock, isOrganizationPubliclyVisible } from "@/lib/organization-profile";
 import {
   applyNormalizedSubscriptionState,
   buildSubscriptionState,
@@ -14,6 +14,7 @@ export type PartnerTier = Exclude<NormalizedPlanTier, "free">;
 export type PartnerSection = "premium" | "education" | "visibility" | null;
 export type PartnerEligibilityReason =
   | "active_paid_subscription"
+  | "legacy_directory_partner"
   | "trial_only"
   | "admin_grant"
   | "expired"
@@ -82,6 +83,27 @@ function isPubliclyListable(record: JsonRecord): boolean {
   const school = isSchoolOrganization(record);
   if (school && !isSchoolPubliclyVisible(record)) return false;
   return isOrganizationPubliclyVisible(record);
+}
+
+function hasPublicApproval(record: JsonRecord): boolean {
+  const status = text(record.status).toLowerCase();
+  return (
+    record.onboardingComplete === true ||
+    record.verified === true ||
+    status === "approved" ||
+    record.emailVerified === true
+  );
+}
+
+function isLegacyDirectoryPartner(record: JsonRecord, tier: PartnerTier, subscriptionStatus: NormalizedSubscriptionStatus): boolean {
+  const directory = getPartnerDirectorySettings(record);
+
+  if (tier !== "premium") return false;
+  if (subscriptionStatus !== "none") return false;
+  if (!directory.enabled) return false;
+  if (hasOrganizationVisibilityBlock(record)) return false;
+
+  return hasPublicApproval(record);
 }
 
 export function getPartnerDirectorySettings(record: JsonRecord): PartnerDirectorySettings {
@@ -177,6 +199,16 @@ export function getPartnerEligibility(record: JsonRecord, now = new Date()): Par
     return {
       isEligible: false,
       reason: "trial_only",
+      tier,
+      subscriptionStatus,
+      ...(subscriptionEnd ? { subscriptionEnd } : {}),
+    };
+  }
+
+  if (isLegacyDirectoryPartner(normalized, tier, subscriptionStatus)) {
+    return {
+      isEligible: true,
+      reason: "legacy_directory_partner",
       tier,
       subscriptionStatus,
       ...(subscriptionEnd ? { subscriptionEnd } : {}),

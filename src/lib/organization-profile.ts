@@ -313,10 +313,33 @@ export function isOrganizationPubliclyVisible(org: {
   directoryVisible?: unknown;
   isDirectoryVisible?: unknown;
 }): boolean {
-  if (org.disabled === true) return false;
+  if (hasOrganizationVisibilityBlock(org)) return false;
+  const status = normalizeString(org.status).toLowerCase();
+
+  const accepted =
+    org.onboardingComplete === true ||
+    org.verified === true ||
+    status === "approved" ||
+    org.emailVerified === true;
+
+  if (!accepted) return false;
+
+  return getBusinessProfileReadiness(org).isReady;
+}
+
+export function hasOrganizationVisibilityBlock(org: {
+  disabled?: unknown;
+  status?: unknown;
+  publicVisibility?: unknown;
+  isPublished?: unknown;
+  publicationStatus?: unknown;
+  directoryVisible?: unknown;
+  isDirectoryVisible?: unknown;
+}): boolean {
+  if (org.disabled === true) return true;
 
   const status = normalizeString(org.status).toLowerCase();
-  if (status === "disabled" || status === "rejected") return false;
+  if (status === "disabled" || status === "rejected") return true;
 
   const visibilitySignals: boolean[] = [];
   const publicVisibility = normalizeString(org.publicVisibility).toLowerCase();
@@ -336,17 +359,8 @@ export function isOrganizationPubliclyVisible(org: {
   if (typeof org.isDirectoryVisible === "boolean") {
     visibilitySignals.push(org.isDirectoryVisible);
   }
-  if (visibilitySignals.some((signal) => signal === false)) return false;
 
-  const accepted =
-    org.onboardingComplete === true ||
-    org.verified === true ||
-    status === "approved" ||
-    org.emailVerified === true;
-
-  if (!accepted) return false;
-
-  return getBusinessProfileReadiness(org).isReady;
+  return visibilitySignals.some((signal) => signal === false);
 }
 
 export function normalizeOrganizationRecord<T extends object>(record: T): T {
