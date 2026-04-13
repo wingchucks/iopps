@@ -24,6 +24,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Validate Vercel release secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$VERCEL_TOKEN"
+          test -n "$VERCEL_ORG_ID"
+          test -n "$VERCEL_PROJECT_ID"
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -33,9 +41,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Build application
-        run: npm run build
 
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
