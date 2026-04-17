@@ -82,7 +82,8 @@ function ApplyWizard() {
                 type: "job",
                 title: data.job.title,
                 orgName: data.job.employerName || data.job.orgName || "",
-                orgId: data.job.employerId || data.job.orgId || "",
+                orgId: data.job.orgId || "",
+                employerId: data.job.employerId || "",
                 status: "active",
                 description: data.job.description || "",
                 location: data.job.location || "",
@@ -174,12 +175,49 @@ function ApplyWizard() {
       // Notify employer (non-blocking — don't let this fail the submission)
       try {
         const idToken = await user.getIdToken();
-        fetch("/api/applications/notify", {
+        const notifyResponse = await fetch("/api/applications/notify", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-          body: JSON.stringify({ postId: post.id, postTitle: post.title, orgId: post.orgId || "" }),
-        }).catch(() => {}); // Fire-and-forget
-      } catch { /* ignore */ }
+          body: JSON.stringify({
+            applicantUid: user.uid,
+            postId: post.id,
+            postTitle: post.title,
+            orgId: post.orgId || "",
+            employerId: post.employerId || "",
+          }),
+        });
+
+        let notifyPayload: { sent?: boolean; reason?: string; error?: string } | null = null;
+        try {
+          notifyPayload = await notifyResponse.json();
+        } catch {
+          notifyPayload = null;
+        }
+
+        if (!notifyResponse.ok) {
+          console.warn("[jobs/apply] employer notification request returned non-ok status", {
+            postId: post.id,
+            orgId: post.orgId || "",
+            employerId: post.employerId || "",
+            status: notifyResponse.status,
+            reason: notifyPayload?.reason || notifyPayload?.error || "unknown",
+          });
+        } else if (notifyPayload?.sent === false) {
+          console.warn("[jobs/apply] employer notification not sent", {
+            postId: post.id,
+            orgId: post.orgId || "",
+            employerId: post.employerId || "",
+            reason: notifyPayload.reason || notifyPayload.error || "unknown",
+          });
+        }
+      } catch (notifyError) {
+        console.warn("[jobs/apply] employer notification request failed", {
+          postId: post.id,
+          orgId: post.orgId || "",
+          employerId: post.employerId || "",
+          error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+        });
+      }
 
       router.push("/feed");
     } catch (err) {
