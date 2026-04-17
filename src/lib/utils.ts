@@ -111,6 +111,17 @@ export function isMailtoHref(value: unknown): boolean {
   return typeof value === "string" && value.trim().toLowerCase().startsWith("mailto:");
 }
 
+export function normalizeApplyUrlFields<T extends Record<string, unknown>>(record: T): T {
+  const normalizedHref = normalizeExternalHref(record.applicationUrl ?? record.externalApplyUrl);
+  if (!normalizedHref) return record;
+
+  return {
+    ...record,
+    applicationUrl: normalizedHref,
+    externalApplyUrl: normalizedHref,
+  };
+}
+
 export function buildLoginRedirectHref(targetPath: string): string {
   return `/login?redirect=${encodeURIComponent(targetPath)}`;
 }
