@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildLoginRedirectHref, isMailtoHref, normalizeExternalHref } from "../src/lib/utils.ts";
+import {
+  buildLoginRedirectHref,
+  isMailtoHref,
+  normalizeApplyUrlFields,
+  normalizeExternalHref,
+} from "../src/lib/utils.ts";
 
 test("prefixes bare email addresses with mailto", () => {
   const href = normalizeExternalHref("careers@onionlakehealth.org");
@@ -27,4 +32,14 @@ test("builds a login redirect href for protected routes", () => {
     buildLoginRedirectHref("/jobs/program-coordinator-mo1vnx15/apply"),
     "/login?redirect=%2Fjobs%2Fprogram-coordinator-mo1vnx15%2Fapply",
   );
+});
+
+test("normalizes bare email application fields on API records", () => {
+  const record = normalizeApplyUrlFields({
+    applicationUrl: "careers@onionlakehealth.org",
+    externalApplyUrl: "careers@onionlakehealth.org",
+  });
+
+  assert.equal(record.applicationUrl, "mailto:careers@onionlakehealth.org");
+  assert.equal(record.externalApplyUrl, "mailto:careers@onionlakehealth.org");
 });

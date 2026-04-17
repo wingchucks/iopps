@@ -1,5 +1,5 @@
 // IOPPS Service Worker
-const CACHE_NAME = "iopps-v1";
+const CACHE_NAME = "iopps-v2";
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = ["/offline"];
