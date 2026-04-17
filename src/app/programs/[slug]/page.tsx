@@ -15,7 +15,7 @@ import { getOrganization, type Organization } from "@/lib/firestore/organization
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { useAuth } from "@/lib/auth-context";
 import ReportButton from "@/components/ReportButton";
-import { displayLocation } from "@/lib/utils";
+import { displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
 
 export default function ProgramDetailPage() {
   return (
@@ -119,6 +119,10 @@ function ProgramDetailContent() {
   const orgLink = org ? `/org/${org.id}` : "#";
   const isPremium = org?.tier === "premium";
   const isSchool = org?.tier === "school";
+  const programApplicationHref = normalizeExternalHref(post.applicationUrl);
+  const programApplicationLinkProps = isMailtoHref(programApplicationHref)
+    ? {}
+    : { target: "_blank", rel: "noopener noreferrer" };
 
   return (
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
@@ -328,8 +332,8 @@ function ProgramDetailContent() {
                     Learn More &#8594;
                   </Button>
                 </a>
-              ) : post.applicationUrl ? (
-                <a href={post.applicationUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+              ) : programApplicationHref ? (
+                <a href={programApplicationHref} {...programApplicationLinkProps} className="no-underline">
                   <Button
                     primary
                     full

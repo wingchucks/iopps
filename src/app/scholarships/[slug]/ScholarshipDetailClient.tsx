@@ -15,7 +15,7 @@ import { getPost, getPosts } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { getScholarshipBySlug, getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
-import { displayAmount, displayLocation } from "@/lib/utils";
+import { displayAmount, displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
 
 interface ScholarshipOwnerMeta {
   ownerType?: "school" | "business" | "organization" | "unknown";
@@ -210,6 +210,10 @@ function ScholarshipDetailContent() {
   const applicationInstructionsHasHtml =
     typeof scholarship.applicationInstructions === "string" &&
     scholarship.applicationInstructions.includes("<");
+  const scholarshipApplicationHref = normalizeExternalHref(scholarship.applicationUrl);
+  const scholarshipApplicationLinkProps = isMailtoHref(scholarshipApplicationHref)
+    ? {}
+    : { target: "_blank", rel: "noopener noreferrer" };
 
   const scholarshipFacts = [
     { label: "Education Level", value: scholarship.educationLevel },
@@ -427,7 +431,7 @@ function ScholarshipDetailContent() {
             </>
           )}
 
-          {scholarship.applicationUrl && (
+          {scholarshipApplicationHref && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">How to Apply</h3>
               <p className="text-sm text-text-sec leading-relaxed mb-6">
@@ -506,8 +510,8 @@ function ScholarshipDetailContent() {
         <div>
           <Card className="mb-4" style={{ position: "sticky", top: 80 }}>
             <div style={{ padding: 20 }}>
-              {scholarship.applicationUrl ? (
-                <a href={scholarship.applicationUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+              {scholarshipApplicationHref ? (
+                <a href={scholarshipApplicationHref} {...scholarshipApplicationLinkProps} className="no-underline">
                   <Button
                     primary
                     full
