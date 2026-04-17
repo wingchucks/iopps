@@ -10,6 +10,7 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ShareButton from "@/components/ShareButton";
 import { buildLoginRedirectHref, displayAmount, displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
+import { sanitizeRichTextHtml } from "@/lib/sanitize-html";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
@@ -216,7 +217,7 @@ function JobDetailContent() {
               {job.description.includes("<") ? (
                 <div
                   className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: job.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(job.description) }}
                 />
               ) : (
                 <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">

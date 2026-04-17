@@ -26,6 +26,7 @@ import {
   normalizePublicEvent,
 } from "@/lib/public-events";
 import { displayAmount, displayLocation } from "@/lib/utils";
+import { sanitizeRichTextHtml } from "@/lib/sanitize-html";
 
 // Unified type for rendering — covers fields from both Event and Post
 type EventData = {
@@ -297,7 +298,7 @@ function EventDetailContent() {
               {descriptionHasHtml ? (
                 <div
                   className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: event.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(event.description) }}
                 />
               ) : (
                 <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
