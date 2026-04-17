@@ -111,6 +111,10 @@ export function isMailtoHref(value: unknown): boolean {
   return typeof value === "string" && value.trim().toLowerCase().startsWith("mailto:");
 }
 
+export function buildLoginRedirectHref(targetPath: string): string {
+  return `/login?redirect=${encodeURIComponent(targetPath)}`;
+}
+
 /** Safely convert a tags field to a string array. */
 export function ensureTagsArray(tags: unknown): string[] {
   if (Array.isArray(tags)) return tags.map(String);
