@@ -9,7 +9,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ShareButton from "@/components/ShareButton";
-import { displayAmount, displayLocation } from "@/lib/utils";
+import { buildLoginRedirectHref, displayAmount, displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
@@ -138,6 +138,12 @@ function JobDetailContent() {
     || (job as unknown as Record<string, unknown>).applicationLink as string | undefined
     || (job as unknown as Record<string, unknown>).externalUrl as string | undefined
     || (job as unknown as Record<string, unknown>).externalApplyUrl as string | undefined;
+  const normalizedApplicationHref = normalizeExternalHref(applicationUrl);
+  const applicationHrefIsMailto = isMailtoHref(normalizedApplicationHref);
+  const shouldUseInternalApply = applicationHrefIsMailto && Boolean(job.orgId || job.employerId);
+  const applicationLinkProps = applicationHrefIsMailto ? {} : { target: "_blank", rel: "noopener noreferrer" };
+  const internalApplyPath = `/jobs/${slug}/apply`;
+  const loginRedirectHref = buildLoginRedirectHref(internalApplyPath);
   const workLocation = (job as unknown as Record<string, unknown>).workLocation as string | undefined;
   const category = (job as unknown as Record<string, unknown>).category as string | undefined;
   const positions = (job as unknown as Record<string, unknown>).positions as string | undefined;
@@ -218,12 +224,12 @@ function JobDetailContent() {
                 </p>
               )}
             </>
-          ) : applicationUrl ? (
+          ) : normalizedApplicationHref && !shouldUseInternalApply ? (
             <div className="mb-6 p-5 rounded-2xl border border-border bg-[var(--card)]">
               <p className="text-sm text-text-sec mb-4">
                 Full job details are available on the employer&apos;s career site.
               </p>
-              <a href={applicationUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+              <a href={normalizedApplicationHref} {...applicationLinkProps} className="no-underline">
                 <Button primary style={{ borderRadius: 12, padding: "12px 24px", fontSize: 15, fontWeight: 700 }}>
                   View Full Details &amp; Apply ↗
                 </Button>
@@ -279,8 +285,8 @@ function JobDetailContent() {
           <Card className="mb-4" style={{ position: "sticky", top: 80 }}>
             <div style={{ padding: 20 }}>
               {/* Apply button */}
-              {applicationUrl ? (
-                <a href={applicationUrl} target="_blank" rel="noopener noreferrer" className="block no-underline mb-3">
+              {normalizedApplicationHref && !shouldUseInternalApply ? (
+                <a href={normalizedApplicationHref} {...applicationLinkProps} className="block no-underline mb-3">
                   <Button
                     primary
                     full
@@ -289,11 +295,21 @@ function JobDetailContent() {
                     Apply Now ↗
                   </Button>
                 </a>
+              ) : !user ? (
+                <Link href={loginRedirectHref} className="block no-underline mb-3">
+                  <Button
+                    primary
+                    full
+                    style={{ padding: "14px 24px", borderRadius: 14, fontSize: 16, fontWeight: 700 }}
+                  >
+                    Sign In to Apply
+                  </Button>
+                </Link>
               ) : (
                 <Button
                   primary
                   full
-                  onClick={() => { if (!applied) router.push(`/jobs/${slug}/apply`); }}
+                  onClick={() => { if (!applied) router.push(internalApplyPath); }}
                   style={{
                     background: applied ? "var(--green)" : "var(--teal)",
                     padding: "14px 24px",

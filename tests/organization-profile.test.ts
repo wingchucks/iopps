@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   formatOrganizationHoursDay,
   getBusinessProfileReadiness,
+  hasOrganizationVisibilityBlock,
   hasOrganizationIndigenousIdentity,
   isOrganizationPubliclyVisible,
   normalizeOrganizationLocation,
@@ -84,20 +85,20 @@ test("hasOrganizationIndigenousIdentity detects multiple signal shapes", () => {
     hasOrganizationIndigenousIdentity({
       tags: ["Indigenous-Owned Business"],
     }),
-    true
+    true,
   );
   assert.equal(
     hasOrganizationIndigenousIdentity({
       nation: "Cree Nation",
     }),
-    true
+    true,
   );
   assert.equal(
     hasOrganizationIndigenousIdentity({
       businessIdentity: "non_indigenous",
       tags: ["Recruitment"],
     }),
-    false
+    false,
   );
 });
 
@@ -109,7 +110,7 @@ test("isOrganizationPubliclyVisible only allows public-ready business organizati
       verified: false,
       status: "pending",
     }),
-    false
+    false,
   );
 
   assert.equal(
@@ -122,7 +123,7 @@ test("isOrganizationPubliclyVisible only allows public-ready business organizati
       description: "Indigenous emergency response services.",
       contactEmail: "team@example.com",
     }),
-    true
+    true,
   );
 
   assert.equal(
@@ -135,7 +136,7 @@ test("isOrganizationPubliclyVisible only allows public-ready business organizati
       description: "Indigenous emergency response services.",
       contactEmail: "team@example.com",
     }),
-    true
+    true,
   );
 
   assert.equal(
@@ -147,7 +148,7 @@ test("isOrganizationPubliclyVisible only allows public-ready business organizati
       description: "Accepted but incomplete business profile.",
       contactEmail: "team@example.com",
     }),
-    false
+    false,
   );
 
   assert.equal(
@@ -157,7 +158,7 @@ test("isOrganizationPubliclyVisible only allows public-ready business organizati
       verified: false,
       status: "approved",
     }),
-    true
+    true,
   );
 
   assert.equal(
@@ -170,7 +171,42 @@ test("isOrganizationPubliclyVisible only allows public-ready business organizati
       description: "Disabled organization.",
       contactEmail: "team@example.com",
     }),
-    false
+    false,
+  );
+});
+
+test("public visibility honors explicit hidden flags even for approved organizations", () => {
+  const visible = isOrganizationPubliclyVisible({
+    description: "Visible profile",
+    logoUrl: "https://example.com/logo.png",
+    website: "https://example.com",
+    onboardingComplete: true,
+    status: "approved",
+    publicVisibility: "hidden",
+  });
+
+  assert.equal(visible, false);
+});
+
+test("hasOrganizationVisibilityBlock only flags explicit public hide signals", () => {
+  assert.equal(
+    hasOrganizationVisibilityBlock({
+      status: "approved",
+      publicVisibility: "hidden",
+    }),
+    true,
+  );
+
+  assert.equal(
+    hasOrganizationVisibilityBlock({
+      status: "approved",
+      publicVisibility: "public",
+      isPublished: true,
+      publicationStatus: "PUBLISHED",
+      directoryVisible: true,
+      isDirectoryVisible: true,
+    }),
+    false,
   );
 });
 
@@ -185,7 +221,7 @@ test("getBusinessProfileReadiness requires logo, story, and contact for business
     {
       isReady: false,
       missingFields: ["logo", "description", "contact"],
-    }
+    },
   );
 
   assert.deepEqual(
@@ -198,6 +234,24 @@ test("getBusinessProfileReadiness requires logo, story, and contact for business
     {
       isReady: true,
       missingFields: [],
-    }
+    },
   );
+});
+
+test("normalizeOrganizationRecord preserves partner directory metadata", () => {
+  const normalized = normalizeOrganizationRecord({
+    partnerDirectory: {
+      enabled: true,
+      visibleAt: "2026-04-12T12:00:00.000Z",
+      sectionOverride: "premium",
+      spotlight: false,
+    },
+  });
+
+  assert.deepEqual(normalized.partnerDirectory, {
+    enabled: true,
+    visibleAt: "2026-04-12T12:00:00.000Z",
+    sectionOverride: "premium",
+    spotlight: false,
+  });
 });

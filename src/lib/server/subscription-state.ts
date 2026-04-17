@@ -1,9 +1,19 @@
 type JsonRecord = Record<string, unknown>;
 
 export type NormalizedPlanTier = "free" | "standard" | "premium" | "school";
+export type NormalizedSubscriptionStatus = "none" | "active" | "trialing" | "past_due" | "canceled" | "inactive";
 
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function numberValue(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
 }
 
 function iso(value: unknown): string | undefined {
@@ -37,42 +47,97 @@ export function normalizePlanTier(...values: unknown[]): NormalizedPlanTier {
   return "free";
 }
 
+export function normalizeSubscriptionStatus(...values: unknown[]): NormalizedSubscriptionStatus {
+  for (const value of values) {
+    const candidate = text(value).toLowerCase();
+    if (!candidate) continue;
+    if (candidate === "trial" || candidate === "trialing") return "trialing";
+    if (candidate === "active" || candidate === "paid") return "active";
+    if (candidate === "past_due" || candidate === "past due") return "past_due";
+    if (candidate === "canceled" || candidate === "cancelled") return "canceled";
+    if (candidate === "inactive" || candidate === "paused") return "inactive";
+    if (candidate === "free" || candidate === "none") return "none";
+  }
+
+  return "none";
+}
+
+function hasSubscriptionEvidence(record: JsonRecord, subscription: JsonRecord): boolean {
+  return Boolean(
+    text(subscription.status) ||
+    text(record.subscriptionStatus) ||
+    text(subscription.paymentId) ||
+    text(record.paymentId) ||
+    numberValue(subscription.amountPaid) !== null ||
+    numberValue(record.amountPaid) !== null ||
+    numberValue(subscription.amount) !== null ||
+    numberValue(record.amount) !== null ||
+    numberValue(subscription.totalAmount) !== null ||
+    numberValue(record.totalAmount) !== null ||
+    iso(subscription.billingStartAt) ||
+    iso(record.billingStartAt) ||
+    iso(subscription.startAt) ||
+    iso(subscription.subscriptionStart) ||
+    iso(record.subscriptionStart) ||
+    iso(subscription.subscriptionEnd) ||
+    iso(record.subscriptionEnd) ||
+    iso(subscription.expiresAt) ||
+    iso(record.expiresAt) ||
+    iso(subscription.bonusAccessGrantedAt) ||
+    iso(record.bonusAccessGrantedAt) ||
+    iso(subscription.bonusAccessEndsAt) ||
+    iso(record.bonusAccessEndsAt) ||
+    text(subscription.bonusAccessReason) ||
+    text(record.bonusAccessReason)
+  );
+}
+
 export function buildSubscriptionState(record: JsonRecord): JsonRecord {
   const subscription = (record.subscription && typeof record.subscription === "object")
     ? (record.subscription as JsonRecord)
     : {};
 
   const tier = normalizePlanTier(
+    subscription.tier,
     record.subscriptionTier,
     record.plan,
     record.tier,
-    subscription.tier,
   );
+  const inferredStatus = tier === "free"
+    ? "none"
+    : hasSubscriptionEvidence(record, subscription)
+      ? "active"
+      : "none";
 
-  const status = text(record.subscriptionStatus) || text(subscription.status) || (tier === "free" ? "none" : "active");
+  const status = normalizeSubscriptionStatus(
+    subscription.status,
+    record.subscriptionStatus,
+    inferredStatus,
+  );
   const billingStartAt =
-    iso(record.billingStartAt) ||
     iso(subscription.billingStartAt) ||
+    iso(record.billingStartAt) ||
+    iso(subscription.startAt) ||
     iso(record.subscriptionStart) ||
     iso(subscription.subscriptionStart);
   const subscriptionEnd =
-    iso(record.subscriptionEnd) ||
     iso(subscription.subscriptionEnd) ||
+    iso(record.subscriptionEnd) ||
     iso(record.expiresAt) ||
     iso(subscription.expiresAt);
   const bonusAccessGrantedAt =
-    iso(record.bonusAccessGrantedAt) ||
     iso(subscription.bonusAccessGrantedAt) ||
+    iso(record.bonusAccessGrantedAt) ||
     iso(record.complimentaryAccessGrantedAt) ||
     iso(subscription.complimentaryAccessGrantedAt);
   const bonusAccessEndsAt =
-    iso(record.bonusAccessEndsAt) ||
     iso(subscription.bonusAccessEndsAt) ||
+    iso(record.bonusAccessEndsAt) ||
     iso(record.complimentaryAccessEndsAt) ||
     iso(subscription.complimentaryAccessEndsAt);
   const bonusAccessReason =
-    text(record.bonusAccessReason) ||
     text(subscription.bonusAccessReason) ||
+    text(record.bonusAccessReason) ||
     text(record.complimentaryAccessReason) ||
     text(subscription.complimentaryAccessReason);
 
@@ -91,15 +156,14 @@ export function buildSubscriptionState(record: JsonRecord): JsonRecord {
 export function applyNormalizedSubscriptionState(record: JsonRecord): JsonRecord {
   const subscription = buildSubscriptionState(record);
   const tier = subscription.tier as NormalizedPlanTier;
+  const status = subscription.status as NormalizedSubscriptionStatus;
 
   return {
     ...record,
-    plan: tier === "free" ? text(record.plan) || null : tier,
-    subscriptionTier: tier === "free" ? text(record.subscriptionTier) || undefined : tier,
-    tier:
-      tier === "premium" || tier === "school" || tier === "standard"
-        ? tier
-        : record.tier,
+    plan: tier,
+    subscriptionTier: tier === "free" ? undefined : tier,
+    subscriptionStatus: status,
+    tier,
     subscription,
   };
 }

@@ -116,17 +116,30 @@ export default function SchoolsPage() {
             <h3 className="text-lg font-bold text-text mb-2">No schools found</h3>
             <p className="text-sm text-text-muted max-w-[400px] mx-auto">
               {search
-                ? "Try adjusting your search."
-                : "Educational institutions will appear here once added."}
+                ? "Try a different school name, location, or study area."
+                : "We're refreshing the public schools directory. Explore the education hub or training opportunities while more schools come online."}
             </p>
             {!search && (
-              <Link
-                href="/partners"
-                className="inline-block mt-4 text-sm font-semibold no-underline"
-                style={{ color: "var(--teal)" }}
-              >
-                View all education partners &#8594;
-              </Link>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <Link
+                  href="/education"
+                  className="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
+                  style={{ background: "var(--teal)", color: "#fff" }}
+                >
+                  Explore Education Hub
+                </Link>
+                <Link
+                  href="/training"
+                  className="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
+                  style={{
+                    background: "var(--card)",
+                    color: "var(--text)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  Browse Training
+                </Link>
+              </div>
             )}
           </Card>
         ) : (

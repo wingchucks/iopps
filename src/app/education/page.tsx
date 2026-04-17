@@ -24,11 +24,11 @@ const categories = [
     bg: "var(--blue-soft)",
   },
   {
-    title: "Programs",
+    title: "Events",
     description:
-      "Explore degree programs, diplomas, and certificates from our education partners across Canada.",
-    href: "/programs",
-    icon: "&#128218;",
+      "Discover student, campus, career, and community events that support Indigenous learners and graduates.",
+    href: "/events",
+    icon: "&#128197;",
     color: "var(--purple)",
     bg: "var(--purple-soft)",
   },
@@ -126,11 +126,11 @@ export default function EducationPage() {
         {/* Browse all organizations link */}
         <div className="text-center mt-8">
           <Link
-            href="/businesses"
+            href="/schools"
             className="text-sm font-semibold no-underline hover:underline"
             style={{ color: "var(--teal)" }}
           >
-            Browse all organizations &#8594;
+            Browse Indigenous schools &#8594;
           </Link>
         </div>
       </div>

@@ -103,6 +103,8 @@ export default function TrainingPage() {
     }
     return items;
   }, [programs, searchQuery, selectedCategory, selectedFormat]);
+  const hasActiveFilters =
+    selectedCategory !== "All" || selectedFormat !== "All" || Boolean(searchQuery.trim());
 
   return (
     <AppShell>
@@ -224,10 +226,47 @@ export default function TrainingPage() {
                 <p className="mb-3 text-4xl">&#128218;</p>
                 <h3 className="mb-2 text-lg font-bold text-text">No training found</h3>
                 <p className="mx-auto max-w-[360px] text-sm text-text-muted">
-                  {searchQuery.trim()
-                    ? "Try a different search term or adjust your filters."
-                    : "Training opportunities will appear here soon. Check back for new offerings."}
+                  {hasActiveFilters
+                    ? "Try a different search term or reset your filters."
+                    : "We're updating the public training directory. You can still explore schools, scholarships, and education resources across IOPPS."}
                 </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  {hasActiveFilters ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSelectedCategory("All");
+                        setSelectedFormat("All");
+                      }}
+                      className="rounded-xl border-none px-4 py-2.5 text-sm font-semibold cursor-pointer"
+                      style={{ background: "var(--teal)", color: "#fff" }}
+                    >
+                      Reset filters
+                    </button>
+                  ) : (
+                    <>
+                      <Link
+                        href="/education"
+                        className="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
+                        style={{ background: "var(--teal)", color: "#fff" }}
+                      >
+                        Explore Education Hub
+                      </Link>
+                      <Link
+                        href="/schools"
+                        className="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
+                        style={{
+                          background: "var(--card)",
+                          color: "var(--text)",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        Browse Schools
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
             </Card>
           ) : (

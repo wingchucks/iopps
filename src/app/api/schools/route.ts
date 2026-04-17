@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { isPublicJobVisible } from "@/lib/public-jobs";
 import { comparePartnerPromotion, withPartnerPromotion } from "@/lib/server/partner-promotion";
+import { getPublicSchoolRecords } from "@/lib/server/public-schools";
 import {
-  deriveOwnerType,
   matchesOrgName,
   serialize,
   type JsonRecord,
 } from "@/lib/server/public-ownership";
-import { isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,25 +20,15 @@ export async function GET() {
   try {
     const db = getAdminDb();
 
-    const [typeSnap, tierSnap, programSnap, scholarshipSnap, jobsSnap, jobPostsSnap] = await Promise.all([
-      db.collection("organizations").where("type", "==", "school").where("onboardingComplete", "==", true).get(),
-      db.collection("organizations").where("tier", "==", "school").where("onboardingComplete", "==", true).get(),
+    const [publicSchools, programSnap, scholarshipSnap, jobsSnap, jobPostsSnap] = await Promise.all([
+      getPublicSchoolRecords(db),
       db.collection("posts").where("type", "==", "program").get(),
       db.collection("scholarships").where("status", "==", "active").get(),
       db.collection("jobs").get(),
       db.collection("posts").where("type", "==", "job").get(),
     ]);
 
-    const seen = new Set<string>();
-    const schools = [...typeSnap.docs, ...tierSnap.docs]
-      .filter((doc) => {
-        if (seen.has(doc.id)) return false;
-        seen.add(doc.id);
-        return true;
-      })
-      .map((doc) => serialize({ id: doc.id, ...doc.data() }) as JsonRecord)
-      .filter((school) => deriveOwnerType(school) === "school")
-      .filter((school) => isSchoolPubliclyVisible(school))
+    const schools = publicSchools
       .map((school) => {
         const schoolId = text(school.id);
         const schoolName = text(school.name);
