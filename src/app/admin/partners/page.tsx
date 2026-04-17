@@ -1,513 +1,325 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Avatar from "@/components/Avatar";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { cn } from "@/lib/utils";
+import { displayLocation } from "@/lib/utils";
 import toast from "react-hot-toast";
 
-interface Partner {
+type AdminFilter = "all" | "listed" | "eligible";
+
+interface PartnerCandidate {
   id: string;
   name: string;
-  logoUrl: string;
-  websiteUrl: string;
-  tier: "Premium" | "Standard";
-  visible: boolean;
+  shortName?: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  description?: string;
+  ownerType: string;
+  verified: boolean;
+  status: string;
+  publicVisibility: string;
+  isPublicPartner: boolean;
+  isEligibleForPublicPartner: boolean;
+  eligibilityReason:
+    | "active_paid_subscription"
+    | "legacy_directory_partner"
+    | "trial_only"
+    | "admin_grant"
+    | "expired"
+    | "not_public"
+    | "no_paid_subscription";
+  subscriptionTier: "standard" | "premium" | "school" | null;
+  subscriptionStatus: string;
+  subscriptionEnd?: string;
   spotlight: boolean;
-  order: number;
-  hires: number;
-  applications: number;
-  views: number;
+  sectionOverride?: "premium" | "education" | "visibility";
+  partnerBadgeLabel?: string;
+  location?: unknown;
+}
+
+function prettifyTier(value: PartnerCandidate["subscriptionTier"]): string {
+  if (value === "premium") return "Premium plan";
+  if (value === "school") return "School plan";
+  if (value === "standard") return "Standard plan";
+  return "No paid plan";
+}
+
+function prettifyType(value: string): string {
+  if (!value) return "Organization";
+  return value
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
+function prettifyEligibilityReason(value: PartnerCandidate["eligibilityReason"]): string {
+  if (value === "active_paid_subscription") return "Active paid subscription";
+  if (value === "legacy_directory_partner") return "Legacy premium directory partner";
+  if (value === "trial_only") return "Trial only";
+  if (value === "admin_grant") return "Complimentary access";
+  if (value === "expired") return "Expired subscription";
+  if (value === "not_public") return "Not public";
+  return "No paid subscription";
+}
+
+function qualifiesForPublicListing(candidate: PartnerCandidate): boolean {
+  return candidate.isEligibleForPublicPartner;
 }
 
 export default function PartnersPage() {
   const { user } = useAuth();
-  const [partners, setPartners] = useState<Partner[]>([]);
+  const [partners, setPartners] = useState<PartnerCandidate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingLogo, setEditingLogo] = useState<string | null>(null);
-  const [newLogoUrl, setNewLogoUrl] = useState("");
-  const [modalForm, setModalForm] = useState({
-    name: "",
-    logoUrl: "",
-    websiteUrl: "",
-    tier: "Standard" as "Premium" | "Standard",
-  });
-  const [saving, setSaving] = useState(false);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  const fetchPartners = async () => {
-    try {
-      const token = await user?.getIdToken();
-      const res = await fetch("/api/admin/partners", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setPartners(data.partners || []);
-    } catch {
-      toast.error("Failed to load partners");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<AdminFilter>("all");
 
   useEffect(() => {
-    if (user) fetchPartners();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    async function load() {
+      try {
+        const token = await user?.getIdToken();
+        const res = await fetch("/api/admin/partners", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setPartners(Array.isArray(data.partners) ? data.partners : []);
+      } catch (error) {
+        console.error("[admin/partners] load failed", error);
+        toast.error("Failed to load partner settings");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (user) void load();
   }, [user]);
 
-  const handleAdd = async () => {
-    if (!modalForm.name.trim()) {
-      toast.error("Name is required");
-      return;
-    }
-    setSaving(true);
-    try {
-      const token = await user?.getIdToken();
-      const res = await fetch("/api/admin/partners", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(modalForm),
-      });
-      if (!res.ok) throw new Error();
-      toast.success("Partner added!");
-      setShowModal(false);
-      setModalForm({ name: "", logoUrl: "", websiteUrl: "", tier: "Standard" });
-      fetchPartners();
-    } catch {
-      toast.error("Failed to add partner");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const stats = useMemo(() => {
+    const listed = partners.filter((partner) => partner.isPublicPartner).length;
+    const eligible = partners.filter((partner) => qualifiesForPublicListing(partner)).length;
+    const blocked = partners.filter((partner) => partner.subscriptionTier !== null && !partner.isEligibleForPublicPartner).length;
+    return { listed, eligible, blocked, total: partners.length };
+  }, [partners]);
 
-  const toggleField = async (id: string, field: "visible" | "spotlight", current: boolean) => {
-    try {
-      const token = await user?.getIdToken();
-      await fetch(`/api/admin/partners/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ [field]: !current }),
-      });
-      setPartners((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, [field]: !current } : p))
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return partners.filter((partner) => {
+      if (filter === "listed" && !partner.isPublicPartner) return false;
+      if (filter === "eligible" && !qualifiesForPublicListing(partner)) return false;
+
+      if (!query) return true;
+
+      return (
+        partner.name.toLowerCase().includes(query) ||
+        partner.ownerType.toLowerCase().includes(query) ||
+        (partner.description || "").toLowerCase().includes(query) ||
+        displayLocation(partner.location).toLowerCase().includes(query)
       );
-      toast.success(field === "spotlight"
-        ? (!current ? "Spotlight enabled" : "Spotlight disabled")
-        : (!current ? "Now visible" : "Now hidden")
-      );
-    } catch {
-      toast.error("Failed to update");
-    }
-  };
-
-  const updateLogo = async (id: string) => {
-    if (!newLogoUrl.trim()) {
-      toast.error("Please enter a URL");
-      return;
-    }
-    setActionLoading(id);
-    try {
-      const token = await user?.getIdToken();
-      await fetch(`/api/admin/partners/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ logoUrl: newLogoUrl }),
-      });
-      setPartners((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, logoUrl: newLogoUrl } : p))
-      );
-      setEditingLogo(null);
-      setNewLogoUrl("");
-      toast.success("Logo updated");
-    } catch {
-      toast.error("Failed to update logo");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const updateTier = async (id: string, newTier: "Premium" | "Standard") => {
-    try {
-      const token = await user?.getIdToken();
-      await fetch(`/api/admin/partners/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ tier: newTier }),
-      });
-      setPartners((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, tier: newTier } : p))
-      );
-      toast.success("Tier updated");
-    } catch {
-      toast.error("Failed to update tier");
-    }
-  };
-
-  const movePartner = async (index: number, direction: "up" | "down") => {
-    const newPartners = [...partners];
-    const swapIndex = direction === "up" ? index - 1 : index + 1;
-    if (swapIndex < 0 || swapIndex >= newPartners.length) return;
-
-    [newPartners[index], newPartners[swapIndex]] = [newPartners[swapIndex], newPartners[index]];
-
-    const reordered = newPartners.map((p, i) => ({ ...p, order: i }));
-    setPartners(reordered);
-
-    try {
-      const token = await user?.getIdToken();
-      await fetch("/api/admin/partners", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          partners: reordered.map((p) => ({ id: p.id, order: p.order })),
-        }),
-      });
-    } catch {
-      toast.error("Failed to reorder");
-      fetchPartners();
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Remove this partner?")) return;
-    try {
-      const token = await user?.getIdToken();
-      await fetch(`/api/admin/partners/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Partner removed");
-      setPartners((prev) => prev.filter((p) => p.id !== id));
-    } catch {
-      toast.error("Failed to delete");
-    }
-  };
-
-  const inputStyle = {
-    backgroundColor: "var(--input-bg)",
-    borderColor: "var(--input-border)",
-  };
-
-  // Summary stats
-  const premiumCount = partners.filter((p) => p.tier === "Premium").length;
-  const spotlightPartner = partners.find((p) => p.spotlight);
-  const totalHires = partners.reduce((s, p) => s + p.hires, 0);
-  const totalApplications = partners.reduce((s, p) => s + p.applications, 0);
-  const totalViews = partners.reduce((s, p) => s + p.views, 0);
+    });
+  }, [filter, partners, search]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Partner Showcase</h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            Manage partners displayed across 7 homepage touchpoints: hero banner logos, partner ticker,
-            spotlight cards, footer grid, testimonial quotes, impact stats co-branding, and the dedicated partners page.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="shrink-0 rounded-lg px-4 py-2 font-medium text-white"
-          style={{ backgroundColor: "var(--input-focus)" }}
-        >
-          <span className="flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M8 3v10M3 8h10" />
-            </svg>
-            Add Partner
-          </span>
-        </button>
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold text-text">Partner Directory Settings</h1>
+        <p className="max-w-3xl text-sm leading-6 text-text-muted">
+          Public partners are now derived automatically from billing state. An organization only appears in partner
+          surfaces when it has an active paid subscription, is publicly visible, and is not on complimentary or trial access.
+        </p>
       </div>
 
-      {/* Impact metrics */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Partners</p>
-          <p className="mt-1 text-xl font-bold text-accent">{partners.length}</p>
-          <p className="mt-0.5 text-xs text-[var(--text-muted)]">{premiumCount} premium</p>
-        </div>
-        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Total Hires</p>
-          <p className="mt-1 text-xl font-bold text-green-500">{totalHires.toLocaleString()}</p>
-        </div>
-        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Applications</p>
-          <p className="mt-1 text-xl font-bold text-blue-500">{totalApplications.toLocaleString()}</p>
-        </div>
-        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Page Views</p>
-          <p className="mt-1 text-xl font-bold text-purple-500">{totalViews.toLocaleString()}</p>
-        </div>
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-amber-400">Spotlight</p>
-          <p className="mt-1 text-sm font-bold text-amber-300">{spotlightPartner?.name || "None"}</p>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Tracked organizations" value={stats.total} tone="default" />
+        <StatCard label="Public partners live" value={stats.listed} tone="teal" />
+        <StatCard label="Eligible paid orgs" value={stats.eligible} tone="gold" />
+        <StatCard label="Blocked non-paid states" value={stats.blocked} tone="blue" />
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <label className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+          <span className="text-sm text-text-muted">&#128269;</span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search partner candidates by name, type, or location..."
+            className="w-full border-none bg-transparent text-sm text-text outline-none"
+          />
+        </label>
+
+        <div className="flex flex-wrap gap-2">
+          {([
+            ["all", "All"],
+            ["listed", "Public"],
+            ["eligible", "Eligible"],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              onClick={() => setFilter(value)}
+              className="rounded-full px-4 py-2 text-xs font-semibold transition-colors"
+              style={{
+                background: filter === value ? "var(--navy)" : "var(--card)",
+                color: filter === value ? "#fff" : "var(--text-sec)",
+                border: filter === value ? "none" : "1px solid var(--border)",
+              }}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
       {loading ? (
-        <div className="py-12 text-center" style={{ color: "var(--text-muted)" }}>Loading...</div>
-      ) : partners.length === 0 ? (
-        <div
-          className="rounded-xl border py-12 text-center"
-          style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}
-        >
-          <p style={{ color: "var(--text-muted)" }}>No partners yet.</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="skeleton h-[220px] rounded-2xl" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-border bg-card px-6 py-12 text-center">
+          <p className="text-sm text-text-muted">No matching organizations found.</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {partners.map((partner, index) => (
-            <div
-              key={partner.id}
-              className={cn(
-                "flex items-center gap-4 rounded-xl border p-4",
-                partner.spotlight && "border-amber-500/30 bg-amber-500/5",
-                !partner.visible && "opacity-50"
-              )}
-              style={!partner.spotlight ? { backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" } : undefined}
-            >
-              {/* Reorder */}
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={() => movePartner(index, "up")}
-                  disabled={index === 0}
-                  className="rounded p-1 text-xs disabled:opacity-20 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 9l4-4 4 4" />
-                  </svg>
-                </button>
-                <span className="text-center text-[10px] text-[var(--text-muted)]">{index + 1}</span>
-                <button
-                  onClick={() => movePartner(index, "down")}
-                  disabled={index === partners.length - 1}
-                  className="rounded p-1 text-xs disabled:opacity-20 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 5l4 4 4-4" />
-                  </svg>
-                </button>
-              </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {filtered.map((partner) => {
+            const eligible = qualifiesForPublicListing(partner);
+            const location = displayLocation(partner.location);
 
-              {/* Logo */}
-              <div className="relative group">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-700">
-                  {partner.logoUrl ? (
-                    <img src={partner.logoUrl} alt="" className="h-full w-full object-contain p-1" />
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--text-muted)" }}>
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" />
-                      <path d="m21 15-5-5L5 21" />
-                    </svg>
-                  )}
+            return (
+              <article key={partner.id} className="rounded-[24px] border border-border bg-card p-5">
+                <div className="flex items-start gap-4">
+                  <Avatar
+                    name={partner.shortName || partner.name}
+                    src={partner.logoUrl}
+                    size={52}
+                    gradient="linear-gradient(135deg, var(--navy), var(--teal))"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-bold text-text">{partner.name}</h2>
+                      {partner.isPublicPartner ? (
+                        <StatusBadge label={partner.partnerBadgeLabel || "Public Partner"} tone="gold" />
+                      ) : partner.isEligibleForPublicPartner ? (
+                        <StatusBadge label="Eligible paid org" tone="teal" />
+                      ) : null}
+                      {partner.verified ? <StatusBadge label="Verified" tone="blue" /> : null}
+                    </div>
+                    <p className="mt-1 text-sm text-text-muted">
+                      {prettifyType(partner.ownerType)} · {prettifyTier(partner.subscriptionTier)}
+                    </p>
+                    {location ? <p className="mt-1 text-xs text-text-sec">&#128205; {location}</p> : null}
+                  </div>
                 </div>
-                <button
-                  onClick={() => { setEditingLogo(editingLogo === partner.id ? null : partner.id); setNewLogoUrl(partner.logoUrl || ""); }}
-                  className="absolute -bottom-1 -right-1 rounded-full bg-white/10 p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20"
-                  title="Replace logo"
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                  </svg>
-                </button>
-              </div>
 
-              {/* Info */}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold">{partner.name}</h3>
-                  {partner.spotlight && (
-                    <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-400">
-                      SPOTLIGHT
+                {partner.description ? (
+                  <p className="mt-4 line-clamp-3 text-sm leading-6 text-text-sec">{partner.description}</p>
+                ) : null}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <StatusBadge label={`Status: ${partner.status || "unknown"}`} tone={partner.status === "approved" ? "teal" : "default"} />
+                  <StatusBadge label={`Visibility: ${partner.publicVisibility || "public"}`} tone={partner.publicVisibility === "hidden" ? "default" : "blue"} />
+                  <StatusBadge label={`Subscription: ${partner.subscriptionStatus || "none"}`} tone={eligible ? "gold" : "default"} />
+                  <StatusBadge label={prettifyEligibilityReason(partner.eligibilityReason)} tone={eligible ? "gold" : "default"} />
+                  {partner.spotlight ? <StatusBadge label="Spotlight enabled" tone="teal" /> : null}
+                </div>
+
+                <p className="mt-4 text-sm leading-6 text-text-muted">
+                  {partner.isPublicPartner
+                    ? "This organization is live in the public partner directory and will appear consistently across partner surfaces."
+                    : partner.eligibilityReason === "legacy_directory_partner"
+                      ? "This organization is a grandfathered premium directory partner and remains live even though it is not on a current paid subscription record."
+                    : partner.eligibilityReason === "trial_only"
+                      ? "Trial access no longer qualifies for the public partner directory. This organization will only go live after a real paid subscription becomes active."
+                      : partner.eligibilityReason === "admin_grant"
+                        ? "Complimentary or admin-granted access does not qualify for the public partner directory."
+                        : partner.eligibilityReason === "expired"
+                          ? "The subscription term has ended, so this organization has been removed automatically from public partner surfaces."
+                          : partner.eligibilityReason === "not_public"
+                            ? "This organization is not currently public, so it cannot appear in the public partner directory even with a paid subscription."
+                            : eligible
+                              ? "This organization qualifies for the public directory and will appear automatically across partner surfaces."
+                              : "This organization does not have an active paid subscription that qualifies for public partner placement."}
+                </p>
+
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                  {partner.subscriptionEnd ? (
+                    <span className="text-sm text-text-muted">
+                      Subscription end: {new Date(partner.subscriptionEnd).toLocaleDateString()}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-text-muted">
+                      {partner.sectionOverride ? `Section override: ${partner.sectionOverride}` : "No subscription end on file"}
                     </span>
                   )}
-                </div>
-                <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
-                  <button
-                    onClick={() => updateTier(partner.id, partner.tier === "Premium" ? "Standard" : "Premium")}
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-xs font-medium transition-colors cursor-pointer",
-                      partner.tier === "Premium"
-                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50"
-                        : "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600"
-                    )}
-                    title="Click to toggle tier"
-                  >
-                    {partner.tier}
-                  </button>
-                  {partner.websiteUrl && (
+
+                  {partner.websiteUrl ? (
                     <a
                       href={partner.websiteUrl}
                       target="_blank"
-                      rel="noopener noreferrer"
-                      className="truncate hover:underline"
+                      rel="noreferrer"
+                      className="text-sm font-semibold text-teal no-underline hover:underline"
                     >
-                      {partner.websiteUrl.replace(/^https?:\/\//, "")}
+                      Open website
                     </a>
+                  ) : (
+                    <span className="text-sm text-text-muted">No website on file</span>
                   )}
                 </div>
-
-                {/* Logo URL editor */}
-                {editingLogo === partner.id && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={newLogoUrl}
-                      onChange={(e) => setNewLogoUrl(e.target.value)}
-                      placeholder="New logo URL..."
-                      className="flex-1 rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:ring-2"
-                      style={{ ...inputStyle, "--tw-ring-color": "var(--input-focus)" } as React.CSSProperties}
-                    />
-                    <button
-                      onClick={() => updateLogo(partner.id)}
-                      disabled={actionLoading === partner.id}
-                      className="rounded-lg bg-accent/20 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/30 disabled:opacity-50"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => { setEditingLogo(null); setNewLogoUrl(""); }}
-                      className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-[var(--text-muted)] hover:bg-white/15"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-
-                {/* Impact metrics per partner */}
-                <div className="mt-1.5 flex items-center gap-3 text-xs text-[var(--text-muted)]">
-                  <span className="flex items-center gap-1" title="Hires">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
-                    {partner.hires} hires
-                  </span>
-                  <span className="flex items-center gap-1" title="Applications">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    {partner.applications} apps
-                  </span>
-                  <span className="flex items-center gap-1" title="Views">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    {partner.views.toLocaleString()} views
-                  </span>
-                </div>
-              </div>
-
-              {/* Toggles */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => toggleField(partner.id, "visible", partner.visible)}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                    partner.visible
-                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                      : "bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400"
-                  )}
-                >
-                  {partner.visible ? "Visible" : "Hidden"}
-                </button>
-                <button
-                  onClick={() => toggleField(partner.id, "spotlight", partner.spotlight)}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                    partner.spotlight
-                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : "bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400"
-                  )}
-                >
-                  {partner.spotlight ? "Spotlight" : "Spotlight"}
-                </button>
-              </div>
-
-              {/* Delete */}
-              <button
-                onClick={() => handleDelete(partner.id)}
-                className="rounded-md p-2 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" />
-                </svg>
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Add Partner Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div
-            className="w-full max-w-md space-y-4 rounded-xl border p-6"
-            style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}
-          >
-            <h2 className="text-lg font-bold">Add Partner</h2>
-
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Name</label>
-                <input
-                  type="text"
-                  value={modalForm.name}
-                  onChange={(e) => setModalForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Partner name"
-                  className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                  style={{ ...inputStyle, "--tw-ring-color": "var(--input-focus)" } as React.CSSProperties}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Logo URL</label>
-                <input
-                  type="text"
-                  value={modalForm.logoUrl}
-                  onChange={(e) => setModalForm((f) => ({ ...f, logoUrl: e.target.value }))}
-                  placeholder="https://..."
-                  className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                  style={{ ...inputStyle, "--tw-ring-color": "var(--input-focus)" } as React.CSSProperties}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Website URL</label>
-                <input
-                  type="text"
-                  value={modalForm.websiteUrl}
-                  onChange={(e) => setModalForm((f) => ({ ...f, websiteUrl: e.target.value }))}
-                  placeholder="https://..."
-                  className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                  style={{ ...inputStyle, "--tw-ring-color": "var(--input-focus)" } as React.CSSProperties}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Tier</label>
-                <select
-                  value={modalForm.tier}
-                  onChange={(e) => setModalForm((f) => ({ ...f, tier: e.target.value as "Premium" | "Standard" }))}
-                  className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                  style={{ ...inputStyle, "--tw-ring-color": "var(--input-focus)" } as React.CSSProperties}
-                >
-                  <option value="Standard">Standard</option>
-                  <option value="Premium">Premium</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setShowModal(false)}
-                className="rounded-lg border px-4 py-2 text-sm"
-                style={{ borderColor: "var(--card-border)" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAdd}
-                disabled={saving}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                style={{ backgroundColor: "var(--input-focus)" }}
-              >
-                {saving ? "Adding..." : "Add Partner"}
-              </button>
-            </div>
-          </div>
+              </article>
+            );
+          })}
         </div>
       )}
     </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "default" | "teal" | "gold" | "blue";
+}) {
+  const color =
+    tone === "teal" ? "var(--teal)" :
+    tone === "gold" ? "var(--gold)" :
+    tone === "blue" ? "var(--blue)" :
+    "var(--text)";
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">{label}</p>
+      <p className="mt-2 text-2xl font-bold" style={{ color }}>{value}</p>
+    </div>
+  );
+}
+
+function StatusBadge({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "default" | "teal" | "gold" | "blue";
+}) {
+  const styles =
+    tone === "teal"
+      ? { color: "var(--teal)", background: "var(--teal-soft)" }
+      : tone === "gold"
+        ? { color: "var(--gold)", background: "var(--gold-soft)" }
+        : tone === "blue"
+          ? { color: "var(--blue)", background: "var(--blue-soft)" }
+          : { color: "var(--text-sec)", background: "rgba(255,255,255,.05)" };
+
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold"
+      style={styles}
+    >
+      {label}
+    </span>
   );
 }

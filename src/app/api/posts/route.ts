@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { isPublicPostVisible } from "@/lib/access-state";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
@@ -27,7 +28,9 @@ export async function GET() {
       .orderBy("order", "asc")
       .get();
 
-    const posts = snap.docs.map(doc => serialize({ id: doc.id, ...doc.data() }));
+    const posts = snap.docs
+      .map((doc) => serialize({ id: doc.id, ...doc.data() }))
+      .filter((post) => isPublicPostVisible(post));
     return NextResponse.json({ posts });
   } catch (err) {
     console.error("Posts API error:", err);

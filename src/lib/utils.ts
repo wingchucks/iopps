@@ -77,6 +77,55 @@ export function displayAmount(value: unknown): string {
     .join(" · ");
 }
 
+const EXTERNAL_SCHEME_RE = /^[a-z][a-z0-9+.-]*:/i;
+const EMAIL_LIKE_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DOMAIN_LIKE_RE = /^(?:www\.)?[^\s/]+\.[^\s/]{2,}(?:[/?#].*)?$/i;
+
+export function normalizeExternalHref(value: unknown): string {
+  if (typeof value !== "string") return "";
+
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  if (
+    EXTERNAL_SCHEME_RE.test(trimmed)
+    || trimmed.startsWith("//")
+    || trimmed.startsWith("/")
+    || trimmed.startsWith("#")
+  ) {
+    return trimmed;
+  }
+
+  if (EMAIL_LIKE_RE.test(trimmed)) {
+    return `mailto:${trimmed}`;
+  }
+
+  if (DOMAIN_LIKE_RE.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+
+  return trimmed;
+}
+
+export function isMailtoHref(value: unknown): boolean {
+  return typeof value === "string" && value.trim().toLowerCase().startsWith("mailto:");
+}
+
+export function normalizeApplyUrlFields<T extends Record<string, unknown>>(record: T): T {
+  const normalizedHref = normalizeExternalHref(record.applicationUrl ?? record.externalApplyUrl);
+  if (!normalizedHref) return record;
+
+  return {
+    ...record,
+    applicationUrl: normalizedHref,
+    externalApplyUrl: normalizedHref,
+  };
+}
+
+export function buildLoginRedirectHref(targetPath: string): string {
+  return `/login?redirect=${encodeURIComponent(targetPath)}`;
+}
+
 /** Safely convert a tags field to a string array. */
 export function ensureTagsArray(tags: unknown): string[] {
   if (Array.isArray(tags)) return tags.map(String);
