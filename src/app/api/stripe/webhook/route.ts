@@ -131,7 +131,50 @@ export async function POST(req: NextRequest) {
             planName: planNames[tier] || tier,
             amount: amount ? Number(amount) / 100 : 0,
             gst: gstAmount ? Number(gstAmount) / 100 : 0,
-          }).catch(() => {});
+          })
+            .then(async (result) => {
+              if (!result.success) {
+                console.error("[stripe/webhook] subscription confirmation email failed", {
+                  orgId,
+                  email: empEmail,
+                  planName: planNames[tier] || tier,
+                  error: result.error,
+                });
+                await db.collection("employers").doc(orgId).set(
+                  {
+                    lastConfirmationEmailStatus: "failed",
+                    lastConfirmationEmailError: result.error || "unknown",
+                    lastConfirmationEmailAttemptAt: now,
+                  },
+                  { merge: true },
+                );
+              } else {
+                await db.collection("employers").doc(orgId).set(
+                  {
+                    lastConfirmationEmailStatus: "sent",
+                    lastConfirmationEmailSentAt: now,
+                  },
+                  { merge: true },
+                );
+              }
+            })
+            .catch(async (err) => {
+              console.error("[stripe/webhook] subscription confirmation threw", {
+                orgId,
+                email: empEmail,
+                err: String(err),
+              });
+              await db.collection("employers").doc(orgId).set(
+                {
+                  lastConfirmationEmailStatus: "failed",
+                  lastConfirmationEmailError: String(err),
+                  lastConfirmationEmailAttemptAt: now,
+                },
+                { merge: true },
+              ).catch(() => {});
+            });
+        } else {
+          console.warn("[stripe/webhook] no employer email on file for subscription confirmation", { orgId });
         }
       } else if (isOneTimePost) {
         // 2c. Add post credits to employer

@@ -169,8 +169,12 @@ export async function POST(req: NextRequest) {
     await adminAuth.setCustomUserClaims(uid, { role: "employer", employerId: uid });
 
     // Send welcome email (non-blocking)
-    sendEmployerWelcome({ email: contactEmail, contactName, orgName: name }).catch(() => {});
-    sendAdminNewSignup({ name: contactName, email: contactEmail, orgName: name, type: "employer", uid }).catch(() => {});
+    sendEmployerWelcome({ email: contactEmail, contactName, orgName: name }).catch((err) => {
+      console.warn("[email] employer welcome failed", { err: String(err), uid, email: contactEmail, orgName: name });
+    });
+    sendAdminNewSignup({ name: contactName, email: contactEmail, orgName: name, type: "employer", uid }).catch((err) => {
+      console.warn("[email] admin signup notification failed", { err: String(err), uid, email: contactEmail, orgName: name, type: "employer" });
+    });
 
     return NextResponse.json({ success: true, orgId: uid, slug });
   } catch (err) {
