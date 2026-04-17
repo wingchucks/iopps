@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Organization } from "@/lib/firestore/organizations";
 import type { Job } from "@/lib/firestore/jobs";
 import { formatOrganizationHoursDay, hasOrganizationIndigenousIdentity } from "@/lib/organization-profile";
-import { displayAmount, displayLocation } from "@/lib/utils";
+import { displayAmount, displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
 
 // ── Types for opportunities ──
 interface LinkedItem { href?: string; }
@@ -176,14 +176,19 @@ function OrgProfileContent() {
     );
   }
 
-  const websiteUrl = org.website ? (org.website.startsWith("http") ? org.website : `https://${org.website}`) : null;
+  const websiteUrl = normalizeExternalHref(org.website) || null;
+  const websiteIsMailto = isMailtoHref(websiteUrl);
+  const instagramHref = normalizeExternalHref(org.socialLinks?.instagram);
+  const facebookHref = normalizeExternalHref(org.socialLinks?.facebook);
+  const linkedinHref = normalizeExternalHref(org.socialLinks?.linkedin);
+  const twitterHref = normalizeExternalHref(org.socialLinks?.twitter);
   const location = displayLocation(org.location);
   const profileJobCount = jobs.length || org.openJobs || 0;
   const relatedJobCount = jobs.length;
   const foundedYear = org.foundedYear ? String(org.foundedYear) : org.since || null;
   const employeeCount = org.employees || org.size || null;
   const isIndigenousOwned = hasOrganizationIndigenousIdentity(org);
-  const hasSocialLinks = org.socialLinks && Object.values(org.socialLinks).some(Boolean);
+  const hasSocialLinks = Boolean(instagramHref || facebookHref || linkedinHref || twitterHref);
   const hasContact = websiteUrl || org.contactEmail || org.phone || org.address;
   const hasTags = Boolean(org.tags?.length);
   const hasQuickStats = foundedYear || employeeCount || profileJobCount > 0;
@@ -291,7 +296,7 @@ function OrgProfileContent() {
                 </a>
               )}
               {websiteUrl && (
-                <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
+                <a href={websiteUrl} target={websiteIsMailto ? undefined : "_blank"} rel={websiteIsMailto ? undefined : "noopener noreferrer"} className="no-underline">
                   <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-teal text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)] hover:-translate-y-0.5">
                     🌐 Visit Website
                   </button>
@@ -315,26 +320,26 @@ function OrgProfileContent() {
           {/* Social Links Row */}
           {hasSocialLinks && (
             <div className="flex gap-2 flex-wrap mt-4">
-              {org.socialLinks!.instagram && (
-                <a href={org.socialLinks!.instagram} target="_blank" rel="noopener noreferrer"
+              {instagramHref && (
+                <a href={instagramHref} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
                   📸 Instagram
                 </a>
               )}
-              {org.socialLinks!.facebook && (
-                <a href={org.socialLinks!.facebook} target="_blank" rel="noopener noreferrer"
+              {facebookHref && (
+                <a href={facebookHref} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
                   📘 Facebook
                 </a>
               )}
-              {org.socialLinks!.linkedin && (
-                <a href={org.socialLinks!.linkedin} target="_blank" rel="noopener noreferrer"
+              {linkedinHref && (
+                <a href={linkedinHref} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
                   💼 LinkedIn
                 </a>
               )}
-              {org.socialLinks!.twitter && (
-                <a href={org.socialLinks!.twitter} target="_blank" rel="noopener noreferrer"
+              {twitterHref && (
+                <a href={twitterHref} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
                   🐦 Twitter / X
                 </a>
@@ -674,7 +679,7 @@ function OrgProfileContent() {
                   <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
                     <span className="text-base w-5 text-center shrink-0">🌐</span>
                     <div><p className="text-[11px] text-text-muted">Website</p>
-                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-[13px] text-teal no-underline hover:underline">{org.website}</a>
+                      <a href={websiteUrl} target={websiteIsMailto ? undefined : "_blank"} rel={websiteIsMailto ? undefined : "noopener noreferrer"} className="text-[13px] text-teal no-underline hover:underline">{org.website}</a>
                     </div>
                   </div>
                 )}

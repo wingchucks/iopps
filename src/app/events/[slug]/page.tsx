@@ -25,7 +25,7 @@ import {
   normalizeEventTypeLabel,
   normalizePublicEvent,
 } from "@/lib/public-events";
-import { displayAmount, displayLocation } from "@/lib/utils";
+import { displayAmount, displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
 
 // Unified type for rendering — covers fields from both Event and Post
 type EventData = {
@@ -395,21 +395,26 @@ function EventDetailContent() {
           <Card className="mb-4" style={{ position: "sticky", top: 80 }}>
             <div style={{ padding: 20 }}>
               {/* Register Button */}
-              {event.rsvpLink && (
-                <a
-                  href={event.rsvpLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold no-underline cursor-pointer transition-opacity hover:opacity-90 mb-4"
-                  style={{
-                    background: "var(--teal)",
-                    color: "#fff",
-                    border: "none",
-                  }}
-                >
-                  &#127915; Register for This Event
-                </a>
-              )}
+              {(() => {
+                const rsvpHref = normalizeExternalHref(event.rsvpLink);
+                if (!rsvpHref) return null;
+                const isMailto = isMailtoHref(rsvpHref);
+                return (
+                  <a
+                    href={rsvpHref}
+                    target={isMailto ? undefined : "_blank"}
+                    rel={isMailto ? undefined : "noopener noreferrer"}
+                    className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold no-underline cursor-pointer transition-opacity hover:opacity-90 mb-4"
+                    style={{
+                      background: "var(--teal)",
+                      color: "#fff",
+                      border: "none",
+                    }}
+                  >
+                    &#127915; Register for This Event
+                  </a>
+                );
+              })()}
 
               {/* RSVP Buttons */}
               <div className="flex gap-2 mb-3">
