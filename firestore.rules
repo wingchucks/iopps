@@ -131,15 +131,12 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
     }
 
-    // Applications: users can read/write their own applications, employers can read
-    match /applications/{applicationId} {
-      allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid || isAdmin()
-      );
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin();
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
+    // Applications rules are defined below (second match block). The previous
+    // duplicate rule that lived here has been removed because Firestore
+    // evaluates all match blocks with the OR of their allows, so the more
+    // permissive second block (which lacked an orgId check) overrode the
+    // stricter intent here and let any employer read every applicant. See
+    // the single consolidated rule further down in this file.
 
     // Posts (jobs, events, scholarships, programs, stories, spotlights):
     // Public read. Admin or org owner/admin can write.
@@ -237,22 +234,33 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
-    // Applications: users can read/create/update their own, admin can read/update all,
-    // org owner/admin can read/update applications for their org's posts
+    // Applications: applicants can read/create/update/delete their own. Admins
+    // can read/update all. Org owner/admin can read/update applications for
+    // their OWN org's posts — verified by matching the application's
+    // orgId/employerId to the caller's memberData().orgId. Without that
+    // org-match, any employer could read every applicant on the platform.
+    function applicationBelongsToCallerOrg() {
+      return exists(/databases/$(database)/documents/members/$(request.auth.uid))
+        && memberData().orgRole in ["owner", "admin"]
+        && (
+          resource.data.orgId == memberData().orgId
+          || resource.data.employerId == memberData().orgId
+        );
+    }
+
     match /applications/{appId} {
       allow read: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
         isAdmin() ||
-        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-         memberData().orgRole in ["owner", "admin"])
+        applicationBelongsToCallerOrg()
       );
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
         isAdmin() ||
-        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-         memberData().orgRole in ["owner", "admin"])
+        applicationBelongsToCallerOrg()
       );
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Notifications: users can read/update/create their own
