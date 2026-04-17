@@ -242,9 +242,14 @@ export default function UnifiedSignupPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to create school profile");
       }
+      const checkoutIdToken = await user.getIdToken();
       const checkoutRes = await fetch("/api/stripe/checkout", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId: selectedPlan, orgId: user.uid }),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${checkoutIdToken}`,
+        },
+        body: JSON.stringify({ planId: selectedPlan }),
       });
       if (checkoutRes.ok) { const { url } = await checkoutRes.json(); if (url) { window.location.href = url; return; } }
       router.push("/org/dashboard");
