@@ -363,6 +363,21 @@ export function hasOrganizationVisibilityBlock(org: {
   return visibilitySignals.some((signal) => signal === false);
 }
 
+/**
+ * Remove contact PII (email, phone) from an organization record before it
+ * ships in a public LIST response. The per-org detail endpoint
+ * (`/api/org/[slug]`) keeps the fields because the detail page intentionally
+ * renders them — the employer filled them in so visitors could reach out.
+ * Bulk exposure on the listing endpoint is what enables scraping, so we
+ * scrub there.
+ */
+export function stripOrganizationContactPII<T extends object>(record: T): T {
+  const source = record as Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { contactEmail: _contactEmail, phone: _phone, ...rest } = source;
+  return rest as T;
+}
+
 export function normalizeOrganizationRecord<T extends object>(record: T): T {
   const source = record as Record<string, unknown>;
   const next = { ...source } as Record<string, unknown>;
