@@ -33,6 +33,7 @@ export interface Post {
   slug?: string;
   status?: PostStatus;
   orgId?: string;
+  employerId?: string;
   orgName?: string;
   orgShort?: string;
   location?: string;
