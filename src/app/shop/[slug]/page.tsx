@@ -12,6 +12,7 @@ import {
   type ShopVendor,
   type ShopListing,
 } from "@/lib/firestore/shop";
+import { isMailtoHref, normalizeExternalHref } from "@/lib/utils";
 
 const categoryConfig: Record<string, { emoji: string; color: string; bg: string }> = {
   Art: { emoji: "\uD83C\uDFA8", color: "var(--purple)", bg: "var(--purple-soft)" },
@@ -104,6 +105,11 @@ export default function VendorProfilePage() {
 
   const catStyle = getCategoryStyle(vendor.category);
   const initial = vendor.name?.charAt(0)?.toUpperCase() || "?";
+  const websiteHref = normalizeExternalHref(vendor.website);
+  const websiteIsMailto = isMailtoHref(websiteHref);
+  const facebookHref = normalizeExternalHref(vendor.socialLinks?.facebook);
+  const instagramHref = normalizeExternalHref(vendor.socialLinks?.instagram);
+  const linkedinHref = normalizeExternalHref(vendor.socialLinks?.linkedin);
 
   return (
     <AppShell>
@@ -171,11 +177,11 @@ export default function VendorProfilePage() {
 
               {/* Contact row */}
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                {vendor.website && (
+                {websiteHref && (
                   <a
-                    href={vendor.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={websiteHref}
+                    target={websiteIsMailto ? undefined : "_blank"}
+                    rel={websiteIsMailto ? undefined : "noopener noreferrer"}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold no-underline rounded-lg transition-colors"
                     style={{
                       padding: "6px 12px",
@@ -215,11 +221,11 @@ export default function VendorProfilePage() {
               </div>
 
               {/* Social links */}
-              {vendor.socialLinks && (
+              {(facebookHref || instagramHref || linkedinHref) && (
                 <div className="flex items-center gap-3 mb-4">
-                  {vendor.socialLinks.facebook && (
+                  {facebookHref && (
                     <a
-                      href={vendor.socialLinks.facebook}
+                      href={facebookHref}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-text-muted hover:text-blue text-sm no-underline"
@@ -227,9 +233,9 @@ export default function VendorProfilePage() {
                       Facebook
                     </a>
                   )}
-                  {vendor.socialLinks.instagram && (
+                  {instagramHref && (
                     <a
-                      href={vendor.socialLinks.instagram}
+                      href={instagramHref}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-text-muted hover:text-purple text-sm no-underline"
@@ -237,9 +243,9 @@ export default function VendorProfilePage() {
                       Instagram
                     </a>
                   )}
-                  {vendor.socialLinks.linkedin && (
+                  {linkedinHref && (
                     <a
-                      href={vendor.socialLinks.linkedin}
+                      href={linkedinHref}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-text-muted hover:text-blue text-sm no-underline"
@@ -251,11 +257,11 @@ export default function VendorProfilePage() {
               )}
 
               {/* CTA */}
-              {vendor.website && (
+              {websiteHref && (
                 <a
-                  href={vendor.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={websiteHref}
+                  target={websiteIsMailto ? undefined : "_blank"}
+                  rel={websiteIsMailto ? undefined : "noopener noreferrer"}
                   className="inline-flex items-center gap-2 rounded-xl border-none font-bold text-sm text-white no-underline cursor-pointer transition-opacity hover:opacity-90"
                   style={{
                     padding: "12px 24px",
