@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isMailtoHref, normalizeExternalHref } from "../src/lib/utils.ts";
+import { buildLoginRedirectHref, isMailtoHref, normalizeExternalHref } from "../src/lib/utils.ts";
 
 test("prefixes bare email addresses with mailto", () => {
   const href = normalizeExternalHref("careers@onionlakehealth.org");
@@ -20,4 +20,11 @@ test("keeps explicit schemes unchanged", () => {
 
 test("leaves internal paths untouched", () => {
   assert.equal(normalizeExternalHref("/jobs/program-coordinator"), "/jobs/program-coordinator");
+});
+
+test("builds a login redirect href for protected routes", () => {
+  assert.equal(
+    buildLoginRedirectHref("/jobs/program-coordinator-mo1vnx15/apply"),
+    "/login?redirect=%2Fjobs%2Fprogram-coordinator-mo1vnx15%2Fapply",
+  );
 });
