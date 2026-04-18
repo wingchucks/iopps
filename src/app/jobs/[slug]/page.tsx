@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
@@ -35,6 +35,8 @@ function JobDetailContent() {
   const [actionLoading, setActionLoading] = useState("");
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     async function load() {
@@ -79,7 +81,13 @@ function JobDetailContent() {
   }, [slug, user]);
 
   const handleSave = async () => {
-    if (!user || !job) return;
+    if (!job) return;
+    // C-3: anonymous save -> route to login, preserve save intent via ?save=1
+    if (!user) {
+      const target = `${pathname || `/jobs/${slug}`}?save=1`;
+      router.push(buildLoginRedirectHref(target));
+      return;
+    }
     const jobId = job.id || slug;
     setActionLoading("save");
     try {
@@ -96,6 +104,18 @@ function JobDetailContent() {
       setActionLoading("");
     }
   };
+
+  // C-3: when returning from login with ?save=1 intent, auto-fire save once
+  useEffect(() => {
+    if (!user || !job || saved) return;
+    if (searchParams?.get("save") !== "1") return;
+    const cleanQs = new URLSearchParams(searchParams.toString());
+    cleanQs.delete("save");
+    const qs = cleanQs.toString();
+    router.replace(qs ? `${pathname}?${qs}` : (pathname || `/jobs/${slug}`));
+    void handleSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, job, saved]);
 
   if (loading) {
     return (
