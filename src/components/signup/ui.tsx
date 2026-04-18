@@ -113,20 +113,32 @@ export function StepHeader({ eyebrow, title, highlight, desc }: {
 }
 
 /* ── Form Input ── */
-export function FormInput({ label, required, ...props }: { label: string; required?: boolean } & React.InputHTMLAttributes<HTMLInputElement>) {
+export function FormInput({ label, required, error, id, ...props }: { label: string; required?: boolean; error?: string; id?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  // C-5: surface field-level validation — pass `required` to the native input,
+  // show a red border + error text when `error` is set.
+  const borderColor = error ? CSS.error : CSS.border;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <label style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted }}>
+      <label htmlFor={id} style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted }}>
         {label} {required && <span style={{ color: CSS.accent }}>*</span>}
       </label>
       <input
+        id={id}
+        required={required}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error && id ? `${id}-error` : undefined}
         {...props}
         style={{
-          background: "rgba(15,23,42,0.8)", border: `1px solid ${CSS.border}`, borderRadius: 10,
+          background: "rgba(15,23,42,0.8)", border: `1px solid ${borderColor}`, borderRadius: 10,
           padding: "12px 16px", fontSize: 15, color: CSS.text, fontFamily: "inherit",
           outline: "none", transition: "all 0.25s", ...((props.style || {}) as React.CSSProperties),
         }}
       />
+      {error && (
+        <div id={id ? `${id}-error` : undefined} role="alert" style={{ fontSize: 12, color: CSS.error, marginTop: 2 }}>
+          {error}
+        </div>
+      )}
     </div>
   );
 }
