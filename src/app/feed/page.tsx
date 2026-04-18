@@ -409,10 +409,10 @@ export default function FeedPage() {
               Empowering Indigenous Success
             </p>
             <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white md:text-4xl">
-              Opportunities Feed
+              Your Indigenous opportunities, all in one place
             </h1>
             <p className="mt-2 max-w-[620px] text-base text-white/78">
-              Jobs, programs, events, and scholarships in one stream. Use the main site navigation to jump into dedicated category boards when you want to browse one area at a time.
+              Jobs, scholarships, events, and training programs from Indigenous-led and allied organizations across Canada — ready when you are.
             </p>
           </div>
         </section>
@@ -426,15 +426,12 @@ export default function FeedPage() {
                     Featured Opportunities
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold text-white">
-                    A curated mix from across the platform
+                    Handpicked for Indigenous professionals
                   </h2>
                   <p className="mt-1 max-w-[560px] text-sm text-white/66">
-                    Up to four featured picks, with organization and opportunity-type variety first.
+                    A rotating selection of standout jobs, events, and scholarships worth a closer look.
                   </p>
                 </div>
-                <p className="text-sm text-white/56">
-                  The main feed below still follows freshness first.
-                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -448,10 +445,10 @@ export default function FeedPage() {
           <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-2xl font-semibold text-white">
-                Latest across IOPPS
+                Fresh opportunities
               </h2>
               <p className="text-sm text-white/60">
-                Featured items get a light boost, but fresh opportunities still lead the stream.
+                The newest jobs, scholarships, events, and programs added to IOPPS.
               </p>
             </div>
           </div>

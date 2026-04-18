@@ -166,9 +166,9 @@ export default function LivestreamsPage() {
               Watch the livestream here. Hire IOPPS to stream your next event.
             </h1>
             <p className="mt-4 max-w-[700px] text-base leading-relaxed text-white/80 md:text-lg">
-              Keep the player on IOPPS, show your recent productions as proof,
-              and give viewers a clean place to watch your live coverage and
-              replays.
+              Pow wows, conferences, community gatherings — watch live or catch
+              the replay. IOPPS has been livestreaming Indigenous events across
+              North America since 2015.
             </p>
           </div>
         </section>
@@ -203,19 +203,19 @@ export default function LivestreamsPage() {
                         {isLive
                           ? "Watch live on IOPPS"
                           : featuredVideo
-                            ? "Featured production replay"
+                            ? "Recent replay"
                             : nextUpcoming
-                              ? "Next livestream coming up"
+                              ? "Coming up next"
                               : "IOPPS Live"}
                       </h2>
                       <p className="mt-2 text-sm leading-relaxed text-text-sec md:text-base">
                         {isLive
-                          ? "The stream is live here on IOPPS right now. Viewers can stay on-site or open the YouTube watch page."
+                          ? "Join the live broadcast right here, or open it on YouTube."
                           : featuredVideo
-                            ? "Use recent productions as proof of the event coverage IOPPS can deliver."
+                            ? "Catch up on a recent Indigenous event streamed by IOPPS."
                             : nextUpcoming
-                              ? "The next scheduled broadcast is ready to promote here."
-                              : "Follow IOPPS on YouTube while the next stream is being prepared."}
+                              ? "Save the date — this broadcast goes live soon."
+                              : "Follow us on YouTube to get notified when the next stream starts."}
                       </p>
                     </div>
 
@@ -244,7 +244,7 @@ export default function LivestreamsPage() {
                         <div className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-border bg-bg px-6 text-center">
                           <p className="max-w-[420px] text-sm leading-relaxed text-text-sec">
                             {error ||
-                              "No stream is live right now. Use the actions beside this player to book IOPPS for your next event."}
+                              "Nothing is live right now — follow us on YouTube for alerts, or get in touch to have your next event streamed by IOPPS."}
                           </p>
                         </div>
                       )}
@@ -336,9 +336,10 @@ export default function LivestreamsPage() {
                         Need your event livestreamed?
                       </h2>
                       <p className="mt-3 text-sm leading-relaxed text-white/80 md:text-base">
-                        Put the live player and replay proof to work for you.
-                        IOPPS can help bring your event to viewers on-site and
-                        across your channels.
+                        We bring pow wows, conferences, and community
+                        gatherings to audiences everywhere. Professional
+                        multi-camera production, reliable streams, and replays
+                        that live on so your moment keeps reaching people.
                       </p>
                       <div className="mt-6 space-y-3 text-sm text-white/90">
                         {SERVICE_TYPES.map((service) => (

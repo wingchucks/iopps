@@ -456,8 +456,8 @@ export default function JobsPage() {
               </h2>
               <p className="text-sm text-text-sec">
                 {hasActiveFilters
-                  ? "Featured placements are hidden while search or filters are active."
-                  : "Results stay mixed by recency so promoted jobs do not take over the browse list."}
+                  ? "Showing the best matches for your search."
+                  : "The newest roles from Indigenous-led and allied employers across Canada."}
               </p>
             </div>
             {!loading && (
