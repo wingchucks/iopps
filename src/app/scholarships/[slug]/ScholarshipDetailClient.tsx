@@ -556,7 +556,7 @@ function ScholarshipDetailContent() {
                   opacity: actionLoading === "save" ? 0.7 : 1,
                 }}
               >
-                {saved ? "&#10004; Saved" : "&#128278; Save Scholarship"}
+                {saved ? "✔ Saved" : "🔖 Save Scholarship"}
               </Button>
 
               <ShareButton

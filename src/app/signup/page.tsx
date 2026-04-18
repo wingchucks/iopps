@@ -55,13 +55,15 @@ export default function UnifiedSignupPage() {
   const [orgType, setOrgType] = useState<OrgType>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  // C-5: field-level validation errors keyed by input id (name, email, password, confirmPassword)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Account
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [newsletterOptIn, setNewsletterOptIn] = useState(true);
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false); // CASL: express opt-in only
 
   // School
   const [schoolName, setSchoolName] = useState("");
@@ -90,7 +92,7 @@ export default function UnifiedSignupPage() {
   const [empLogoFile, setEmpLogoFile] = useState<File | null>(null);
   const [empBannerFile, setEmpBannerFile] = useState<File | null>(null);
 
-  const goTo = useCallback((s: number) => { setStep(s); setError(""); window.scrollTo({ top: 0, behavior: "smooth" }); }, []);
+  const goTo = useCallback((s: number) => { setStep(s); setError(""); setFieldErrors({}); window.scrollTo({ top: 0, behavior: "smooth" }); }, []);
 
   const getStepInfo = () => {
     if (role === "community") return { labels: ["Role", "Account", "Verify"], total: 3, current: step };
@@ -114,9 +116,33 @@ export default function UnifiedSignupPage() {
 
   const handleCreateAccount = async () => {
     setError("");
-    if (!name || !email || !password) { setError("Please fill in all fields"); return; }
-    if (password !== confirmPassword) { setError("Passwords don't match"); return; }
-    if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
+    // C-5: client-side validation with per-field errors
+    const errs: Record<string, string> = {};
+    if (!name.trim()) errs.name = "Please enter your name.";
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) errs.email = "Email is required.";
+    else if (!emailRe.test(email.trim())) errs.email = "Please enter a valid email address.";
+    if (!password) errs.password = "Password is required.";
+    else if (password.length < 8) errs.password = "Password must be at least 8 characters.";
+    if (!confirmPassword) errs.confirmPassword = "Please confirm your password.";
+    else if (password && confirmPassword !== password) errs.confirmPassword = "Passwords don't match.";
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      // scroll first invalid field into view
+      const firstKey = ["name", "email", "password", "confirmPassword"].find((k) => errs[k]);
+      if (firstKey && typeof document !== "undefined") {
+        requestAnimationFrame(() => {
+          const el = document.getElementById(firstKey);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            (el as HTMLInputElement).focus({ preventScroll: true });
+          }
+        });
+      }
+      return;
+    }
+    setFieldErrors({});
     setSubmitting(true);
     try {
         await signUp(name, email, password);
@@ -125,7 +151,7 @@ export default function UnifiedSignupPage() {
           const cu = getAuth().currentUser;
           if (cu) {
             const t = await cu.getIdToken();
-            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn }) });
+            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn, newsletterOptInAt: newsletterOptIn ? new Date().toISOString() : null }) });
           }
         } catch { /* non-blocking */ }
         goTo(3);
@@ -141,7 +167,7 @@ export default function UnifiedSignupPage() {
         try {
           if (cred?.user) {
             const t = await cred.user.getIdToken();
-            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn }) });
+            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn, newsletterOptInAt: newsletterOptIn ? new Date().toISOString() : null }) });
           }
         } catch { /* non-blocking */ }
         if (role === "organization") {
@@ -366,13 +392,13 @@ export default function UnifiedSignupPage() {
           </div>
           <div style={{ display: "grid", gap: 20 }}>
             <div>
-              <FormInput label={role === "organization" ? "Your Name (Contact Person)" : orgType === "school" ? "Contact Name" : "Your Name"} required placeholder={role === "organization" ? "e.g., Jane Smith" : "Your full name"} value={name} onChange={e => setName(e.target.value)} />
+              <FormInput id="name" label={role === "organization" ? "Your Name (Contact Person)" : orgType === "school" ? "Contact Name" : "Your Name"} required autoComplete="name" error={fieldErrors.name} placeholder={role === "organization" ? "e.g., Jane Smith" : "Your full name"} value={name} onChange={e => { setName(e.target.value); if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: "" })); }} />
               {role === "organization" && <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 6, paddingLeft: 2 }}>&#8594; You&apos;ll enter your <strong style={{ color: CSS.textMuted }}>business name</strong> on the next step.</div>}
             </div>
-            <FormInput label="Email Address" required type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+            <FormInput id="email" label="Email Address" required type="email" autoComplete="email" error={fieldErrors.email} placeholder="you@example.com" value={email} onChange={e => { setEmail(e.target.value); if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" })); }} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-              <div><FormInput label="Password" required type="password" placeholder="Min. 8 characters" value={password} onChange={e => setPassword(e.target.value)} /><PasswordStrength password={password} /></div>
-              <FormInput label="Confirm Password" required type="password" placeholder="Re-enter password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+              <div><FormInput id="password" label="Password" required type="password" minLength={8} autoComplete="new-password" error={fieldErrors.password} placeholder="Min. 8 characters" value={password} onChange={e => { setPassword(e.target.value); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" })); }} /><PasswordStrength password={password} /></div>
+              <FormInput id="confirmPassword" label="Confirm Password" required type="password" minLength={8} autoComplete="new-password" error={fieldErrors.confirmPassword} placeholder="Re-enter password" value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); if (fieldErrors.confirmPassword) setFieldErrors((p) => ({ ...p, confirmPassword: "" })); }} />
             </div>
           </div>
           {/* Newsletter Opt-In */}
@@ -382,7 +408,7 @@ export default function UnifiedSignupPage() {
                 style={{ width: 18, height: 18, marginTop: 2, accentColor: CSS.accent, cursor: "pointer" }} />
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: CSS.text }}>{"📬"} Subscribe to IOPPS Newsletter</div>
-                <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 2 }}>Get weekly updates on new jobs, events, scholarships, and community highlights. Unsubscribe anytime.</div>
+                <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 2 }}>We'll only email you if you check this box. Weekly updates on jobs, events, scholarships, and community highlights. Unsubscribe anytime.</div>
               </div>
             </label>
           </div>

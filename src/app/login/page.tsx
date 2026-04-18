@@ -47,14 +47,34 @@ function LoginForm() {
   };
 
   const resolvePostAuthDestination = async (
-    currentUser: { uid: string; getIdToken: () => Promise<string> },
+    currentUser: {
+      uid: string;
+      getIdToken: () => Promise<string>;
+      getIdTokenResult?: () => Promise<{ claims: Record<string, unknown> }>;
+    },
   ) => {
-    const profile = await getMemberProfile(currentUser.uid);
-    if (!profile) return "/setup";
+    // C-4: Check admin via ID token custom claims BEFORE reading members doc.
+    // Admins may not have a members/{uid} profile; without this check they
+    // were falling into the community onboarding wizard at /setup.
+    try {
+      if (typeof currentUser.getIdTokenResult === "function") {
+        const tokenResult = await currentUser.getIdTokenResult();
+        const claims = tokenResult?.claims ?? {};
+        if (claims.admin === true || claims.role === "admin" || claims.role === "moderator") {
+          return redirectTo || "/admin";
+        }
+      }
+    } catch {
+      /* fall through to profile-based resolution */
+    }
 
-    if (profile.role === "admin" || profile.role === "moderator") {
+    const profile = await getMemberProfile(currentUser.uid);
+
+    if (profile?.role === "admin" || profile?.role === "moderator") {
       return redirectTo || "/admin";
     }
+
+    if (!profile) return redirectTo || "/setup";
 
     if (profile.orgId) {
       const idToken = await currentUser.getIdToken();

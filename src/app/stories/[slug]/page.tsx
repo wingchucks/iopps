@@ -341,7 +341,7 @@ function StoryDetailContent() {
                   opacity: actionLoading === "save" ? 0.7 : 1,
                 }}
               >
-                {saved ? "&#10004; Saved" : "&#128278; Save Story"}
+                {saved ? "✔ Saved" : "🔖 Save Story"}
               </Button>
 
               <ShareButton

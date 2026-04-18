@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Badge from "@/components/Badge";
@@ -25,7 +25,7 @@ import {
   normalizeEventTypeLabel,
   normalizePublicEvent,
 } from "@/lib/public-events";
-import { displayAmount, displayLocation } from "@/lib/utils";
+import { buildLoginRedirectHref, displayAmount, displayLocation } from "@/lib/utils";
 
 // Unified type for rendering — covers fields from both Event and Post
 type EventData = {
@@ -103,6 +103,9 @@ function EventDetailContent() {
   const [goingCount, setGoingCount] = useState(0);
   const [actionLoading, setActionLoading] = useState("");
   const { user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     async function load() {
@@ -162,7 +165,13 @@ function EventDetailContent() {
   }, [slug, user]);
 
   const handleSave = async () => {
-    if (!user || !event) return;
+    if (!event) return;
+    // C-3: anonymous save -> route to login, preserve save intent via ?save=1
+    if (!user) {
+      const target = `${pathname || `/events/${slug}`}?save=1`;
+      router.push(buildLoginRedirectHref(target));
+      return;
+    }
     setActionLoading("save");
     try {
       if (saved) {
@@ -178,6 +187,18 @@ function EventDetailContent() {
       setActionLoading("");
     }
   };
+
+  // C-3: when returning from login with ?save=1 intent, auto-fire save once
+  useEffect(() => {
+    if (!user || !event || saved) return;
+    if (searchParams?.get("save") !== "1") return;
+    const cleanQs = new URLSearchParams(searchParams.toString());
+    cleanQs.delete("save");
+    const qs = cleanQs.toString();
+    router.replace(qs ? `${pathname}?${qs}` : (pathname || `/events/${slug}`));
+    void handleSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, event, saved]);
 
   const handleRsvp = async (status: RSVPStatus) => {
     if (!user || !event) return;
@@ -473,7 +494,7 @@ function EventDetailContent() {
                   opacity: actionLoading === "save" ? 0.7 : 1,
                 }}
               >
-                {saved ? "\u2714 Saved" : "&#128278; Save Event"}
+                {saved ? "✔ Saved" : "🔖 Save Event"}
               </Button>
 
               <div className="border-t border-border pt-4">
