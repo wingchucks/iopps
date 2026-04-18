@@ -27,6 +27,11 @@ export default function JobDetailPage() {
   );
 }
 
+type RelatedJob = Pick<
+  Job,
+  "id" | "slug" | "title" | "employerName" | "orgName" | "location" | "jobType" | "employmentType" | "salary" | "externalApplyUrl"
+>;
+
 function JobDetailContent() {
   const params = useParams();
   const slug = params.slug as string;
@@ -35,6 +40,8 @@ function JobDetailContent() {
   const [saved, setSaved] = useState(false);
   const [applied, setApplied] = useState(false);
   const [actionLoading, setActionLoading] = useState("");
+  const [employerJobs, setEmployerJobs] = useState<RelatedJob[]>([]);
+  const [similarJobs, setSimilarJobs] = useState<RelatedJob[]>([]);
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -58,6 +65,16 @@ function JobDetailContent() {
         // Track view (fire-and-forget)
         if (loadedJob) {
           fetch(`/api/jobs/${slug}/view`, { method: "POST" }).catch(() => {});
+
+          // M-2: fetch related jobs so the detail page isn't a dead end
+          fetch(`/api/jobs/${slug}/related`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+              if (!data) return;
+              if (Array.isArray(data.employerJobs)) setEmployerJobs(data.employerJobs);
+              if (Array.isArray(data.similarJobs)) setSimilarJobs(data.similarJobs);
+            })
+            .catch(() => {});
         }
       } catch (err) {
         console.error("Failed to load job:", err);
@@ -306,6 +323,12 @@ function JobDetailContent() {
         <div>
           <Card className="mb-4" style={{ position: "sticky", top: 80 }}>
             <div style={{ padding: 20 }}>
+              {/* M-4: show where the Apply action routes */}
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+                {normalizedApplicationHref && !shouldUseInternalApply
+                  ? "Apply on employer site"
+                  : "Apply on IOPPS"}
+              </p>
               {/* Apply button */}
               {normalizedApplicationHref && !shouldUseInternalApply ? (
                 <a href={normalizedApplicationHref} {...applicationLinkProps} className="block no-underline mb-3">
@@ -447,6 +470,57 @@ function JobDetailContent() {
           </Card>
         </div>
       </div>
+
+      {(employerJobs.length > 0 || similarJobs.length > 0) && (
+        <div className="mt-10 space-y-10">
+          {employerJobs.length > 0 && (
+            <RelatedJobList
+              title={`More from ${employerName}`}
+              jobs={employerJobs}
+            />
+          )}
+          {similarJobs.length > 0 && (
+            <RelatedJobList title="Similar roles" jobs={similarJobs} />
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+function RelatedJobList({ title, jobs }: { title: string; jobs: RelatedJob[] }) {
+  return (
+    <section>
+      <h2 className="text-xl font-extrabold text-text mb-4">{title}</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {jobs.map((job) => {
+          const href = `/jobs/${job.slug || job.id}`;
+          const employer = job.employerName || job.orgName || "";
+          const isExternal = Boolean(job.externalApplyUrl);
+          return (
+            <Link key={job.id} href={href} className="no-underline">
+              <Card className="hover:-translate-y-0.5 transition-transform">
+                <div className="p-4 flex flex-col gap-1.5">
+                  <h3 className="text-[15px] font-bold text-text m-0 line-clamp-2">{job.title}</h3>
+                  {employer && (
+                    <p className="text-xs text-teal font-semibold m-0">{employer}</p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted mt-1">
+                    {job.location && <span>📍 {job.location}</span>}
+                    {(job.jobType || job.employmentType) && (
+                      <span>· {job.jobType || job.employmentType}</span>
+                    )}
+                    {job.salary && <span>· {job.salary}</span>}
+                  </div>
+                  <p className="text-[11px] font-semibold text-text-muted mt-1 m-0">
+                    {isExternal ? "Apply on employer site ↗" : "Apply on IOPPS"}
+                  </p>
+                </div>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 }
