@@ -70,9 +70,28 @@ function getVideoUrl(videoId: string) {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
+// M-8 — YouTube descriptions imported from the Data API often come in
+// ALL CAPS plus pasted URLs + hashtags + "subscribe and follow" boilerplate.
+// The featured replay card used to render them verbatim, which read as raw
+// and unedited. Normalize before rendering.
+function cleanYouTubeCaption(text: string): string {
+  let t = text.replace(/\s+/g, " ").trim();
+  // Drop URLs.
+  t = t.replace(/https?:\/\/\S+/g, "").trim();
+  // Drop lines of repeated hashtags / social handles.
+  t = t.replace(/(?:^|\s)#\S+/g, "").replace(/(?:^|\s)@\S+/g, "").trim();
+  // If the text is more than 70% uppercase letters, sentence-case it.
+  const letters = t.match(/[A-Za-z]/g) || [];
+  const upperLetters = t.match(/[A-Z]/g) || [];
+  if (letters.length > 0 && upperLetters.length / letters.length > 0.7) {
+    t = t.toLowerCase().replace(/(^\s*|(?<=[.!?]\s))([a-z])/g, (_m, lead, ch) => lead + ch.toUpperCase());
+  }
+  return t.replace(/\s+/g, " ").trim();
+}
+
 function snippet(text?: string, maxLength = 180) {
   if (!text) return "";
-  const cleaned = text.replace(/\s+/g, " ").trim();
+  const cleaned = cleanYouTubeCaption(text);
   if (cleaned.length <= maxLength) return cleaned;
   return `${cleaned.slice(0, maxLength).trimEnd()}...`;
 }
