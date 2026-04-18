@@ -34,6 +34,13 @@ export interface Organization {
   tagline?: string;
   description: string;
   foundedYear?: number | null;
+  /**
+   * H-3 — true when foundedYear was set by the org owner during onboarding /
+   * profile edit. Admin-verified orgs (org.verified === true) are also
+   * treated as trustworthy. Other sources (scraper, bulk import) leave this
+   * false so the year doesn't render until someone verifies it.
+   */
+  foundedYearVerified?: boolean;
   communityAffiliation?: string;
   industry?: string;
   size?: string;

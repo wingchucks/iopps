@@ -256,7 +256,11 @@ export default function OrgOnboardingPage() {
       // Always save everything so far
       if (logoUrl) data.logo = logoUrl;
       if (description) data.description = description;
-      if (foundedYear) data.foundedYear = parseInt(foundedYear, 10);
+      if (foundedYear) {
+        data.foundedYear = parseInt(foundedYear, 10);
+        // H-3 — owner-supplied year is trusted for the public chip.
+        data.foundedYearVerified = true;
+      }
       if (communityAffiliation) data.communityAffiliation = communityAffiliation;
       if (industry) data.industry = industry;
       if (size) data.size = size;
