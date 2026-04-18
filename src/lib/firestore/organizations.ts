@@ -123,6 +123,49 @@ export async function getOrganization(
   } as Organization);
 }
 
+/**
+ * Strip incorporation suffixes, punctuation, and casing so two records like
+ * "Saskatoon Tribal Council" and "saskatoon tribal council inc." collide.
+ * Used by H-2 dedup migration and by the pre-insert guard below.
+ */
+export function normalizeOrgNameForDedup(name: string): string {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/\b(inc|incorporated|llc|ltd|limited|corp|corporation|co|company)\.?\b/g, "")
+    .replace(/[^\w\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Pre-insert dedup guard. Returns the existing organization if one with the
+ * same normalized name (and optionally same province) is already in
+ * Firestore — callers should re-use it instead of creating a duplicate.
+ *
+ * Intended for scrapers and bulk import scripts. Not used by the human
+ * employer-signup flow because that keys orgs by uid (one user → one org).
+ */
+export async function findExistingOrgByName(
+  name: string,
+  options?: { province?: string }
+): Promise<Organization | null> {
+  const target = normalizeOrgNameForDedup(name);
+  if (!target) return null;
+  const wantProvince = (options?.province || "").toLowerCase().trim();
+
+  const snap = await getDocs(collection(db, "organizations"));
+  for (const d of snap.docs) {
+    const data = d.data() as Partial<Organization>;
+    if (normalizeOrgNameForDedup(data.name || "") !== target) continue;
+    if (wantProvince) {
+      const province = String(data.location?.province || "").toLowerCase().trim();
+      if (province && province !== wantProvince) continue;
+    }
+    return normalizeOrganizationRecord({ id: d.id, ...data } as Organization);
+  }
+  return null;
+}
+
 export async function updateOrganization(
   orgId: string,
   data: Partial<Omit<Organization, "id" | "createdAt">>
