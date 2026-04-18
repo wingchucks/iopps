@@ -141,8 +141,8 @@ export default async function LandingPage() {
 
   const whyPoints = [
     "Indigenous-centered opportunities, organizations, and community updates in one place.",
-    "Real partner proof and public discovery paths that work on mobile first.",
-    "A cleaner path from first visit to jobs, events, schools, and business discovery.",
+    "Trusted partners and discovery tools designed mobile-first.",
+    "One simple path to jobs, events, schools, and businesses across Canada.",
   ];
 
   return (
@@ -318,8 +318,8 @@ export default async function LandingPage() {
         <section>
           <SectionHeader
             eyebrow="Start here"
-            title="Move directly into the part of IOPPS that matters most"
-            description="The homepage now leads with four clear entry points instead of a crowded stack of similar sections."
+            title="Jump straight into what matters to you"
+            description="Explore Indigenous-led opportunities, organizations, and community updates across Canada."
           />
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -343,11 +343,11 @@ export default async function LandingPage() {
         <section className="mt-10">
           <SectionHeader
             eyebrow="Featured this week"
-            title={featuredPartner ? "Partner visibility that feels real" : "A cleaner path into live opportunities"}
+            title={featuredPartner ? "Meet an active IOPPS partner" : "Live opportunities right now"}
             description={
               featuredPartner
-                ? "Keep one stronger spotlight block under the main entry points instead of multiple oversized promo sections."
-                : "The homepage keeps one focused spotlight instead of stacking multiple competing modules."
+                ? "Discover the organizations building visibility, hiring, and connecting with community on IOPPS."
+                : "Browse the latest roles, events, and partner activity across the platform."
             }
           />
 
@@ -389,7 +389,7 @@ export default async function LandingPage() {
           <Card variant="list">
             <div className="p-5 sm:p-6">
               <p className="m-0 text-xs font-extrabold uppercase tracking-[0.24em] text-teal">Why IOPPS works</p>
-              <h2 className="mt-3 text-[24px] font-bold text-text">The platform should feel useful before it asks for commitment.</h2>
+              <h2 className="mt-3 text-[24px] font-bold text-text">Built for Indigenous opportunity, end to end.</h2>
               <div className="mt-5 space-y-4">
                 {whyPoints.map((point) => (
                   <div key={point} className="flex items-start gap-3">
@@ -404,9 +404,9 @@ export default async function LandingPage() {
           <Card variant="spotlight">
             <div className="p-5 sm:p-6">
               <p className="m-0 text-xs font-extrabold uppercase tracking-[0.24em] text-teal">Ready to join?</p>
-              <h2 className="mt-3 text-[24px] font-bold text-text">Start with the part of IOPPS that matches your goal.</h2>
+              <h2 className="mt-3 text-[24px] font-bold text-text">Get started in minutes.</h2>
               <p className="mt-3 text-sm leading-7 text-text-sec">
-                Join the community, browse jobs, or explore employers and education partners without fighting the interface first.
+                Join the community, browse jobs, or explore employers and education partners — all in one place.
               </p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row lg:flex-col">
                 <Link href="/signup">
