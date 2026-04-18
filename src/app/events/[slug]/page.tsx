@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
@@ -50,7 +50,9 @@ export default function EventDetailPage() {
   return (
     <AppShell>
       <div className="min-h-screen bg-bg">
-        <EventDetailContent />
+        <Suspense fallback={null}>
+          <EventDetailContent />
+        </Suspense>
       </div>
     </AppShell>
   );
