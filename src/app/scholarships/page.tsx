@@ -114,7 +114,7 @@ export default function ScholarshipsBrowsePage() {
         </div>
 
         <div className="mx-auto max-w-[1200px] px-4 py-6 md:px-10">
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch">
             <input
               type="text"
               placeholder="Search scholarships..."

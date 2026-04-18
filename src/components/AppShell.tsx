@@ -19,7 +19,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </Suspense>
 
       {/* Content area — offset for the fixed sidebar on desktop */}
-      <div className="lg:pl-[240px]">{children}</div>
+      <div className="lg:pl-[240px] min-w-0 overflow-x-hidden">{children}</div>
     </>
   );
 }
