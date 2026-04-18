@@ -378,29 +378,37 @@ function ApplyWizard() {
               </div>
             )}
 
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-[1px] bg-border" />
-              <span className="text-xs text-text-muted font-semibold">OR</span>
-              <div className="flex-1 h-[1px] bg-border" />
-            </div>
+            {/* C-6: hide OR divider when using profile (no upload alternative is shown anyway) */}
+            {!useProfile && (
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-[1px] bg-border" />
+                <span className="text-xs text-text-muted font-semibold">OR</span>
+                <div className="flex-1 h-[1px] bg-border" />
+              </div>
+            )}
 
-            {/* Use profile option */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <div
+            {/* C-6: real, accessible Switch (button role=switch, keyboard, aria-checked) */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={useProfile}
+                aria-label="Use my IOPPS Profile as my application"
                 onClick={() => {
                   const next = !useProfile;
                   setUseProfile(next);
                   if (next) { setResumeFile(null); setResumeUrl(""); }
                 }}
-                className="relative shrink-0 rounded-full transition-colors"
+                className="relative shrink-0 rounded-full transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                 style={{
                   width: 48,
                   height: 28,
                   background: useProfile ? "var(--teal)" : "var(--border)",
+                  border: "none",
+                  padding: 0,
                 }}
               >
-                <div
+                <span
                   className="absolute top-[2px] rounded-full bg-white transition-all"
                   style={{
                     width: 24,
@@ -408,14 +416,32 @@ function ApplyWizard() {
                     left: useProfile ? 22 : 2,
                   }}
                 />
-              </div>
+              </button>
               <div>
                 <p className="text-sm font-semibold text-text m-0">Use my IOPPS Profile</p>
                 <p className="text-xs text-text-muted m-0">
                   Your profile will be shared as your application
                 </p>
               </div>
-            </label>
+            </div>
+
+            {/* C-6: confirmation chip when toggle is on, with preview link */}
+            {useProfile && user && (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(13,148,136,0.08)", border: "1px solid rgba(13,148,136,0.25)" }}>
+                <div className="flex items-center gap-2 text-sm text-text">
+                  <span aria-hidden style={{ color: "var(--teal)" }}>✓</span>
+                  <span>Using your IOPPS profile</span>
+                </div>
+                <Link
+                  href={`/members/${user.uid}`}
+                  target="_blank"
+                  rel="noopener"
+                  className="text-xs font-semibold text-teal hover:underline"
+                >
+                  Preview what employers see →
+                </Link>
+              </div>
+            )}
           </div>
         </Card>
       )}
@@ -506,7 +532,22 @@ function ApplyWizard() {
                 </button>
               </div>
               {useProfile ? (
-                <p className="text-sm text-text m-0">IOPPS Profile</p>
+                /* C-6: review-step chip — confirms what is being submitted + lets the user preview */
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(13,148,136,0.12)", color: "var(--teal)", border: "1px solid rgba(13,148,136,0.3)" }}>
+                    <span aria-hidden>✓</span> Using IOPPS profile
+                  </span>
+                  {user && (
+                    <Link
+                      href={`/members/${user.uid}`}
+                      target="_blank"
+                      rel="noopener"
+                      className="text-xs font-semibold text-teal hover:underline"
+                    >
+                      Preview →
+                    </Link>
+                  )}
+                </div>
               ) : (
                 <p className="text-sm text-text m-0">{resumeFile?.name || "Uploaded file"}</p>
               )}
