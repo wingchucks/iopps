@@ -473,7 +473,7 @@ function EventDetailContent() {
                   opacity: actionLoading === "save" ? 0.7 : 1,
                 }}
               >
-                {saved ? "\u2714 Saved" : "&#128278; Save Event"}
+                {saved ? "✔ Saved" : "🔖 Save Event"}
               </Button>
 
               <div className="border-t border-border pt-4">

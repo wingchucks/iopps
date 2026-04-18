@@ -378,7 +378,7 @@ function ProgramDetailContent() {
                   opacity: actionLoading === "save" ? 0.7 : 1,
                 }}
               >
-                {saved ? "&#10004; Saved" : "&#128278; Save Program"}
+                {saved ? "✔ Saved" : "🔖 Save Program"}
               </Button>
 
               <ShareButton
