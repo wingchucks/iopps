@@ -6,6 +6,7 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { type Organization } from "@/lib/firestore/organizations";
+import { shouldDisplayFoundedYear } from "@/lib/organization-profile";
 import { displayAmount, displayLocation } from "@/lib/utils";
 
 // ── Types ──
@@ -149,7 +150,10 @@ function SchoolProfileContent() {
   const schoolOrg = org as SchoolOrganization;
   const websiteUrl = schoolOrg.website ? (schoolOrg.website.startsWith("http") ? schoolOrg.website : `https://${schoolOrg.website}`) : null;
   const applyUrl = schoolOrg.applyUrl || websiteUrl;
-  const foundedYear = schoolOrg.foundedYear ? String(schoolOrg.foundedYear) : schoolOrg.since || null;
+  // H-3 — only show foundedYear if admin-verified or owner-set.
+  const foundedYear = shouldDisplayFoundedYear(schoolOrg)
+    ? String(schoolOrg.foundedYear)
+    : schoolOrg.since || null;
   const campuses: Campus[] = schoolOrg.campuses || [];
   const accreditations: AccreditationRecord[] = schoolOrg.accreditation
     ? typeof schoolOrg.accreditation === "string"

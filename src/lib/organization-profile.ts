@@ -229,6 +229,28 @@ export function formatOrganizationHoursDay(value: unknown): string {
   return "Closed";
 }
 
+/**
+ * H-3 — Should the public-facing UI render an org's foundedYear?
+ *
+ * The scraper / bulk-import pipeline populates foundedYear with the IOPPS
+ * record-creation year, which is wrong for the org's actual history (e.g.
+ * STC seeded as "Founded 2023" when it was established in 1982). Trust the
+ * value only when:
+ *   - an admin has reviewed the org overall (org.verified === true), OR
+ *   - the org owner explicitly set it via onboarding / profile edit
+ *     (org.foundedYearVerified === true).
+ *
+ * Wrong fact > no fact for everything else: omit the chip.
+ */
+export function shouldDisplayFoundedYear(org: {
+  foundedYear?: number | null;
+  foundedYearVerified?: boolean;
+  verified?: boolean;
+}): boolean {
+  if (!org.foundedYear) return false;
+  return org.verified === true || org.foundedYearVerified === true;
+}
+
 export function hasOrganizationIndigenousIdentity(org: {
   businessIdentity?: string;
   indigenousOwned?: boolean;
@@ -429,6 +451,7 @@ export function normalizeOrganizationRecord<T extends object>(record: T): T {
   if (sourceUrls.length > 0) next.sourceUrls = sourceUrls;
   if (hours) next.hours = hours;
   if (foundedYear !== null) next.foundedYear = foundedYear;
+  if (typeof source.foundedYearVerified === "boolean") next.foundedYearVerified = source.foundedYearVerified;
   if (profileMode) next.profileMode = profileMode;
   if (seedSource) next.seedSource = seedSource;
   if (careersUrl) next.careersUrl = careersUrl;
@@ -474,8 +497,15 @@ export function normalizeOrganizationProfilePatch(body: Record<string, unknown>)
   }
 
   if (body.foundedYear !== undefined) {
-    updates.foundedYear = normalizeNumericYear(body.foundedYear);
+    const normalizedYear = normalizeNumericYear(body.foundedYear);
+    updates.foundedYear = normalizedYear;
     touchedFields.push("foundedYear");
+    // H-3 — owner-supplied year is trusted; render the chip without
+    // waiting for a separate admin verification.
+    if (normalizedYear !== null) {
+      updates.foundedYearVerified = true;
+      touchedFields.push("foundedYearVerified");
+    }
   }
 
   if (body.logoUrl !== undefined) {

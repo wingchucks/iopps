@@ -10,7 +10,7 @@ import Avatar from "@/components/Avatar";
 import { useAuth } from "@/lib/auth-context";
 import type { Organization } from "@/lib/firestore/organizations";
 import type { Job } from "@/lib/firestore/jobs";
-import { formatOrganizationHoursDay, hasOrganizationIndigenousIdentity } from "@/lib/organization-profile";
+import { formatOrganizationHoursDay, hasOrganizationIndigenousIdentity, shouldDisplayFoundedYear } from "@/lib/organization-profile";
 import { displayAmount, displayLocation } from "@/lib/utils";
 
 // ── Types for opportunities ──
@@ -180,7 +180,11 @@ function OrgProfileContent() {
   const location = displayLocation(org.location);
   const profileJobCount = jobs.length || org.openJobs || 0;
   const relatedJobCount = jobs.length;
-  const foundedYear = org.foundedYear ? String(org.foundedYear) : org.since || null;
+  // H-3 — only show foundedYear if admin-verified or owner-set. Scraper-set
+  // years (e.g. STC's incorrect "Founded 2023") stay hidden.
+  const foundedYear = shouldDisplayFoundedYear(org)
+    ? String(org.foundedYear)
+    : org.since || null;
   const employeeCount = org.employees || org.size || null;
   const isIndigenousOwned = hasOrganizationIndigenousIdentity(org);
   const hasSocialLinks = org.socialLinks && Object.values(org.socialLinks).some(Boolean);
