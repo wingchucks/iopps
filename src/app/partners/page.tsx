@@ -205,7 +205,7 @@ function PartnersContent() {
               <div className="flex flex-col gap-6">
                 <PartnerSection
                   title="Premium Partners"
-                  description="Highest-visibility partners with premium placement across IOPPS."
+                  description="Leading organizations championing Indigenous opportunity across Canada."
                   icon="&#11088;"
                   count={premiumOrgs.length}
                   color="var(--gold)"
@@ -216,7 +216,7 @@ function PartnersContent() {
                 />
                 <PartnerSection
                   title="Schools"
-                  description="Schools and education institutions partnering with IOPPS."
+                  description="Universities, colleges, and training providers investing in Indigenous learners."
                   icon="&#127891;"
                   count={schoolOrgs.length}
                   color="var(--blue)"
@@ -226,7 +226,7 @@ function PartnersContent() {
                 />
                 <PartnerSection
                   title="Employers"
-                  description="Employers and organizations partnering with IOPPS to reach Indigenous talent."
+                  description="Companies and organizations actively hiring Indigenous talent."
                   icon="&#128188;"
                   count={employerOrgs.length}
                   color="var(--teal)"
