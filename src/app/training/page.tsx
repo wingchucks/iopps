@@ -128,10 +128,11 @@ export default function TrainingPage() {
               placeholder="Search training, skills, providers..."
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              className="w-full rounded-xl border-none text-sm font-medium outline-none"
+              className="w-full rounded-xl text-sm font-medium outline-none"
               style={{
                 padding: "14px 48px 14px 18px",
-                background: "rgba(255,255,255,.95)",
+                background: "var(--card)",
+                border: "1.5px solid var(--border)",
                 color: "var(--text)",
               }}
             />
