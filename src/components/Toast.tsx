@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ToastProps {
   message: string;
@@ -32,17 +32,20 @@ const typeStyles: Record<ToastProps["type"], { bg: string; border: string; color
 export default function Toast({ message, type, onClose }: ToastProps) {
   const [visible, setVisible] = useState(false);
   const style = typeStyles[type];
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Trigger slide-in
     requestAnimationFrame(() => setVisible(true));
 
-    const timer = setTimeout(() => {
+    const dismissTimer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onClose, 300);
+      closeTimerRef.current = setTimeout(onClose, 300);
     }, 4000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(dismissTimer);
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
   }, [onClose]);
 
   return (
@@ -70,7 +73,7 @@ export default function Toast({ message, type, onClose }: ToastProps) {
       <button
         onClick={() => {
           setVisible(false);
-          setTimeout(onClose, 300);
+          closeTimerRef.current = setTimeout(onClose, 300);
         }}
         className="text-sm border-none bg-transparent cursor-pointer shrink-0"
         style={{ color: style.color, opacity: 0.6, lineHeight: 1 }}
