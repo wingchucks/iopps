@@ -1,3 +1,13 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Program Details", description: "Learn about this Indigenous program's objectives, eligibility, and how to participate through IOPPS." };
-export default function Layout({ children }: { children: React.ReactNode }) { return children; }
+import { generateProgramMetadata } from "@/lib/server/detail-metadata";
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> },
+): Promise<Metadata> {
+  const { slug } = await params;
+  return generateProgramMetadata(slug);
+}
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return children;
+}
