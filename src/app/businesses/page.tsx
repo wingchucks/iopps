@@ -203,7 +203,13 @@ function BusinessCard({ org }: { org: Organization }) {
               gradient={isPremium ? "linear-gradient(135deg, var(--gold), var(--navy))" : "linear-gradient(135deg, var(--navy), var(--teal))"}
             />
             <div className="min-w-0 flex-1">
-              <p className="m-0 overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-bold text-text">
+              {/* M-6: allow long org names to wrap to 2 lines instead of
+                  chopping mid-word with a whitespace-nowrap ellipsis. */}
+              <p
+                className="m-0 line-clamp-2 text-[15px] font-bold text-text"
+                style={{ overflowWrap: "anywhere" }}
+                title={org.name}
+              >
                 {org.name}
               </p>
               <div className="mt-1 flex flex-wrap items-center gap-1.5">

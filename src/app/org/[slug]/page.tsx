@@ -212,13 +212,15 @@ function OrgProfileContent() {
   const visibleEvents = expandedOppTab === "events" ? events : events.slice(0, 4);
   const visibleScholarships = expandedOppTab === "scholarships" ? scholarships : scholarships.slice(0, 4);
   const visibleTraining = expandedOppTab === "training" ? training : training.slice(0, 4);
+  // M-5 — the chip row previously duplicated the Quick Stats strip under
+  // the hero (Verified, Founded, employees, location all appeared twice).
+  // Reserve this strip for platform-specific identity facts that aren't
+  // shown elsewhere on the profile — Nation, Treaty Territory, Indigenous
+  // ownership signal.
   const proofItems = [
-    org.verified ? "Verified organization" : "",
-    org.isPartner ? org.partnerLabel || org.partnerBadgeLabel || "Partner" : "",
-    foundedYear ? `Founded ${foundedYear}` : "",
-    employeeCount ? `${employeeCount} employees` : "",
-    location ? location : "",
-    org.nation ? org.nation : "",
+    org.nation ? `Nation — ${org.nation}` : "",
+    org.treatyTerritory ? `Treaty Territory — ${org.treatyTerritory}` : "",
+    isIndigenousOwned ? "🪶 Indigenous-led organization" : "",
   ].filter((item): item is string => Boolean(item));
 
   return (

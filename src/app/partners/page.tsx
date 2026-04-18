@@ -67,17 +67,25 @@ function PartnersContent() {
     load();
   }, []);
 
-  const filtered = useMemo(() => {
-    let list = orgs;
+  // M-7 — "Employers" and "Schools" tabs previously filtered on
+  // partnerTier (admin-set), so partners tagged only as "premium" never
+  // surfaced in the Employers tab even when they clearly were employers.
+  // Use the structural org.type field so every partner shows up in the
+  // tab that matches what they actually are. Premium remains a real tier.
+  const isSchoolPartner = (o: typeof orgs[number]) =>
+    o.type === "school";
+  const isEmployerPartner = (o: typeof orgs[number]) =>
+    o.type === "business" || o.type === "employer" || o.type === "non-profit";
 
-    list = list.filter((o) => o.isPartner);
+  const filtered = useMemo(() => {
+    let list = orgs.filter((o) => o.isPartner);
 
     if (filter === "Premium") {
       list = list.filter((o) => o.partnerTier === "premium");
     } else if (filter === "Schools") {
-      list = list.filter((o) => o.partnerTier === "school");
+      list = list.filter(isSchoolPartner);
     } else if (filter === "Employers") {
-      list = list.filter((o) => o.partnerTier === "standard");
+      list = list.filter(isEmployerPartner);
     }
 
     if (search.trim()) {
@@ -93,17 +101,18 @@ function PartnersContent() {
     return list;
   }, [orgs, filter, search]);
 
-  const premiumOrgs = useMemo(() => orgs.filter((o) => o.partnerTier === "premium"), [orgs]);
-  const schoolOrgs = useMemo(() => orgs.filter((o) => o.partnerTier === "school"), [orgs]);
-  const employerOrgs = useMemo(() => orgs.filter((o) => o.partnerTier === "standard"), [orgs]);
+  const partnerOrgs = useMemo(() => orgs.filter((o) => o.isPartner), [orgs]);
+  const premiumOrgs = useMemo(() => partnerOrgs.filter((o) => o.partnerTier === "premium"), [partnerOrgs]);
+  const schoolOrgs = useMemo(() => partnerOrgs.filter(isSchoolPartner), [partnerOrgs]);
+  const employerOrgs = useMemo(() => partnerOrgs.filter(isEmployerPartner), [partnerOrgs]);
   const showSections = filter === "All Partners" && !search && orgs.length > 0;
 
   const filterCounts: Record<TierFilter, number> = useMemo(() => ({
-    "All Partners": orgs.length,
+    "All Partners": partnerOrgs.length,
     "Premium": premiumOrgs.length,
     "Employers": employerOrgs.length,
     "Schools": schoolOrgs.length,
-  }), [employerOrgs.length, orgs, premiumOrgs.length, schoolOrgs.length]);
+  }), [employerOrgs.length, partnerOrgs.length, premiumOrgs.length, schoolOrgs.length]);
 
   return (
     <>
