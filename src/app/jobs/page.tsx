@@ -432,9 +432,14 @@ export default function JobsPage() {
                               </span>
                             )}
                           </div>
-                          <span className="text-sm font-semibold text-[#99F6E4]">
-                            View role &#8594;
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+                              {job.externalApplyUrl ? "Apply on employer site ↗" : "Apply on IOPPS"}
+                            </span>
+                            <span className="text-sm font-semibold text-[#99F6E4]">
+                              View role &#8594;
+                            </span>
+                          </div>
                         </div>
                       </article>
                     </Link>
@@ -563,7 +568,10 @@ export default function JobsPage() {
                           )}
                         </div>
 
-                        <div className="mt-4 flex items-center justify-end border-t border-border pt-3">
+                        <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
+                          <span className="text-[11px] font-semibold text-text-muted">
+                            {job.externalApplyUrl ? "Apply on employer site ↗" : "Apply on IOPPS"}
+                          </span>
                           <span className="text-sm font-semibold text-[#0D9488]">
                             View details &#8594;
                           </span>
