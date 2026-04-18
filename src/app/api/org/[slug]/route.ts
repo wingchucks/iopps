@@ -132,6 +132,21 @@ async function resolveOrganization(
     );
   }
 
+  // H-2: when scripts/dedup-organizations.cjs merges a duplicate org, it
+  // writes a redirect entry so old links keep resolving. Honor it here.
+  const redirectDoc = await db.collection("org-slug-redirects").doc(slug).get();
+  if (redirectDoc.exists) {
+    const target = String(redirectDoc.data()?.to || "");
+    if (target) {
+      const targetDoc = await db.collection("organizations").doc(target).get();
+      if (targetDoc.exists) {
+        return normalizeOrganizationRecord(
+          applyNormalizedSubscriptionState(serializeDoc(targetDoc))
+        );
+      }
+    }
+  }
+
   return null;
 }
 
