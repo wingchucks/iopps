@@ -61,7 +61,7 @@ export default function UnifiedSignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [newsletterOptIn, setNewsletterOptIn] = useState(true);
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false); // CASL: express opt-in only
 
   // School
   const [schoolName, setSchoolName] = useState("");
@@ -125,7 +125,7 @@ export default function UnifiedSignupPage() {
           const cu = getAuth().currentUser;
           if (cu) {
             const t = await cu.getIdToken();
-            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn }) });
+            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn, newsletterOptInAt: newsletterOptIn ? new Date().toISOString() : null }) });
           }
         } catch { /* non-blocking */ }
         goTo(3);
@@ -141,7 +141,7 @@ export default function UnifiedSignupPage() {
         try {
           if (cred?.user) {
             const t = await cred.user.getIdToken();
-            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn }) });
+            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn, newsletterOptInAt: newsletterOptIn ? new Date().toISOString() : null }) });
           }
         } catch { /* non-blocking */ }
         if (role === "organization") {
@@ -382,7 +382,7 @@ export default function UnifiedSignupPage() {
                 style={{ width: 18, height: 18, marginTop: 2, accentColor: CSS.accent, cursor: "pointer" }} />
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: CSS.text }}>{"📬"} Subscribe to IOPPS Newsletter</div>
-                <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 2 }}>Get weekly updates on new jobs, events, scholarships, and community highlights. Unsubscribe anytime.</div>
+                <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 2 }}>We'll only email you if you check this box. Weekly updates on jobs, events, scholarships, and community highlights. Unsubscribe anytime.</div>
               </div>
             </label>
           </div>
