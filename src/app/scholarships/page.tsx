@@ -34,6 +34,26 @@ function isClosingSoon(deadline?: string): boolean {
   return diff > 0 && diff < 14 * 24 * 60 * 60 * 1000;
 }
 
+/**
+ * M-3 — a scholarship is "rolling" (or has no real deadline field) when the
+ * ingest pipeline couldn't parse an actual date. Detect both the empty case
+ * and the common free-text markers so users who don't care about fixed
+ * deadlines can still discover these.
+ */
+function isRollingDeadline(deadline?: string): boolean {
+  if (!deadline) return true;
+  const parsed = new Date(deadline);
+  if (!Number.isNaN(parsed.getTime())) return false;
+  const normalized = deadline.trim().toLowerCase();
+  return /rolling|open|ongoing|varies|see |check |contact |provider/.test(normalized);
+}
+
+function hasKnownDeadline(deadline?: string): boolean {
+  if (!deadline) return false;
+  const parsed = new Date(deadline);
+  return !Number.isNaN(parsed.getTime());
+}
+
 function getSourceLabel(ownerType?: PublicScholarship["ownerType"]) {
   switch (ownerType) {
     case "school":
@@ -53,6 +73,7 @@ export default function ScholarshipsBrowsePage() {
   const [search, setSearch] = useState("");
   const [eligibilityFilter, setEligibilityFilter] = useState("");
   const [closingSoonOnly, setClosingSoonOnly] = useState(false);
+  const [rollingOnly, setRollingOnly] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -92,8 +113,11 @@ export default function ScholarshipsBrowsePage() {
     if (closingSoonOnly) {
       result = result.filter((scholarship) => isClosingSoon(scholarship.deadline));
     }
+    if (rollingOnly) {
+      result = result.filter((scholarship) => isRollingDeadline(scholarship.deadline));
+    }
     return result;
-  }, [closingSoonOnly, eligibilityFilter, scholarships, search]);
+  }, [closingSoonOnly, eligibilityFilter, rollingOnly, scholarships, search]);
 
   return (
     <AppShell>
@@ -146,7 +170,10 @@ export default function ScholarshipsBrowsePage() {
               ))}
             </select>
             <button
-              onClick={() => setClosingSoonOnly(!closingSoonOnly)}
+              onClick={() => {
+                setClosingSoonOnly(!closingSoonOnly);
+                if (!closingSoonOnly) setRollingOnly(false);
+              }}
               className="rounded-xl px-4 py-3 text-sm font-semibold transition-all"
               style={{
                 background: closingSoonOnly ? "var(--gold)" : "var(--card)",
@@ -155,6 +182,21 @@ export default function ScholarshipsBrowsePage() {
               }}
             >
               &#9200; Closing Soon
+            </button>
+            <button
+              onClick={() => {
+                setRollingOnly(!rollingOnly);
+                if (!rollingOnly) setClosingSoonOnly(false);
+              }}
+              className="rounded-xl px-4 py-3 text-sm font-semibold transition-all"
+              style={{
+                background: rollingOnly ? "var(--teal)" : "var(--card)",
+                border: rollingOnly ? "1.5px solid var(--teal)" : "1.5px solid var(--border)",
+                color: rollingOnly ? "#fff" : "var(--text)",
+              }}
+              title="Scholarships with rolling or open-ended deadlines"
+            >
+              &#x221E; Rolling
             </button>
           </div>
 
@@ -172,7 +214,7 @@ export default function ScholarshipsBrowsePage() {
               <p className="mb-4 text-5xl">&#127891;</p>
               <h2 className="mb-2 text-xl font-extrabold text-text">No Scholarships Found</h2>
               <p className="mb-6 text-sm text-text-sec">
-                {search || eligibilityFilter || closingSoonOnly
+                {search || eligibilityFilter || closingSoonOnly || rollingOnly
                   ? "Try adjusting your filters to find more scholarships."
                   : "There are no scholarships listed right now. Check back soon!"}
               </p>
@@ -189,8 +231,9 @@ export default function ScholarshipsBrowsePage() {
               {filtered.map((scholarship) => {
                 const slug = scholarship.slug || scholarship.id;
                 const closingSoon = isClosingSoon(scholarship.deadline);
-                const amountLabel = displayAmount(scholarship.amount) || "Funding varies";
-                const deadlineLabel = scholarship.deadline || "Check provider for deadline";
+                const amountLabel = displayAmount(scholarship.amount);
+                const knownDeadline = hasKnownDeadline(scholarship.deadline);
+                const rolling = !knownDeadline && isRollingDeadline(scholarship.deadline);
                 const sourceLabel = getSourceLabel(scholarship.ownerType);
 
                 return (
@@ -209,21 +252,37 @@ export default function ScholarshipsBrowsePage() {
                       <div className="h-1.5" style={{ background: "var(--gold)" }} />
                       <div className="flex flex-1 flex-col p-5">
                         <div className="mb-3 flex items-center gap-2">
-                          <span
-                            className="inline-block rounded-xl px-3 py-1.5 text-sm font-extrabold"
-                            style={{
-                              color: scholarship.amount ? "var(--gold)" : "var(--text-sec)",
-                              background: scholarship.amount ? "var(--gold-soft)" : "var(--border)",
-                            }}
-                          >
-                            {amountLabel}
-                          </span>
+                          {amountLabel ? (
+                            <span
+                              className="inline-block rounded-xl px-3 py-1.5 text-sm font-extrabold"
+                              style={{ color: "var(--gold)", background: "var(--gold-soft)" }}
+                            >
+                              {amountLabel}
+                            </span>
+                          ) : (
+                            <span
+                              className="inline-block rounded-xl px-3 py-1.5 text-xs font-semibold italic"
+                              style={{ color: "var(--text-muted)", background: "var(--border)" }}
+                              title="The provider hasn't published a fixed award amount"
+                            >
+                              Amount on application
+                            </span>
+                          )}
                           {closingSoon && (
                             <span
                               className="inline-block rounded-lg px-2 py-1 text-[10px] font-bold"
                               style={{ color: "var(--red)", background: "var(--red-soft)" }}
                             >
                               Closing Soon
+                            </span>
+                          )}
+                          {rolling && (
+                            <span
+                              className="inline-block rounded-lg px-2 py-1 text-[10px] font-bold"
+                              style={{ color: "var(--teal)", background: "var(--teal-soft)" }}
+                              title="Rolling or open-ended deadline"
+                            >
+                              Rolling
                             </span>
                           )}
                         </div>
@@ -251,9 +310,15 @@ export default function ScholarshipsBrowsePage() {
                         )}
 
                         <div className="mt-auto flex flex-col gap-1.5">
-                          <p className="m-0 flex items-center gap-1.5 text-xs text-text-sec">
-                            <span>&#128197;</span> {deadlineLabel}
-                          </p>
+                          {knownDeadline ? (
+                            <p className="m-0 flex items-center gap-1.5 text-xs text-text-sec">
+                              <span>&#128197;</span> {scholarship.deadline}
+                            </p>
+                          ) : rolling ? (
+                            <p className="m-0 flex items-center gap-1.5 text-xs italic text-text-muted">
+                              <span>&#128197;</span> Rolling / open-ended
+                            </p>
+                          ) : null}
                           {Boolean(scholarship.location) && (
                             <p className="m-0 flex items-center gap-1.5 text-xs text-text-sec">
                               <span>&#128205;</span> {displayLocation(scholarship.location)}
