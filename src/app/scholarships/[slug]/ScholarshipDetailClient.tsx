@@ -15,6 +15,7 @@ import { getPost, getPosts } from "@/lib/firestore/posts";
 import { getOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { getScholarshipBySlug, getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { displayAmount, displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
 
 interface ScholarshipOwnerMeta {
@@ -300,7 +301,7 @@ function ScholarshipDetailContent() {
               {descriptionHasHtml ? (
                 <div
                   className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: scholarship.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(scholarship.description) }}
                 />
               ) : (
                 <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
@@ -316,7 +317,7 @@ function ScholarshipDetailContent() {
               {eligibilityHasHtml ? (
                 <div
                   className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: scholarship.eligibility }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(scholarship.eligibility) }}
                 />
               ) : (
                 <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
@@ -332,7 +333,7 @@ function ScholarshipDetailContent() {
               {applicationInstructionsHasHtml ? (
                 <div
                   className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: scholarship.applicationInstructions }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(scholarship.applicationInstructions) }}
                 />
               ) : (
                 <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">

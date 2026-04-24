@@ -18,6 +18,7 @@ import {
   type RSVPStatus,
 } from "@/lib/firestore/rsvps";
 import { useAuth } from "@/lib/auth-context";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import ReportButton from "@/components/ReportButton";
 import {
   getEventDisplayDates,
@@ -320,7 +321,7 @@ function EventDetailContent() {
               {descriptionHasHtml ? (
                 <div
                   className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: event.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.description) }}
                 />
               ) : (
                 <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
