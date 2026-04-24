@@ -66,9 +66,13 @@ function CheckoutContent({ planKey }: { planKey: string }) {
     setError(null);
 
     try {
+      const idToken = await user.getIdToken();
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({ planId: planKey, orgId: user.uid }),
       });
 

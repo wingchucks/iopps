@@ -269,7 +269,11 @@ export default function UnifiedSignupPage() {
         throw new Error(data.error || "Failed to create school profile");
       }
       const checkoutRes = await fetch("/api/stripe/checkout", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({ planId: selectedPlan, orgId: user.uid }),
       });
       if (checkoutRes.ok) { const { url } = await checkoutRes.json(); if (url) { window.location.href = url; return; } }
