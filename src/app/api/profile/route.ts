@@ -59,7 +59,14 @@ export async function PATCH(req: NextRequest) {
         email: authUser.email || "",
         type: "community",
         uid,
-      }).catch(() => {});
+      }).catch((err) => {
+        console.warn("[email] admin signup notification failed", {
+          err: String(err),
+          uid,
+          email: authUser.email || "",
+          type: "community",
+        });
+      });
     }
     return NextResponse.json({ ok: true });
   } catch (err) {
