@@ -35,6 +35,9 @@ export interface Application {
   userId: string;
   postId: string;
   postTitle: string;
+  // orgId of the org that owns the post. New writes always set it; docs
+  // created before the denormalization backfill may be missing it.
+  orgId?: string;
   orgName: string;
   status: ApplicationStatus;
   statusHistory: StatusHistoryEntry[];
@@ -82,6 +85,7 @@ export async function applyToPost(
   userId: string,
   postId: string,
   postTitle: string,
+  orgId: string,
   orgName: string
 ): Promise<void> {
   const docId = `${userId}_${postId}`;
@@ -90,6 +94,7 @@ export async function applyToPost(
     userId,
     postId,
     postTitle,
+    orgId,
     orgName,
     status: "submitted" as ApplicationStatus,
     statusHistory: [

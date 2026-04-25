@@ -160,6 +160,7 @@ function ApplyWizard() {
         userId: user.uid,
         postId: post.id,
         postTitle: post.title,
+        orgId: post.orgId || "",
         orgName: post.orgName || "",
         status: "submitted",
         statusHistory: [{ status: "submitted", timestamp: now }],
