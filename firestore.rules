@@ -125,22 +125,6 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Saved items: users can read/write their own saved items only
-    match /saved_items/{itemId} {
-      allow read, write: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
-    }
-
-    // Applications: users can read/write their own applications, employers can read
-    match /applications/{applicationId} {
-      allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid || isAdmin()
-      );
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin();
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
     // Posts (jobs, events, scholarships, programs, stories, spotlights):
     // Public read. Admin or org owner/admin can write.
     // Authenticated users can create their own community posts (stories).
@@ -237,8 +221,15 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
-    // Applications: users can read/create/update their own, admin can read/update all,
-    // org owner/admin can read/update applications for their org's posts
+    // Applications: the applicant can read/create/update/delete their own,
+    // admin can read/update any, org owner/admin can read/update (see TODO).
+    //
+    // TODO: Current rule lets *any* org owner/admin read *any* application,
+    // because application docs don't carry an orgId — only postId + userId.
+    // To scope reads/updates to "applications for MY org's posts only",
+    // application docs need to be denormalized with an orgId field and this
+    // rule tightened to: memberData().orgId == resource.data.orgId.
+    // Requires a backfill of existing docs and a client/API write update.
     match /applications/{appId} {
       allow read: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
@@ -253,6 +244,7 @@ service cloud.firestore {
         (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
          memberData().orgRole in ["owner", "admin"])
       );
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Notifications: users can read/update/create their own
@@ -336,13 +328,19 @@ service cloud.firestore {
         resource.data.followerId == request.auth.uid;
     }
 
-    // Subscriptions: org owner can read/create, admin/mod can read/update
+    // Subscriptions: caller must be the org owner (uid == orgId) or a member
+    // with owner/admin orgRole. Admin/mod can read/update any.
+    // Subscriptions are created server-side via Admin SDK (Stripe webhook and
+    // admin API), so client-side create is denied.
     match /subscriptions/{subId} {
       allow read: if isSignedIn() && (
         resource.data.orgId == request.auth.uid ||
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         memberData().orgId == resource.data.orgId &&
+         memberData().orgRole in ["owner", "admin"]) ||
         isAdminOrMod()
       );
-      allow create: if isSignedIn() && request.resource.data.orgId == request.auth.uid;
+      allow create: if false;
       allow update: if isAdminOrMod();
     }
 
