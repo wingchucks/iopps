@@ -64,7 +64,20 @@ export default function OrgUpgradePage() {
           formStartedAt: formStartedAtRef.current,
         }),
       });
-      const data = await res.json();
+
+      const raw = await res.text();
+      let data: { error?: string; success?: boolean; slug?: string } = {};
+
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          if (!res.ok) {
+            throw new Error("Upgrade failed. The server returned an invalid response.");
+          }
+        }
+      }
+
       if (!res.ok) throw new Error(data.error || "Upgrade failed");
       // Force token refresh so new role takes effect
       await user!.getIdToken(true);
