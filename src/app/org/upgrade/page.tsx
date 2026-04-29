@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { getAppCheckTokenValue } from "@/lib/firebase";
+import {
+  UPGRADE_FALLBACK_ERROR,
+  getUpgradeErrorMessage,
+  readUpgradeResponse,
+} from "@/lib/client/upgrade-response";
 
 const ORG_TYPES = [
   { value: "employer", label: "Employer / Business", desc: "Post jobs and find Indigenous talent" },
@@ -65,25 +70,15 @@ export default function OrgUpgradePage() {
         }),
       });
 
-      const raw = await res.text();
-      let data: { error?: string; success?: boolean; slug?: string } = {};
-
-      if (raw) {
-        try {
-          data = JSON.parse(raw);
-        } catch {
-          if (!res.ok) {
-            throw new Error("Upgrade failed. The server returned an invalid response.");
-          }
-        }
+      const data = await readUpgradeResponse(res);
+      if (!res.ok) {
+        throw new Error(getUpgradeErrorMessage(data));
       }
-
-      if (!res.ok) throw new Error(data.error || "Upgrade failed");
       // Force token refresh so new role takes effect
       await user!.getIdToken(true);
       router.push("/org/onboarding");
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
+      setError(e instanceof Error && e.message ? e.message : UPGRADE_FALLBACK_ERROR);
       setLoading(false);
     }
   }

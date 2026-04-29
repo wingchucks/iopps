@@ -1,5 +1,5 @@
 // IOPPS Service Worker
-const CACHE_NAME = "iopps-v2";
+const CACHE_NAME = "iopps-v3";
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = ["/offline"];
@@ -50,7 +50,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean up old caches
+// Activate: clean up old caches, including stale app-shell chunks from v1/v2.
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -64,7 +64,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for navigation and API, cache-first for static assets
+// Fetch: network-first for navigation and API, cache-first for stable media/font assets
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
@@ -92,10 +92,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: cache-first
+  // Static media/font assets: cache-first. Next.js JS/CSS chunks stay network-managed
+  // so a stale service-worker cache cannot keep old application code alive.
   if (
-    request.url.match(/\.(js|css|woff2?|ttf|svg|png|jpg|jpeg|webp|ico)$/) ||
-    request.url.includes("/_next/static/")
+    request.url.match(/\.(woff2?|ttf|svg|png|jpg|jpeg|webp|ico)$/)
   ) {
     event.respondWith(
       caches.match(request).then(
