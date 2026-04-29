@@ -169,3 +169,22 @@ test("/api/partners dedupes legacy alias partner records and keeps the canonical
     ["Saskatoon Tribal Council", "Westland Insurance Group Ltd."],
   );
 });
+
+test("/api/partners restores City of Saskatoon as a legacy public partner", () => {
+  const payload = buildPartnersPayload([
+    {
+      id: "vAhCU0qrmpRaWCHHWOpbhvx3u9h1",
+      name: "City of Saskatoon",
+      slug: "city-of-saskatoon-n0w2ko",
+      onboardingComplete: true,
+    },
+  ]);
+
+  assert.deepEqual(
+    payload.partners.map((partner) => String(partner.name)),
+    ["City of Saskatoon"],
+  );
+  assert.equal(payload.partners[0]?.partnerTier, "premium");
+  assert.equal(payload.partners[0]?.partnerEligibilityReason, "legacy_directory_partner");
+  assert.equal(payload.groups.premium.length, 1);
+});

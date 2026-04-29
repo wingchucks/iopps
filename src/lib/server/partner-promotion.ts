@@ -9,6 +9,7 @@ import {
 import { isComplimentarySubscription } from "@/lib/server/partner-subscription";
 import { deriveOwnerType, type JsonRecord, type PublicOwnerType } from "@/lib/server/public-ownership";
 import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
+import { getLegacyPublicPartnerTier, isLegacyPublicPartner } from "@/lib/legacy-partners";
 
 export type PartnerTier = Exclude<NormalizedPlanTier, "free">;
 export type PartnerSection = "premium" | "education" | "visibility" | null;
@@ -100,7 +101,7 @@ function isLegacyDirectoryPartner(record: JsonRecord, tier: PartnerTier, subscri
 
   if (tier !== "premium") return false;
   if (subscriptionStatus !== "none") return false;
-  if (!directory.enabled) return false;
+  if (!directory.enabled && !isLegacyPublicPartner(record)) return false;
   if (hasOrganizationVisibilityBlock(record)) return false;
 
   return hasPublicApproval(record);
@@ -151,7 +152,7 @@ export function getPartnerSubscriptionTier(record: JsonRecord): PartnerTier | nu
     return tier;
   }
 
-  return null;
+  return getLegacyPublicPartnerTier(normalized);
 }
 
 export function hasPartnerSubscription(record: JsonRecord): boolean {

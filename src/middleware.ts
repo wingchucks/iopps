@@ -12,7 +12,6 @@ const PROTECTED_PREFIXES = [
   "/notifications",
   "/saved",
   "/applications",
-  "/mentorship",
   "/learning",
   "/org/dashboard",
   "/org/onboarding",

@@ -149,16 +149,6 @@ function NavIcon({ name, size = 20 }: { name: NavigationIconName | "plus"; size?
           <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       );
-    case "handshake":
-      return (
-        <svg {...p}>
-          <path d="M11 12 8 15a2 2 0 1 1-3-3l4-4" />
-          <path d="m13 10 3-3a2.83 2.83 0 1 1 4 4l-6 6" />
-          <path d="m8 8 3-3a2 2 0 1 1 3 3l-1 1" />
-          <path d="m2 14 6 6" />
-          <path d="m22 10-6-6" />
-        </svg>
-      );
     case "tag":
       return (
         <svg {...p}>

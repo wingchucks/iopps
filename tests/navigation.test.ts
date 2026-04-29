@@ -40,6 +40,15 @@ test("member explore nav includes jobs/events and appends org/admin links when a
   assert(keys.includes("admin"));
 });
 
+test("navigation does not expose the retired mentorship section", () => {
+  const publicKeys = getAppExploreNavItems({ isAuthenticated: false }).map((item) => item.key);
+  const memberKeys = getAppExploreNavItems({ isAuthenticated: true }).map((item) => item.key);
+
+  assert(!publicKeys.includes("mentorship"));
+  assert(!memberKeys.includes("mentorship"));
+  assert(!memberKeys.some((key) => key.toLowerCase().includes("mentor")));
+});
+
 test("brand and auth links use public-friendly destinations", () => {
   const authItems = getPublicAuthNavItems();
   const utilityItems = getMemberUtilityNavItems();

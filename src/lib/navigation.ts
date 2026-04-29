@@ -11,7 +11,6 @@ export type NavigationIconName =
   | "shield"
   | "search"
   | "users"
-  | "handshake"
   | "bookmark"
   | "bell"
   | "settings"
@@ -117,13 +116,6 @@ const NAV_ITEM_DEFINITIONS = {
     icon: "users",
     priority: 110,
   },
-  mentorship: {
-    key: "mentorship",
-    label: "Mentorship",
-    href: "/mentorship",
-    icon: "handshake",
-    priority: 120,
-  },
   pricing: {
     key: "pricing",
     label: "Pricing",
@@ -218,7 +210,6 @@ const MEMBER_EXPLORE_KEYS: NavigationKey[] = [
   "schools",
   "members",
   "training",
-  "mentorship",
   "businesses",
 ];
 

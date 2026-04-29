@@ -138,7 +138,6 @@ Tap each tab at the top of the feed and verify it filters content:
 | Stories | `/stories` | |
 | Members | `/members` | |
 | Training | `/training` | |
-| Mentorship | `/mentorship` | |
 | Shop | `/shop` | |
 | Live | `/livestreams` | |
 
@@ -336,21 +335,6 @@ Navigate to `https://iopps.ca/members`.
 - [ ] Go back
 - [ ] Navigate to `/members/[uid]/endorsements` — verify endorsements page loads
 - [ ] Check endorsement cards render (if any exist): endorser info, type badge, message, skills
-
----
-
-## SECTION 13: MENTORSHIP (/mentorship)
-
-Navigate to `https://iopps.ca/mentorship`.
-
-- [ ] Mentorship hub page loads
-- [ ] Browse available mentors/mentees (if listed)
-- [ ] Navigate to `/mentorship/become` — verify the "Become a Mentor" form loads
-- [ ] Fill out the form with test data prefixed with `[QA TEST]`
-- [ ] Submit the form — verify success feedback
-- [ ] Navigate to `/mentorship/requests` — verify the requests page loads
-
----
 
 ## SECTION 14: MESSAGES (/messages)
 
@@ -561,7 +545,6 @@ Note all test data you created so it can be cleaned up:
 - Job applications with `[QA TEST]` prefix
 - Profile changes (revert if possible)
 - Messages with `[QA TEST]` prefix
-- Mentorship form submissions with `[QA TEST]` prefix
 
 ### Summary Table:
 
@@ -582,7 +565,6 @@ Fill in this table with your results:
 | 10 | Stories | | | | |
 | 11 | Shop | | | | |
 | 12 | Members | | | | |
-| 13 | Mentorship | | | | |
 | 14 | Messages | | | | |
 | 15 | Notifications | | | | |
 | 16 | Search | | | | |

@@ -36,7 +36,6 @@ const SIZE_OPTIONS = [
 const SERVICES = [
   "Recruitment",
   "Training",
-  "Mentorship",
   "Scholarships",
   "Events",
   "Community Programs",
@@ -80,7 +79,6 @@ const ENROLLMENT_OPTIONS = [
 const PARTNERSHIP_OPTIONS = [
   "Co-op Placements",
   "Job Fairs",
-  "Mentorship Programs",
   "Sponsorships",
   "Training Partnerships",
   "Community Events",
