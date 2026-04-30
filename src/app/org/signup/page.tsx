@@ -123,7 +123,7 @@ export default function OrgSignupPage() {
     setLoading(true);
     signingUpRef.current = true; // Block useEffect redirect
     try {
-      await signUp(contactName, email, password);
+      await signUp(contactName, email, password, "/org/onboarding");
 
       // Get ID token for server-side API call
       const { auth } = await import("@/lib/firebase");

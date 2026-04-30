@@ -210,7 +210,7 @@ export default function UnifiedSignupPage() {
     setError("");
     setSubmitting(true);
     try {
-      await sendVerificationEmail();
+      await sendVerificationEmail(role === "organization" ? "/org/dashboard" : "/setup");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to resend verification email");
     } finally {
@@ -408,7 +408,7 @@ export default function UnifiedSignupPage() {
                 style={{ width: 18, height: 18, marginTop: 2, accentColor: CSS.accent, cursor: "pointer" }} />
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: CSS.text }}>{"📬"} Subscribe to IOPPS Newsletter</div>
-                <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 2 }}>We'll only email you if you check this box. Weekly updates on jobs, events, scholarships, and community highlights. Unsubscribe anytime.</div>
+                <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 2 }}>We&apos;ll only email you if you check this box. Weekly updates on jobs, events, scholarships, and community highlights. Unsubscribe anytime.</div>
               </div>
             </label>
           </div>

@@ -14,17 +14,18 @@ import {
   type User,
   type UserCredential,
 } from "firebase/auth";
-import { auth } from "./firebase";
+import { buildEmailVerificationContinueUrl } from "@/lib/auth-verification-email";
+import { auth, getAppCheckTokenValue } from "./firebase";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<UserCredential>;
-  signUp: (name: string, email: string, password: string) => Promise<void>;
+  signUp: (name: string, email: string, password: string, nextPath?: string) => Promise<void>;
   signInWithGoogle: () => Promise<UserCredential>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  sendVerificationEmail: () => Promise<void>;
+  sendVerificationEmail: (nextPath?: string) => Promise<void>;
   reloadUser: () => Promise<void>;
 }
 
@@ -91,6 +92,47 @@ async function ensureSessionCookie(user: User | null): Promise<boolean> {
   return syncSessionCookie(user, { forceRefresh: true });
 }
 
+function getClientSiteUrl(): string {
+  if (typeof window !== "undefined") return window.location.origin;
+  return "https://www.iopps.ca";
+}
+
+async function sendFirebaseVerificationEmail(user: User, nextPath?: string): Promise<void> {
+  try {
+    await sendEmailVerification(user, {
+      url: buildEmailVerificationContinueUrl(getClientSiteUrl(), nextPath),
+      handleCodeInApp: false,
+    });
+  } catch {
+    await sendEmailVerification(user);
+  }
+}
+
+async function requestAccountVerificationEmail(user: User, nextPath?: string): Promise<void> {
+  try {
+    const [idToken, appCheckToken] = await Promise.all([
+      user.getIdToken(),
+      getAppCheckTokenValue(),
+    ]);
+
+    const response = await fetchWithTimeout("/api/auth/verification-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+        ...(appCheckToken ? { "X-Firebase-AppCheck": appCheckToken } : {}),
+      },
+      body: JSON.stringify({ nextPath }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Server verification email failed");
+    }
+  } catch {
+    await sendFirebaseVerificationEmail(user, nextPath);
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -127,10 +169,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return cred;
   };
 
-  const signUp = async (name: string, email: string, password: string) => {
+  const signUp = async (name: string, email: string, password: string, nextPath?: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
-    await sendEmailVerification(cred.user);
+    await requestAccountVerificationEmail(cred.user, nextPath);
     const sessionReady = await ensureSessionCookie(cred.user);
     if (!sessionReady) {
       await firebaseSignOut(auth).catch(() => {});
@@ -162,9 +204,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const resendVerificationEmail = async () => {
+  const resendVerificationEmail = async (nextPath?: string) => {
     if (auth.currentUser && !auth.currentUser.emailVerified) {
-      await sendEmailVerification(auth.currentUser);
+      await requestAccountVerificationEmail(auth.currentUser, nextPath);
     }
   };
 
