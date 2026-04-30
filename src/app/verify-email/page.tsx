@@ -47,7 +47,7 @@ function VerifyEmailContent() {
     setResending(true);
     setResent(false);
     try {
-      await sendVerificationEmail();
+      await sendVerificationEmail(redirectPath);
       setResent(true);
     } catch {
       // Rate limited or other error — silently ignore

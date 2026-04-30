@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { buildAccountVerificationEmailContent } from "@/lib/auth-verification-email";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -133,6 +134,32 @@ export async function sendEmployerWelcome(opts: {
     return { success: true };
   } catch (err) {
     console.error("[email] Welcome email failed:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
+export async function sendAccountVerificationEmail(opts: {
+  email: string;
+  displayName?: string | null;
+  verificationLink: string;
+}): Promise<{ success: boolean; error?: string }> {
+  if (!resend) return { success: false, error: "Email not configured" };
+
+  const html = emailWrapper(buildAccountVerificationEmailContent({
+    displayName: opts.displayName,
+    verificationLink: opts.verificationLink,
+  }));
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: opts.email,
+      subject: "Confirm your IOPPS account",
+      html,
+    });
+    return { success: true };
+  } catch (err) {
+    console.error("[email] Account verification email failed:", err);
     return { success: false, error: String(err) };
   }
 }
