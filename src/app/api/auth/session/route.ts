@@ -3,6 +3,7 @@ import { getAdminAuth } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { validateOrigin } from "@/lib/csrf";
+import { assertUserCanAccessApp, AccountAccessError } from "@/lib/server/account-access";
 
 const COOKIE_NAME = "__session";
 const MAX_AGE = 60 * 60; // 1 hour (token gets refreshed every 55 min)
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
 
     // Verify the ID token with Firebase Admin
     const decoded = await getAdminAuth().verifyIdToken(idToken);
+    await assertUserCanAccessApp(decoded);
     await syncAcceptedEmployerState(decoded.uid, decoded.email_verified === true);
 
     const res = NextResponse.json({ status: "ok", uid: decoded.uid });
@@ -81,6 +83,10 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (error) {
+    if (error instanceof AccountAccessError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
     console.error("Session POST error:", error);
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }

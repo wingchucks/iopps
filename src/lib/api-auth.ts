@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebase-admin";
-import type { DecodedIdToken } from "firebase-admin/auth";
+import type { Auth, DecodedIdToken } from "firebase-admin/auth";
+import type { AccountAccessDeps } from "@/lib/server/account-access";
+import { assertUserCanAccessApp, AccountAccessError } from "@/lib/server/account-access";
+import { isSuperAdminEmail } from "@/lib/server/super-admin";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -9,11 +12,19 @@ import type { DecodedIdToken } from "firebase-admin/auth";
 export interface AuthResult {
   success: true;
   decodedToken: DecodedIdToken;
+  userData: Record<string, unknown>;
+  viewerEmail: string | null;
 }
 
 export interface AuthError {
   success: false;
   response: NextResponse;
+}
+
+export interface VerifyAuthTokenDeps {
+  adminAuth?: Pick<Auth, "verifyIdToken"> | null;
+  accessDeps?: AccountAccessDeps;
+  superAdminEnvValue?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -27,7 +38,8 @@ export interface AuthError {
  * Firebase Admin Auth, and returns the decoded token on success.
  */
 export async function verifyAuthToken(
-  request: NextRequest
+  request: NextRequest,
+  deps: VerifyAuthTokenDeps = {},
 ): Promise<AuthResult | AuthError> {
   const authHeader = request.headers.get("authorization");
 
@@ -41,7 +53,9 @@ export async function verifyAuthToken(
     };
   }
 
-  if (!adminAuth) {
+  const authService = deps.adminAuth ?? adminAuth;
+
+  if (!authService) {
     return {
       success: false,
       response: NextResponse.json(
@@ -53,9 +67,25 @@ export async function verifyAuthToken(
 
   try {
     const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    return { success: true, decodedToken };
-  } catch {
+    const decodedToken = await authService.verifyIdToken(token);
+    const access = await assertUserCanAccessApp(decodedToken, deps.accessDeps);
+    return {
+      success: true,
+      decodedToken,
+      userData: access.userData,
+      viewerEmail: access.email,
+    };
+  } catch (error) {
+    if (error instanceof AccountAccessError) {
+      return {
+        success: false,
+        response: NextResponse.json(
+          { error: error.message },
+          { status: error.status }
+        ),
+      };
+    }
+
     return {
       success: false,
       response: NextResponse.json(
@@ -77,9 +107,10 @@ export async function verifyAuthToken(
  * decoded token to support both legacy and current claim structures.
  */
 export async function verifyAdminToken(
-  request: NextRequest
+  request: NextRequest,
+  deps: VerifyAuthTokenDeps = {},
 ): Promise<AuthResult | AuthError> {
-  const result = await verifyAuthToken(request);
+  const result = await verifyAuthToken(request, deps);
   if (!result.success) return result;
 
   const { decodedToken } = result;
@@ -91,6 +122,27 @@ export async function verifyAdminToken(
       success: false,
       response: NextResponse.json(
         { error: "Forbidden" },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return result;
+}
+
+export async function verifySuperAdminToken(
+  request: NextRequest,
+  deps: VerifyAuthTokenDeps = {},
+): Promise<AuthResult | AuthError> {
+  const result = await verifyAdminToken(request, deps);
+  if (!result.success) return result;
+
+  const viewerEmail = result.viewerEmail ?? result.decodedToken.email ?? null;
+  if (!isSuperAdminEmail(viewerEmail, deps.superAdminEnvValue ?? undefined)) {
+    return {
+      success: false,
+      response: NextResponse.json(
+        { error: "Super admin access required" },
         { status: 403 }
       ),
     };
