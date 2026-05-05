@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 const YT = "https://www.googleapis.com/youtube/v3";
+const IOPPS_MANUAL_LIVE_VIDEO_IDS = ["STgbVkwfuYA"];
 
 interface YTVideo {
   id: string;
@@ -13,6 +14,45 @@ interface YTVideo {
   scheduledStart?: string;
   actualStart?: string;
   concurrentViewers?: string;
+}
+
+interface YTSearchItem {
+  id: {
+    videoId: string;
+  };
+}
+
+interface YTPlaylistItem {
+  contentDetails: {
+    videoId: string;
+  };
+}
+
+interface YTVideoItem {
+  id: string;
+  snippet: {
+    title: string;
+    description: string;
+    publishedAt: string;
+    liveBroadcastContent: string;
+    thumbnails: {
+      maxres?: { url: string };
+      high?: { url: string };
+      medium?: { url: string };
+    };
+  };
+  statistics?: {
+    viewCount?: string;
+  };
+  liveStreamingDetails?: {
+    scheduledStartTime?: string;
+    actualStartTime?: string;
+    concurrentViewers?: string;
+  };
+}
+
+interface YTListResponse<T> {
+  items?: T[];
 }
 
 async function ytFetch(
@@ -31,6 +71,49 @@ async function ytFetch(
   return res.json();
 }
 
+function getManualLiveVideoIds() {
+  const configured = process.env.YOUTUBE_MANUAL_LIVE_VIDEO_IDS?.trim();
+  const ids = configured
+    ? configured.split(",").map((id) => id.trim()).filter(Boolean)
+    : IOPPS_MANUAL_LIVE_VIDEO_IDS;
+  return [...new Set(ids)];
+}
+
+async function getOEmbedVideo(videoId: string): Promise<YTVideo | null> {
+  try {
+    const url = new URL("https://www.youtube.com/oembed");
+    url.searchParams.set("url", `https://www.youtube.com/watch?v=${videoId}`);
+    url.searchParams.set("format", "json");
+
+    const res = await fetch(url.toString(), {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    return {
+      id: videoId,
+      title: data.title || "IOPPS Live Stream",
+      description:
+        "Watch the current IOPPS livestream here, or open it on YouTube.",
+      thumbnail:
+        data.thumbnail_url ||
+        `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      publishedAt: new Date().toISOString(),
+      liveBroadcastContent: "live",
+    };
+  } catch (err) {
+    console.error("YouTube oEmbed fallback error:", err);
+    return null;
+  }
+}
+
+async function getManualLiveFallback(): Promise<YTVideo | null> {
+  const [videoId] = getManualLiveVideoIds();
+  if (!videoId) return null;
+  return getOEmbedVideo(videoId);
+}
+
 async function enrichVideos(
   apiKey: string,
   ids: string[]
@@ -40,15 +123,17 @@ async function enrichVideos(
     part: "snippet,liveStreamingDetails,statistics",
     id: ids.join(","),
   });
-  if (!data?.items) return [];
-  return data.items.map((item: any) => ({
+  const items = (data as YTListResponse<YTVideoItem> | null)?.items;
+  if (!items) return [];
+  return items.map((item) => ({
     id: item.id,
     title: item.snippet.title,
     description: item.snippet.description,
     thumbnail:
       item.snippet.thumbnails.maxres?.url ||
       item.snippet.thumbnails.high?.url ||
-      item.snippet.thumbnails.medium?.url,
+      item.snippet.thumbnails.medium?.url ||
+      `https://i.ytimg.com/vi/${item.id}/hqdefault.jpg`,
     publishedAt: item.snippet.publishedAt,
     liveBroadcastContent: item.snippet.liveBroadcastContent,
     viewCount: item.statistics?.viewCount,
@@ -65,9 +150,15 @@ export async function GET() {
 
     if (!apiKey || !channelId) {
       console.error("Missing env vars:", { apiKey: !!apiKey, channelId: !!channelId });
+      const manualLive = await getManualLiveFallback();
       return NextResponse.json(
-        { live: null, upcoming: [], recent: [], error: "Missing configuration" },
-        { status: 500 }
+        {
+          live: manualLive,
+          upcoming: [],
+          recent: [],
+          error: manualLive ? undefined : "Missing configuration",
+        },
+        { status: manualLive ? 200 : 500 }
       );
     }
 
@@ -97,21 +188,22 @@ export async function GET() {
     ]);
 
     // Collect video IDs to enrich
-    const liveIds: string[] =
-      liveData?.items?.map((i: any) => i.id.videoId) ?? [];
-    const upcomingIds: string[] =
-      upcomingData?.items?.map((i: any) => i.id.videoId) ?? [];
-    const recentIds: string[] =
-      playlistData?.items?.map(
-        (i: any) => i.contentDetails.videoId
-      ) ?? [];
+    const liveItems = (liveData as YTListResponse<YTSearchItem> | null)?.items ?? [];
+    const upcomingItems = (upcomingData as YTListResponse<YTSearchItem> | null)?.items ?? [];
+    const playlistItems = (playlistData as YTListResponse<YTPlaylistItem> | null)?.items ?? [];
+
+    const liveIds: string[] = liveItems.map((i) => i.id.videoId);
+    const upcomingIds: string[] = upcomingItems.map((i) => i.id.videoId);
+    const recentIds: string[] = playlistItems.map(
+      (i) => i.contentDetails.videoId
+    );
 
     // Dedupe and enrich all at once
     const allIds = [...new Set([...liveIds, ...upcomingIds, ...recentIds])];
     const enriched = await enrichVideos(apiKey, allIds);
     const byId = new Map(enriched.map((v) => [v.id, v]));
 
-    const live = liveIds.map((id) => byId.get(id)).filter(Boolean)[0] ?? null;
+    const live = liveIds.map((id) => byId.get(id)).filter(Boolean)[0] ?? await getManualLiveFallback();
     const upcoming = upcomingIds
       .map((id) => byId.get(id))
       .filter(Boolean) as YTVideo[];
