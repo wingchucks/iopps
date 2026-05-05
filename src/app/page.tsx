@@ -170,7 +170,7 @@ function Header() {
         <div className="hidden sm:block">
           <ThemeToggle />
         </div>
-        <Link href="/login" className="no-underline">
+        <Link href="/login" className="hidden no-underline min-[420px]:block">
           <Button
             variant="outline"
             size="sm"
@@ -180,7 +180,7 @@ function Header() {
             Sign In
           </Button>
         </Link>
-        <Link href="/signup" className="no-underline">
+        <Link href="/signup" className="hidden no-underline min-[420px]:block">
           <Button variant="primary-teal" size="sm" className="min-h-9 rounded-xl px-3 text-xs sm:min-h-10 sm:px-4 sm:text-sm">
             Sign Up
           </Button>
