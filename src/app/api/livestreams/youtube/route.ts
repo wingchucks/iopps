@@ -145,7 +145,7 @@ async function enrichVideos(
 
 export async function GET() {
   try {
-    const apiKey = process.env.YOUTUBE_API_KEY?.trim();
+    const apiKey = process.env.YOUTUBE_API_KEY?.replace(/\\n/g, "").trim();
     const channelId = process.env.YOUTUBE_CHANNEL_ID?.trim();
 
     if (!apiKey || !channelId) {
@@ -163,23 +163,31 @@ export async function GET() {
     }
 
     const uploadsPlaylist = channelId.replace(/^UC/, "UU");
+    const manualLiveIds = getManualLiveVideoIds();
+    const shouldUseManualLiveIds = manualLiveIds.length > 0;
 
-    // Run live, upcoming, and recent queries in parallel
+    // YouTube search calls are expensive quota-wise. When a current stream ID is
+    // configured, enrich that video directly and only fall back to search when
+    // there is no manual/live campaign override.
     const [liveData, upcomingData, playlistData] = await Promise.all([
-      ytFetch(apiKey, "search", {
-        part: "id",
-        channelId,
-        eventType: "live",
-        type: "video",
-        maxResults: "1",
-      }),
-      ytFetch(apiKey, "search", {
-        part: "id",
-        channelId,
-        eventType: "upcoming",
-        type: "video",
-        maxResults: "5",
-      }),
+      shouldUseManualLiveIds
+        ? null
+        : ytFetch(apiKey, "search", {
+            part: "id",
+            channelId,
+            eventType: "live",
+            type: "video",
+            maxResults: "1",
+          }),
+      shouldUseManualLiveIds
+        ? null
+        : ytFetch(apiKey, "search", {
+            part: "id",
+            channelId,
+            eventType: "upcoming",
+            type: "video",
+            maxResults: "5",
+          }),
       ytFetch(apiKey, "playlistItems", {
         part: "contentDetails",
         playlistId: uploadsPlaylist,
@@ -187,27 +195,33 @@ export async function GET() {
       }),
     ]);
 
-    // Collect video IDs to enrich
     const liveItems = (liveData as YTListResponse<YTSearchItem> | null)?.items ?? [];
     const upcomingItems = (upcomingData as YTListResponse<YTSearchItem> | null)?.items ?? [];
     const playlistItems = (playlistData as YTListResponse<YTPlaylistItem> | null)?.items ?? [];
 
-    const liveIds: string[] = liveItems.map((i) => i.id.videoId);
+    const liveIds: string[] = shouldUseManualLiveIds
+      ? manualLiveIds
+      : liveItems.map((i) => i.id.videoId);
     const upcomingIds: string[] = upcomingItems.map((i) => i.id.videoId);
     const recentIds: string[] = playlistItems.map(
       (i) => i.contentDetails.videoId
     );
 
-    // Dedupe and enrich all at once
     const allIds = [...new Set([...liveIds, ...upcomingIds, ...recentIds])];
     const enriched = await enrichVideos(apiKey, allIds);
     const byId = new Map(enriched.map((v) => [v.id, v]));
 
-    const live = liveIds.map((id) => byId.get(id)).filter(Boolean)[0] ?? await getManualLiveFallback();
+    const liveFromApi = liveIds
+      .map((id) => byId.get(id))
+      .find((video): video is YTVideo =>
+        !!video &&
+        video.liveBroadcastContent !== "none" &&
+        !video.actualStart?.includes("Invalid")
+      );
+    const live = liveFromApi ?? await getManualLiveFallback();
     const upcoming = upcomingIds
       .map((id) => byId.get(id))
       .filter(Boolean) as YTVideo[];
-    // Exclude live/upcoming from recent list
     const excludeIds = new Set([...liveIds, ...upcomingIds]);
     const recent = recentIds
       .map((id) => byId.get(id))
