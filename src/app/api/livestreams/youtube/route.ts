@@ -132,7 +132,8 @@ async function enrichVideos(
     thumbnail:
       item.snippet.thumbnails.maxres?.url ||
       item.snippet.thumbnails.high?.url ||
-      item.snippet.thumbnails.medium?.url,
+      item.snippet.thumbnails.medium?.url ||
+      `https://i.ytimg.com/vi/${item.id}/hqdefault.jpg`,
     publishedAt: item.snippet.publishedAt,
     liveBroadcastContent: item.snippet.liveBroadcastContent,
     viewCount: item.statistics?.viewCount,
