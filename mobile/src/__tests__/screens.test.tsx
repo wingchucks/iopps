@@ -106,14 +106,14 @@ describe('Screen Components', () => {
   describe('ProfileScreen', () => {
     it('renders without crashing', () => {
       const { getByTestId } = render(
-        <ProfileScreen navigation={mockNavigation} />
+        <ProfileScreen />
       );
       expect(getByTestId('profile-screen')).toBeTruthy();
     });
 
     it('displays screen content', () => {
       const { getByText } = render(
-        <ProfileScreen navigation={mockNavigation} />
+        <ProfileScreen />
       );
       expect(getByText('Profile Screen')).toBeTruthy();
     });
@@ -122,14 +122,14 @@ describe('Screen Components', () => {
   describe('SavedJobsScreen', () => {
     it('renders without crashing', () => {
       const { getByTestId } = render(
-        <SavedJobsScreen navigation={mockNavigation} />
+        <SavedJobsScreen />
       );
       expect(getByTestId('saved-jobs-screen')).toBeTruthy();
     });
 
     it('displays screen content', () => {
       const { getByText } = render(
-        <SavedJobsScreen navigation={mockNavigation} />
+        <SavedJobsScreen />
       );
       expect(getByText('Saved Jobs Screen')).toBeTruthy();
     });
@@ -138,14 +138,14 @@ describe('Screen Components', () => {
   describe('NotificationsScreen', () => {
     it('renders without crashing', () => {
       const { getByTestId } = render(
-        <NotificationsScreen navigation={mockNavigation} />
+        <NotificationsScreen />
       );
       expect(getByTestId('notifications-screen')).toBeTruthy();
     });
 
     it('displays screen content', () => {
       const { getByText } = render(
-        <NotificationsScreen navigation={mockNavigation} />
+        <NotificationsScreen />
       );
       expect(getByText('Notifications Screen')).toBeTruthy();
     });
@@ -154,14 +154,14 @@ describe('Screen Components', () => {
   describe('ApplicationsScreen', () => {
     it('renders without crashing', () => {
       const { getByTestId } = render(
-        <ApplicationsScreen navigation={mockNavigation} />
+        <ApplicationsScreen />
       );
       expect(getByTestId('applications-screen')).toBeTruthy();
     });
 
     it('displays screen content', () => {
       const { getByText } = render(
-        <ApplicationsScreen navigation={mockNavigation} />
+        <ApplicationsScreen />
       );
       expect(getByText('Applications Screen')).toBeTruthy();
     });

@@ -1,7 +1,7 @@
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 import { Linking, Platform } from 'react-native';
-import { Job } from '@/types';
+import type { JobPosting } from '@/types';
 import * as Sentry from '@sentry/react-native';
 import { logger } from './logger';
 
@@ -84,7 +84,7 @@ export function trackShareEvent(
 /**
  * Share a job using the native share sheet
  */
-export async function shareJob(job: Job): Promise<ShareResult> {
+export async function shareJob(job: JobPosting): Promise<ShareResult> {
   try {
     const shareableItem: ShareableItem = {
       id: job.id,
@@ -255,7 +255,7 @@ export async function copyToClipboard(item: ShareableItem): Promise<ShareResult>
 /**
  * Copy job link to clipboard (convenience function)
  */
-export async function copyJobLinkToClipboard(job: Job): Promise<ShareResult> {
+export async function copyJobLinkToClipboard(job: JobPosting): Promise<ShareResult> {
   const shareableItem: ShareableItem = {
     id: job.id,
     title: job.title,

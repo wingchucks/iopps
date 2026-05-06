@@ -21,6 +21,18 @@ interface JobDetailScreenProps {
   navigation: any;
 }
 
+function formatSalaryRange(job: JobPosting): string | null {
+  const salaryRange = job.salaryRange;
+  if (!salaryRange) return null;
+  if (typeof salaryRange === "string") return salaryRange;
+  if (salaryRange.disclosed === false) return "Salary not disclosed";
+  const { min, max, currency = "CAD" } = salaryRange;
+  if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()} ${currency}`;
+  if (min) return `From $${min.toLocaleString()} ${currency}`;
+  if (max) return `Up to $${max.toLocaleString()} ${currency}`;
+  return null;
+}
+
 export default function JobDetailScreen({ route, navigation }: JobDetailScreenProps) {
   const { jobId } = route.params;
   const { user } = useAuth();
@@ -167,7 +179,7 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
         {job.salaryRange && (
           <View style={styles.salaryContainer}>
             <Text style={styles.salaryLabel}>Salary Range</Text>
-            <Text style={styles.salaryValue}>{job.salaryRange}</Text>
+            <Text style={styles.salaryValue}>{formatSalaryRange(job)}</Text>
           </View>
         )}
 

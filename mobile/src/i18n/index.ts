@@ -59,7 +59,6 @@ const initI18n = async () => {
   i18n
     .use(initReactI18next)
     .init({
-      compatibilityJSON: 'v3', // Required for React Native
       resources: {
         en: { translation: en },
         fr: { translation: fr },

@@ -3,7 +3,7 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db } from '../lib/firebase';
 import { notificationLogger } from '../lib/logger';
 
 // Types
@@ -37,6 +37,8 @@ export interface NotificationPermissionStatus {
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
@@ -199,7 +201,7 @@ class PushNotificationService {
       }
 
       // Listen for token refresh
-      messaging().onTokenRefresh(async (newToken) => {
+      messaging().onTokenRefresh(async (newToken: string) => {
         notificationLogger.log('FCM Token refreshed:', newToken);
         if (this.userId) {
           await this.storeFCMToken(newToken);
@@ -266,7 +268,7 @@ class PushNotificationService {
     );
 
     // Firebase foreground handler
-    this.foregroundListener = messaging().onMessage(async (remoteMessage) => {
+    this.foregroundListener = messaging().onMessage(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
       notificationLogger.log('FCM message received in foreground:', remoteMessage);
       await this.displayLocalNotification(remoteMessage);
     });
@@ -277,8 +279,8 @@ class PushNotificationService {
    */
   private setupBackgroundHandler(): void {
     // Handle notifications when app is in background or quit state
-    this.backgroundListener = messaging().setBackgroundMessageHandler(
-      async (remoteMessage) => {
+    messaging().setBackgroundMessageHandler(
+      async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
         notificationLogger.log('Message handled in background:', remoteMessage);
         await this.handleBackgroundNotification(remoteMessage);
       }
@@ -548,6 +550,7 @@ class PushNotificationService {
           sound: true,
         },
         trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: triggerDate,
         },
       });
