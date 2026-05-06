@@ -49,6 +49,7 @@ export default function OrgApplicationsPage() {
   const router = useRouter();
   const [groups, setGroups] = useState<GroupedApplications[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   // Applicant profiles cache: userId -> MemberProfile
   const [profiles, setProfiles] = useState<Record<string, MemberProfile>>({});
   // Reviewer notes editing state
@@ -66,37 +67,47 @@ export default function OrgApplicationsPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const profile = await getMemberProfile(user.uid);
-      if (!profile?.orgId) return;
+      try {
+        setLoadError("");
+        const profile = await getMemberProfile(user.uid);
+        if (!profile?.orgId) {
+          setLoadError("This account is not connected to an organization yet.");
+          return;
+        }
 
-      const posts = await getOrgPosts(profile.orgId);
-      const grouped: GroupedApplications[] = await Promise.all(
-        posts.map(async (post) => {
-          const applications = await getApplicationsByPost(post.id);
-          return { post, applications };
-        })
-      );
-      const withApps = grouped.filter((g) => g.applications.length > 0);
-      setGroups(withApps);
+        const posts = await getOrgPosts(profile.orgId);
+        const grouped: GroupedApplications[] = await Promise.all(
+          posts.map(async (post) => {
+            const applications = await getApplicationsByPost(post.id);
+            return { post, applications };
+          })
+        );
+        const withApps = grouped.filter((g) => g.applications.length > 0);
+        setGroups(withApps);
 
-      // Batch-fetch member profiles for all applicants
-      const allUserIds = new Set<string>();
-      withApps.forEach((g) =>
-        g.applications.forEach((a) => allUserIds.add(a.userId))
-      );
-      const profileMap: Record<string, MemberProfile> = {};
-      await Promise.all(
-        Array.from(allUserIds).map(async (uid) => {
-          try {
-            const p = await getMemberProfile(uid);
-            if (p) profileMap[uid] = p;
-          } catch {
-            // skip failed lookups
-          }
-        })
-      );
-      setProfiles(profileMap);
-      setLoading(false);
+        // Batch-fetch member profiles for all applicants
+        const allUserIds = new Set<string>();
+        withApps.forEach((g) =>
+          g.applications.forEach((a) => allUserIds.add(a.userId))
+        );
+        const profileMap: Record<string, MemberProfile> = {};
+        await Promise.all(
+          Array.from(allUserIds).map(async (uid) => {
+            try {
+              const p = await getMemberProfile(uid);
+              if (p) profileMap[uid] = p;
+            } catch {
+              // skip failed lookups
+            }
+          })
+        );
+        setProfiles(profileMap);
+      } catch (err) {
+        console.error("Failed to load applications:", err);
+        setLoadError("Applications could not load. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [user, router]);
 
@@ -606,12 +617,36 @@ export default function OrgApplicationsPage() {
                 <div key={i} className="h-40 rounded-2xl skeleton" />
               ))}
             </div>
+          ) : loadError ? (
+            <Card className="p-8 text-center">
+              <p className="text-sm" style={{ color: "#DC2626" }}>
+                {loadError}
+              </p>
+            </Card>
           ) : groups.length === 0 ? (
             <Card className="p-8 text-center">
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                No applications received yet. Applications will appear here when
-                candidates apply to your job postings.
+              <p className="text-lg font-bold mb-2" style={{ color: "var(--text)" }}>
+                No applications yet
               </p>
+              <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
+                Applications will appear here when candidates apply. In the meantime, post a role or share your public jobs page to get traffic moving.
+              </p>
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                <Link
+                  href="/org/dashboard/jobs/new"
+                  className="px-4 py-2 rounded-xl text-sm font-semibold no-underline"
+                  style={{ background: "var(--teal)", color: "#fff" }}
+                >
+                  Post a job
+                </Link>
+                <Link
+                  href="/jobs"
+                  className="px-4 py-2 rounded-xl text-sm font-semibold no-underline"
+                  style={{ background: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" }}
+                >
+                  View public jobs
+                </Link>
+              </div>
             </Card>
           ) : viewMode === "list" ? (
             /* ===== LIST VIEW ===== */

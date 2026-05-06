@@ -8,6 +8,7 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { displayAmount, displayLocation } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
 import { getOrganization } from "@/lib/firestore/organizations";
@@ -338,6 +339,7 @@ function EventForm({
 
 export default function OrgDashboardEventsPage() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
@@ -346,6 +348,7 @@ export default function OrgDashboardEventsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -371,8 +374,17 @@ export default function OrgDashboardEventsPage() {
 
   const handleDelete = async (eventId: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return;
-    await deleteEvent(eventId);
-    setEvents((prev) => prev.filter((e) => e.id !== eventId));
+    setDeletingId(eventId);
+    try {
+      await deleteEvent(eventId);
+      setEvents((prev) => prev.filter((e) => e.id !== eventId));
+      showToast("Event deleted", "success");
+    } catch (err) {
+      console.error("Failed to delete event:", err);
+      showToast("Failed to delete event", "error");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleEdit = (event: Event) => {
@@ -610,10 +622,15 @@ export default function OrgDashboardEventsPage() {
                             </button>
                             <button
                               onClick={() => handleDelete(event.id)}
+                              disabled={deletingId === event.id}
                               className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
-                              style={{ background: "rgba(220,38,38,.1)", color: "#DC2626" }}
+                              style={{
+                                background: "rgba(220,38,38,.1)",
+                                color: "#DC2626",
+                                opacity: deletingId === event.id ? 0.6 : 1,
+                              }}
                             >
-                              Delete
+                              {deletingId === event.id ? "Deleting..." : "Delete"}
                             </button>
                           </div>
                         </div>

@@ -33,6 +33,13 @@ service cloud.firestore {
       );
     }
 
+    function isOrgManager(orgId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        memberData().orgId == orgId &&
+        memberData().orgRole in ["owner", "admin"];
+    }
+
     // ── Public content collections ──
 
     // Jobs: public read, admin write, org owner/admin can create/update their org's
@@ -71,46 +78,28 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Scholarships: public read, admin write, org owner/admin can create/update their org's
+    // Scholarships: public read, admin write, org owner/admin can create/update/delete their org's
     match /scholarships/{scholarshipId} {
       allow read: if true;
       allow write: if isAdmin();
-      allow create: if isSignedIn() &&
-        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-        memberData().orgId == request.resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
-      allow update: if isSignedIn() &&
-        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-        memberData().orgId == resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+      allow create: if isOrgManager(request.resource.data.orgId);
+      allow update, delete: if isOrgManager(resource.data.orgId);
     }
 
-    // Conferences: public read, admin write, org owner/admin can create/update their org's
+    // Conferences: public read, admin write, org owner/admin can create/update/delete their org's
     match /conferences/{conferenceId} {
       allow read: if true;
       allow write: if isAdmin();
-      allow create: if isSignedIn() &&
-        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-        memberData().orgId == request.resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
-      allow update: if isSignedIn() &&
-        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-        memberData().orgId == resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+      allow create: if isOrgManager(request.resource.data.orgId);
+      allow update, delete: if isOrgManager(resource.data.orgId);
     }
 
-    // Events: public read, admin write, org owner/admin can create/update their org's
+    // Events: public read, admin write, org owner/admin can create/update/delete their org's
     match /events/{eventId} {
       allow read: if true;
       allow write: if isAdmin();
-      allow create: if isSignedIn() &&
-        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-        memberData().orgId == request.resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
-      allow update: if isSignedIn() &&
-        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-        memberData().orgId == resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+      allow create: if isOrgManager(request.resource.data.orgId);
+      allow update, delete: if isOrgManager(resource.data.orgId);
     }
 
     // RSS feeds collection: public read, admin write
@@ -162,12 +151,17 @@ service cloud.firestore {
         memberData().orgRole in ["owner", "admin"];
     }
 
-    // Organizations: public read, org owner can create/update, admin can write any
+    // Organizations: public read, org owner/admin can update own org, admin can write any
     match /organizations/{orgId} {
       allow read: if true;
       allow create: if isOwner(orgId);
-      allow update: if isOwner(orgId) || isAdmin();
+      allow update: if isOrgManager(orgId) || isAdmin();
       allow delete: if isAdmin();
+    }
+
+    // Organization team invites: org owners/admins can manage their own invites.
+    match /organizations/{orgId}/teamInvites/{inviteId} {
+      allow read, create, update, delete: if isOrgManager(orgId) || isAdmin();
     }
 
     // Shop vendors: public read, admin/moderator write

@@ -41,6 +41,7 @@ export default function TeamPage() {
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [invites, setInvites] = useState<TeamInvite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
   const [sending, setSending] = useState(false);
@@ -48,30 +49,39 @@ export default function TeamPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const profile = await getMemberProfile(user.uid);
-      if (!profile?.orgId) return;
-      setOrgId(profile.orgId);
+      try {
+        setLoadError("");
+        const profile = await getMemberProfile(user.uid);
+        if (!profile?.orgId) {
+          setLoadError("This account is not connected to an organization yet.");
+          return;
+        }
+        setOrgId(profile.orgId);
 
-      const org = await getOrganization(profile.orgId);
-      if (org) setOrgName(org.name);
+        const org = await getOrganization(profile.orgId);
+        if (org) setOrgName(org.name);
 
-      // Fetch team members
-      const membersSnap = await getDocs(
-        query(collection(db, "members"), where("orgId", "==", profile.orgId))
-      );
-      setMembers(
-        membersSnap.docs.map((d) => d.data() as MemberProfile)
-      );
+        // Fetch team members
+        const membersSnap = await getDocs(
+          query(collection(db, "members"), where("orgId", "==", profile.orgId))
+        );
+        setMembers(
+          membersSnap.docs.map((d) => d.data() as MemberProfile)
+        );
 
-      // Fetch pending invites
-      const invitesSnap = await getDocs(
-        collection(db, "organizations", profile.orgId, "teamInvites")
-      );
-      setInvites(
-        invitesSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as TeamInvite)
-      );
-
-      setLoading(false);
+        // Fetch pending invites
+        const invitesSnap = await getDocs(
+          collection(db, "organizations", profile.orgId, "teamInvites")
+        );
+        setInvites(
+          invitesSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as TeamInvite)
+        );
+      } catch (err) {
+        console.error("Failed to load team page:", err);
+        setLoadError("Team management could not load. Check organization invite permissions and try again.");
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [user]);
 
@@ -203,6 +213,22 @@ export default function TeamPage() {
                   <div key={i} className="h-20 rounded-2xl skeleton" />
                 ))}
               </div>
+            ) : loadError ? (
+              <Card className="p-6">
+                <h2 className="text-base font-bold mb-2" style={{ color: "var(--text)" }}>
+                  Team tools unavailable
+                </h2>
+                <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
+                  {loadError}
+                </p>
+                <Link
+                  href="/org/dashboard"
+                  className="inline-flex px-4 py-2 rounded-xl text-sm font-semibold no-underline"
+                  style={{ background: "var(--teal)", color: "#fff" }}
+                >
+                  Back to dashboard
+                </Link>
+              </Card>
             ) : (
               <>
                 {/* Invite section */}
