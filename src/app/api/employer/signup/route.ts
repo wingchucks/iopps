@@ -145,7 +145,9 @@ export async function POST(req: NextRequest) {
     // 3. users/{uid} — set employer role (merge to keep existing fields)
     batch.set(adminDb.collection("users").doc(uid), {
       role: "employer",
+      orgRole: "owner",
       employerId: uid,
+      orgId: uid,
       displayName: contactName,
       email: contactEmail,
       emailVerified,
@@ -157,6 +159,7 @@ export async function POST(req: NextRequest) {
       displayName: name,
       email: contactEmail,
       orgId: uid,
+      orgRole: "owner",
       role: "employer",
       emailVerified,
       createdAt: now,

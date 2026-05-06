@@ -132,6 +132,7 @@ export default function OrgSignupPage() {
       const idToken = await currentUser.getIdToken();
       await createOrganizationProfile(idToken, email);
 
+      await currentUser.getIdToken(true);
       await currentUser.reload();
       router.push(currentUser.emailVerified ? "/org/onboarding" : "/verify-email?next=/org/onboarding");
     } catch (err: unknown) {
@@ -225,6 +226,7 @@ export default function OrgSignupPage() {
                 }
                 const idToken = await cred.user.getIdToken();
                 await createOrganizationProfile(idToken, googleEmail);
+                await cred.user.getIdToken(true);
                 router.push("/org/onboarding");
               } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : "Something went wrong.";

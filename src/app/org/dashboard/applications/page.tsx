@@ -1,21 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
-import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
-import { getOrgPosts } from "@/lib/firestore/posts";
 import type { Post } from "@/lib/firestore/posts";
-import {
-  getApplicationsByPost,
-  updateApplicationStatus,
-  updateApplicationNote,
-} from "@/lib/firestore/applications";
 import type { Application, ApplicationStatus } from "@/lib/firestore/applications";
 
 interface GroupedApplications {
@@ -46,7 +38,6 @@ type ViewMode = "list" | "board";
 
 export default function OrgApplicationsPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [groups, setGroups] = useState<GroupedApplications[]>([]);
   const [loading, setLoading] = useState(true);
   // Applicant profiles cache: userId -> MemberProfile
@@ -66,39 +57,43 @@ export default function OrgApplicationsPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const profile = await getMemberProfile(user.uid);
-      if (!profile?.orgId) return;
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch("/api/employer/applications", {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Failed to load applications");
 
-      const posts = await getOrgPosts(profile.orgId);
-      const grouped: GroupedApplications[] = await Promise.all(
-        posts.map(async (post) => {
-          const applications = await getApplicationsByPost(post.id);
-          return { post, applications };
-        })
-      );
-      const withApps = grouped.filter((g) => g.applications.length > 0);
-      setGroups(withApps);
+        const applications = (Array.isArray(data.applications) ? data.applications : []) as Application[];
+        const jobsById = (data.jobs || {}) as Record<string, Partial<Post> & { id?: string; title?: string }>;
+        const groupedByPost = new Map<string, GroupedApplications>();
 
-      // Batch-fetch member profiles for all applicants
-      const allUserIds = new Set<string>();
-      withApps.forEach((g) =>
-        g.applications.forEach((a) => allUserIds.add(a.userId))
-      );
-      const profileMap: Record<string, MemberProfile> = {};
-      await Promise.all(
-        Array.from(allUserIds).map(async (uid) => {
-          try {
-            const p = await getMemberProfile(uid);
-            if (p) profileMap[uid] = p;
-          } catch {
-            // skip failed lookups
-          }
-        })
-      );
-      setProfiles(profileMap);
-      setLoading(false);
+        for (const app of applications) {
+          const appWithJob = app as Application & { jobId?: string };
+          const postId = appWithJob.postId || appWithJob.jobId || "unknown";
+          const job = jobsById[postId] || {};
+          const post: Post = {
+            id: postId,
+            type: "job",
+            title: job.title || app.postTitle || "Untitled posting",
+            status: "active",
+            createdAt: null,
+            order: 0,
+          } as Post;
+          if (!groupedByPost.has(postId)) groupedByPost.set(postId, { post, applications: [] });
+          groupedByPost.get(postId)!.applications.push(app);
+        }
+
+        setGroups(Array.from(groupedByPost.values()));
+        setProfiles((data.profiles || {}) as Record<string, MemberProfile>);
+      } catch (err) {
+        console.error("Failed to load employer applications:", err);
+      } finally {
+        setLoading(false);
+      }
     })();
-  }, [user, router]);
+  }, [user]);
 
   // All applications flat list (for board view and bulk ops)
   const allApps = useMemo(() => {
@@ -116,7 +111,14 @@ export default function OrgApplicationsPage() {
     postId: string,
     newStatus: ApplicationStatus
   ) => {
-    await updateApplicationStatus(appId, newStatus);
+    if (!user) return;
+    const idToken = await user.getIdToken();
+    const response = await fetch("/api/employer/applications", {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ appId, status: newStatus }),
+    });
+    if (!response.ok) throw new Error("Failed to update application status");
     setGroups((prev) =>
       prev.map((g) => {
         if (g.post.id !== postId) return g;
@@ -135,7 +137,14 @@ export default function OrgApplicationsPage() {
     if (note === undefined) return;
     setSavingNote((prev) => ({ ...prev, [appId]: true }));
     try {
-      await updateApplicationNote(appId, note);
+      if (!user) return;
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/employer/applications", {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ appId, reviewerNote: note }),
+      });
+      if (!response.ok) throw new Error("Failed to save note");
       // Update local state
       setGroups((prev) =>
         prev.map((g) => ({
@@ -158,7 +167,14 @@ export default function OrgApplicationsPage() {
     try {
       await Promise.all(
         Array.from(selected).map(async (appId) => {
-          await updateApplicationStatus(appId, bulkStatus);
+          if (!user) return;
+          const idToken = await user.getIdToken();
+          const response = await fetch("/api/employer/applications", {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ appId, status: bulkStatus }),
+          });
+          if (!response.ok) throw new Error("Failed to update application status");
         })
       );
       // Update local state
@@ -224,13 +240,14 @@ export default function OrgApplicationsPage() {
     return columns;
   }, [allApps]);
 
-  const renderAppCard = (app: Application & { postTitle?: string; postId?: string }, showPostTitle = false) => {
+  const renderAppCard = (app: Application & { postTitle?: string; postId?: string; resumeUrl?: string }, showPostTitle = false) => {
     const sc = statusColors[app.status] || statusColors.submitted;
     const profile = profiles[app.userId];
     const displayName = profile?.displayName || app.userId;
     const avatar = profile?.photoURL;
     const skills = profile?.skills?.slice(0, 3) || [];
-    const resumeUrl = profile?.resumeUrl;
+    const applicationResumeUrl = app.resumeUrl;
+    const resumeUrl = applicationResumeUrl && !String(applicationResumeUrl).startsWith("profile://") ? String(applicationResumeUrl) : profile?.resumeUrl;
     const noteOpen = editingNote[app.id] !== undefined;
     const appPostId = app.postId || groups.find((g) => g.applications.some((a) => a.id === app.id))?.post.id || "";
 
@@ -658,7 +675,7 @@ export default function OrgApplicationsPage() {
                     </div>
                     <div className="flex flex-col gap-2">
                       {applications.map((app) =>
-                        renderAppCard({ ...app, postTitle: post.title, postId: post.id })
+                        renderAppCard({ ...app, postTitle: post.title, postId: post.id } as Application & { postTitle?: string; postId?: string; resumeUrl?: string })
                       )}
                     </div>
                   </div>
@@ -744,7 +761,8 @@ export default function OrgApplicationsPage() {
                             const profile = profiles[app.userId];
                             const displayName = profile?.displayName || app.userId;
                             const avatar = profile?.photoURL;
-                            const resumeUrl = profile?.resumeUrl;
+                            const applicationResumeUrl = (app as Application & { resumeUrl?: string }).resumeUrl;
+                            const resumeUrl = applicationResumeUrl && !String(applicationResumeUrl).startsWith("profile://") ? String(applicationResumeUrl) : profile?.resumeUrl;
 
                             return (
                               <div

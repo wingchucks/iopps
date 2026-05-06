@@ -8,11 +8,10 @@ import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { getPost, type Post } from "@/lib/firestore/posts";
-import { hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { db, storage } from "@/lib/firebase";
-import { doc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const STEPS = ["Resume", "Cover Letter", "Review & Submit"];
@@ -94,8 +93,8 @@ function ApplyWizard() {
         }
         setPost(postData);
         if (postData && user) {
-          const already = await hasApplied(user.uid, postData.id);
-          if (already) {
+          const applicationSnap = await getDoc(doc(db, "applications", `${user.uid}_${postData.id}`)).catch(() => null);
+          if (applicationSnap?.exists()) {
             showToast("You have already applied to this job", "info");
             router.replace(`/jobs/${slug}`);
           }
@@ -161,6 +160,9 @@ function ApplyWizard() {
         postId: post.id,
         postTitle: post.title,
         orgName: post.orgName || "",
+        orgId: post.orgId || post.employerId || "",
+        employerId: post.employerId || post.orgId || "",
+        jobId: post.id,
         status: "submitted",
         statusHistory: [{ status: "submitted", timestamp: now }],
         resumeUrl: useProfile ? `profile://${user.uid}` : resumeUrl,

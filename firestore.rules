@@ -58,8 +58,13 @@ service cloud.firestore {
     // Employers: public read, employer can update own, admin can write any
     match /employers/{employerId} {
       allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && employerId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        employerId == request.auth.uid ||
+        resource.data.uid == request.auth.uid ||
+        resource.data.id == request.auth.uid ||
+        isAdmin()
+      );
       allow delete: if isAdmin();
     }
 
@@ -131,13 +136,24 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
     }
 
-    // Applications: users can read/write their own applications, employers can read
+    // Applications: applicants can create/read their own applications; employers can manage applications for their org.
     match /applications/{applicationId} {
       allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid || isAdmin()
+        resource.data.userId == request.auth.uid ||
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         memberData().orgId in [resource.data.orgId, resource.data.employerId] &&
+         memberData().orgRole in ["owner", "admin"])
       );
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin();
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(["userId", "postId", "jobId", "orgId", "employerId", "postTitle", "status", "appliedAt"]);
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         memberData().orgId in [resource.data.orgId, resource.data.employerId] &&
+         memberData().orgRole in ["owner", "admin"])
+      );
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
@@ -237,22 +253,10 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
-    // Applications: users can read/create/update their own, admin can read/update all,
-    // org owner/admin can read/update applications for their org's posts
+    // Applications are defined above near public content collections.
+    // Keep this duplicate match intentionally narrow to avoid broad org-owner reads.
     match /applications/{appId} {
-      allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid ||
-        isAdmin() ||
-        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-         memberData().orgRole in ["owner", "admin"])
-      );
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && (
-        resource.data.userId == request.auth.uid ||
-        isAdmin() ||
-        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-         memberData().orgRole in ["owner", "admin"])
-      );
+      allow read, update: if false;
     }
 
     // Notifications: users can read/update/create their own

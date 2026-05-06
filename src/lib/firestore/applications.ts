@@ -74,8 +74,15 @@ export async function hasApplied(
   postId: string
 ): Promise<boolean> {
   const docId = `${userId}_${postId}`;
-  const snap = await getDoc(doc(db, "applications", docId));
-  return snap.exists();
+  try {
+    const snap = await getDoc(doc(db, "applications", docId));
+    return snap.exists();
+  } catch (error) {
+    // Some legacy application documents are missing org linkage required by rules.
+    // Treat permission misses as "not applied" so public job pages do not fail to load.
+    console.warn("[applications] Unable to check application state", error);
+    return false;
+  }
 }
 
 export async function applyToPost(

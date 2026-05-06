@@ -17,8 +17,9 @@ interface EditableJob {
   id: string;
   title?: string;
   description?: string;
-  location?: string;
-  salary?: string;
+  location?: string | { city?: string; province?: string; remote?: boolean };
+  salary?: string | { min?: number | string; max?: number | string; display?: string; currency?: string; period?: string };
+  salaryRange?: { min?: number | string; max?: number | string; display?: string; currency?: string; period?: string };
   employmentType?: string;
   jobType?: string;
   qualifications?: string[];
@@ -39,6 +40,36 @@ const employmentTypes = [
   "Temporary",
   "Internship",
 ];
+
+function normalizeSalaryParts(job: EditableJob): { min: string; max: string } {
+  const salaryValue = job.salaryRange || job.salary;
+  if (salaryValue && typeof salaryValue === "object") {
+    const min = salaryValue.min == null ? "" : String(salaryValue.min).replace(/[^\d]/g, "");
+    const max = salaryValue.max == null ? "" : String(salaryValue.max).replace(/[^\d]/g, "");
+    if (min || max) return { min, max };
+    if (salaryValue.display) return parseSalaryString(String(salaryValue.display));
+  }
+  return parseSalaryString(typeof job.salary === "string" ? job.salary : "");
+}
+
+function parseSalaryString(value: string): { min: string; max: string } {
+  const numbers = value.match(/\d[\d,]*/g) || [];
+  return {
+    min: numbers[0]?.replace(/,/g, "") || "",
+    max: numbers[1]?.replace(/,/g, "") || "",
+  };
+}
+
+function normalizeLocationParts(location: EditableJob["location"]): { city: string; province: string } {
+  if (location && typeof location === "object") {
+    return {
+      city: typeof location.city === "string" ? location.city : "",
+      province: typeof location.province === "string" ? location.province : location.remote ? "Remote" : "",
+    };
+  }
+  const locParts = (location || "").split(",").map((s) => s.trim());
+  return { city: locParts[0] || "", province: locParts[1] || "" };
+}
 
 export default function JobEditPage() {
   const params = useParams();
@@ -93,19 +124,13 @@ export default function JobEditPage() {
         setPost(p);
         setTitle(p.title || "");
         setDescription(p.description || "");
-        const locParts = (p.location || "").split(",").map((s) => s.trim());
-        setLocationCity(locParts[0] || "");
-        setLocationProvince(locParts[1] || "");
+        const locationParts = normalizeLocationParts(p.location);
+        setLocationCity(locationParts.city);
+        setLocationProvince(locationParts.province);
         setEmploymentType(p.employmentType || p.jobType || "Full-time");
-        if (p.salary) {
-          const salaryMatch = p.salary.match(
-            /\$?([\d,]+)\s*-\s*\$?([\d,]+)/
-          );
-          if (salaryMatch) {
-            setSalaryMin(salaryMatch[1].replace(/,/g, ""));
-            setSalaryMax(salaryMatch[2].replace(/,/g, ""));
-          }
-        }
+        const salaryParts = normalizeSalaryParts(p);
+        setSalaryMin(salaryParts.min);
+        setSalaryMax(salaryParts.max);
         setRequirements(p.qualifications || []);
         setSkills(p.badges || []);
         setClosingDate(p.closingDate || "");
@@ -151,6 +176,12 @@ export default function JobEditPage() {
           location,
           employmentType,
           salary,
+          salaryRange: salaryMin || salaryMax ? {
+            min: salaryMin ? Number(salaryMin) : undefined,
+            max: salaryMax ? Number(salaryMax) : undefined,
+            display: salary,
+            currency: "CAD",
+          } : undefined,
           qualifications: requirements.filter((r) => r.trim()),
           badges: skills,
           closingDate,
