@@ -23,6 +23,7 @@ interface EmployerJobInput {
   workLocation?: string;
   location?: string;
   salary?: string;
+  salaryRange?: Record<string, unknown>;
   closingDate?: string;
   externalApplyUrl?: string;
   applicationUrl?: string;
@@ -249,6 +250,7 @@ export async function PUT(
         workLocation: normalizeString(body.workLocation),
         location: normalizeString(body.location),
         salary: normalizeString(body.salary),
+        salaryRange: body.salaryRange,
         closingDate: normalizeString(body.closingDate),
         externalApplyUrl: normalizeString(body.externalApplyUrl ?? body.applicationUrl),
         applicationUrl: normalizeString(body.applicationUrl ?? body.externalApplyUrl),
