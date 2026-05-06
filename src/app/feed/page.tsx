@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import Card from "@/components/Card";
 import {
   selectFeaturedOpportunityItems,
   sortByRecencyWithFeaturedBoost,
@@ -172,7 +173,7 @@ function OrgAvatar({ logo, name, size = 40 }: { logo?: string; name: string; siz
           height: size,
           borderRadius: 12,
           objectFit: "contain",
-          background: "#111827",
+          background: "var(--bg)",
           padding: 4,
           flexShrink: 0,
         }}
@@ -187,7 +188,7 @@ function OrgAvatar({ logo, name, size = 40 }: { logo?: string; name: string; siz
         height: size,
         borderRadius: 12,
         flexShrink: 0,
-        background: "linear-gradient(135deg, #14B8A6, #0F766E)",
+        background: "linear-gradient(135deg, var(--teal), var(--navy))",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -204,7 +205,7 @@ function OrgAvatar({ logo, name, size = 40 }: { logo?: string; name: string; siz
 function TypeBadge({ type }: { type: FeedItemType }) {
   const meta = TYPE_META[type];
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-[#14B8A6]/25 bg-[#0D9488]/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#99F6E4]">
+    <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: "color-mix(in srgb, var(--teal) 25%, var(--border))", background: "var(--teal-soft)", color: "var(--teal)" }}>
       <span>{meta.icon}</span>
       <span>{meta.label}</span>
     </span>
@@ -213,8 +214,8 @@ function TypeBadge({ type }: { type: FeedItemType }) {
 
 function FeaturedMarker() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/6 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/72">
-      <span className="h-1.5 w-1.5 rounded-full bg-[#14B8A6]" />
+    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-bg px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+      <span className="h-1.5 w-1.5 rounded-full bg-teal" />
       Featured
     </span>
   );
@@ -247,7 +248,7 @@ function getCtaLabel(type: FeedItemType): string {
 function FeedCard({ item }: { item: FeedItem }) {
   return (
     <CardLink href={item.href}>
-      <article className="rounded-[24px] border border-white/8 bg-[#111111] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#14B8A6]/25 md:p-5">
+      <Card variant="list" className="p-4 hover:-translate-y-0.5 md:p-5">
         <div className="flex items-start gap-3">
           <OrgAvatar logo={item.orgLogo} name={item.orgName || "IOPPS"} size={42} />
           <div className="min-w-0 flex-1">
@@ -255,16 +256,16 @@ function FeedCard({ item }: { item: FeedItem }) {
               <TypeBadge type={item.type} />
               {item.featured && <FeaturedMarker />}
             </div>
-            <p className="mt-3 truncate text-sm font-semibold text-white/72">
+            <p className="mt-3 truncate text-sm font-semibold text-text-sec">
               {item.orgName || "IOPPS"}
             </p>
-            <h3 className="mt-1 text-lg font-semibold leading-snug text-white">
+            <h3 className="mt-1 text-lg font-semibold leading-snug text-text">
               {item.title}
             </h3>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-white/62">
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-text-sec">
           {item.subtitle && <span>{item.subtitle}</span>}
           {item.detail && <span>{item.detail}</span>}
         </div>
@@ -272,16 +273,16 @@ function FeedCard({ item }: { item: FeedItem }) {
         <div className="mt-4 flex items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             {item.badge && (
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/74">
+              <span className="rounded-full border border-border bg-bg px-3 py-1 text-xs font-semibold text-text-sec">
                 {item.badge}
               </span>
             )}
           </div>
-          <span className="text-sm font-semibold text-[#99F6E4]">
+          <span className="text-sm font-semibold text-teal">
             {getCtaLabel(item.type)} &#8594;
           </span>
         </div>
-      </article>
+      </Card>
     </CardLink>
   );
 }
@@ -289,16 +290,10 @@ function FeedCard({ item }: { item: FeedItem }) {
 function FeaturedOpportunityCard({ item }: { item: FeedItem }) {
   return (
     <CardLink href={item.href}>
-      <article
-        className="h-full rounded-[24px] p-5 transition-transform duration-200 hover:-translate-y-0.5"
-        style={{
-          border: "1px solid rgba(20,184,166,.22)",
-          background: "linear-gradient(145deg, rgba(13,148,136,.14) 0%, rgba(17,17,17,1) 46%, rgba(10,10,10,1) 100%)",
-        }}
-      >
+      <Card variant="spotlight" className="h-full p-5 hover:-translate-y-0.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <TypeBadge type={item.type} />
-          <span className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/76">
+          <span className="rounded-full border border-border bg-bg px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-text-sec">
             Featured Opportunity
           </span>
         </div>
@@ -306,49 +301,49 @@ function FeaturedOpportunityCard({ item }: { item: FeedItem }) {
         <div className="mt-4 flex items-center gap-3">
           <OrgAvatar logo={item.orgLogo} name={item.orgName || "IOPPS"} size={48} />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white/76">
+            <p className="truncate text-sm font-semibold text-text-sec">
               {item.orgName || "IOPPS"}
             </p>
             {item.badge && (
-              <p className="truncate text-sm text-[#CCFBF1]">
+              <p className="truncate text-sm text-teal">
                 {item.badge}
               </p>
             )}
           </div>
         </div>
 
-        <h3 className="mt-4 text-xl font-semibold leading-snug text-white">
+        <h3 className="mt-4 text-xl font-semibold leading-snug text-text">
           {item.title}
         </h3>
 
-        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-white/68">
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-text-sec">
           {item.subtitle && <span>{item.subtitle}</span>}
           {item.detail && <span>{item.detail}</span>}
         </div>
 
         <div className="mt-5 flex items-center justify-end">
-          <span className="text-sm font-semibold text-[#99F6E4]">
+          <span className="text-sm font-semibold text-teal">
             {getCtaLabel(item.type)} &#8594;
           </span>
         </div>
-      </article>
+      </Card>
     </CardLink>
   );
 }
 
 function SkeletonCard() {
   return (
-    <div className="rounded-[24px] border border-white/8 bg-[#111111] p-5">
+    <Card variant="list" className="p-5">
       <div className="mb-4 flex gap-3">
-        <div className="h-11 w-11 rounded-xl bg-white/6" />
+        <div className="h-11 w-11 rounded-xl bg-border" />
         <div className="flex-1">
-          <div className="mb-2 h-3 w-28 rounded bg-white/8" />
-          <div className="h-5 w-3/4 rounded bg-white/10" />
+          <div className="mb-2 h-3 w-28 rounded bg-border" />
+          <div className="h-5 w-3/4 rounded bg-border" />
         </div>
       </div>
-      <div className="mb-3 h-4 w-5/6 rounded bg-white/8" />
-      <div className="h-3 w-2/3 rounded bg-white/6" />
-    </div>
+      <div className="mb-3 h-4 w-5/6 rounded bg-border" />
+      <div className="h-3 w-2/3 rounded bg-border" />
+    </Card>
   );
 }
 
@@ -433,10 +428,10 @@ export default function FeedPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-[#0A0A0A] text-white">
+      <div className="min-h-screen bg-bg text-text">
         <section
-          className="border-b border-white/8 px-5 py-8"
-          style={{ background: "linear-gradient(135deg, #0D9488 0%, #0A0A0A 100%)" }}
+          className="border-b border-border px-5 py-8"
+          style={{ background: "linear-gradient(160deg, var(--navy-deep) 0%, var(--navy) 58%, #0D3B66 100%)" }}
         >
           <div className="mx-auto max-w-[860px]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#CCFBF1]">
@@ -445,7 +440,7 @@ export default function FeedPage() {
             <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white md:text-4xl">
               Your Indigenous opportunities, all in one place
             </h1>
-            <p className="mt-2 max-w-[620px] text-base text-white/78">
+            <p className="mt-2 max-w-[620px] text-base text-white/72">
               Jobs, scholarships, events, and training programs from Indigenous-led and allied organizations across Canada — ready when you are.
             </p>
           </div>
@@ -456,15 +451,15 @@ export default function FeedPage() {
             <section className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2">
               {quickCards.map((card) => (
                 <Link key={card.href} href={card.href} className="no-underline">
-                  <div className="h-full rounded-[22px] border border-white/8 bg-[#111111] p-4 transition-all hover:border-[#14B8A6]/25">
+                  <div className="h-full rounded-[22px] border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg">
                     <div className="mb-3 flex items-center gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/8 text-xl">{card.icon}</span>
+                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-border text-xl">{card.icon}</span>
                       <div>
-                        <h2 className="text-base font-semibold text-white">{card.title}</h2>
-                        <p className="text-xs font-semibold text-[#99F6E4]">{card.cta} &#8594;</p>
+                        <h2 className="text-base font-semibold text-text">{card.title}</h2>
+                        <p className="text-xs font-semibold text-teal">{card.cta} &#8594;</p>
                       </div>
                     </div>
-                    <p className="text-sm leading-relaxed text-white/62">{card.description}</p>
+                    <p className="text-sm leading-relaxed text-text-sec">{card.description}</p>
                   </div>
                 </Link>
               ))}
@@ -472,16 +467,16 @@ export default function FeedPage() {
           )}
 
           {!loading && featuredItems.length > 0 && (
-            <section className="mb-6 rounded-[28px] border border-white/8 bg-[#111111] p-5 md:p-6">
+            <section className="mb-6 rounded-[28px] border border-border bg-card p-5 md:p-6">
               <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#99F6E4]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal">
                     Featured Opportunities
                   </p>
-                  <h2 className="mt-2 text-2xl font-semibold text-white">
+                  <h2 className="mt-2 text-2xl font-semibold text-text">
                     Handpicked for Indigenous professionals
                   </h2>
-                  <p className="mt-1 max-w-[560px] text-sm text-white/66">
+                  <p className="mt-1 max-w-[560px] text-sm text-text-sec">
                     A rotating selection of standout jobs, events, and scholarships worth a closer look.
                   </p>
                 </div>
@@ -497,10 +492,10 @@ export default function FeedPage() {
 
           <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-white">
+              <h2 className="text-2xl font-semibold text-text">
                 Fresh opportunities
               </h2>
-              <p className="text-sm text-white/60">
+              <p className="text-sm text-text-sec">
                 A mixed stream of fresh jobs, events, training, scholarships, and schools — not just another job board.
               </p>
             </div>
@@ -513,12 +508,12 @@ export default function FeedPage() {
               ))}
             </div>
           ) : allItems.length === 0 ? (
-            <div className="rounded-[24px] border border-white/8 bg-[#111111] px-6 py-16 text-center">
+            <div className="rounded-[24px] border border-border bg-card px-6 py-16 text-center">
               <p className="mb-3 text-4xl">🌐</p>
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-text">
                 No opportunities yet
               </h3>
-              <p className="mt-2 text-sm text-white/60">
+              <p className="mt-2 text-sm text-text-sec">
                 Check back soon. New public opportunities are added regularly.
               </p>
             </div>

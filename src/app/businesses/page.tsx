@@ -290,10 +290,15 @@ function BusinessCard({ org }: { org: Organization }) {
             ))}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-xs font-bold">
-            <span style={{ color: "var(--teal)" }}>View profile &#8594;</span>
-            {org.openJobs > 0 && <span style={{ color: "var(--blue)" }}>Open jobs</span>}
-            <span style={{ color: "var(--text-muted)" }}>Follow</span>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-xs font-bold">
+            <span className="inline-flex items-center rounded-full px-3 py-1" style={{ background: "var(--teal-soft)", color: "var(--teal)" }}>
+              View profile &#8594;
+            </span>
+            {org.openJobs > 0 && (
+              <span className="text-text-muted">
+                {org.openJobs} open job{org.openJobs === 1 ? "" : "s"}
+              </span>
+            )}
           </div>
         </div>
       </Card>

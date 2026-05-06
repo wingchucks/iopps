@@ -551,7 +551,7 @@ function EnrollSidebar({
         </Button>
 
         {enrollNotice && (
-          <div className="mt-3 rounded-xl border px-3 py-2 text-xs font-semibold" style={{ borderColor: "rgba(13,148,136,.22)", background: "rgba(13,148,136,.08)", color: "var(--teal)" }}>
+          <div className="mt-3 rounded-xl border px-3 py-2 text-xs font-semibold" style={{ borderColor: "color-mix(in srgb, var(--teal) 24%, var(--border))", background: "var(--teal-soft)", color: "var(--teal)" }}>
             {enrollNotice}
           </div>
         )}
