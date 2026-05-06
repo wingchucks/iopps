@@ -46,6 +46,7 @@ export default function TrainingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [alreadyEnrolled, setAlreadyEnrolled] = useState(false);
+  const [enrollNotice, setEnrollNotice] = useState("");
 
   useEffect(() => {
     getTrainingBySlug(slug)
@@ -72,9 +73,10 @@ export default function TrainingDetailPage() {
     setEnrolling(true);
     try {
       await enrollInProgram(user.uid, program);
-      showToast("Successfully enrolled! Redirecting to your learning dashboard...");
+      showToast("You’re enrolled! Opening your learning dashboard...");
+      setEnrollNotice("You’re enrolled. We’re taking you to My Learning so you can start module 1.");
       setAlreadyEnrolled(true);
-      setTimeout(() => router.push("/learning"), 1500);
+      setTimeout(() => router.push("/learning"), 2200);
     } catch (err) {
       console.error("Enrollment failed:", err);
       showToast("Failed to enroll. Please try again.", "error");
@@ -409,6 +411,7 @@ export default function TrainingDetailPage() {
                 enrolling={enrolling}
                 user={user}
                 onEnroll={handleEnroll}
+                enrollNotice={enrollNotice}
               />
             </div>
           </div>
@@ -471,6 +474,7 @@ function EnrollSidebar({
   enrolling,
   user,
   onEnroll,
+  enrollNotice,
 }: {
   program: TrainingProgram;
   enrollPercent: number | null;
@@ -478,6 +482,7 @@ function EnrollSidebar({
   enrolling: boolean;
   user: unknown;
   onEnroll: () => void;
+  enrollNotice: string;
 }) {
   const priceLabel = displayAmount(program.price);
 
@@ -544,6 +549,12 @@ function EnrollSidebar({
                 ? "Enroll Now"
                 : "Sign in to Enroll"}
         </Button>
+
+        {enrollNotice && (
+          <div className="mt-3 rounded-xl border px-3 py-2 text-xs font-semibold" style={{ borderColor: "rgba(13,148,136,.22)", background: "rgba(13,148,136,.08)", color: "var(--teal)" }}>
+            {enrollNotice}
+          </div>
+        )}
 
         {alreadyEnrolled && (
           <Link

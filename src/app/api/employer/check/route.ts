@@ -48,6 +48,13 @@ export async function GET(req: NextRequest) {
   } catch (err: unknown) {
     const status = err instanceof EmployerApiError ? err.status : 500;
     const message = err instanceof Error ? err.message : "Unknown error";
+
+    // Community members can legitimately hit this check from shared app chrome.
+    // Return a quiet 200 so browsers do not log expected non-employer state as an error.
+    if (err instanceof EmployerApiError && status === 403 && message === "Not an employer") {
+      return NextResponse.json({ authorized: false, organizationType: null, profileReady: false });
+    }
+
     return NextResponse.json({ authorized: false, error: message }, { status });
   }
 }

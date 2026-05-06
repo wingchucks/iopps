@@ -281,9 +281,15 @@ function MessagesContent() {
             ) : conversations.length === 0 ? (
               <Card style={{ padding: 32, textAlign: "center" }}>
                 <p className="text-3xl mb-2">&#128172;</p>
-                <p className="text-sm text-text-muted">
-                  No conversations yet. Start a new message!
+                <p className="text-sm font-bold text-text mb-1">
+                  No conversations yet
                 </p>
+                <p className="text-sm text-text-muted mb-4">
+                  Find a community member and start the first message.
+                </p>
+                <Button small onClick={openNewChat} style={{ background: "var(--teal)", color: "#fff", border: "none" }}>
+                  Start a Message
+                </Button>
               </Card>
             ) : (
               <div className="space-y-1">
@@ -475,9 +481,12 @@ function MessagesContent() {
               <div className="text-center">
                 <p className="text-4xl mb-3">&#128172;</p>
                 <p className="text-lg font-bold text-text mb-1">Your Messages</p>
-                <p className="text-sm text-text-muted">
+                <p className="text-sm text-text-muted mb-4">
                   Select a conversation or start a new one.
                 </p>
+                <Button small onClick={openNewChat} style={{ background: "var(--teal)", color: "#fff", border: "none" }}>
+                  + New Message
+                </Button>
               </div>
             </div>
           )}
