@@ -3,6 +3,7 @@ import {
   Image,
   ImageProps,
   ImageStyle,
+  StyleProp,
   StyleSheet,
   View,
   ViewStyle,
@@ -18,7 +19,7 @@ interface OptimizedImageProps extends Omit<ImageProps, 'source'> {
   fallback?: string;
   showLoader?: boolean;
   fadeIn?: boolean;
-  containerStyle?: ViewStyle;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -67,7 +68,7 @@ function OptimizedImageComponent({
     : { uri: uri };
 
   // Calculate dimensions
-  const imageStyle: ImageStyle = {
+  const imageStyle: StyleProp<ImageStyle> = {
     width: width || '100%',
     height: height || '100%',
     ...(style as ImageStyle),

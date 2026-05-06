@@ -61,6 +61,7 @@ export default {
           faceIDPermission: "Allow IOPPS to use Face ID for quick sign-in.",
         },
       ],
+      "expo-localization",
       "expo-secure-store",
       "@react-native-google-signin/google-signin",
     ],

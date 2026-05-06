@@ -11,8 +11,20 @@ import {
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { listSavedJobs, formatTimestamp } from "../lib/firestore";
-import type { SavedJob } from "../types";
+import type { JobPosting, SavedJob } from "../types";
 import { logger } from "../lib/logger";
+
+function formatSalaryRange(job: JobPosting): string | null {
+  const salaryRange = job.salaryRange;
+  if (!salaryRange) return null;
+  if (typeof salaryRange === "string") return salaryRange;
+  if (salaryRange.disclosed === false) return "Salary not disclosed";
+  const { min, max, currency = "CAD" } = salaryRange;
+  if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()} ${currency}`;
+  if (min) return `From $${min.toLocaleString()} ${currency}`;
+  if (max) return `Up to $${max.toLocaleString()} ${currency}`;
+  return null;
+}
 
 export default function SavedJobsScreen() {
   const navigation = useNavigation();
@@ -79,7 +91,7 @@ export default function SavedJobsScreen() {
         </View>
 
         {job.salaryRange && (
-          <Text style={styles.salary}>{job.salaryRange}</Text>
+          <Text style={styles.salary}>{formatSalaryRange(job)}</Text>
         )}
 
         <View style={styles.tagsRow}>
