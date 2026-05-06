@@ -98,8 +98,20 @@ export async function sendEmployerWelcome(opts: {
   email: string;
   contactName: string;
   orgName: string;
+  verificationLink?: string | null;
 }): Promise<{ success: boolean; error?: string }> {
   if (!resend) return { success: false, error: "Email not configured" };
+
+  const confirmationBlock = opts.verificationLink
+    ? `
+    <div style="background:#ecfdf5;border:1px solid #99f6e4;border-radius:14px;padding:18px;margin:22px 0;">
+      <h3 style="color:#0F2B4C;font-size:17px;font-weight:800;margin:0 0 8px;">Confirm your email to activate employer tools</h3>
+      <p style="${STYLES.text};margin-bottom:14px;">
+        Please confirm this email address so you can finish onboarding, manage your organization, and post public content.
+      </p>
+      <a href="${opts.verificationLink}" style="${STYLES.button}">Confirm Email</a>
+    </div>`
+    : "";
 
   const html = emailWrapper(`
     <h2 style="${STYLES.h2}">Welcome to IOPPS, ${opts.contactName}! 👋</h2>
@@ -107,6 +119,7 @@ export async function sendEmployerWelcome(opts: {
       <strong>${opts.orgName}</strong> is now registered on IOPPS.ca — Canada's
       Indigenous careers, events, and community platform.
     </p>
+    ${confirmationBlock}
     <p style="${STYLES.text}">Here's what to do next:</p>
     <ol style="${STYLES.text}">
       <li><strong>Complete your profile</strong> — Add your logo, description, and contact info</li>
