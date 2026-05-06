@@ -397,6 +397,40 @@ export default function FeedPage() {
     })
   ), [allItems]);
 
+  const quickCards = useMemo(() => {
+    const firstByType = (type: FeedItemType) => allItems.find((item) => item.type === type);
+    return [
+      {
+        title: "Jobs near your next step",
+        description: firstByType("job")?.title || "Browse active Indigenous and allied employers.",
+        href: "/jobs",
+        cta: "Browse jobs",
+        icon: "💼",
+      },
+      {
+        title: "Events to keep on your radar",
+        description: firstByType("event")?.title || "Find pow wows, conferences, and community events.",
+        href: "/events",
+        cta: "Browse events",
+        icon: "📅",
+      },
+      {
+        title: "Build skills and credentials",
+        description: firstByType("program")?.title || "Explore training and education pathways.",
+        href: "/training",
+        cta: "Browse training",
+        icon: "📚",
+      },
+      {
+        title: "Pick up where you left off",
+        description: "Review saved items, applications, events, and learning from your profile.",
+        href: "/profile",
+        cta: "Open profile",
+        icon: "✨",
+      },
+    ];
+  }, [allItems]);
+
   return (
     <AppShell>
       <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -418,6 +452,25 @@ export default function FeedPage() {
         </section>
 
         <div className="mx-auto max-w-[860px] px-4 py-5 md:px-5 md:py-6" data-tour-step="feed">
+          {!loading && (
+            <section className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2">
+              {quickCards.map((card) => (
+                <Link key={card.href} href={card.href} className="no-underline">
+                  <div className="h-full rounded-[22px] border border-white/8 bg-[#111111] p-4 transition-all hover:border-[#14B8A6]/25">
+                    <div className="mb-3 flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/8 text-xl">{card.icon}</span>
+                      <div>
+                        <h2 className="text-base font-semibold text-white">{card.title}</h2>
+                        <p className="text-xs font-semibold text-[#99F6E4]">{card.cta} &#8594;</p>
+                      </div>
+                    </div>
+                    <p className="text-sm leading-relaxed text-white/62">{card.description}</p>
+                  </div>
+                </Link>
+              ))}
+            </section>
+          )}
+
           {!loading && featuredItems.length > 0 && (
             <section className="mb-6 rounded-[28px] border border-white/8 bg-[#111111] p-5 md:p-6">
               <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -448,7 +501,7 @@ export default function FeedPage() {
                 Fresh opportunities
               </h2>
               <p className="text-sm text-white/60">
-                The newest jobs, scholarships, events, and programs added to IOPPS.
+                A mixed stream of fresh jobs, events, training, scholarships, and schools — not just another job board.
               </p>
             </div>
           </div>

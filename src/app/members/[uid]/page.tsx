@@ -207,7 +207,7 @@ function MemberProfileContent() {
               </Link>
             ) : (
               <>
-                <Link href="/messages">
+                <Link href={`/messages?to=${encodeURIComponent(profile.uid)}`}>
                   <Button
                     small
                     primary

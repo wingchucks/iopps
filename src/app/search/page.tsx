@@ -774,11 +774,34 @@ function SearchContent() {
           <p className="text-sm text-text-sec">Find jobs, events, scholarships, schools, training, and businesses.</p>
         </div>
       ) : totalResults === 0 ? (
-        <div className="py-16 text-center">
-          <p className="mb-4 text-5xl">&#128533;</p>
-          <h2 className="mb-2 text-xl font-bold text-text">No results for &ldquo;{query || "your filters"}&rdquo;</h2>
-          <p className="text-sm text-text-sec">Try different keywords or adjust your filters.</p>
-        </div>
+        <Card>
+          <div className="px-6 py-14 text-center">
+            <p className="mb-4 text-5xl">&#128533;</p>
+            <h2 className="mb-2 text-xl font-bold text-text">No results for &ldquo;{query || "your filters"}&rdquo;</h2>
+            <p className="mx-auto mb-5 max-w-[460px] text-sm text-text-sec">
+              Try broader keywords, clear a filter, or jump into one of the main opportunity areas below.
+            </p>
+            <div className="mb-5 flex flex-wrap justify-center gap-2">
+              {["health", "Saskatoon", "remote", "training", "pow wow"].map((suggestion) => (
+                <button
+                  key={suggestion}
+                  onClick={() => setQuery(suggestion)}
+                  className="rounded-full border-none px-3 py-1.5 text-xs font-semibold"
+                  style={{ background: "var(--teal-soft)", color: "var(--teal)" }}
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 text-sm font-semibold">
+              <Link href="/jobs" className="no-underline" style={{ color: "var(--teal)" }}>Browse jobs</Link>
+              <span className="text-text-muted">·</span>
+              <Link href="/events" className="no-underline" style={{ color: "var(--teal)" }}>Browse events</Link>
+              <span className="text-text-muted">·</span>
+              <Link href="/training" className="no-underline" style={{ color: "var(--teal)" }}>Browse training</Link>
+            </div>
+          </div>
+        </Card>
       ) : (
         <>
           <p className="mb-4 text-sm text-text-muted">

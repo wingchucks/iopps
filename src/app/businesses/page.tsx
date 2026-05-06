@@ -289,6 +289,12 @@ function BusinessCard({ org }: { org: Organization }) {
               </span>
             ))}
           </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-xs font-bold">
+            <span style={{ color: "var(--teal)" }}>View profile &#8594;</span>
+            {org.openJobs > 0 && <span style={{ color: "var(--blue)" }}>Open jobs</span>}
+            <span style={{ color: "var(--text-muted)" }}>Follow</span>
+          </div>
         </div>
       </Card>
     </Link>

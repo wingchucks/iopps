@@ -104,6 +104,7 @@ function EventDetailContent() {
   const [rsvpStatus, setRsvpStatus] = useState<RSVPStatus | null>(null);
   const [goingCount, setGoingCount] = useState(0);
   const [actionLoading, setActionLoading] = useState("");
+  const [actionNotice, setActionNotice] = useState("");
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -179,9 +180,11 @@ function EventDetailContent() {
       if (saved) {
         await unsavePost(user.uid, event.id);
         setSaved(false);
+        setActionNotice("Removed from your saved events.");
       } else {
         await savePost(user.uid, event.id, event.title, "event", event.orgName);
         setSaved(true);
+        setActionNotice("Saved — you can find this anytime from Saved Items.");
       }
     } catch (err) {
       console.error("Save failed:", err);
@@ -210,6 +213,7 @@ function EventDetailContent() {
         await removeRSVP(user.uid, event.id);
         if (status === "going") setGoingCount((c) => Math.max(0, c - 1));
         setRsvpStatus(null);
+        setActionNotice("RSVP removed.");
       } else {
         const wasGoing = rsvpStatus === "going";
         await setRSVP({
@@ -223,6 +227,13 @@ function EventDetailContent() {
         if (status === "going" && !wasGoing) setGoingCount((c) => c + 1);
         if (status !== "going" && wasGoing) setGoingCount((c) => Math.max(0, c - 1));
         setRsvpStatus(status);
+        setActionNotice(
+          status === "going"
+            ? "You’re marked as going. This event now appears on your profile."
+            : status === "interested"
+              ? "Marked interested — this event now appears on your profile."
+              : "Marked as can’t go."
+        );
       }
     } catch (err) {
       console.error("RSVP failed:", err);
@@ -469,6 +480,18 @@ function EventDetailContent() {
               <p className="text-xs text-text-muted text-center mb-4">
                 {goingCount} {goingCount === 1 ? "person" : "people"} going
               </p>
+
+              {rsvpStatus && (
+                <div className="mb-3 rounded-xl border px-3 py-2 text-center text-xs font-semibold" style={{ borderColor: "rgba(13,148,136,.22)", background: "rgba(13,148,136,.08)", color: "var(--teal)" }}>
+                  Your RSVP: {rsvpStatus === "going" ? "Going" : rsvpStatus === "interested" ? "Interested" : "Can’t go"}
+                </div>
+              )}
+
+              {actionNotice && (
+                <div className="mb-3 rounded-xl border px-3 py-2 text-xs" style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--text-sec)" }}>
+                  {actionNotice}
+                </div>
+              )}
 
               {/* Add to Calendar */}
               <Button

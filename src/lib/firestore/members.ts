@@ -64,7 +64,7 @@ export async function getMemberProfile(
 ): Promise<MemberProfile | null> {
   const snap = await getDoc(doc(db, "members", uid));
   if (!snap.exists()) return null;
-  return snap.data() as MemberProfile;
+  return { uid: snap.id, ...snap.data() } as MemberProfile;
 }
 
 export async function createMemberProfile(
@@ -126,7 +126,9 @@ export async function getAllMembers(): Promise<MemberProfile[]> {
   const snap = await getDocs(
     query(collection(db, "members"), orderBy("displayName"))
   );
-  return snap.docs.map((d) => d.data() as MemberProfile);
+  return snap.docs
+    .map((d) => ({ uid: d.id, ...d.data() }) as MemberProfile)
+    .filter((member) => Boolean(member.uid && member.displayName));
 }
 
 const PAGE_SIZE = 30;
@@ -142,7 +144,10 @@ export async function getMembersPaginated(
   const snap = await getDocs(query(collection(db, "members"), ...constraints));
   // Filter out members hidden from directory client-side (avoids Firestore index requirement)
   const allDocs = snap.docs.filter((d) => d.data().hideFromDirectory !== true);
-  const members = allDocs.slice(0, PAGE_SIZE).map((d) => d.data() as MemberProfile);
+  const members = allDocs
+    .slice(0, PAGE_SIZE)
+    .map((d) => ({ uid: d.id, ...d.data() }) as MemberProfile)
+    .filter((member) => Boolean(member.uid && member.displayName));
   const lastDoc = allDocs.length >= PAGE_SIZE ? allDocs[PAGE_SIZE - 1] : null;
   return { members, lastDoc };
 }
