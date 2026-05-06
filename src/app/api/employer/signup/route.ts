@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendEmployerWelcome, sendAdminNewSignup } from "@/lib/email";
+import { buildEmailVerificationContinueUrl } from "@/lib/auth-verification-email";
 import { verifyAppCheckFromRequest } from "@/lib/server/app-check";
 import {
   evaluateEmployerSignupProtection,
@@ -9,6 +10,18 @@ import {
 } from "@/lib/server/signup-protection";
 
 export const runtime = "nodejs";
+
+function getSiteUrl(req: NextRequest): string {
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configuredSiteUrl) return configuredSiteUrl;
+
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const host = forwardedHost || req.headers.get("host");
+  if (!host) return "https://www.iopps.ca";
+
+  const forwardedProto = req.headers.get("x-forwarded-proto") || "https";
+  return `${forwardedProto}://${host}`;
+}
 
 /**
  * POST /api/employer/signup
@@ -34,11 +47,13 @@ export async function POST(req: NextRequest) {
   }
 
   let uid: string;
+  let accountEmail: string | undefined;
   let emailVerified = false;
   try {
     const token = authHeader.split("Bearer ")[1];
     const decoded = await adminAuth.verifyIdToken(token);
     uid = decoded.uid;
+    accountEmail = decoded.email;
     emailVerified = decoded.email_verified === true;
   } catch {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
@@ -67,12 +82,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields: name, type, contactName, contactEmail" }, { status: 400 });
   }
 
+  const normalizedContactEmail = contactEmail.trim().toLowerCase();
+  const confirmationEmail = (accountEmail || normalizedContactEmail).trim().toLowerCase();
+
   const protection = await evaluateEmployerSignupProtection(adminDb, {
     uid,
     kind: "employer_signup",
     name,
     contactName,
-    contactEmail,
+    contactEmail: normalizedContactEmail,
     website: body.website,
     description: body.description,
     honeypot: body.honeypot,
@@ -109,7 +127,7 @@ export async function POST(req: NextRequest) {
       name,
       type,
       contactName,
-      contactEmail,
+      contactEmail: normalizedContactEmail,
       slug,
       businessIdentity,
       onboardingComplete: false,
@@ -130,7 +148,7 @@ export async function POST(req: NextRequest) {
       type,
       businessIdentity,
       contactName,
-      contactEmail,
+      contactEmail: normalizedContactEmail,
       plan: "free",
       subscriptionTier: "free",
       status: signupStatus,
@@ -149,7 +167,7 @@ export async function POST(req: NextRequest) {
       employerId: uid,
       orgId: uid,
       displayName: contactName,
-      email: contactEmail,
+      email: normalizedContactEmail,
       emailVerified,
       updatedAt: now,
     }, { merge: true });
@@ -157,7 +175,7 @@ export async function POST(req: NextRequest) {
     // 4. members/{uid} — org membership + talent search filter
     batch.set(adminDb.collection("members").doc(uid), {
       displayName: name,
-      email: contactEmail,
+      email: normalizedContactEmail,
       orgId: uid,
       orgRole: "owner",
       role: "employer",
@@ -166,16 +184,54 @@ export async function POST(req: NextRequest) {
       updatedAt: now,
     }, { merge: true });
 
+    // 5. Admin bell notification so new employer signups are visible in the dashboard
+    batch.set(adminDb.collection("adminNotifications").doc(), {
+      title: "New employer signup",
+      message: `${name} registered an employer account${emailVerified ? "." : " and needs email confirmation."}`,
+      type: "success",
+      read: false,
+      employerId: uid,
+      orgId: uid,
+      orgName: name,
+      contactName,
+      contactEmail: normalizedContactEmail,
+      emailVerified,
+      createdAt: now,
+    });
+
     await batch.commit();
 
     // Set custom claims so auth token reflects employer role
     await adminAuth.setCustomUserClaims(uid, { role: "employer", employerId: uid });
 
-    // Send welcome email (non-blocking)
-    sendEmployerWelcome({ email: contactEmail, contactName, orgName: name }).catch(() => {});
-    sendAdminNewSignup({ name: contactName, email: contactEmail, orgName: name, type: "employer", uid }).catch(() => {});
+    let verificationLink: string | null = null;
+    if (!emailVerified) {
+      try {
+        verificationLink = await adminAuth.generateEmailVerificationLink(confirmationEmail, {
+          url: buildEmailVerificationContinueUrl(getSiteUrl(req), "/org/onboarding"),
+          handleCodeInApp: false,
+        });
+      } catch (linkError) {
+        console.error("[employer/signup] Failed to generate employer confirmation link:", linkError);
+      }
+    }
 
-    return NextResponse.json({ success: true, orgId: uid, slug });
+    // Send signup confirmations (non-blocking, but log failures so delivery issues are visible)
+    sendEmployerWelcome({
+      email: confirmationEmail,
+      contactName,
+      orgName: name,
+      verificationLink,
+    }).then((result) => {
+      if (!result.success) console.error("[employer/signup] Employer welcome/confirmation failed:", result.error);
+    }).catch((error) => {
+      console.error("[employer/signup] Employer welcome/confirmation failed:", error);
+    });
+    sendAdminNewSignup({ name: contactName, email: normalizedContactEmail, orgName: name, type: "employer", uid }).catch((error) => {
+      console.error("[employer/signup] Admin signup email failed:", error);
+    });
+
+    return NextResponse.json({ success: true, orgId: uid, slug, confirmationEmailSent: true });
   } catch (err) {
     console.error("[employer/signup] Failed:", err);
     const message = err instanceof Error ? err.message : "Failed to create organization";
