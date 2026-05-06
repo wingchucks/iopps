@@ -63,40 +63,53 @@ export default function EmailTemplatesPage() {
   const [orgId, setOrgId] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [dirty, setDirty] = useState(false);
   const [templates, setTemplates] = useState<Record<string, string>>({});
   const [previewKey, setPreviewKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const profile = await getMemberProfile(user.uid);
-      if (!profile?.orgId) return;
-      setOrgId(profile.orgId);
+      try {
+        setLoadError("");
+        const profile = await getMemberProfile(user.uid);
+        if (!profile?.orgId) {
+          setLoadError("This account is not connected to an organization yet.");
+          return;
+        }
+        setOrgId(profile.orgId);
 
-      const org = await getOrganization(profile.orgId);
-      if (org) {
-        // Load saved templates or use defaults
-        const saved = org.emailTemplates;
+        const org = await getOrganization(profile.orgId);
+        const saved = org?.emailTemplates;
         const merged: Record<string, string> = {};
         for (const cfg of STATUS_CONFIGS) {
           merged[cfg.key] = saved?.[cfg.key] || cfg.defaultText;
         }
         setTemplates(merged);
+      } catch (err) {
+        console.error("Failed to load templates:", err);
+        setLoadError("Email templates could not load. Please try again.");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     })();
   }, [user]);
 
   const handleSave = async () => {
     if (!orgId) return;
     setSaving(true);
+    setSaveError("");
     try {
       await updateOrganization(orgId, {
         emailTemplates: templates,
       });
+      setDirty(false);
       showToast("Templates saved", "success");
     } catch (err) {
       console.error("Save failed:", err);
+      setSaveError("Templates could not be saved. Organization owners/admins need permission to update emailTemplates.");
       showToast("Failed to save templates", "error");
     } finally {
       setSaving(false);
@@ -107,6 +120,7 @@ export default function EmailTemplatesPage() {
     const cfg = STATUS_CONFIGS.find((c) => c.key === key);
     if (cfg) {
       setTemplates((prev) => ({ ...prev, [key]: cfg.defaultText }));
+      setDirty(true);
     }
   };
 
@@ -144,14 +158,29 @@ export default function EmailTemplatesPage() {
                   Customize the emails sent to candidates when you update their application status
                 </p>
               </div>
-              <Button
-                primary
-                onClick={handleSave}
-                className={saving ? "opacity-50 pointer-events-none" : ""}
-              >
-                {saving ? "Saving..." : "Save All Templates"}
-              </Button>
+              <div className="flex items-center gap-3 flex-wrap">
+                {dirty && (
+                  <span className="text-xs font-semibold" style={{ color: "#F59E0B" }}>
+                    Unsaved changes
+                  </span>
+                )}
+                <Button
+                  primary
+                  onClick={handleSave}
+                  className={saving ? "opacity-50 pointer-events-none" : ""}
+                >
+                  {saving ? "Saving..." : "Save All Templates"}
+                </Button>
+              </div>
             </div>
+
+            {saveError && (
+              <Card className="p-4 mb-4">
+                <p className="text-sm font-semibold" style={{ color: "#DC2626" }}>
+                  {saveError}
+                </p>
+              </Card>
+            )}
 
             {loading ? (
               <div className="flex flex-col gap-4">
@@ -159,6 +188,15 @@ export default function EmailTemplatesPage() {
                   <div key={i} className="h-40 rounded-2xl skeleton" />
                 ))}
               </div>
+            ) : loadError ? (
+              <Card className="p-6">
+                <h2 className="text-base font-bold mb-2" style={{ color: "var(--text)" }}>
+                  Templates unavailable
+                </h2>
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  {loadError}
+                </p>
+              </Card>
             ) : (
               <div className="flex flex-col gap-4">
                 {STATUS_CONFIGS.map((cfg) => (
@@ -183,12 +221,13 @@ export default function EmailTemplatesPage() {
                     </p>
                     <textarea
                       value={templates[cfg.key] || ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setTemplates((prev) => ({
                           ...prev,
                           [cfg.key]: e.target.value,
-                        }))
-                      }
+                        }));
+                        setDirty(true);
+                      }}
                       rows={3}
                       className="w-full px-3 py-2.5 rounded-xl text-sm resize-y mb-2"
                       style={inputStyle}

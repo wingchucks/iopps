@@ -8,6 +8,7 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { displayAmount } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
 import { getOrganization } from "@/lib/firestore/organizations";
@@ -325,6 +326,7 @@ function ScholarshipForm({
 
 export default function OrgDashboardScholarshipsPage() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
@@ -333,6 +335,7 @@ export default function OrgDashboardScholarshipsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingScholarship, setEditingScholarship] = useState<Scholarship | null>(null);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -358,8 +361,17 @@ export default function OrgDashboardScholarshipsPage() {
 
   const handleDelete = async (scholarshipId: string) => {
     if (!confirm("Are you sure you want to delete this scholarship?")) return;
-    await deleteScholarship(scholarshipId);
-    setScholarships((prev) => prev.filter((s) => s.id !== scholarshipId));
+    setDeletingId(scholarshipId);
+    try {
+      await deleteScholarship(scholarshipId);
+      setScholarships((prev) => prev.filter((s) => s.id !== scholarshipId));
+      showToast("Scholarship deleted", "success");
+    } catch (err) {
+      console.error("Failed to delete scholarship:", err);
+      showToast("Failed to delete scholarship", "error");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleEdit = (scholarship: Scholarship) => {
@@ -596,10 +608,15 @@ export default function OrgDashboardScholarshipsPage() {
                             </button>
                             <button
                               onClick={() => handleDelete(scholarship.id)}
+                              disabled={deletingId === scholarship.id}
                               className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
-                              style={{ background: "rgba(220,38,38,.1)", color: "#DC2626" }}
+                              style={{
+                                background: "rgba(220,38,38,.1)",
+                                color: "#DC2626",
+                                opacity: deletingId === scholarship.id ? 0.6 : 1,
+                              }}
                             >
-                              Delete
+                              {deletingId === scholarship.id ? "Deleting..." : "Delete"}
                             </button>
                           </div>
                         </div>

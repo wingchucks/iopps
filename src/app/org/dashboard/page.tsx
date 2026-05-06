@@ -663,7 +663,7 @@ function OrgDashboardContent() {
                       timeAgo={timeAgo}
                     />
                   ) : (
-                    <OverviewTab stats={stats} chartBars={chartBars} maxBar={maxBar} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
+                    <OverviewTab org={org} stats={stats} chartBars={chartBars} maxBar={maxBar} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} setActiveTab={setActiveTab} />
                   )
                 )}
 
@@ -717,7 +717,8 @@ function OrgDashboardContent() {
 /* ═══════════════════════════════════════════════════════════
    OVERVIEW TAB
    ═══════════════════════════════════════════════════════════ */
-function OverviewTab({ stats, chartBars, maxBar, activity, jobs, timeAgo, formatTimestamp }: {
+function OverviewTab({ org, stats, chartBars, maxBar, activity, jobs, timeAgo, formatTimestamp, setActiveTab }: {
+  org: Organization | null;
   stats: DashboardStats;
   chartBars: number[];
   maxBar: number;
@@ -725,6 +726,7 @@ function OverviewTab({ stats, chartBars, maxBar, activity, jobs, timeAgo, format
   jobs: DashJob[];
   timeAgo: (ts: unknown) => string;
   formatTimestamp: (ts: unknown) => string;
+  setActiveTab: (tab: DashboardTab) => void;
 }) {
   const statCards = [
     { label: "Total Posts", value: stats.totalPosts, color: AMBER, rgb: AMBER_RGB },
@@ -732,9 +734,73 @@ function OverviewTab({ stats, chartBars, maxBar, activity, jobs, timeAgo, format
     { label: "Applications", value: stats.applications, color: "#A78BFA", rgb: "167,139,250" },
     { label: "Profile Views", value: stats.profileViews, color: "#F59E0B", rgb: "245,158,11" },
   ];
+  const setupItems = [
+    {
+      label: "Complete your public profile",
+      done: Boolean(org?.description && (org?.logoUrl || org?.logo) && org?.location),
+      action: "Edit Profile" as DashboardTab,
+    },
+    {
+      label: "Post or activate a job",
+      done: stats.totalPosts > 0,
+      href: "/org/dashboard/jobs/new",
+    },
+    {
+      label: "Review applications pipeline",
+      done: stats.applications > 0,
+      action: "Applications" as DashboardTab,
+    },
+    {
+      label: "Invite your hiring team",
+      done: false,
+      href: "/org/dashboard/team",
+    },
+    {
+      label: "Customize candidate emails",
+      done: Boolean(org?.emailTemplates && Object.keys(org.emailTemplates).length > 0),
+      href: "/org/dashboard/templates",
+    },
+  ];
+  const completedSetup = setupItems.filter((item) => item.done).length;
 
   return (
     <>
+      {/* Employer setup checklist */}
+      <DashCard className="mb-6">
+        <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: AMBER }}>
+              Employer launch checklist
+            </div>
+            <h2 className="text-lg font-bold" style={{ color: "var(--text, #f8fafc)" }}>
+              {completedSetup}/{setupItems.length} essentials complete
+            </h2>
+            <p className="text-sm mt-1" style={{ color: "var(--text-muted, #64748b)" }}>
+              Finish these steps to make the employer dashboard easier to run and easier for candidates to trust.
+            </p>
+          </div>
+          <Link href="/org/checkout?plan=featured-post" className="px-3 py-2 rounded-xl text-xs font-semibold no-underline" style={{ background: `rgba(${AMBER_RGB},0.12)`, color: AMBER }}>
+            Boost visibility
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {setupItems.map((item) => {
+            const content = (
+              <div className="flex items-center gap-3 p-3 rounded-xl transition-all hover:-translate-y-0.5" style={{ background: item.done ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: item.done ? "rgba(34,197,94,0.16)" : `rgba(${AMBER_RGB},0.12)`, color: item.done ? "#22C55E" : AMBER }}>
+                  {item.done ? "✓" : "•"}
+                </span>
+                <span className="text-sm font-semibold" style={{ color: "var(--text-sec, #cbd5e1)" }}>{item.label}</span>
+              </div>
+            );
+            if (item.href) {
+              return <Link key={item.label} href={item.href} className="no-underline">{content}</Link>;
+            }
+            return <button key={item.label} onClick={() => item.action && setActiveTab(item.action)} className="text-left border-none bg-transparent p-0 cursor-pointer">{content}</button>;
+          })}
+        </div>
+      </DashCard>
+
       {/* Stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map((s) => (
@@ -812,7 +878,7 @@ function OverviewTab({ stats, chartBars, maxBar, activity, jobs, timeAgo, format
       <DashCard>
         <div className="flex items-center justify-between mb-5">
           <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Top Performing Jobs</span>
-          <Link href="/org/dashboard/jobs/new" className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline transition-all hover:-translate-y-0.5" style={{
+          <Link href="/org/dashboard/jobs" className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline transition-all hover:-translate-y-0.5" style={{
             background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-sec, #cbd5e1)",
           }}>View All</Link>
         </div>
@@ -3009,9 +3075,9 @@ function PlaceholderTab({ title, desc, icon }: { title: string; desc: string; ic
    SHARED COMPONENTS
    ═══════════════════════════════════════════════════════════ */
 
-function DashCard({ children }: { children: React.ReactNode }) {
+function DashCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="relative p-7 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg" style={{
+    <div className={`relative p-7 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg ${className}`} style={{
       background: "var(--card, #0D1224)", border: "1px solid var(--border, rgba(30,41,59,0.6))",
     }}>
       {children}
