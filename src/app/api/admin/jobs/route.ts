@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
+import { resolveEmployerNotificationEmail } from "@/lib/server/employer-notification-email";
 
 export const dynamic = "force-dynamic";
 
@@ -137,12 +138,29 @@ export async function POST(request: NextRequest) {
     }
 
     switch (body.action) {
-      case "activate":
+      case "activate": {
+        const jobData = jobSnap.data() || {};
+        const notificationEmail = await resolveEmployerNotificationEmail(adminDb, {
+          employerId: jobData.employerId,
+          orgId: jobData.orgId,
+          organizationId: jobData.organizationId,
+          companyId: jobData.companyId,
+        });
+
+        if (!notificationEmail.email) {
+          return NextResponse.json({
+            error: "Add an employer contact email before activating this job so applications can be delivered.",
+            code: "missing_employer_notification_email",
+            checkedIds: notificationEmail.checkedIds,
+          }, { status: 400 });
+        }
+
         await jobRef.update({
           active: true,
           updatedAt: FieldValue.serverTimestamp(),
         });
         break;
+      }
 
       case "deactivate":
         await jobRef.update({

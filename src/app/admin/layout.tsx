@@ -233,6 +233,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "All Posts", href: "/admin/posts", icon: "\u2601" },
       { label: "Jobs", href: "/admin/jobs", icon: "\u2601" },
+      { label: "Notification Health", href: "/admin/notification-health", icon: "\u26A0" },
       { label: "Pow Wows", href: "/admin/powwows", icon: "🪶" },
       { label: "Conferences", href: "/admin/conferences", icon: "\u2609" },
       { label: "Scholarships", href: "/admin/scholarships", icon: "\u2605" },

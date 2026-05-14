@@ -11,6 +11,7 @@ import {
   evaluateFeaturedActivation,
 } from "@/lib/server/featured-job-entitlements";
 import { isSchoolOrganization } from "@/lib/school-visibility";
+import { resolveEmployerNotificationEmail } from "@/lib/server/employer-notification-email";
 
 export const runtime = "nodejs";
 
@@ -256,6 +257,21 @@ export async function POST(req: NextRequest) {
       orgName: (context.organizationData.name as string) || (context.employerData.name as string) || (context.employerData.orgName as string),
       orgShort: (context.organizationData.shortName as string) || (context.organizationData.short as string) || undefined,
     });
+
+    if (status === "active") {
+      const notificationEmail = await resolveEmployerNotificationEmail(db, {
+        employerId: context.employerId,
+        orgId: context.orgId,
+      });
+
+      if (!notificationEmail.email) {
+        return NextResponse.json({
+          error: "Add an employer contact email before publishing an active job so applications can be delivered.",
+          code: "missing_employer_notification_email",
+          checkedIds: notificationEmail.checkedIds,
+        }, { status: 400 });
+      }
+    }
 
     let nextFeaturedSummary = null;
 
