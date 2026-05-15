@@ -66,6 +66,7 @@ function ProfileContent() {
   const [editSection, setEditSection] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editPanelRef = useRef<HTMLDivElement>(null);
 
   // Edit form state
   const [community, setCommunity] = useState("");
@@ -139,6 +140,20 @@ function ProfileContent() {
 
   const displayName = profile?.displayName || user?.displayName || user?.email?.split("@")[0] || "User";
   const email = profile?.email || user?.email || "";
+
+  const openEditProfile = () => {
+    if (editing) {
+      setEditing(false);
+      setEditSection(null);
+      return;
+    }
+
+    setEditing(true);
+    setEditSection("identity");
+    requestAnimationFrame(() => {
+      editPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -240,13 +255,15 @@ function ProfileContent() {
           <div className="relative group">
             <Avatar name={displayName} size={72} src={profile?.photoURL} />
             <button
+              type="button"
+              aria-label="Change profile photo"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
               style={{ borderRadius: 16 }}
             >
               <span className="text-white text-xs font-semibold">
-                {uploading ? "..." : "Edit"}
+                {uploading ? "..." : "Photo"}
               </span>
             </button>
             <input
@@ -298,21 +315,15 @@ function ProfileContent() {
           <div className="flex gap-2.5 mt-2 sm:mt-0">
             <Button
               small
-              onClick={() => {
-                if (editing) {
-                  setEditing(false);
-                  setEditSection(null);
-                } else {
-                  setEditing(true);
-                  setEditSection("identity");
-                }
-              }}
+              type="button"
+              onClick={openEditProfile}
               style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)", background: "rgba(255,255,255,.12)" }}
             >
               {editing ? "Cancel" : "Edit Profile"}
             </Button>
             <Button
               small
+              type="button"
               onClick={async () => { await signOut(); router.push("/"); }}
               style={{ color: "#DC2626", borderColor: "rgba(220,38,38,.3)", background: "rgba(220,38,38,.1)" }}
             >
@@ -331,7 +342,7 @@ function ProfileContent() {
       <div className="px-4 py-6 md:px-12">
         {editing ? (
           /* -- Edit Mode (Accordion Sections) -- */
-          <div>
+          <div ref={editPanelRef} tabIndex={-1}>
             <h3 className="text-lg font-bold text-text mb-4">Edit Profile</h3>
 
             <div className="flex flex-col gap-3 mb-6">

@@ -44,7 +44,7 @@ function CareerSettingsContent() {
   const router = useRouter();
   const { user } = useAuth();
   const { showToast } = useToast();
-  const { loading: roleLoading, isEmployer } = useAccountContext();
+  const { loading: roleLoading, isEmployer, memberProfile } = useAccountContext();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -86,10 +86,11 @@ function CareerSettingsContent() {
   }, [loadProfile]);
 
   useEffect(() => {
-    if (!roleLoading && isEmployer) {
+    const isCommunityMember = Boolean(memberProfile && !memberProfile.orgId);
+    if (!roleLoading && isEmployer && !isCommunityMember) {
       router.replace("/settings");
     }
-  }, [isEmployer, roleLoading, router]);
+  }, [isEmployer, memberProfile, roleLoading, router]);
 
   const addRole = () => {
     const val = roleInput.trim();
@@ -159,7 +160,8 @@ function CareerSettingsContent() {
     return <PageSkeleton variant="list" />;
   }
 
-  if (isEmployer) return null;
+  const isCommunityMember = Boolean(memberProfile && !memberProfile.orgId);
+  if (isEmployer && !isCommunityMember) return null;
 
   return (
     <div className="max-w-[700px] mx-auto px-4 py-8 md:px-10 pb-24">

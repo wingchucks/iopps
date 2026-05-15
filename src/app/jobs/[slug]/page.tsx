@@ -32,6 +32,27 @@ type RelatedJob = Pick<
   "id" | "slug" | "title" | "employerName" | "orgName" | "location" | "jobType" | "employmentType" | "salary" | "externalApplyUrl"
 >;
 
+function formatJobDate(value: unknown): string | null {
+  if (!value) return null;
+
+  let date: Date;
+  if (typeof value === "object" && value !== null && "toDate" in value && typeof value.toDate === "function") {
+    date = value.toDate();
+  } else if (typeof value === "object" && value !== null && "seconds" in value && typeof value.seconds === "number") {
+    date = new Date(value.seconds * 1000);
+  } else {
+    date = new Date(value as string | number | Date);
+  }
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date.toLocaleDateString("en-CA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 function JobDetailContent() {
   const params = useParams();
   const slug = params.slug as string;
@@ -170,9 +191,7 @@ function JobDetailContent() {
 
   const jobType = job.employmentType || job.jobType;
   const employerName = job.employerName || job.orgName || job.orgShort || "";
-  const closingDate = job.closingDate
-    ? new Date(job.closingDate as string).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })
-    : null;
+  const closingDate = formatJobDate(job.closingDate ?? (job as unknown as Record<string, unknown>).deadline);
   const applicationUrl = job.applicationUrl
     || (job as unknown as Record<string, unknown>).applicationLink as string | undefined
     || (job as unknown as Record<string, unknown>).externalUrl as string | undefined

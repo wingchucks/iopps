@@ -121,38 +121,52 @@ export function useAccountContext(): AccountContextState {
         idToken = "";
       }
 
-      try {
-        if (!idToken) {
-          idToken = await currentUser.getIdToken();
-        }
-
-        const res = await fetchWithTimeout(
-          "/api/employer/check",
-          {
-            headers: { Authorization: `Bearer ${idToken}` },
-          },
-          4500,
-        );
-
-        if (res.ok) {
-          const data = (await res.json()) as {
-            authorized?: boolean;
-            profile?: { orgId?: string | null };
-          };
-          employerAuthorized = data.authorized === true;
-          employerOrgId = data.profile?.orgId ?? null;
-        }
-      } catch (error) {
-        if (!isAbortError(error)) {
-          console.error("[useAccountContext] employer check failed:", error);
-        }
-        employerAuthorized = false;
-      }
-
       const userRole =
         typeof userData?.role === "string"
           ? (userData.role as string)
           : claimRole;
+      const shouldCheckEmployer =
+        userRole === "employer" ||
+        userRole === "school" ||
+        userRole === "organization" ||
+        Boolean(
+          memberProfile?.orgId ||
+            userData?.orgId ||
+            userData?.employerId ||
+            claimOrgId ||
+            claimEmployerId,
+        );
+
+      if (shouldCheckEmployer) {
+        try {
+          if (!idToken) {
+            idToken = await currentUser.getIdToken();
+          }
+
+          const res = await fetchWithTimeout(
+            "/api/employer/check",
+            {
+              headers: { Authorization: `Bearer ${idToken}` },
+            },
+            4500,
+          );
+
+          if (res.ok) {
+            const data = (await res.json()) as {
+              authorized?: boolean;
+              profile?: { orgId?: string | null };
+            };
+            employerAuthorized = data.authorized === true;
+            employerOrgId = data.profile?.orgId ?? null;
+          }
+        } catch (error) {
+          if (!isAbortError(error)) {
+            console.error("[useAccountContext] employer check failed:", error);
+          }
+          employerAuthorized = false;
+        }
+      }
+
       const orgId = resolveLinkedOrganizationId({
         memberOrgId: employerOrgId || memberProfile?.orgId,
         userOrgId: userData?.orgId,
