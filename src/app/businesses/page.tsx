@@ -180,7 +180,7 @@ function BusinessCard({ org }: { org: Organization }) {
   const summary = org.tagline || org.description;
   const trustSignals = [
     org.verified ? "Verified" : "",
-    hasOrganizationIndigenousIdentity(org) ? "Indigenous-led" : "",
+    hasOrganizationIndigenousIdentity(org) ? "Indigenous-owned" : "",
     org.nation || "",
   ].filter(Boolean);
   const surfaceTags = [
@@ -191,16 +191,23 @@ function BusinessCard({ org }: { org: Organization }) {
   return (
     <Link href={`/org/${org.slug || org.id}`} className="no-underline">
       <Card
-        className="h-full transition-shadow hover:shadow-lg"
-        style={isPremium ? { borderColor: "rgba(251,191,36,.28)", boxShadow: "0 20px 34px -28px rgba(251,191,36,.45)" } : undefined}
+        className="h-full overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-lg"
+        style={isPremium ? {
+          borderColor: "rgba(217,119,6,.38)",
+          boxShadow: "0 22px 42px -32px rgba(217,119,6,.55)",
+          background: "linear-gradient(145deg, rgba(217,119,6,.08), var(--card) 42%, rgba(13,148,136,.05))",
+        } : undefined}
       >
+        {isPremium && (
+          <div style={{ height: 4, background: "linear-gradient(90deg, var(--gold), var(--teal), transparent)" }} />
+        )}
         <div style={{ padding: 20 }}>
-          <div className="mb-3 flex items-center gap-3">
+          <div className="mb-3 flex items-start gap-3">
             <Avatar
               name={org.shortName || org.name}
-              size={48}
+              size={isPremium ? 58 : 48}
               src={org.logoUrl || org.logo}
-              gradient={isPremium ? "linear-gradient(135deg, var(--gold), var(--navy))" : "linear-gradient(135deg, var(--navy), var(--teal))"}
+              gradient={isPremium ? "linear-gradient(135deg, var(--gold), var(--teal))" : "linear-gradient(135deg, var(--navy), var(--teal))"}
             />
             <div className="min-w-0 flex-1">
               {/* M-6: allow long org names to wrap to 2 lines instead of
@@ -238,7 +245,12 @@ function BusinessCard({ org }: { org: Organization }) {
                 <span
                   key={signal}
                   className="rounded-full text-[11px] font-semibold"
-                  style={{ padding: "3px 10px", background: "rgba(13,148,136,.08)", border: "1px solid rgba(13,148,136,.12)", color: "var(--teal)" }}
+                  style={{
+                    padding: "3px 10px",
+                    background: signal === "Verified" ? "rgba(13,148,136,.1)" : "rgba(37,99,235,.08)",
+                    border: signal === "Verified" ? "1px solid rgba(13,148,136,.18)" : "1px solid rgba(37,99,235,.14)",
+                    color: signal === "Verified" ? "var(--teal)" : "var(--blue)",
+                  }}
                 >
                   {signal}
                 </span>
@@ -291,7 +303,10 @@ function BusinessCard({ org }: { org: Organization }) {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-xs font-bold">
-            <span className="inline-flex items-center rounded-full px-3 py-1" style={{ background: "var(--teal-soft)", color: "var(--teal)" }}>
+            <span className="inline-flex items-center rounded-full px-3 py-1" style={{
+              background: isPremium ? "linear-gradient(135deg, var(--teal), var(--teal-light))" : "var(--teal-soft)",
+              color: isPremium ? "#fff" : "var(--teal)",
+            }}>
               View profile &#8594;
             </span>
             {org.openJobs > 0 && (

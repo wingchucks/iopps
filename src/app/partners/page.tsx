@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -72,10 +72,12 @@ function PartnersContent() {
   // surfaced in the Employers tab even when they clearly were employers.
   // Use the structural org.type field so every partner shows up in the
   // tab that matches what they actually are. Premium remains a real tier.
-  const isSchoolPartner = (o: typeof orgs[number]) =>
-    o.type === "school";
-  const isEmployerPartner = (o: typeof orgs[number]) =>
-    o.type === "business" || o.type === "employer" || o.type === "non-profit";
+  const isSchoolPartner = useCallback((o: typeof orgs[number]) =>
+    o.type === "school",
+  []);
+  const isEmployerPartner = useCallback((o: typeof orgs[number]) =>
+    o.type === "business" || o.type === "employer" || o.type === "non-profit",
+  []);
 
   const filtered = useMemo(() => {
     let list = orgs.filter((o) => o.isPartner);
@@ -99,12 +101,12 @@ function PartnersContent() {
       );
     }
     return list;
-  }, [orgs, filter, search]);
+  }, [orgs, filter, search, isEmployerPartner, isSchoolPartner]);
 
   const partnerOrgs = useMemo(() => orgs.filter((o) => o.isPartner), [orgs]);
   const premiumOrgs = useMemo(() => partnerOrgs.filter((o) => o.partnerTier === "premium"), [partnerOrgs]);
-  const schoolOrgs = useMemo(() => partnerOrgs.filter(isSchoolPartner), [partnerOrgs]);
-  const employerOrgs = useMemo(() => partnerOrgs.filter(isEmployerPartner), [partnerOrgs]);
+  const schoolOrgs = useMemo(() => partnerOrgs.filter(isSchoolPartner), [partnerOrgs, isSchoolPartner]);
+  const employerOrgs = useMemo(() => partnerOrgs.filter(isEmployerPartner), [partnerOrgs, isEmployerPartner]);
   const showSections = filter === "All Partners" && !search && orgs.length > 0;
 
   const filterCounts: Record<TierFilter, number> = useMemo(() => ({
@@ -423,22 +425,33 @@ function PremiumSpotlightCard({ org }: { org: Organization }) {
 
 function OrgCard({ org }: { org: Organization }) {
   const isSchool = org.ownerType === "school" || org.type === "school" || org.partnerTier === "school";
+  const isPremium = org.partnerTier === "premium";
   const href = isSchool ? `/schools/${org.slug || org.id}` : `/org/${org.slug || org.id}`;
   return (
     <Link href={href} className="no-underline">
-      <Card className="cursor-pointer h-full hover:shadow-md">
+      <Card
+        className="cursor-pointer h-full overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md"
+        style={isPremium ? {
+          borderColor: "rgba(217,119,6,.38)",
+          boxShadow: "0 22px 42px -32px rgba(217,119,6,.55)",
+          background: "linear-gradient(145deg, rgba(217,119,6,.08), var(--card) 42%, rgba(13,148,136,.05))",
+        } : undefined}
+      >
+        {isPremium && (
+          <div style={{ height: 4, background: "linear-gradient(90deg, var(--gold), var(--teal), transparent)" }} />
+        )}
         <div style={{ padding: 20 }}>
           <div className="flex gap-3 items-start mb-3">
             <Avatar
               name={org.shortName || org.name}
-              size={48}
+              size={isPremium ? 58 : 48}
               src={org.logoUrl}
-              gradient={isSchool ? "linear-gradient(135deg, var(--teal), var(--blue))" : undefined}
+              gradient={isPremium ? "linear-gradient(135deg, var(--gold), var(--teal))" : isSchool ? "linear-gradient(135deg, var(--teal), var(--blue))" : undefined}
             />
             <div className="flex-1 min-w-0">
               <h3 className="text-[15px] font-bold text-text mb-1 truncate">{org.name}</h3>
               <div className="flex flex-wrap items-center gap-1.5">
-                {org.partnerTier === "premium" ? (
+                {isPremium ? (
                   <Badge text={org.partnerBadgeLabel || "Premium Partner"} color="var(--gold)" bg="var(--gold-soft)" small />
                 ) : isSchool ? (
                   <Badge text={org.partnerBadgeLabel || "Education Partner"} color="var(--blue)" bg="var(--blue-soft)" small />

@@ -120,7 +120,27 @@ const TREATY_OPTIONS = [
 /* ─── amber accent color ─── */
 const AMBER = "#D97706";
 const AMBER_RGB = "217,119,6";
+const TEAL = "#14B8A6";
+const TEAL_RGB = "20,184,166";
+const BLUE = "#2563EB";
+const BLUE_RGB = "37,99,235";
 const MS_PER_DAY = 86_400_000;
+
+function isPremiumOrganization(org: Organization | null): boolean {
+  return org?.partnerTier === "premium" || org?.subscriptionTier === "premium" || org?.plan === "premium";
+}
+
+function formatPlanLabel(value: string | undefined): string {
+  if (!value) return "";
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function formatSubscriptionEnd(value: string | undefined): string {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleDateString(undefined, { month: "short", year: "numeric" });
+}
 
 function SectionNumberBadge({
   n,
@@ -482,6 +502,9 @@ function OrgDashboardContent() {
   });
   const maxBar = Math.max(...chartBars, 1);
   const publicProfileHref = getOrganizationPublicHref(org);
+  const isPremiumDashboard = isPremiumOrganization(org);
+  const planLabel = formatPlanLabel(org?.subscriptionTier || org?.plan || undefined);
+  const planEndLabel = formatSubscriptionEnd(org?.subscriptionEnd);
   const heroDescription = isSchoolOrg
     ? "Manage your school profile, programs, scholarships, and student recruitment."
     : "Manage your organization, jobs, and applications";
@@ -505,19 +528,27 @@ function OrgDashboardContent() {
         <div className="min-h-screen relative" style={{ background: "var(--bg, #020617)" }}>
           {/* Ambient background */}
           <div className="fixed inset-0 pointer-events-none z-0" style={{
-            background: `radial-gradient(ellipse 120% 80% at 20% -30%, rgba(${AMBER_RGB},0.08), transparent 60%),
-                         radial-gradient(ellipse 80% 60% at 80% 20%, rgba(59,130,246,0.06), transparent 50%),
-                         radial-gradient(ellipse 60% 80% at 50% 110%, rgba(167,139,250,0.04), transparent 50%)`,
+            background: `radial-gradient(ellipse 120% 80% at 18% -28%, rgba(${TEAL_RGB},0.08), transparent 58%),
+                         radial-gradient(ellipse 90% 62% at 82% 18%, rgba(${BLUE_RGB},0.06), transparent 52%),
+                         radial-gradient(ellipse 58% 78% at 50% 112%, rgba(${AMBER_RGB},0.05), transparent 50%)`,
           }} />
 
           <div className="relative z-[1] max-w-[1100px] mx-auto px-4 py-8 md:px-10">
             {loading ? <LoadingSkeleton /> : (
               <>
                 {/* ─── HERO ─── */}
-                <div className="relative rounded-[20px] p-8 md:p-10 mb-8 overflow-hidden" style={{
-                  background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.08), rgba(59,130,246,0.06), rgba(167,139,250,0.04))`,
-                  border: `1px solid rgba(${AMBER_RGB},0.15)`,
+                <div className="relative rounded-2xl p-8 md:p-10 mb-8 overflow-hidden" style={{
+                  background: isPremiumDashboard
+                    ? `linear-gradient(135deg, rgba(${AMBER_RGB},0.09), rgba(${TEAL_RGB},0.06) 42%, rgba(${BLUE_RGB},0.04)), var(--card, #0F1A2B)`
+                    : `linear-gradient(135deg, rgba(${TEAL_RGB},0.08), rgba(${BLUE_RGB},0.05)), var(--card, #0F1A2B)`,
+                  border: isPremiumDashboard ? `1px solid rgba(${AMBER_RGB},0.38)` : "1px solid var(--border, #263449)",
+                  boxShadow: isPremiumDashboard ? `0 22px 46px -34px rgba(${AMBER_RGB},0.55)` : undefined,
                 }}>
+                  <div className="absolute inset-x-0 top-0 h-1.5" style={{
+                    background: isPremiumDashboard
+                      ? `linear-gradient(90deg, ${AMBER}, ${TEAL}, transparent)`
+                      : `linear-gradient(90deg, ${TEAL}, ${BLUE}, transparent)`,
+                  }} />
                   <div className="flex items-center justify-between flex-wrap gap-4 relative z-[2]">
                     <div className="flex items-center gap-5">
                       <div className="relative">
@@ -525,26 +556,37 @@ function OrgDashboardContent() {
                           name={org?.shortName || org?.name || ""}
                           size={64}
                           src={org?.logoUrl || org?.logo}
-                          gradient={`linear-gradient(135deg, ${AMBER}, #F59E0B)`}
+                          gradient={isPremiumDashboard ? `linear-gradient(135deg, ${AMBER}, ${TEAL})` : `linear-gradient(135deg, ${TEAL}, ${BLUE})`}
                         />
                       </div>
                       <div>
-                        <h1 className="text-2xl md:text-3xl font-black tracking-tight" style={{
-                          background: `linear-gradient(135deg, #fff 30%, ${AMBER})`,
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                        }}>
+                        <h1 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--text, #f8fafc)" }}>
                           {org?.name || "Dashboard"}
                         </h1>
                         <p className="text-sm mt-1" style={{ color: "var(--text-muted, #94a3b8)" }}>
                           {heroDescription}
                         </p>
                         <div className="flex flex-wrap items-center gap-2 mt-1">
-                          {org?.plan && (
-                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{
-                              background: `rgba(${AMBER_RGB},0.12)`, color: AMBER,
+                          {isPremiumDashboard ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style={{
+                              background: `rgba(${AMBER_RGB},0.14)`, color: "#F59E0B", border: `1px solid rgba(${AMBER_RGB},0.35)`,
                             }}>
-                              {org.plan} plan
+                              <span aria-hidden="true">★</span>
+                              Premium Partner{planEndLabel ? ` until ${planEndLabel}` : ""}
+                            </span>
+                          ) : org?.plan && (
+                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{
+                              background: `rgba(${TEAL_RGB},0.12)`, color: TEAL,
+                            }}>
+                              {planLabel || org.plan} plan
+                            </span>
+                          )}
+                          {org?.verified && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style={{
+                              background: `rgba(${TEAL_RGB},0.12)`, color: TEAL, border: `1px solid rgba(${TEAL_RGB},0.28)`,
+                            }}>
+                              <span aria-hidden="true">✓</span>
+                              Verified
                             </span>
                           )}
                           {isSchoolOrg && (
@@ -567,7 +609,7 @@ function OrgDashboardContent() {
                           color: "var(--text-sec, #cbd5e1)",
                         }}>
                           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-                          View Profile
+                          View Public Page
                         </Link>
                       )}
                       <button
@@ -575,7 +617,7 @@ function OrgDashboardContent() {
                         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer transition-all hover:-translate-y-0.5"
                         style={{
                           background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`,
-                          color: "#fff",
+                          color: "#111827",
                           boxShadow: `0 4px 20px rgba(${AMBER_RGB},0.3)`,
                         }}
                       >
@@ -663,7 +705,7 @@ function OrgDashboardContent() {
                       timeAgo={timeAgo}
                     />
                   ) : (
-                    <OverviewTab stats={stats} chartBars={chartBars} maxBar={maxBar} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
+                    <OverviewTab org={org} stats={stats} chartBars={chartBars} maxBar={maxBar} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
                   )
                 )}
 
@@ -717,7 +759,8 @@ function OrgDashboardContent() {
 /* ═══════════════════════════════════════════════════════════
    OVERVIEW TAB
    ═══════════════════════════════════════════════════════════ */
-function OverviewTab({ stats, chartBars, maxBar, activity, jobs, timeAgo, formatTimestamp }: {
+function OverviewTab({ org, stats, chartBars, maxBar, activity, jobs, timeAgo, formatTimestamp }: {
+  org: Organization | null;
   stats: DashboardStats;
   chartBars: number[];
   maxBar: number;
@@ -728,10 +771,12 @@ function OverviewTab({ stats, chartBars, maxBar, activity, jobs, timeAgo, format
 }) {
   const statCards = [
     { label: "Total Posts", value: stats.totalPosts, color: AMBER, rgb: AMBER_RGB },
-    { label: "Active Posts", value: stats.activePosts, color: "#3B82F6", rgb: "59,130,246" },
-    { label: "Applications", value: stats.applications, color: "#A78BFA", rgb: "167,139,250" },
+    { label: "Active Posts", value: stats.activePosts, color: TEAL, rgb: TEAL_RGB },
+    { label: "Applications", value: stats.applications, color: BLUE, rgb: BLUE_RGB },
     { label: "Profile Views", value: stats.profileViews, color: "#F59E0B", rgb: "245,158,11" },
   ];
+  const isPremium = isPremiumOrganization(org);
+  const planEndLabel = formatSubscriptionEnd(org?.subscriptionEnd);
 
   return (
     <>
@@ -753,10 +798,81 @@ function OverviewTab({ stats, chartBars, maxBar, activity, jobs, timeAgo, format
         ))}
       </div>
 
+      {isPremium && (
+        <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-4 mb-4">
+          <DashCard accent="gold">
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div>
+                <div className="text-[11px] font-extrabold uppercase tracking-[0.18em] mb-2" style={{ color: "#F59E0B" }}>
+                  Premium Visibility
+                </div>
+                <h3 className="m-0 text-xl font-black" style={{ color: "var(--text, #f8fafc)" }}>
+                  Featured employer placement is active
+                </h3>
+              </div>
+              <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-extrabold uppercase" style={{
+                background: "rgba(217,119,6,0.14)",
+                color: "#F59E0B",
+                border: "1px solid rgba(217,119,6,0.3)",
+              }}>
+                Premium
+              </span>
+            </div>
+            {[
+              "Directory highlight active",
+              "Verified trust badge visible",
+              "Priority partner placement",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3 py-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-black" style={{
+                  background: "rgba(20,184,166,0.16)",
+                  color: TEAL,
+                }}>✓</span>
+                <span className="text-sm font-semibold" style={{ color: "var(--text-sec, #cbd5e1)" }}>{item}</span>
+              </div>
+            ))}
+            <div className="mt-5 rounded-xl p-4" style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span style={{ color: "var(--text-muted, #94a3b8)" }}>Visibility status</span>
+                <span className="font-bold" style={{ color: TEAL }}>Active</span>
+              </div>
+              {planEndLabel && (
+                <p className="m-0 mt-2 text-xs" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                  Premium package active through {planEndLabel}.
+                </p>
+              )}
+            </div>
+          </DashCard>
+          <DashCard>
+            <div className="flex items-center justify-between mb-5">
+              <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Profile Views — 30 Days</span>
+              <span className="px-3 py-1 rounded-lg text-[11px] font-semibold" style={{ background: "rgba(20,184,166,0.12)", color: TEAL }}>
+                {stats.profileViews > 0 ? `${stats.profileViews} total` : "No data yet"}
+              </span>
+            </div>
+            <div className="relative h-[180px] flex items-end gap-1.5">
+              {chartBars.map((val, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-t-md transition-all duration-300 hover:brightness-125 cursor-pointer min-h-[4px]"
+                  style={{
+                    height: String((val / maxBar) * 100) + "%",
+                    background: i % 4 === 0
+                      ? "linear-gradient(to top, #D97706, rgba(217,119,6,0.15))"
+                      : "linear-gradient(to top, #14B8A6, rgba(20,184,166,0.15))",
+                  }}
+                  title={`${val} views`}
+                />
+              ))}
+            </div>
+          </DashCard>
+        </div>
+      )}
+
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         {/* Profile Views Chart */}
-        <DashCard>
+        {!isPremium && <DashCard>
           <div className="flex items-center justify-between mb-5">
             <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Profile Views — 30 Days</span>
             <span className="px-3 py-1 rounded-lg text-[11px] font-semibold" style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER }}>
@@ -772,13 +888,13 @@ function OverviewTab({ stats, chartBars, maxBar, activity, jobs, timeAgo, format
                   height: `${(val / maxBar) * 100}%`,
                   background: i % 3 === 0
                     ? `linear-gradient(to top, ${AMBER}, rgba(${AMBER_RGB},0.15))`
-                    : `linear-gradient(to top, #3B82F6, rgba(59,130,246,0.15))`,
+                    : `linear-gradient(to top, ${TEAL}, rgba(${TEAL_RGB},0.15))`,
                 }}
                 title={`${val} views`}
               />
             ))}
           </div>
-        </DashCard>
+        </DashCard>}
 
         {/* Recent Activity */}
         <DashCard>
@@ -3009,10 +3125,16 @@ function PlaceholderTab({ title, desc, icon }: { title: string; desc: string; ic
    SHARED COMPONENTS
    ═══════════════════════════════════════════════════════════ */
 
-function DashCard({ children }: { children: React.ReactNode }) {
+function DashCard({ children, accent }: { children: React.ReactNode; accent?: "gold" | "teal" }) {
   return (
     <div className="relative p-7 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg" style={{
-      background: "var(--card, #0D1224)", border: "1px solid var(--border, rgba(30,41,59,0.6))",
+      background: "var(--card, #0D1224)",
+      border: accent === "gold"
+        ? "1px solid rgba(217,119,6,0.35)"
+        : accent === "teal"
+          ? "1px solid rgba(20,184,166,0.28)"
+          : "1px solid var(--border, rgba(30,41,59,0.6))",
+      boxShadow: accent === "gold" ? "0 20px 38px -32px rgba(217,119,6,0.55)" : undefined,
     }}>
       {children}
     </div>

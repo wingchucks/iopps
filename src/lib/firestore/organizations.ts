@@ -63,6 +63,10 @@ export interface Organization {
   updatedAt?: unknown;
   onboardingComplete?: boolean;
   plan?: string | null;
+  subscriptionTier?: "standard" | "premium" | "school" | string;
+  subscriptionStatus?: string;
+  subscriptionEnd?: string;
+  billingStartAt?: string;
   isPublished?: boolean;
   publicationStatus?: "DRAFT" | "PUBLISHED" | "PENDING_APPROVAL" | "REJECTED" | "SUSPENDED";
   directoryVisible?: boolean;
