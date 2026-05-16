@@ -10,7 +10,8 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
+const FROM_EMAIL = "IOPPS Updates <notifications@iopps.ca>";
+const REPLY_TO_EMAIL = "Nathan Arias <nathan.arias@iopps.ca>";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.iopps.ca";
 
 function generateUnsubToken(uid: string): string {
@@ -21,6 +22,38 @@ function personalizeHtml(html: string, uid: string): string {
   const token = generateUnsubToken(uid);
   const unsubUrl = `${SITE_URL}/api/unsubscribe?uid=${uid}&token=${token}`;
   return html.replace(/UNSUBSCRIBE_URL/g, unsubUrl);
+}
+
+function unsubscribeUrl(uid: string): string {
+  const token = generateUnsubToken(uid);
+  return `${SITE_URL}/api/unsubscribe?uid=${encodeURIComponent(uid)}&token=${token}`;
+}
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/h[1-6]>/gi, "\n\n")
+    .replace(/<li>/gi, "- ")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&mdash;/g, "-")
+    .replace(/&middot;/g, "-")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function campaignHeaders(campaignId: string, uid: string): Record<string, string> {
+  const unsubUrl = unsubscribeUrl(uid);
+  return {
+    "List-Unsubscribe": `<${unsubUrl}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    "X-Entity-Ref-ID": `campaign-${campaignId}-${uid}`,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -127,11 +160,15 @@ export async function POST(request: NextRequest) {
       }
 
       try {
+        const testUid = admin?.uid || "test";
         await resend.emails.send({
           from: FROM_EMAIL,
           to: toEmail,
+          replyTo: REPLY_TO_EMAIL,
           subject: `[TEST] ${subject}`,
           html,
+          text: htmlToText(html.replace(/UNSUBSCRIBE_URL/g, unsubscribeUrl(testUid))),
+          headers: campaignHeaders("test", testUid),
         });
       } catch (err) {
         console.error("[newsletter] Test send failed:", err);
@@ -227,8 +264,11 @@ export async function POST(request: NextRequest) {
       const batchPayload = batch.map(({ email, uid }) => ({
         from: FROM_EMAIL,
         to: email,
+        replyTo: REPLY_TO_EMAIL,
         subject,
         html: personalizeHtml(html, uid),
+        text: htmlToText(personalizeHtml(html, uid)),
+        headers: campaignHeaders(campaignRef.id, uid),
       }));
 
       try {

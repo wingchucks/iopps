@@ -12,6 +12,14 @@ function generateToken(uid: string): string {
 }
 
 export async function GET(request: NextRequest) {
+  return unsubscribe(request);
+}
+
+export async function POST(request: NextRequest) {
+  return unsubscribe(request);
+}
+
+async function unsubscribe(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const uid = searchParams.get("uid");
   const token = searchParams.get("token");

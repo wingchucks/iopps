@@ -6,7 +6,8 @@ import { Resend } from "resend";
 export const runtime = "nodejs";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
+const FROM_EMAIL = "IOPPS Updates <notifications@iopps.ca>";
+const REPLY_TO_EMAIL = "Nathan Arias <nathan.arias@iopps.ca>";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.iopps.ca";
 
 function generateUnsubToken(uid: string): string {
@@ -19,7 +20,39 @@ function personalizeHtml(html: string, uid: string): string {
   return html.replace(/UNSUBSCRIBE_URL/g, unsubUrl);
 }
 
-function buildHtml(body: string, subject: string): string {
+function unsubscribeUrl(uid: string): string {
+  const token = generateUnsubToken(uid);
+  return `${SITE_URL}/api/unsubscribe?uid=${encodeURIComponent(uid)}&token=${token}`;
+}
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/h[1-6]>/gi, "\n\n")
+    .replace(/<li>/gi, "- ")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&mdash;/g, "-")
+    .replace(/&middot;/g, "-")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function campaignHeaders(campaignId: string, uid: string): Record<string, string> {
+  const unsubUrl = unsubscribeUrl(uid);
+  return {
+    "List-Unsubscribe": `<${unsubUrl}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    "X-Entity-Ref-ID": `campaign-${campaignId}-${uid}`,
+  };
+}
+
+function buildHtml(body: string): string {
   const year = new Date().getFullYear();
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:20px;background:#f3f4f6;">
@@ -78,12 +111,20 @@ export async function GET(request: NextRequest) {
       continue;
     }
 
-    const html = buildHtml(emailBody || "", subject);
+    const html = buildHtml(emailBody || "");
     const BATCH_SIZE = 50;
     let sent = 0;
 
     for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-      const batch = recipients.slice(i, i + BATCH_SIZE).map(({ email, uid }) => ({ from: FROM_EMAIL, to: email, subject, html: personalizeHtml(html, uid) }));
+      const batch = recipients.slice(i, i + BATCH_SIZE).map(({ email, uid }) => ({
+        from: FROM_EMAIL,
+        to: email,
+        replyTo: REPLY_TO_EMAIL,
+        subject,
+        html: personalizeHtml(html, uid),
+        text: htmlToText(personalizeHtml(html, uid)),
+        headers: campaignHeaders(doc.id, uid),
+      }));
       try { await resend.batch.send(batch); sent += batch.length; } catch { /* continue */ }
       if (i + BATCH_SIZE < recipients.length) await new Promise(r => setTimeout(r, 500));
     }

@@ -5,9 +5,26 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
+const FROM_EMAIL = "IOPPS Notifications <notifications@iopps.ca>";
 const ADMIN_EMAIL = "nathan.arias@iopps.ca";
+const REPLY_TO_EMAIL = "Nathan Arias <nathan.arias@iopps.ca>";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.iopps.ca";
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function deliveryHeaders(entityRef: string): Record<string, string> {
+  return {
+    "Auto-Submitted": "auto-generated",
+    "X-Entity-Ref-ID": entityRef,
+  };
+}
 
 // ── Shared styles ──────────────────────────────────────────────
 const STYLES = {
@@ -59,15 +76,18 @@ export async function sendApplicationNotification(opts: {
   orgId: string;
 }): Promise<{ success: boolean; error?: string }> {
   if (!resend) return { success: false, error: "Email not configured (RESEND_API_KEY missing)" };
+  const employerName = escapeHtml(opts.employerName);
+  const applicantName = escapeHtml(opts.applicantName);
+  const jobTitle = escapeHtml(opts.jobTitle);
 
   const html = emailWrapper(`
-    <h2 style="${STYLES.h2}">New Application Received! 🎉</h2>
+    <h2 style="${STYLES.h2}">New application received</h2>
     <p style="${STYLES.text}">
-      <strong>${opts.applicantName}</strong> has applied for
-      <strong>${opts.jobTitle}</strong> at ${opts.employerName}.
+      <strong>${applicantName}</strong> has applied for
+      <strong>${jobTitle}</strong> at ${employerName}.
     </p>
     <p style="${STYLES.text}">
-      Review their application and respond promptly — great candidates move fast.
+      You can review the application in your IOPPS employer dashboard.
     </p>
     <div style="text-align:center;margin:28px 0;">
       <a href="${SITE_URL}/org/dashboard/applications" style="${STYLES.button}">
@@ -79,13 +99,25 @@ export async function sendApplicationNotification(opts: {
       You received this email because someone applied to a job posted on IOPPS.ca.
     </p>
   `);
+  const text = [
+    "New application received",
+    "",
+    `${opts.applicantName} has applied for ${opts.jobTitle} at ${opts.employerName}.`,
+    "Review the application in your IOPPS employer dashboard:",
+    `${SITE_URL}/org/dashboard/applications`,
+    "",
+    "You received this email because someone applied to a job posted on IOPPS.ca.",
+  ].join("\n");
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to: opts.employerEmail,
-      subject: `New application: ${opts.applicantName} applied for ${opts.jobTitle}`,
+      replyTo: REPLY_TO_EMAIL,
+      subject: `New application for ${opts.jobTitle}`,
       html,
+      text,
+      headers: deliveryHeaders(`application-${opts.orgId}-${opts.jobId}`),
     });
     return { success: true };
   } catch (err) {
@@ -101,6 +133,8 @@ export async function sendEmployerWelcome(opts: {
   verificationLink?: string | null;
 }): Promise<{ success: boolean; error?: string }> {
   if (!resend) return { success: false, error: "Email not configured" };
+  const contactName = escapeHtml(opts.contactName);
+  const orgName = escapeHtml(opts.orgName);
 
   const confirmationBlock = opts.verificationLink
     ? `
@@ -114,9 +148,9 @@ export async function sendEmployerWelcome(opts: {
     : "";
 
   const html = emailWrapper(`
-    <h2 style="${STYLES.h2}">Welcome to IOPPS, ${opts.contactName}! 👋</h2>
+    <h2 style="${STYLES.h2}">Welcome to IOPPS, ${contactName}</h2>
     <p style="${STYLES.text}">
-      <strong>${opts.orgName}</strong> is now registered on IOPPS.ca — Canada's
+      <strong>${orgName}</strong> is now registered on IOPPS.ca, Canada's
       Indigenous careers, events, and community platform.
     </p>
     ${confirmationBlock}
@@ -136,13 +170,25 @@ export async function sendEmployerWelcome(opts: {
       Questions? Reply to this email or contact us at hello@iopps.ca
     </p>
   `);
+  const text = [
+    `Welcome to IOPPS, ${opts.contactName}`,
+    "",
+    `${opts.orgName} is now registered on IOPPS.ca, Canada's Indigenous careers, events, and community platform.`,
+    opts.verificationLink ? `Confirm your email: ${opts.verificationLink}` : "",
+    `Complete your profile: ${SITE_URL}/org/onboarding`,
+    "",
+    "Questions? Reply to this email or contact hello@iopps.ca.",
+  ].filter(Boolean).join("\n");
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to: opts.email,
-      subject: `Welcome to IOPPS — ${opts.orgName} is registered!`,
+      replyTo: REPLY_TO_EMAIL,
+      subject: `Welcome to IOPPS: ${opts.orgName}`,
       html,
+      text,
+      headers: deliveryHeaders(`employer-welcome-${opts.email}`),
     });
     return { success: true };
   } catch (err) {
@@ -162,13 +208,25 @@ export async function sendAccountVerificationEmail(opts: {
     displayName: opts.displayName,
     verificationLink: opts.verificationLink,
   }));
+  const text = [
+    `Confirm your IOPPS account`,
+    "",
+    opts.displayName ? `Hello ${opts.displayName},` : "Hello,",
+    "Please confirm this email address to finish setting up your IOPPS account.",
+    opts.verificationLink,
+    "",
+    "If you did not request this email, you can ignore it.",
+  ].join("\n");
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to: opts.email,
+      replyTo: REPLY_TO_EMAIL,
       subject: "Confirm your IOPPS account",
       html,
+      text,
+      headers: deliveryHeaders(`account-verification-${opts.email}`),
     });
     return { success: true };
   } catch (err) {
@@ -189,18 +247,21 @@ export async function sendAdminNewSignup(opts: {
   const typeLabel = opts.type === "community" ? "Community Member" : opts.type === "employer" ? "New Employer" : "Employer Upgrade";
   const typeColor = opts.type === "community" ? "#0D9488" : opts.type === "employer" ? "#7C3AED" : "#D97706";
   const subject = opts.type === "community"
-    ? `🙋 New Member: ${opts.name}`
+    ? `New member: ${opts.name}`
     : opts.type === "employer"
-    ? `🏢 New Employer: ${opts.orgName || opts.name}`
-    : `⬆️ Upgrade: ${opts.orgName || opts.name}`;
+    ? `New employer: ${opts.orgName || opts.name}`
+    : `Employer upgrade: ${opts.orgName || opts.name}`;
+  const name = escapeHtml(opts.name);
+  const email = escapeHtml(opts.email);
+  const orgName = opts.orgName ? escapeHtml(opts.orgName) : "";
 
   const html = emailWrapper(`
     <div style="background:${typeColor};color:#fff;display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:16px;">${typeLabel.toUpperCase()}</div>
     <h2 style="${STYLES.h2}">New Signup on IOPPS.ca</h2>
     <table style="width:100%;border-collapse:collapse;font-size:14px;color:#374151;margin-bottom:24px;">
-      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;width:40%;">Name</td><td style="padding:10px 0;font-weight:600;">${opts.name}</td></tr>
-      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Email</td><td style="padding:10px 0;">${opts.email}</td></tr>
-      ${opts.orgName ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Organization</td><td style="padding:10px 0;font-weight:600;">${opts.orgName}</td></tr>` : ""}
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;width:40%;">Name</td><td style="padding:10px 0;font-weight:600;">${name}</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Email</td><td style="padding:10px 0;">${email}</td></tr>
+      ${opts.orgName ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Organization</td><td style="padding:10px 0;font-weight:600;">${orgName}</td></tr>` : ""}
       <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Type</td><td style="padding:10px 0;">${typeLabel}</td></tr>
       <tr><td style="padding:10px 0;color:#9ca3af;">Time</td><td style="padding:10px 0;">${new Date().toLocaleString("en-CA", { timeZone: "America/Regina" })} CST</td></tr>
     </table>
@@ -208,13 +269,25 @@ export async function sendAdminNewSignup(opts: {
       <a href="${SITE_URL}/admin/users" style="${STYLES.button}">View in Admin</a>
     </div>
   `);
+  const text = [
+    "New signup on IOPPS.ca",
+    "",
+    `Name: ${opts.name}`,
+    `Email: ${opts.email}`,
+    opts.orgName ? `Organization: ${opts.orgName}` : "",
+    `Type: ${typeLabel}`,
+    `Admin: ${SITE_URL}/admin/users`,
+  ].filter(Boolean).join("\n");
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to: ADMIN_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       subject,
       html,
+      text,
+      headers: deliveryHeaders(`admin-signup-${opts.uid || opts.email}`),
     });
   } catch (err) {
     console.error("[email] Admin signup notification failed:", err);
@@ -232,11 +305,14 @@ export async function sendSubscriptionConfirmation(opts: {
   if (!resend) return { success: false, error: "Email not configured" };
 
   const total = opts.amount + opts.gst;
+  const contactName = escapeHtml(opts.contactName);
+  const orgName = escapeHtml(opts.orgName);
+  const planName = escapeHtml(opts.planName);
   const html = emailWrapper(`
-    <h2 style="${STYLES.h2}">Payment Confirmed ✅</h2>
+    <h2 style="${STYLES.h2}">Payment confirmed</h2>
     <p style="${STYLES.text}">
-      Thank you, ${opts.contactName}! Your <strong>${opts.planName}</strong> plan
-      for <strong>${opts.orgName}</strong> is now active.
+      Thank you, ${contactName}. Your <strong>${planName}</strong> plan
+      for <strong>${orgName}</strong> is now active.
     </p>
     <div style="background:#f9fafb;border-radius:12px;padding:20px;margin:20px 0;">
       <table style="width:100%;font-size:14px;color:#374151;">
@@ -256,13 +332,25 @@ export async function sendSubscriptionConfirmation(opts: {
       Your plan renews in 12 months. We'll send a reminder before renewal.
     </p>
   `);
+  const text = [
+    "IOPPS payment confirmed",
+    "",
+    `Thank you, ${opts.contactName}. Your ${opts.planName} plan for ${opts.orgName} is now active.`,
+    `Amount: $${opts.amount.toFixed(2)} CAD`,
+    `GST: $${opts.gst.toFixed(2)} CAD`,
+    `Total: $${total.toFixed(2)} CAD`,
+    `Dashboard: ${SITE_URL}/org/dashboard`,
+  ].join("\n");
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to: opts.email,
-      subject: `IOPPS Payment Confirmed — ${opts.planName} Plan Active`,
+      replyTo: REPLY_TO_EMAIL,
+      subject: `IOPPS payment confirmed: ${opts.planName} plan`,
       html,
+      text,
+      headers: deliveryHeaders(`subscription-confirmation-${opts.email}`),
     });
     return { success: true };
   } catch (err) {
