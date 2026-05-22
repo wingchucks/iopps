@@ -9,6 +9,15 @@ const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
 const ADMIN_EMAIL = "nathan.arias@iopps.ca";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.iopps.ca";
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // ── Shared styles ──────────────────────────────────────────────
 const STYLES = {
   container: "max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;",
@@ -218,6 +227,55 @@ export async function sendAdminNewSignup(opts: {
     });
   } catch (err) {
     console.error("[email] Admin signup notification failed:", err);
+  }
+}
+
+export async function sendAdminContentPosted(opts: {
+  contentType: "job" | "event" | "scholarship" | "community post";
+  title: string;
+  status?: string;
+  authorName?: string | null;
+  authorEmail?: string | null;
+  orgName?: string | null;
+  urlPath?: string | null;
+  id?: string | null;
+}): Promise<void> {
+  if (!resend) return;
+
+  const title = escapeHtml(opts.title || "Untitled");
+  const contentType = escapeHtml(opts.contentType);
+  const status = escapeHtml(opts.status || "active");
+  const authorName = escapeHtml(opts.authorName || "Unknown");
+  const authorEmail = escapeHtml(opts.authorEmail || "");
+  const orgName = escapeHtml(opts.orgName || "");
+  const id = escapeHtml(opts.id || "");
+  const url = opts.urlPath ? `${SITE_URL}${opts.urlPath}` : null;
+  const subjectPrefix = opts.status === "draft" ? "New draft" : "New post";
+
+  const html = emailWrapper(`
+    <div style="background:#0D9488;color:#fff;display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:16px;">${contentType.toUpperCase()}</div>
+    <h2 style="${STYLES.h2}">New Content Posted on IOPPS.ca</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;color:#374151;margin-bottom:24px;">
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;width:40%;">Title</td><td style="padding:10px 0;font-weight:600;">${title}</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Type</td><td style="padding:10px 0;">${contentType}</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Status</td><td style="padding:10px 0;">${status}</td></tr>
+      ${orgName ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Organization</td><td style="padding:10px 0;">${orgName}</td></tr>` : ""}
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Author</td><td style="padding:10px 0;">${authorName}${authorEmail ? ` &lt;${authorEmail}&gt;` : ""}</td></tr>
+      ${id ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">ID</td><td style="padding:10px 0;">${id}</td></tr>` : ""}
+      <tr><td style="padding:10px 0;color:#9ca3af;">Time</td><td style="padding:10px 0;">${new Date().toLocaleString("en-CA", { timeZone: "America/Regina" })} CST</td></tr>
+    </table>
+    ${url ? `<div style="text-align:center;margin:20px 0;"><a href="${escapeHtml(url)}" style="${STYLES.button}">Open on IOPPS</a></div>` : ""}
+  `);
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: ADMIN_EMAIL,
+      subject: `${subjectPrefix}: ${opts.contentType} - ${opts.title || "Untitled"}`,
+      html,
+    });
+  } catch (err) {
+    console.error("[email] Admin content notification failed:", err);
   }
 }
 

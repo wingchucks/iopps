@@ -40,23 +40,45 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const data = await req.json();
+    const signupRole = data.signupRole;
     // Strip dangerous fields
     delete data.role;
     delete data.uid;
     delete data.email;
+    delete data.signupRole;
+    delete data.adminSignupNotifiedAt;
 
     const db = getAdminDb();
     const isNew = data.onboardingComplete === true;
-    await db.collection("users").doc(uid).set(
-      { ...data, updatedAt: new Date().toISOString() },
+    const userRef = db.collection("users").doc(uid);
+    const existingUser = await userRef.get();
+    const existingData = existingUser.data() ?? {};
+    const shouldNotifyCommunitySignup =
+      (signupRole === "community" || isNew) &&
+      existingData.adminSignupNotifiedAt == null;
+
+    let authUser: Awaited<ReturnType<ReturnType<typeof getAuth>["getUser"]>> | null = null;
+    if (shouldNotifyCommunitySignup) {
+      authUser = await getAuth(getApps()[0]).getUser(uid);
+    }
+
+    await userRef.set(
+      {
+        ...data,
+        ...(shouldNotifyCommunitySignup ? { adminSignupNotifiedAt: new Date().toISOString() } : {}),
+        updatedAt: new Date().toISOString(),
+      },
       { merge: true }
     );
     // Notify admin when a community member completes onboarding
-    if (isNew && data.displayName) {
-      const authUser = await getAuth(getApps()[0]).getUser(uid);
+    if (shouldNotifyCommunitySignup) {
+      const displayName =
+        typeof data.displayName === "string" && data.displayName.trim()
+          ? data.displayName.trim()
+          : authUser?.displayName || authUser?.email?.split("@")[0] || "Community Member";
       sendAdminNewSignup({
-        name: data.displayName,
-        email: authUser.email || "",
+        name: displayName,
+        email: authUser?.email || "",
         type: "community",
         uid,
       }).catch(() => {});
