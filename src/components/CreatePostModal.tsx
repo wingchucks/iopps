@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
-import { createMemberPost } from "@/lib/firestore/posts";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import Avatar from "@/components/Avatar";
@@ -68,15 +67,23 @@ export default function CreatePostModal({
         featuredImage = await getDownloadURL(storageRef);
       }
 
-      await createMemberPost({
-        title: title.trim() || content.trim().slice(0, 60),
-        description: content.trim(),
-        type: "story",
-        authorUid: user.uid,
-        authorName: user.displayName || "Community Member",
-        authorPhoto: user.photoURL || undefined,
-        featuredImage,
+      const token = await user.getIdToken();
+      const response = await fetch("/api/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: title.trim() || content.trim().slice(0, 60),
+          description: content.trim(),
+          type: "story",
+          featuredImage,
+        }),
       });
+      if (!response.ok) {
+        throw new Error("Failed to create post");
+      }
 
       showToast("Post shared successfully!");
       setContent("");

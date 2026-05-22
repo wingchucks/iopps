@@ -11,6 +11,7 @@ import {
   evaluateFeaturedActivation,
 } from "@/lib/server/featured-job-entitlements";
 import { isSchoolOrganization } from "@/lib/school-visibility";
+import { sendAdminContentPosted } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -315,6 +316,19 @@ export async function POST(req: NextRequest) {
         featuredJobsUsed: activeFeaturedCount + (featured && status === "active" ? 1 : 0),
         featuredPostCredits: (Number(employerData.featuredPostCredits ?? 0) || 0) - (decision.consumeCredit ? 1 : 0),
       });
+    });
+
+    sendAdminContentPosted({
+      contentType: "job",
+      title,
+      status,
+      orgName: (context.organizationData.name as string) || (context.employerData.name as string) || (context.employerData.orgName as string) || null,
+      authorName: (context.userData.displayName as string) || (context.memberData.displayName as string) || null,
+      authorEmail: (context.userData.email as string) || (context.memberData.email as string) || (context.employerData.contactEmail as string) || null,
+      id: baseSlug,
+      urlPath: status === "active" ? `/jobs/${baseSlug}` : `/org/dashboard/jobs/${baseSlug}/edit`,
+    }).catch((error) => {
+      console.error("[api/employer/jobs][POST] Admin content email failed:", error);
     });
 
     return NextResponse.json({

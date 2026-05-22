@@ -5,6 +5,7 @@ import {
   requireEmployerContext,
   requireEmployerPublishingContext,
 } from "@/lib/server/employer-auth";
+import { sendAdminContentPosted } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   try {
@@ -55,6 +56,18 @@ export async function POST(req: NextRequest) {
     };
 
     const ref = await db.collection("scholarships").add(data);
+    sendAdminContentPosted({
+      contentType: "scholarship",
+      title: String(data.title || "Untitled scholarship"),
+      status: "active",
+      orgName: String(data.organization || ""),
+      authorName: (employer.userData.displayName as string) || (employer.memberData.displayName as string) || null,
+      authorEmail: (employer.userData.email as string) || (employer.memberData.email as string) || (employer.employerData.contactEmail as string) || null,
+      id: ref.id,
+      urlPath: "/scholarships",
+    }).catch((error) => {
+      console.error("[api/employer/scholarships][POST] Admin content email failed:", error);
+    });
     return NextResponse.json({ id: ref.id, ...data }, { status: 201 });
   } catch (error) {
     const status = error instanceof EmployerApiError ? error.status : 500;
