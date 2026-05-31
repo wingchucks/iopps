@@ -6,6 +6,7 @@ import { ToastProvider } from "@/lib/toast-context";
 import { OnboardingProvider } from "@/lib/onboarding-context";
 import AuthErrorBoundary from "@/components/AuthErrorBoundary";
 import SessionManager from "@/components/SessionManager";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -82,6 +83,7 @@ export default function RootLayout({
               <OnboardingProvider>
                 <AuthErrorBoundary>
                   <SessionManager />
+                  <AnalyticsTracker />
                   <div id="main-content">
                     {children}
                   </div>
