@@ -6,6 +6,18 @@ export const dynamic = "force-dynamic";
 
 type CounterMap = Record<string, number>;
 
+function normalizeSecret(value: string | null | undefined): string {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+}
+
 function dateKeyForRegina(date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Regina",
@@ -44,8 +56,10 @@ function formatTop(items: AnalyticsSummaryMetric[], fallback: string): string {
 }
 
 export async function GET(request: NextRequest) {
-  const configuredSecret = process.env.IOPPS_ANALYTICS_CRON_SECRET;
-  const providedSecret = request.headers.get("x-cron-secret") || request.nextUrl.searchParams.get("secret");
+  const configuredSecret = normalizeSecret(process.env.IOPPS_ANALYTICS_CRON_SECRET);
+  const providedSecret = normalizeSecret(
+    request.headers.get("x-cron-secret") || request.nextUrl.searchParams.get("secret"),
+  );
 
   if (!configuredSecret || providedSecret !== configuredSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
