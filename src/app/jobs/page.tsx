@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
@@ -73,6 +73,15 @@ export default function JobsPage() {
   const [salaryMin, setSalaryMin] = useState("");
   const [salaryMax, setSalaryMax] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const submitSearch = (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   useEffect(() => {
     async function load() {
@@ -225,8 +234,10 @@ export default function JobsPage() {
         </section>
 
         <div className="mx-auto max-w-[1100px] px-4 py-6 md:px-8">
-          <div
-            className="mb-4 flex items-center gap-3 rounded-[20px] px-5 py-4 shadow-sm transition-colors"
+          <form
+            onSubmit={submitSearch}
+            className="mb-4 flex items-center gap-3 rounded-[20px] px-4 py-3 shadow-sm transition-colors sm:px-5 sm:py-4"
+            role="search"
             style={{
               ...inputSurfaceStyle,
               border: "1px solid color-mix(in srgb, var(--teal) 16%, var(--border))",
@@ -234,27 +245,47 @@ export default function JobsPage() {
           >
             <span className="text-xl text-[#0D9488]">&#128269;</span>
             <input
-              type="text"
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search job titles, employers, locations..."
-              className="flex-1 border-none bg-transparent text-base text-text outline-none placeholder:text-text-muted"
+              className="min-w-0 flex-1 border-none bg-transparent text-base text-text outline-none placeholder:text-text-muted"
+              aria-label="Search jobs"
             />
             {search && (
               <button
+                type="button"
                 onClick={() => setSearch("")}
-                className="cursor-pointer border-none bg-transparent text-lg text-text-muted"
+                className="cursor-pointer border-none bg-transparent px-1 text-lg text-text-muted"
+                aria-label="Clear job search"
               >
                 &#10005;
               </button>
             )}
-          </div>
+            <button
+              type="submit"
+              className="shrink-0 cursor-pointer rounded-full border-none px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+              style={{ background: "var(--teal)" }}
+            >
+              Search
+            </button>
+          </form>
 
           <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <input
-              type="text"
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submitSearch();
+                }
+              }}
               placeholder="City or province..."
               className="rounded-xl px-4 py-3 text-sm text-text outline-none placeholder:text-text-muted transition-colors"
               style={inputSurfaceStyle}
@@ -449,7 +480,7 @@ export default function JobsPage() {
             </section>
           )}
 
-          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div ref={resultsRef} className="mb-4 scroll-mt-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-2xl font-semibold text-text">
                 {hasActiveFilters ? "Matching jobs" : "Latest jobs"}
