@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { adminDb } from "@/lib/firebase-admin";
+import { verifyAuthToken } from "@/lib/api-auth";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS, type BillingPlanId } from "@/lib/pricing";
 
 export const runtime = "nodejs";
@@ -28,6 +30,15 @@ function getStripe(): Stripe | null {
   return new Stripe(key);
 }
 
+async function callerOwnsOrg(uid: string, orgId: string): Promise<boolean> {
+  if (uid === orgId) return true;
+  if (!adminDb) return false;
+  const memberSnap = await adminDb.collection("members").doc(uid).get();
+  if (!memberSnap.exists) return false;
+  const data = memberSnap.data() ?? {};
+  return data.orgId === orgId && (data.orgRole === "owner" || data.orgRole === "admin");
+}
+
 export async function POST(req: NextRequest) {
   const stripe = getStripe();
   if (!stripe) {
@@ -36,6 +47,10 @@ export async function POST(req: NextRequest) {
       { status: 503 }
     );
   }
+
+  const authResult = await verifyAuthToken(req);
+  if (!authResult.success) return authResult.response;
+  const uid = authResult.decodedToken.uid;
 
   try {
     const body = await req.json();
@@ -53,6 +68,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: `Unknown plan: ${planId}` },
         { status: 400 }
+      );
+    }
+
+    if (!(await callerOwnsOrg(uid, orgId))) {
+      return NextResponse.json(
+        { error: "Not authorized to purchase for this organization" },
+        { status: 403 }
       );
     }
 
@@ -83,8 +105,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         orgId,
         planId,
-        amount: String(plan.amount),
-        gstAmount: String(gstAmount),
+        purchaserUid: uid,
       },
       success_url: `${origin}/org/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan=${planId}`,
       cancel_url: `${origin}/org/checkout/cancel?plan=${planId}`,

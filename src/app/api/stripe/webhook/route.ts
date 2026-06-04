@@ -55,10 +55,19 @@ export async function POST(req: NextRequest) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const { orgId, planId, amount, gstAmount } = session.metadata ?? {};
+    const { orgId, planId, purchaserUid } = session.metadata ?? {};
 
     if (!orgId || !planId) {
       console.error("[stripe/webhook] Missing metadata — orgId:", orgId, "planId:", planId);
+      return NextResponse.json({ received: true });
+    }
+
+    const tier = PLAN_TO_TIER[planId];
+    const isSubscription = !!tier;
+    const isOneTimePost = ONE_TIME_POSTS.has(planId);
+
+    if (!isSubscription && !isOneTimePost) {
+      console.error("[stripe/webhook] Unknown planId in metadata:", planId);
       return NextResponse.json({ received: true });
     }
 
@@ -66,21 +75,25 @@ export async function POST(req: NextRequest) {
       const db = getAdminDb();
       const now = new Date();
       const expiresAt = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
-      const tier = PLAN_TO_TIER[planId];
-      const isSubscription = !!tier;
-      const isOneTimePost = ONE_TIME_POSTS.has(planId);
+
+      // Derive prices from session.amount_total (trusted, Stripe-signed) rather
+      // than metadata, which was client-supplied at checkout creation.
+      const totalAmount = session.amount_total ? session.amount_total / 100 : 0;
+      const preGstAmount = Math.round((totalAmount / 1.05) * 100) / 100;
+      const gstAmount = Math.round((totalAmount - preGstAmount) * 100) / 100;
 
       // 1. Record subscription/purchase
       await db.collection("subscriptions").add({
         orgId,
         plan: planId,
         status: "active",
-        amount: amount ? Number(amount) / 100 : 0,
-        gstAmount: gstAmount ? Number(gstAmount) / 100 : 0,
-        totalAmount: session.amount_total ? session.amount_total / 100 : 0,
+        amount: preGstAmount,
+        gstAmount,
+        totalAmount,
         billingCycle: isSubscription ? "annual" : "one-time",
         stripeSessionId: session.id,
         stripePaymentIntent: session.payment_intent,
+        purchaserUid: purchaserUid ?? null,
         kind: isSubscription ? "subscription" : "purchase",
         createdAt: now,
         expiresAt: isSubscription ? expiresAt : null,
@@ -129,8 +142,8 @@ export async function POST(req: NextRequest) {
             contactName: empContact,
             orgName: empName,
             planName: planNames[tier] || tier,
-            amount: amount ? Number(amount) / 100 : 0,
-            gst: gstAmount ? Number(gstAmount) / 100 : 0,
+            amount: preGstAmount,
+            gst: gstAmount,
           }).catch(() => {});
         }
       } else if (isOneTimePost) {
