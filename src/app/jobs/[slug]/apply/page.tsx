@@ -157,6 +157,8 @@ function ApplyWizard() {
       const now = Timestamp.now();
       await setDoc(doc(db, "applications", docId), {
         userId: user.uid,
+        applicantName: user.displayName || user.email || "A candidate",
+        applicantEmail: user.email || "",
         postId: post.id,
         postTitle: post.title,
         orgName: post.orgName || "",
@@ -184,8 +186,8 @@ function ApplyWizard() {
             applicantUid: user.uid,
             postId: post.id,
             postTitle: post.title,
-            orgId: post.orgId || "",
-            employerId: post.employerId || "",
+            orgId: post.orgId || post.employerId || "",
+            employerId: post.employerId || post.orgId || "",
           }),
         });
 
