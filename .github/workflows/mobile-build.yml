@@ -23,7 +23,7 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
 
       - name: Setup Expo
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@v9
         with:
           expo-version: latest
           eas-version: latest
@@ -81,7 +81,7 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
 
       - name: Setup Expo
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@v9
         with:
           expo-version: latest
           eas-version: latest
