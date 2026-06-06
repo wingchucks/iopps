@@ -143,6 +143,10 @@ async function enrichVideos(
   }));
 }
 
+function isCurrentlyLive(video?: YTVideo): video is YTVideo {
+  return !!video && video.liveBroadcastContent === "live";
+}
+
 export async function GET() {
   try {
     const apiKey = process.env.YOUTUBE_API_KEY?.replace(/\\n/g, "").trim();
@@ -213,16 +217,15 @@ export async function GET() {
 
     const liveFromApi = liveIds
       .map((id) => byId.get(id))
-      .find((video): video is YTVideo =>
-        !!video &&
-        video.liveBroadcastContent !== "none" &&
-        !video.actualStart?.includes("Invalid")
-      );
-    const live = liveFromApi ?? await getManualLiveFallback();
+      .find(isCurrentlyLive);
+    const liveFromUploads = recentIds
+      .map((id) => byId.get(id))
+      .find(isCurrentlyLive);
+    const live = liveFromApi ?? liveFromUploads ?? await getManualLiveFallback();
     const upcoming = upcomingIds
       .map((id) => byId.get(id))
       .filter(Boolean) as YTVideo[];
-    const excludeIds = new Set([...liveIds, ...upcomingIds]);
+    const excludeIds = new Set(live ? [...liveIds, ...upcomingIds, live.id] : [...liveIds, ...upcomingIds]);
     const recent = recentIds
       .map((id) => byId.get(id))
       .filter((v): v is YTVideo => !!v && !excludeIds.has(v.id));
