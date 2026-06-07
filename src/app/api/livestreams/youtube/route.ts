@@ -221,11 +221,12 @@ export async function GET() {
     const liveFromUploads = recentIds
       .map((id) => byId.get(id))
       .find(isCurrentlyLive);
-    const live = liveFromApi ?? liveFromUploads ?? await getManualLiveFallback();
+    const live = liveFromApi ?? liveFromUploads ?? null;
     const upcoming = upcomingIds
       .map((id) => byId.get(id))
       .filter(Boolean) as YTVideo[];
     const excludeIds = new Set(live ? [...liveIds, ...upcomingIds, live.id] : [...liveIds, ...upcomingIds]);
+
     const recent = recentIds
       .map((id) => byId.get(id))
       .filter((v): v is YTVideo => !!v && !excludeIds.has(v.id));
