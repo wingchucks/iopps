@@ -7,6 +7,7 @@ import { OnboardingProvider } from "@/lib/onboarding-context";
 import AuthErrorBoundary from "@/components/AuthErrorBoundary";
 import SessionManager from "@/components/SessionManager";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -84,6 +85,7 @@ export default function RootLayout({
                 <AuthErrorBoundary>
                   <SessionManager />
                   <AnalyticsTracker />
+                  <GoogleAnalytics />
                   <div id="main-content">
                     {children}
                   </div>
