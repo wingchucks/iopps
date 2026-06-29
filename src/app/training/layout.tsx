@@ -1,3 +1,14 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Training Hub", description: "Explore training programs, certifications, and professional development courses designed for Indigenous communities across Canada." };
-export default function Layout({ children }: { children: React.ReactNode }) { return children; }
+import { buildListingMetadata } from "@/lib/server/seo";
+
+export const metadata: Metadata = buildListingMetadata({
+  title: "Training — Indigenous Programs, Courses & Professional Development",
+  description:
+    "Explore training programs, professional development, microcredentials, and learning opportunities on IOPPS.ca for Indigenous people and communities across Canada.",
+  path: "/training",
+  type: "website",
+});
+
+export default function TrainingLayout({ children }: { children: React.ReactNode }) {
+  return children;
+}

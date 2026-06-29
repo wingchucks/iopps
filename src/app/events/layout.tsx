@@ -1,3 +1,14 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Events — Community Gatherings & Career Fairs", description: "Discover pow wows, career fairs, round dances, and Indigenous community events across Canada. RSVP and add events to your calendar." };
-export default function Layout({ children }: { children: React.ReactNode }) { return children; }
+import { buildListingMetadata } from "@/lib/server/seo";
+
+export const metadata: Metadata = buildListingMetadata({
+  title: "Events — Pow Wows, Gatherings, Career Fairs & Community Events",
+  description:
+    "Find pow wows, conferences, career fairs, gatherings, and community events across Canada on IOPPS.ca, with dates, locations, and event details in one place.",
+  path: "/events",
+  type: "website",
+});
+
+export default function EventsLayout({ children }: { children: React.ReactNode }) {
+  return children;
+}
