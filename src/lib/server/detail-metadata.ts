@@ -1,35 +1,24 @@
 import type { Metadata } from "next";
 import { getAdminDb } from "@/lib/firebase-admin";
+import {
+  buildEventJsonLd,
+  buildJobPostingJsonLd,
+  buildListingMetadata,
+  buildTrainingCourseJsonLd,
+  stripHtml,
+  truncate,
+} from "@/lib/server/seo";
 
-/**
- * M-1 — Small shared metadata helpers for the detail-page layouts. Every
- * detail route currently ships a generic static title ("Job Opportunity",
- * "Event", "Organization Profile", etc.). These helpers fetch the record
- * server-side at build / request time and return a per-entity title so
- * tabs, bookmarks, and search engines see something useful.
- */
-
-const SITE = "IOPPS";
-const SITE_URL = "https://www.iopps.ca";
-
-function clean(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function truncate(input: string, max = 190): string {
-  if (input.length <= max) return input;
-  return `${input.slice(0, max - 1).trimEnd()}…`;
-}
-
-function stripHtml(input?: string): string {
-  if (!input) return "";
-  return input.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-}
+type JsonLd = Record<string, unknown>;
 
 type EntityLookup = {
   collections: readonly string[];
   slugFields?: readonly string[];
 };
+
+function clean(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
 
 async function findFirst(
   collections: readonly string[],
@@ -56,57 +45,111 @@ async function findFirst(
   return null;
 }
 
+function field(record: Record<string, unknown>, ...names: string[]): string {
+  for (const name of names) {
+    const value = clean(record[name]);
+    if (value) return value;
+  }
+  return "";
+}
+
 export function fallbackMetadata(title: string, description: string): Metadata {
-  return { title: `${title} | ${SITE}`, description };
+  return buildListingMetadata({
+    title,
+    description,
+    path: "/",
+    type: "website",
+  });
 }
 
 export async function generateJobMetadata(slug: string): Promise<Metadata> {
   const lookup: EntityLookup = { collections: ["jobs", "posts"] };
   const job = await findFirst(lookup.collections, slug, lookup.slugFields);
   if (!job) {
-    return fallbackMetadata(
-      "Job Opportunity",
-      "View full job details, requirements, and application instructions for this Indigenous career opportunity on IOPPS.",
-    );
+    return buildListingMetadata({
+      title: "Job Opportunity",
+      description: "View full job details, requirements, and application instructions for this Indigenous career opportunity on IOPPS.ca.",
+      path: `/jobs/${slug}`,
+      type: "article",
+    });
   }
-  const title = clean(job.title) || "Job Opportunity";
-  const employer = clean(job.employerName) || clean(job.orgName) || clean(job.companyName);
-  const location = clean(job.location) || clean((job.location as Record<string, string> | undefined)?.city);
-  const facts = [employer, location].filter(Boolean).join(" · ");
-  const summary = truncate(
+  const title = field(job, "title") || "Job Opportunity";
+  const employer = field(job, "employerName", "orgName", "companyName", "company", "organization");
+  const location = field(job, "location", "locationProvince");
+  const closingDate = field(job, "closingDate", "deadline", "expiresAt");
+  const facts = [employer, location, closingDate ? `Closing ${closingDate}` : ""].filter(Boolean).join(" · ");
+  const description = truncate(
     facts
-      ? `${title} at ${employer || "an IOPPS employer"}. ${stripHtml(clean(job.description))}`
+      ? `${title} · ${facts}. ${stripHtml(clean(job.description))}`
       : `${title}. ${stripHtml(clean(job.description))}`,
   );
-  return {
-    title: employer ? `${title} — ${employer} | ${SITE}` : `${title} | ${SITE}`,
-    description: summary || "View full job details on IOPPS.",
-    alternates: { canonical: `${SITE_URL}/jobs/${slug}` },
-  };
+  return buildListingMetadata({
+    title: employer ? `${title} — ${employer}` : title,
+    description: description || "View full job details on IOPPS.ca.",
+    path: `/jobs/${slug}`,
+    type: "article",
+  });
+}
+
+export async function generateJobJsonLd(slug: string): Promise<JsonLd | null> {
+  const job = await findFirst(["jobs", "posts"], slug);
+  if (!job) return null;
+  return buildJobPostingJsonLd({
+    slug,
+    title: field(job, "title") || "Job Opportunity",
+    description: clean(job.description),
+    employerName: field(job, "employerName", "orgName", "companyName", "company", "organization"),
+    location: job.location || field(job, "locationProvince"),
+    datePosted: field(job, "datePosted", "postedAt", "publishedAt", "createdAt"),
+    closingDate: field(job, "closingDate", "deadline", "expiresAt"),
+    employmentType: field(job, "employmentType", "jobType"),
+    salary: field(job, "salary"),
+  });
 }
 
 export async function generateEventMetadata(slug: string): Promise<Metadata> {
   const lookup: EntityLookup = { collections: ["events", "posts"] };
   const event = await findFirst(lookup.collections, slug, lookup.slugFields);
   if (!event) {
-    return fallbackMetadata(
-      "Event",
-      "View event details, schedule, and RSVP for this Indigenous community gathering, pow wow, or career fair on IOPPS.",
-    );
+    return buildListingMetadata({
+      title: "Event",
+      description: "View event details, schedule, and RSVP for this Indigenous community gathering, pow wow, or career fair on IOPPS.ca.",
+      path: `/events/${slug}`,
+      type: "article",
+    });
   }
-  const title = clean(event.title) || "Event";
-  const dates = clean(event.dates) || clean(event.date);
-  const host = clean(event.orgName) || clean(event.organizerName);
-  const leading = [dates, host].filter(Boolean).join(" · ");
-  return {
-    title: dates ? `${title} — ${dates} | ${SITE}` : `${title} | ${SITE}`,
+  const title = field(event, "title") || "Event";
+  const dates = field(event, "dates", "date", "startDate");
+  const location = field(event, "location", "venue");
+  const host = field(event, "orgName", "organizerName", "nation", "venue");
+  const leading = [dates, location, host].filter(Boolean).join(" · ");
+  return buildListingMetadata({
+    title: dates ? `${title} — ${dates}` : title,
     description: truncate(
       leading
         ? `${title} · ${leading}. ${stripHtml(clean(event.description))}`
         : `${title}. ${stripHtml(clean(event.description))}`,
-    ) || "View event details on IOPPS.",
-    alternates: { canonical: `${SITE_URL}/events/${slug}` },
-  };
+    ) || "View event details on IOPPS.ca.",
+    path: `/events/${slug}`,
+    type: "article",
+    image: field(event, "imageUrl", "posterUrl"),
+  });
+}
+
+export async function generateEventJsonLd(slug: string): Promise<JsonLd | null> {
+  const event = await findFirst(["events", "posts"], slug);
+  if (!event) return null;
+  return buildEventJsonLd({
+    slug,
+    title: field(event, "title") || "Event",
+    description: clean(event.description),
+    startDate: field(event, "startDate", "date"),
+    endDate: field(event, "endDate"),
+    location: event.location || field(event, "venue"),
+    venue: field(event, "venue"),
+    organizer: field(event, "orgName", "organizerName", "nation", "venue"),
+    image: field(event, "imageUrl", "posterUrl"),
+  });
 }
 
 export async function generateOrgMetadata(slug: string): Promise<Metadata> {
@@ -120,13 +163,12 @@ export async function generateOrgMetadata(slug: string): Promise<Metadata> {
   }
   const name = clean(org.name) || "Organization";
   const tagline = clean(org.tagline);
-  return {
-    title: `${name} | ${SITE}`,
-    description: truncate(
-      tagline || stripHtml(clean(org.description)) || `${name} on IOPPS.`,
-    ),
-    alternates: { canonical: `${SITE_URL}/org/${slug}` },
-  };
+  return buildListingMetadata({
+    title: name,
+    description: truncate(tagline || stripHtml(clean(org.description)) || `${name} on IOPPS.ca.`),
+    path: `/org/${slug}`,
+    type: "article",
+  });
 }
 
 export async function generateSchoolMetadata(slug: string): Promise<Metadata> {
@@ -139,33 +181,49 @@ export async function generateSchoolMetadata(slug: string): Promise<Metadata> {
     );
   }
   const name = clean(school.name) || "School";
-  return {
-    title: `${name} | Schools | ${SITE}`,
-    description: truncate(
-      stripHtml(clean(school.description)) || `Programs, scholarships, and careers at ${name} on IOPPS.`,
-    ),
-    alternates: { canonical: `${SITE_URL}/schools/${slug}` },
-  };
+  return buildListingMetadata({
+    title: `${name} | Schools`,
+    description: truncate(stripHtml(clean(school.description)) || `Programs, scholarships, and careers at ${name} on IOPPS.ca.`),
+    path: `/schools/${slug}`,
+    type: "article",
+  });
 }
 
 export async function generateProgramMetadata(slug: string): Promise<Metadata> {
+  return generateTrainingMetadata(slug, "/programs");
+}
+
+export async function generateTrainingMetadata(slug: string, routePrefix = "/training"): Promise<Metadata> {
   const lookup: EntityLookup = { collections: ["training", "programs", "posts"] };
   const program = await findFirst(lookup.collections, slug, lookup.slugFields);
   if (!program) {
-    return fallbackMetadata(
-      "Program",
-      "View training program details, credentials, and enrollment information on IOPPS.",
-    );
+    return buildListingMetadata({
+      title: routePrefix === "/training" ? "Training" : "Program",
+      description: "View training program details, credentials, and enrollment information on IOPPS.ca.",
+      path: `${routePrefix}/${slug}`,
+      type: "article",
+    });
   }
-  const name = clean(program.title) || clean(program.programName) || "Program";
-  const provider = clean(program.institutionName) || clean(program.provider) || clean(program.orgName);
-  return {
-    title: provider ? `${name} — ${provider} | ${SITE}` : `${name} | ${SITE}`,
-    description: truncate(
-      stripHtml(clean(program.description)) || `${name} on IOPPS.`,
-    ),
-    alternates: { canonical: `${SITE_URL}/programs/${slug}` },
-  };
+  const name = field(program, "title", "programName") || "Training";
+  const provider = field(program, "institutionName", "provider", "orgName", "ownerName");
+  return buildListingMetadata({
+    title: provider ? `${name} — ${provider}` : name,
+    description: truncate(stripHtml(clean(program.description)) || `${name} on IOPPS.ca.`),
+    path: `${routePrefix}/${slug}`,
+    type: "article",
+  });
+}
+
+export async function generateTrainingJsonLd(slug: string): Promise<JsonLd | null> {
+  const program = await findFirst(["training", "programs", "posts"], slug);
+  if (!program) return null;
+  return buildTrainingCourseJsonLd({
+    slug,
+    title: field(program, "title", "programName") || "Training",
+    description: clean(program.description),
+    provider: field(program, "institutionName", "provider", "orgName", "ownerName"),
+    location: field(program, "location", "format"),
+  });
 }
 
 export async function generateMemberMetadata(uid: string): Promise<Metadata> {
@@ -189,13 +247,12 @@ export async function generateMemberMetadata(uid: string): Promise<Metadata> {
     const headline = clean(data.headline) || clean(data.title);
     const nation = clean(data.nation);
     const parts = [headline, nation].filter(Boolean).join(" · ");
-    return {
-      title: parts ? `${name} — ${parts} | ${SITE}` : `${name} | ${SITE}`,
-      description: truncate(
-        stripHtml(clean(data.bio)) || `${name} on IOPPS — Canada's Indigenous professional platform.`,
-      ),
-      alternates: { canonical: `${SITE_URL}/members/${uid}` },
-    };
+    return buildListingMetadata({
+      title: parts ? `${name} — ${parts}` : name,
+      description: truncate(stripHtml(clean(data.bio)) || `${name} on IOPPS — Canada's Indigenous professional platform.`),
+      path: `/members/${uid}`,
+      type: "article",
+    });
   } catch {
     return fallbackMetadata(
       "Member Profile",
