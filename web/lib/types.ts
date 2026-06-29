@@ -23,6 +23,17 @@ export interface UserProfile {
   skills: string[]; // max 3
   interests: Interest[];
   resumeURL: string | null;
+  publicTalentProfile?: {
+    enabled: boolean;
+    consentWebsite: boolean;
+    consentSocial: boolean;
+    approvedForFeature: boolean;
+    lookingFor: string;
+    openToRelocate: boolean;
+    workPreference: "full-time" | "part-time" | "contract" | "seasonal" | "training" | "open";
+    talentPublicEmail: string;
+    featuredAt: FirebaseTimestamp | null;
+  };
   emailDigest: {
     frequency: "daily" | "weekly" | "off";
     categories: Record<ContentType, boolean>;

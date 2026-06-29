@@ -129,6 +129,99 @@ export default function EditProfilePage() {
             ))}
           </div>
         </div>
+
+        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 space-y-4">
+          <div>
+            <h2 className="font-semibold text-[var(--text-primary)] mb-1">Featured Talent</h2>
+            <p className="text-sm text-[var(--text-muted)]">
+              Opt in if you want IOPPS to review your profile for the Featured Talent page or social spotlight. No phone numbers are shown publicly; public contact is email only.
+            </p>
+          </div>
+
+          <label className="flex items-start gap-3 rounded-lg bg-[var(--surface-raised)] p-4">
+            <input
+              type="checkbox"
+              checked={profile.publicTalentProfile?.enabled || false}
+              onChange={e => update('publicTalentProfile', { ...(profile.publicTalentProfile || {}), enabled: e.target.checked })}
+              className="mt-1 h-4 w-4 accent-[var(--accent)]"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-[var(--text-primary)]">Consider me for Featured Talent</span>
+              <span className="block text-sm text-[var(--text-secondary)]">IOPPS can review my profile for a public job-seeker feature.</span>
+            </span>
+          </label>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Public contact email</label>
+            <input
+              type="email"
+              value={profile.publicTalentProfile?.talentPublicEmail || profile.email || ''}
+              onChange={e => update('publicTalentProfile', { ...(profile.publicTalentProfile || {}), talentPublicEmail: e.target.value })}
+              placeholder="your.email@example.com"
+              className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--input-border)] rounded-lg text-[var(--text-primary)] focus:border-[var(--input-focus)] outline-none"
+            />
+            <p className="text-xs text-[var(--text-muted)] mt-1">Only this email is used for public contact.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Work preference</label>
+              <select
+                value={profile.publicTalentProfile?.workPreference || 'open'}
+                onChange={e => update('publicTalentProfile', { ...(profile.publicTalentProfile || {}), workPreference: e.target.value })}
+                className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--input-border)] rounded-lg text-[var(--text-primary)] focus:border-[var(--input-focus)] outline-none"
+              >
+                <option value="open">Open to opportunities</option>
+                <option value="full-time">Full-time</option>
+                <option value="part-time">Part-time</option>
+                <option value="contract">Contract</option>
+                <option value="seasonal">Seasonal</option>
+                <option value="training">Training or apprenticeship</option>
+              </select>
+            </div>
+            <label className="flex items-center gap-3 rounded-lg bg-[var(--surface-raised)] px-4 py-3 text-sm font-medium text-[var(--text-secondary)]">
+              <input
+                type="checkbox"
+                checked={profile.publicTalentProfile?.openToRelocate || false}
+                onChange={e => update('publicTalentProfile', { ...(profile.publicTalentProfile || {}), openToRelocate: e.target.checked })}
+                className="h-4 w-4 accent-[var(--accent)]"
+              />
+              Open to relocation
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">What opportunities are you looking for?</label>
+            <textarea
+              value={profile.publicTalentProfile?.lookingFor || ''}
+              onChange={e => update('publicTalentProfile', { ...(profile.publicTalentProfile || {}), lookingFor: e.target.value })}
+              rows={3}
+              placeholder="Example: full-time administration, health, training, community support, or leadership roles."
+              className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--input-border)] rounded-lg text-[var(--text-primary)] focus:border-[var(--input-focus)] outline-none resize-none"
+            />
+          </div>
+
+          <div className="space-y-3 border-t border-[var(--card-border)] pt-4">
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={profile.publicTalentProfile?.consentWebsite || false}
+                onChange={e => update('publicTalentProfile', { ...(profile.publicTalentProfile || {}), consentWebsite: e.target.checked })}
+                className="mt-1 h-4 w-4 accent-[var(--accent)]"
+              />
+              <span className="text-sm text-[var(--text-secondary)]">I give IOPPS permission to feature my approved profile on IOPPS.ca.</span>
+            </label>
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={profile.publicTalentProfile?.consentSocial || false}
+                onChange={e => update('publicTalentProfile', { ...(profile.publicTalentProfile || {}), consentSocial: e.target.checked })}
+                className="mt-1 h-4 w-4 accent-[var(--accent)]"
+              />
+              <span className="text-sm text-[var(--text-secondary)]">I give IOPPS permission to prepare a social spotlight for review before posting.</span>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   );
