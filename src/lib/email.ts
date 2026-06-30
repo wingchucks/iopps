@@ -107,6 +107,44 @@ export async function sendApplicationNotification(opts: {
   }
 }
 
+export async function sendAdminApplicationNotification(opts: {
+  applicantName: string;
+  applicantEmail?: string | null;
+  jobTitle: string;
+  employerName: string;
+  employerEmail: string;
+  jobId: string;
+  orgId: string;
+}): Promise<void> {
+  if (!resend) return;
+
+  const html = emailWrapper(`
+    <div style="background:#2563EB;color:#fff;display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:16px;">APPLICATION</div>
+    <h2 style="${STYLES.h2}">New Application Activity on IOPPS.ca</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;color:#374151;margin-bottom:24px;">
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;width:40%;">Applicant</td><td style="padding:10px 0;font-weight:600;">${escapeHtml(opts.applicantName)}${opts.applicantEmail ? ` &lt;${escapeHtml(opts.applicantEmail)}&gt;` : ""}</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Role</td><td style="padding:10px 0;">${escapeHtml(opts.jobTitle)}</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Employer</td><td style="padding:10px 0;">${escapeHtml(opts.employerName)} &lt;${escapeHtml(opts.employerEmail)}&gt;</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Job ID</td><td style="padding:10px 0;">${escapeHtml(opts.jobId)}</td></tr>
+      <tr><td style="padding:10px 0;color:#9ca3af;">Time</td><td style="padding:10px 0;">${new Date().toLocaleString("en-CA", { timeZone: "America/Regina" })} CST</td></tr>
+    </table>
+    <div style="text-align:center;margin:20px 0;">
+      <a href="${SITE_URL}/admin/jobs" style="${STYLES.button}">View Admin Jobs</a>
+    </div>
+  `);
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: ADMIN_EMAILS,
+      subject: `📩 New application: ${opts.applicantName} applied for ${opts.jobTitle}`,
+      html,
+    });
+  } catch (err) {
+    console.error("[email] Admin application notification failed:", err);
+  }
+}
+
 export async function sendEmployerWelcome(opts: {
   email: string;
   contactName: string;

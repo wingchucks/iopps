@@ -45,10 +45,12 @@ test("admin notification emails cover signups, content, applications, and paymen
   assert.match(email, /ADMIN_NOTIFICATION_EMAILS/);
   assert.match(email, /sendAdminNewSignup/);
   assert.match(email, /sendAdminContentPosted/);
+  assert.match(email, /sendAdminApplicationNotification/);
   assert.match(email, /sendAdminPaymentNotification/);
   assert.match(stripeWebhook, /sendAdminPaymentNotification/);
   assert.match(jobs, /sendAdminContentPosted/);
   assert.match(events, /sendAdminContentPosted/);
   assert.match(posts, /sendAdminContentPosted/);
   assert.match(applications, /sendApplicationNotification/);
+  assert.match(applications, /sendAdminApplicationNotification/);
 });
