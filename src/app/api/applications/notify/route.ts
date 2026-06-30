@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import { sendApplicationNotification } from "@/lib/email";
+import { sendAdminApplicationNotification, sendApplicationNotification } from "@/lib/email";
 import {
   buildApplicationDeliveryDocId,
   buildEmployerNotificationDeliveryPatch,
@@ -204,6 +204,17 @@ export async function POST(req: NextRequest) {
       jobTitle: postTitle || "a position",
       jobId: postId,
       orgId: targetOrgId,
+    });
+
+    sendAdminApplicationNotification({
+      applicantName,
+      jobTitle: postTitle || "a position",
+      employerName: String(employerName),
+      employerEmail,
+      jobId: postId,
+      orgId: targetOrgId,
+    }).catch((error) => {
+      console.error("[applications/notify] Admin application email failed:", error);
     });
 
     if (!result.success) {
