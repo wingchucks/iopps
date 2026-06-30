@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import NewsletterSignup from "@/components/NewsletterSignup";
-import { featuredTalentProfiles } from "@/lib/featured-talent";
 
 const PILLARS = [
   { icon: "💼", title: "Careers", desc: "Find your next opportunity" },
@@ -24,7 +22,6 @@ interface Stats {
 
 export default function HomePage() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const featuredTalent = featuredTalentProfiles[0];
 
   useEffect(() => {
     fetch("/api/stats/public")
@@ -44,7 +41,7 @@ export default function HomePage() {
     <>
       {/* Hero */}
       <section className="bg-hero-gradient text-white">
-        <div className="max-w-5xl mx-auto px-4 py-16 md:py-32 text-center">
+        <div className="max-w-5xl mx-auto px-4 py-24 md:py-32 text-center">
           <h1 className="text-5xl md:text-7xl font-bold tracking-wide mb-6">IOPPS</h1>
           <span className="slogan-pill mb-6 inline-block">EMPOWERING INDIGENOUS SUCCESS</span>
           <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8">
@@ -68,75 +65,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Talent Spotlight */}
-      <section className="relative z-10 -mt-10 max-w-6xl mx-auto px-4">
-        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-3xl shadow-2xl overflow-hidden">
-          <div className="grid md:grid-cols-[0.9fr_1.1fr] gap-0">
-            <div className="bg-[var(--navy)] p-6 md:p-8 flex items-center justify-center">
-              <div className="relative w-full max-w-xs md:max-w-sm">
-                <div className="absolute inset-0 bg-[var(--teal)]/25 blur-3xl rounded-full" />
-                <Image
-                  src={featuredTalent.imageUrl}
-                  alt={`${featuredTalent.name}, ${featuredTalent.featuredLabel} on IOPPS.ca`}
-                  width={520}
-                  height={520}
-                  priority
-                  className="relative w-full aspect-square object-cover rounded-3xl border-4 border-white/15 shadow-2xl"
-                />
-              </div>
-            </div>
-
-            <div className="p-6 md:p-10">
-              <span className="inline-flex items-center rounded-full bg-[var(--teal)]/10 text-[var(--teal-dark)] px-4 py-2 text-sm font-bold mb-4">
-                {featuredTalent.featuredLabel}
-              </span>
-              <h2 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-3">
-                Meet {featuredTalent.name}
-              </h2>
-              <p className="text-lg font-semibold text-[var(--text-primary)] mb-2">
-                {featuredTalent.headline}
-              </p>
-              <p className="text-[var(--text-secondary)] mb-4">
-                {featuredTalent.nation} • {featuredTalent.location}
-              </p>
-              <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
-                IOPPS Featured Talent helps Indigenous job seekers get seen by employers,
-                organizations, and community opportunity providers. Audrey is seeking full-time
-                employment and is open to the right opportunity.
-              </p>
-
-              <div className="flex flex-wrap gap-2 mb-6">
-                {featuredTalent.skills.slice(0, 4).map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-full border border-[var(--card-border)] px-3 py-1 text-sm text-[var(--text-secondary)]"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href={`/featured-talent/${featuredTalent.slug}`}
-                  className="bg-[var(--teal)] hover:bg-[var(--teal-dark)] text-white font-semibold px-6 py-3 rounded-lg text-center transition-colors"
-                >
-                  View Audrey&apos;s Profile
-                </Link>
-                <Link
-                  href="/featured-talent"
-                  className="border border-[var(--card-border)] hover:border-[var(--teal)] text-[var(--text-primary)] font-semibold px-6 py-3 rounded-lg text-center transition-colors"
-                >
-                  See Featured Talent
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Six Pillars */}
-      <section className="max-w-6xl mx-auto px-4 pt-16 pb-20">
+      <section className="max-w-6xl mx-auto px-4 py-20">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-[var(--text-primary)]">
           Everything in One Place
         </h2>
