@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { sendSubscriptionConfirmation } from "@/lib/email";
+import { sendAdminPaymentNotification, sendSubscriptionConfirmation } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -133,6 +133,15 @@ export async function POST(req: NextRequest) {
             gst: gstAmount ? Number(gstAmount) / 100 : 0,
           }).catch(() => {});
         }
+        sendAdminPaymentNotification({
+          email: empEmail || String(session.customer_email || ""),
+          contactName: empContact,
+          orgName: empName || orgId,
+          planName: planNames[tier] || tier,
+          amount: amount ? Number(amount) / 100 : 0,
+          gst: gstAmount ? Number(gstAmount) / 100 : 0,
+          orgId,
+        }).catch(() => {});
       } else if (isOneTimePost) {
         // 2c. Add post credits to employer
         const creditField =
@@ -144,6 +153,16 @@ export async function POST(req: NextRequest) {
         const snap = await employerRef.get();
         const current = snap.exists ? (snap.data()?.[creditField] ?? 0) : 0;
         await employerRef.set({ [creditField]: current + 1, updatedAt: now }, { merge: true });
+
+        sendAdminPaymentNotification({
+          email: String(snap.data()?.contactEmail || snap.data()?.email || session.customer_email || ""),
+          contactName: String(snap.data()?.contactName || ""),
+          orgName: String(snap.data()?.name || orgId),
+          planName: planId,
+          amount: amount ? Number(amount) / 100 : 0,
+          gst: gstAmount ? Number(gstAmount) / 100 : 0,
+          orgId,
+        }).catch(() => {});
 
         console.log(`[stripe/webhook] ✅ Added 1 ${planId} credit for org ${orgId}`);
       }

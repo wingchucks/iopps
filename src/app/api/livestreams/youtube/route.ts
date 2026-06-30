@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
 const YT = "https://www.googleapis.com/youtube/v3";
-const IOPPS_MANUAL_LIVE_VIDEO_IDS = ["STgbVkwfuYA"];
+// Manual IDs are emergency fallbacks only. Do not hard-code a default live
+// video because that can hide the real current YouTube live search result.
+const IOPPS_MANUAL_LIVE_VIDEO_IDS: string[] = [];
 
 interface YTVideo {
   id: string;
@@ -167,31 +169,25 @@ export async function GET() {
     }
 
     const uploadsPlaylist = channelId.replace(/^UC/, "UU");
-    const manualLiveIds = getManualLiveVideoIds();
-    const shouldUseManualLiveIds = manualLiveIds.length > 0;
 
-    // YouTube search calls are expensive quota-wise. When a current stream ID is
-    // configured, enrich that video directly and only fall back to search when
-    // there is no manual/live campaign override.
+    // Always ask YouTube for the current live/upcoming state first. Manual IDs
+    // are fallback-only so a stale override can never mask a newly started live
+    // stream on the channel.
     const [liveData, upcomingData, playlistData] = await Promise.all([
-      shouldUseManualLiveIds
-        ? null
-        : ytFetch(apiKey, "search", {
-            part: "id",
-            channelId,
-            eventType: "live",
-            type: "video",
-            maxResults: "1",
-          }),
-      shouldUseManualLiveIds
-        ? null
-        : ytFetch(apiKey, "search", {
-            part: "id",
-            channelId,
-            eventType: "upcoming",
-            type: "video",
-            maxResults: "5",
-          }),
+      ytFetch(apiKey, "search", {
+        part: "id",
+        channelId,
+        eventType: "live",
+        type: "video",
+        maxResults: "3",
+      }),
+      ytFetch(apiKey, "search", {
+        part: "id",
+        channelId,
+        eventType: "upcoming",
+        type: "video",
+        maxResults: "5",
+      }),
       ytFetch(apiKey, "playlistItems", {
         part: "contentDetails",
         playlistId: uploadsPlaylist,
@@ -203,9 +199,7 @@ export async function GET() {
     const upcomingItems = (upcomingData as YTListResponse<YTSearchItem> | null)?.items ?? [];
     const playlistItems = (playlistData as YTListResponse<YTPlaylistItem> | null)?.items ?? [];
 
-    const liveIds: string[] = shouldUseManualLiveIds
-      ? manualLiveIds
-      : liveItems.map((i) => i.id.videoId);
+    const liveIds: string[] = liveItems.map((i) => i.id.videoId);
     const upcomingIds: string[] = upcomingItems.map((i) => i.id.videoId);
     const recentIds: string[] = playlistItems.map(
       (i) => i.contentDetails.videoId
