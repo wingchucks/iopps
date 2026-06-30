@@ -244,6 +244,32 @@ function TrustedPartnerStrip({ partners }: { partners: LandingPartner[] }) {
   );
 }
 
+function HeroFeaturedTalentCard() {
+  const featuredTalent = featuredTalentProfiles[0];
+
+  return (
+    <Link href={`/featured-talent/${featuredTalent.slug}`} className="mt-5 block max-w-[680px] no-underline">
+      <div className="flex items-center gap-4 rounded-[22px] border border-white/14 bg-white/[0.085] p-3 text-white transition-colors hover:bg-white/12">
+        <Image
+          src={featuredTalent.imageUrl}
+          alt={`${featuredTalent.name}, ${featuredTalent.featuredLabel} on IOPPS.ca`}
+          width={76}
+          height={76}
+          className="h-[76px] w-[76px] shrink-0 rounded-2xl object-cover"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="m-0 text-[10px] font-black uppercase tracking-[0.18em] text-teal-light">Featured Talent</p>
+          <p className="mt-1 text-lg font-black leading-tight text-white">Meet Audrey Fiddler</p>
+          <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-white/68">
+            Seeking full-time employment • Administrative, training, and community support
+          </p>
+        </div>
+        <span className="hidden shrink-0 text-sm font-black text-teal-light sm:inline">View profile &rarr;</span>
+      </div>
+    </Link>
+  );
+}
+
 function StatStrip({ stats }: { stats: LandingStats }) {
   const items = [
     { label: "Active roles", value: formatStat(stats.jobs, "New"), href: "/jobs" },
@@ -607,6 +633,7 @@ function Hero({ stats, partners, jobs, events }: { stats: LandingStats; partners
           <p className="mt-4 max-w-[660px] text-base leading-7 text-white/78 sm:text-lg">
             Start with what you need today. Watch live coverage, discover upcoming events, and explore current roles from trusted organizations.
           </p>
+          <HeroFeaturedTalentCard />
           <FirstScreenActivityLinks stats={stats} />
           <TrustedPartnerStrip partners={partners} />
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
