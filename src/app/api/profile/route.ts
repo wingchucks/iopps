@@ -62,6 +62,12 @@ export async function PATCH(req: NextRequest) {
       authUser = await getAuth(getApps()[0]).getUser(uid);
     }
 
+    const displayName = shouldNotifyCommunitySignup
+      ? typeof data.displayName === "string" && data.displayName.trim()
+        ? data.displayName.trim()
+        : authUser?.displayName || authUser?.email?.split("@")[0] || "Community Member"
+      : "Community Member";
+
     await userRef.set(
       {
         ...data,
@@ -70,12 +76,20 @@ export async function PATCH(req: NextRequest) {
       },
       { merge: true }
     );
+    // Notify admin when a community member signs up/completes onboarding.
+    if (shouldNotifyCommunitySignup) {
+      await db.collection("adminNotifications").add({
+        title: "New community signup",
+        message: `${displayName} joined IOPPS.ca.`,
+        type: "success",
+        read: false,
+        userId: uid,
+        contactEmail: authUser?.email || "",
+        createdAt: new Date().toISOString(),
+      });
+    }
     // Notify admin when a community member completes onboarding
     if (shouldNotifyCommunitySignup) {
-      const displayName =
-        typeof data.displayName === "string" && data.displayName.trim()
-          ? data.displayName.trim()
-          : authUser?.displayName || authUser?.email?.split("@")[0] || "Community Member";
       sendAdminNewSignup({
         name: displayName,
         email: authUser?.email || "",

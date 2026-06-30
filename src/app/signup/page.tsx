@@ -151,7 +151,16 @@ export default function UnifiedSignupPage() {
           const cu = getAuth().currentUser;
           if (cu) {
             const t = await cu.getIdToken();
-            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn, newsletterOptInAt: newsletterOptIn ? new Date().toISOString() : null }) });
+            await fetch("/api/profile", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
+              body: JSON.stringify({
+                displayName: name,
+                newsletterOptIn,
+                newsletterOptInAt: newsletterOptIn ? new Date().toISOString() : null,
+                ...(role === "community" ? { signupRole: "community" } : {}),
+              }),
+            });
           }
         } catch { /* non-blocking */ }
         goTo(3);
@@ -167,7 +176,16 @@ export default function UnifiedSignupPage() {
         try {
           if (cred?.user) {
             const t = await cred.user.getIdToken();
-            await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ newsletterOptIn, newsletterOptInAt: newsletterOptIn ? new Date().toISOString() : null }) });
+            await fetch("/api/profile", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
+              body: JSON.stringify({
+                displayName: cred.user.displayName || name,
+                newsletterOptIn,
+                newsletterOptInAt: newsletterOptIn ? new Date().toISOString() : null,
+                ...(role === "community" ? { signupRole: "community" } : {}),
+              }),
+            });
           }
         } catch { /* non-blocking */ }
         if (role === "organization") {

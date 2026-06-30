@@ -6,7 +6,11 @@ const resend = process.env.RESEND_API_KEY
   : null;
 
 const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
-const ADMIN_EMAIL = "nathan.arias@iopps.ca";
+const DEFAULT_ADMIN_EMAIL = "nathan.arias@iopps.ca";
+const ADMIN_EMAILS = (process.env.ADMIN_NOTIFICATION_EMAILS || process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL)
+  .split(",")
+  .map((email) => email.trim())
+  .filter(Boolean);
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.iopps.ca";
 
 function escapeHtml(value: unknown): string {
@@ -221,7 +225,7 @@ export async function sendAdminNewSignup(opts: {
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
-      to: ADMIN_EMAIL,
+      to: ADMIN_EMAILS,
       subject,
       html,
     });
@@ -270,12 +274,52 @@ export async function sendAdminContentPosted(opts: {
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
-      to: ADMIN_EMAIL,
+      to: ADMIN_EMAILS,
       subject: `${subjectPrefix}: ${opts.contentType} - ${opts.title || "Untitled"}`,
       html,
     });
   } catch (err) {
     console.error("[email] Admin content notification failed:", err);
+  }
+}
+
+export async function sendAdminPaymentNotification(opts: {
+  orgName: string;
+  contactName: string;
+  email: string;
+  planName: string;
+  amount: number;
+  gst: number;
+  orgId?: string | null;
+}): Promise<void> {
+  if (!resend) return;
+
+  const total = opts.amount + opts.gst;
+  const html = emailWrapper(`
+    <div style="background:#D97706;color:#fff;display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:16px;">PAYMENT</div>
+    <h2 style="${STYLES.h2}">Payment Activity on IOPPS.ca</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;color:#374151;margin-bottom:24px;">
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;width:40%;">Organization</td><td style="padding:10px 0;font-weight:600;">${escapeHtml(opts.orgName)}</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Contact</td><td style="padding:10px 0;">${escapeHtml(opts.contactName)} &lt;${escapeHtml(opts.email)}&gt;</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Plan</td><td style="padding:10px 0;">${escapeHtml(opts.planName)}</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Total</td><td style="padding:10px 0;font-weight:700;">$${total.toFixed(2)} CAD</td></tr>
+      ${opts.orgId ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Org ID</td><td style="padding:10px 0;">${escapeHtml(opts.orgId)}</td></tr>` : ""}
+      <tr><td style="padding:10px 0;color:#9ca3af;">Time</td><td style="padding:10px 0;">${new Date().toLocaleString("en-CA", { timeZone: "America/Regina" })} CST</td></tr>
+    </table>
+    <div style="text-align:center;margin:20px 0;">
+      <a href="${SITE_URL}/admin/payments" style="${STYLES.button}">View Payments</a>
+    </div>
+  `);
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: ADMIN_EMAILS,
+      subject: `💳 IOPPS payment: ${opts.orgName} - ${opts.planName}`,
+      html,
+    });
+  } catch (err) {
+    console.error("[email] Admin payment notification failed:", err);
   }
 }
 
