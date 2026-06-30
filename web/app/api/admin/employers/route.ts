@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   query = query.limit(100);
 
   const snapshot = await query.get();
-  let orgs: Array<Record<string, unknown> & { id: string }> = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  let orgs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   if (search) {
     const q = search.toLowerCase();
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
         ownerMap[d.uid] = { displayName: d.displayName || `${d.firstName} ${d.lastName}`, email: d.email };
       });
     }
-    orgs = orgs.map((o: Record<string, unknown> & { id: string }) => ({
+    orgs = orgs.map((o: Record<string, unknown>) => ({
       ...o,
       ownerInfo: o.ownerUid ? ownerMap[o.ownerUid as string] || null : null,
     }));
