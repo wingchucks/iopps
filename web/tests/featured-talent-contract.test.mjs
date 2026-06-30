@@ -39,4 +39,20 @@ describe('Featured Talent contract', () => {
     assert.match(profilePage, /talentPublicEmail/);
     assert.match(profilePage, /No phone numbers are shown publicly/i);
   });
+
+  it('features Audrey on the homepage above the main pillar grid', () => {
+    const homePage = read('app/page.tsx');
+    const featuredIndex = homePage.indexOf('Featured Talent');
+    const pillarsIndex = homePage.indexOf('Everything in One Place');
+
+    assert.ok(featuredIndex > -1, 'homepage should include Featured Talent copy');
+    assert.ok(pillarsIndex > -1, 'homepage should include the existing pillars section');
+    assert.ok(featuredIndex < pillarsIndex, 'Featured Talent should appear before the pillar grid');
+    const talentData = read('lib/featured-talent.ts');
+    assert.match(talentData, /Audrey Fiddler/);
+    assert.match(talentData, /audrey-fiddler/);
+    assert.match(homePage, /featuredTalentProfiles\[0\]/);
+    assert.match(homePage, /`\/featured-talent\/\$\{featuredTalent\.slug\}`/);
+    assert.match(homePage, /\/featured-talent/);
+  });
 });
