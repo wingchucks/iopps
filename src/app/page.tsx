@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
 import LandingMobileMenu from "@/components/landing/LandingMobileMenu";
 import LandingLivePreview from "@/components/landing/LandingLivePreview";
+import { featuredTalentProfiles } from "@/lib/featured-talent";
 import { getLandingInlineNavItems } from "@/lib/navigation";
 import {
   getLandingContent,
@@ -428,6 +429,62 @@ function SectionShell({
   );
 }
 
+function FeaturedTalentSpotlight() {
+  const featuredTalent = featuredTalentProfiles[0];
+
+  return (
+    <section className="mx-auto -mt-7 max-w-[1320px] px-4 pb-8 sm:px-6 lg:px-8">
+      <Card variant="spotlight" className="relative z-10 shadow-2xl">
+        <article className="grid gap-0 overflow-hidden lg:grid-cols-[0.78fr_1.22fr]">
+          <div className="bg-[color:var(--navy)] p-5 sm:p-7 lg:p-8">
+            <div className="relative mx-auto max-w-sm">
+              <div className="absolute inset-0 rounded-full bg-[color:var(--teal)]/25 blur-3xl" />
+              <Image
+                src={featuredTalent.imageUrl}
+                alt={`${featuredTalent.name}, ${featuredTalent.featuredLabel} on IOPPS.ca`}
+                width={560}
+                height={560}
+                priority
+                className="relative aspect-square w-full rounded-[28px] object-cover shadow-2xl"
+              />
+            </div>
+          </div>
+          <div className="p-6 sm:p-8 lg:p-10">
+            <Badge text={featuredTalent.featuredLabel} color="var(--teal)" bg="var(--teal-soft)" />
+            <h2 className="mt-4 text-3xl font-black leading-tight text-text sm:text-4xl">
+              Meet {featuredTalent.name}
+            </h2>
+            <p className="mt-3 text-lg font-bold text-text">{featuredTalent.headline}</p>
+            <p className="mt-2 text-sm font-bold uppercase tracking-[0.14em] text-text-muted">
+              {featuredTalent.nation} • {featuredTalent.location}
+            </p>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-text-sec">
+              IOPPS Featured Talent helps Indigenous job seekers get seen by employers,
+              organizations, and community opportunity providers. Audrey is seeking full-time
+              employment and is open to the right opportunity.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {featuredTalent.skills.slice(0, 5).map((skill) => (
+                <span key={skill} className="rounded-full border border-border px-3 py-1 text-sm font-semibold text-text-sec">
+                  {skill}
+                </span>
+              ))}
+            </div>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link href={`/featured-talent/${featuredTalent.slug}`} className="no-underline">
+                <Button variant="primary-teal" size="lg">View Audrey&apos;s Profile</Button>
+              </Link>
+              <Link href="/featured-talent" className="no-underline">
+                <Button variant="outline" size="lg">See Featured Talent</Button>
+              </Link>
+            </div>
+          </div>
+        </article>
+      </Card>
+    </section>
+  );
+}
+
 function PathwayCards() {
   const pathways = [
     {
@@ -596,6 +653,8 @@ export default async function LandingPage() {
       <Hero stats={content.stats} partners={content.partners} jobs={content.jobs} events={content.events} />
 
       <main>
+        <FeaturedTalentSpotlight />
+
         <SectionShell
           eyebrow="Partner network"
           title="Meet the organizations building opportunity with IOPPS"
