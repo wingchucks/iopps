@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
 import LandingMobileMenu from "@/components/landing/LandingMobileMenu";
 import LandingLivePreview from "@/components/landing/LandingLivePreview";
-import { featuredTalentProfiles } from "@/lib/featured-talent";
+import { getHomepageFeaturedTalent } from "@/lib/featured-talent";
 import { getLandingInlineNavItems } from "@/lib/navigation";
 import {
   getLandingContent,
@@ -245,7 +245,7 @@ function TrustedPartnerStrip({ partners }: { partners: LandingPartner[] }) {
 }
 
 function HeroFeaturedTalentCard() {
-  const featuredTalent = featuredTalentProfiles[0];
+  const featuredTalent = getHomepageFeaturedTalent();
 
   return (
     <Link href={`/featured-talent/${featuredTalent.slug}`} className="mt-5 block max-w-[680px] no-underline">
@@ -456,7 +456,7 @@ function SectionShell({
 }
 
 function FeaturedTalentSpotlight() {
-  const featuredTalent = featuredTalentProfiles[0];
+  const featuredTalent = getHomepageFeaturedTalent();
 
   return (
     <section className="mx-auto -mt-7 max-w-[1320px] px-4 pb-8 sm:px-6 lg:px-8">

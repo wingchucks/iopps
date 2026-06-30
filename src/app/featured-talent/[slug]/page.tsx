@@ -55,7 +55,10 @@ export default async function FeaturedTalentProfilePage({ params }: { params: Fe
             />
           </div>
           <div>
-            <Badge text={profile.featuredLabel} color="var(--teal)" bg="var(--teal-soft)" />
+            <div className="flex flex-wrap gap-2">
+              <Badge text={profile.featuredLabel} color="var(--teal)" bg="var(--teal-soft)" />
+              <Badge text={profile.category} color="var(--gold)" bg="var(--gold-soft)" />
+            </div>
             <h1 className="mt-4 text-4xl font-black leading-tight text-text sm:text-5xl">{profile.name}</h1>
             <p className="mt-3 text-xl font-bold text-text">{profile.headline}</p>
             <p className="mt-2 text-sm font-bold uppercase tracking-[0.14em] text-text-muted">
@@ -82,7 +85,7 @@ export default async function FeaturedTalentProfilePage({ params }: { params: Fe
           </div>
         </section>
 
-        <section className="mt-10 grid gap-4 md:grid-cols-2">
+        <section className="mt-10 grid gap-4 md:grid-cols-3">
           <Card>
             <div className="p-6">
               <h2 className="text-2xl font-black text-text">Experience areas</h2>
@@ -91,11 +94,33 @@ export default async function FeaturedTalentProfilePage({ params }: { params: Fe
               </ul>
             </div>
           </Card>
+          <Card>
+            <div className="p-6">
+              <h2 className="text-2xl font-black text-text">Ideal roles</h2>
+              <ul className="mt-4 space-y-3 text-sm leading-7 text-text-sec">
+                {profile.idealRoles.map((item) => <li key={item}>• {item}</li>)}
+              </ul>
+            </div>
+          </Card>
           <Card variant="spotlight">
             <div className="p-6">
+              <h2 className="text-2xl font-black text-text">Social kit</h2>
+              <p className="mt-4 text-sm leading-7 text-text-sec">{profile.socialShare.shortCaption}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {profile.socialShare.hashtags.map((tag) => (
+                  <span key={tag} className="rounded-full border border-border px-3 py-1 text-xs font-bold text-text-sec">#{tag}</span>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        <section className="mt-10">
+          <Card variant="spotlight">
+            <div className="p-6 sm:p-8">
               <h2 className="text-2xl font-black text-text">Why Featured Talent?</h2>
               <p className="mt-4 text-sm leading-7 text-text-sec">
-                IOPPS Featured Talent gives approved Indigenous job seekers a public, respectful profile that employers and community organizations can discover without exposing private contact details.
+                IOPPS Featured Talent gives approved Indigenous job seekers a public, respectful profile that employers and community organizations can discover while private contact stays protected.
               </p>
             </div>
           </Card>
