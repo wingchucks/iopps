@@ -13,8 +13,11 @@ export function generateStaticParams() {
   return featuredTalentProfiles.map((profile) => ({ slug: profile.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const profile = getFeaturedTalentProfile(params.slug);
+type FeaturedTalentParams = Promise<{ slug: string }>;
+
+export async function generateMetadata({ params }: { params: FeaturedTalentParams }): Promise<Metadata> {
+  const { slug } = await params;
+  const profile = getFeaturedTalentProfile(slug);
   if (!profile) return { title: "Featured Talent | IOPPS.CA" };
   return {
     title: `${profile.name} | Featured Talent | IOPPS.CA`,
@@ -22,8 +25,9 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-export default function FeaturedTalentProfilePage({ params }: { params: { slug: string } }) {
-  const profile = getFeaturedTalentProfile(params.slug);
+export default async function FeaturedTalentProfilePage({ params }: { params: FeaturedTalentParams }) {
+  const { slug } = await params;
+  const profile = getFeaturedTalentProfile(slug);
   if (!profile) notFound();
 
   return (
