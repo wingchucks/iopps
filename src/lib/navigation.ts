@@ -96,6 +96,13 @@ const NAV_ITEM_DEFINITIONS = {
     icon: "store",
     priority: 80,
   },
+  entrepreneurs: {
+    key: "entrepreneurs",
+    label: "Entrepreneurs",
+    href: "/entrepreneurs",
+    icon: "handshake",
+    priority: 85,
+  },
   partners: {
     key: "partners",
     label: "Partners",
@@ -190,6 +197,7 @@ const PUBLIC_EXPLORE_KEYS: NavigationKey[] = [
   "training",
   "schools",
   "businesses",
+  "entrepreneurs",
   "partners",
   "search",
   "live",
@@ -203,6 +211,7 @@ const LANDING_INLINE_KEYS: NavigationKey[] = [
   "training",
   "schools",
   "businesses",
+  "entrepreneurs",
   "partners",
   "live",
   "pricing",
@@ -220,6 +229,7 @@ const MEMBER_EXPLORE_KEYS: NavigationKey[] = [
   "training",
   "mentorship",
   "businesses",
+  "entrepreneurs",
 ];
 
 const MEMBER_DESKTOP_TOP_KEYS: NavigationKey[] = [
@@ -231,6 +241,7 @@ const MEMBER_DESKTOP_TOP_KEYS: NavigationKey[] = [
   "schools",
   "training",
   "businesses",
+  "entrepreneurs",
 ];
 
 const MEMBER_UTILITY_KEYS: NavigationKey[] = ["saved", "notifications", "settings"];
