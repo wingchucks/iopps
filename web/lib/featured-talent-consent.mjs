@@ -74,6 +74,8 @@ No, not right now: ${noUrl}
 
 If you choose yes, we’ll send you the planned feature date and the profile details we’ll use before it goes live.
 
+For your Featured Talent graphic, you can choose to use your own photo or a clean IOPPS avatar/card with your initials. If you want a photo used, reply with the image or update your IOPPS profile photo before your feature date. If we do not receive a photo before then, we may use the IOPPS avatar/card so your spotlight can still go ahead.
+
 Thank you,
 Nathan Arias
 IOPPS.CA — Empowering Indigenous Success`,

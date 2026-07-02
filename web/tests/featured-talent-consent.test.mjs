@@ -75,6 +75,9 @@ test('email includes yes/no links, Sunday date, and email-only privacy language'
   assert.match(email.text, /Tansi Lauren/);
   assert.match(email.text, /Sunday, July 5, 2026/);
   assert.match(email.text, /email-only/i);
+  assert.match(email.text, /own photo/i);
+  assert.match(email.text, /IOPPS avatar\/card/i);
+  assert.match(email.text, /profile photo before your feature date/i);
   assert.doesNotMatch(email.text, /phone number\s*:/i);
   assert.match(email.text, /Yes, feature me: https:\/\/www\.iopps\.ca\/api\/featured-talent\/consent\?token=abc&choice=yes/);
   assert.match(email.text, /No, not right now: https:\/\/www\.iopps\.ca\/api\/featured-talent\/consent\?token=abc&choice=no/);
