@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { buildAccountVerificationEmailContent } from "@/lib/auth-verification-email";
+import { buildProfileCompletionReminderContent, type ProfileReminderKind, type ProfileReminderStage } from "@/lib/profile-completion-reminder";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -358,6 +359,38 @@ export async function sendAdminPaymentNotification(opts: {
     });
   } catch (err) {
     console.error("[email] Admin payment notification failed:", err);
+  }
+}
+
+export async function sendProfileCompletionReminder(opts: {
+  email: string;
+  displayName?: string | null;
+  kind: ProfileReminderKind;
+  stage: ProfileReminderStage;
+}): Promise<{ success: boolean; error?: string; subject?: string }> {
+  if (!resend) return { success: false, error: "Email not configured" };
+
+  const content = buildProfileCompletionReminderContent({
+    displayName: opts.displayName,
+    kind: opts.kind,
+    stage: opts.stage,
+    siteUrl: SITE_URL,
+  });
+
+  const html = emailWrapper(content.html);
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: opts.email,
+      subject: content.subject,
+      html,
+      text: content.text,
+    });
+    return { success: true, subject: content.subject };
+  } catch (err) {
+    console.error("[email] Profile completion reminder failed:", err);
+    return { success: false, error: String(err), subject: content.subject };
   }
 }
 
