@@ -27,12 +27,60 @@ const COPY: Record<string, { title: string; body: string }> = {
   },
 };
 
+function choiceCopy(choice: string) {
+  if (choice === "yes") {
+    return {
+      title: "Confirm you want to be featured",
+      body: "Please confirm that IOPPS can feature your profile on IOPPS.ca and share a short email-only public spotlight on IOPPS social media.",
+      button: "Yes, feature me",
+    };
+  }
+
+  return {
+    title: "Confirm you do not want to be featured right now",
+    body: "Please confirm that IOPPS should not feature your profile right now. You can still ask to be considered later.",
+    button: "No, not right now",
+  };
+}
+
 export default async function FeaturedTalentConsentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; token?: string; choice?: string }>;
 }) {
   const params = await searchParams;
+  const token = params.token || "";
+  const choice = params.choice === "yes" ? "yes" : params.choice === "no" ? "no" : "";
+
+  if (token && choice) {
+    const copy = choiceCopy(choice);
+
+    return (
+      <main className="min-h-screen bg-[var(--background)] px-4 py-16">
+        <section className="mx-auto max-w-xl rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-8 text-center shadow-sm">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-[var(--accent)]">
+            IOPPS Featured Talent
+          </p>
+          <h1 className="mb-4 text-3xl font-bold text-[var(--text-primary)]">{copy.title}</h1>
+          <p className="mb-6 text-[var(--text-secondary)]">{copy.body}</p>
+          <p className="mb-8 rounded-lg bg-[var(--surface)] p-4 text-sm text-[var(--text-secondary)]">
+            Public Featured Talent contact is email-only. IOPPS will not publish your phone number.
+          </p>
+          <form method="POST" action="/api/featured-talent/consent" className="space-y-4">
+            <input type="hidden" name="token" value={token} />
+            <input type="hidden" name="choice" value={choice} />
+            <button
+              type="submit"
+              className="inline-flex rounded-lg bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)]"
+            >
+              {copy.button}
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
   const status = params.status || "invalid";
   const copy = COPY[status] || COPY.invalid;
 

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -49,6 +50,17 @@ test('builds decline update that blocks public featuring', () => {
     scheduledFor: null,
     consentVersion: '2026-07-02',
   });
+});
+
+test('route keeps GET read-only and records consent only from POST', () => {
+  const route = readFileSync(new URL('../app/api/featured-talent/consent/route.ts', import.meta.url), 'utf8');
+  const getBody = route.match(/export async function GET[\s\S]*?\n}\n\nexport async function POST/)?.[0] || '';
+
+  assert.match(route, /export async function GET/);
+  assert.match(route, /export async function POST/);
+  assert.doesNotMatch(getBody, /buildFeaturedTalentConsentUpdate/);
+  assert.doesNotMatch(getBody, /batch\.commit|runTransaction/);
+  assert.match(route, /runTransaction/);
 });
 
 test('email includes yes/no links, Sunday date, and email-only privacy language', () => {
