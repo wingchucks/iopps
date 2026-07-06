@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 
 export default function FeaturedTalentPage() {
   const [featured] = featuredTalentProfiles;
+  const firstName = featured.name.split(" ")[0] ?? featured.name;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -64,10 +65,10 @@ export default function FeaturedTalentPage() {
               </div>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link href={`/featured-talent/${featured.slug}`} className="no-underline">
-                  <Button variant="primary-teal" size="lg">View Audrey&apos;s Profile</Button>
+                  <Button variant="primary-teal" size="lg">View {firstName}&apos;s Profile</Button>
                 </Link>
                 <Link href={`mailto:${featured.publicEmail}`} className="no-underline">
-                  <Button variant="outline" size="lg">Email Audrey</Button>
+                  <Button variant="outline" size="lg">Email {firstName}</Button>
                 </Link>
               </div>
             </div>
