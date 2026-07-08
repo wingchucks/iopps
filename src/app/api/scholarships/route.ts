@@ -13,6 +13,10 @@ import {
 export const runtime = "nodejs";
 export const revalidate = 60;
 
+const PUBLIC_LIST_CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+};
+
 function normalizeScholarship(
   doc: FirebaseFirestore.QueryDocumentSnapshot,
   orgLookup: Map<string, JsonRecord>,
@@ -71,7 +75,7 @@ export async function GET() {
     const orgLookup = new Map(organizations.map((org) => [String(org.id || ""), org]));
 
     const scholarships = snap.docs.map((doc) => normalizeScholarship(doc, orgLookup, organizations));
-    return NextResponse.json({ scholarships });
+    return NextResponse.json({ scholarships }, { headers: PUBLIC_LIST_CACHE_HEADERS });
   } catch (err) {
     console.error("Scholarships API error:", err);
     return NextResponse.json({ error: "Failed to load scholarships" }, { status: 500 });

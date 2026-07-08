@@ -11,6 +11,10 @@ import {
 export const runtime = "nodejs";
 export const revalidate = 60;
 
+const PUBLIC_LIST_CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+};
+
 export async function GET() {
   try {
     const db = getAdminDb();
@@ -56,7 +60,10 @@ export async function GET() {
         );
       });
 
-    return NextResponse.json({ training, programs: training });
+    return NextResponse.json(
+      { training, programs: training },
+      { headers: PUBLIC_LIST_CACHE_HEADERS },
+    );
   } catch (err) {
     console.error("Failed to fetch training:", err);
     return NextResponse.json({ training: [], programs: [] }, { status: 500 });
