@@ -15,6 +15,34 @@ export type FeaturedTalentProfile = {
 
 export const featuredTalentProfiles: FeaturedTalentProfile[] = [
   {
+    slug: "lauren-moosuk",
+    name: "Lauren Moosuk",
+    featuredLabel: "Featured Talent",
+    headline: "Support work, mental health, and wellness",
+    nation: "Mosquito Grizzly Bear’s Head Lean Man First Nation • Nakota",
+    location: "North Battleford",
+    openTo: "Seeking wellness and support work opportunities",
+    imageUrl:
+      "https://firebasestorage.googleapis.com/v0/b/iopps-c2224.firebasestorage.app/o/avatars%2Fzks536DFxVMNQ7cYiRMaT7T3A9T2%2Fprofile.jpg?alt=media&token=fd37b251-8c65-4f55-ac8b-e84c9bfb231d",
+    publicEmail: "laurenmoosuk70@gmail.com",
+    summary:
+      "Lauren Moosuk is passionate about mental health, wellness, and community care. She is seeking employment in the wellness field where she can contribute compassion, cultural understanding, lived experience, and a strong commitment to helping individuals and communities thrive.",
+    skills: [
+      "Mental health and wellness",
+      "Support services",
+      "Community care",
+      "Cultural understanding",
+      "Safe and inclusive spaces",
+      "Compassionate support",
+    ],
+    experience: [
+      "Mental health and wellness support services",
+      "Community care and people-first support",
+      "Culturally respectful and inclusive spaces",
+      "Helping individuals and communities build resilience and well-being",
+    ],
+  },
+  {
     slug: "audrey-fiddler",
     name: "Audrey Fiddler",
     featuredLabel: "Featured Talent",
