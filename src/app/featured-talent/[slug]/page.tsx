@@ -29,6 +29,7 @@ export default async function FeaturedTalentProfilePage({ params }: { params: Fe
   const { slug } = await params;
   const profile = getFeaturedTalentProfile(slug);
   if (!profile) notFound();
+  const firstName = profile.name.split(" ")[0] ?? profile.name;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -73,7 +74,7 @@ export default async function FeaturedTalentProfilePage({ params }: { params: Fe
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href={`mailto:${profile.publicEmail}`} className="no-underline">
-                <Button variant="primary-teal" size="lg">Email Audrey</Button>
+                <Button variant="primary-teal" size="lg">Email {firstName}</Button>
               </Link>
               <Link href="/jobs" className="no-underline">
                 <Button variant="outline" size="lg">Browse Opportunities</Button>

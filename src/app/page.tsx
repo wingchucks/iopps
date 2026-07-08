@@ -259,9 +259,9 @@ function HeroFeaturedTalentCard() {
         />
         <div className="min-w-0 flex-1">
           <p className="m-0 text-[10px] font-black uppercase tracking-[0.18em] text-teal-light">Featured Talent</p>
-          <p className="mt-1 text-lg font-black leading-tight text-white">Meet Audrey Fiddler</p>
+          <p className="mt-1 text-lg font-black leading-tight text-white">Meet {featuredTalent.name}</p>
           <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-white/68">
-            Seeking full-time employment • Administrative, training, and community support
+            {featuredTalent.openTo} • {featuredTalent.headline}
           </p>
         </div>
         <span className="hidden shrink-0 text-sm font-black text-teal-light sm:inline">View profile &rarr;</span>
@@ -457,6 +457,7 @@ function SectionShell({
 
 function FeaturedTalentSpotlight() {
   const featuredTalent = featuredTalentProfiles[0];
+  const firstName = featuredTalent.name.split(" ")[0] ?? featuredTalent.name;
 
   return (
     <section className="mx-auto -mt-7 max-w-[1320px] px-4 pb-8 sm:px-6 lg:px-8">
@@ -486,8 +487,8 @@ function FeaturedTalentSpotlight() {
             </p>
             <p className="mt-5 max-w-2xl text-base leading-8 text-text-sec">
               IOPPS Featured Talent helps Indigenous job seekers get seen by employers,
-              organizations, and community opportunity providers. Audrey is seeking full-time
-              employment and is open to the right opportunity.
+              organizations, and community opportunity providers. {firstName} is seeking
+              wellness and support work opportunities and is open to the right connection.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               {featuredTalent.skills.slice(0, 5).map((skill) => (
@@ -498,7 +499,7 @@ function FeaturedTalentSpotlight() {
             </div>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href={`/featured-talent/${featuredTalent.slug}`} className="no-underline">
-                <Button variant="primary-teal" size="lg">View Audrey&apos;s Profile</Button>
+                <Button variant="primary-teal" size="lg">View {firstName}&apos;s Profile</Button>
               </Link>
               <Link href="/featured-talent" className="no-underline">
                 <Button variant="outline" size="lg">See Featured Talent</Button>
