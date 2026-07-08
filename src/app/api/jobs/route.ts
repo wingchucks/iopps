@@ -11,6 +11,10 @@ import {
 export const runtime = "nodejs";
 export const revalidate = 60; // Cache for 60 seconds
 
+const PUBLIC_LIST_CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+};
+
 // Recursively convert Firestore Timestamps and non-serializable values to JSON-safe types
 function serialize(value: unknown): unknown {
   if (value === null || value === undefined) return value;
@@ -117,7 +121,10 @@ export async function GET(request: Request) {
 
     const sortedJobs = sortJobsByRecency(publicJobs);
 
-    return NextResponse.json({ jobs: sortedJobs, count: sortedJobs.length });
+    return NextResponse.json(
+      { jobs: sortedJobs, count: sortedJobs.length },
+      { headers: PUBLIC_LIST_CACHE_HEADERS },
+    );
   } catch (err) {
     console.error("Jobs API error:", err);
     return NextResponse.json({ error: "Failed to load jobs" }, { status: 500 });

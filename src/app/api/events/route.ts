@@ -5,6 +5,10 @@ import { isPublicEventVisible, normalizePublicEvent } from "@/lib/public-events"
 export const runtime = "nodejs";
 export const revalidate = 60;
 
+const PUBLIC_LIST_CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+};
+
 function serialize(value: unknown): unknown {
   if (value === null || value === undefined) return value;
   if (typeof value === "object" && value !== null && typeof (value as Record<string, unknown>).toDate === "function") {
@@ -32,7 +36,7 @@ export async function GET() {
       .map((doc) => serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
       .filter((event) => isPublicEventVisible(event))
       .map((event) => normalizePublicEvent(event));
-    return NextResponse.json({ events });
+    return NextResponse.json({ events }, { headers: PUBLIC_LIST_CACHE_HEADERS });
   } catch (err) {
     console.error("Events API error:", err);
     return NextResponse.json({ error: "Failed to load events" }, { status: 500 });
