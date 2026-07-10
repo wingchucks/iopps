@@ -1,11 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import Avatar from "@/components/Avatar";
+import DirectoryPagination, { useDirectoryFilter, useDirectoryPagination } from "@/components/DirectoryPagination";
 import type { Job } from "@/lib/firestore/jobs";
 import { mixJobsForBrowse, selectFeaturedStripItems } from "@/lib/public-featured";
 
@@ -65,14 +66,24 @@ function getClosingSoonLabel(job: Job): string | null {
 }
 
 export default function JobsPage() {
+  return (
+    <Suspense fallback={null}>
+      <JobsPageContent />
+    </Suspense>
+  );
+}
+
+function JobsPageContent() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("All");
-  const [salaryMin, setSalaryMin] = useState("");
-  const [salaryMax, setSalaryMax] = useState("");
-  const [remoteOnly, setRemoteOnly] = useState(false);
+  const [search, setSearch] = useDirectoryFilter("q", "");
+  const [locationFilter, setLocationFilter] = useDirectoryFilter("location", "");
+  const [typeFilter, setTypeFilter] = useDirectoryFilter("type", "All");
+  const [salaryMin, setSalaryMin] = useDirectoryFilter("salaryMin", "");
+  const [salaryMax, setSalaryMax] = useDirectoryFilter("salaryMax", "");
+  const [remoteParam, setRemoteParam] = useDirectoryFilter("remote", "");
+  const remoteOnly = remoteParam === "1";
+  const setRemoteOnly = (next: boolean) => setRemoteParam(next ? "1" : "");
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const submitSearch = (event?: FormEvent<HTMLFormElement>) => {
@@ -200,6 +211,7 @@ export default function JobsPage() {
       maxFeaturedInFirstWindow: 2,
     })
   ), [filtered]);
+  const { page, pageItems, totalPages, setPage } = useDirectoryPagination(mixedJobs);
 
   const inputSurfaceStyle = {
     border: "1px solid var(--border)",
@@ -278,6 +290,7 @@ export default function JobsPage() {
               type="search"
               inputMode="search"
               enterKeyHint="search"
+              aria-label="Filter jobs by city or province"
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
               onKeyDown={(e) => {
@@ -292,6 +305,7 @@ export default function JobsPage() {
             />
 
             <select
+              aria-label="Filter jobs by employment type"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               className="cursor-pointer rounded-xl px-4 py-3 text-sm text-text transition-colors"
@@ -307,6 +321,7 @@ export default function JobsPage() {
             <div className="flex gap-2">
               <input
                 type="number"
+                aria-label="Minimum salary"
                 value={salaryMin}
                 onChange={(e) => setSalaryMin(e.target.value)}
                 placeholder="Min $"
@@ -315,6 +330,7 @@ export default function JobsPage() {
               />
               <input
                 type="number"
+                aria-label="Maximum salary"
                 value={salaryMax}
                 onChange={(e) => setSalaryMax(e.target.value)}
                 placeholder="Max $"
@@ -324,6 +340,8 @@ export default function JobsPage() {
             </div>
 
             <button
+              type="button"
+              aria-pressed={remoteOnly}
               onClick={() => setRemoteOnly(!remoteOnly)}
               className="flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors"
               style={{
@@ -492,7 +510,7 @@ export default function JobsPage() {
               </p>
             </div>
             {!loading && (
-              <p className="text-sm text-text-muted">
+              <p className="text-sm text-text-muted" aria-live="polite">
                 {mixedJobs.length} job{mixedJobs.length !== 1 ? "s" : ""} found
               </p>
             )}
@@ -517,8 +535,8 @@ export default function JobsPage() {
               </p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {mixedJobs.map((job) => {
+            <div id="directory-results" tabIndex={-1} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {pageItems.map((job) => {
                 const employerName = job.employerName || job.orgName || job.orgShort || "Hiring organization";
                 const salary = getSalaryDisplay(job);
                 const posted = daysAgo(job);
@@ -614,6 +632,7 @@ export default function JobsPage() {
               })}
             </div>
           )}
+          <DirectoryPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </AppShell>

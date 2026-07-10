@@ -4,15 +4,27 @@ import { normalizeImportedDescription } from "@/lib/server/imported-job-descript
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 import {
   buildPublicJobRouteSlugMap,
-  isPublicJobVisible,
   sortJobsByRecency,
 } from "@/lib/public-jobs";
+import { mergePublicJobRecords } from "@/lib/public-job-merge";
 
 export const runtime = "nodejs";
 export const revalidate = 60; // Cache for 60 seconds
 
 const PUBLIC_LIST_CACHE_HEADERS = {
   "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+};
+
+type NormalizedJob = Record<string, unknown> & {
+  id: string;
+  slug?: string;
+  active?: boolean;
+  status?: string;
+  createdAt?: string | Date | null;
+  updatedAt?: string | Date | null;
+  postedAt?: string | Date | null;
+  publishedAt?: string | Date | null;
+  order?: number | null;
 };
 
 // Recursively convert Firestore Timestamps and non-serializable values to JSON-safe types
@@ -42,7 +54,7 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
-function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "jobs" | "posts"): Record<string, unknown> {
+function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "jobs" | "posts"): NormalizedJob {
   const data = doc.data();
   const serialized = serialize({ id: doc.id, ...data }) as Record<string, unknown>;
   serialized.slug = buildJobRouteSlug({
@@ -64,7 +76,7 @@ function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "job
   }
   // Tag source
   serialized._source = source;
-  return serialized;
+  return serialized as NormalizedJob;
 }
 
 export async function GET(request: Request) {
@@ -88,26 +100,10 @@ export async function GET(request: Request) {
 
     const [jobsSnap, postsSnap] = await Promise.all([jobsQuery.get(), postsQuery.get()]);
 
-    const jobIds = new Set<string>();
-    const jobs: Record<string, unknown>[] = [];
-
-    jobsSnap.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
-      jobIds.add(doc.id);
-      jobs.push(normalizeJob(doc, "jobs"));
-    });
-
-    // Merge posts — skip if same slug already in jobs collection
-    postsSnap.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
-      const slug = doc.data().slug || doc.id;
-      if (!jobIds.has(doc.id) && !jobIds.has(slug)) {
-        jobs.push(normalizeJob(doc, "posts"));
-      }
-    });
-
-    const publicJobs = jobs.filter((job) => isPublicJobVisible({
-      active: job.active as boolean | undefined,
-      status: typeof job.status === "string" ? job.status : undefined,
-    }));
+    const publicJobs = mergePublicJobRecords<NormalizedJob, NormalizedJob>(
+      jobsSnap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => normalizeJob(doc, "jobs")),
+      postsSnap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => normalizeJob(doc, "posts")),
+    );
 
     const publicSlugMap = buildPublicJobRouteSlugMap(publicJobs.map((job) => ({
       id: String(job.id),

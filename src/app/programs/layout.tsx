@@ -1,3 +1,3 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Programs", description: "Explore Indigenous programs including education, employment support, community development, and professional growth opportunities." };
+export const metadata: Metadata = { title: "Programs", description: "Browse programs through the IOPPS schools directory.", robots: { index: false, follow: false } };
 export default function Layout({ children }: { children: React.ReactNode }) { return children; }

@@ -1,21 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
+import {
+  buildAnalyticsDeltas,
+  buildMetricDocumentId,
+  isTrackedClick,
+} from "@/lib/analytics/storage";
 import { ANALYTICS_EVENT_NAMES, type AnalyticsEventPayload } from "@/lib/analytics/types";
+import { verifyRequiredAppCheckFromRequest } from "@/lib/server/app-check";
 
 export const dynamic = "force-dynamic";
-
-const CLICK_EVENTS = new Set([
-  "cta_click",
-  "internal_link_click",
-  "outbound_link_click",
-  "job_apply_click",
-  "job_detail_click",
-  "event_detail_click",
-  "scholarship_detail_click",
-  "training_detail_click",
-  "employer_profile_click",
-]);
 
 function dateKeyForRegina(date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -26,11 +20,6 @@ function dateKeyForRegina(date = new Date()): string {
   }).formatToParts(date);
   const value = (type: string) => parts.find((part) => part.type === type)?.value;
   return `${value("year")}-${value("month")}-${value("day")}`;
-}
-
-function safeKey(value: string | undefined, fallback: string): string {
-  const cleaned = (value || fallback).replace(/^https?:\/\/[^/]+/i, "").trim() || fallback;
-  return encodeURIComponent(cleaned.slice(0, 160)).replace(/\./g, "%2E");
 }
 
 function safeText(value: unknown, fallback = "unknown"): string {
@@ -50,6 +39,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Firestore not initialized" }, { status: 500 });
   }
 
+  const appCheckValid = await verifyRequiredAppCheckFromRequest(request);
+  if (!appCheckValid) {
+    return NextResponse.json({ ok: false, error: "Security check failed" }, { status: 403 });
+  }
+
   let payload: Partial<AnalyticsEventPayload>;
   try {
     payload = await request.json();
@@ -63,40 +57,72 @@ export async function POST(request: NextRequest) {
   }
 
   const dateKey = dateKeyForRegina();
-  const dayRef = adminDb.collection("analyticsDaily").doc(dateKey);
+  // V1 stored every page/click label as a dynamic map on one document and hit
+  // Firestore's 1 MiB document limit. V2 keeps only fixed-cardinality totals on
+  // the day document and moves unbounded labels to metric documents.
+  const dayRef = adminDb.collection("analyticsDailyV2").doc(dateKey);
+  const legacyDayRef = adminDb.collection("analyticsDaily").doc(dateKey);
   const visitorId = safeVisitorId(payload.visitorId);
   const path = safeText(payload.path, "/");
   const href = safeText(payload.href, "");
   const label = safeText(payload.label || payload.title || href || path, eventName);
+  const deltas = buildAnalyticsDeltas(eventName);
 
   try {
-    await dayRef.set(
+    const batch = adminDb.batch();
+    batch.set(
+      dayRef,
       {
         date: dateKey,
         timezone: "America/Regina",
+        schemaVersion: 2,
         updatedAt: FieldValue.serverTimestamp(),
         totals: {
-          events: FieldValue.increment(1),
-          pageViews: FieldValue.increment(eventName === "page_view" ? 1 : 0),
-          clicks: FieldValue.increment(CLICK_EVENTS.has(eventName) ? 1 : 0),
-          outboundClicks: FieldValue.increment(eventName === "outbound_link_click" ? 1 : 0),
-          applyClicks: FieldValue.increment(eventName === "job_apply_click" ? 1 : 0),
+          events: FieldValue.increment(deltas.events),
+          pageViews: FieldValue.increment(deltas.pageViews),
+          clicks: FieldValue.increment(deltas.clicks),
+          outboundClicks: FieldValue.increment(deltas.outboundClicks),
+          applyClicks: FieldValue.increment(deltas.applyClicks),
         },
         events: {
           [eventName]: FieldValue.increment(1),
-        },
-        pages: {
-          [safeKey(path, "/")]: FieldValue.increment(eventName === "page_view" ? 1 : 0),
-        },
-        clicks: {
-          [safeKey(label || href, eventName)]: FieldValue.increment(CLICK_EVENTS.has(eventName) ? 1 : 0),
         },
       },
       { merge: true },
     );
 
+    if (eventName === "page_view") {
+      batch.set(
+        dayRef.collection("metrics").doc(buildMetricDocumentId("page", path)),
+        {
+          kind: "page",
+          label: path,
+          count: FieldValue.increment(1),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    }
+
+    if (isTrackedClick(eventName)) {
+      const clickLabel = label || href || eventName;
+      batch.set(
+        dayRef.collection("metrics").doc(buildMetricDocumentId("click", clickLabel)),
+        {
+          kind: "click",
+          label: clickLabel,
+          count: FieldValue.increment(1),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    }
+
     if (visitorId) {
-      await dayRef.collection("visitors").doc(visitorId).set(
+      // Keep the original visitor subcollection as the single source of truth so
+      // the transition does not double-count people who visit before and after V2.
+      batch.set(
+        legacyDayRef.collection("visitors").doc(visitorId),
         {
           firstSeenAt: FieldValue.serverTimestamp(),
           lastSeenAt: FieldValue.serverTimestamp(),
@@ -105,7 +131,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ ok: true });
+    await batch.commit();
+    return NextResponse.json({ ok: true, schemaVersion: 2 });
   } catch (error) {
     console.error("[POST /api/analytics/event] Error:", error);
     return NextResponse.json({ ok: false, error: "Failed to record analytics event" }, { status: 500 });

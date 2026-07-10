@@ -1,3 +1,4 @@
+import { getAppCheckTokenValue } from "@/lib/firebase";
 import type { AnalyticsEventName, AnalyticsEventPayload } from "./types";
 
 const VISITOR_STORAGE_KEY = "iopps.analytics.visitorId";
@@ -41,18 +42,18 @@ export function trackAnalyticsEvent(
     visitorId: payload.visitorId ?? getVisitorId(),
   };
 
-  const serialized = JSON.stringify(body);
+  void (async () => {
+    const appCheckToken = await getAppCheckTokenValue();
+    if (!appCheckToken) return;
 
-  if (navigator.sendBeacon) {
-    const blob = new Blob([serialized], { type: "application/json" });
-    navigator.sendBeacon("/api/analytics/event", blob);
-    return;
-  }
-
-  void fetch("/api/analytics/event", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: serialized,
-    keepalive: true,
-  }).catch(() => undefined);
+    await fetch("/api/analytics/event", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Firebase-AppCheck": appCheckToken,
+      },
+      body: JSON.stringify(body),
+      keepalive: true,
+    });
+  })().catch(() => undefined);
 }

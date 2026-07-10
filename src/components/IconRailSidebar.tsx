@@ -346,6 +346,7 @@ export default function IconRailSidebar() {
 
           <nav
             ref={navRef}
+            aria-label="Primary navigation"
             className="flex h-full flex-col gap-0.5 overflow-y-auto px-2 py-2"
             style={{ scrollbarWidth: "thin", scrollbarColor: "var(--teal) transparent" }}
           >
@@ -353,7 +354,7 @@ export default function IconRailSidebar() {
               const active = isRailItemActive(pathname, href, key, searchType);
 
               return (
-                <Link key={href} href={href} className="no-underline" data-nav-item={key}>
+                <Link key={href} href={href} className="no-underline" data-nav-item={key} aria-current={active ? "page" : undefined}>
                   <div
                     className="flex h-11 items-center gap-3 rounded-xl px-3.5 transition-colors hover:bg-bg"
                     style={{
@@ -408,7 +409,7 @@ export default function IconRailSidebar() {
             const active = pathname === href || pathname.startsWith(`${href}/`);
 
             return (
-              <Link key={href} href={href} className="no-underline" data-nav-item={key}>
+              <Link key={href} href={href} className="no-underline" data-nav-item={key} aria-current={active ? "page" : undefined}>
                 <div
                   className="flex h-10 items-center gap-3 rounded-xl px-3.5 transition-colors hover:bg-bg"
                   style={{

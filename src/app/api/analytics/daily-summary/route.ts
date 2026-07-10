@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
+import { topAnalyticsItems } from "@/lib/analytics/storage";
+import { readAnalyticsDay } from "@/lib/server/analytics-daily";
 import type { AnalyticsSummaryMetric } from "@/lib/analytics/types";
 
 export const dynamic = "force-dynamic";
-
-type CounterMap = Record<string, number>;
 
 function normalizeSecret(value: string | null | undefined): string {
   if (!value) return "";
@@ -27,23 +27,6 @@ function dateKeyForRegina(date = new Date()): string {
   }).formatToParts(date);
   const value = (type: string) => parts.find((part) => part.type === type)?.value;
   return `${value("year")}-${value("month")}-${value("day")}`;
-}
-
-function decodeLabel(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
-function topItems(map: unknown, limit = 3): AnalyticsSummaryMetric[] {
-  if (!map || typeof map !== "object") return [];
-  return Object.entries(map as CounterMap)
-    .filter(([, count]) => typeof count === "number" && count > 0)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([label, count]) => ({ label: decodeLabel(label), count }));
 }
 
 function formatNumber(value: number): string {
@@ -72,26 +55,15 @@ export async function GET(request: NextRequest) {
   const date = request.nextUrl.searchParams.get("date") || dateKeyForRegina();
 
   try {
-    const dayRef = adminDb.collection("analyticsDaily").doc(date);
-    const [daySnap, visitorsSnap] = await Promise.all([
-      dayRef.get(),
-      dayRef.collection("visitors").count().get(),
-    ]);
-
-    const data = daySnap.exists ? daySnap.data() || {} : {};
-    const totals = (data.totals || {}) as Record<string, number>;
-    const visitors = visitorsSnap.data().count || 0;
-    const pageViews = totals.pageViews || 0;
-    const totalClicks = totals.clicks || 0;
-    const outboundClicks = totals.outboundClicks || 0;
-    const applyClicks = totals.applyClicks || 0;
-    const topPages = topItems(data.pages);
-    const topClicks = topItems(data.clicks);
+    const day = await readAnalyticsDay(adminDb, date);
+    const { pageViews, clicks: totalClicks, outboundClicks, applyClicks } = day.totals;
+    const topPages = topAnalyticsItems(day.pages, 3);
+    const topClicks = topAnalyticsItems(day.clicks, 3);
     const sponsorLine = `IOPPS recorded ${formatNumber(pageViews)} page views, ${formatNumber(totalClicks)} tracked clicks, and ${formatNumber(outboundClicks)} outbound clicks on ${date}.`;
 
     const text = [
       `IOPPS Daily Stats — ${date}`,
-      `- Visitors: ${formatNumber(visitors)}`,
+      `- Visitors: ${formatNumber(day.visitors)}`,
       `- Page views: ${formatNumber(pageViews)}`,
       `- Tracked clicks: ${formatNumber(totalClicks)}`,
       `- Outbound clicks: ${formatNumber(outboundClicks)}`,
@@ -103,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       date,
-      visitors,
+      visitors: day.visitors,
       pageViews,
       totalClicks,
       outboundClicks,
@@ -112,6 +84,7 @@ export async function GET(request: NextRequest) {
       topClicks,
       sponsorLine,
       text,
+      schemaVersion: 2,
     });
   } catch (error) {
     console.error("[GET /api/analytics/daily-summary] Error:", error);

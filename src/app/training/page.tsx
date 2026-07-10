@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
+import DirectoryPagination, { useDirectoryFilter, useDirectoryFilterActions, useDirectoryPagination } from "@/components/DirectoryPagination";
 import { displayAmount } from "@/lib/utils";
 
 const categories = ["All", "Technology", "Business", "Trades", "Health", "Culture"] as const;
@@ -55,11 +56,20 @@ function formatBadgeColor(format: string) {
 }
 
 export default function TrainingPage() {
+  return (
+    <Suspense fallback={null}>
+      <TrainingPageContent />
+    </Suspense>
+  );
+}
+
+function TrainingPageContent() {
   const [programs, setPrograms] = useState<TrainingProgram[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedFormat, setSelectedFormat] = useState("All");
+  const [searchQuery, setSearchQuery] = useDirectoryFilter("q", "");
+  const [selectedCategory, setSelectedCategory] = useDirectoryFilter("category", "All");
+  const [selectedFormat, setSelectedFormat] = useDirectoryFilter("format", "All");
+  const setFilters = useDirectoryFilterActions();
 
   useEffect(() => {
     async function load() {
@@ -103,6 +113,7 @@ export default function TrainingPage() {
     }
     return items;
   }, [programs, searchQuery, selectedCategory, selectedFormat]);
+  const { page, pageItems, totalPages, setPage } = useDirectoryPagination(filtered);
   const hasActiveFilters =
     selectedCategory !== "All" || selectedFormat !== "All" || Boolean(searchQuery.trim());
 
@@ -125,6 +136,7 @@ export default function TrainingPage() {
           <div className="relative mx-auto max-w-[520px]">
             <input
               type="text"
+              aria-label="Search training"
               placeholder="Search training, skills, providers..."
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -160,6 +172,7 @@ export default function TrainingPage() {
         <div className="mx-auto max-w-[1200px] px-4 pb-24 pt-6 md:px-10">
           <div className="mb-6 flex flex-wrap gap-4">
             <select
+              aria-label="Filter training by category"
               value={selectedCategory}
               onChange={(event) => setSelectedCategory(event.target.value)}
               className="rounded-xl text-sm font-semibold"
@@ -182,7 +195,9 @@ export default function TrainingPage() {
                 const active = selectedFormat === format;
                 return (
                   <button
+                    type="button"
                     key={format}
+                    aria-pressed={active}
                     onClick={() => setSelectedFormat(format)}
                     className="whitespace-nowrap rounded-xl border-none px-4 py-2.5 text-sm font-semibold"
                     style={{
@@ -209,7 +224,7 @@ export default function TrainingPage() {
             </div>
           )}
 
-          <h2 className="mb-4 text-lg font-bold text-text">
+          <h2 className="mb-4 text-lg font-bold text-text" aria-live="polite">
             {selectedCategory !== "All" || selectedFormat !== "All" || searchQuery.trim()
               ? `${filtered.length} Training${filtered.length !== 1 ? "s" : ""} Found`
               : "All Training"}
@@ -235,11 +250,7 @@ export default function TrainingPage() {
                   {hasActiveFilters ? (
                     <button
                       type="button"
-                      onClick={() => {
-                        setSearchQuery("");
-                        setSelectedCategory("All");
-                        setSelectedFormat("All");
-                      }}
+                      onClick={() => setFilters({ q: null, category: null, format: null })}
                       className="rounded-xl border-none px-4 py-2.5 text-sm font-semibold cursor-pointer"
                       style={{ background: "var(--teal)", color: "#fff" }}
                     >
@@ -271,12 +282,13 @@ export default function TrainingPage() {
               </div>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((program) => (
+            <div id="directory-results" tabIndex={-1} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {pageItems.map((program) => (
                 <ProgramCard key={program.id} program={program} />
               ))}
             </div>
           )}
+          <DirectoryPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </AppShell>

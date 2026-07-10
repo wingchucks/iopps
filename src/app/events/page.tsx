@@ -1,9 +1,10 @@
 "use client";
 // Design: Events pages use purple gradient hero (--color-purple) — intentional per-content-type color scheme
 
-import { useState, useEffect, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import DirectoryPagination, { useDirectoryFilter, useDirectoryPagination } from "@/components/DirectoryPagination";
 import { getEvents, type Event } from "@/lib/firestore/events";
 import { getPosts } from "@/lib/firestore/posts";
 import {
@@ -18,12 +19,20 @@ import { displayLocation } from "@/lib/utils";
 const dateFilters = ["All Dates", "This Week", "This Month", "Upcoming"] as const;
 
 export default function EventsBrowsePage() {
+  return (
+    <Suspense fallback={null}>
+      <EventsBrowsePageContent />
+    </Suspense>
+  );
+}
+
+function EventsBrowsePageContent() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState<string>("All Dates");
+  const [search, setSearch] = useDirectoryFilter("q", "");
+  const [locationFilter, setLocationFilter] = useDirectoryFilter("location", "");
+  const [typeFilter, setTypeFilter] = useDirectoryFilter("type", "");
+  const [dateFilter, setDateFilter] = useDirectoryFilter("date", "All Dates");
 
   useEffect(() => {
     async function load() {
@@ -125,6 +134,7 @@ export default function EventsBrowsePage() {
     }
     return result;
   }, [events, search, locationFilter, typeFilter, dateFilter]);
+  const { page, pageItems, totalPages, setPage } = useDirectoryPagination(filtered);
 
   return (
     <AppShell>
@@ -155,6 +165,7 @@ export default function EventsBrowsePage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <input
             type="text"
+            aria-label="Search events"
             placeholder="Search events..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -167,6 +178,7 @@ export default function EventsBrowsePage() {
             }}
           />
           <select
+            aria-label="Filter events by location"
             value={locationFilter}
             onChange={(e) => setLocationFilter(e.target.value)}
             className="px-4 py-3 rounded-xl text-sm font-medium cursor-pointer"
@@ -184,6 +196,7 @@ export default function EventsBrowsePage() {
             ))}
           </select>
           <select
+            aria-label="Filter events by type"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
             className="px-4 py-3 rounded-xl text-sm font-medium cursor-pointer"
@@ -206,7 +219,9 @@ export default function EventsBrowsePage() {
         <div className="flex gap-2 mb-6 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {dateFilters.map((df) => (
             <button
+              type="button"
               key={df}
+              aria-pressed={dateFilter === df}
               onClick={() => setDateFilter(df)}
               className="px-4 py-2 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all whitespace-nowrap"
               style={{
@@ -219,6 +234,12 @@ export default function EventsBrowsePage() {
             </button>
           ))}
         </div>
+
+        {!loading && (
+          <p className="mb-4 text-sm text-text-muted" aria-live="polite">
+            {filtered.length} event{filtered.length !== 1 ? "s" : ""} found
+          </p>
+        )}
 
         {/* Loading Skeleton */}
         {loading && (
@@ -254,8 +275,8 @@ export default function EventsBrowsePage() {
 
         {/* Events Grid */}
         {!loading && filtered.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((evt) => {
+          <div id="directory-results" tabIndex={-1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {pageItems.map((evt) => {
               const slug = evt.slug || evt.id;
               // Parse a short month/day from the dates string
               const displayDates = getEventDisplayDates(evt);
@@ -363,6 +384,7 @@ export default function EventsBrowsePage() {
             })}
           </div>
         )}
+        <DirectoryPagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </div>
     </AppShell>

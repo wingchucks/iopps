@@ -34,6 +34,7 @@ export default function NavBar() {
     canScrollDown: false,
   });
   const drawerRef = useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -64,10 +65,22 @@ export default function NavBar() {
     if (!menuOpen) return;
 
     const originalOverflow = document.body.style.overflow;
+    const menuButton = menuButtonRef.current;
     document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    requestAnimationFrame(() => {
+      drawerRef.current?.querySelector<HTMLElement>("button, a[href]")?.focus();
+    });
 
     return () => {
       document.body.style.overflow = originalOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      menuButton?.focus();
     };
   }, [menuOpen]);
 
@@ -113,6 +126,7 @@ export default function NavBar() {
   return (
     <>
       <nav
+        aria-label="Primary navigation"
         className="sticky top-0 z-50"
         style={{
           background: "linear-gradient(135deg, var(--navy), var(--navy-light))",
@@ -146,6 +160,7 @@ export default function NavBar() {
                   <Link
                     key={href}
                     href={href}
+                    aria-current={active ? "page" : undefined}
                     className="px-4 py-2 rounded-lg border-none font-semibold text-sm transition-all no-underline flex items-center gap-1.5 whitespace-nowrap"
                     style={{
                       background: active ? "rgba(255,255,255,.12)" : "transparent",
@@ -274,8 +289,12 @@ export default function NavBar() {
             )}
 
             <button
+              ref={menuButtonRef}
+              type="button"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle navigation menu"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-navigation-menu"
               className="w-10 h-10 rounded-[10px] border-none cursor-pointer text-xl text-white flex items-center justify-center"
               style={{ background: "rgba(255,255,255,.08)" }}
             >
@@ -293,7 +312,13 @@ export default function NavBar() {
               className="fixed inset-0 z-40 border-none bg-slate-950/40 p-0 md:hidden"
             />
 
-            <div className="fixed inset-x-3 top-20 bottom-3 z-50 overflow-hidden rounded-[28px] border border-white/10 bg-[var(--navy)] shadow-2xl shadow-black/40 md:hidden">
+            <div
+              id="mobile-navigation-menu"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation menu"
+              className="fixed inset-x-3 top-20 bottom-3 z-50 overflow-hidden rounded-[28px] border border-white/10 bg-[var(--navy)] shadow-2xl shadow-black/40 md:hidden"
+            >
               <div ref={drawerRef} className="relative flex h-full flex-col overflow-y-auto px-4 py-4" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--teal) transparent" }}>
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -367,6 +392,7 @@ export default function NavBar() {
                           <Link
                             key={href}
                             href={href}
+                            aria-current={active ? "page" : undefined}
                             onClick={() => setMenuOpen(false)}
                             className="flex items-center justify-between rounded-[20px] border px-4 py-3.5 text-sm font-semibold no-underline transition-all"
                             style={{
@@ -403,6 +429,7 @@ export default function NavBar() {
                           <Link
                             key={href}
                             href={href}
+                            aria-current={active ? "page" : undefined}
                             onClick={() => setMenuOpen(false)}
                             className="flex items-center justify-between rounded-[20px] border px-4 py-3.5 text-sm font-semibold no-underline transition-all"
                             style={{

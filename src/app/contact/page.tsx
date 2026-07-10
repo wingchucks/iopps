@@ -39,7 +39,7 @@ export default function ContactPage() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-5 md:px-10 lg:px-20 py-10 md:py-14 max-w-[800px] mx-auto w-full">
+      <div className="flex-1 px-5 md:px-10 lg:px-20 py-10 md:py-14 max-w-[800px] mx-auto w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           {/* General Inquiries */}
           <div className="rounded-2xl border border-border bg-card p-6">
@@ -126,7 +126,7 @@ export default function ContactPage() {
             line.
           </p>
         </div>
-      </main>
+      </div>
 
       <Footer />
     </div>

@@ -37,7 +37,7 @@ export default function PrivacyPage() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-5 md:px-10 lg:px-20 py-10 md:py-14 max-w-[800px] mx-auto w-full">
+      <div className="flex-1 px-5 md:px-10 lg:px-20 py-10 md:py-14 max-w-[800px] mx-auto w-full">
         <section className="mb-8">
           <h2 className="text-xl font-extrabold text-text mb-4">1. Information We Collect</h2>
           <p className="text-text-sec leading-relaxed mb-3">
@@ -143,7 +143,7 @@ export default function PrivacyPage() {
             .
           </p>
         </section>
-      </main>
+      </div>
 
       <Footer />
     </div>

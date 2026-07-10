@@ -109,37 +109,6 @@ const fallbackPartners: LandingPartner[] = [
   },
 ];
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebSite",
-      name: "IOPPS",
-      url: "https://www.iopps.ca",
-      description: "Jobs, events, livestreams, schools, businesses, and community opportunities in one place.",
-      potentialAction: {
-        "@type": "SearchAction",
-        target: "https://www.iopps.ca/search?q={search_term_string}",
-        "query-input": "required name=search_term_string",
-      },
-    },
-    {
-      "@type": "Organization",
-      name: "IOPPS",
-      url: "https://www.iopps.ca",
-      logo: "https://www.iopps.ca/logo.png",
-      description:
-        "IOPPS connects people with jobs, events, livestreams, schools, businesses, partners, and community opportunities.",
-      sameAs: [],
-      contactPoint: {
-        "@type": "ContactPoint",
-        contactType: "customer service",
-        url: "https://www.iopps.ca/contact",
-      },
-    },
-  ],
-};
-
 function Header() {
   return (
     <header className="relative z-10 mx-auto flex max-w-[1320px] items-center justify-between gap-3 px-4 py-5 sm:gap-5 sm:px-6 lg:px-8">
@@ -197,13 +166,14 @@ function formatStat(value: number, fallback: string): string {
 
 function FirstScreenActivityLinks({ stats }: { stats: LandingStats }) {
   const items = [
-    { label: "Live", value: "Watch now", detail: "Coverage and replays", href: "/livestreams" },
-    { label: "Jobs", value: `${formatStat(stats.jobs, "New")} roles`, detail: "Current openings", href: "/jobs" },
-    { label: "Events", value: `${formatStat(stats.events, "New")} events`, detail: "Career and community", href: "/events" },
+    { label: "Find work", value: `${formatStat(stats.jobs, "New")} roles`, detail: "Browse current openings", href: "/jobs" },
+    { label: "Hire talent", value: "Post opportunities", detail: "Reach Indigenous candidates", href: "/for-employers" },
+    { label: "Learn", value: "Build your skills", detail: "Training and education", href: "/training" },
+    { label: "Events & live", value: `${formatStat(stats.events, "New")} events`, detail: "Gatherings, coverage, and replays", href: "/events" },
   ];
 
   return (
-    <div className="mt-5 grid max-w-[680px] grid-cols-3 gap-2 sm:gap-3">
+    <div className="mt-5 grid max-w-[680px] grid-cols-2 gap-2 sm:gap-3">
       {items.map((item) => (
         <Link key={item.label} href={item.href} className="min-w-0 no-underline">
           <div className="h-full rounded-[16px] border border-white/12 bg-white/[0.075] px-3 py-3 text-white transition-colors hover:bg-white/12">
@@ -640,7 +610,7 @@ function Hero({ stats, partners, jobs, events }: { stats: LandingStats; partners
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link href="/jobs" className="no-underline">
               <Button variant="primary-teal" size="lg">
-                Explore Opportunities
+                Browse Jobs
               </Button>
             </Link>
             <Link href="/livestreams" className="no-underline">
@@ -676,11 +646,10 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen bg-bg" style={logoTealTheme}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <Hero stats={content.stats} partners={content.partners} jobs={content.jobs} events={content.events} />
 
-      <main>
+      <div>
         <FeaturedTalentSpotlight />
 
         <SectionShell
@@ -724,7 +693,7 @@ export default async function LandingPage() {
         >
           <EmptyStatePreview />
         </SectionShell>
-      </main>
+      </div>
 
       <Footer />
     </div>

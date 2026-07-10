@@ -1,11 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { verifyAdminToken } from "@/lib/api-auth";
-import type { AnalyticsSummaryMetric, AnalyticsSummaryResponse } from "@/lib/analytics/types";
+import {
+  mergeCounterMaps,
+  topAnalyticsItems,
+  type AnalyticsCounterMap,
+} from "@/lib/analytics/storage";
+import { readAnalyticsDay } from "@/lib/server/analytics-daily";
+import type { AnalyticsSummaryResponse } from "@/lib/analytics/types";
 
 export const dynamic = "force-dynamic";
-
-type CounterMap = Record<string, number>;
 
 function dateKeyForRegina(date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -26,30 +30,6 @@ function dateKeys(days: number): string[] {
   });
 }
 
-function decodeLabel(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
-function topItems(map: unknown, limit = 5): AnalyticsSummaryMetric[] {
-  if (!map || typeof map !== "object") return [];
-  return Object.entries(map as CounterMap)
-    .filter(([, count]) => typeof count === "number" && count > 0)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([label, count]) => ({ label: decodeLabel(label), count }));
-}
-
-function mergeCounter(into: CounterMap, source: unknown) {
-  if (!source || typeof source !== "object") return;
-  for (const [key, value] of Object.entries(source as CounterMap)) {
-    if (typeof value === "number") into[key] = (into[key] || 0) + value;
-  }
-}
-
 export async function GET(request: NextRequest) {
   const auth = await verifyAdminToken(request);
   if (!auth.success) return auth.response;
@@ -64,12 +44,7 @@ export async function GET(request: NextRequest) {
   const keys = dateKeys(rangeDays);
 
   try {
-    const dayRefs = keys.map((key) => db.collection("analyticsDaily").doc(key));
-    const [daySnaps, visitorCounts] = await Promise.all([
-      db.getAll(...dayRefs),
-      Promise.all(dayRefs.map((ref) => ref.collection("visitors").count().get())),
-    ]);
-
+    const analyticsDays = await Promise.all(keys.map((key) => readAnalyticsDay(db, key)));
     const totals = {
       visitors: 0,
       pageViews: 0,
@@ -77,39 +52,31 @@ export async function GET(request: NextRequest) {
       outboundClicks: 0,
       applyClicks: 0,
     };
-    const allEvents: CounterMap = {};
-    const allPages: CounterMap = {};
-    const allClicks: CounterMap = {};
+    let allEvents: AnalyticsCounterMap = {};
+    let allPages: AnalyticsCounterMap = {};
+    let allClicks: AnalyticsCounterMap = {};
 
-    const days = daySnaps.map((snap, index) => {
-      const data = snap.exists ? snap.data() || {} : {};
-      const dayTotals = (data.totals || {}) as Record<string, number>;
-      const visitors = visitorCounts[index].data().count || 0;
-      const pageViews = dayTotals.pageViews || 0;
-      const totalClicks = dayTotals.clicks || 0;
-      const outboundClicks = dayTotals.outboundClicks || 0;
-      const applyClicks = dayTotals.applyClicks || 0;
-
-      totals.visitors += visitors;
-      totals.pageViews += pageViews;
-      totals.totalClicks += totalClicks;
-      totals.outboundClicks += outboundClicks;
-      totals.applyClicks += applyClicks;
-      mergeCounter(allEvents, data.events);
-      mergeCounter(allPages, data.pages);
-      mergeCounter(allClicks, data.clicks);
+    const days = analyticsDays.map((day, index) => {
+      totals.visitors += day.visitors;
+      totals.pageViews += day.totals.pageViews;
+      totals.totalClicks += day.totals.clicks;
+      totals.outboundClicks += day.totals.outboundClicks;
+      totals.applyClicks += day.totals.applyClicks;
+      allEvents = mergeCounterMaps(allEvents, day.events);
+      allPages = mergeCounterMaps(allPages, day.pages);
+      allClicks = mergeCounterMaps(allClicks, day.clicks);
 
       return {
         date: keys[index],
-        visitors,
-        pageViews,
-        totalClicks,
-        outboundClicks,
-        applyClicks,
-        topEvents: topItems(data.events, 5),
-        topPages: topItems(data.pages, 5),
-        topClicks: topItems(data.clicks, 5),
-        sponsorLine: `IOPPS recorded ${pageViews.toLocaleString()} page views and ${totalClicks.toLocaleString()} tracked clicks on ${keys[index]}.`,
+        visitors: day.visitors,
+        pageViews: day.totals.pageViews,
+        totalClicks: day.totals.clicks,
+        outboundClicks: day.totals.outboundClicks,
+        applyClicks: day.totals.applyClicks,
+        topEvents: topAnalyticsItems(day.events, 5),
+        topPages: topAnalyticsItems(day.pages, 5),
+        topClicks: topAnalyticsItems(day.clicks, 5),
+        sponsorLine: `IOPPS recorded ${day.totals.pageViews.toLocaleString()} page views and ${day.totals.clicks.toLocaleString()} tracked clicks on ${keys[index]}.`,
       };
     });
 
@@ -118,9 +85,9 @@ export async function GET(request: NextRequest) {
       generatedAt: new Date().toISOString(),
       totals,
       days,
-      topEvents: topItems(allEvents, 8),
-      topPages: topItems(allPages, 8),
-      topClicks: topItems(allClicks, 8),
+      topEvents: topAnalyticsItems(allEvents, 8),
+      topPages: topAnalyticsItems(allPages, 8),
+      topClicks: topAnalyticsItems(allClicks, 8),
       sponsorLine: `IOPPS recorded ${totals.pageViews.toLocaleString()} page views, ${totals.totalClicks.toLocaleString()} tracked clicks, and ${totals.outboundClicks.toLocaleString()} outbound clicks in the last ${rangeDays} days.`,
     };
 

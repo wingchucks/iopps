@@ -1,22 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import DirectoryPagination, { useDirectoryFilter, useDirectoryPagination } from "@/components/DirectoryPagination";
 import { type Organization } from "@/lib/firestore/organizations";
 import { hasOrganizationIndigenousIdentity } from "@/lib/organization-profile";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
-type BusinessFilter = "All Businesses" | "Partners" | "Verified" | "Indigenous";
-
 export default function BusinessesPage() {
+  return (
+    <Suspense fallback={null}>
+      <BusinessesPageContent />
+    </Suspense>
+  );
+}
+
+function BusinessesPageContent() {
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<BusinessFilter>("All Businesses");
+  const [search, setSearch] = useDirectoryFilter("q", "");
+  const [filter, setFilter] = useDirectoryFilter("type", "All Businesses");
 
   useEffect(() => {
     async function load() {
@@ -68,6 +75,7 @@ export default function BusinessesPage() {
         return left.name.localeCompare(right.name);
       });
   }, [businesses, filter, search]);
+  const { page, pageItems, totalPages, setPage } = useDirectoryPagination(filtered);
 
   const partnerCount = businesses.filter((org) => org.isPartner).length;
   const verifiedCount = businesses.filter((org) => org.verified).length;
@@ -105,6 +113,7 @@ export default function BusinessesPage() {
             <span className="text-xl text-text-muted">&#128269;</span>
             <input
               type="text"
+              aria-label="Search businesses"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search businesses by name, location, or industry..."
@@ -123,7 +132,9 @@ export default function BusinessesPage() {
           <div className="mb-5 flex flex-wrap gap-2">
             {(["All Businesses", "Partners", "Verified", "Indigenous"] as const).map((option) => (
               <button
+                type="button"
                 key={option}
+                aria-pressed={filter === option}
                 onClick={() => setFilter(option)}
                 className="rounded-full border-none px-4 py-2 text-[13px] font-semibold"
                 style={{
@@ -140,7 +151,7 @@ export default function BusinessesPage() {
           </div>
 
           {!loading && (
-            <p className="mb-4 text-sm text-text-muted">
+            <p className="mb-4 text-sm text-text-muted" aria-live="polite">
               {filtered.length} business{filtered.length !== 1 ? "es" : ""} found
             </p>
           )}
@@ -162,12 +173,13 @@ export default function BusinessesPage() {
               </p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((org) => (
+            <div id="directory-results" tabIndex={-1} className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {pageItems.map((org) => (
                 <BusinessCard key={org.id} org={org} />
               ))}
             </div>
           )}
+          <DirectoryPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </AppShell>

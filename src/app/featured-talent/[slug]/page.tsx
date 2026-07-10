@@ -41,7 +41,7 @@ export default async function FeaturedTalentProfilePage({ params }: { params: Fe
         <ThemeToggle />
       </header>
 
-      <main className="mx-auto max-w-[1180px] px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1180px] px-4 pb-20 pt-8 sm:px-6 lg:px-8">
         <Link href="/featured-talent" className="text-sm font-bold text-teal no-underline">&larr; Featured Talent</Link>
 
         <section className="mt-6 grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
@@ -101,7 +101,7 @@ export default async function FeaturedTalentProfilePage({ params }: { params: Fe
             </div>
           </Card>
         </section>
-      </main>
+      </div>
 
       <Footer />
     </div>

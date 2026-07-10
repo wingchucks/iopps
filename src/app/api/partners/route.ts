@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "@/lib/server/partner-promotion";
+import { mergePublicJobRecords, withAuthoritativeJobCounts } from "@/lib/public-job-merge";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
@@ -158,12 +159,22 @@ export function buildPartnersPayload(records: JsonRecord[]) {
 export async function GET() {
   try {
     const db = getAdminDb();
-    const snapshot = await db.collection("organizations").get();
+    const [snapshot, jobsSnapshot, postsSnapshot] = await Promise.all([
+      db.collection("organizations").get(),
+      db.collection("jobs").where("active", "==", true).get(),
+      db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
+    ]);
+    const publicJobs = mergePublicJobRecords(
+      jobsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      postsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+    );
+    const organizations = withAuthoritativeJobCounts(
+      snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as JsonRecord),
+      publicJobs,
+    );
 
     return NextResponse.json(
-      buildPartnersPayload(
-        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as JsonRecord),
-      ),
+      buildPartnersPayload(organizations),
     );
   } catch (err) {
     console.error("[api/partners] Error:", err);
