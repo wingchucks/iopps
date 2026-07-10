@@ -62,8 +62,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
+    const db = getAdminDb();
+    const eventRef = db.collection("stripeWebhookEvents").doc(event.id);
     try {
-      const db = getAdminDb();
+      await eventRef.create({
+        type: event.type,
+        stripeCreatedAt: new Date(event.created * 1000),
+        processingStartedAt: new Date(),
+        status: "processing",
+      });
+    } catch (claimError: unknown) {
+      const code = (claimError as { code?: number | string }).code;
+      if (code === 6 || code === "already-exists") {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
+      throw claimError;
+    }
+
+    try {
       const now = new Date();
       const expiresAt = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
       const tier = PLAN_TO_TIER[planId];
@@ -166,7 +182,10 @@ export async function POST(req: NextRequest) {
 
         console.log(`[stripe/webhook] ✅ Added 1 ${planId} credit for org ${orgId}`);
       }
+
+      await eventRef.set({ status: "completed", processedAt: new Date() }, { merge: true });
     } catch (err) {
+      await eventRef.delete().catch(() => {});
       console.error("[stripe/webhook] Failed to process payment:", err);
       return NextResponse.json({ error: "Failed to process payment" }, { status: 500 });
     }
