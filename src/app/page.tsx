@@ -173,12 +173,12 @@ function FirstScreenActivityLinks({ stats }: { stats: LandingStats }) {
   ];
 
   return (
-    <div className="mt-5 grid max-w-[680px] grid-cols-2 gap-2 sm:gap-3">
+    <div className="mt-5 grid w-full min-w-0 max-w-[680px] grid-cols-2 gap-2 sm:gap-3">
       {items.map((item) => (
         <Link key={item.label} href={item.href} className="min-w-0 no-underline">
           <div className="h-full rounded-[16px] border border-white/12 bg-white/[0.075] px-3 py-3 text-white transition-colors hover:bg-white/12">
             <p className="m-0 text-[10px] font-black uppercase tracking-[0.16em] text-teal-light">{item.label}</p>
-            <p className="mt-1 text-[13px] font-black leading-snug text-white sm:text-sm">{item.value}</p>
+            <p className="mt-1 break-words text-[13px] font-black leading-snug text-white sm:text-sm">{item.value}</p>
             <p className="mt-1 hidden text-[11px] font-semibold leading-4 text-white/62 sm:block">{item.detail}</p>
           </div>
         </Link>
@@ -191,7 +191,7 @@ function TrustedPartnerStrip({ partners }: { partners: LandingPartner[] }) {
   const visiblePartners = partners.length ? partners : fallbackPartners;
 
   return (
-    <div className="mt-5 max-w-[680px] rounded-[20px] border border-white/12 bg-white/[0.07] p-3 text-white">
+    <div className="mt-5 w-full min-w-0 max-w-[680px] rounded-[20px] border border-white/12 bg-white/[0.07] p-3 text-white">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="m-0 text-[11px] font-black uppercase tracking-[0.2em] text-white/62">Trusted partners</p>
         <Link href="/partners" className="text-sm font-bold text-teal-light no-underline">
@@ -203,10 +203,10 @@ function TrustedPartnerStrip({ partners }: { partners: LandingPartner[] }) {
           <Link
             key={partner.id}
             href={partner.href}
-            className="flex min-w-0 items-center gap-2 rounded-full border border-white/12 bg-white/[0.075] px-3 py-2 text-white no-underline"
+            className="flex min-w-0 max-w-full items-center gap-2 rounded-full border border-white/12 bg-white/[0.075] px-3 py-2 text-white no-underline"
           >
             <Avatar name={partner.shortName} src={partner.logoUrl} size={28} />
-            <span className="max-w-[142px] truncate text-xs font-bold text-white/86">{partner.shortName}</span>
+            <span className="min-w-0 max-w-[142px] truncate text-xs font-bold text-white/86">{partner.shortName}</span>
           </Link>
         ))}
       </div>
@@ -218,7 +218,7 @@ function HeroFeaturedTalentCard() {
   const featuredTalent = featuredTalentProfiles[0];
 
   return (
-    <Link href={`/featured-talent/${featuredTalent.slug}`} className="mt-5 block max-w-[680px] no-underline">
+    <Link href={`/featured-talent/${featuredTalent.slug}`} className="mt-5 block w-full min-w-0 max-w-[680px] no-underline">
       <div className="flex items-center gap-4 rounded-[22px] border border-white/14 bg-white/[0.085] p-3 text-white transition-colors hover:bg-white/12">
         <Image
           src={featuredTalent.imageUrl}
@@ -595,8 +595,8 @@ function Hero({ stats, partners, jobs, events }: { stats: LandingStats; partners
 
       <Header />
 
-      <div className="relative mx-auto grid max-w-[1320px] gap-8 px-4 pb-10 pt-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_520px] lg:px-8 lg:pb-14">
-        <div className="flex flex-col justify-center">
+      <div className="relative mx-auto grid min-w-0 max-w-[1320px] gap-8 px-4 pb-10 pt-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_520px] lg:px-8 lg:pb-14">
+        <div className="min-w-0 flex flex-col justify-center">
           <p className="m-0 text-xs font-extrabold uppercase tracking-[0.28em] text-teal-light">Empowering Indigenous Success</p>
           <h1 className="mt-4 max-w-[780px] text-[36px] font-black leading-tight sm:text-[48px] lg:text-[58px]">
             Find jobs, events, livestreams, and community opportunities in one place.
@@ -629,7 +629,7 @@ function Hero({ stats, partners, jobs, events }: { stats: LandingStats; partners
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <div className="min-w-0 grid gap-4">
           <LandingLivePreview />
           <div className="grid gap-4 sm:grid-cols-2">
             {jobs[0] ? <JobTile job={jobs[0]} emphasis /> : <EmptyOpportunityTile type="job" />}
