@@ -14,8 +14,12 @@ test("partners and livestreams declare canonical metadata without duplicating th
   assert.doesNotMatch(livestreams, /title:[^\n]*\| IOPPS/);
 });
 
-test("missing scholarship detail metadata is noindex", () => {
-  const scholarship = readFileSync(path.join(root, "src/app/scholarships/[slug]/page.tsx"), "utf8");
-  const missingRecordBranch = scholarship.match(/if \(!scholarship\) \{([\s\S]*?)\n  \}/)?.[1] ?? "";
-  assert.match(missingRecordBranch, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false/);
+test("scholarship details use one metadata implementation with a noindex fallback", () => {
+  const page = readFileSync(path.join(root, "src/app/scholarships/[slug]/page.tsx"), "utf8");
+  const layout = readFileSync(path.join(root, "src/app/scholarships/[slug]/layout.tsx"), "utf8");
+  const helper = readFileSync(path.join(root, "src/lib/server/detail-metadata.ts"), "utf8");
+
+  assert.doesNotMatch(page, /generateMetadata/);
+  assert.match(layout, /generateScholarshipMetadata/);
+  assert.match(helper, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false/);
 });
