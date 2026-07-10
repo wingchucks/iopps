@@ -97,7 +97,7 @@ export default function LandingLivePreview() {
 
   if (loading) {
     return (
-      <Card className="h-full" style={{ padding: 0 }}>
+      <Card className="h-full w-full min-w-0 max-w-full" style={{ padding: 0 }}>
         <div className="p-5">
           <div className="h-5 w-20 animate-pulse rounded-full bg-teal-soft" />
           <div className="mt-4 h-6 w-3/4 animate-pulse rounded bg-bg" />
@@ -111,8 +111,8 @@ export default function LandingLivePreview() {
   }
 
   return (
-    <section aria-label="Featured livestream" className="h-full">
-      <Card className="h-full" style={{ padding: 0 }}>
+    <section aria-label="Featured livestream" className="h-full w-full min-w-0 max-w-full">
+      <Card className="h-full w-full min-w-0 max-w-full" style={{ padding: 0 }}>
         <div className="border-b border-border p-5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge text={isLive ? "LIVE" : featured ? "Replay" : "Livestreams"} color={isLive ? "#FFFFFF" : "var(--teal)"} bg={isLive ? "#DC2626" : "var(--teal-soft)"} />
