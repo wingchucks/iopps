@@ -35,6 +35,7 @@ test("homepage hero cannot force horizontal overflow on narrow mobile screens", 
   assert.match(hero, /relative mx-auto grid min-w-0/);
   assert.match(hero, /className="min-w-0 flex flex-col justify-center"/);
   assert.match(hero, /className="min-w-0 grid grid-cols-\[minmax\(0,1fr\)\] gap-4"/);
+  assert.match(hero, /className="grid min-w-0 grid-cols-\[minmax\(0,1fr\)\] gap-4 sm:grid-cols-2"/);
   assert.match(partners, /w-full min-w-0 max-w-\[680px\]/);
   assert.match(partners, /max-w-full items-center/);
 
