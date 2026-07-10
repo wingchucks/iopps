@@ -248,7 +248,7 @@ function StatStrip({ stats }: { stats: LandingStats }) {
   ];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-3">
       {items.map((stat) => (
         <Link key={stat.label} href={stat.href} className="no-underline">
           <div className="rounded-[20px] px-4 py-4 text-white transition-transform hover:-translate-y-0.5" style={panelStyle}>
@@ -386,9 +386,9 @@ function PartnerShowcase({ partners }: { partners: LandingPartner[] }) {
   const [featured, ...supporting] = visiblePartners;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.05fr_1.4fr]">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[1.05fr_1.4fr]">
       <PartnerFeatureCard partner={featured} featured />
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-1">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-3 lg:grid-cols-1">
         {supporting.slice(0, 3).map((partner) => (
           <PartnerFeatureCard key={partner.id} partner={partner} />
         ))}
@@ -432,7 +432,7 @@ function FeaturedTalentSpotlight() {
   return (
     <section className="mx-auto -mt-7 max-w-[1320px] px-4 pb-8 sm:px-6 lg:px-8">
       <Card variant="spotlight" className="relative z-10 shadow-2xl">
-        <article className="grid gap-0 overflow-hidden lg:grid-cols-[0.78fr_1.22fr]">
+        <article className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-0 overflow-hidden lg:grid-cols-[0.78fr_1.22fr]">
           <div className="bg-[color:var(--navy)] p-5 sm:p-7 lg:p-8">
             <div className="relative mx-auto max-w-sm">
               <div className="absolute inset-0 rounded-full bg-[color:var(--teal)]/25 blur-3xl" />
@@ -505,7 +505,7 @@ function PathwayCards() {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-3">
       {pathways.map((pathway) => (
         <Link key={pathway.title} href={pathway.href} className="no-underline">
           <Card variant="list" className="h-full hover:-translate-y-0.5 hover:shadow-md">
@@ -523,7 +523,7 @@ function PathwayCards() {
 
 function JobsEventsGrid({ jobs, events }: { jobs: LandingJob[]; events: LandingEvent[] }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2">
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-xl font-black text-text">Current jobs</h3>
@@ -531,7 +531,7 @@ function JobsEventsGrid({ jobs, events }: { jobs: LandingJob[]; events: LandingE
             Browse jobs &rarr;
           </Link>
         </div>
-        <div className="grid gap-3">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
           {jobs.length ? jobs.map((job) => <JobTile key={job.id} job={job} />) : <EmptyOpportunityTile type="job" />}
         </div>
       </div>
@@ -542,7 +542,7 @@ function JobsEventsGrid({ jobs, events }: { jobs: LandingJob[]; events: LandingE
             Browse events &rarr;
           </Link>
         </div>
-        <div className="grid gap-3">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
           {events.length ? events.map((event) => <EventTile key={event.id} event={event} />) : <EmptyOpportunityTile type="event" />}
         </div>
       </div>
@@ -552,7 +552,7 @@ function JobsEventsGrid({ jobs, events }: { jobs: LandingJob[]; events: LandingE
 
 function EmptyStatePreview() {
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.1fr_.9fr]">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[1.1fr_.9fr]">
       <Card>
         <div className="p-6">
           <p className="m-0 text-xs font-black uppercase tracking-[0.22em] text-teal">Livestreams</p>

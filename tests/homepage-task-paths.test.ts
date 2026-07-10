@@ -42,4 +42,5 @@ test("homepage hero cannot force horizontal overflow on narrow mobile screens", 
   const livestream = readFileSync(path.join(process.cwd(), "src", "components", "landing", "LandingLivePreview.tsx"), "utf8");
   assert.match(livestream, /<section[^>]*className="h-full w-full min-w-0 max-w-full"/);
   assert.match(livestream, /<Card className="h-full w-full min-w-0 max-w-full"/);
+  assert.doesNotMatch(source, /className="grid gap-/);
 });
