@@ -1,3 +1,14 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Indigenous Story", description: "Read this Indigenous success story or partner spotlight featured on IOPPS — sharing inspiring journeys across Canada." };
-export default function Layout({ children }: { children: React.ReactNode }) { return children; }
+import { generateStoryJsonLd, generateStoryMetadata } from "@/lib/server/detail-metadata";
+import { serializeJsonLd } from "@/lib/server/seo";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  return generateStoryMetadata(slug);
+}
+
+export default async function Layout({ children, params }: { children: React.ReactNode; params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const jsonLd = await generateStoryJsonLd(slug);
+  return <>{jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} /> : null}{children}</>;
+}

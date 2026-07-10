@@ -125,6 +125,40 @@ function postalAddress(location: unknown) {
   };
 }
 
+export const siteJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.iopps.ca/#organization",
+      name: "IOPPS",
+      url: "https://www.iopps.ca/",
+      logo: "https://www.iopps.ca/logo.png",
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer service",
+        url: "https://www.iopps.ca/contact",
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://www.iopps.ca/#website",
+      name: "IOPPS",
+      url: "https://www.iopps.ca/",
+      publisher: { "@id": "https://www.iopps.ca/#organization" },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: "https://www.iopps.ca/search?q={search_term_string}",
+        "query-input": "required name=search_term_string",
+      },
+    },
+  ],
+};
+
+export function serializeJsonLd(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
 export function buildJobPostingJsonLd(input: JobSchemaInput) {
   const title = clean(input.title) || "Job Opportunity";
   const employerName = clean(input.employerName) || "IOPPS employer";

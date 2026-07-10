@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { generateEventJsonLd, generateEventMetadata } from "@/lib/server/detail-metadata";
+import { serializeJsonLd } from "@/lib/server/seo";
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> },
@@ -22,7 +23,7 @@ export default async function Layout({
       {jsonLd ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
       ) : null}
       {children}

@@ -6,6 +6,8 @@ import {
   buildJobPostingJsonLd,
   buildListingMetadata,
   buildTrainingCourseJsonLd,
+  serializeJsonLd,
+  siteJsonLd,
 } from "../src/lib/server/seo.ts";
 
 test("buildListingMetadata creates canonical and social tags for listing pages", () => {
@@ -76,4 +78,11 @@ test("buildTrainingCourseJsonLd emits Course schema with IOPPS training URL", ()
   assert.equal(jsonLd["@type"], "Course");
   assert.equal(jsonLd.url, "https://www.iopps.ca/training/fnuniv-icec-professional-microcredentials");
   assert.equal(jsonLd.provider.name, "First Nations University of Canada");
+});
+
+test("global schema has stable graph IDs and JSON-LD serialization cannot close its script", () => {
+  const graph = siteJsonLd["@graph"];
+  assert.equal(graph[0]["@id"], "https://www.iopps.ca/#organization");
+  assert.equal(graph[1]["@id"], "https://www.iopps.ca/#website");
+  assert.equal(serializeJsonLd({ description: "</script><script>alert(1)</script>" }).includes("<"), false);
 });

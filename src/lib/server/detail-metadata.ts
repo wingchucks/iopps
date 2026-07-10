@@ -53,13 +53,14 @@ function field(record: Record<string, unknown>, ...names: string[]): string {
   return "";
 }
 
-export function fallbackMetadata(title: string, description: string): Metadata {
-  return buildListingMetadata({
+export function fallbackMetadata(title: string, description: string, path = "/"): Metadata {
+  const metadata = buildListingMetadata({
     title,
     description,
-    path: "/",
+    path,
     type: "website",
   });
+  return { ...metadata, robots: { index: false, follow: false } };
 }
 
 export async function generateJobMetadata(slug: string): Promise<Metadata> {
@@ -158,7 +159,8 @@ export async function generateOrgMetadata(slug: string): Promise<Metadata> {
   if (!org) {
     return fallbackMetadata(
       "Organization Profile",
-      "View this organization's profile, open positions, and partnership details on IOPPS — Canada's Indigenous professional platform.",
+      "View this organization's profile, open positions, and details on IOPPS — Canada's Indigenous professional platform.",
+      `/org/${slug}`,
     );
   }
   const name = clean(org.name) || "Organization";
@@ -178,6 +180,7 @@ export async function generateSchoolMetadata(slug: string): Promise<Metadata> {
     return fallbackMetadata(
       "School Profile",
       "View this school's programs, scholarships, and career opportunities for Indigenous students on IOPPS.",
+      `/schools/${slug}`,
     );
   }
   const name = clean(school.name) || "School";
@@ -194,7 +197,7 @@ export async function generateProgramMetadata(slug: string): Promise<Metadata> {
 }
 
 export async function generateTrainingMetadata(slug: string, routePrefix = "/training"): Promise<Metadata> {
-  const lookup: EntityLookup = { collections: ["training", "programs", "posts"] };
+  const lookup: EntityLookup = { collections: ["training_programs", "training", "programs", "posts"] };
   const program = await findFirst(lookup.collections, slug, lookup.slugFields);
   if (!program) {
     return buildListingMetadata({
@@ -215,7 +218,7 @@ export async function generateTrainingMetadata(slug: string, routePrefix = "/tra
 }
 
 export async function generateTrainingJsonLd(slug: string): Promise<JsonLd | null> {
-  const program = await findFirst(["training", "programs", "posts"], slug);
+  const program = await findFirst(["training_programs", "training", "programs", "posts"], slug);
   if (!program) return null;
   return buildTrainingCourseJsonLd({
     slug,
@@ -224,6 +227,89 @@ export async function generateTrainingJsonLd(slug: string): Promise<JsonLd | nul
     provider: field(program, "institutionName", "provider", "orgName", "ownerName"),
     location: field(program, "location", "format"),
   });
+}
+
+export async function generateStoryMetadata(slug: string): Promise<Metadata> {
+  const story = await findFirst(["posts"], slug) ||
+    await findFirst(["posts"], `story-${slug}`) ||
+    await findFirst(["posts"], `spotlight-${slug}`);
+  if (!story) return fallbackMetadata("Story", "Read this story on IOPPS.ca.", `/stories/${slug}`);
+  const title = field(story, "title", "headline") || "IOPPS Story";
+  return buildListingMetadata({
+    title,
+    description: truncate(stripHtml(field(story, "excerpt", "description", "content")) || `${title} on IOPPS.ca.`),
+    path: `/stories/${slug}`,
+    type: "article",
+    image: field(story, "imageUrl", "coverImage", "thumbnailUrl"),
+  });
+}
+
+export async function generateStoryJsonLd(slug: string): Promise<JsonLd | null> {
+  const story = await findFirst(["posts"], slug) ||
+    await findFirst(["posts"], `story-${slug}`) ||
+    await findFirst(["posts"], `spotlight-${slug}`);
+  if (!story) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: field(story, "title", "headline") || "IOPPS Story",
+    description: truncate(stripHtml(field(story, "excerpt", "description", "content"))),
+    url: `https://www.iopps.ca/stories/${encodeURIComponent(slug)}`,
+    image: field(story, "imageUrl", "coverImage", "thumbnailUrl") || undefined,
+  };
+}
+
+export async function generateShopMetadata(slug: string): Promise<Metadata> {
+  const vendor = await findFirst(["shop_vendors"], slug);
+  if (!vendor) return fallbackMetadata("Shop Listing", "View this Indigenous business listing on IOPPS.ca.", `/shop/${slug}`);
+  const name = field(vendor, "name", "businessName", "title") || "Indigenous Business";
+  return buildListingMetadata({
+    title: name,
+    description: truncate(stripHtml(field(vendor, "description", "about", "tagline")) || `${name} on IOPPS.ca.`),
+    path: `/shop/${slug}`,
+    image: field(vendor, "logoUrl", "imageUrl", "coverImage"),
+  });
+}
+
+export async function generateShopJsonLd(slug: string): Promise<JsonLd | null> {
+  const vendor = await findFirst(["shop_vendors"], slug);
+  if (!vendor) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: field(vendor, "name", "businessName", "title") || "Indigenous Business",
+    description: truncate(stripHtml(field(vendor, "description", "about", "tagline"))),
+    url: `https://www.iopps.ca/shop/${encodeURIComponent(slug)}`,
+    image: field(vendor, "logoUrl", "imageUrl", "coverImage") || undefined,
+  };
+}
+
+export async function generateScholarshipMetadata(slug: string): Promise<Metadata> {
+  const scholarship = await findFirst(["scholarships"], slug);
+  if (!scholarship) return fallbackMetadata("Scholarship Opportunity", "View scholarship details on IOPPS.ca.", `/scholarships/${slug}`);
+  const title = field(scholarship, "title", "name") || "Scholarship Opportunity";
+  const provider = field(scholarship, "provider", "organization", "orgName");
+  return buildListingMetadata({
+    title: provider ? `${title} — ${provider}` : title,
+    description: truncate(stripHtml(field(scholarship, "description", "eligibility")) || `${title} on IOPPS.ca.`),
+    path: `/scholarships/${slug}`,
+    type: "article",
+  });
+}
+
+export async function generateScholarshipJsonLd(slug: string): Promise<JsonLd | null> {
+  const scholarship = await findFirst(["scholarships"], slug);
+  if (!scholarship) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "MonetaryGrant",
+    name: field(scholarship, "title", "name") || "Scholarship Opportunity",
+    description: truncate(stripHtml(field(scholarship, "description", "eligibility"))),
+    url: `https://www.iopps.ca/scholarships/${encodeURIComponent(slug)}`,
+    funder: field(scholarship, "provider", "organization", "orgName")
+      ? { "@type": "Organization", name: field(scholarship, "provider", "organization", "orgName") }
+      : undefined,
+  };
 }
 
 export async function generateMemberMetadata(uid: string): Promise<Metadata> {

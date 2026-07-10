@@ -8,6 +8,7 @@ import AuthErrorBoundary from "@/components/AuthErrorBoundary";
 import SessionManager from "@/components/SessionManager";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import { serializeJsonLd, siteJsonLd } from "@/lib/server/seo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,6 +24,7 @@ export const metadata: Metadata = {
   description:
     "Jobs, events, scholarships, businesses, schools, and livestreams — all in one place for Indigenous people across North America.",
   metadataBase: new URL("https://www.iopps.ca"),
+  alternates: { canonical: "/" },
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
@@ -73,6 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(siteJsonLd) }} />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script dangerouslySetInnerHTML={{ __html: swScript }} />
       </head>
@@ -86,9 +89,9 @@ export default function RootLayout({
                   <SessionManager />
                   <AnalyticsTracker />
                   <GoogleAnalytics />
-                  <div id="main-content">
+                  <main id="main-content">
                     {children}
-                  </div>
+                  </main>
                 </AuthErrorBoundary>
               </OnboardingProvider>
             </ToastProvider>
