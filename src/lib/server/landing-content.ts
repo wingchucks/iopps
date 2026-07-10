@@ -1,5 +1,6 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildPublicJobRouteSlugMap, isPublicJobVisible, sortJobsByRecency } from "@/lib/public-jobs";
+import { mergePublicJobRecords } from "@/lib/public-job-merge";
 import {
   getEventDisplayDates,
   getEventStartDate,
@@ -127,17 +128,23 @@ function getClosingSoonLabel(job: JsonRecord): string | undefined {
 async function getStats(): Promise<LandingStats> {
   try {
     const db = getAdminDb();
-    const [usersSnap, jobsSnap, employersSnap, eventsSnap, schools] = await Promise.all([
+    const [usersSnap, jobsSnap, postsSnap, employersSnap, eventsSnap, schools] = await Promise.all([
       db.collection("users").count().get(),
-      db.collection("jobs").where("active", "==", true).count().get(),
+      db.collection("jobs").where("active", "==", true).get(),
+      db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
       db.collection("employers").where("status", "==", "approved").count().get(),
       db.collection("events").count().get(),
       getPublicSchoolRecords(db),
     ]);
 
+    const publicJobs = mergePublicJobRecords(
+      jobsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      postsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+    );
+
     return {
       members: usersSnap.data().count,
-      jobs: jobsSnap.data().count,
+      jobs: publicJobs.length,
       organizations: employersSnap.data().count,
       events: eventsSnap.data().count,
       schools: schools.length,

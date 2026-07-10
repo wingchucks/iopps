@@ -1,4 +1,5 @@
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
+import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
 
 type JobLike = {
   id?: string;
@@ -21,22 +22,6 @@ type JobRouteLike = {
   title?: string | null;
 };
 
-const HIDDEN_JOB_STATUSES = new Set([
-  "archived",
-  "cancelled",
-  "canceled",
-  "closed",
-  "completed",
-  "deleted",
-  "draft",
-  "expired",
-  "inactive",
-  "removed",
-]);
-
-function normalizeStatus(status?: string | null): string {
-  return typeof status === "string" ? status.trim().toLowerCase() : "";
-}
 
 function toTimestamp(value: unknown): number {
   if (!value) return 0;
@@ -59,8 +44,7 @@ function toTimestamp(value: unknown): number {
 }
 
 export function isPublicJobVisible(job: JobVisibilityLike): boolean {
-  if (job.active === false) return false;
-  return !HIDDEN_JOB_STATUSES.has(normalizeStatus(job.status));
+  return isPublicJobRecordVisible(job);
 }
 
 export function sortJobsByRecency<T extends JobRecencyLike>(jobs: T[]): T[] {

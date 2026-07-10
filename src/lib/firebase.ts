@@ -3,6 +3,7 @@ import { connectAuthEmulator, getAuth } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
+import { getAppCheckConfiguration } from "@/lib/firebase/app-check-config";
 
 // Placeholders keep `initializeApp` from throwing during builds that don't
 // inject NEXT_PUBLIC_FIREBASE_* (e.g. GitHub Actions CI). Vercel + local .env
@@ -20,20 +21,23 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 let appCheckInstance: AppCheck | null = null;
 const useEmulators = process.env.NEXT_PUBLIC_USE_EMULATORS === "true";
 
-// Initialize Firebase App Check with reCAPTCHA Enterprise (client-side only)
+// App Check is explicitly opt-in. A stale hard-coded site key caused token
+// exchange 403s on every public page, so production must provide both values.
 if (typeof window !== "undefined") {
-  const isLocalHost =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
+  const configuration = getAppCheckConfiguration(
+    process.env.NEXT_PUBLIC_FIREBASE_APP_CHECK_ENABLED,
+    process.env.NEXT_PUBLIC_FIREBASE_APP_CHECK_SITE_KEY,
+    window.location.hostname,
+  );
 
-  if (!isLocalHost) {
+  if (configuration.enabled) {
     try {
       appCheckInstance = initializeAppCheck(app, {
-        provider: new ReCaptchaEnterpriseProvider("6LeFMHosAAAAAFKTIgee7jESAYTypsH69SbjnbSF"),
+        provider: new ReCaptchaEnterpriseProvider(configuration.siteKey),
         isTokenAutoRefreshEnabled: true,
       });
     } catch {
-      // App Check already initialized (e.g., HMR in development)
+      // App Check already initialized (e.g., HMR in development).
     }
   }
 }
