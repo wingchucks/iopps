@@ -173,7 +173,7 @@ export default function LivestreamsPage() {
           </div>
         </section>
 
-        <main className="mx-auto max-w-[1280px] px-4 py-8 md:px-8 md:py-10">
+        <div className="mx-auto max-w-[1280px] px-4 py-8 md:px-8 md:py-10">
           {loading ? (
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
               <div className="h-[520px] rounded-[28px] bg-card animate-pulse" />
@@ -529,7 +529,7 @@ export default function LivestreamsPage() {
               )}
             </>
           )}
-        </main>
+        </div>
       </div>
     </AppShell>
   );

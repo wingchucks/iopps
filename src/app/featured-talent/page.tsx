@@ -27,7 +27,7 @@ export default function FeaturedTalentPage() {
         <ThemeToggle />
       </header>
 
-      <main className="mx-auto max-w-[1180px] px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1180px] px-4 pb-20 pt-8 sm:px-6 lg:px-8">
         <section className="mb-8 max-w-3xl">
           <Badge text="Featured Talent" color="var(--teal)" bg="var(--teal-soft)" />
           <h1 className="mt-4 text-4xl font-black leading-tight text-text sm:text-5xl">Meet Indigenous talent ready for opportunity.</h1>
@@ -74,7 +74,7 @@ export default function FeaturedTalentPage() {
             </div>
           </article>
         </Card>
-      </main>
+      </div>
 
       <Footer />
     </div>

@@ -432,7 +432,7 @@ export default function UnifiedSignupPage() {
           </div>
           <div style={{ marginTop: 24, background: CSS.card, border: "1px solid rgba(34,197,94,0.3)", borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 24, height: 24, borderRadius: "50%", background: CSS.success, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>✓</span></div>
-            <span style={{ fontSize: 13, color: CSS.success }}>Protected by reCAPTCHA Enterprise</span>
+            <span style={{ fontSize: 13, color: CSS.success }}>Secure account creation</span>
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
             <BtnGhost onClick={() => goTo(1)}>← Back</BtnGhost>

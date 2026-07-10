@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import DirectoryPagination, { useDirectoryFilter, useDirectoryFilterActions, useDirectoryPagination } from "@/components/DirectoryPagination";
 import { displayAmount, displayLocation } from "@/lib/utils";
 
 interface PublicScholarship {
@@ -68,12 +69,23 @@ function getSourceLabel(ownerType?: PublicScholarship["ownerType"]) {
 }
 
 export default function ScholarshipsBrowsePage() {
+  return (
+    <Suspense fallback={null}>
+      <ScholarshipsBrowsePageContent />
+    </Suspense>
+  );
+}
+
+function ScholarshipsBrowsePageContent() {
   const [scholarships, setScholarships] = useState<PublicScholarship[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [eligibilityFilter, setEligibilityFilter] = useState("");
-  const [closingSoonOnly, setClosingSoonOnly] = useState(false);
-  const [rollingOnly, setRollingOnly] = useState(false);
+  const [search, setSearch] = useDirectoryFilter("q", "");
+  const [eligibilityFilter, setEligibilityFilter] = useDirectoryFilter("eligibility", "");
+  const [closingParam] = useDirectoryFilter("closing", "");
+  const [rollingParam] = useDirectoryFilter("rolling", "");
+  const setFilters = useDirectoryFilterActions();
+  const closingSoonOnly = closingParam === "1";
+  const rollingOnly = rollingParam === "1";
 
   useEffect(() => {
     async function load() {
@@ -118,6 +130,7 @@ export default function ScholarshipsBrowsePage() {
     }
     return result;
   }, [closingSoonOnly, eligibilityFilter, rollingOnly, scholarships, search]);
+  const { page, pageItems, totalPages, setPage } = useDirectoryPagination(filtered);
 
   return (
     <AppShell>
@@ -141,6 +154,7 @@ export default function ScholarshipsBrowsePage() {
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch">
             <input
               type="text"
+              aria-label="Search scholarships"
               placeholder="Search scholarships..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -153,6 +167,7 @@ export default function ScholarshipsBrowsePage() {
               }}
             />
             <select
+              aria-label="Filter scholarships by eligibility"
               value={eligibilityFilter}
               onChange={(event) => setEligibilityFilter(event.target.value)}
               className="rounded-xl px-4 py-3 text-sm font-medium"
@@ -170,10 +185,12 @@ export default function ScholarshipsBrowsePage() {
               ))}
             </select>
             <button
-              onClick={() => {
-                setClosingSoonOnly(!closingSoonOnly);
-                if (!closingSoonOnly) setRollingOnly(false);
-              }}
+              type="button"
+              aria-pressed={closingSoonOnly}
+              onClick={() => setFilters({
+                closing: closingSoonOnly ? null : "1",
+                rolling: null,
+              })}
               className="rounded-xl px-4 py-3 text-sm font-semibold transition-all"
               style={{
                 background: closingSoonOnly ? "var(--gold)" : "var(--card)",
@@ -184,10 +201,12 @@ export default function ScholarshipsBrowsePage() {
               &#9200; Closing Soon
             </button>
             <button
-              onClick={() => {
-                setRollingOnly(!rollingOnly);
-                if (!rollingOnly) setClosingSoonOnly(false);
-              }}
+              type="button"
+              aria-pressed={rollingOnly}
+              onClick={() => setFilters({
+                rolling: rollingOnly ? null : "1",
+                closing: null,
+              })}
               className="rounded-xl px-4 py-3 text-sm font-semibold transition-all"
               style={{
                 background: rollingOnly ? "var(--teal)" : "var(--card)",
@@ -199,6 +218,12 @@ export default function ScholarshipsBrowsePage() {
               &#x221E; Rolling
             </button>
           </div>
+
+          {!loading && (
+            <p className="mb-4 text-sm text-text-muted" aria-live="polite">
+              {filtered.length} scholarship{filtered.length !== 1 ? "s" : ""} found
+            </p>
+          )}
 
           {loading ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -227,8 +252,8 @@ export default function ScholarshipsBrowsePage() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((scholarship) => {
+            <div id="directory-results" tabIndex={-1} className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {pageItems.map((scholarship) => {
                 const slug = scholarship.slug || scholarship.id;
                 const closingSoon = isClosingSoon(scholarship.deadline);
                 const amountLabel = displayAmount(scholarship.amount);
@@ -338,6 +363,7 @@ export default function ScholarshipsBrowsePage() {
               })}
             </div>
           )}
+          <DirectoryPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </AppShell>

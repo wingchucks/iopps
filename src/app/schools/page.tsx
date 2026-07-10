@@ -1,18 +1,27 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
+import DirectoryPagination, { useDirectoryFilter, useDirectoryPagination } from "@/components/DirectoryPagination";
 import { type Organization } from "@/lib/firestore/organizations";
 import { displayLocation } from "@/lib/utils";
 
 export default function SchoolsPage() {
+  return (
+    <Suspense fallback={null}>
+      <SchoolsPageContent />
+    </Suspense>
+  );
+}
+
+function SchoolsPageContent() {
   const [schools, setSchools] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useDirectoryFilter("q", "");
 
   useEffect(() => {
     async function load() {
@@ -50,6 +59,7 @@ export default function SchoolsPage() {
         return left.name.localeCompare(right.name);
       });
   }, [schools, search]);
+  const { page, pageItems, totalPages, setPage } = useDirectoryPagination(filtered);
 
   return (
     <AppShell>
@@ -81,6 +91,7 @@ export default function SchoolsPage() {
           <span className="text-xl text-text-muted">&#128269;</span>
           <input
             type="text"
+            aria-label="Search schools"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search schools by name, location, or study area..."
@@ -98,7 +109,7 @@ export default function SchoolsPage() {
 
         {/* Results count */}
         {!loading && (
-          <p className="text-sm text-text-muted mb-4">
+          <p className="text-sm text-text-muted mb-4" aria-live="polite">
               {filtered.length} school{filtered.length !== 1 ? "s" : ""} found
           </p>
         )}
@@ -143,12 +154,13 @@ export default function SchoolsPage() {
             )}
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map((school) => (
+          <div id="directory-results" tabIndex={-1} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {pageItems.map((school) => (
               <SchoolCard key={school.id} school={school} />
             ))}
           </div>
         )}
+        <DirectoryPagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </div>
     </AppShell>

@@ -40,7 +40,7 @@ export default function AboutPage() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-5 md:px-10 lg:px-20 py-10 md:py-14 max-w-[800px] mx-auto w-full">
+      <div className="flex-1 px-5 md:px-10 lg:px-20 py-10 md:py-14 max-w-[800px] mx-auto w-full">
         <section className="mb-10">
           <h2 className="text-xl font-extrabold text-text mb-4">Our Mission</h2>
           <p className="text-text-sec leading-relaxed mb-4">
@@ -120,7 +120,7 @@ export default function AboutPage() {
             </Link>
           </div>
         </section>
-      </main>
+      </div>
 
       <Footer />
     </div>

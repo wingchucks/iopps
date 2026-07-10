@@ -248,12 +248,13 @@ export function RoleCard({ icon, label, desc, selected, onClick }: {
   icon: string; label: string; desc: string; selected: boolean; onClick: () => void;
 }) {
   return (
-    <div onClick={onClick} style={{
+    <button type="button" aria-pressed={selected} onClick={onClick} style={{
       background: CSS.card,
       border: `1px solid ${selected ? CSS.accent : CSS.border}`,
       borderRadius: 16, padding: 24, cursor: "pointer",
       transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
       position: "relative", overflow: "hidden",
+      width: "100%", textAlign: "left", color: "inherit", fontFamily: "inherit",
       boxShadow: selected ? `0 0 0 1px ${CSS.accent}, 0 8px 32px rgba(20,184,166,0.15)` : "none",
     }}>
       <div style={{
@@ -268,7 +269,7 @@ export function RoleCard({ icon, label, desc, selected, onClick }: {
       <div style={{ fontSize: 32, marginBottom: 12 }}>{icon}</div>
       <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 13, color: CSS.textMuted, lineHeight: 1.5 }}>{desc}</div>
-    </div>
+    </button>
   );
 }
 
@@ -277,11 +278,12 @@ export function OrgTypeCard({ icon, label, desc, selected, onClick }: {
   icon: string; label: string; desc: string; selected: boolean; onClick: () => void;
 }) {
   return (
-    <div onClick={onClick} style={{
+    <button type="button" aria-pressed={selected} onClick={onClick} style={{
       background: selected ? "rgba(20,184,166,0.05)" : CSS.card,
       border: `1px solid ${selected ? CSS.accent : CSS.border}`,
       borderRadius: 12, padding: 20, cursor: "pointer",
       transition: "all 0.3s", display: "flex", alignItems: "flex-start", gap: 16,
+      width: "100%", textAlign: "left", color: "inherit", fontFamily: "inherit",
     }}>
       <span style={{ fontSize: 28, flexShrink: 0, marginTop: 2 }}>{icon}</span>
       <div style={{ flex: 1 }}>
@@ -296,7 +298,7 @@ export function OrgTypeCard({ icon, label, desc, selected, onClick }: {
       }}>
         {selected && <div style={{ width: 10, height: 10, borderRadius: "50%", background: CSS.accent }} />}
       </div>
-    </div>
+    </button>
   );
 }
 
