@@ -629,7 +629,7 @@ function Hero({ stats, partners, jobs, events }: { stats: LandingStats; partners
           </div>
         </div>
 
-        <div className="min-w-0 grid gap-4">
+        <div className="min-w-0 grid grid-cols-[minmax(0,1fr)] gap-4">
           <LandingLivePreview />
           <div className="grid gap-4 sm:grid-cols-2">
             {jobs[0] ? <JobTile job={jobs[0]} emphasis /> : <EmptyOpportunityTile type="job" />}
