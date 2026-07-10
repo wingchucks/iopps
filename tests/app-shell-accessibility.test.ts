@@ -19,7 +19,7 @@ test("the app exposes exactly one global main-content landmark", () => {
   assert.match(rootLayout, /<main\b[^>]*id=["']main-content["']/);
 
   const nestedMainFiles = tsxFiles(path.join(root, "src", "app"))
-    .filter((file) => !file.endsWith(`${path.sep}layout.tsx`))
+    .filter((file) => file !== path.join(root, "src", "app", "layout.tsx"))
     .filter((file) => /<main\b/.test(readFileSync(file, "utf8")));
   assert.deepEqual(nestedMainFiles, [], `nested main landmarks: ${nestedMainFiles.join(", ")}`);
 

@@ -87,6 +87,7 @@ export async function generateMetadata(
       title: "Scholarship Opportunity",
       description:
         "View scholarship details, eligibility requirements, deadlines, and application instructions for Indigenous students.",
+      robots: { index: false, follow: false },
     };
   }
 
