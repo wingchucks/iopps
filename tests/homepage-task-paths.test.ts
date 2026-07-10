@@ -23,3 +23,17 @@ test("homepage first screen offers task-first pathways", () => {
   assert.doesNotMatch(source, />\s*Explore Opportunities\s*</);
   assert.match(source, />\s*Browse Jobs\s*</);
 });
+
+test("homepage hero cannot force horizontal overflow on narrow mobile screens", () => {
+  const heroStart = source.indexOf("function Hero(");
+  const heroEnd = source.indexOf("export default async function LandingPage", heroStart);
+  const hero = source.slice(heroStart, heroEnd);
+  const partnersStart = source.indexOf("function TrustedPartnerStrip");
+  const partnersEnd = source.indexOf("function HeroFeaturedTalentCard", partnersStart);
+  const partners = source.slice(partnersStart, partnersEnd);
+
+  assert.match(hero, /relative mx-auto grid min-w-0/);
+  assert.match(hero, /className="min-w-0 flex flex-col justify-center"/);
+  assert.match(partners, /w-full min-w-0 max-w-\[680px\]/);
+  assert.match(partners, /max-w-full items-center/);
+});
