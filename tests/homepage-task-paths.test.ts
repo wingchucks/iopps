@@ -36,4 +36,8 @@ test("homepage hero cannot force horizontal overflow on narrow mobile screens", 
   assert.match(hero, /className="min-w-0 flex flex-col justify-center"/);
   assert.match(partners, /w-full min-w-0 max-w-\[680px\]/);
   assert.match(partners, /max-w-full items-center/);
+
+  const livestream = readFileSync(path.join(process.cwd(), "src", "components", "landing", "LandingLivePreview.tsx"), "utf8");
+  assert.match(livestream, /<section[^>]*className="h-full w-full min-w-0 max-w-full"/);
+  assert.match(livestream, /<Card className="h-full w-full min-w-0 max-w-full"/);
 });
