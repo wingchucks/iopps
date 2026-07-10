@@ -174,13 +174,18 @@ async function applyRateLimit(
 
   return db.runTransaction(async (transaction: Transaction) => {
     const reasons: string[] = [];
-
-    for (const limit of RATE_LIMITS) {
+    const limits = RATE_LIMITS.flatMap((limit) => {
       const value = normalizedInputs[limit.scope];
-      if (!value) continue;
+      if (!value) return [];
+      return [{
+        limit,
+        ref: db.collection("signup_security_limits").doc(getLimitDocId(limit.scope, value)),
+      }];
+    });
+    const snapshots = await transaction.getAll(...limits.map(({ ref }) => ref));
 
-      const ref = db.collection("signup_security_limits").doc(getLimitDocId(limit.scope, value));
-      const snap = await transaction.get(ref);
+    for (const [index, { limit, ref }] of limits.entries()) {
+      const snap = snapshots[index];
       const data = snap.exists ? (snap.data() as Record<string, unknown>) : undefined;
       const state = readWindowState(data, limit.windowMs, nowMs);
       const nextCount = state.count + 1;
