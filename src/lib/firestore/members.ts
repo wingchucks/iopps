@@ -82,6 +82,7 @@ export async function createMemberProfile(
     headline?: string;
     skillsText?: string;
     skills?: string[];
+    profileComplete?: boolean;
   }
 ): Promise<void> {
   await setDoc(doc(db, "members", uid), {

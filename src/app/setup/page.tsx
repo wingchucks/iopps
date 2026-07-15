@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
-import { storage } from "@/lib/firebase";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { db, storage } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { createMemberProfile, getMemberProfile } from "@/lib/firestore/members";
+import { buildSetupRecoveryUserDoc } from "@/lib/setup-user-recovery";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -47,6 +49,47 @@ function SetupWizard() {
   const { user } = useAuth();
   const router = useRouter();
   const displayName = user?.displayName || "there";
+
+  useEffect(() => {
+    const currentUser = user;
+    if (!currentUser || !db) return;
+
+    let cancelled = false;
+
+    const uid = currentUser.uid;
+    const email = currentUser.email;
+    const authDisplayName = currentUser.displayName;
+    const authPhotoURL = currentUser.photoURL;
+
+    async function recoverMissingUserDoc() {
+      const userRef = doc(db, "users", uid);
+      const snap = await getDoc(userRef);
+      if (cancelled || snap.exists()) return;
+
+      const recovered = buildSetupRecoveryUserDoc({
+        uid,
+        email,
+        displayName: authDisplayName,
+        photoURL: authPhotoURL,
+      });
+
+      await setDoc(userRef, {
+        ...recovered,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp(),
+        recoveredFromSetup: true,
+      }, { merge: true });
+    }
+
+    recoverMissingUserDoc().catch((error) => {
+      console.error("Failed to recover setup user document:", error);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const toggleInterest = (id: string) => {
     setInterests((prev) =>
@@ -94,6 +137,7 @@ function SetupWizard() {
           headline,
           skillsText,
           skills: parsedSkills,
+          profileComplete: true,
           ...(photoURL ? { photoURL } : {}),
           updatedAt: serverTimestamp(),
         });
@@ -111,8 +155,14 @@ function SetupWizard() {
           headline,
           skillsText,
           skills: parsedSkills,
+          profileComplete: true,
         });
       }
+
+      await setDoc(doc(db, "users", user.uid), {
+        profileComplete: true,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
     } catch (err) {
       console.error("Failed to save profile:", err);
     }
