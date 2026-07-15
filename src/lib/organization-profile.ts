@@ -492,6 +492,12 @@ export function normalizeOrganizationProfilePatch(body: Record<string, unknown>)
     "contactEmail",
     "nation",
     "treatyTerritory",
+    "communityAffiliation",
+    "hiringStatus",
+    "institutionType",
+    "studentBodySize",
+    "accreditation",
+    "enrollmentStatus",
   ]) {
     setStringField(key);
   }
@@ -547,6 +553,17 @@ export function normalizeOrganizationProfilePatch(body: Record<string, unknown>)
   if (body.services !== undefined) {
     updates.services = normalizeStringArray(body.services);
     touchedFields.push("services");
+  }
+
+  if (body.partnershipInterests !== undefined) {
+    updates.partnershipInterests = normalizeStringArray(body.partnershipInterests);
+    touchedFields.push("partnershipInterests");
+  }
+
+  if (body.campusCount !== undefined) {
+    const campusCount = Number.parseInt(String(body.campusCount), 10);
+    updates.campusCount = Number.isFinite(campusCount) && campusCount >= 0 ? campusCount : null;
+    touchedFields.push("campusCount");
   }
 
   if (body.indigenousGroups !== undefined) {

@@ -3,10 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { getOrganization, updateOrganization } from "@/lib/firestore/organizations";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { getOrganization } from "@/lib/firestore/organizations";
 import { getBusinessProfileReadiness } from "@/lib/organization-profile";
+import {
+  saveOrganizationOnboardingProgress,
+  uploadOrganizationOnboardingLogo,
+} from "@/lib/organization-onboarding-client";
 import Button from "@/components/Button";
 
 const INDUSTRIES = [
@@ -172,7 +174,7 @@ export default function OrgOnboardingPage() {
       }
       // Populate fields from saved data
       if (org.type) setOrgType(org.type);
-      if (org.logo) setLogoPreview(org.logo);
+      if (org.logoUrl || org.logo) setLogoPreview(org.logoUrl || org.logo || null);
       if (org.description) setDescription(org.description);
       if (org.foundedYear) setFoundedYear(String(org.foundedYear));
       if (org.communityAffiliation) setCommunityAffiliation(org.communityAffiliation);
@@ -241,12 +243,14 @@ export default function OrgOnboardingPage() {
     setSaving(true);
     try {
       let logoUrl = logoPreview;
+      const idToken = await user.getIdToken();
 
-      // Upload logo if a new file was selected
+      // Keep browser traffic on the IOPPS origin. Corporate networks commonly
+      // block direct Firebase Storage/Firestore calls, which previously left
+      // this button stuck on "Saving..." with no persisted draft.
       if (logoFile) {
-        const storageRef = ref(storage, `org-logos/${user.uid}`);
-        await uploadBytes(storageRef, logoFile);
-        logoUrl = await getDownloadURL(storageRef);
+        const uploaded = await uploadOrganizationOnboardingLogo(logoFile, idToken);
+        logoUrl = uploaded.url;
         setLogoPreview(logoUrl);
         setLogoFile(null);
       }
@@ -254,7 +258,7 @@ export default function OrgOnboardingPage() {
       const data: Record<string, unknown> = {};
 
       // Always save everything so far
-      if (logoUrl) data.logo = logoUrl;
+      if (logoUrl) data.logoUrl = logoUrl;
       if (description) data.description = description;
       if (foundedYear) {
         data.foundedYear = parseInt(foundedYear, 10);
@@ -282,7 +286,7 @@ export default function OrgOnboardingPage() {
         ...(enrollmentStatus ? { enrollmentStatus } : {}),
       });
 
-      await updateOrganization(user.uid, data);
+      await saveOrganizationOnboardingProgress(data, idToken);
     } finally {
       setSaving(false);
     }

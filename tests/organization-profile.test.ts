@@ -65,7 +65,7 @@ test("normalizeOrganizationProfilePatch supports normalized partial writes", () 
     },
   });
 
-  assert.deepEqual(touchedFields, ["foundedYear", "isPublished", "location", "hours", "socialLinks"]);
+  assert.deepEqual(touchedFields, ["foundedYear", "foundedYearVerified", "isPublished", "location", "hours", "socialLinks"]);
   assert.equal(updates.foundedYear, 2004);
   assert.equal(updates.isPublished, false);
   assert.deepEqual(updates.location, {
@@ -78,6 +78,38 @@ test("normalizeOrganizationProfilePatch supports normalized partial writes", () 
   });
   assert.equal(formatOrganizationHoursDay((updates.hours as Record<string, unknown>).monday), "9:00 AM - 5:00 PM");
   assert.equal(formatOrganizationHoursDay((updates.hours as Record<string, unknown>).sunday), "Closed");
+});
+
+test("normalizeOrganizationProfilePatch preserves organization onboarding fields", () => {
+  const { updates, touchedFields } = normalizeOrganizationProfilePatch({
+    communityAffiliation: "  Treaty 4  ",
+    hiringStatus: " Actively Hiring ",
+    institutionType: " University ",
+    studentBodySize: " 15000+ ",
+    accreditation: " Accredited ",
+    enrollmentStatus: " Open Enrollment ",
+    partnershipInterests: [" Job Fairs ", "", "Mentorship Programs"],
+    campusCount: "3",
+  });
+
+  assert.equal(updates.communityAffiliation, "Treaty 4");
+  assert.equal(updates.hiringStatus, "Actively Hiring");
+  assert.equal(updates.institutionType, "University");
+  assert.equal(updates.studentBodySize, "15000+");
+  assert.equal(updates.accreditation, "Accredited");
+  assert.equal(updates.enrollmentStatus, "Open Enrollment");
+  assert.deepEqual(updates.partnershipInterests, ["Job Fairs", "Mentorship Programs"]);
+  assert.equal(updates.campusCount, 3);
+  assert.deepEqual(touchedFields, [
+    "communityAffiliation",
+    "hiringStatus",
+    "institutionType",
+    "studentBodySize",
+    "accreditation",
+    "enrollmentStatus",
+    "partnershipInterests",
+    "campusCount",
+  ]);
 });
 
 test("hasOrganizationIndigenousIdentity detects multiple signal shapes", () => {
