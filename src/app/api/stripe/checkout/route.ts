@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS, type BillingPlanId } from "@/lib/pricing";
+import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 
 export const runtime = "nodejs";
 
@@ -38,15 +39,34 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
-    const { planId, orgId } = body as { planId?: string; orgId?: string };
+    // Authenticate the caller and resolve which org they own. The previous
+    // version trusted `orgId` from the request body, so any signed-in user
+    // could trigger a checkout session that upgrades an arbitrary org when
+    // paid. Now we ignore any orgId the client sends and use the one bound
+    // to their authenticated employer context.
+    const context = await requireEmployerContext(req);
 
-    if (!planId || !orgId) {
+    const body = await req.json();
+    const { planId, orgId: requestedOrgId } = body as { planId?: string; orgId?: string };
+
+    if (!planId) {
       return NextResponse.json(
-        { error: "Missing planId or orgId" },
+        { error: "Missing planId" },
         { status: 400 }
       );
     }
+
+    // If the client passed an orgId, it must match the caller's authenticated
+    // org. If it doesn't, refuse rather than silently ignore — the client
+    // sending the wrong orgId is a signal of a bug or an attack.
+    if (requestedOrgId && requestedOrgId !== context.orgId) {
+      return NextResponse.json(
+        { error: "orgId does not match authenticated employer" },
+        { status: 403 }
+      );
+    }
+
+    const orgId = context.orgId;
 
     const plan = PLAN_PRICES[planId as BillingPlanId];
     if (!plan) {
@@ -92,6 +112,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (err: unknown) {
+    if (err instanceof EmployerApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const message = err instanceof Error ? err.message : "Internal server error";
     console.error("[stripe/checkout] Error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
