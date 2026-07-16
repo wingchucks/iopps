@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createHmac } from "crypto";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyAdminToken } from "@/lib/api-auth";
 import { Resend } from "resend";
 
 export const runtime = "nodejs";
@@ -13,6 +14,8 @@ const resend = process.env.RESEND_API_KEY
 const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.iopps.ca";
 
+const SEND_COOLDOWN_MS = 60_000;
+
 function generateUnsubToken(uid: string): string {
   return createHmac("sha256", process.env.CRON_SECRET || "").update(uid).digest("hex").substring(0, 32);
 }
@@ -23,24 +26,18 @@ function personalizeHtml(html: string, uid: string): string {
   return html.replace(/UNSUBSCRIBE_URL/g, unsubUrl);
 }
 
-// ---------------------------------------------------------------------------
-// Auth helper
-// ---------------------------------------------------------------------------
-async function verifyAdmin(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.split("Bearer ")[1];
-  try {
-    const { getAuth } = await import("firebase-admin/auth");
-    const decoded = await getAuth().verifyIdToken(token);
-    const db = getAdminDb();
-    const userDoc = await db.collection("users").doc(decoded.uid).get();
-    const userData = userDoc.data();
-    if (!userData || userData.role !== "admin") return null;
-    return decoded;
-  } catch {
-    return null;
+async function enforceAdminSendCooldown(uid: string): Promise<{ ok: true } | { ok: false; retryAfterSec: number }> {
+  const db = getAdminDb();
+  const ref = db.collection("emailSendCooldowns").doc(uid);
+  const now = Date.now();
+  const snap = await ref.get();
+  const lastSent = snap.exists ? Number(snap.data()?.lastSentAt ?? 0) : 0;
+  const elapsed = now - lastSent;
+  if (lastSent && elapsed < SEND_COOLDOWN_MS) {
+    return { ok: false, retryAfterSec: Math.ceil((SEND_COOLDOWN_MS - elapsed) / 1000) };
   }
+  await ref.set({ lastSentAt: now }, { merge: true });
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -82,13 +79,9 @@ function buildNewsletterHtml(body: string, subject: string): string {
 // POST /api/admin/email/send
 // ---------------------------------------------------------------------------
 export async function POST(request: NextRequest) {
-  // Auth: admin token OR CRON_SECRET header
-  const admin = await verifyAdmin(request);
-  const cronSecret = request.headers.get("x-cron-secret");
-  const isCronAuth = cronSecret && cronSecret === process.env.CRON_SECRET;
-  if (!admin && !isCronAuth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await verifyAdminToken(request);
+  if (!authResult.success) return authResult.response;
+  const admin = authResult.decodedToken;
 
   const db = getAdminDb();
 
@@ -121,9 +114,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Resend not configured" }, { status: 500 });
       }
 
-      const toEmail = testEmail || admin?.email;
+      const toEmail = testEmail || admin.email;
       if (!toEmail) {
         return NextResponse.json({ error: "No test email available" }, { status: 400 });
+      }
+
+      const cooldown = await enforceAdminSendCooldown(admin.uid);
+      if (!cooldown.ok) {
+        return NextResponse.json(
+          { error: `Too many sends. Try again in ${cooldown.retryAfterSec}s.` },
+          { status: 429, headers: { "Retry-After": String(cooldown.retryAfterSec) } },
+        );
       }
 
       try {
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
         audience,
         body: emailBody || "",
         sentTo: toEmail,
-        sentBy: admin?.uid || "cron",
+        sentBy: admin.uid,
         sentAt: new Date().toISOString(),
       });
 
@@ -166,7 +167,7 @@ export async function POST(request: NextRequest) {
         scheduledAt,
         sentAt: null as string | null,
         createdAt: new Date().toISOString(),
-        createdBy: admin?.uid || "cron",
+        createdBy: admin.uid,
         stats: { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, unsubscribed: 0 },
       };
       const ref = await db.collection("emailCampaigns").add(campaign);
@@ -178,6 +179,14 @@ export async function POST(request: NextRequest) {
     // -------------------------------------------------------------------
     if (!resend) {
       return NextResponse.json({ error: "Resend not configured (RESEND_API_KEY missing)" }, { status: 500 });
+    }
+
+    const cooldown = await enforceAdminSendCooldown(admin.uid);
+    if (!cooldown.ok) {
+      return NextResponse.json(
+        { error: `Too many sends. Try again in ${cooldown.retryAfterSec}s.` },
+        { status: 429, headers: { "Retry-After": String(cooldown.retryAfterSec) } },
+      );
     }
 
     // Build recipient query
@@ -210,7 +219,7 @@ export async function POST(request: NextRequest) {
       status: "sending",
       sentAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
-      createdBy: admin?.uid || "cron",
+      createdBy: admin.uid,
       recipientCount: recipients.length,
       stats: { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, unsubscribed: 0 },
     };
