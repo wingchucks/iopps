@@ -482,6 +482,40 @@ function FeaturedTalentSpotlight() {
   );
 }
 
+function EntrepreneurSupportsFeature() {
+  return (
+    <div className="grid gap-5 lg:grid-cols-[1fr_0.95fr] lg:items-stretch">
+      <Card variant="spotlight">
+        <div className="p-6 sm:p-8">
+          <p className="m-0 text-xs font-black uppercase tracking-[0.22em] text-teal">Entrepreneur Supports</p>
+          <h3 className="mt-3 text-3xl font-black leading-tight text-text">Funding, training, mentorship, and business support by province.</h3>
+          <p className="mt-4 text-sm leading-7 text-text-sec">
+            IOPPS is building a practical guide for Indigenous entrepreneurs to find official supports across Canada — starting with Alberta, Saskatchewan, and national resources.
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Link href="/entrepreneurs" className="no-underline">
+              <Button variant="primary-teal">Explore Entrepreneur Supports</Button>
+            </Link>
+            <Link href="/entrepreneurs/partners/aiic" className="no-underline">
+              <Button variant="outline">View AIIC Resource</Button>
+            </Link>
+          </div>
+        </div>
+      </Card>
+      <Card>
+        <div className="p-6 sm:p-8">
+          <h3 className="text-2xl font-black text-text">Clear lanes, no pricing confusion</h3>
+          <div className="mt-5 grid gap-3 text-sm leading-7 text-text-sec">
+            <p><strong className="text-text">Job plans</strong> are for employers posting jobs.</p>
+            <p><strong className="text-text">Program listings</strong> are separate from job plans.</p>
+            <p><strong className="text-text">Awareness campaigns</strong> promote approved partner supports through IOPPS.ca, social/community content, and reporting.</p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 function PathwayCards() {
   const pathways = [
     {
@@ -651,6 +685,19 @@ export default async function LandingPage() {
 
       <div>
         <FeaturedTalentSpotlight />
+
+        <SectionShell
+          eyebrow="Entrepreneurs"
+          title="A new hub for Indigenous entrepreneurs"
+          description="Help founders find financing, training, mentorship, startup support, procurement pathways, and official resource partners without confusing them with job-posting plans."
+          action={
+            <Link href="/entrepreneurs" className="no-underline">
+              <Button variant="primary-teal">Open Entrepreneur Supports</Button>
+            </Link>
+          }
+        >
+          <EntrepreneurSupportsFeature />
+        </SectionShell>
 
         <SectionShell
           eyebrow="Partner network"
