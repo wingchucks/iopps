@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
+import { getStoredAccountType, shouldAllowAccountTypeRecovery } from "../src/lib/account-type.ts";
 
 const root = process.cwd();
 const signupSource = readFileSync(path.join(root, "src", "app", "signup", "page.tsx"), "utf8");
@@ -25,12 +26,25 @@ test("authenticated accounts without an IOPPS profile return to account-type sel
   assert.match(signupSource, /const isAccountRecovery = Boolean\(user\) &&/);
   assert.match(signupSource, /new URLSearchParams\(window\.location\.search\)\.get\("resume"\) === "account-type"/);
   assert.match(signupSource, /handleRoleContinue/);
-  assert.match(signupSource, /accountType: role === "community" \? "community" : orgType === "school" \? "school" : "employer"/);
+  assert.match(signupSource, /accountType: getStoredAccountType\(role, orgType\)/);
   assert.doesNotMatch(signupSource, /accountType: role === "community" \? "individual"/);
 });
 
 test("recovery verifies missing profile eligibility on the server before changing account type", () => {
   assert.match(profileApiSource, /memberProfileExists: memberDoc\.exists/);
-  assert.match(signupSource, /eligibility\.memberProfileExists !== false/);
+  assert.match(signupSource, /shouldAllowAccountTypeRecovery\(eligibility\.memberProfileExists\)/);
   assert.match(signupSource, /router\.replace\("\/login"\)/);
+});
+
+test("display-label changes preserve existing stored account-type values", () => {
+  assert.equal(getStoredAccountType("community", ""), "community");
+  assert.equal(getStoredAccountType("organization", "employer"), "employer");
+  assert.equal(getStoredAccountType("organization", "school"), "school");
+});
+
+test("only a confirmed missing member profile is eligible for account-type recovery", () => {
+  assert.equal(shouldAllowAccountTypeRecovery(false), true);
+  assert.equal(shouldAllowAccountTypeRecovery(true), false);
+  assert.equal(shouldAllowAccountTypeRecovery(undefined), false);
+  assert.equal(shouldAllowAccountTypeRecovery(null), false);
 });

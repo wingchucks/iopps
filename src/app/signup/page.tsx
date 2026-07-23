@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, getAppCheckTokenValue, storage } from "@/lib/firebase";
+import { getStoredAccountType, shouldAllowAccountTypeRecovery } from "@/lib/account-type";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 import {
   BackgroundMesh, TopBar, ProgressBar, StepDots, StepHeader,
@@ -134,7 +135,7 @@ export default function UnifiedSignupPage() {
         throw new Error("We could not verify your account setup. Please try again.");
       }
       const eligibility = await eligibilityResponse.json();
-      if (eligibility.memberProfileExists !== false) {
+      if (!shouldAllowAccountTypeRecovery(eligibility.memberProfileExists)) {
         router.replace("/login");
         return;
       }
@@ -147,7 +148,7 @@ export default function UnifiedSignupPage() {
         },
         body: JSON.stringify({
           displayName: user.displayName || user.email?.split("@")[0] || "",
-          accountType: role === "community" ? "community" : orgType === "school" ? "school" : "employer",
+          accountType: getStoredAccountType(role, orgType),
           ...(role === "organization" ? { organizationType: orgType } : {}),
         }),
       });
