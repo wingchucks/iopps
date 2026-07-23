@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, getAppCheckTokenValue, storage } from "@/lib/firebase";
+import { getStoredAccountType, shouldAllowAccountTypeRecovery } from "@/lib/account-type";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 import {
   BackgroundMesh, TopBar, ProgressBar, StepDots, StepHeader,
@@ -47,6 +48,9 @@ const BUSINESS_IDENTITY_OPTIONS: Array<{
 export default function UnifiedSignupPage() {
   const router = useRouter();
   const { signUp, signInWithGoogle, user, sendVerificationEmail, reloadUser } = useAuth();
+  const isAccountRecovery = Boolean(user) &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("resume") === "account-type";
 
   const [step, setStep] = useState(1);
   const formStartedAtRef = useRef(Date.now());
@@ -113,6 +117,62 @@ export default function UnifiedSignupPage() {
 
   const { labels, total, current } = getStepInfo();
   const percent = Math.max(8, (current / total) * 100);
+
+  const handleRoleContinue = async () => {
+    if (!isAccountRecovery || !user) {
+      goTo(2);
+      return;
+    }
+
+    setError("");
+    setSubmitting(true);
+    try {
+      const token = await user.getIdToken();
+      const eligibilityResponse = await fetch("/api/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!eligibilityResponse.ok) {
+        throw new Error("We could not verify your account setup. Please try again.");
+      }
+      const eligibility = await eligibilityResponse.json();
+      if (!shouldAllowAccountTypeRecovery(eligibility.memberProfileExists)) {
+        router.replace("/login");
+        return;
+      }
+
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          displayName: user.displayName || user.email?.split("@")[0] || "",
+          accountType: getStoredAccountType(role, orgType),
+          ...(role === "organization" ? { organizationType: orgType } : {}),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("We could not save your account choice. Please try again.");
+      }
+
+      setName(user.displayName || "");
+      setEmail(user.email || "");
+
+      if (!user.emailVerified) {
+        goTo(3);
+      } else if (role === "organization") {
+        goTo(orgType === "school" ? 4 : 10);
+      } else {
+        router.push("/setup");
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "We could not continue your account setup.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleCreateAccount = async () => {
     setError("");
@@ -382,10 +442,10 @@ export default function UnifiedSignupPage() {
 
         {/* STEP 1 */}
         {step === 1 && (<div>
-          <StepHeader eyebrow="Getting Started" title="Join the" highlight="Community" desc="Choose how you'd like to use IOPPS. You can always expand your account later." />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <RoleCard icon="👤" label="Community Member" desc="Find jobs, scholarships, events, and connect with Indigenous professionals across Canada." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
-            <RoleCard icon="🏢" label="Organization" desc="Post jobs, list programs, host events, and reach Indigenous talent nationwide." selected={role === "organization"} onClick={() => setRole("organization")} />
+          <StepHeader eyebrow={isAccountRecovery ? "Finish Account Setup" : "Getting Started"} title="What kind of account do you need?" highlight="" desc="Are you signing up for yourself or on behalf of an organization? You can add organization access later." />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <RoleCard icon="👤" label="Individual" desc="For people looking for jobs, training, scholarships, events, or professional connections." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
+            <RoleCard icon="🏢" label="Organization / Employer" desc="For First Nations, tribal councils, businesses, schools, nonprofits, governments, and other organizations." selected={role === "organization"} onClick={() => setRole("organization")} />
           </div>
           {role === "organization" && (<div style={{ marginTop: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: CSS.textMuted }}>What type of organization?</div>
@@ -395,7 +455,7 @@ export default function UnifiedSignupPage() {
             </div>
           </div>)}
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
-            <BtnPrimary onClick={() => goTo(2)} disabled={!role || (role === "organization" && !orgType)}>Continue →</BtnPrimary>
+            <BtnPrimary onClick={handleRoleContinue} disabled={submitting || !role || (role === "organization" && !orgType)}>{submitting ? "Saving..." : "Continue →"}</BtnPrimary>
           </div>
         </div>)}
 
