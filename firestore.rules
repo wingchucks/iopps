@@ -33,89 +33,136 @@ service cloud.firestore {
       );
     }
 
+    function hasOrganizationMembership() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+        'orgId' in memberData() &&
+        memberData().orgId is string &&
+        memberData().orgId.size() > 0;
+    }
+
+    function isApprovedOrganization(orgId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/employers/$(orgId)) &&
+        get(/databases/$(database)/documents/employers/$(orgId)).data.status == 'approved';
+    }
+
+    function createsWithoutUserPrivileges() {
+      return !request.resource.data.keys().hasAny([
+        'role', 'admin', 'employerId', 'orgId', 'orgRole',
+        'status', 'disabled', 'deletedAt', 'deletedBy'
+      ]);
+    }
+
+    function preservesUserPrivileges() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'role', 'admin', 'employerId', 'orgId', 'orgRole',
+        'status', 'disabled', 'deletedAt', 'deletedBy'
+      ]);
+    }
+
+    function preservesEmployerApproval() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'status', 'verified', 'approvedAt', 'rejectionReason',
+        'disabled', 'deletedAt', 'deletedBy', 'plan', 'subscriptionTier',
+        'isPublished', 'publicationStatus', 'publicVisibility',
+        'directoryVisible', 'isDirectoryVisible'
+      ]);
+    }
+
     // ── Public content collections ──
 
-    // Jobs: public read, admin write, org owner/admin can create/update their org's
+    // Jobs: public read, admin write, approved org owner/admin can create/update their org's
     match /jobs/{jobId} {
       allow read: if true;
       allow write: if isAdmin();
       allow create: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == request.resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+        memberData().orgRole in ["owner", "admin"] &&
+        isApprovedOrganization(request.resource.data.orgId);
       allow update: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+        memberData().orgRole in ["owner", "admin"] &&
+        isApprovedOrganization(resource.data.orgId);
       allow delete: if isAdmin() || (
         isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"]
+        memberData().orgRole in ["owner", "admin"] &&
+        isApprovedOrganization(resource.data.orgId)
       );
     }
 
-    // Employers: public read, employer can update own, admin can write any
+    // Employers: public read, employer can update profile fields, admin controls approval
     match /employers/{employerId} {
       allow read: if true;
-      allow create: if isSignedIn() && employerId == request.auth.uid;
+      allow create: if isAdmin();
       allow update: if isSignedIn() && (
-        employerId == request.auth.uid ||
-        resource.data.uid == request.auth.uid ||
-        resource.data.id == request.auth.uid ||
+        ((employerId == request.auth.uid ||
+          resource.data.uid == request.auth.uid ||
+          resource.data.id == request.auth.uid) &&
+         preservesEmployerApproval()) ||
         isAdmin()
       );
       allow delete: if isAdmin();
     }
 
-    // Users: authenticated read (member directory), users write own, admin writes any
+    // Users: authenticated read (member directory), users edit non-security fields, admin writes any
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && createsWithoutUserPrivileges();
+      allow update: if (isOwner(userId) && preservesUserPrivileges()) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Scholarships: public read, admin write, org owner/admin can create/update their org's
+    // Scholarships: public read, admin write, approved org owner/admin can create/update their org's
     match /scholarships/{scholarshipId} {
       allow read: if true;
       allow write: if isAdmin();
       allow create: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == request.resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+        memberData().orgRole in ["owner", "admin"] &&
+        isApprovedOrganization(request.resource.data.orgId);
       allow update: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+        memberData().orgRole in ["owner", "admin"] &&
+        isApprovedOrganization(resource.data.orgId);
     }
 
-    // Conferences: public read, admin write, org owner/admin can create/update their org's
+    // Conferences: public read, admin write, approved org owner/admin can create/update their org's
     match /conferences/{conferenceId} {
       allow read: if true;
       allow write: if isAdmin();
       allow create: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == request.resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+        memberData().orgRole in ["owner", "admin"] &&
+        isApprovedOrganization(request.resource.data.orgId);
       allow update: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+        memberData().orgRole in ["owner", "admin"] &&
+        isApprovedOrganization(resource.data.orgId);
     }
 
-    // Events: public read, admin write, org owner/admin can create/update their org's
+    // Events: public read, admin write, approved org owner/admin can create/update their org's
     match /events/{eventId} {
       allow read: if true;
       allow write: if isAdmin();
       allow create: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == request.resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+        memberData().orgRole in ["owner", "admin"] &&
+        isApprovedOrganization(request.resource.data.orgId);
       allow update: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+        memberData().orgRole in ["owner", "admin"] &&
+        isApprovedOrganization(resource.data.orgId);
     }
 
     // RSS feeds collection: public read, admin write
@@ -158,31 +205,34 @@ service cloud.firestore {
     }
 
     // Posts (jobs, events, scholarships, programs, stories, spotlights):
-    // Public read. Admin or org owner/admin can write.
-    // Authenticated users can create their own community posts (stories).
+    // Public read. Admin or approved org owner/admin can write.
+    // Authenticated users without an organization membership can create their own community posts.
     match /posts/{postId} {
       allow read: if true;
       allow write: if isAdmin();
       allow create: if isSignedIn() && (
-        // Any authenticated user can create their own community posts
-        request.resource.data.authorUid == request.auth.uid ||
-        // Org owner/admin can create org posts (guard orgId existence first)
+        // Non-organization users can create their own community posts
+        (request.resource.data.authorUid == request.auth.uid &&
+         !hasOrganizationMembership()) ||
+        // Approved org owner/admin can create org posts (guard orgId existence first)
         ('orgId' in request.resource.data &&
          exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
          memberData().orgId == request.resource.data.orgId &&
-         memberData().orgRole in ["owner", "admin"])
+         memberData().orgRole in ["owner", "admin"] &&
+         isApprovedOrganization(request.resource.data.orgId))
       );
       allow update: if isSignedIn() &&
         exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
         memberData().orgId == resource.data.orgId &&
-        memberData().orgRole in ["owner", "admin"];
+        memberData().orgRole in ["owner", "admin"] &&
+        isApprovedOrganization(resource.data.orgId);
     }
 
-    // Organizations: public read, org owner can create/update, admin can write any
+    // Organizations: public read, owner can edit profile fields, admin controls approval
     match /organizations/{orgId} {
       allow read: if true;
-      allow create: if isOwner(orgId);
-      allow update: if isOwner(orgId) || isAdmin();
+      allow create: if isAdmin();
+      allow update: if (isOwner(orgId) && preservesEmployerApproval()) || isAdmin();
       allow delete: if isAdmin();
     }
 
@@ -238,11 +288,11 @@ service cloud.firestore {
 
     // ── Authenticated collections ──
 
-    // Members: authenticated read (profile directory), users write own, admin writes any
+    // Members: authenticated read, users edit non-security profile fields, admin writes any
     match /members/{userId} {
       allow read: if isSignedIn();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && createsWithoutUserPrivileges();
+      allow update: if (isOwner(userId) && preservesUserPrivileges()) || isAdmin();
       allow delete: if isAdmin();
     }
 

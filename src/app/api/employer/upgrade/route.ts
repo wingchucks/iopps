@@ -7,6 +7,7 @@ import {
   evaluateEmployerSignupProtection,
   getSignupClientIp,
 } from "@/lib/server/signup-protection";
+import { NEW_EMPLOYER_STATUS } from "@/lib/server/employer-approval";
 
 export const runtime = "nodejs";
 
@@ -96,7 +97,9 @@ export async function POST(req: NextRequest) {
     .substring(0, 60);
 
   const now = FieldValue.serverTimestamp();
-  const signupStatus = emailVerified ? "approved" : "pending";
+  // Verifying an email proves ownership of the address, not that the
+  // organization has been approved by IOPPS.
+  const signupStatus = NEW_EMPLOYER_STATUS;
 
   try {
     const batch = adminDb.batch();
@@ -118,7 +121,6 @@ export async function POST(req: NextRequest) {
       onboardingComplete: false,
       status: signupStatus,
       verified: false,
-      ...(emailVerified ? { approvedAt: now } : {}),
       openJobs: 0,
       createdAt: now,
       updatedAt: now,
@@ -143,7 +145,6 @@ export async function POST(req: NextRequest) {
       onboardingComplete: false,
       status: signupStatus,
       verified: false,
-      ...(emailVerified ? { approvedAt: now } : {}),
       openJobs: 0,
       createdAt: now,
       updatedAt: now,

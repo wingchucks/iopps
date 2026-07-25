@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { validateOrigin } from "@/lib/csrf";
 import { assertUserCanAccessApp, AccountAccessError } from "@/lib/server/account-access";
+import { buildEmployerEmailVerificationUpdate } from "@/lib/server/employer-approval";
 
 const COOKIE_NAME = "__session";
 const MAX_AGE = 60 * 60; // 1 hour (token gets refreshed every 55 min)
@@ -39,18 +40,14 @@ async function syncAcceptedEmployerState(uid: string, emailVerified: boolean) {
   const now = FieldValue.serverTimestamp();
   updates.push(
     memberRef.set({ emailVerified: true, updatedAt: now }, { merge: true }),
-    db.collection("organizations").doc(employerId).set({
-      emailVerified: true,
-      status: "approved",
-      approvedAt: now,
-      updatedAt: now,
-    }, { merge: true }),
-    db.collection("employers").doc(employerId).set({
-      emailVerified: true,
-      status: "approved",
-      approvedAt: now,
-      updatedAt: now,
-    }, { merge: true }),
+    db.collection("organizations").doc(employerId).set(
+      buildEmployerEmailVerificationUpdate(now),
+      { merge: true },
+    ),
+    db.collection("employers").doc(employerId).set(
+      buildEmployerEmailVerificationUpdate(now),
+      { merge: true },
+    ),
   );
 
   await Promise.all(updates);

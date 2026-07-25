@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
+import { buildEmployerOnboardingCompletionUpdate } from "@/lib/server/employer-approval";
 import { getBusinessProfileReadiness, normalizeOrganizationRecord } from "@/lib/organization-profile";
 import { isSchoolOrganization } from "@/lib/school-visibility";
 
@@ -55,18 +56,8 @@ export async function POST(req: Request) {
     const memberRef = db.collection("members").doc(context.uid);
 
     await Promise.all([
-      organizationRef.set({
-        onboardingComplete: true,
-        status: "approved",
-        approvedAt: now,
-        updatedAt: now,
-      }, { merge: true }),
-      employerRef.set({
-        onboardingComplete: true,
-        status: "approved",
-        approvedAt: now,
-        updatedAt: now,
-      }, { merge: true }),
+      organizationRef.set(buildEmployerOnboardingCompletionUpdate(now), { merge: true }),
+      employerRef.set(buildEmployerOnboardingCompletionUpdate(now), { merge: true }),
       userRef.set({
         onboardingComplete: true,
         updatedAt: now,
@@ -77,7 +68,7 @@ export async function POST(req: Request) {
       }, { merge: true }),
       organizationRef.collection("activity").add({
         type: "onboarding_complete",
-        message: "Organization setup completed and account accepted automatically.",
+        message: "Organization setup completed and is awaiting IOPPS review.",
         timestamp: now,
       }),
     ]);

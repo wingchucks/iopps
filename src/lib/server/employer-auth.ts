@@ -7,6 +7,7 @@ import {
 } from "@/lib/account-state";
 import { getOrganizationAccessBlockReason } from "@/lib/access-state";
 import { assertUserCanAccessApp, type AccountAccessDeps } from "@/lib/server/account-access";
+import { isEmployerApproved } from "@/lib/server/employer-approval";
 
 export class EmployerApiError extends Error {
   status: number;
@@ -193,6 +194,13 @@ export async function requireEmployerPublishingContext(
 
   if (!hasCompletedEmployerOnboarding(context)) {
     throw new EmployerApiError(403, "Complete your organization setup before posting public content.");
+  }
+
+  // New employers must be reviewed by IOPPS before publishing. The employer
+  // record is authoritative because many legacy accounts predate matching
+  // organization status fields.
+  if (!isEmployerApproved(context.employerData.status)) {
+    throw new EmployerApiError(403, "Your organization is awaiting IOPPS approval before it can publish content.");
   }
 
   return context;
