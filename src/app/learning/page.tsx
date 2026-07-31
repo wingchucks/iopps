@@ -56,13 +56,17 @@ function LearningContent() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([getUserEnrollments(user.uid), getTrainingPrograms()])
-      .then(([userEnrollments, programs]) => {
-        setEnrollments(userEnrollments);
+
+    getUserEnrollments(user.uid)
+      .then(setEnrollments)
+      .catch((err) => console.error("Failed to load enrollments:", err))
+      .finally(() => setLoading(false));
+
+    getTrainingPrograms()
+      .then((programs) => {
         setProgramById(new Map(programs.map((program) => [program.id, program])));
       })
-      .catch((err) => console.error("Failed to load learning dashboard:", err))
-      .finally(() => setLoading(false));
+      .catch((err) => console.error("Failed to load training catalogue:", err));
   }, [user]);
 
   const providerHostedSelections = useMemo(
@@ -77,7 +81,16 @@ function LearningContent() {
   );
 
   const internalEnrollments = useMemo(
-    () => enrollments.filter((enrollment) => !isProviderHostedTraining(programById.get(enrollment.programId) || {})),
+    () =>
+      enrollments.filter((enrollment) => {
+        const program = programById.get(enrollment.programId);
+        return Boolean(program && !isProviderHostedTraining(program));
+      }),
+    [enrollments, programById],
+  );
+
+  const unresolvedSelections = useMemo(
+    () => enrollments.filter((enrollment) => !programById.has(enrollment.programId)),
     [enrollments, programById],
   );
 
@@ -209,6 +222,24 @@ function LearningContent() {
                 </Card>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {unresolvedSelections.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg font-bold text-text mb-4">Previously selected training</h2>
+          <div className="flex flex-col gap-3">
+            {unresolvedSelections.map((enrollment) => (
+              <Card key={enrollment.id}>
+                <div style={{ padding: 20 }}>
+                  <p className="text-sm font-bold text-text mb-1">{enrollment.programTitle}</p>
+                  <p className="text-xs leading-relaxed text-text-muted m-0">
+                    This training listing is no longer available on IOPPS. We cannot verify that IOPPS delivers it, so no course progress is shown.
+                  </p>
+                </div>
+              </Card>
+            ))}
           </div>
         </section>
       )}

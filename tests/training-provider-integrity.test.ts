@@ -26,6 +26,19 @@ test("source URLs also classify a listing as provider-hosted", () => {
   assert.equal(getOfficialTrainingUrl(program), "https://provider.example/course");
 });
 
+test("provider URLs fall back safely and reject non-http schemes", () => {
+  assert.equal(
+    getOfficialTrainingUrl({
+      externalUrl: "",
+      sourceUrl: "https://provider.example/fallback",
+    }),
+    "https://provider.example/fallback",
+  );
+  assert.equal(isProviderHostedTraining({ externalUrl: "data:text/html,unsafe" }), false);
+  assert.equal(isProviderHostedTraining({ externalUrl: "/relative/path" }), false);
+  assert.equal(isProviderHostedTraining({ externalUrl: "javascript:alert(1)" }), false);
+});
+
 test("unknown provider pricing is not presented as free", () => {
   assert.equal(
     getTrainingPriceLabel({ externalUrl: "https://provider.example/course", price: "" }),
@@ -79,6 +92,10 @@ test("legacy external selections are not presented as IOPPS course progress", ()
   assert.match(learning, /Provider-hosted training/);
   assert.match(learning, /Registration is completed with the provider\./);
   assert.match(learning, /isProviderHostedTraining/);
+  assert.match(learning, /Previously selected training/);
+  assert.match(learning, /no course progress is shown/);
+  assert.doesNotMatch(learning, /Promise\.all\(\[getUserEnrollments/);
+  assert.doesNotMatch(learning, /programById\.get\(enrollment\.programId\) \|\| \{\}/);
 });
 
 test("the enrollment data layer defensively rejects provider-hosted listings", () => {
