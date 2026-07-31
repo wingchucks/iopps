@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { displayAmount } from "@/lib/utils";
+import { isCurrentTrainingListing } from "@/lib/training-listing";
 import {
   deriveOwnerType,
   serialize,
@@ -37,6 +38,7 @@ export async function GET() {
         const org = orgById.get(String(program.orgId || ""));
         return deriveOwnerType(org) !== "school";
       })
+      .filter((program) => isCurrentTrainingListing(program))
       .map((program) => {
         const org = orgById.get(String(program.orgId || "")) || null;
         const ownerType = deriveOwnerType(org);

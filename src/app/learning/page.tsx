@@ -10,9 +10,12 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { getMemberProfile } from "@/lib/firestore/members";
 import {
+  getTrainingPrograms,
   getUserEnrollments,
   type TrainingEnrollment,
+  type TrainingProgram,
 } from "@/lib/firestore/training";
+import { getOfficialTrainingUrl, isProviderHostedTraining } from "@/lib/training-listing";
 
 function formatDate(ts: unknown): string {
   if (!ts || typeof ts !== "object") return "";
@@ -42,6 +45,7 @@ function LearningContent() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [enrollments, setEnrollments] = useState<TrainingEnrollment[]>([]);
+  const [programById, setProgramById] = useState<Map<string, TrainingProgram>>(new Map());
   const [loading, setLoading] = useState(true);
   const [hasOrg, setHasOrg] = useState(false);
 
@@ -52,32 +56,51 @@ function LearningContent() {
 
   useEffect(() => {
     if (!user) return;
-    getUserEnrollments(user.uid)
-      .then(setEnrollments)
-      .catch((err) => console.error("Failed to load enrollments:", err))
+    Promise.all([getUserEnrollments(user.uid), getTrainingPrograms()])
+      .then(([userEnrollments, programs]) => {
+        setEnrollments(userEnrollments);
+        setProgramById(new Map(programs.map((program) => [program.id, program])));
+      })
+      .catch((err) => console.error("Failed to load learning dashboard:", err))
       .finally(() => setLoading(false));
   }, [user]);
 
+  const providerHostedSelections = useMemo(
+    () =>
+      enrollments
+        .map((enrollment) => ({ enrollment, program: programById.get(enrollment.programId) }))
+        .filter(
+          (entry): entry is { enrollment: TrainingEnrollment; program: TrainingProgram } =>
+            Boolean(entry.program && isProviderHostedTraining(entry.program)),
+        ),
+    [enrollments, programById],
+  );
+
+  const internalEnrollments = useMemo(
+    () => enrollments.filter((enrollment) => !isProviderHostedTraining(programById.get(enrollment.programId) || {})),
+    [enrollments, programById],
+  );
+
   const inProgress = useMemo(
     () =>
-      enrollments.filter(
+      internalEnrollments.filter(
         (e) => e.status === "enrolled" || e.status === "in-progress"
       ),
-    [enrollments]
+    [internalEnrollments]
   );
 
   const completed = useMemo(
-    () => enrollments.filter((e) => e.status === "completed"),
-    [enrollments]
+    () => internalEnrollments.filter((e) => e.status === "completed"),
+    [internalEnrollments]
   );
 
   const stats = useMemo(
     () => ({
-      enrolled: enrollments.length,
+      enrolled: internalEnrollments.length,
       completed: completed.length,
       certificates: completed.filter((e) => e.certificateUrl).length,
     }),
-    [enrollments, completed]
+    [internalEnrollments, completed]
   );
 
   if (loading) {
@@ -158,6 +181,37 @@ function LearningContent() {
           </div>
         </Card>
       </div>
+
+      {providerHostedSelections.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg font-bold text-text mb-4">Provider-hosted training</h2>
+          <div className="flex flex-col gap-3">
+            {providerHostedSelections.map(({ enrollment, program }) => {
+              const officialUrl = getOfficialTrainingUrl(program);
+              const providerName = program.provider || program.orgName || "the training provider";
+              return (
+                <Card key={enrollment.id}>
+                  <div style={{ padding: 20 }}>
+                    <p className="text-sm font-bold text-text mb-1">{enrollment.programTitle}</p>
+                    <p className="text-xs leading-relaxed text-text-muted mb-3">
+                      Registration is completed with the provider. IOPPS lists this opportunity but does not deliver the course or issue its certificate.
+                    </p>
+                    <a
+                      href={officialUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center rounded-xl px-3 py-2 text-xs font-bold text-white no-underline"
+                      style={{ background: "var(--teal)" }}
+                    >
+                      Continue with {providerName} &#8599;
+                    </a>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* In Progress */}
       <section className="mb-8">

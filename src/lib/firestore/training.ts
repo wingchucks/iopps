@@ -10,7 +10,8 @@ import {
   serverTimestamp,
   type QueryConstraint,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "@/lib/firebase";
+import { isProviderHostedTraining } from "@/lib/training-listing";
 
 export interface TrainingProgram {
   id: string;
@@ -37,7 +38,11 @@ export interface TrainingProgram {
   location: string;
   startDate: string;
   endDate: string;
-  price: number | null;
+  price: unknown;
+  provider?: string;
+  externalUrl?: string;
+  sourceUrl?: string;
+  source?: string;
   featured: boolean;
   active: boolean;
   createdAt: unknown;
@@ -94,6 +99,12 @@ export async function enrollInProgram(
   userId: string,
   program: TrainingProgram
 ): Promise<string> {
+  if (isProviderHostedTraining(program)) {
+    throw new Error(
+      "Provider-hosted training must be registered for on the official provider website."
+    );
+  }
+
   const ref = await addDoc(enrollmentsCol, {
     userId,
     programId: program.id,
