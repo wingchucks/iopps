@@ -7,8 +7,20 @@ export interface TrainingListingLike {
   endDate?: unknown;
 }
 
+function normalizeProviderUrl(value: unknown): string {
+  const href = normalizeExternalHref(value);
+  if (!href) return "";
+
+  try {
+    const url = new URL(href);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
 export function getOfficialTrainingUrl(program: TrainingListingLike): string {
-  return normalizeExternalHref(program.externalUrl ?? program.sourceUrl);
+  return normalizeProviderUrl(program.externalUrl) || normalizeProviderUrl(program.sourceUrl);
 }
 
 export function isProviderHostedTraining(program: TrainingListingLike): boolean {
