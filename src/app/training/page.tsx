@@ -6,7 +6,7 @@ import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import DirectoryPagination, { useDirectoryFilter, useDirectoryFilterActions, useDirectoryPagination } from "@/components/DirectoryPagination";
-import { displayAmount } from "@/lib/utils";
+import { getTrainingPriceLabel, isProviderHostedTraining } from "@/lib/training-listing";
 
 const categories = ["All", "Technology", "Business", "Trades", "Health", "Culture"] as const;
 const formats = ["All", "Online", "In-Person", "Hybrid"] as const;
@@ -22,6 +22,8 @@ interface TrainingProgram {
   enrollmentCount?: number;
   maxEnrollment?: number;
   price?: unknown;
+  externalUrl?: string;
+  sourceUrl?: string;
   featured?: boolean;
   active?: boolean;
   provider?: string;
@@ -304,12 +306,14 @@ function ProgramCard({
 }) {
   const catStyle = getCategoryStyle(program.category || "");
   const fmtStyle = formatBadgeColor((program.format || "").toLowerCase());
-  const enrollText =
-    program.maxEnrollment != null
+  const providerHosted = isProviderHostedTraining(program);
+  const enrollText = providerHosted
+    ? "Registration through provider"
+    : program.maxEnrollment != null
       ? `${program.enrollmentCount || 0}/${program.maxEnrollment} enrolled`
       : `${program.enrollmentCount || 0} enrolled`;
   const providerName = program.ownerName || program.orgName || program.provider || "Training provider";
-  const priceLabel = displayAmount(program.price);
+  const priceLabel = getTrainingPriceLabel(program);
 
   return (
     <Link href={`/training/${program.slug || program.id}`} className="no-underline">
@@ -369,7 +373,7 @@ function ProgramCard({
               className="text-sm font-bold"
               style={{ color: priceLabel ? "var(--teal)" : "var(--green)" }}
             >
-              {priceLabel || "Free"}
+              {priceLabel}
             </span>
           </div>
         </div>

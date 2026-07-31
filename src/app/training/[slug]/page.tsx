@@ -16,7 +16,11 @@ import {
   getUserEnrollments,
   type TrainingProgram,
 } from "@/lib/firestore/training";
-import { displayAmount } from "@/lib/utils";
+import {
+  getOfficialTrainingUrl,
+  getTrainingPriceLabel,
+  isProviderHostedTraining,
+} from "@/lib/training-listing";
 
 const categoryColors: Record<string, { color: string; bg: string }> = {
   Technology: { color: "var(--blue)", bg: "var(--blue-soft)" },
@@ -135,11 +139,14 @@ export default function TrainingDetailPage() {
   }
 
   const catStyle = getCategoryStyle(program.category);
+  const providerHosted = isProviderHostedTraining(program);
+  const officialUrl = getOfficialTrainingUrl(program);
+  const providerName = program.provider || program.orgName || "the training provider";
   const enrollPercent =
-    program.maxEnrollment != null
+    !providerHosted && program.maxEnrollment != null
       ? Math.round((program.enrollmentCount / program.maxEnrollment) * 100)
       : null;
-  const priceLabel = displayAmount(program.price);
+  const priceLabel = getTrainingPriceLabel(program);
 
   return (
     <AppShell>
@@ -303,15 +310,17 @@ export default function TrainingDetailPage() {
                         color: priceLabel ? "var(--text)" : "var(--green)",
                       }}
                     >
-                      {priceLabel || "Free"}
+                      {priceLabel}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-xs text-text-muted mb-1">Modules</p>
-                    <p className="text-sm font-semibold text-text">
-                      {(program.modules || []).length}
-                    </p>
-                  </div>
+                  {!providerHosted && (
+                    <div>
+                      <p className="text-xs text-text-muted mb-1">Modules</p>
+                      <p className="text-sm font-semibold text-text">
+                        {(program.modules || []).length}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
@@ -359,46 +368,48 @@ export default function TrainingDetailPage() {
               </Card>
             )}
 
-            {/* Curriculum */}
-            <Card className="mb-6">
-              <div style={{ padding: 20 }}>
-                <h2 className="text-base font-bold text-text mb-4">
-                  Curriculum
-                </h2>
-                <div className="space-y-3">
-                  {(program.modules || []).map((mod, i) => (
-                    <div
-                      key={i}
-                      className="flex gap-3 p-3 rounded-xl"
-                      style={{ background: "var(--bg)" }}
-                    >
+            {/* Curriculum is only available for courses delivered directly on IOPPS. */}
+            {!providerHosted && (program.modules || []).length > 0 && (
+              <Card className="mb-6">
+                <div style={{ padding: 20 }}>
+                  <h2 className="text-base font-bold text-text mb-4">
+                    Curriculum
+                  </h2>
+                  <div className="space-y-3">
+                    {(program.modules || []).map((mod, i) => (
                       <div
-                        className="flex items-center justify-center rounded-lg flex-shrink-0 text-sm font-bold"
-                        style={{
-                          width: 36,
-                          height: 36,
-                          background: "var(--teal-soft)",
-                          color: "var(--teal)",
-                        }}
+                        key={i}
+                        className="flex gap-3 p-3 rounded-xl"
+                        style={{ background: "var(--bg)" }}
                       >
-                        {i + 1}
+                        <div
+                          className="flex items-center justify-center rounded-lg flex-shrink-0 text-sm font-bold"
+                          style={{
+                            width: 36,
+                            height: 36,
+                            background: "var(--teal-soft)",
+                            color: "var(--teal)",
+                          }}
+                        >
+                          {i + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-text mb-0.5">
+                            {mod.title}
+                          </p>
+                          <p className="text-xs text-text-muted mb-1">
+                            {mod.description}
+                          </p>
+                          <span className="text-xs text-text-muted font-medium">
+                            {mod.duration}
+                          </span>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-text mb-0.5">
-                          {mod.title}
-                        </p>
-                        <p className="text-xs text-text-muted mb-1">
-                          {mod.description}
-                        </p>
-                        <span className="text-xs text-text-muted font-medium">
-                          {mod.duration}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar (desktop) */}
@@ -412,6 +423,9 @@ export default function TrainingDetailPage() {
                 user={user}
                 onEnroll={handleEnroll}
                 enrollNotice={enrollNotice}
+                providerHosted={providerHosted}
+                officialUrl={officialUrl}
+                providerName={providerName}
               />
             </div>
           </div>
@@ -428,35 +442,42 @@ export default function TrainingDetailPage() {
       >
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p
-              className="text-lg font-bold"
-              style={{
-                color: priceLabel ? "var(--text)" : "var(--green)",
-              }}
-            >
-              {priceLabel || "Free"}
+            <p className="text-lg font-bold" style={{ color: "var(--text)" }}>
+              {priceLabel}
             </p>
             <p className="text-xs text-text-muted">
-              {program.enrollmentCount} enrolled
+              {providerHosted ? `Registration through ${providerName}` : `${program.enrollmentCount} enrolled`}
             </p>
           </div>
-          <Button
-            primary
-            onClick={handleEnroll}
-            style={{
-              background: alreadyEnrolled ? "var(--green)" : "var(--teal)",
-              borderRadius: 14,
-              opacity: enrolling ? 0.7 : 1,
-            }}
-          >
-            {alreadyEnrolled
-              ? "Already Enrolled"
-              : enrolling
-                ? "Enrolling..."
-                : user
-                  ? "Enroll Now"
-                  : "Sign in to Enroll"}
-          </Button>
+          {providerHosted ? (
+            <a
+              href={officialUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-[14px] px-4 py-3 text-sm font-bold text-white no-underline"
+              style={{ background: "var(--teal)" }}
+            >
+              View provider details
+            </a>
+          ) : (
+            <Button
+              primary
+              onClick={handleEnroll}
+              style={{
+                background: alreadyEnrolled ? "var(--green)" : "var(--teal)",
+                borderRadius: 14,
+                opacity: enrolling ? 0.7 : 1,
+              }}
+            >
+              {alreadyEnrolled
+                ? "Already Enrolled"
+                : enrolling
+                  ? "Enrolling..."
+                  : user
+                    ? "Enroll Now"
+                    : "Sign in to Enroll"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -475,6 +496,9 @@ function EnrollSidebar({
   user,
   onEnroll,
   enrollNotice,
+  providerHosted,
+  officialUrl,
+  providerName,
 }: {
   program: TrainingProgram;
   enrollPercent: number | null;
@@ -483,8 +507,11 @@ function EnrollSidebar({
   user: unknown;
   onEnroll: () => void;
   enrollNotice: string;
+  providerHosted: boolean;
+  officialUrl: string;
+  providerName: string;
 }) {
-  const priceLabel = displayAmount(program.price);
+  const priceLabel = getTrainingPriceLabel(program);
 
   return (
     <Card>
@@ -496,11 +523,11 @@ function EnrollSidebar({
             color: priceLabel ? "var(--text)" : "var(--green)",
           }}
         >
-          {priceLabel || "Free"}
+          {priceLabel}
         </p>
 
         {/* Enrollment progress */}
-        {program.maxEnrollment != null && enrollPercent != null && (
+        {!providerHosted && program.maxEnrollment != null && enrollPercent != null && (
           <div className="mb-4">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-text-muted">Enrollment</span>
@@ -523,47 +550,66 @@ function EnrollSidebar({
           </div>
         )}
 
-        {program.maxEnrollment == null && (
+        {!providerHosted && program.maxEnrollment == null && (
           <p className="text-xs text-text-muted mb-4">
             {program.enrollmentCount} already enrolled
           </p>
         )}
 
-        {/* Enroll button */}
-        <Button
-          primary
-          full
-          onClick={onEnroll}
-          style={{
-            background: alreadyEnrolled ? "var(--green)" : "var(--teal)",
-            borderRadius: 14,
-            padding: "14px 24px",
-            opacity: enrolling ? 0.7 : 1,
-          }}
-        >
-          {alreadyEnrolled
-            ? "Already Enrolled"
-            : enrolling
-              ? "Enrolling..."
-              : user
-                ? "Enroll Now"
-                : "Sign in to Enroll"}
-        </Button>
+        {/* Provider-hosted listings open the official registration page. */}
+        {providerHosted ? (
+          <>
+            <a
+              href={officialUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center rounded-[14px] px-6 py-3.5 text-sm font-bold text-white no-underline"
+              style={{ background: "var(--teal)" }}
+            >
+              View official provider details
+            </a>
+            <p className="mt-3 text-xs leading-relaxed text-text-muted">
+              Registration, course access, eligibility, and fees are handled by {providerName}.
+            </p>
+          </>
+        ) : (
+          <>
+            <Button
+              primary
+              full
+              onClick={onEnroll}
+              style={{
+                background: alreadyEnrolled ? "var(--green)" : "var(--teal)",
+                borderRadius: 14,
+                padding: "14px 24px",
+                opacity: enrolling ? 0.7 : 1,
+              }}
+            >
+              {alreadyEnrolled
+                ? "Already Enrolled"
+                : enrolling
+                  ? "Enrolling..."
+                  : user
+                    ? "Enroll Now"
+                    : "Sign in to Enroll"}
+            </Button>
 
-        {enrollNotice && (
-          <div className="mt-3 rounded-xl border px-3 py-2 text-xs font-semibold" style={{ borderColor: "color-mix(in srgb, var(--teal) 24%, var(--border))", background: "var(--teal-soft)", color: "var(--teal)" }}>
-            {enrollNotice}
-          </div>
-        )}
+            {enrollNotice && (
+              <div className="mt-3 rounded-xl border px-3 py-2 text-xs font-semibold" style={{ borderColor: "color-mix(in srgb, var(--teal) 24%, var(--border))", background: "var(--teal-soft)", color: "var(--teal)" }}>
+                {enrollNotice}
+              </div>
+            )}
 
-        {alreadyEnrolled && (
-          <Link
-            href="/learning"
-            className="block text-center text-sm font-semibold mt-3 no-underline"
-            style={{ color: "var(--teal)" }}
-          >
-            Go to My Learning &#8594;
-          </Link>
+            {alreadyEnrolled && (
+              <Link
+                href="/learning"
+                className="block text-center text-sm font-semibold mt-3 no-underline"
+                style={{ color: "var(--teal)" }}
+              >
+                Go to My Learning &#8594;
+              </Link>
+            )}
+          </>
         )}
 
         {/* Quick info */}
@@ -584,25 +630,27 @@ function EnrollSidebar({
             </svg>
             <span className="text-xs text-text-sec">{program.duration}</span>
           </div>
-          <div className="flex items-center gap-3">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--text-muted)"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-            <span className="text-xs text-text-sec">
-              {(program.modules || []).length} modules
-            </span>
-          </div>
-          {program.certificateOffered && (
+          {!providerHosted && (
+            <div className="flex items-center gap-3">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--text-muted)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              <span className="text-xs text-text-sec">
+                {(program.modules || []).length} modules
+              </span>
+            </div>
+          )}
+          {!providerHosted && program.certificateOffered && (
             <div className="flex items-center gap-3">
               <svg
                 width="16"
