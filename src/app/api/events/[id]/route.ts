@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { isPublicEventVisible, normalizePublicEvent } from "@/lib/public-events";
+import { withPublicDetailCache } from "@/lib/server/public-detail-cache";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
@@ -39,7 +40,7 @@ export async function GET(
         serialize({ id: direct.id, ...direct.data() }) as Record<string, unknown>
       );
       if (isPublicEventVisible(event)) {
-        return NextResponse.json({ event });
+        return withPublicDetailCache(NextResponse.json({ event }));
       }
     }
 
@@ -55,7 +56,7 @@ export async function GET(
         serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>
       );
       if (isPublicEventVisible(event)) {
-        return NextResponse.json({ event });
+        return withPublicDetailCache(NextResponse.json({ event }));
       }
     }
 
