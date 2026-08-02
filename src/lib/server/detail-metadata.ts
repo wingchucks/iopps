@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { PUBLIC_DETAIL_CACHE_SECONDS } from "@/lib/server/public-detail-cache";
 import {
   buildEventJsonLd,
   buildJobPostingJsonLd,
@@ -20,7 +22,27 @@ function clean(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-async function findFirst(
+function serializeForCache(value: unknown): unknown {
+  if (value === null || value === undefined) return value;
+  if (
+    typeof value === "object" &&
+    typeof (value as Record<string, unknown>).toDate === "function"
+  ) {
+    return ((value as Record<string, unknown>).toDate as () => Date)().toISOString();
+  }
+  if (Array.isArray(value)) return value.map(serializeForCache);
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        serializeForCache(entry),
+      ]),
+    );
+  }
+  return value;
+}
+
+async function findFirstUncached(
   collections: readonly string[],
   slug: string,
   slugFields: readonly string[] = ["slug"],
@@ -30,12 +52,14 @@ async function findFirst(
   for (const name of collections) {
     try {
       const direct = await db.collection(name).doc(slug).get();
-      if (direct.exists) return { id: direct.id, ...(direct.data() || {}) };
+      if (direct.exists) {
+        return serializeForCache({ id: direct.id, ...(direct.data() || {}) }) as Record<string, unknown>;
+      }
       for (const field of slugFields) {
         const q = await db.collection(name).where(field, "==", slug).limit(1).get();
         if (!q.empty) {
           const d = q.docs[0];
-          return { id: d.id, ...(d.data() || {}) };
+          return serializeForCache({ id: d.id, ...(d.data() || {}) }) as Record<string, unknown>;
         }
       }
     } catch {
@@ -43,6 +67,29 @@ async function findFirst(
     }
   }
   return null;
+}
+
+const cachedFindFirst = unstable_cache(
+  async (collectionsJson: string, slug: string, slugFieldsJson: string) =>
+    findFirstUncached(
+      JSON.parse(collectionsJson) as string[],
+      slug,
+      JSON.parse(slugFieldsJson) as string[],
+    ),
+  ["public-detail-metadata-v1"],
+  { revalidate: PUBLIC_DETAIL_CACHE_SECONDS },
+);
+
+async function findFirst(
+  collections: readonly string[],
+  slug: string,
+  slugFields: readonly string[] = ["slug"],
+): Promise<Record<string, unknown> | null> {
+  return cachedFindFirst(
+    JSON.stringify(collections),
+    slug,
+    JSON.stringify(slugFields),
+  );
 }
 
 function field(record: Record<string, unknown>, ...names: string[]): string {

@@ -3,6 +3,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 import { isPublicJobVisible } from "@/lib/public-jobs";
+import { withPublicDetailCache } from "@/lib/server/public-detail-cache";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
@@ -72,12 +73,16 @@ export async function GET(
 
     const found = await findPublicJobDocument(db, id);
     if (!found) {
-      return NextResponse.json({ employerJobs: [], similarJobs: [] });
+      return withPublicDetailCache(
+        NextResponse.json({ employerJobs: [], similarJobs: [] }),
+      );
     }
 
     const currentDoc = await db.collection(found.source).doc(found.id).get();
     if (!currentDoc.exists) {
-      return NextResponse.json({ employerJobs: [], similarJobs: [] });
+      return withPublicDetailCache(
+        NextResponse.json({ employerJobs: [], similarJobs: [] }),
+      );
     }
     const current = currentDoc.data() || {};
     const currentEmployerId =
@@ -159,10 +164,12 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({
-      employerJobs: employerResults,
-      similarJobs: similarResults,
-    });
+    return withPublicDetailCache(
+      NextResponse.json({
+        employerJobs: employerResults,
+        similarJobs: similarResults,
+      }),
+    );
   } catch (err) {
     console.error("Related jobs API error:", err);
     return NextResponse.json({ employerJobs: [], similarJobs: [] });

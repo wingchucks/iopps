@@ -5,6 +5,7 @@ import {
   normalizeImportedDescription,
 } from "@/lib/server/imported-job-descriptions";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
+import { withPublicDetailCache } from "@/lib/server/public-detail-cache";
 import { normalizeApplyUrlFields } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -98,7 +99,7 @@ export async function GET(
       job.description = normalizeImportedDescription(job.description);
     }
 
-    return NextResponse.json({ job });
+    return withPublicDetailCache(NextResponse.json({ job }));
   } catch (err) {
     console.error("Job detail API error:", err);
     return NextResponse.json({ error: "Failed to load job" }, { status: 500 });
