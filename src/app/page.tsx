@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
 import LandingMobileMenu from "@/components/landing/LandingMobileMenu";
 import LandingLivePreview from "@/components/landing/LandingLivePreview";
-import { featuredTalentProfiles } from "@/lib/featured-talent";
+
 import { getLandingInlineNavItems } from "@/lib/navigation";
 import {
   getLandingContent,
@@ -215,26 +215,20 @@ function TrustedPartnerStrip({ partners }: { partners: LandingPartner[] }) {
 }
 
 function HeroFeaturedTalentCard() {
-  const featuredTalent = featuredTalentProfiles[0];
-
   return (
-    <Link href={`/featured-talent/${featuredTalent.slug}`} className="mt-5 block w-full min-w-0 max-w-[680px] no-underline">
-      <div className="flex items-center gap-4 rounded-[22px] border border-white/14 bg-white/[0.085] p-3 text-white transition-colors hover:bg-white/12">
-        <Image
-          src={featuredTalent.imageUrl}
-          alt={`${featuredTalent.name}, ${featuredTalent.featuredLabel} on IOPPS.ca`}
-          width={76}
-          height={76}
-          className="h-[76px] w-[76px] shrink-0 rounded-2xl object-cover"
-        />
+    <Link href="/indigenous-business-spotlight" className="mt-5 block w-full min-w-0 max-w-[680px] no-underline">
+      <div className="flex items-center gap-4 rounded-[22px] border border-white/14 bg-white/[0.085] p-4 text-white transition-colors hover:bg-white/12">
+        <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-2xl bg-[color:var(--gold)]/15 text-3xl" aria-hidden="true">
+          ◈
+        </div>
         <div className="min-w-0 flex-1">
-          <p className="m-0 text-[10px] font-black uppercase tracking-[0.18em] text-teal-light">Featured Talent</p>
-          <p className="mt-1 text-lg font-black leading-tight text-white">Meet {featuredTalent.name}</p>
-          <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-white/68">
-            {featuredTalent.openTo} • {featuredTalent.headline}
+          <p className="m-0 text-[10px] font-black uppercase tracking-[0.18em] text-teal-light">Indigenous Business Spotlight</p>
+          <p className="mt-1 text-lg font-black leading-tight text-white">Your business could be featured next</p>
+          <p className="mt-1 text-xs font-semibold leading-5 text-white/68">
+            Join IOPPS, add your Indigenous business, and help more people discover what you offer.
           </p>
         </div>
-        <span className="hidden shrink-0 text-sm font-black text-teal-light sm:inline">View profile &rarr;</span>
+        <span className="hidden shrink-0 text-sm font-black text-teal-light sm:inline">Learn how &rarr;</span>
       </div>
     </Link>
   );
@@ -426,57 +420,45 @@ function SectionShell({
 }
 
 function FeaturedTalentSpotlight() {
-  const featuredTalent = featuredTalentProfiles[0];
-  const firstName = featuredTalent.name.split(" ")[0] ?? featuredTalent.name;
-
   return (
     <section className="mx-auto -mt-7 max-w-[1320px] px-4 pb-8 sm:px-6 lg:px-8">
       <Card variant="spotlight" className="relative z-10 shadow-2xl">
-        <article className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-0 overflow-hidden lg:grid-cols-[0.78fr_1.22fr]">
-          <div className="bg-[color:var(--navy)] p-5 sm:p-7 lg:p-8">
-            <div className="relative mx-auto max-w-sm">
-              <div className="absolute inset-0 rounded-full bg-[color:var(--teal)]/25 blur-3xl" />
-              <Image
-                src={featuredTalent.imageUrl}
-                alt={`${featuredTalent.name}, ${featuredTalent.featuredLabel} on IOPPS.ca`}
-                width={560}
-                height={560}
-                priority
-                className="relative aspect-square w-full rounded-[28px] object-cover shadow-2xl"
-              />
+        <div className="grid min-w-0 gap-0 overflow-hidden lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="flex min-h-[280px] items-center justify-center bg-[color:var(--navy)] p-8 text-center">
+            <div>
+              <p className="text-6xl text-gold" aria-hidden="true">◈</p>
+              <p className="mt-5 text-sm font-black uppercase tracking-[0.24em] text-white/60">Indigenous Business Spotlight</p>
+              <p className="mt-3 text-3xl font-black leading-tight text-white">Built by Indigenous entrepreneurs. Supported by community.</p>
             </div>
           </div>
           <div className="p-6 sm:p-8 lg:p-10">
-            <Badge text={featuredTalent.featuredLabel} color="var(--teal)" bg="var(--teal-soft)" />
-            <h2 className="mt-4 text-3xl font-black leading-tight text-text sm:text-4xl">
-              Meet {featuredTalent.name}
-            </h2>
-            <p className="mt-3 text-lg font-bold text-text">{featuredTalent.headline}</p>
-            <p className="mt-2 text-sm font-bold uppercase tracking-[0.14em] text-text-muted">
-              {featuredTalent.nation} • {featuredTalent.location}
-            </p>
+            <Badge text="Free Indigenous business profiles" color="var(--teal)" bg="var(--teal-soft)" />
+            <h2 className="mt-4 text-3xl font-black leading-tight text-text sm:text-4xl">Put your Indigenous business in front of more people.</h2>
             <p className="mt-5 max-w-2xl text-base leading-8 text-text-sec">
-              IOPPS Featured Talent helps Indigenous job seekers get seen by employers,
-              organizations, and community opportunity providers. {firstName} is seeking
-              wellness and support work opportunities and is open to the right connection.
+              Indigenous-owned and Indigenous-led businesses can create a free IOPPS profile, share what they offer, and be discovered by customers, partners, and communities across Canada. Complete business profiles can also be considered for a free IOPPS spotlight.
             </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {featuredTalent.skills.slice(0, 5).map((skill) => (
-                <span key={skill} className="rounded-full border border-border px-3 py-1 text-sm font-semibold text-text-sec">
-                  {skill}
-                </span>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {[
+                ["1", "Join IOPPS and choose Organization"],
+                ["2", "Add your business and select Indigenous business or employer"],
+                ["3", "Complete your profile so people can find and support you"],
+              ].map(([step, text]) => (
+                <div key={step} className="rounded-2xl border border-border bg-bg p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-teal">Step {step}</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-text">{text}</p>
+                </div>
               ))}
             </div>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href={`/featured-talent/${featuredTalent.slug}`} className="no-underline">
-                <Button variant="primary-teal" size="lg">View {firstName}&apos;s Profile</Button>
+              <Link href="/signup" className="no-underline">
+                <Button variant="primary-teal" size="lg">Add Your Business Free</Button>
               </Link>
-              <Link href="/featured-talent" className="no-underline">
-                <Button variant="outline" size="lg">See Featured Talent</Button>
+              <Link href="/businesses?type=Indigenous" className="no-underline">
+                <Button variant="outline" size="lg">Browse Indigenous Businesses</Button>
               </Link>
             </div>
           </div>
-        </article>
+        </div>
       </Card>
     </section>
   );
