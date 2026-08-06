@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format-date";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import toast from "react-hot-toast";
 
 // ---------------------------------------------------------------------------
@@ -293,7 +294,7 @@ export default function EmailTemplatesPage() {
               </div>
               {expandedId === t.id && t.htmlContent && (
                 <div className="mt-3 max-h-60 overflow-auto rounded-lg border border-[var(--card-border)] bg-white p-3 text-sm text-gray-800">
-                  <div dangerouslySetInnerHTML={{ __html: t.htmlContent }} />
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(t.htmlContent) }} />
                 </div>
               )}
             </div>

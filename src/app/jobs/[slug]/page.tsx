@@ -13,6 +13,7 @@ import { buildLoginRedirectHref, displayAmount, displayLocation, isMailtoHref, n
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import type { Job } from "@/lib/firestore/jobs";
 
 export default function JobDetailPage() {
@@ -255,7 +256,7 @@ function JobDetailContent() {
               {job.description.includes("<") ? (
                 <div
                   className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: job.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(job.description) }}
                 />
               ) : (
                 <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">

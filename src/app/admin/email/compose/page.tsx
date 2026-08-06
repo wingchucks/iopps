@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -293,7 +294,7 @@ export default function ComposeEmailPage() {
               <div className="mt-3 max-h-96 overflow-auto rounded-lg border border-[var(--card-border)] bg-white p-4 text-sm text-gray-800">
                 <div className="mb-2 border-b pb-2 font-bold text-gray-900">{subject || "(No subject)"}</div>
                 {body ? (
-                  <div dangerouslySetInnerHTML={{ __html: body }} />
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(body) }} />
                 ) : (
                   <p className="italic text-gray-400">No content yet</p>
                 )}

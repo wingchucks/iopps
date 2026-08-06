@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import toast from "react-hot-toast";
 import { formatDateTime } from "@/lib/format-date";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import Link from "next/link";
 
 // ---------------------------------------------------------------------------
@@ -179,7 +180,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ campa
         <h2 className="mb-3 text-lg font-semibold">Email Content</h2>
         {campaign.body ? (
           <div className="max-h-96 overflow-auto rounded-lg border border-[var(--card-border)] bg-white p-4 text-sm text-gray-800">
-            <div dangerouslySetInnerHTML={{ __html: campaign.body }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(campaign.body) }} />
           </div>
         ) : (
           <p className="text-sm text-[var(--text-muted)]">No content</p>
