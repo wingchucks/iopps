@@ -102,7 +102,7 @@ export default function IndigenousBusinessSpotlightPage() {
               </div>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link href="/signup" className="no-underline">
+                <Link href="/signup?intent=indigenous-business" className="no-underline">
                   <Button variant="primary-teal" size="lg">Add Your Business Free</Button>
                 </Link>
                 <Link href="/businesses?type=Indigenous" className="no-underline">
@@ -123,6 +123,31 @@ export default function IndigenousBusinessSpotlightPage() {
             </Card>
           ))}
         </section>
+
+        <Card variant="list" className="mt-8">
+          <section className="p-6 sm:p-8">
+            <h2 className="text-2xl font-black text-text">What makes a profile ready to promote</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-text-sec">
+              A complete profile gives customers a clear, accurate picture of your business and helps the IOPPS team prepare spotlight consideration.
+            </p>
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+              {[
+                "A complete business story and clear products or services",
+                "Your city, province, website, and other contact links",
+                "A recognizable logo and useful business photos",
+                "Spotlight details and social assets confirmed with you before promotion",
+              ].map((item) => (
+                <li key={item} className="flex gap-3 rounded-2xl border border-border bg-bg p-4 text-sm font-semibold leading-6 text-text">
+                  <span className="text-teal" aria-hidden="true">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link href="/login" className="mt-6 inline-block text-sm font-black text-teal no-underline">
+              Sign in to finish your business profile
+            </Link>
+          </section>
+        </Card>
       </main>
 
       <Footer />

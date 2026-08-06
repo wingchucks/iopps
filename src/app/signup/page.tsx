@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useState, useCallback, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, getAppCheckTokenValue, storage } from "@/lib/firebase";
@@ -44,15 +44,18 @@ const BUSINESS_IDENTITY_OPTIONS: Array<{
   },
 ];
 
-export default function UnifiedSignupPage() {
+function UnifiedSignupContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const intent = "intent";
+  const entrepreneurIntent = searchParams.get(intent) === "indigenous-business";
   const { signUp, signInWithGoogle, user, sendVerificationEmail, reloadUser } = useAuth();
 
   const [step, setStep] = useState(1);
   const formStartedAtRef = useRef(Date.now());
-  const [role, setRole] = useState<Role>("");
+  const [role, setRole] = useState<Role>(entrepreneurIntent ? "organization" : "");
   const [websiteTrap, setWebsiteTrap] = useState("");
-  const [orgType, setOrgType] = useState<OrgType>("");
+  const [orgType, setOrgType] = useState<OrgType>(entrepreneurIntent ? "employer" : "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   // C-5: field-level validation errors keyed by input id (name, email, password, confirmPassword)
@@ -85,7 +88,10 @@ export default function UnifiedSignupPage() {
 
   // Employer
   const [orgName, setOrgName] = useState("");
-  const [businessIdentity, setBusinessIdentity] = useState<BusinessIdentity>("indigenous");
+  const [businessIdentity, setBusinessIdentity] = useState<BusinessIdentity>(entrepreneurIntent ? "indigenous" : "not_specified");
+  const [empDescription, setEmpDescription] = useState("");
+  const [empWebsite, setEmpWebsite] = useState("");
+  const [empServices, setEmpServices] = useState("");
   const [empProvince, setEmpProvince] = useState("");
   const [empCity, setEmpCity] = useState("");
   const [capabilities, setCapabilities] = useState<string[]>(["post_jobs"]);
@@ -307,6 +313,9 @@ export default function UnifiedSignupPage() {
       const orgData: Record<string, unknown> = {
         name: orgName, type: "employer",
         businessIdentity,
+        description: empDescription,
+        website: empWebsite,
+        services: empServices.split(",").map(service => service.trim()).filter((service, index, all) => service.length > 0 && all.indexOf(service) === index),
         ...(empProvince || empCity ? { location: { ...(empProvince ? { province: empProvince } : {}), ...(empCity ? { city: empCity } : {}) } } : {}),
         ...(capabilities.length > 0 ? { capabilities } : {}),
         ...(logoUrl ? { logoUrl, logo: logoUrl } : {}),
@@ -382,7 +391,10 @@ export default function UnifiedSignupPage() {
 
         {/* STEP 1 */}
         {step === 1 && (<div>
-          <StepHeader eyebrow="Getting Started" title="Join the" highlight="Community" desc="Choose how you'd like to use IOPPS. You can always expand your account later." />
+          {entrepreneurIntent && (
+            <InfoBanner icon="🪶"><strong style={{ color: CSS.text }}>Indigenous Entrepreneur Signup</strong><br />Your free business profile and directory listing starts here.</InfoBanner>
+          )}
+          <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "Join the"} highlight={entrepreneurIntent ? "Business Profile" : "Community"} desc={entrepreneurIntent ? "Your free business profile and directory listing helps customers and communities discover what you offer. You can still change your account type below." : "Choose how you'd like to use IOPPS. You can always expand your account later."} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <RoleCard icon="👤" label="Community Member" desc="Find jobs, scholarships, events, and connect with Indigenous professionals across Canada." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
             <RoleCard icon="🏢" label="Organization" desc="Post jobs, list programs, host events, and reach Indigenous talent nationwide." selected={role === "organization"} onClick={() => setRole("organization")} />
@@ -588,9 +600,12 @@ export default function UnifiedSignupPage() {
 
         {/* STEP 10: Employer Basics */}
         {step === 10 && (<div>
-          <StepHeader eyebrow="Employer Setup — 1 of 3" title="About your" highlight="Organization" desc="Tell us about your business." />
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 1 of 3" : "Employer Setup — 1 of 3"} title="About your" highlight={entrepreneurIntent ? "Business" : "Organization"} desc={entrepreneurIntent ? "Share the essentials customers need to discover your business." : "Tell us about your business."} />
           <div style={{ display: "grid", gap: 20 }}>
-            <FormInput label="Organization Name" required placeholder="e.g., Northern Resources Inc." value={orgName} onChange={e => setOrgName(e.target.value)} />
+            <FormInput label={entrepreneurIntent ? "Business Name" : "Organization Name"} required placeholder="e.g., Northern Resources Inc." value={orgName} onChange={e => setOrgName(e.target.value)} />
+            <FormTextarea label="Short Business Description" required placeholder="Tell people what your business does and who you serve." maxLength={600} value={empDescription} onChange={e => setEmpDescription(e.target.value)} />
+            <FormInput label="Products or Services (comma-separated)" required maxLength={500} placeholder="e.g., Catering, Consulting, Handmade goods" value={empServices} onChange={e => setEmpServices(e.target.value)} />
+            <FormInput label="Website" type="url" maxLength={300} placeholder="https://www.yourbusiness.ca" value={empWebsite} onChange={e => setEmpWebsite(e.target.value)} />
             <div>
               <div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>How should we represent your business?</div>
               <div style={{ display: "grid", gap: 12 }}>
@@ -615,8 +630,8 @@ export default function UnifiedSignupPage() {
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-              <FormSelect label="Province / Territory" value={empProvince} onChange={e => setEmpProvince(e.target.value)} options={[{ value: "", label: "Select..." }, ...PROVINCES.map(p => ({ value: p, label: p }))]} />
-              <FormInput label="City" placeholder="City" value={empCity} onChange={e => setEmpCity(e.target.value)} />
+              <FormSelect label="Province / Territory" required={entrepreneurIntent} value={empProvince} onChange={e => setEmpProvince(e.target.value)} options={[{ value: "", label: "Select..." }, ...PROVINCES.map(p => ({ value: p, label: p }))]} />
+              <FormInput label="City" required={entrepreneurIntent} placeholder="City" value={empCity} onChange={e => setEmpCity(e.target.value)} />
             </div>
             <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>What do you want to do on IOPPS?</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{EMPLOYER_CAPABILITIES.map(c => <CheckboxItem key={c.id} icon={c.icon} label={c.label} checked={capabilities.includes(c.id)} onToggle={() => toggleCapability(c.id)} />)}</div>
@@ -627,7 +642,7 @@ export default function UnifiedSignupPage() {
               Indigenous businesses can stay on a free profile. Non-Indigenous companies only need a paid plan if they want promoted visibility.
             </InfoBanner>
           </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(3)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(11)} disabled={!orgName}>Continue →</BtnPrimary></div>
+          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(3)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(11)} disabled={!orgName.trim() || !empDescription.trim() || !empServices.trim() || (entrepreneurIntent && (!empCity.trim() || !empProvince))}>Continue →</BtnPrimary></div>
         </div>)}
 
         {/* STEP 11: Employer Brand */}
@@ -646,6 +661,9 @@ export default function UnifiedSignupPage() {
           <ReviewSection icon="🏢" title="Organization Summary" onEdit={() => goTo(10)}>
             <ReviewRow label="Name" value={orgName} />
             <ReviewRow label="Business Identity" value={BUSINESS_IDENTITY_OPTIONS.find(option => option.value === businessIdentity)?.label || "Not set"} />
+            <ReviewRow label="Description" value={empDescription} />
+            <ReviewRow label="Products or Services" value={empServices} />
+            <ReviewRow label="Website" value={empWebsite || "Not set"} />
             <ReviewRow label="Location" value={[empCity, empProvince].filter(Boolean).join(", ") || "Not set"} />
             <ReviewRow label="Capabilities" value={<div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-end" }}>{capabilities.map(id => { const c = EMPLOYER_CAPABILITIES.find(x => x.id === id); return <span key={id} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: CSS.accentLight, color: CSS.accent, fontWeight: 500 }}>{c?.label || id}</span>; })}</div>} />
           </ReviewSection>
@@ -700,5 +718,13 @@ export default function UnifiedSignupPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function UnifiedSignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <UnifiedSignupContent />
+    </Suspense>
   );
 }

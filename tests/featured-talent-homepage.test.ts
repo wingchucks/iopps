@@ -37,7 +37,7 @@ test("Indigenous Business Spotlight gives the real signup path and precise free 
   assert.match(page, /Sign up and choose Organization, then Employer \/ Business/);
   assert.match(page, /Select Indigenous business or employer/);
   assert.match(page, /There is no charge to create the profile, appear in the directory, or be considered for this spotlight/);
-  assert.match(page, /href="\/signup"/);
+  assert.match(page, /href="\/signup\?intent=indigenous-business"/);
   assert.match(page, /Add Your Business Free/);
   assert.doesNotMatch(page, /proof|document|verification requirement/i);
 });
