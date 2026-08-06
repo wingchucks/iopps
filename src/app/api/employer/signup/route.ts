@@ -8,6 +8,7 @@ import {
   evaluateEmployerSignupProtection,
   getSignupClientIp,
 } from "@/lib/server/signup-protection";
+import { NEW_EMPLOYER_STATUS } from "@/lib/server/employer-approval";
 
 export const runtime = "nodejs";
 
@@ -117,7 +118,9 @@ export async function POST(req: NextRequest) {
     .substring(0, 60);
 
   const now = FieldValue.serverTimestamp();
-  const signupStatus = emailVerified ? "approved" : "pending";
+  // Email ownership is not organization approval. Every new employer remains
+  // pending until an IOPPS admin reviews it.
+  const signupStatus = NEW_EMPLOYER_STATUS;
 
   try {
     const batch = adminDb.batch();
@@ -135,7 +138,6 @@ export async function POST(req: NextRequest) {
       status: signupStatus,
       emailVerified,
       verified: false,
-      ...(emailVerified ? { approvedAt: now } : {}),
       createdAt: now,
       updatedAt: now,
     });
@@ -155,7 +157,6 @@ export async function POST(req: NextRequest) {
       emailVerified,
       verified: false,
       onboardingComplete: false,
-      ...(emailVerified ? { approvedAt: now } : {}),
       createdAt: now,
       updatedAt: now,
     });
