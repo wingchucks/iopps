@@ -10,32 +10,6 @@ import { test, expect } from "@playwright/test";
 //   - C-4 (role-based post-login redirect for admin/employer/member)
 //   - C-6 (Use my IOPPS Profile toggle behavior in the signed-in apply flow)
 
-test.describe("C-7 — newsletter opt-in defaults to unchecked (CASL)", () => {
-  test("community signup form ships newsletter checkbox unchecked", async ({ page }) => {
-    await page.goto("/signup");
-
-    // Step 1 — pick Community Member role to advance to the account form.
-    // RoleCard is a clickable <div>, not a <button> — match by text.
-    await page.locator("text=/community member/i").first().click();
-    await page.getByRole("button", { name: /continue/i }).click();
-
-    // Step 2 — newsletter checkbox should be present and NOT pre-ticked.
-    const newsletter = page.locator('input[type="checkbox"]').filter({
-      has: page.locator("xpath=ancestor::label//*[contains(., 'Newsletter')]"),
-    });
-
-    // Fall back to a label-based locator if the structural one misses.
-    const newsletterCheckbox = (await newsletter.count())
-      ? newsletter.first()
-      : page
-          .locator("label", { hasText: /newsletter/i })
-          .locator('input[type="checkbox"]')
-          .first();
-
-    await expect(newsletterCheckbox).toBeVisible();
-    await expect(newsletterCheckbox).not.toBeChecked();
-  });
-});
 
 test.describe("C-5 — signup validation surfaces per-field errors", () => {
   test("invalid email shows alert under the email field", async ({ page }) => {

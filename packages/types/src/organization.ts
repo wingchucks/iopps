@@ -192,7 +192,6 @@ export interface EmployerNotificationPreferences {
   teamInvitations: boolean;
   teamActivity: boolean;
   // Digest notifications
-  weeklyDigest: boolean;
   dailyActivitySummary?: boolean;
   // Marketing
   marketingEmails: boolean;

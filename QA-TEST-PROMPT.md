@@ -1185,10 +1185,6 @@
 - [ ] **Admin Permission** shows **PASS** (green)
 - [ ] "Refresh Claims" button works
 
-### Test 43.3: Email Management
-- [ ] Navigate to `/admin/emails`
-- [ ] Email logs display
-- [ ] Trigger email campaign works
 
 ### Test 43.4: Analytics
 - [ ] Navigate to `/admin/analytics`

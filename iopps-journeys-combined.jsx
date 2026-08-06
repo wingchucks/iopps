@@ -730,7 +730,7 @@ const PlansScreen = ({ go }) => {
             },
             {
               key: "confFeat", name: "Featured Conference", price: "400", badge: "FEATURED",
-              features: ["Everything in Standard, plus:", "Featured spotlight on Events page", "Promoted in IOPPS feed & newsletters", "Full branding with logo and banner"],
+              features: ["Everything in Standard, plus:", "Featured spotlight on Events page", "Promoted in IOPPS feed", "Full branding with logo and banner"],
             },
           ].map(plan => (
             <div key={plan.key} onClick={() => setSelected(plan.key)} className="card-hover" style={{

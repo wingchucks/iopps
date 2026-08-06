@@ -252,7 +252,7 @@ const NAV_GROUPS: NavGroup[] = [
     title: "Platform",
     items: [
       { label: "Feed Sync", href: "/admin/feed-sync", icon: "\u21BB" },
-      { label: "Email", href: "/admin/email", icon: "\u2709" },
+
       { label: "Data Management", href: "/admin/data", icon: "\u2630" },
       { label: "Settings", href: "/admin/settings", icon: "\u2699" },
     ],

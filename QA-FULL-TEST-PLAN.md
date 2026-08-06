@@ -324,7 +324,7 @@
 ### Test 48: Admin Analytics & Settings
 - [ ] `/admin/analytics` — Analytics page loads
 - [ ] `/admin/settings` — Settings page loads
-- [ ] `/admin/emails` — Email management loads
+
 
 ## Part 19: Error Handling & Edge Cases
 

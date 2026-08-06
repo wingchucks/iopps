@@ -194,8 +194,6 @@ export interface EmailPreferences {
   trainingCategories: string[]; // empty = all categories
   trainingFormats: ("in-person" | "online" | "hybrid")[]; // empty = all formats
 
-  // Platform Newsletter
-  weeklyDigest: boolean;
 
   // Account Notifications (always on by default, can't fully disable)
   applicationUpdates: boolean; // job application status changes

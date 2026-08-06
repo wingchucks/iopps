@@ -305,7 +305,7 @@ async function main() {
 
   const adminRoutes = [
     '/admin', '/admin/analytics', '/admin/applications', '/admin/check-claims',
-    '/admin/conferences', '/admin/content', '/admin/emails', '/admin/employers',
+    '/admin/conferences', '/admin/content', '/admin/employers',
     '/admin/feeds', '/admin/jobs', '/admin/members', '/admin/moderation',
     '/admin/news', '/admin/powwows', '/admin/scholarships', '/admin/settings',
     '/admin/users', '/admin/vendors', '/admin/verification', '/admin/videos',
