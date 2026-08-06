@@ -74,7 +74,7 @@ function LoginForm() {
       return redirectTo || "/admin";
     }
 
-    if (!profile) return redirectTo || "/setup";
+    if (!profile) return "/signup?resume=account-type";
 
     if (profile.orgId) {
       const idToken = await currentUser.getIdToken();

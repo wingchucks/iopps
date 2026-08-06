@@ -25,9 +25,14 @@ export async function GET(req: NextRequest) {
 
   try {
     const db = getAdminDb();
-    const doc = await db.collection("users").doc(uid).get();
-    if (!doc.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ user: { id: doc.id, ...doc.data() } });
+    const [userDoc, memberDoc] = await Promise.all([
+      db.collection("users").doc(uid).get(),
+      db.collection("members").doc(uid).get(),
+    ]);
+    return NextResponse.json({
+      user: userDoc.exists ? { id: userDoc.id, ...userDoc.data() } : null,
+      memberProfileExists: memberDoc.exists,
+    });
   } catch (err) {
     console.error("GET /api/profile error:", err);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
