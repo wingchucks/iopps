@@ -422,7 +422,7 @@ function UnifiedSignupContent() {
               {role === "organization" && <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 6, paddingLeft: 2 }}>&#8594; You&apos;ll enter your <strong style={{ color: CSS.textMuted }}>business name</strong> on the next step.</div>}
             </div>
             <FormInput id="email" label="Email Address" required type="email" autoComplete="email" error={fieldErrors.email} placeholder="you@example.com" value={email} onChange={e => { setEmail(e.target.value); if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" })); }} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+            <div className="signup-account-password-grid grid grid-cols-1 gap-5 min-w-0 sm:grid-cols-2">
               <div><FormInput id="password" label="Password" required type="password" minLength={8} autoComplete="new-password" error={fieldErrors.password} placeholder="Min. 8 characters" value={password} onChange={e => { setPassword(e.target.value); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" })); }} /><PasswordStrength password={password} /></div>
               <FormInput id="confirmPassword" label="Confirm Password" required type="password" minLength={8} autoComplete="new-password" error={fieldErrors.confirmPassword} placeholder="Re-enter password" value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); if (fieldErrors.confirmPassword) setFieldErrors((p) => ({ ...p, confirmPassword: "" })); }} />
             </div>
