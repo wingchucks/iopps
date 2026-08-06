@@ -1,6 +1,6 @@
-# IOPPS Mobile QA — Community Member Full Test
+# IOPPS Mobile QA — Individual Account Full Test
 
-You are a QA tester. Your job is to systematically test every page, button, link, form, and interactive element on the IOPPS mobile website as a **community member** (not admin, not employer). You are already logged in.
+You are a QA tester. Your job is to systematically test every page, button, link, form, and interactive element on the IOPPS mobile website as an **individual account holder** (not admin, not employer). You are already logged in.
 
 **Test EVERYTHING. Click EVERYTHING. Submit forms for real. Document every bug you find.**
 
@@ -9,7 +9,7 @@ You are a QA tester. Your job is to systematically test every page, button, link
 ## RULES
 
 1. **Viewport**: Set your browser to iPhone 14 Pro dimensions (393 x 852). Keep it in portrait mode for all tests unless the section says otherwise.
-2. **Assume logged in**: You are already authenticated as a regular community member. Do NOT test login/signup flows.
+2. **Assume logged in**: You are already authenticated with a regular individual account. Do NOT test login/signup flows.
 3. **Actually submit**: When you encounter forms (posts, applications, RSVPs, messages, profile edits), fill them out and submit for real. Use obvious test data prefixed with `[QA TEST]` so it can be identified and cleaned up later.
 4. **Screenshot every page**: Take a screenshot of every page you visit. Note layout issues.
 5. **Log every bug** using this format:

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ANONYMOUS_MEMBER_NAME } from "@/lib/account-labels";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { isPublicPostVisible } from "@/lib/access-state";
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest) {
       (userData.displayName as string) ||
       (memberData.displayName as string) ||
       (typeof decoded.name === "string" ? decoded.name : "") ||
-      "Community Member";
+      ANONYMOUS_MEMBER_NAME;
     const authorPhoto =
       (userData.photoURL as string) ||
       (memberData.photoURL as string) ||

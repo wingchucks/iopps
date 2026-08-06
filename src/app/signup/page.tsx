@@ -394,10 +394,10 @@ function UnifiedSignupContent() {
           {entrepreneurIntent && (
             <InfoBanner icon="🪶"><strong style={{ color: CSS.text }}>Indigenous Entrepreneur Signup</strong><br />Your free business profile and directory listing starts here.</InfoBanner>
           )}
-          <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "Join the"} highlight={entrepreneurIntent ? "Business Profile" : "Community"} desc={entrepreneurIntent ? "Your free business profile and directory listing helps customers and communities discover what you offer. You can still change your account type below." : "Choose how you'd like to use IOPPS. You can always expand your account later."} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <RoleCard icon="👤" label="Community Member" desc="Find jobs, scholarships, events, and connect with Indigenous professionals across Canada." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
-            <RoleCard icon="🏢" label="Organization" desc="Post jobs, list programs, host events, and reach Indigenous talent nationwide." selected={role === "organization"} onClick={() => setRole("organization")} />
+          <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "What kind of"} highlight={entrepreneurIntent ? "Business Profile" : "account do you need?"} desc={entrepreneurIntent ? "Your free business profile and directory listing helps customers and communities discover what you offer. You can still change your account type below." : "Are you signing up for yourself or on behalf of an organization?"} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <RoleCard icon="👤" label="Individual" desc="For people looking for jobs, training, scholarships, events, or professional connections." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
+            <RoleCard icon="🏢" label="Organization / Employer" desc="For First Nations, tribal councils, businesses, schools, nonprofits, governments, and organizations that want to post opportunities or manage a public profile." selected={role === "organization"} onClick={() => setRole("organization")} />
           </div>
           {role === "organization" && (<div style={{ marginTop: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: CSS.textMuted }}>What type of organization?</div>

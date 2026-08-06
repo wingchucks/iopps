@@ -6,6 +6,7 @@ import { storage } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import Avatar from "@/components/Avatar";
+import { ANONYMOUS_MEMBER_NAME } from "@/lib/account-labels";
 import Button from "@/components/Button";
 
 interface CreatePostModalProps {
@@ -138,7 +139,7 @@ export default function CreatePostModal({
             />
             <div>
               <p className="text-sm font-bold text-text m-0">
-                {user.displayName || "Community Member"}
+                {user.displayName || ANONYMOUS_MEMBER_NAME}
               </p>
               <p className="text-xs text-text-muted m-0">Sharing to community</p>
             </div>

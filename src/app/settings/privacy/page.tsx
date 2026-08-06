@@ -285,7 +285,7 @@ function PrivacyContent() {
             />
             <ToggleRow
               label="Show in Member Directory"
-              desc="Appear in the community member directory"
+              desc="Appear in the member directory"
               checked={settings.showInDirectory}
               onChange={(v) =>
                 setSettings({ ...settings, showInDirectory: v })

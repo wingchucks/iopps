@@ -20,7 +20,7 @@ export default function LiveStats() {
   }, []);
 
   const items = [
-    { label: "Community Members", value: stats ? stats.members : null },
+    { label: "Members", value: stats ? stats.members : null },
     { label: "Jobs Posted", value: stats ? stats.jobs : null },
     { label: "Events Listed", value: stats ? stats.events : null },
     { label: "Organizations", value: stats ? stats.organizations : null },

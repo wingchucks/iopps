@@ -24,6 +24,7 @@ import Toast from "@/components/Toast";
 
 import { interestLabels } from "@/lib/constants/interests";
 import { getOrganization } from "@/lib/firestore/organizations";
+import { getPublicAccountTypeLabel } from "@/lib/account-labels";
 
 export default function MemberProfilePage() {
   return (
@@ -177,7 +178,7 @@ function MemberProfileContent() {
             )}
             <div className="flex flex-wrap gap-2 mt-2">
               <Badge
-                text={profile.role === "admin" ? "Admin" : profile.role === "moderator" ? "Moderator" : profile.orgRole === "owner" || profile.orgRole === "admin" ? "Organization" : "Community Member"}
+                text={getPublicAccountTypeLabel(profile.role, profile.orgRole)}
                 color={profile.role === "admin" ? "#F59E0B" : profile.role === "moderator" ? "#8B5CF6" : "#6EE7B7"}
                 bg={profile.role === "admin" ? "rgba(245,158,11,.15)" : profile.role === "moderator" ? "rgba(139,92,246,.15)" : "rgba(110,231,183,.15)"}
                 small
@@ -384,7 +385,7 @@ function MemberProfileContent() {
                   MEMBER INFO
                 </p>
                 <p className="text-sm text-text-sec m-0">
-                  Community member on IOPPS
+                  Individual account on IOPPS
                 </p>
               </div>
             </Card>
