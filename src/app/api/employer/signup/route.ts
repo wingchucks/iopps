@@ -23,12 +23,44 @@ function getSiteUrl(req: NextRequest): string {
   return `${forwardedProto}://${host}`;
 }
 
+function cleanString(value: unknown, maxLength: number): string {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+function cleanStringArray(value: unknown, maxItems: number, maxItemLength: number): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value
+    .slice(0, maxItems)
+    .map((item) => cleanString(item, maxItemLength))
+    .filter(Boolean))];
+}
+
+function cleanHttpUrl(value: unknown): string {
+  const candidate = cleanString(value, 500);
+  if (!candidate) return "";
+  try {
+    const url = new URL(candidate);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+function cleanLocation(value: unknown): { city: string; province: string } | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const input = value as Record<string, unknown>;
+  const city = cleanString(input.city, 120);
+  const province = cleanString(input.province, 80);
+  return city || province ? { city, province } : undefined;
+}
+
 /**
  * POST /api/employer/signup
  * Creates all required Firestore documents for a new employer account.
  * Must be called AFTER Firebase Auth account creation (user must send ID token).
  *
- * Body: { name, type, contactName, contactEmail, businessIdentity? }
+ * Body: core organization/contact fields plus optional public profile details,
+ * branding, capabilities, services, location, and onboarding completion intent.
  */
 export async function POST(req: NextRequest) {
   if (!adminAuth || !adminDb) {
@@ -68,6 +100,12 @@ export async function POST(req: NextRequest) {
     businessIdentity?: "indigenous" | "non_indigenous" | "not_specified";
     website?: string;
     description?: string;
+    location?: { city?: string; province?: string };
+    capabilities?: string[];
+    services?: string[];
+    logoUrl?: string;
+    bannerUrl?: string;
+    onboardingComplete?: boolean;
     honeypot?: string;
     formStartedAt?: number | string;
   };
@@ -84,6 +122,14 @@ export async function POST(req: NextRequest) {
 
   const normalizedContactEmail = contactEmail.trim().toLowerCase();
   const confirmationEmail = (accountEmail || normalizedContactEmail).trim().toLowerCase();
+  const website = cleanHttpUrl(body.website);
+  const description = cleanString(body.description, 600);
+  const services = cleanStringArray(body.services, 40, 100);
+  const capabilities = cleanStringArray(body.capabilities, 30, 80);
+  const location = cleanLocation(body.location);
+  const logoUrl = cleanHttpUrl(body.logoUrl);
+  const bannerUrl = cleanHttpUrl(body.bannerUrl);
+  const profileSubmitted = body.onboardingComplete === true && description.length > 0 && !!location?.city && !!location?.province;
 
   const protection = await evaluateEmployerSignupProtection(adminDb, {
     uid,
@@ -91,8 +137,8 @@ export async function POST(req: NextRequest) {
     name,
     contactName,
     contactEmail: normalizedContactEmail,
-    website: body.website,
-    description: body.description,
+    website,
+    description,
     honeypot: body.honeypot,
     formStartedAt: body.formStartedAt,
     clientIp: getSignupClientIp(req),
@@ -130,7 +176,14 @@ export async function POST(req: NextRequest) {
       contactEmail: normalizedContactEmail,
       slug,
       businessIdentity,
-      onboardingComplete: false,
+      ...(website ? { website } : {}),
+      ...(description ? { description } : {}),
+      ...(services.length > 0 ? { services } : {}),
+      ...(location ? { location } : {}),
+      ...(capabilities.length > 0 ? { capabilities } : {}),
+      ...(logoUrl ? { logoUrl, logo: logoUrl } : {}),
+      ...(bannerUrl ? { bannerUrl } : {}),
+      onboardingComplete: profileSubmitted,
       plan: null,
       status: signupStatus,
       emailVerified,
@@ -149,12 +202,19 @@ export async function POST(req: NextRequest) {
       businessIdentity,
       contactName,
       contactEmail: normalizedContactEmail,
+      ...(website ? { website } : {}),
+      ...(description ? { description } : {}),
+      ...(services.length > 0 ? { services } : {}),
+      ...(location ? { location } : {}),
+      ...(capabilities.length > 0 ? { capabilities } : {}),
+      ...(logoUrl ? { logoUrl, logo: logoUrl } : {}),
+      ...(bannerUrl ? { bannerUrl } : {}),
       plan: "free",
       subscriptionTier: "free",
       status: signupStatus,
       emailVerified,
       verified: false,
-      onboardingComplete: false,
+      onboardingComplete: profileSubmitted,
       ...(emailVerified ? { approvedAt: now } : {}),
       createdAt: now,
       updatedAt: now,

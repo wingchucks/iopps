@@ -450,7 +450,7 @@ function FeaturedTalentSpotlight() {
               ))}
             </div>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/signup" className="no-underline">
+              <Link href="/signup?intent=indigenous-business" className="no-underline">
                 <Button variant="primary-teal" size="lg">Add Your Business Free</Button>
               </Link>
               <Link href="/businesses?type=Indigenous" className="no-underline">
