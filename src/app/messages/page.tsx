@@ -285,7 +285,7 @@ function MessagesContent() {
                   No conversations yet
                 </p>
                 <p className="text-sm text-text-muted mb-4">
-                  Find a community member and start the first message.
+                  Find someone and start the first message.
                 </p>
                 <Button small variant="primary-teal" onClick={openNewChat}>
                   Start a Message

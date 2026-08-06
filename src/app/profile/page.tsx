@@ -27,6 +27,7 @@ import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
+import { getPublicAccountTypeLabel } from "@/lib/account-labels";
 
 import { interestOptions, interestLabels } from "@/lib/constants/interests";
 
@@ -272,7 +273,7 @@ function ProfileContent() {
             )}
             <div className="flex flex-wrap gap-2">
               <Badge
-                text={profile?.role === "admin" ? "Admin" : profile?.role === "moderator" ? "Moderator" : profile?.orgRole === "owner" || profile?.orgRole === "admin" ? "Organization" : "Community Member"}
+                text={getPublicAccountTypeLabel(profile?.role, profile?.orgRole)}
                 color={profile?.role === "admin" ? "#F59E0B" : profile?.role === "moderator" ? "#8B5CF6" : "#6EE7B7"}
                 bg={profile?.role === "admin" ? "rgba(245,158,11,.15)" : profile?.role === "moderator" ? "rgba(139,92,246,.15)" : "rgba(110,231,183,.15)"}
                 small

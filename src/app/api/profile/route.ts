@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ANONYMOUS_MEMBER_NAME } from "@/lib/account-labels";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
 import { getApps } from "firebase-admin/app";
@@ -65,8 +66,8 @@ export async function PATCH(req: NextRequest) {
     const displayName = shouldNotifyCommunitySignup
       ? typeof data.displayName === "string" && data.displayName.trim()
         ? data.displayName.trim()
-        : authUser?.displayName || authUser?.email?.split("@")[0] || "Community Member"
-      : "Community Member";
+        : authUser?.displayName || authUser?.email?.split("@")[0] || ANONYMOUS_MEMBER_NAME
+      : ANONYMOUS_MEMBER_NAME;
 
     await userRef.set(
       {
@@ -79,7 +80,7 @@ export async function PATCH(req: NextRequest) {
     // Notify admin when a community member signs up/completes onboarding.
     if (shouldNotifyCommunitySignup) {
       await db.collection("adminNotifications").add({
-        title: "New community signup",
+        title: "New individual signup",
         message: `${displayName} joined IOPPS.ca.`,
         type: "success",
         read: false,

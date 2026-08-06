@@ -19,12 +19,13 @@ import { formatDate } from "@/lib/format-date";
 import type { UserRole } from "@/lib/auth";
 import type { AdminUserRow } from "@/lib/admin/view-types";
 import { cn } from "@/lib/utils";
+import { getAdminRoleLabel } from "@/lib/account-labels";
 
 const PAGE_SIZE = 20;
 
 const ROLE_TABS: AdminFilterOption[] = [
   { label: "All", value: "all" },
-  { label: "Community", value: "community" },
+  { label: "Individuals", value: "community" },
   { label: "Employers", value: "employer" },
   { label: "Moderators", value: "moderator" },
   { label: "Admins", value: "admin" },
@@ -38,7 +39,7 @@ const roleBadgeStyles: Record<UserRole, string> = {
 };
 
 const ASSIGNABLE_ROLES: { label: string; value: UserRole }[] = [
-  { label: "Community", value: "community" },
+  { label: "Individual", value: "community" },
   { label: "Employer", value: "employer" },
   { label: "Moderator", value: "moderator" },
   { label: "Admin", value: "admin" },
@@ -52,7 +53,7 @@ function RoleBadge({ role }: { role: UserRole }) {
         roleBadgeStyles[role] || roleBadgeStyles.community,
       )}
     >
-      {role}
+      {getAdminRoleLabel(role)}
     </span>
   );
 }

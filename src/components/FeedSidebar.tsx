@@ -7,6 +7,7 @@ import Button from "@/components/Button";
 import { useAuth } from "@/lib/auth-context";
 import type { Post } from "@/lib/firestore/posts";
 import type { Organization } from "@/lib/firestore/organizations";
+import { getPublicAccountTypeLabel } from "@/lib/account-labels";
 
 interface FeedSidebarProps {
   featuredPartners: Organization[];
@@ -19,13 +20,6 @@ interface FeedSidebarProps {
   orgLogo?: string;
 }
 
-function getRoleLabel(role?: string, orgRole?: string) {
-  if (role === "admin") return "Admin";
-  if (role === "moderator") return "Moderator";
-  if (role === "employer") return "Employer";
-  if (orgRole === "owner" || orgRole === "admin") return "Organization";
-  return "Community Member";
-}
 
 export default function FeedSidebar({
   featuredPartners,
@@ -50,7 +44,7 @@ export default function FeedSidebar({
             <Avatar name={displayName} size={44} src={orgLogo || user.photoURL || undefined} />
             <div>
               <p className="text-[15px] font-bold text-text m-0">{displayName}</p>
-              <p className="text-xs text-teal-light m-0">{getRoleLabel(userRole, orgRole)}</p>
+              <p className="text-xs text-teal-light m-0">{getPublicAccountTypeLabel(userRole, orgRole)}</p>
             </div>
           </div>
           {!hasOrg && (

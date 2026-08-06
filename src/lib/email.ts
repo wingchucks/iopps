@@ -237,7 +237,7 @@ export async function sendAdminNewSignup(opts: {
 }): Promise<void> {
   if (!resend) return;
 
-  const typeLabel = opts.type === "community" ? "Community Member" : opts.type === "employer" ? "New Employer" : "Employer Upgrade";
+  const typeLabel = opts.type === "community" ? "Individual" : opts.type === "employer" ? "New Employer" : "Employer Upgrade";
   const typeColor = opts.type === "community" ? "#0D9488" : opts.type === "employer" ? "#7C3AED" : "#D97706";
   const subject = opts.type === "community"
     ? `🙋 New Member: ${opts.name}`

@@ -109,7 +109,7 @@ function MembersContent() {
           Member Directory
         </h1>
         <p className="text-sm text-text-sec">
-          Connect with {members.length} community members across the IOPPS
+          Connect with {members.length} people across the IOPPS
           network
         </p>
       </div>
@@ -171,7 +171,7 @@ function MembersContent() {
           </p>
           <p className="text-sm text-text-muted">
             {search || activeFilter !== "All"
-              ? "Try adjusting your search or filter to find community members."
+              ? "Try adjusting your search or filter to find people."
               : "Be the first to join the IOPPS community!"}
           </p>
         </Card>
