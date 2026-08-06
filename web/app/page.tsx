@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import NewsletterSignup from "@/components/NewsletterSignup";
+
 
 const PILLARS = [
   { icon: "💼", title: "Careers", desc: "Find your next opportunity" },
@@ -116,10 +116,6 @@ export default function HomePage() {
         </blockquote>
       </section>
 
-      {/* Newsletter Signup */}
-      <section className="max-w-xl mx-auto px-4 py-16">
-        <NewsletterSignup />
-      </section>
 
       {/* Partner Logo Strip */}
       <section className="bg-[var(--surface-raised)] py-12">

@@ -20,7 +20,7 @@ const NAV_SECTIONS = [
   { label: "Reports", href: "/admin/reports", icon: "📈" },
   { label: "Feed Sync", href: "/admin/feed-sync", icon: "🔄" },
   { label: "Partners", href: "/admin/partners", icon: "🤝" },
-  { label: "Email", href: "/admin/email", icon: "✉️" },
+
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

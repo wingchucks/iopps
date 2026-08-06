@@ -97,33 +97,14 @@ function NotificationContent() {
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
+
   const categoryLabels = isEmployer ? employerCategoryLabels : memberCategoryLabels;
 
   const loadPrefs = useCallback(async () => {
     if (!user) return;
     try {
-      const [prefsData, token] = await Promise.all([
-        getNotificationPreferences(user.uid),
-        user.getIdToken(),
-      ]);
+      const prefsData = await getNotificationPreferences(user.uid);
       setPrefs(prefsData);
-
-      try {
-        const profileRes = await fetch("/api/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (profileRes.ok) {
-          const profileData = await profileRes.json();
-          setNewsletterOptIn(
-            Boolean(profileData?.user?.newsletterOptIn ?? profileData?.user?.emailOptIn ?? true)
-          );
-        } else {
-          setNewsletterOptIn(true);
-        }
-      } catch {
-        setNewsletterOptIn(true);
-      }
     } catch (err) {
       console.error("Failed to load notification preferences:", err);
     } finally {
@@ -143,10 +124,6 @@ function NotificationContent() {
         categories: prefs.categories,
         quietHours: prefs.quietHours,
       });
-      try {
-        const token = await user.getIdToken();
-        await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ newsletterOptIn }) });
-      } catch { /* */ }
       showToast("Notification preferences saved");
     } catch (err) {
       console.error("Failed to save notification preferences:", err);
@@ -261,33 +238,6 @@ function NotificationContent() {
         )}
       </div>
 
-      {/* Newsletter */}
-      <Card className="mb-4">
-        <div className="p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-start gap-3">
-              <span className="text-xl">{"📬"}</span>
-              <div>
-                <h3 className="text-[15px] font-bold text-text m-0">IOPPS Newsletter</h3>
-                <p className="text-xs text-text-muted m-0">
-                  {isEmployer
-                    ? "Weekly digest of employer activity, job visibility, and platform highlights"
-                    : "Weekly digest of new jobs, events, scholarships, and community highlights"}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setNewsletterOptIn(!newsletterOptIn)}
-              className="relative h-7 w-12 rounded-full border-none cursor-pointer transition-colors shrink-0"
-              style={{ background: newsletterOptIn ? "var(--teal)" : "var(--border)" }}
-            >
-              <span className="absolute top-1 h-5 w-5 rounded-full bg-white transition-all shadow-sm"
-                style={{ left: newsletterOptIn ? 24 : 4 }} />
-            </button>
-          </div>
-        </div>
-      </Card>
 
       {/* Quiet Hours */}
       <Card className="mb-6">

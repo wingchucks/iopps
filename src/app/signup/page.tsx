@@ -66,7 +66,7 @@ function UnifiedSignupContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [newsletterOptIn, setNewsletterOptIn] = useState(false); // CASL: express opt-in only
+
 
   // School
   const [schoolName, setSchoolName] = useState("");
@@ -162,8 +162,6 @@ function UnifiedSignupContent() {
               headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
               body: JSON.stringify({
                 displayName: name,
-                newsletterOptIn,
-                newsletterOptInAt: newsletterOptIn ? new Date().toISOString() : null,
                 ...(role === "community" ? { signupRole: "community" } : {}),
               }),
             });
@@ -187,8 +185,6 @@ function UnifiedSignupContent() {
               headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
               body: JSON.stringify({
                 displayName: cred.user.displayName || name,
-                newsletterOptIn,
-                newsletterOptInAt: newsletterOptIn ? new Date().toISOString() : null,
                 ...(role === "community" ? { signupRole: "community" } : {}),
               }),
             });
@@ -431,17 +427,7 @@ function UnifiedSignupContent() {
               <FormInput id="confirmPassword" label="Confirm Password" required type="password" minLength={8} autoComplete="new-password" error={fieldErrors.confirmPassword} placeholder="Re-enter password" value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); if (fieldErrors.confirmPassword) setFieldErrors((p) => ({ ...p, confirmPassword: "" })); }} />
             </div>
           </div>
-          {/* Newsletter Opt-In */}
-          <div style={{ marginTop: 20 }}>
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer", padding: "14px 16px", borderRadius: 12, background: CSS.card, border: `1px solid ${newsletterOptIn ? "rgba(20,184,166,0.3)" : CSS.border}`, transition: "all 0.2s" }}>
-              <input type="checkbox" checked={newsletterOptIn} onChange={e => setNewsletterOptIn(e.target.checked)}
-                style={{ width: 18, height: 18, marginTop: 2, accentColor: CSS.accent, cursor: "pointer" }} />
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: CSS.text }}>{"📬"} Subscribe to IOPPS Newsletter</div>
-                <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 2 }}>We&apos;ll only email you if you check this box. Weekly updates on jobs, events, scholarships, and community highlights. Unsubscribe anytime.</div>
-              </div>
-            </label>
-          </div>
+
           <div style={{ marginTop: 24, background: CSS.card, border: "1px solid rgba(34,197,94,0.3)", borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 24, height: 24, borderRadius: "50%", background: CSS.success, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>✓</span></div>
             <span style={{ fontSize: 13, color: CSS.success }}>Secure account creation</span>

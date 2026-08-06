@@ -48,6 +48,10 @@ export async function PATCH(req: NextRequest) {
     delete data.email;
     delete data.signupRole;
     delete data.adminSignupNotifiedAt;
+    delete data.newsletterOptIn;
+    delete data.newsletterOptInAt;
+    delete data.emailOptIn;
+    delete data.emailOptInAt;
 
     const db = getAdminDb();
     const isNew = data.onboardingComplete === true;
