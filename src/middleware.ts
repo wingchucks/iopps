@@ -62,8 +62,16 @@ export function middleware(req: NextRequest) {
 
   if (cookie) {
     try {
-      // Lightweight decode — no signature verification (that's done server-side in the API route).
-      // We only check structure and expiry here for Edge performance.
+      // SECURITY: Intentionally no signature verification here. This decode
+      // is UX-only — it drives three redirects: unauth → /login,
+      // authed-on-auth-page → /feed, and unverified-email → /verify-email.
+      // A tampered cookie only gets an attacker past these redirects; it
+      // doesn't expose data or perform mutations. The real boundary is the
+      // API layer: every protected route must re-verify the ID token
+      // signature via verifyAuthToken / verifyAdminToken (see lib/api-auth.ts)
+      // or Firebase Admin's verifyIdToken. Do NOT add any server-side data
+      // read or write that trusts this cookie's claims without verifying the
+      // signature — use the Bearer token from Authorization header instead.
       const decoded = decodeJwt(cookie);
       const now = Math.floor(Date.now() / 1000);
       if (decoded.exp && decoded.exp > now) {
