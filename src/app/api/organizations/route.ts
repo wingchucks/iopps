@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
 import { getLocalDevOrganizations } from "@/lib/local-dev-business-data";
 import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "@/lib/server/partner-promotion";
-import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
+import { isOrganizationPubliclyVisible, normalizeOrganizationRecord, stripOrganizationContactPII } from "@/lib/organization-profile";
 import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
@@ -40,8 +40,10 @@ export async function GET(req: Request) {
       const snapshot = await db.collection("organizations").get();
       const orgs = snapshot.docs
         .map((doc) =>
-          normalizeOrganizationRecord(
-            withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+          stripOrganizationContactPII(
+            normalizeOrganizationRecord(
+              withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+            )
           )
         )
         .filter((org) => isSchoolOrganization(org) || isOrganizationPubliclyVisible(org))
@@ -71,8 +73,10 @@ export async function GET(req: Request) {
     });
     const orgs = allDocs
       .map((doc) =>
-        normalizeOrganizationRecord(
-          withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+        stripOrganizationContactPII(
+          normalizeOrganizationRecord(
+            withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+          )
         )
       )
       .filter((org) => isSchoolOrganization(org) || isOrganizationPubliclyVisible(org))
