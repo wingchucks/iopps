@@ -56,14 +56,23 @@ function endpointUrl(baseValue, operation) {
   if (base.username || base.password || base.search || base.hash) {
     throw new Error("HERMES_ADMIN_BASE_URL must be an origin without credentials, query, or fragment");
   }
-  return new URL(`/api/hermes/v1/employers/${operation}`, base);
+  const paths = {
+    review: "/api/hermes/v1/employers/review",
+    apply: "/api/hermes/v1/employers/apply",
+    "convert-review": "/api/hermes/v1/users/convert-to-individual/review",
+    "convert-apply": "/api/hermes/v1/users/convert-to-individual/apply",
+  };
+  return new URL(paths[operation], base);
 }
 
 async function main() {
   const operation = process.argv[2];
   const bodyPath = process.argv[3];
-  if ((operation !== "review" && operation !== "apply") || !bodyPath) {
-    throw new Error("Usage: node scripts/hermes-admin-client.mjs <review|apply> <json-body-path>");
+  const operations = new Set(["review", "apply", "convert-review", "convert-apply"]);
+  if (!operations.has(operation) || !bodyPath) {
+    throw new Error(
+      "Usage: node scripts/hermes-admin-client.mjs <review|apply|convert-review|convert-apply> <json-body-path>",
+    );
   }
 
   const baseUrl = requiredEnv("HERMES_ADMIN_BASE_URL");
