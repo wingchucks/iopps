@@ -1,6 +1,6 @@
 # Hermes Admin API
 
-The Hermes Admin API is a narrow, machine-signed two-step workflow for reviewing and applying one employer-account correction. It does not expose a general Firestore write surface.
+The Hermes Admin API contains narrow, machine-signed two-step workflows for reviewing and applying one employer-account correction or converting one employer account back to an individual account. It does not expose a general Firestore write surface.
 
 ## Server configuration
 
@@ -68,6 +68,31 @@ Apply uses a Firestore transaction to recheck every bound version and then write
 
 All responses use `Cache-Control: no-store` and omit internal exception details.
 
+## Convert an employer account to an individual account
+
+Conversion review accepts exactly this body at `POST /api/hermes/v1/users/convert-to-individual/review`:
+
+```json
+{
+  "email": "exact-normalized-email@example.invalid"
+}
+```
+
+The server requires exactly one `users.email` match, the existing `members` document with the same document ID, exactly one linked employer, and exactly one linked organization. Link resolution deduplicates direct IDs and the existing `uid`, `ownerId`, `employerId`, email, and organization-link adapter patterns. All linked complimentary subscriptions found through `employerId`, `orgId`, or `organizationId` are deduplicated. Every resolved document ID and Firestore update version is bound into the HMAC-authenticated opaque review token. The response contains only that token and sanitized current/desired projections; internal IDs are not returned in the projections.
+
+After inspecting the projections, send exactly this envelope to `POST /api/hermes/v1/users/convert-to-individual/apply`:
+
+```json
+{
+  "reviewToken": "token-returned-by-review",
+  "confirmation": "CONVERT IOPPS ACCOUNT TO INDIVIDUAL"
+}
+```
+
+Apply re-resolves the target and rejects a stale token. One Firestore transaction rechecks every bound version, changes only the conversion allowlist, and preserves unrelated profile, application, and subscription data. It sets `users.role` and `members.role` to `community`, clears the account organization links with `null`, soft-disables and hides the employer and organization, downgrades their plan/subscription access to `free`/`expired`, and expires linked active complimentary subscription records. The login account is never deleted or disabled.
+
+After verified Firestore readback, Firebase Auth cleanup removes only the `role`, `employer`, `employerId`, and `orgId` custom claims, preserves unrelated claims, revokes refresh tokens, and verifies claim readback. If Auth cleanup fails after the transaction commits, retry the exact same apply body with the same idempotency key and a fresh nonce/signature. The retry verifies the committed Firestore state, finishes claim cleanup, and returns the original `applied` or `verified_noop` result without repeating target writes. Audit and idempotency records are sanitized and never store the email, request body, nonce, signature, review token, review secret, or private key.
+
 ## Local client template
 
 Prepare JSON body files locally, then set the client inputs explicitly. Do not put private-key values in shell history; a protected path is preferred.
@@ -80,4 +105,4 @@ $env:HERMES_ADMIN_PRIVATE_KEY_PATH = "C:\protected\path\hermes-ed25519-private.p
 node scripts/hermes-admin-client.mjs review .\review-body.json
 ```
 
-For apply, use a new idempotency key and an apply-body file containing the inspected review token and exact confirmation phrase. The alternative `HERMES_ADMIN_PRIVATE_KEY_PEM` input exists for secured process injection; set exactly one private-key source. Plain HTTP is refused except for explicit localhost testing with `HERMES_ADMIN_ALLOW_HTTP_LOCALHOST=true`.
+For employer apply, use `apply`. For account conversion, use `convert-review` and then `convert-apply`. Each apply uses a new idempotency key and an apply-body file containing the inspected review token and exact confirmation phrase; exact retries reuse that apply idempotency key and body. The alternative `HERMES_ADMIN_PRIVATE_KEY_PEM` input exists for secured process injection; set exactly one private-key source. Plain HTTP is refused except for explicit localhost testing with `HERMES_ADMIN_ALLOW_HTTP_LOCALHOST=true`.

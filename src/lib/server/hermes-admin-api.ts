@@ -11,6 +11,13 @@ import type {
   HermesExecutionContext,
   HermesIdempotentApplyResult,
 } from "./hermes-firestore-adapter.ts";
+import {
+  ACCOUNT_CONVERSION_CONFIRMATION,
+  applyHermesAccountConversion,
+  reviewHermesAccountConversion,
+  type HermesAccountConversionServiceDeps,
+} from "./hermes-account-conversion.ts";
+import type { HermesAccountConversionIdempotentResult } from "./hermes-account-conversion-firestore.ts";
 
 export interface HermesAdminApiDeps extends HermesMachineAuthDeps {
   reviewSecret: string;
@@ -19,6 +26,16 @@ export interface HermesAdminApiDeps extends HermesMachineAuthDeps {
     command: HermesEmployerCommand,
     execution: HermesExecutionContext,
   ) => Promise<HermesIdempotentApplyResult | null>;
+}
+
+export interface HermesAccountConversionApiDeps extends HermesMachineAuthDeps {
+  reviewSecret: string;
+  createAccountConversionServiceDeps: (
+    execution: HermesExecutionContext,
+  ) => HermesAccountConversionServiceDeps;
+  getIdempotentConversionApply: (
+    execution: HermesExecutionContext,
+  ) => Promise<HermesAccountConversionIdempotentResult | null>;
 }
 
 function safeJson(payload: unknown, status = 200): Response {
@@ -134,6 +151,80 @@ export async function handleHermesEmployerApplyRequest(
       "status" in error &&
       (error as { status?: unknown }).status === 409
     ) {
+      return requestError(409, "Hermes request conflicted with current state");
+    }
+    return hermesAdminInternalErrorResponse();
+  }
+}
+
+export async function handleHermesAccountConversionReviewRequest(
+  request: Request,
+  deps: HermesAccountConversionApiDeps,
+): Promise<Response> {
+  const endpointError = validateEndpoint(request, "/api/hermes/v1/users/convert-to-individual/review");
+  if (endpointError) return endpointError;
+  try {
+    const authenticated = await authenticateHermesJsonRequest(request, deps);
+    if (!authenticated.ok) return requestError(authenticated.status, authenticated.error);
+    const execution = executionFromAuthenticated(
+      authenticated.keyId,
+      authenticated.idempotencyKey,
+      authenticated.body,
+    );
+    const result = await reviewHermesAccountConversion(
+      authenticated.json,
+      deps.createAccountConversionServiceDeps(execution),
+    );
+    return result.ok ? safeJson(result) : requestError(result.status, result.error);
+  } catch {
+    return hermesAdminInternalErrorResponse();
+  }
+}
+
+function isConversionApplyEnvelope(value: unknown): value is { reviewToken: string; confirmation: string } {
+  return isRecord(value) && Object.keys(value).length === 2 &&
+    typeof value.reviewToken === "string" && value.confirmation === ACCOUNT_CONVERSION_CONFIRMATION;
+}
+
+export async function handleHermesAccountConversionApplyRequest(
+  request: Request,
+  deps: HermesAccountConversionApiDeps,
+): Promise<Response> {
+  const endpointError = validateEndpoint(request, "/api/hermes/v1/users/convert-to-individual/apply");
+  if (endpointError) return endpointError;
+  try {
+    const authenticated = await authenticateHermesJsonRequest(request, deps);
+    if (!authenticated.ok) return requestError(authenticated.status, authenticated.error);
+    if (!isConversionApplyEnvelope(authenticated.json)) {
+      return requestError(400, "Apply requires the review token and exact confirmation");
+    }
+    const execution = executionFromAuthenticated(
+      authenticated.keyId,
+      authenticated.idempotencyKey,
+      authenticated.body,
+    );
+    const idempotent = await deps.getIdempotentConversionApply(execution);
+    if (idempotent) {
+      if (!idempotent.authCleanupComplete) {
+        const serviceDeps = deps.createAccountConversionServiceDeps(execution);
+        await serviceDeps.cleanupAuthClaims(idempotent.userId);
+        await serviceDeps.markAuthCleanupComplete(idempotent);
+      }
+      return safeJson({
+        ok: true,
+        status: idempotent.status,
+        ...(idempotent.committedAt ? { committedAt: idempotent.committedAt } : {}),
+        verified: idempotent.verified,
+      });
+    }
+    const result = await applyHermesAccountConversion(
+      authenticated.json,
+      deps.createAccountConversionServiceDeps(execution),
+    );
+    return result.ok ? safeJson(result) : requestError(result.status, result.error);
+  } catch (error) {
+    if (error && typeof error === "object" && "status" in error &&
+        (error as { status?: unknown }).status === 409) {
       return requestError(409, "Hermes request conflicted with current state");
     }
     return hermesAdminInternalErrorResponse();
