@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import {
+  buildExpiredSubscriptionAccessPatch,
+  resolveSubscriptionExpirationTargets,
+  subscriptionMatchesExpirationTargets,
+} from "@/lib/server/subscription-expiration";
 
 export const runtime = "nodejs";
 
@@ -38,37 +43,35 @@ export async function GET(req: NextRequest) {
       if (expiryDate > now) continue;
 
       // This subscription has expired
-      const orgId = data.orgId;
+      const { employerId, organizationId: orgId } = resolveSubscriptionExpirationTargets(data);
       const planId = data.plan;
 
       // Mark subscription as expired
       await doc.ref.update({ status: "expired", expiredAt: now });
 
-      // Check if org has any other active subscription
+      // Check every supported subscription identity representation. Filtering one
+      // fresh active snapshot avoids requiring new compound indexes for each field.
       const otherActive = await db
         .collection("subscriptions")
-        .where("orgId", "==", orgId)
         .where("status", "==", "active")
-        .limit(1)
         .get();
+      const hasOtherActive = otherActive.docs.some((activeDoc) =>
+        activeDoc.id !== doc.id &&
+        subscriptionMatchesExpirationTargets(activeDoc.data(), { employerId, organizationId: orgId }));
 
-      if (otherActive.empty) {
+      if (!hasOtherActive) {
         // No other active subs — downgrade to free
         const batch = db.batch();
 
-        const empRef = db.collection("employers").doc(orgId);
-        batch.set(empRef, {
-          plan: "free",
-          subscriptionTier: "free",
-          subscriptionStatus: "expired",
-          updatedAt: now,
-        }, { merge: true });
+        const expiredAccessPatch = buildExpiredSubscriptionAccessPatch(now);
+        const empRef = db.collection("employers").doc(employerId);
+        batch.set(empRef, expiredAccessPatch, { merge: true });
 
         // Also update organizations doc
         const orgRef = db.collection("organizations").doc(orgId);
         const orgSnap = await orgRef.get();
         if (orgSnap.exists) {
-          batch.set(orgRef, { plan: null, subscriptionTier: "free", updatedAt: now }, { merge: true });
+          batch.set(orgRef, { ...expiredAccessPatch, plan: null }, { merge: true });
         }
 
         await batch.commit();
