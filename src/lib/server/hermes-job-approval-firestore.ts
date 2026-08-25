@@ -1,11 +1,18 @@
 import { createHash } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 
 import type {
   HermesExecutionContext,
   HermesFirestorePort,
 } from "./hermes-firestore-adapter.ts";
 import { HermesFirestoreConflictError } from "./hermes-firestore-adapter.ts";
+import {
+  buildFeaturedJobSummary,
+  evaluateFeaturedActivation,
+} from "./featured-job-entitlements.ts";
 import type {
+  HermesFeaturedEntitlementBoundState,
+  HermesFeaturedJobIdentity,
   HermesJobApprovalBoundState,
   HermesJobApprovalDocument,
   HermesJobApprovalProjection,
@@ -14,6 +21,7 @@ import type {
 
 const IDEMPOTENCY_COLLECTION = "hermesAdminIdempotency";
 const AUDIT_COLLECTION = "hermesAdminAudit";
+const FEATURED_QUERY_LIMIT = 501;
 
 function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
@@ -33,6 +41,113 @@ function assertExecution(execution: HermesExecutionContext): void {
   }
 }
 
+interface FeaturedReader {
+  getDocument: HermesFirestorePort["getDocument"];
+  queryExact: HermesFirestorePort["queryExact"];
+}
+
+function isActiveFeaturedJob(data: Record<string, unknown>): boolean {
+  return Boolean(data.featured) && (data.active === true || data.status === "active");
+}
+
+function nullableString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+function normalizedCredits(value: unknown): number {
+  return Math.max(0, Number(value ?? 0) || 0);
+}
+
+function featuredIdentity(
+  collection: "jobs" | "posts",
+  document: { id: string; version: string },
+): HermesFeaturedJobIdentity {
+  return { collection, documentId: document.id, version: document.version };
+}
+
+function sortFeaturedIdentities(identities: HermesFeaturedJobIdentity[]): HermesFeaturedJobIdentity[] {
+  return identities.sort((left, right) =>
+    `${left.collection}\0${left.documentId}`.localeCompare(`${right.collection}\0${right.documentId}`));
+}
+
+async function readFeaturedEntitlement(
+  document: HermesJobApprovalDocument,
+  reader: FeaturedReader,
+): Promise<
+  | { ok: true; state: HermesFeaturedEntitlementBoundState }
+  | { ok: false; status: number; error: string }
+> {
+  if (!document.data.featured) {
+    return { ok: false, status: 409, error: "Featured job intent changed since review" };
+  }
+  const employerId = document.collection === "jobs"
+    ? nullableString(document.data.employerId)
+    : nullableString(document.data.orgId);
+  if (!employerId) {
+    return { ok: false, status: 409, error: "Featured job has no exact employer entitlement identity" };
+  }
+  const [employer, jobs, posts] = await Promise.all([
+    reader.getDocument("employers", employerId),
+    reader.queryExact("jobs", "employerId", employerId, FEATURED_QUERY_LIMIT),
+    reader.queryExact("posts", "orgId", employerId, FEATURED_QUERY_LIMIT),
+  ]);
+  if (!employer) {
+    return { ok: false, status: 409, error: "Featured job employer entitlement was not found" };
+  }
+  if (jobs.length >= FEATURED_QUERY_LIMIT || posts.length >= FEATURED_QUERY_LIMIT) {
+    return { ok: false, status: 409, error: "Featured job usage could not be bound unambiguously" };
+  }
+  const activeFeaturedJobs = sortFeaturedIdentities([
+    ...jobs.filter((candidate) => isActiveFeaturedJob(candidate.data)).map((candidate) => featuredIdentity("jobs", candidate)),
+    ...posts
+      .filter((candidate) => candidate.data.type === "job" && isActiveFeaturedJob(candidate.data))
+      .map((candidate) => featuredIdentity("posts", candidate)),
+  ]);
+  const currentIdentity = `${document.collection}\0${document.id}`;
+  const activeFeaturedCountExcludingCurrent = activeFeaturedJobs.filter(
+    (candidate) => `${candidate.collection}\0${candidate.documentId}` !== currentIdentity,
+  ).length;
+  const plan = nullableString(employer.data.plan);
+  const subscriptionTier = nullableString(employer.data.subscriptionTier);
+  const featuredPostCredits = normalizedCredits(employer.data.featuredPostCredits);
+  const summary = buildFeaturedJobSummary({
+    plan,
+    subscriptionTier,
+    featuredJobsUsed: activeFeaturedJobs.length,
+    featuredPostCredits,
+  });
+  const existingActiveFeatured = isActiveFeaturedJob(document.data);
+  const existingFeaturedCreditConsumed = Boolean(document.data.featuredCreditConsumed);
+  const decision = evaluateFeaturedActivation({
+    requestedActiveFeatured: true,
+    existingActiveFeatured,
+    existingFeaturedCreditConsumed,
+    activeFeaturedCountExcludingCurrent,
+    summary,
+  });
+  if (!decision.allowed) {
+    return { ok: false, status: 400, error: decision.reason || "This job cannot be featured." };
+  }
+  return {
+    ok: true,
+    state: {
+      employerId,
+      employerVersion: employer.version,
+      plan,
+      subscriptionTier,
+      featuredPostCredits,
+      existingFeaturedCreditConsumed,
+      activeFeaturedJobs,
+      decision: existingActiveFeatured || existingFeaturedCreditConsumed
+        ? "existing_entitlement"
+        : decision.consumeCredit
+          ? "featured_post_credit"
+          : "included_slot",
+      consumeCredit: decision.consumeCredit,
+    },
+  };
+}
+
 export function createHermesJobApprovalFirestoreAdapter(
   port: HermesFirestorePort,
   options: { now?: () => Date; timestampToken?: () => unknown } = {},
@@ -40,7 +155,10 @@ export function createHermesJobApprovalFirestoreAdapter(
   const now = options.now ?? (() => new Date());
   const timestampToken = options.timestampToken ?? now;
 
-  function project(document: HermesJobApprovalDocument): HermesJobApprovalProjection {
+  function project(
+    document: HermesJobApprovalDocument,
+    entitlementDecision?: HermesFeaturedEntitlementBoundState["decision"],
+  ): HermesJobApprovalProjection {
     const pick = (...keys: string[]) => {
       for (const key of keys) {
         const value = document.data[key];
@@ -52,17 +170,27 @@ export function createHermesJobApprovalFirestoreAdapter(
       title: pick("title"),
       organization: pick("orgName", "organizationName", "companyName", "orgShort"),
       status: pick("status"),
+      featuredIntent: document.data.featured ? "featured" : "standard",
+      entitlementDecision: document.data.featured
+        ? entitlementDecision ?? "existing_entitlement"
+        : "not_required",
     };
   }
 
   function targetFrom(state: HermesJobApprovalBoundState) {
-    return { documentId: state.documentId, collection: state.collection, schema: state.schema };
+    return {
+      documentId: state.documentId,
+      collection: state.collection,
+      schema: state.schema,
+      ...(state.featuredEntitlement ? { employerId: state.featuredEntitlement.employerId } : {}),
+    };
   }
 
   function parseTarget(value: unknown): {
     documentId: string;
     collection: "jobs" | "posts";
     schema: "employer-job-v1" | "legacy-job-post-v1";
+    employerId?: string;
   } | null {
     if (!value || typeof value !== "object" || Array.isArray(value)) return null;
     const target = value as Record<string, unknown>;
@@ -70,6 +198,7 @@ export function createHermesJobApprovalFirestoreAdapter(
         (target.collection !== "jobs" && target.collection !== "posts") ||
         (target.schema !== "employer-job-v1" && target.schema !== "legacy-job-post-v1")) return null;
     if ((target.collection === "jobs") !== (target.schema === "employer-job-v1")) return null;
+    if (target.employerId !== undefined && (typeof target.employerId !== "string" || !target.employerId)) return null;
     return target as ReturnType<typeof targetFrom>;
   }
 
@@ -81,14 +210,49 @@ export function createHermesJobApprovalFirestoreAdapter(
     return targetCollection === "posts" || other.data.type === "job";
   }
 
-  async function rereadAndVerify(state: HermesJobApprovalBoundState): Promise<HermesJobApprovalProjection> {
-    const reread = await port.getDocument(state.collection, state.documentId);
+  function parseFeaturedVerification(value: unknown): {
+    decision: HermesFeaturedEntitlementBoundState["decision"];
+    expectedEmployerCredits: number;
+    featuredCreditConsumed: boolean;
+  } | null {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const verification = value as Record<string, unknown>;
+    if ((verification.decision !== "included_slot" && verification.decision !== "featured_post_credit" &&
+          verification.decision !== "existing_entitlement") ||
+        typeof verification.expectedEmployerCredits !== "number" ||
+        !Number.isFinite(verification.expectedEmployerCredits) || verification.expectedEmployerCredits < 0 ||
+        typeof verification.featuredCreditConsumed !== "boolean") return null;
+    return verification as ReturnType<typeof parseFeaturedVerification> & object;
+  }
+
+  async function rereadAndVerify(
+    state: HermesJobApprovalBoundState,
+    expectedEmployerCredits?: number,
+  ): Promise<HermesJobApprovalProjection> {
+    const [reread, employer] = await Promise.all([
+      port.getDocument(state.collection, state.documentId),
+      state.featuredEntitlement
+        ? port.getDocument("employers", state.featuredEntitlement.employerId)
+        : Promise.resolve(null),
+    ]);
     if (!reread || (state.collection === "posts" && reread.data.type !== "job") ||
         reread.data.status !== "active" || reread.data.active !== true ||
         (state.desiredState.setPostedAt && reread.data.postedAt == null)) {
       throw new Error("Post-write public-active verification failed");
     }
-    return project({ ...reread, collection: state.collection, schema: state.schema });
+    if (state.featuredEntitlement) {
+      const expectedConsumed = state.featuredEntitlement.existingFeaturedCreditConsumed ||
+        state.featuredEntitlement.consumeCredit;
+      if (!reread.data.featured || Boolean(reread.data.featuredCreditConsumed) !== expectedConsumed ||
+          (state.featuredEntitlement.consumeCredit && reread.data.featuredCreditConsumedAt == null) ||
+          !employer || normalizedCredits(employer.data.featuredPostCredits) !== expectedEmployerCredits) {
+        throw new Error("Post-write featured entitlement verification failed");
+      }
+    }
+    return project(
+      { ...reread, collection: state.collection, schema: state.schema },
+      state.featuredEntitlement?.decision,
+    );
   }
 
   return {
@@ -107,9 +271,16 @@ export function createHermesJobApprovalFirestoreAdapter(
       }
       const verifiedStatus: "applied" | "verified_noop" = status;
       const otherCollection = target.collection === "jobs" ? "posts" : "jobs";
-      const [document, other] = await Promise.all([
+      const featuredVerification = target.employerId
+        ? parseFeaturedVerification(record.data.featuredVerification)
+        : null;
+      if (target.employerId && !featuredVerification) {
+        throw new HermesFirestoreConflictError("Idempotent featured verification record is invalid");
+      }
+      const [document, other, employer] = await Promise.all([
         port.getDocument(target.collection, target.documentId),
         port.getDocument(otherCollection, target.documentId),
+        target.employerId ? port.getDocument("employers", target.employerId) : Promise.resolve(null),
       ]);
       if (isConflictingOppositeDocument(target.collection, other)) {
         throw new HermesFirestoreConflictError("Idempotent job target is ambiguous");
@@ -120,10 +291,21 @@ export function createHermesJobApprovalFirestoreAdapter(
       if (!document || document.data.status !== "active" || document.data.active !== true || document.data.postedAt == null) {
         throw new Error("Idempotent public-active verification failed");
       }
+      if (target.employerId && featuredVerification &&
+          (!document.data.featured ||
+            Boolean(document.data.featuredCreditConsumed) !== featuredVerification.featuredCreditConsumed ||
+            (featuredVerification.decision === "featured_post_credit" && document.data.featuredCreditConsumedAt == null) ||
+            !employer ||
+            normalizedCredits(employer.data.featuredPostCredits) !== featuredVerification.expectedEmployerCredits)) {
+        throw new Error("Idempotent featured entitlement verification failed");
+      }
       return {
         status: verifiedStatus,
         ...(typeof record.data.committedAt === "string" ? { committedAt: record.data.committedAt } : {}),
-        verified: project({ ...document, collection: target.collection, schema: target.schema }),
+        verified: project(
+          { ...document, collection: target.collection, schema: target.schema },
+          featuredVerification?.decision,
+        ),
       };
     },
     createServiceDeps(input: {
@@ -145,11 +327,15 @@ export function createHermesJobApprovalFirestoreAdapter(
               : []),
           ] satisfies HermesJobApprovalDocument[];
         },
+        async resolveFeaturedEntitlement(document) {
+          return readFeaturedEntitlement(document, port);
+        },
         async commit({ boundState, current }) {
           const id = hermesJobApprovalIdempotencyDocumentId(input.execution);
           const transactionResult = await port.runTransaction<{
             status: "applied" | "verified_noop";
             committedAt: string;
+            expectedEmployerCredits?: number;
           }>(async (transaction) => {
             const existing = await transaction.getDocument(IDEMPOTENCY_COLLECTION, id);
             if (existing) {
@@ -162,9 +348,18 @@ export function createHermesJobApprovalFirestoreAdapter(
                   typeof existing.data.committedAt !== "string") {
                 throw new HermesFirestoreConflictError("Idempotent request record is invalid");
               }
+              const featuredVerification = boundState.featuredEntitlement
+                ? parseFeaturedVerification(existing.data.featuredVerification)
+                : null;
+              if (boundState.featuredEntitlement && !featuredVerification) {
+                throw new HermesFirestoreConflictError("Idempotent featured verification record is invalid");
+              }
               return {
                 status: resultStatus as "applied" | "verified_noop",
                 committedAt: existing.data.committedAt,
+                ...(featuredVerification
+                  ? { expectedEmployerCredits: featuredVerification.expectedEmployerCredits }
+                  : {}),
               };
             }
 
@@ -186,14 +381,45 @@ export function createHermesJobApprovalFirestoreAdapter(
               throw new HermesFirestoreConflictError("Reviewed job identity is invalid");
             }
 
+            let transactionEntitlement: HermesFeaturedEntitlementBoundState | null = null;
+            if (boundState.featuredEntitlement) {
+              if (!transaction.queryExact) {
+                throw new Error("Firestore transaction queries are required for featured approval");
+              }
+              const resolvedEntitlement = await readFeaturedEntitlement(
+                { ...target, collection: boundState.collection, schema: boundState.schema },
+                {
+                  getDocument: transaction.getDocument,
+                  queryExact: transaction.queryExact,
+                },
+              );
+              if (!resolvedEntitlement.ok ||
+                  !isDeepStrictEqual(resolvedEntitlement.state, boundState.featuredEntitlement)) {
+                throw new HermesFirestoreConflictError("Featured entitlement changed since review");
+              }
+              transactionEntitlement = resolvedEntitlement.state;
+            }
+
             const alreadyActive = target.data.status === "active" && target.data.active === true &&
               (!boundState.desiredState.setPostedAt || target.data.postedAt != null);
+            const mutationTimestamp = timestampToken();
             const patch: Record<string, unknown> = alreadyActive ? {} : {
               status: "active",
               active: true,
-              updatedAt: timestampToken(),
+              updatedAt: mutationTimestamp,
               ...(boundState.desiredState.setPostedAt && target.data.postedAt == null
-                ? { postedAt: timestampToken() }
+                ? { postedAt: mutationTimestamp }
+                : {}),
+              ...(transactionEntitlement
+                ? {
+                    featuredCreditConsumed: transactionEntitlement.existingFeaturedCreditConsumed ||
+                      transactionEntitlement.consumeCredit,
+                    ...(!transactionEntitlement.existingFeaturedCreditConsumed && transactionEntitlement.consumeCredit
+                      ? { featuredCreditConsumedAt: mutationTimestamp }
+                      : target.data.featuredCreditConsumedAt !== undefined
+                        ? { featuredCreditConsumedAt: target.data.featuredCreditConsumedAt }
+                        : {}),
+                  }
                 : {}),
             };
             if (!alreadyActive && (target.data.status !== "draft" || target.data.active === true)) {
@@ -202,10 +428,21 @@ export function createHermesJobApprovalFirestoreAdapter(
             if (Object.keys(patch).length > 0) {
               transaction.updateDocument(boundState.collection, boundState.documentId, patch);
             }
+            const expectedEmployerCredits = transactionEntitlement
+              ? transactionEntitlement.featuredPostCredits - (transactionEntitlement.consumeCredit ? 1 : 0)
+              : undefined;
+            const employerPatch = transactionEntitlement?.consumeCredit
+              ? { featuredPostCredits: expectedEmployerCredits, updatedAt: mutationTimestamp }
+              : {};
+            if (transactionEntitlement?.consumeCredit) {
+              transaction.updateDocument("employers", transactionEntitlement.employerId, employerPatch);
+            }
             const status: "applied" | "verified_noop" = Object.keys(patch).length > 0 ? "applied" : "verified_noop";
             const committedAt = now().toISOString();
             const targetIdentity = targetFrom(boundState);
-            const changedFields = Object.keys(patch).sort();
+            const changedFields = transactionEntitlement
+              ? { job: Object.keys(patch).sort(), employer: Object.keys(employerPatch).sort() }
+              : Object.keys(patch).sort();
             transaction.setDocument(AUDIT_COLLECTION, id, {
               protocol: "iopps-hermes-admin-audit-v1",
               action: "approve_job",
@@ -224,10 +461,24 @@ export function createHermesJobApprovalFirestoreAdapter(
               target: targetIdentity,
               resultStatus: status,
               committedAt,
+              ...(transactionEntitlement
+                ? {
+                    featuredVerification: {
+                      decision: transactionEntitlement.decision,
+                      expectedEmployerCredits,
+                      featuredCreditConsumed: transactionEntitlement.existingFeaturedCreditConsumed ||
+                        transactionEntitlement.consumeCredit,
+                    },
+                  }
+                : {}),
             });
-            return { status, committedAt };
+            return {
+              status,
+              committedAt,
+              ...(expectedEmployerCredits !== undefined ? { expectedEmployerCredits } : {}),
+            };
           });
-          const verified = await rereadAndVerify(boundState);
+          const verified = await rereadAndVerify(boundState, transactionResult.expectedEmployerCredits);
           return { ...transactionResult, verified };
         },
       };

@@ -59,7 +59,10 @@ function apiDeps(calls: string[] = []): HermesJobApprovalApiDeps {
         return {
           status: "applied",
           committedAt: "2026-08-25T12:00:00.000Z",
-          verified: { title: "Community Liaison", organization: "Northern Organization", status: "active" },
+          verified: {
+            title: "Community Liaison", organization: "Northern Organization", status: "active",
+            featuredIntent: "standard", entitlementDecision: "not_required",
+          },
         };
       },
     }),
@@ -179,6 +182,9 @@ test("Hermes documentation defines the exact job approval contract", () => {
     '"jobId"',
     "APPROVE IOPPS JOB",
     "status`, `active`, `updatedAt`, and `postedAt`",
+    "featuredIntent",
+    "entitlementDecision",
+    "featuredPostCredits",
     "job-review",
     "job-apply",
   ]) {

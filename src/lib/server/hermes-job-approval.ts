@@ -19,6 +19,26 @@ export interface HermesJobApprovalProjection {
   title: string;
   organization: string;
   status: string;
+  featuredIntent: "standard" | "featured";
+  entitlementDecision: "not_required" | "included_slot" | "featured_post_credit" | "existing_entitlement";
+}
+
+export interface HermesFeaturedJobIdentity {
+  collection: "jobs" | "posts";
+  documentId: string;
+  version: string;
+}
+
+export interface HermesFeaturedEntitlementBoundState {
+  employerId: string;
+  employerVersion: string;
+  plan: string | null;
+  subscriptionTier: string | null;
+  featuredPostCredits: number;
+  existingFeaturedCreditConsumed: boolean;
+  activeFeaturedJobs: HermesFeaturedJobIdentity[];
+  decision: "included_slot" | "featured_post_credit" | "existing_entitlement";
+  consumeCredit: boolean;
 }
 
 export interface HermesJobApprovalBoundState {
@@ -31,12 +51,17 @@ export interface HermesJobApprovalBoundState {
     active: true;
     setPostedAt: boolean;
   };
+  featuredEntitlement: HermesFeaturedEntitlementBoundState | null;
 }
 
 export interface HermesJobApprovalServiceDeps {
   reviewSecret: string;
   now?: () => Date;
   findJobCandidates: (jobId: string) => Promise<HermesJobApprovalDocument[]>;
+  resolveFeaturedEntitlement?: (document: HermesJobApprovalDocument) => Promise<
+    | { ok: true; state: HermesFeaturedEntitlementBoundState }
+    | { ok: false; status: number; error: string }
+  >;
   commit: (input: {
     boundState: HermesJobApprovalBoundState;
     current: HermesJobApprovalDocument;
@@ -83,15 +108,27 @@ function text(data: Record<string, unknown>, ...keys: string[]): string {
   return "";
 }
 
-function projection(document: HermesJobApprovalDocument, status?: string): HermesJobApprovalProjection {
+function projection(
+  document: HermesJobApprovalDocument,
+  entitlement: HermesFeaturedEntitlementBoundState | null,
+  status?: string,
+): HermesJobApprovalProjection {
+  const featured = Boolean(document.data.featured);
   return {
     title: text(document.data, "title"),
     organization: text(document.data, "orgName", "organizationName", "companyName", "orgShort"),
     status: status ?? text(document.data, "status"),
+    featuredIntent: featured ? "featured" : "standard",
+    entitlementDecision: featured
+      ? entitlement?.decision ?? "existing_entitlement"
+      : "not_required",
   };
 }
 
-function boundState(document: HermesJobApprovalDocument): HermesJobApprovalBoundState {
+function boundState(
+  document: HermesJobApprovalDocument,
+  featuredEntitlement: HermesFeaturedEntitlementBoundState | null,
+): HermesJobApprovalBoundState {
   return {
     documentId: document.id,
     collection: document.collection,
@@ -102,6 +139,7 @@ function boundState(document: HermesJobApprovalDocument): HermesJobApprovalBound
       active: true,
       setPostedAt: document.data.postedAt == null,
     },
+    featuredEntitlement,
   };
 }
 
@@ -147,13 +185,32 @@ function parseReviewToken(token: string, secret: string): {
         (state.collection !== "jobs" && state.collection !== "posts") ||
         (state.schema !== "employer-job-v1" && state.schema !== "legacy-job-post-v1") ||
         typeof state.version !== "string" || !isRecord(desired) ||
-        desired.status !== "active" || desired.active !== true || typeof desired.setPostedAt !== "boolean") {
+        desired.status !== "active" || desired.active !== true || typeof desired.setPostedAt !== "boolean" ||
+        !isValidFeaturedEntitlement(state.featuredEntitlement)) {
       return null;
     }
     return { command: normalized.command, boundState: state as unknown as HermesJobApprovalBoundState };
   } catch {
     return null;
   }
+}
+
+function isValidFeaturedEntitlement(value: unknown): value is HermesFeaturedEntitlementBoundState | null {
+  if (value === null) return true;
+  if (!isRecord(value) || typeof value.employerId !== "string" || !value.employerId ||
+      typeof value.employerVersion !== "string" ||
+      (value.plan !== null && typeof value.plan !== "string") ||
+      (value.subscriptionTier !== null && typeof value.subscriptionTier !== "string") ||
+      typeof value.featuredPostCredits !== "number" || !Number.isFinite(value.featuredPostCredits) ||
+      value.featuredPostCredits < 0 || typeof value.existingFeaturedCreditConsumed !== "boolean" ||
+      !Array.isArray(value.activeFeaturedJobs) || typeof value.consumeCredit !== "boolean" ||
+      (value.decision !== "included_slot" && value.decision !== "featured_post_credit" &&
+        value.decision !== "existing_entitlement")) return false;
+  if (value.consumeCredit !== (value.decision === "featured_post_credit")) return false;
+  return value.activeFeaturedJobs.every((identity) => isRecord(identity) &&
+    (identity.collection === "jobs" || identity.collection === "posts") &&
+    typeof identity.documentId === "string" && Boolean(identity.documentId) &&
+    typeof identity.version === "string");
 }
 
 function isPublicActive(document: HermesJobApprovalDocument): boolean {
@@ -197,16 +254,25 @@ async function resolveJob(
       },
     };
   }
-  if (isDraft(document) && Boolean(document.data.featured)) {
-    return {
-      error: {
-        ok: false,
-        status: 409,
-        error: "Featured draft jobs require the normal entitlement-aware publishing flow",
-      },
-    };
-  }
   return { document };
+}
+
+async function resolveBoundState(
+  document: HermesJobApprovalDocument,
+  deps: HermesJobApprovalServiceDeps,
+): Promise<
+  | { ok: true; state: HermesJobApprovalBoundState }
+  | { ok: false; status: number; error: string }
+> {
+  if (!isDraft(document) || !Boolean(document.data.featured)) {
+    return { ok: true, state: boundState(document, null) };
+  }
+  if (!deps.resolveFeaturedEntitlement) {
+    return { ok: false, status: 409, error: "Featured entitlement state could not be resolved" };
+  }
+  const resolved = await deps.resolveFeaturedEntitlement(document);
+  if (!resolved.ok) return resolved;
+  return { ok: true, state: boundState(document, resolved.state) };
 }
 
 export async function reviewHermesJobApproval(
@@ -217,11 +283,13 @@ export async function reviewHermesJobApproval(
   if (!normalized.ok) return { ok: false as const, status: 400, error: normalized.error };
   const resolved = await resolveJob(normalized.command, deps);
   if ("error" in resolved) return resolved.error;
-  const current = projection(resolved.document);
-  const desired = projection(resolved.document, "active");
+  const bound = await resolveBoundState(resolved.document, deps);
+  if (!bound.ok) return bound;
+  const current = projection(resolved.document, bound.state.featuredEntitlement);
+  const desired = projection(resolved.document, bound.state.featuredEntitlement, "active");
   return {
     ok: true as const,
-    reviewToken: createReviewToken(normalized.command, boundState(resolved.document), deps.reviewSecret),
+    reviewToken: createReviewToken(normalized.command, bound.state, deps.reviewSecret),
     current,
     desired,
   };
@@ -238,7 +306,11 @@ export async function applyHermesJobApproval(
   const reviewed = parseReviewToken(value.reviewToken, deps.reviewSecret);
   if (!reviewed) return { ok: false as const, status: 409, error: "Review token is invalid or stale" };
   const resolved = await resolveJob(reviewed.command, deps);
-  if ("error" in resolved || !isDeepStrictEqual(boundState(resolved.document), reviewed.boundState)) {
+  if ("error" in resolved) {
+    return { ok: false as const, status: 409, error: "Review token is invalid or stale" };
+  }
+  const currentState = await resolveBoundState(resolved.document, deps);
+  if (!currentState.ok || !isDeepStrictEqual(currentState.state, reviewed.boundState)) {
     return { ok: false as const, status: 409, error: "Review token is invalid or stale" };
   }
   const result = await deps.commit({ boundState: reviewed.boundState, current: resolved.document });

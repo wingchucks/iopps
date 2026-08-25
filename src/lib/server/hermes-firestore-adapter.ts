@@ -20,6 +20,12 @@ const AUDIT_COLLECTION = "hermesAdminAudit";
 
 export interface HermesFirestorePortTransaction {
   getDocument: (collection: string, id: string) => Promise<HermesEmployerDocument | null>;
+  queryExact?: (
+    collection: string,
+    field: string,
+    value: string,
+    limit: number,
+  ) => Promise<HermesEmployerDocument[]>;
   setDocument: (
     collection: string,
     id: string,
@@ -465,6 +471,14 @@ function transactionPort(db: Firestore, transaction: Transaction): HermesFiresto
   return {
     async getDocument(collection, id) {
       return toPortDocument(await transaction.get(db.collection(collection).doc(id)));
+    },
+    async queryExact(collection, field, value, limit) {
+      const snapshot = await transaction.get(db.collection(collection).where(field, "==", value).limit(limit));
+      return snapshot.docs.map((document) => {
+        const converted = toPortDocument(document);
+        if (!converted) throw new Error("Firestore transaction query returned a missing document");
+        return converted;
+      });
     },
     setDocument(collection, id, data, options) {
       const ref = db.collection(collection).doc(id);
