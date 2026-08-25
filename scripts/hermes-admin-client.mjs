@@ -61,6 +61,8 @@ function endpointUrl(baseValue, operation) {
     apply: "/api/hermes/v1/employers/apply",
     "convert-review": "/api/hermes/v1/users/convert-to-individual/review",
     "convert-apply": "/api/hermes/v1/users/convert-to-individual/apply",
+    "job-review": "/api/hermes/v1/jobs/approve/review",
+    "job-apply": "/api/hermes/v1/jobs/approve/apply",
   };
   return new URL(paths[operation], base);
 }
@@ -68,10 +70,12 @@ function endpointUrl(baseValue, operation) {
 async function main() {
   const operation = process.argv[2];
   const bodyPath = process.argv[3];
-  const operations = new Set(["review", "apply", "convert-review", "convert-apply"]);
+  const operations = new Set([
+    "review", "apply", "convert-review", "convert-apply", "job-review", "job-apply",
+  ]);
   if (!operations.has(operation) || !bodyPath) {
     throw new Error(
-      "Usage: node scripts/hermes-admin-client.mjs <review|apply|convert-review|convert-apply> <json-body-path>",
+      "Usage: node scripts/hermes-admin-client.mjs <review|apply|convert-review|convert-apply|job-review|job-apply> <json-body-path>",
     );
   }
 

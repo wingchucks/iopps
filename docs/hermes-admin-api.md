@@ -1,6 +1,6 @@
 # Hermes Admin API
 
-The Hermes Admin API contains narrow, machine-signed two-step workflows for reviewing and applying one employer-account correction or converting one employer account back to an individual account. It does not expose a general Firestore write surface.
+The Hermes Admin API contains narrow, machine-signed two-step workflows for reviewing and applying one employer-account correction, converting one employer account back to an individual account, or approving one exact job draft. It does not expose a general Firestore write surface.
 
 ## Server configuration
 
@@ -10,7 +10,7 @@ Review tokens use a 32-byte key derived with domain-separated HKDF-SHA-256. The 
 
 ## Signed request contract
 
-Both endpoints accept only `POST` with an exact `Content-Type: application/json` header, a canonical decimal `Content-Length`, valid UTF-8 JSON, and a maximum body size of 32,768 bytes. Encoded or streamed request bodies are rejected.
+All workflow endpoints accept only `POST` with an exact `Content-Type: application/json` header, a canonical decimal `Content-Length`, valid UTF-8 JSON, and a maximum body size of 32,768 bytes. Encoded or streamed request bodies are rejected.
 
 Required headers:
 
@@ -68,6 +68,33 @@ Apply uses a Firestore transaction to recheck every bound version and then write
 
 All responses use `Cache-Control: no-store` and omit internal exception details.
 
+## Approve one exact draft job
+
+Job review accepts exactly this body at `POST /api/hermes/v1/jobs/approve/review`:
+
+```json
+{
+  "jobId": "exact-firestore-document-id"
+}
+```
+
+`jobId` is an exact document ID, not a title, slug search, query, or path. The server reads that ID from both canonical storage locations used by the organization editor: `jobs/{jobId}` and the legacy `posts/{jobId}` fallback. A legacy post must have `type: "job"`. Zero matches return not found; two matches are ambiguous and rejected. A target is eligible when it is a draft (`status: "draft"` and not active). An already public-active record may pass review only so apply can prove and record a `verified_noop`; closed, inconsistent, and non-job targets are rejected.
+
+The review response contains only safe `title`, `organization`, and `status` projections plus an opaque HMAC review token. The token is bound to the exact document ID, collection, schema, Firestore update version, and desired publication state, including whether `postedAt` must be initialized. It contains no job description, application configuration, contact details, signature, nonce, or request metadata. Featured drafts are rejected so this narrow approval operation cannot bypass the normal featured-job entitlement and credit checks.
+
+After inspecting the projections, send exactly this body to `POST /api/hermes/v1/jobs/approve/apply`:
+
+```json
+{
+  "reviewToken": "token-returned-by-review",
+  "confirmation": "APPROVE IOPPS JOB"
+}
+```
+
+Apply re-resolves both storage locations and rejects missing, ambiguous, schema-changed, ineligible, or version-stale state. One Firestore transaction rechecks the bound target and changes only `status`, `active`, `updatedAt`, and `postedAt`: `status` becomes `active`, `active` becomes `true`, `updatedAt` uses a Firestore server timestamp, and `postedAt` uses a Firestore server timestamp only when it was absent at review and remains absent. This matches the organization editor's publication behavior. Every unrelated field, including the job body, contact and application fields, original creation data, and an existing `postedAt`, is preserved.
+
+The transaction writes deterministic `hermesAdminIdempotency` and sanitized `hermesAdminAudit` records containing only protocol/operation metadata, the machine key ID, request hash, exact target identity, changed field names, outcome, and timestamps. Neither record stores the request body, job body, contact details, signature, nonce, review token, private key, or review secret. After commit, the server rereads the exact target and verifies `status: "active"`, `active: true`, and the required `postedAt`. An already-correct target returns `verified_noop` only after that exact reread. Exact apply retries reuse the same body and idempotency key with a fresh nonce/signature; cached success is returned only after re-resolving uniqueness and rereading public-active state.
+
 ## Convert an employer account to an individual account
 
 Conversion review accepts exactly this body at `POST /api/hermes/v1/users/convert-to-individual/review`:
@@ -105,4 +132,4 @@ $env:HERMES_ADMIN_PRIVATE_KEY_PATH = "C:\protected\path\hermes-ed25519-private.p
 node scripts/hermes-admin-client.mjs review .\review-body.json
 ```
 
-For employer apply, use `apply`. For account conversion, use `convert-review` and then `convert-apply`. Each apply uses a new idempotency key and an apply-body file containing the inspected review token and exact confirmation phrase; exact retries reuse that apply idempotency key and body. The alternative `HERMES_ADMIN_PRIVATE_KEY_PEM` input exists for secured process injection; set exactly one private-key source. Plain HTTP is refused except for explicit localhost testing with `HERMES_ADMIN_ALLOW_HTTP_LOCALHOST=true`.
+For employer apply, use `apply`. For account conversion, use `convert-review` and then `convert-apply`. For one job approval, use `job-review` and then `job-apply`. Each apply uses a new idempotency key and an apply-body file containing the inspected review token and exact confirmation phrase; exact retries reuse that apply idempotency key and body. The alternative `HERMES_ADMIN_PRIVATE_KEY_PEM` input exists for secured process injection; set exactly one private-key source. Plain HTTP is refused except for explicit localhost testing with `HERMES_ADMIN_ALLOW_HTTP_LOCALHOST=true`.
