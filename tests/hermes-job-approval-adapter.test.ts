@@ -35,13 +35,29 @@ function memoryPort(seed: Record<string, Record<string, StoredDoc>>) {
     if (collection === "jobs" || collection === "posts") targetWrites += 1;
   };
   const port: HermesFirestorePort = {
-    async queryExact() { return []; },
-    async queryExactFields() { return []; },
+    async queryExact(collection, field, value, limit) {
+      return [...(collections.get(collection) ?? new Map())]
+        .filter(([, document]) => document.data[field] === value)
+        .slice(0, limit)
+        .map(([id]) => read(collections, collection, id)!).filter(Boolean);
+    },
+    async queryExactFields(collection, filters, limit) {
+      return [...(collections.get(collection) ?? new Map())]
+        .filter(([, document]) => filters.every(({ field, value }) => document.data[field] === value))
+        .slice(0, limit)
+        .map(([id]) => read(collections, collection, id)!).filter(Boolean);
+    },
     async getDocument(collection, id) { outsideReads += 1; return read(collections, collection, id); },
     async runTransaction<T>(handler: (transaction: HermesFirestorePortTransaction) => Promise<T>) {
       const working = clone();
       const transaction: HermesFirestorePortTransaction = {
         async getDocument(collection, id) { return read(working, collection, id); },
+        async queryExact(collection, field, value, limit) {
+          return [...(working.get(collection) ?? new Map())]
+            .filter(([, document]) => document.data[field] === value)
+            .slice(0, limit)
+            .map(([id]) => read(working, collection, id)!).filter(Boolean);
+        },
         setDocument(collection, id, data, options) { write(working, collection, id, data, options?.merge === true); },
         updateDocument(collection, id, data) {
           if (!working.get(collection)?.has(id)) throw new Error("missing document");
@@ -136,6 +152,8 @@ test("job approval transaction changes only canonical publication fields, preser
     title: "Community Liaison",
     organization: "Northern Organization",
     status: "active",
+    featuredIntent: "standard",
+    entitlementDecision: "not_required",
   });
   assert.deepEqual(memory.get("jobs", "job-123")?.data, {
     title: "Community Liaison",
@@ -161,6 +179,179 @@ test("job approval transaction changes only canonical publication fields, preser
     }
   }
   assert.deepEqual(audit.changedFields, ["active", "postedAt", "status", "updatedAt"]);
+});
+
+test("featured approval uses an included slot without consuming a purchased credit", async () => {
+  const memory = memoryPort({
+    employers: {
+      "employer-1": {
+        version: "e1",
+        data: { plan: "premium", subscriptionTier: "premium", featuredPostCredits: 2, privateBillingNote: "keep-secret" },
+      },
+    },
+    jobs: {
+      "job-123": {
+        version: "j1",
+        data: {
+          employerId: "employer-1", title: "Community Liaison", orgName: "Northern Organization",
+          status: "draft", active: false, featured: true, description: "preserve body",
+        },
+      },
+      "job-existing": {
+        version: "j2",
+        data: { employerId: "employer-1", status: "active", active: true, featured: true, postedAt: "earlier" },
+      },
+    },
+  });
+  const exec = execution("included-slot");
+  const adapter = createHermesJobApprovalFirestoreAdapter(memory.port, {
+    now: () => new Date("2026-08-25T12:00:00.000Z"),
+  });
+  const deps = adapter.createServiceDeps({ reviewSecret: "s".repeat(64), execution: exec });
+  const reviewed = await reviewHermesJobApproval({ jobId: "job-123" }, deps);
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  assert.equal(reviewed.current.featuredIntent, "featured");
+  assert.equal(reviewed.current.entitlementDecision, "included_slot");
+  assert.equal(JSON.stringify(reviewed).includes("privateBillingNote"), false);
+  assert.equal(JSON.stringify(reviewed).includes("featuredPostCredits"), false);
+
+  const applied = await applyHermesJobApproval({
+    reviewToken: reviewed.reviewToken,
+    confirmation: JOB_APPROVAL_CONFIRMATION,
+  }, deps);
+  assert.equal(applied.ok, true);
+  assert.equal(memory.get("employers", "employer-1")?.data.featuredPostCredits, 2);
+  assert.deepEqual(memory.get("jobs", "job-123")?.data, {
+    employerId: "employer-1", title: "Community Liaison", orgName: "Northern Organization",
+    status: "active", active: true, featured: true, description: "preserve body",
+    featuredCreditConsumed: false,
+    updatedAt: new Date("2026-08-25T12:00:00.000Z"),
+    postedAt: new Date("2026-08-25T12:00:00.000Z"),
+  });
+});
+
+test("featured approval consumes exactly one purchased credit, preserves unrelated fields, and retry does not debit again", async () => {
+  const memory = memoryPort({
+    employers: {
+      "employer-1": {
+        version: "e1",
+        data: { plan: "free", subscriptionTier: "free", featuredPostCredits: 2, unrelatedEmployer: { keep: true } },
+      },
+    },
+    jobs: {
+      "job-123": {
+        version: "j1",
+        data: {
+          employerId: "employer-1", title: "Community Liaison", orgName: "Northern Organization",
+          status: "draft", active: false, featured: true, description: "preserve body",
+          applicationConfig: { preserve: true }, createdAt: "preserve-created",
+        },
+      },
+    },
+  });
+  const exec = execution("credit");
+  const timestamp = new Date("2026-08-25T12:00:00.000Z");
+  const adapter = createHermesJobApprovalFirestoreAdapter(memory.port, { now: () => timestamp });
+  const deps = adapter.createServiceDeps({ reviewSecret: "s".repeat(64), execution: exec });
+  const reviewed = await reviewHermesJobApproval({ jobId: "job-123" }, deps);
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  assert.equal(reviewed.desired.featuredIntent, "featured");
+  assert.equal(reviewed.desired.entitlementDecision, "featured_post_credit");
+
+  const applied = await applyHermesJobApproval({ reviewToken: reviewed.reviewToken, confirmation: JOB_APPROVAL_CONFIRMATION }, deps);
+  assert.equal(applied.ok, true);
+  assert.deepEqual(memory.get("employers", "employer-1")?.data, {
+    plan: "free", subscriptionTier: "free", featuredPostCredits: 1,
+    unrelatedEmployer: { keep: true }, updatedAt: timestamp,
+  });
+  assert.deepEqual(memory.get("jobs", "job-123")?.data, {
+    employerId: "employer-1", title: "Community Liaison", orgName: "Northern Organization",
+    status: "active", active: true, featured: true, description: "preserve body",
+    applicationConfig: { preserve: true }, createdAt: "preserve-created",
+    featuredCreditConsumed: true, featuredCreditConsumedAt: timestamp,
+    updatedAt: timestamp, postedAt: timestamp,
+  });
+
+  const cached = await adapter.getIdempotentApply(exec);
+  assert.equal(cached?.status, "applied");
+  assert.equal(memory.get("employers", "employer-1")?.data.featuredPostCredits, 1);
+  const audit = memory.get("hermesAdminAudit", hermesJobApprovalIdempotencyDocumentId(exec))?.data ?? {};
+  assert.deepEqual(audit.changedFields, {
+    employer: ["featuredPostCredits", "updatedAt"],
+    job: ["active", "featuredCreditConsumed", "featuredCreditConsumedAt", "postedAt", "status", "updatedAt"],
+  });
+  assert.equal(JSON.stringify(audit).includes("unrelatedEmployer"), false);
+  assert.equal(JSON.stringify(audit).includes("featuredPostCredits\":1"), false);
+});
+
+test("featured review rejects a draft with no included slot or purchased credit", async () => {
+  const memory = memoryPort({
+    employers: { "employer-1": { version: "e1", data: { plan: "free", featuredPostCredits: 0 } } },
+    jobs: {
+      "job-123": {
+        version: "j1",
+        data: { employerId: "employer-1", title: "A", status: "draft", active: false, featured: true },
+      },
+    },
+  });
+  const deps = createHermesJobApprovalFirestoreAdapter(memory.port)
+    .createServiceDeps({ reviewSecret: "s".repeat(64), execution: execution("no-entitlement") });
+  assert.deepEqual(await reviewHermesJobApproval({ jobId: "job-123" }, deps), {
+    ok: false,
+    status: 400,
+    error: "Featured jobs require a Premium or School plan, or an available featured post credit.",
+  });
+  assert.equal(memory.targetWrites(), 0);
+});
+
+test("featured apply rejects employer-version and active-featured-count races atomically", async (t) => {
+  for (const race of ["employer", "count"] as const) {
+    await t.test(race, async () => {
+      const memory = memoryPort({
+        employers: { "employer-1": { version: "e1", data: { plan: "premium", featuredPostCredits: 0 } } },
+        jobs: {
+          "job-123": {
+            version: "j1",
+            data: { employerId: "employer-1", title: "A", status: "draft", active: false, featured: true },
+          },
+        },
+      });
+      let injectRace = false;
+      const racingPort: HermesFirestorePort = {
+        ...memory.port,
+        async runTransaction(handler) {
+          if (injectRace) {
+            if (race === "employer") {
+              memory.put("employers", "employer-1", {
+                version: "e2",
+                data: { plan: "free", featuredPostCredits: 0 },
+              });
+            } else {
+              memory.put("jobs", "job-race", {
+                version: "jr1",
+                data: { employerId: "employer-1", status: "active", active: true, featured: true, postedAt: "now" },
+              });
+            }
+          }
+          return memory.port.runTransaction(handler);
+        },
+      };
+      const deps = createHermesJobApprovalFirestoreAdapter(racingPort)
+        .createServiceDeps({ reviewSecret: "s".repeat(64), execution: execution(`race-${race}`) });
+      const reviewed = await reviewHermesJobApproval({ jobId: "job-123" }, deps);
+      assert.equal(reviewed.ok, true);
+      if (!reviewed.ok) return;
+      injectRace = true;
+      await assert.rejects(
+        () => applyHermesJobApproval({ reviewToken: reviewed.reviewToken, confirmation: JOB_APPROVAL_CONFIRMATION }, deps),
+        (error: unknown) => Boolean(error && typeof error === "object" && "status" in error && error.status === 409),
+      );
+      assert.equal(memory.targetWrites(), 0);
+      assert.equal(memory.get("jobs", "job-123")?.data.status, "draft");
+    });
+  }
 });
 
 test("an already public-active target is verified_noop only after reread and exact retry is deterministic", async () => {

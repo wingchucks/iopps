@@ -39,10 +39,27 @@ function serviceDeps(
   return {
     reviewSecret,
     findJobCandidates: async () => [jobDoc("jobs")],
+    resolveFeaturedEntitlement: async () => ({
+      ok: true,
+      state: {
+        employerId: "employer-1",
+        employerVersion: "e1",
+        plan: "premium",
+        subscriptionTier: "premium",
+        featuredPostCredits: 0,
+        existingFeaturedCreditConsumed: false,
+        activeFeaturedJobs: [],
+        decision: "included_slot",
+        consumeCredit: false,
+      },
+    }),
     commit: async () => ({
       status: "applied",
       committedAt: "2026-08-25T12:00:00.000Z",
-      verified: { title: "Community Liaison", organization: "Northern Organization", status: "active" },
+      verified: {
+        title: "Community Liaison", organization: "Northern Organization", status: "active",
+        featuredIntent: "standard", entitlementDecision: "not_required",
+      },
     }),
     ...overrides,
   };
@@ -105,6 +122,8 @@ test("job review resolves one draft and returns only safe projections plus an op
     title: "Community Liaison",
     organization: "Northern Organization",
     status: "draft",
+    featuredIntent: "standard",
+    entitlementDecision: "not_required",
   });
   assert.deepEqual(reviewed.desired, { ...reviewed.current, status: "active" });
   assert.match(reviewed.reviewToken, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/);
@@ -129,14 +148,6 @@ test("job review rejects missing, ambiguous, ineligible, and mismatched canonica
     })),
     { ok: false, status: 409, error: "Job target is not eligible for approval" },
   );
-  for (const featured of [true, 1, "true"]) {
-    assert.deepEqual(
-      await reviewHermesJobApproval({ jobId: "job-123" }, serviceDeps({
-        findJobCandidates: async () => [jobDoc("jobs", "v1", { featured })],
-      })),
-      { ok: false, status: 409, error: "Featured draft jobs require the normal entitlement-aware publishing flow" },
-    );
-  }
   assert.deepEqual(
     await reviewHermesJobApproval({ jobId: "job-123" }, serviceDeps({
       findJobCandidates: async () => [jobDoc("jobs", "v1", { status: "active", active: true, postedAt: null })],
@@ -149,4 +160,18 @@ test("job review rejects missing, ambiguous, ineligible, and mismatched canonica
     })),
     { ok: false, status: 409, error: "Job target identity did not match the exact request" },
   );
+});
+
+test("featured review states intent and its bound entitlement decision without private details", async () => {
+  const reviewed = await reviewHermesJobApproval({ jobId: "job-123" }, serviceDeps({
+    findJobCandidates: async () => [jobDoc("jobs", "v1", { featured: true, employerId: "employer-1" })],
+  }));
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  assert.equal(reviewed.current.featuredIntent, "featured");
+  assert.equal(reviewed.current.entitlementDecision, "included_slot");
+  assert.equal(reviewed.desired.featuredIntent, "featured");
+  assert.equal(reviewed.desired.entitlementDecision, "included_slot");
+  assert.equal(JSON.stringify(reviewed).includes("employer-1"), false);
+  assert.equal(JSON.stringify(reviewed).includes("premium"), false);
 });
