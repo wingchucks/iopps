@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  createHermesFeaturedIdentitySetBinding,
   createHermesJobApprovalFirestoreAdapter,
   hermesJobApprovalIdempotencyDocumentId,
 } from "../src/lib/server/hermes-job-approval-firestore.ts";
@@ -86,6 +87,91 @@ function memoryPort(seed: Record<string, Record<string, StoredDoc>>) {
 function execution(key = "job-apply-1") {
   return { keyId: "primary", idempotencyKey: key, requestHash: "a".repeat(64) };
 }
+
+test("featured identity binding is deterministic and changes for every identity or version change", () => {
+  const identities = [
+    { collection: "posts" as const, documentId: "post-2", version: "v2" },
+    { collection: "jobs" as const, documentId: "job-1", version: "v1" },
+  ];
+  const expected = createHermesFeaturedIdentitySetBinding(identities);
+  assert.deepEqual(createHermesFeaturedIdentitySetBinding([...identities].reverse()), expected);
+  assert.match(expected.activeFeaturedJobsDigest, /^[a-f0-9]{64}$/);
+  assert.equal(expected.activeFeaturedJobsCount, 2);
+
+  for (const changed of [
+    [{ ...identities[0], collection: "jobs" as const }, identities[1]],
+    [{ ...identities[0], documentId: "post-3" }, identities[1]],
+    [{ ...identities[0], version: "v3" }, identities[1]],
+    [...identities, { collection: "jobs" as const, documentId: "job-3", version: "v3" }],
+  ]) {
+    assert.notEqual(
+      createHermesFeaturedIdentitySetBinding(changed).activeFeaturedJobsDigest,
+      expected.activeFeaturedJobsDigest,
+    );
+  }
+});
+
+test("a successful review with 500 active featured identities yields a small apply envelope", async () => {
+  const activePosts = Object.fromEntries(Array.from({ length: 500 }, (_, index) => [
+    `featured-${String(index).padStart(3, "0")}`,
+    {
+      version: `version-private-${index}`,
+      data: {
+        type: "job",
+        orgId: "employer-private-500",
+        status: "active",
+        active: true,
+        featured: true,
+        postedAt: "earlier",
+      },
+    },
+  ]));
+  const memory = memoryPort({
+    employers: {
+      "employer-private-500": {
+        version: "employer-version-private-500",
+        data: { plan: "free-private", subscriptionTier: "free-private", featuredPostCredits: 1 },
+      },
+    },
+    jobs: {
+      "job-123": {
+        version: "target-version-private-500",
+        data: {
+          employerId: "employer-private-500",
+          title: "A",
+          status: "draft",
+          active: false,
+          featured: true,
+        },
+      },
+    },
+    posts: activePosts,
+  });
+  const deps = createHermesJobApprovalFirestoreAdapter(memory.port)
+    .createServiceDeps({ reviewSecret: "s".repeat(64), execution: execution("five-hundred") });
+  const reviewed = await reviewHermesJobApproval({ jobId: "job-123" }, deps);
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  const applyEnvelope = JSON.stringify({
+    reviewToken: reviewed.reviewToken,
+    confirmation: JOB_APPROVAL_CONFIRMATION,
+  });
+  const applyEnvelopeBytes = Buffer.byteLength(applyEnvelope, "utf8");
+  assert.ok(applyEnvelopeBytes < 32_768, applyEnvelopeBytes.toString());
+  assert.ok(applyEnvelopeBytes < 8_192, applyEnvelopeBytes.toString());
+  for (const segment of reviewed.reviewToken.split(".")) {
+    const decoded = Buffer.from(segment, "base64url").toString("utf8");
+    for (const forbidden of [
+      "employer-private-500",
+      "employer-version-private-500",
+      "free-private",
+      "featured-499",
+      "version-private-499",
+      "target-version-private-500",
+      "job-123",
+    ]) assert.equal(decoded.includes(forbidden), false, forbidden);
+  }
+});
 
 test("job adapter resolves the exact document ID across canonical jobs and legacy job posts", async () => {
   const jobs = memoryPort({
@@ -334,8 +420,8 @@ test("featured review rejects a draft with no included slot or purchased credit"
   assert.equal(memory.targetWrites(), 0);
 });
 
-test("featured apply rejects employer-version and active-featured-count races atomically", async (t) => {
-  for (const race of ["employer", "count"] as const) {
+test("featured apply rejects employer, active-featured-count, and identity-version races atomically", async (t) => {
+  for (const race of ["employer", "count", "identity-version"] as const) {
     await t.test(race, async () => {
       const memory = memoryPort({
         employers: { "employer-1": { version: "e1", data: { plan: "premium", featuredPostCredits: 0 } } },
@@ -343,6 +429,10 @@ test("featured apply rejects employer-version and active-featured-count races at
           "job-123": {
             version: "j1",
             data: { employerId: "employer-1", title: "A", status: "draft", active: false, featured: true },
+          },
+          "job-existing": {
+            version: "existing-v1",
+            data: { employerId: "employer-1", status: "active", active: true, featured: true, postedAt: "earlier" },
           },
         },
       });
@@ -356,10 +446,15 @@ test("featured apply rejects employer-version and active-featured-count races at
                 version: "e2",
                 data: { plan: "free", featuredPostCredits: 0 },
               });
-            } else {
+            } else if (race === "count") {
               memory.put("jobs", "job-race", {
                 version: "jr1",
                 data: { employerId: "employer-1", status: "active", active: true, featured: true, postedAt: "now" },
+              });
+            } else {
+              memory.put("jobs", "job-existing", {
+                version: "existing-v2",
+                data: { employerId: "employer-1", status: "active", active: true, featured: true, postedAt: "earlier" },
               });
             }
           }
