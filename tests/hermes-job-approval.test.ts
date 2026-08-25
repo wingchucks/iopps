@@ -70,15 +70,37 @@ test("job review accepts only an exact jobId object", () => {
     ok: true,
     command: { jobId: "job-123" },
   });
+  assert.deepEqual(normalizeHermesJobReviewCommand({ jobId: "job-123", featured: false }), {
+    ok: true,
+    command: { jobId: "job-123", featured: false },
+  });
   for (const input of [
     {},
     { jobId: "job-123", extra: true },
+    { jobId: "job-123", featured: true },
     { jobId: "" },
     { jobId: "a/b" },
     "job-123",
   ]) {
     assert.equal(normalizeHermesJobReviewCommand(input).ok, false);
   }
+});
+
+test("featured draft can be reviewed for explicit standard publication without entitlement", async () => {
+  let entitlementCalls = 0;
+  const reviewed = await reviewHermesJobApproval({ jobId: "job-123", featured: false }, serviceDeps({
+    findJobCandidates: async () => [jobDoc("jobs", "v1", { featured: true })],
+    resolveFeaturedEntitlement: async () => {
+      entitlementCalls += 1;
+      throw new Error("must not resolve entitlement");
+    },
+  }));
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  assert.equal(entitlementCalls, 0);
+  assert.equal(reviewed.current.featuredIntent, "featured");
+  assert.equal(reviewed.desired.featuredIntent, "standard");
+  assert.equal(reviewed.desired.entitlementDecision, "not_required");
 });
 
 test("job apply requires only the opaque token and exact confirmation and rejects stale review state", async () => {

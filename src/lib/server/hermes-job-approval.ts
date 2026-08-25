@@ -5,6 +5,7 @@ export const JOB_APPROVAL_CONFIRMATION = "APPROVE IOPPS JOB";
 
 export interface HermesJobApprovalCommand {
   jobId: string;
+  featured?: false;
 }
 
 export interface HermesJobApprovalDocument {
@@ -50,6 +51,7 @@ export interface HermesJobApprovalBoundState {
     status: "active";
     active: true;
     setPostedAt: boolean;
+    featured: boolean;
   };
   featuredEntitlement: HermesFeaturedEntitlementBoundState | null;
 }
@@ -79,14 +81,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function normalizeHermesJobReviewCommand(value: unknown):
   | { ok: true; command: HermesJobApprovalCommand }
   | { ok: false; error: string } {
-  if (!isRecord(value) || Object.keys(value).length !== 1 || !("jobId" in value)) {
-    return { ok: false, error: "Review request must contain exactly jobId" };
+  if (!isRecord(value) || !("jobId" in value) ||
+      Object.keys(value).some((key) => key !== "jobId" && key !== "featured") ||
+      (Object.keys(value).length !== 1 && Object.keys(value).length !== 2) ||
+      ("featured" in value && value.featured !== false)) {
+    return { ok: false, error: "Review request must contain jobId and optional featured false" };
   }
   const jobId = typeof value.jobId === "string" ? value.jobId.trim() : "";
   if (!jobId || jobId.length > 512 || jobId.includes("/") || /[\u0000-\u001f\u007f]/.test(jobId)) {
     return { ok: false, error: "A valid exact jobId is required" };
   }
-  return { ok: true, command: { jobId } };
+  return { ok: true, command: { jobId, ...(value.featured === false ? { featured: false as const } : {}) } };
 }
 
 function canonicalize(value: unknown): string {
@@ -112,8 +117,9 @@ function projection(
   document: HermesJobApprovalDocument,
   entitlement: HermesFeaturedEntitlementBoundState | null,
   status?: string,
+  featuredOverride?: boolean,
 ): HermesJobApprovalProjection {
-  const featured = Boolean(document.data.featured);
+  const featured = featuredOverride ?? Boolean(document.data.featured);
   return {
     title: text(document.data, "title"),
     organization: text(document.data, "orgName", "organizationName", "companyName", "orgShort"),
@@ -128,6 +134,7 @@ function projection(
 function boundState(
   document: HermesJobApprovalDocument,
   featuredEntitlement: HermesFeaturedEntitlementBoundState | null,
+  desiredFeatured = Boolean(document.data.featured),
 ): HermesJobApprovalBoundState {
   return {
     documentId: document.id,
@@ -138,6 +145,7 @@ function boundState(
       status: "active",
       active: true,
       setPostedAt: document.data.postedAt == null,
+      featured: desiredFeatured,
     },
     featuredEntitlement,
   };
@@ -186,6 +194,7 @@ function parseReviewToken(token: string, secret: string): {
         (state.schema !== "employer-job-v1" && state.schema !== "legacy-job-post-v1") ||
         typeof state.version !== "string" || !isRecord(desired) ||
         desired.status !== "active" || desired.active !== true || typeof desired.setPostedAt !== "boolean" ||
+        typeof desired.featured !== "boolean" ||
         !isValidFeaturedEntitlement(state.featuredEntitlement)) {
       return null;
     }
@@ -259,11 +268,15 @@ async function resolveJob(
 
 async function resolveBoundState(
   document: HermesJobApprovalDocument,
+  command: HermesJobApprovalCommand,
   deps: HermesJobApprovalServiceDeps,
 ): Promise<
   | { ok: true; state: HermesJobApprovalBoundState }
   | { ok: false; status: number; error: string }
 > {
+  if (command.featured === false) {
+    return { ok: true, state: boundState(document, null, false) };
+  }
   if (!isDraft(document) || !Boolean(document.data.featured)) {
     return { ok: true, state: boundState(document, null) };
   }
@@ -283,10 +296,15 @@ export async function reviewHermesJobApproval(
   if (!normalized.ok) return { ok: false as const, status: 400, error: normalized.error };
   const resolved = await resolveJob(normalized.command, deps);
   if ("error" in resolved) return resolved.error;
-  const bound = await resolveBoundState(resolved.document, deps);
+  const bound = await resolveBoundState(resolved.document, normalized.command, deps);
   if (!bound.ok) return bound;
   const current = projection(resolved.document, bound.state.featuredEntitlement);
-  const desired = projection(resolved.document, bound.state.featuredEntitlement, "active");
+  const desired = projection(
+    resolved.document,
+    bound.state.featuredEntitlement,
+    "active",
+    bound.state.desiredState.featured,
+  );
   return {
     ok: true as const,
     reviewToken: createReviewToken(normalized.command, bound.state, deps.reviewSecret),
@@ -309,7 +327,7 @@ export async function applyHermesJobApproval(
   if ("error" in resolved) {
     return { ok: false as const, status: 409, error: "Review token is invalid or stale" };
   }
-  const currentState = await resolveBoundState(resolved.document, deps);
+  const currentState = await resolveBoundState(resolved.document, reviewed.command, deps);
   if (!currentState.ok || !isDeepStrictEqual(currentState.state, reviewed.boundState)) {
     return { ok: false as const, status: 409, error: "Review token is invalid or stale" };
   }
