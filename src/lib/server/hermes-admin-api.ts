@@ -18,6 +18,13 @@ import {
   type HermesAccountConversionServiceDeps,
 } from "./hermes-account-conversion.ts";
 import type { HermesAccountConversionIdempotentResult } from "./hermes-account-conversion-firestore.ts";
+import {
+  applyHermesJobApproval,
+  JOB_APPROVAL_CONFIRMATION,
+  reviewHermesJobApproval,
+  type HermesJobApprovalProjection,
+  type HermesJobApprovalServiceDeps,
+} from "./hermes-job-approval.ts";
 
 export interface HermesAdminApiDeps extends HermesMachineAuthDeps {
   reviewSecret: string;
@@ -36,6 +43,16 @@ export interface HermesAccountConversionApiDeps extends HermesMachineAuthDeps {
   getIdempotentConversionApply: (
     execution: HermesExecutionContext,
   ) => Promise<HermesAccountConversionIdempotentResult | null>;
+}
+
+export interface HermesJobApprovalApiDeps extends HermesMachineAuthDeps {
+  reviewSecret: string;
+  createJobApprovalServiceDeps: (execution: HermesExecutionContext) => HermesJobApprovalServiceDeps;
+  getIdempotentJobApply: (execution: HermesExecutionContext) => Promise<{
+    status: "applied" | "verified_noop";
+    committedAt?: string;
+    verified: HermesJobApprovalProjection;
+  } | null>;
 }
 
 function safeJson(payload: unknown, status = 200): Response {
@@ -220,6 +237,69 @@ export async function handleHermesAccountConversionApplyRequest(
     const result = await applyHermesAccountConversion(
       authenticated.json,
       deps.createAccountConversionServiceDeps(execution),
+    );
+    return result.ok ? safeJson(result) : requestError(result.status, result.error);
+  } catch (error) {
+    if (error && typeof error === "object" && "status" in error &&
+        (error as { status?: unknown }).status === 409) {
+      return requestError(409, "Hermes request conflicted with current state");
+    }
+    return hermesAdminInternalErrorResponse();
+  }
+}
+
+export async function handleHermesJobApprovalReviewRequest(
+  request: Request,
+  deps: HermesJobApprovalApiDeps,
+): Promise<Response> {
+  const endpointError = validateEndpoint(request, "/api/hermes/v1/jobs/approve/review");
+  if (endpointError) return endpointError;
+  try {
+    const authenticated = await authenticateHermesJsonRequest(request, deps);
+    if (!authenticated.ok) return requestError(authenticated.status, authenticated.error);
+    const execution = executionFromAuthenticated(
+      authenticated.keyId,
+      authenticated.idempotencyKey,
+      authenticated.body,
+    );
+    const result = await reviewHermesJobApproval(
+      authenticated.json,
+      deps.createJobApprovalServiceDeps(execution),
+    );
+    return result.ok ? safeJson(result) : requestError(result.status, result.error);
+  } catch {
+    return hermesAdminInternalErrorResponse();
+  }
+}
+
+function isJobApprovalApplyEnvelope(value: unknown): value is { reviewToken: string; confirmation: string } {
+  return isRecord(value) && Object.keys(value).length === 2 &&
+    typeof value.reviewToken === "string" && value.reviewToken.length > 0 &&
+    value.confirmation === JOB_APPROVAL_CONFIRMATION;
+}
+
+export async function handleHermesJobApprovalApplyRequest(
+  request: Request,
+  deps: HermesJobApprovalApiDeps,
+): Promise<Response> {
+  const endpointError = validateEndpoint(request, "/api/hermes/v1/jobs/approve/apply");
+  if (endpointError) return endpointError;
+  try {
+    const authenticated = await authenticateHermesJsonRequest(request, deps);
+    if (!authenticated.ok) return requestError(authenticated.status, authenticated.error);
+    if (!isJobApprovalApplyEnvelope(authenticated.json)) {
+      return requestError(400, "Apply requires the review token and exact confirmation");
+    }
+    const execution = executionFromAuthenticated(
+      authenticated.keyId,
+      authenticated.idempotencyKey,
+      authenticated.body,
+    );
+    const idempotent = await deps.getIdempotentJobApply(execution);
+    if (idempotent) return safeJson({ ok: true, ...idempotent });
+    const result = await applyHermesJobApproval(
+      authenticated.json,
+      deps.createJobApprovalServiceDeps(execution),
     );
     return result.ok ? safeJson(result) : requestError(result.status, result.error);
   } catch (error) {
