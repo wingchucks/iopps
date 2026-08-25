@@ -66,8 +66,30 @@ function featuredIdentity(
 }
 
 function sortFeaturedIdentities(identities: HermesFeaturedJobIdentity[]): HermesFeaturedJobIdentity[] {
-  return identities.sort((left, right) =>
-    `${left.collection}\0${left.documentId}`.localeCompare(`${right.collection}\0${right.documentId}`));
+  return identities.sort((left, right) => {
+    if (left.collection !== right.collection) return left.collection < right.collection ? -1 : 1;
+    if (left.documentId !== right.documentId) return left.documentId < right.documentId ? -1 : 1;
+    if (left.version !== right.version) return left.version < right.version ? -1 : 1;
+    return 0;
+  });
+}
+
+export function createHermesFeaturedIdentitySetBinding(
+  identities: HermesFeaturedJobIdentity[],
+): Pick<HermesFeaturedEntitlementBoundState, "activeFeaturedJobsDigest" | "activeFeaturedJobsCount"> {
+  if (identities.length > (FEATURED_QUERY_LIMIT - 1) * 2) {
+    throw new Error("Featured identity set exceeds the bounded query result");
+  }
+  const sorted = sortFeaturedIdentities(identities.map((identity) => ({ ...identity })));
+  const serialized = JSON.stringify(sorted.map(({ collection, documentId, version }) => [
+    collection,
+    documentId,
+    version,
+  ]));
+  return {
+    activeFeaturedJobsDigest: sha256(`iopps-hermes-featured-identity-set-v1\0${serialized}`),
+    activeFeaturedJobsCount: sorted.length,
+  };
 }
 
 async function readFeaturedEntitlement(
@@ -103,6 +125,7 @@ async function readFeaturedEntitlement(
       .filter((candidate) => candidate.data.type === "job" && isActiveFeaturedJob(candidate.data))
       .map((candidate) => featuredIdentity("posts", candidate)),
   ]);
+  const activeFeaturedBinding = createHermesFeaturedIdentitySetBinding(activeFeaturedJobs);
   const currentIdentity = `${document.collection}\0${document.id}`;
   const activeFeaturedCountExcludingCurrent = activeFeaturedJobs.filter(
     (candidate) => `${candidate.collection}\0${candidate.documentId}` !== currentIdentity,
@@ -137,7 +160,7 @@ async function readFeaturedEntitlement(
       subscriptionTier,
       featuredPostCredits,
       existingFeaturedCreditConsumed,
-      activeFeaturedJobs,
+      ...activeFeaturedBinding,
       decision: existingActiveFeatured || existingFeaturedCreditConsumed
         ? "existing_entitlement"
         : decision.consumeCredit

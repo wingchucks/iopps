@@ -48,7 +48,8 @@ function serviceDeps(
         subscriptionTier: "premium",
         featuredPostCredits: 0,
         existingFeaturedCreditConsumed: false,
-        activeFeaturedJobs: [],
+        activeFeaturedJobsDigest: "a".repeat(64),
+        activeFeaturedJobsCount: 0,
         decision: "included_slot",
         consumeCredit: false,
       },
@@ -148,9 +149,79 @@ test("job review resolves one draft and returns only safe projections plus an op
     entitlementDecision: "not_required",
   });
   assert.deepEqual(reviewed.desired, { ...reviewed.current, status: "active" });
-  assert.match(reviewed.reviewToken, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/);
+  assert.match(reviewed.reviewToken, /^v1\.[A-Za-z0-9_-]{16}\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{22}$/);
   assert.equal(JSON.stringify(reviewed).includes("privateContact"), false);
   assert.equal(JSON.stringify(reviewed).includes("must-not-leak@example.com"), false);
+});
+
+test("job review tokens keep sensitive bound state confidential and reject tampering", async () => {
+  let commits = 0;
+  const forbidden = [
+    "employer-private-9281",
+    "employer-version-private-7319",
+    "plan-private-4827",
+    "tier-private-5938",
+    "938475610293847",
+    "job-identity-private-6194",
+    "job-version-private-2048",
+  ];
+  const deps = serviceDeps({
+    findJobCandidates: async () => [jobDoc("jobs", "v1", {
+      featured: true,
+      employerId: "employer-private-9281",
+    })],
+    resolveFeaturedEntitlement: async () => ({
+      ok: true,
+      state: {
+        employerId: "employer-private-9281",
+        employerVersion: "employer-version-private-7319",
+        plan: "plan-private-4827",
+        subscriptionTier: "tier-private-5938",
+        featuredPostCredits: 938475610293847,
+        existingFeaturedCreditConsumed: false,
+        activeFeaturedJobsDigest: "b".repeat(64),
+        activeFeaturedJobsCount: 1,
+        decision: "included_slot",
+        consumeCredit: false,
+      },
+    }),
+    commit: async () => {
+      commits += 1;
+      throw new Error("tampered review must not commit");
+    },
+  });
+  const reviewed = await reviewHermesJobApproval({ jobId: "job-123" }, deps);
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  const secondReview = await reviewHermesJobApproval({ jobId: "job-123" }, deps);
+  assert.equal(secondReview.ok, true);
+  if (!secondReview.ok) return;
+  assert.notEqual(secondReview.reviewToken, reviewed.reviewToken);
+  assert.notEqual(secondReview.reviewToken.split(".")[1], reviewed.reviewToken.split(".")[1]);
+
+  for (const segment of reviewed.reviewToken.split(".")) {
+    const decoded = Buffer.from(segment, "base64url").toString("utf8");
+    for (const value of [...forbidden, "job-123"]) assert.equal(decoded.includes(value), false, value);
+  }
+
+  const segments = reviewed.reviewToken.split(".");
+  const mutate = (value: string) => `${value.slice(0, -1)}${value.endsWith("A") ? "B" : "A"}`;
+  const tamperedTokens = [
+    ["v2", ...segments.slice(1)].join("."),
+    [segments[0], mutate(segments[1]), ...segments.slice(2)].join("."),
+    [segments[0], segments[1], mutate(segments[2]), segments[3]].join("."),
+    [...segments.slice(0, 3), mutate(segments[3])].join("."),
+    `${reviewed.reviewToken}.${"A".repeat(10)}`,
+    `v1.${"A".repeat(16)}.${"A".repeat(10_924)}.${"A".repeat(22)}`,
+    "A".repeat(12_001),
+  ];
+  for (const reviewToken of tamperedTokens) {
+    assert.deepEqual(await applyHermesJobApproval({
+      reviewToken,
+      confirmation: JOB_APPROVAL_CONFIRMATION,
+    }, deps), { ok: false, status: 409, error: "Review token is invalid or stale" });
+  }
+  assert.equal(commits, 0);
 });
 
 test("job review rejects missing, ambiguous, ineligible, and mismatched canonical targets", async () => {

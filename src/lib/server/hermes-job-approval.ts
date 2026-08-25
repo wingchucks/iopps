@@ -1,4 +1,9 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import {
+  createCipheriv,
+  createDecipheriv,
+  hkdfSync,
+  randomBytes,
+} from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 
 export const JOB_APPROVAL_CONFIRMATION = "APPROVE IOPPS JOB";
@@ -37,7 +42,8 @@ export interface HermesFeaturedEntitlementBoundState {
   subscriptionTier: string | null;
   featuredPostCredits: number;
   existingFeaturedCreditConsumed: boolean;
-  activeFeaturedJobs: HermesFeaturedJobIdentity[];
+  activeFeaturedJobsDigest: string;
+  activeFeaturedJobsCount: number;
   decision: "included_slot" | "featured_post_credit" | "existing_entitlement";
   consumeCredit: boolean;
 }
@@ -105,6 +111,12 @@ function canonicalize(value: unknown): string {
   throw new TypeError("Unsupported canonical value");
 }
 
+function hasExactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+
 function text(data: Record<string, unknown>, ...keys: string[]): string {
   for (const key of keys) {
     const value = data[key];
@@ -152,12 +164,27 @@ function boundState(
 }
 
 function reviewPayload(command: HermesJobApprovalCommand, state: HermesJobApprovalBoundState) {
-  return { protocol: "iopps-hermes-job-approval-review-v1", command, boundState: state };
+  return { protocol: "iopps-hermes-job-approval-review-v2", command, boundState: state };
 }
 
-function reviewMac(payloadText: string, secret: string): Buffer {
+const REVIEW_TOKEN_VERSION = "v1";
+const REVIEW_TOKEN_AAD = Buffer.from("iopps-hermes-job-approval-review-token-v1", "utf8");
+const REVIEW_TOKEN_NONCE_BYTES = 12;
+const REVIEW_TOKEN_TAG_BYTES = 16;
+const MAX_REVIEW_PAYLOAD_BYTES = 8_192;
+const MAX_REVIEW_TOKEN_LENGTH = 12_000;
+const MAX_BOUND_STRING_LENGTH = 1_500;
+const MAX_ACTIVE_FEATURED_IDENTITIES = 1_000;
+
+function reviewEncryptionKey(secret: string): Buffer {
   if (Buffer.byteLength(secret, "utf8") < 32) throw new Error("Hermes review secret must be at least 32 bytes");
-  return createHmac("sha256", secret).update(payloadText, "utf8").digest();
+  return Buffer.from(hkdfSync(
+    "sha256",
+    Buffer.from(secret, "utf8"),
+    Buffer.from("iopps-hermes-review-key-derivation-v1", "utf8"),
+    Buffer.from("job-approval-review-token-aes-256-gcm-v1", "utf8"),
+    32,
+  ));
 }
 
 function createReviewToken(
@@ -166,7 +193,19 @@ function createReviewToken(
   secret: string,
 ): string {
   const payloadText = canonicalize(reviewPayload(command, state));
-  return `${Buffer.from(payloadText, "utf8").toString("base64url")}.${reviewMac(payloadText, secret).toString("base64url")}`;
+  const payloadBytes = Buffer.from(payloadText, "utf8");
+  if (payloadBytes.length > MAX_REVIEW_PAYLOAD_BYTES) throw new Error("Hermes review payload is too large");
+  const nonce = randomBytes(REVIEW_TOKEN_NONCE_BYTES);
+  const cipher = createCipheriv("aes-256-gcm", reviewEncryptionKey(secret), nonce);
+  cipher.setAAD(REVIEW_TOKEN_AAD);
+  const ciphertext = Buffer.concat([cipher.update(payloadBytes), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return [
+    REVIEW_TOKEN_VERSION,
+    nonce.toString("base64url"),
+    ciphertext.toString("base64url"),
+    tag.toString("base64url"),
+  ].join(".");
 }
 
 function parseReviewToken(token: string, secret: string): {
@@ -174,25 +213,44 @@ function parseReviewToken(token: string, secret: string): {
   boundState: HermesJobApprovalBoundState;
 } | null {
   try {
-    const [encoded, encodedMac, extra] = token.split(".");
-    if (extra !== undefined || !encoded || !/^[A-Za-z0-9_-]+$/.test(encoded) ||
-        !encodedMac || !/^[A-Za-z0-9_-]{43}$/.test(encodedMac)) return null;
-    const payloadBytes = Buffer.from(encoded, "base64url");
-    if (payloadBytes.toString("base64url") !== encoded) return null;
+    if (!token || token.length > MAX_REVIEW_TOKEN_LENGTH) return null;
+    const segments = token.split(".");
+    if (segments.length !== 4) return null;
+    const [version, encodedNonce, encodedCiphertext, encodedTag] = segments;
+    if (version !== REVIEW_TOKEN_VERSION ||
+        !/^[A-Za-z0-9_-]{16}$/.test(encodedNonce) ||
+        !encodedCiphertext || encodedCiphertext.length > Math.ceil(MAX_REVIEW_PAYLOAD_BYTES * 4 / 3) ||
+        !/^[A-Za-z0-9_-]+$/.test(encodedCiphertext) ||
+        !/^[A-Za-z0-9_-]{22}$/.test(encodedTag)) return null;
+    const nonce = Buffer.from(encodedNonce, "base64url");
+    const ciphertext = Buffer.from(encodedCiphertext, "base64url");
+    const tag = Buffer.from(encodedTag, "base64url");
+    if (nonce.length !== REVIEW_TOKEN_NONCE_BYTES || nonce.toString("base64url") !== encodedNonce ||
+        ciphertext.length === 0 || ciphertext.length > MAX_REVIEW_PAYLOAD_BYTES ||
+        ciphertext.toString("base64url") !== encodedCiphertext ||
+        tag.length !== REVIEW_TOKEN_TAG_BYTES || tag.toString("base64url") !== encodedTag) return null;
+    const decipher = createDecipheriv("aes-256-gcm", reviewEncryptionKey(secret), nonce);
+    decipher.setAAD(REVIEW_TOKEN_AAD);
+    decipher.setAuthTag(tag);
+    const payloadBytes = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+    if (payloadBytes.length === 0 || payloadBytes.length > MAX_REVIEW_PAYLOAD_BYTES) return null;
     const payloadText = payloadBytes.toString("utf8");
-    const provided = Buffer.from(encodedMac, "base64url");
-    const expected = reviewMac(payloadText, secret);
-    if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) return null;
+    if (!Buffer.from(payloadText, "utf8").equals(payloadBytes)) return null;
     const payload = JSON.parse(payloadText) as Record<string, unknown>;
-    if (payload.protocol !== "iopps-hermes-job-approval-review-v1" || !isRecord(payload.boundState)) return null;
+    if (!isRecord(payload) || canonicalize(payload) !== payloadText ||
+        !hasExactKeys(payload, ["protocol", "command", "boundState"]) ||
+        payload.protocol !== "iopps-hermes-job-approval-review-v2" || !isRecord(payload.boundState)) return null;
     const normalized = normalizeHermesJobReviewCommand(payload.command);
     if (!normalized.ok) return null;
     const state = payload.boundState;
     const desired = state.desiredState;
-    if (typeof state.documentId !== "string" ||
+    if (!hasExactKeys(state, ["documentId", "collection", "schema", "version", "desiredState", "featuredEntitlement"]) ||
+        typeof state.documentId !== "string" || !state.documentId || state.documentId.length > MAX_BOUND_STRING_LENGTH ||
         (state.collection !== "jobs" && state.collection !== "posts") ||
         (state.schema !== "employer-job-v1" && state.schema !== "legacy-job-post-v1") ||
-        typeof state.version !== "string" || !isRecord(desired) ||
+        typeof state.version !== "string" || !state.version || state.version.length > MAX_BOUND_STRING_LENGTH ||
+        !isRecord(desired) ||
+        !hasExactKeys(desired, ["status", "active", "setPostedAt", "featured"]) ||
         desired.status !== "active" || desired.active !== true || typeof desired.setPostedAt !== "boolean" ||
         typeof desired.featured !== "boolean" ||
         !isValidFeaturedEntitlement(state.featuredEntitlement)) {
@@ -206,20 +264,30 @@ function parseReviewToken(token: string, secret: string): {
 
 function isValidFeaturedEntitlement(value: unknown): value is HermesFeaturedEntitlementBoundState | null {
   if (value === null) return true;
-  if (!isRecord(value) || typeof value.employerId !== "string" || !value.employerId ||
-      typeof value.employerVersion !== "string" ||
-      (value.plan !== null && typeof value.plan !== "string") ||
-      (value.subscriptionTier !== null && typeof value.subscriptionTier !== "string") ||
+  if (!isRecord(value) ||
+      !hasExactKeys(value, [
+        "employerId", "employerVersion", "plan", "subscriptionTier", "featuredPostCredits",
+        "existingFeaturedCreditConsumed", "activeFeaturedJobsDigest", "activeFeaturedJobsCount",
+        "decision", "consumeCredit",
+      ]) ||
+      typeof value.employerId !== "string" || !value.employerId || value.employerId.length > MAX_BOUND_STRING_LENGTH ||
+      typeof value.employerVersion !== "string" || !value.employerVersion ||
+      value.employerVersion.length > MAX_BOUND_STRING_LENGTH ||
+      (value.plan !== null && (typeof value.plan !== "string" || value.plan.length > MAX_BOUND_STRING_LENGTH)) ||
+      (value.subscriptionTier !== null &&
+        (typeof value.subscriptionTier !== "string" || value.subscriptionTier.length > MAX_BOUND_STRING_LENGTH)) ||
       typeof value.featuredPostCredits !== "number" || !Number.isFinite(value.featuredPostCredits) ||
       value.featuredPostCredits < 0 || typeof value.existingFeaturedCreditConsumed !== "boolean" ||
-      !Array.isArray(value.activeFeaturedJobs) || typeof value.consumeCredit !== "boolean" ||
+      typeof value.activeFeaturedJobsDigest !== "string" ||
+      !/^[a-f0-9]{64}$/.test(value.activeFeaturedJobsDigest) ||
+      typeof value.activeFeaturedJobsCount !== "number" ||
+      !Number.isInteger(value.activeFeaturedJobsCount) || value.activeFeaturedJobsCount < 0 ||
+      value.activeFeaturedJobsCount > MAX_ACTIVE_FEATURED_IDENTITIES ||
+      typeof value.consumeCredit !== "boolean" ||
       (value.decision !== "included_slot" && value.decision !== "featured_post_credit" &&
         value.decision !== "existing_entitlement")) return false;
   if (value.consumeCredit !== (value.decision === "featured_post_credit")) return false;
-  return value.activeFeaturedJobs.every((identity) => isRecord(identity) &&
-    (identity.collection === "jobs" || identity.collection === "posts") &&
-    typeof identity.documentId === "string" && Boolean(identity.documentId) &&
-    typeof identity.version === "string");
+  return true;
 }
 
 function isPublicActive(document: HermesJobApprovalDocument): boolean {
