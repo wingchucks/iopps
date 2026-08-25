@@ -237,6 +237,7 @@ export function createHermesJobApprovalFirestoreAdapter(
     ]);
     if (!reread || (state.collection === "posts" && reread.data.type !== "job") ||
         reread.data.status !== "active" || reread.data.active !== true ||
+        Boolean(reread.data.featured) !== state.desiredState.featured ||
         (state.desiredState.setPostedAt && reread.data.postedAt == null)) {
       throw new Error("Post-write public-active verification failed");
     }
@@ -406,6 +407,9 @@ export function createHermesJobApprovalFirestoreAdapter(
             const patch: Record<string, unknown> = alreadyActive ? {} : {
               status: "active",
               active: true,
+              ...(Boolean(target.data.featured) !== boundState.desiredState.featured
+                ? { featured: boundState.desiredState.featured }
+                : {}),
               updatedAt: mutationTimestamp,
               ...(boundState.desiredState.setPostedAt && target.data.postedAt == null
                 ? { postedAt: mutationTimestamp }

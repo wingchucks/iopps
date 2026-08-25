@@ -231,6 +231,34 @@ test("featured approval uses an included slot without consuming a purchased cred
   });
 });
 
+test("explicit standard publication removes featured intent without touching employer credits", async () => {
+  const memory = memoryPort({
+    employers: { emp1: { version: "e1", data: { plan: "free", featuredPostCredits: 0, keep: true } } },
+    jobs: {
+      "job-123": {
+        version: "j1",
+        data: { title: "A", employerId: "emp1", status: "draft", active: false, featured: true, keep: true },
+      },
+    },
+  });
+  const deps = createHermesJobApprovalFirestoreAdapter(memory.port)
+    .createServiceDeps({ reviewSecret: "s".repeat(64), execution: execution("standard-publish") });
+  const reviewed = await reviewHermesJobApproval({ jobId: "job-123", featured: false }, deps);
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  const applied = await applyHermesJobApproval({
+    reviewToken: reviewed.reviewToken,
+    confirmation: JOB_APPROVAL_CONFIRMATION,
+  }, deps);
+  assert.equal(applied.ok, true);
+  const job = memory.get("jobs", "job-123")!.data;
+  assert.equal(job.status, "active");
+  assert.equal(job.active, true);
+  assert.equal(job.featured, false);
+  assert.equal(job.keep, true);
+  assert.deepEqual(memory.get("employers", "emp1")!.data, { plan: "free", featuredPostCredits: 0, keep: true });
+});
+
 test("featured approval consumes exactly one purchased credit, preserves unrelated fields, and retry does not debit again", async () => {
   const memory = memoryPort({
     employers: {
