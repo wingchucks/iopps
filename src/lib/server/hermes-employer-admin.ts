@@ -432,20 +432,22 @@ async function resolveEmployerState(
           const employerLinkMatches = employerId === authorId || employerId === candidateEmployer.id;
           const organizationLinkMatches = organizationId === authorId ||
             organizationId === candidateEmployer.id || organizationId === candidateOrganization.id;
+          const organizationEmployerId = pickText(candidateOrganization.data, "employerId");
+          const pairIsConsistent = !organizationEmployerId || organizationEmployerId === candidateEmployer.id;
           const nameMatches = pickText(
             candidateOrganization.data,
             "organizationName",
             "name",
             "companyName",
           ) === command.organizationName;
-          return employerLinkMatches && organizationLinkMatches && nameMatches;
+          return employerLinkMatches && organizationLinkMatches && pairIsConsistent && nameMatches;
         })
         .map((candidateOrganization) => {
           const score =
             (candidateEmployer.id === userEmployerId ? 32 : 0) +
             (candidateEmployer.id === userOrganizationId ? 16 : 0) +
             (pickText(candidateEmployer.data, "uid", "ownerId") === authorId ? 8 : 0) +
-            (candidateOrganization.id === userOrganizationId ? 32 : 0) +
+            (candidateOrganization.id === userOrganizationId ? 64 : 0) +
             (pickText(candidateOrganization.data, "employerId") === candidateEmployer.id ? 16 : 0) +
             (pickText(candidateOrganization.data, "ownerId", "uid") === authorId ? 8 : 0);
           return { employer: candidateEmployer, organization: candidateOrganization, score };
