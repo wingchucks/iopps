@@ -237,7 +237,9 @@ export function createHermesFirestoreAdapter(
               ? jobTarget.schema !== "employer-job-v1"
               : jobTarget.schema !== "legacy-job-post-v1") ||
             typeof jobTarget.version !== "string" || jobTarget.authorId !== userId ||
-            jobTarget.employerId !== employerId || jobTarget.organizationId !== organizationId
+            (jobTarget.employerId !== employerId && jobTarget.employerId !== userId) ||
+            (jobTarget.organizationId !== organizationId && jobTarget.organizationId !== employerId &&
+              jobTarget.organizationId !== userId)
           : Boolean(jobTarget)) ||
         (resultStatus !== "applied" && resultStatus !== "verified_noop")
       ) {
