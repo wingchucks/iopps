@@ -450,11 +450,15 @@ test("reviewHermesEmployer selects one exact organization pair from multiple lin
   const otherOrganization = doc("organization_old", "o-old", {
     employerId: "employer_old", ownerId: "user_1", name: "Battlefords Agency Tribal Chiefs",
   });
+  const crossLinkedUser = doc("user_1", "u1", {
+    role: "community", employerId: "employer_old", orgId: "organization_1",
+  });
   const reviewed = await reviewHermesEmployer(jobCommandInput, jobServiceDeps({
     findJobCandidates: async () => [aliased],
+    findUsersByAuthorId: async () => [crossLinkedUser],
     findLinkedEmployers: async () => [matchingEmployer, duplicateEmployer],
     findLinkedOrganizations: async (_user: unknown, employer: { id: string }) =>
-      employer.id === "employer_1" ? [matchingOrganization] : [otherOrganization],
+      employer.id === "employer_1" ? [matchingOrganization] : [matchingOrganization, otherOrganization],
   }));
   assert.equal(reviewed.ok, true);
   if (!reviewed.ok) return;
