@@ -417,6 +417,27 @@ test("reviewHermesEmployer resolves one exact canonical job and binds its exact 
   assert.equal(reviewed.desired.organizationName, jobCommandInput.organizationName);
 });
 
+test("reviewHermesEmployer resolves a legacy job with distinct employer and organization IDs", async () => {
+  const canonical = await jobServiceDeps().findJobCandidates("job_exact_1");
+  const legacy = {
+    ...canonical[0],
+    collection: "posts" as const,
+    schema: "legacy-job-post-v1" as const,
+    data: { ...canonical[0].data, type: "job", employerId: "employer_1", orgId: "organization_1" },
+  };
+  const reviewed = await reviewHermesEmployer(jobCommandInput, jobServiceDeps({
+    findJobCandidates: async () => [legacy],
+  }));
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  assert.deepEqual(reviewed.target, {
+    userId: "user_1",
+    employerId: "employer_1",
+    organizationId: "organization_1",
+    jobId: "job_exact_1",
+  });
+});
+
 test("reviewHermesEmployer rejects dual storage, missing links, and mismatched organization names", async () => {
   const legacy = {
     ...doc("job_exact_1", "p1", {

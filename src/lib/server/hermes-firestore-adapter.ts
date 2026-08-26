@@ -172,8 +172,9 @@ function verifyJobTarget(
       (target.collection === "jobs"
         ? stringField(document.data, "employerId") !== target.employerId ||
           stringField(document.data, "orgId") !== target.organizationId
-        : document.data.type !== "job" || stringField(document.data, "orgId") !== target.employerId ||
-          target.organizationId !== target.employerId)) {
+        : document.data.type !== "job" ||
+          (stringField(document.data, "employerId") || stringField(document.data, "orgId")) !== target.employerId ||
+          stringField(document.data, "orgId") !== target.organizationId)) {
     throw new HermesFirestoreConflictError("Job target links changed since review");
   }
 }

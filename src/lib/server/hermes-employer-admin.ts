@@ -407,7 +407,7 @@ async function resolveEmployerState(
     const authorId = pickText(job.data, "authorId");
     const employerId = job.collection === "jobs"
       ? pickText(job.data, "employerId")
-      : pickText(job.data, "orgId");
+      : pickText(job.data, "employerId", "orgId");
     const organizationId = pickText(job.data, "orgId");
     if (!authorId || !employerId || !organizationId) {
       return { error: { ok: false, status: 409, error: "Job target is missing exact author, employer, or organization links" } };
