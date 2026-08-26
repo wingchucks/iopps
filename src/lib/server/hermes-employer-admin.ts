@@ -391,6 +391,7 @@ async function resolveEmployerState(
         !deps.findLinkedEmployers || !deps.findLinkedOrganizations) {
       return { error: { ok: false, status: 409, error: "Exact job link resolution is unavailable" } };
     }
+    const findLinkedOrganizations = deps.findLinkedOrganizations;
     const jobs = await deps.findJobCandidates(command.jobId);
     if (jobs.length === 0) {
       return { error: { ok: false, status: 404, error: "Job target was not found" } };
@@ -416,22 +417,37 @@ async function resolveEmployerState(
     if (users.length !== 1 || users[0].id !== authorId) {
       return { error: { ok: false, status: 409, error: "Exact job author lookup was not unique" } };
     }
-    employers = deduplicateDocuments(await deps.findLinkedEmployers(users[0]));
-    if (employers.length !== 1 ||
-        (employerId !== employers[0].id && employerId !== authorId)) {
+    const employerCandidates = deduplicateDocuments(await deps.findLinkedEmployers(users[0]));
+    if (employerCandidates.length === 0) {
       return { error: { ok: false, status: 409, error: "Exact job employer link was not unique" } };
     }
-    const organizations = deduplicateDocuments(await deps.findLinkedOrganizations(users[0], employers[0]));
-    if (organizations.length !== 1 ||
-        (organizationId !== organizations[0].id && organizationId !== employers[0].id &&
-          organizationId !== authorId)) {
-      return { error: { ok: false, status: 409, error: "Exact job organization link was not unique" } };
+    const pairGroups = await Promise.all(employerCandidates.map(async (candidateEmployer) => {
+      const candidateOrganizations = deduplicateDocuments(
+        await findLinkedOrganizations(users[0], candidateEmployer),
+      );
+      return candidateOrganizations
+        .filter((candidateOrganization) => {
+          const employerLinkMatches = employerId === authorId || employerId === candidateEmployer.id;
+          const organizationLinkMatches = organizationId === authorId ||
+            organizationId === candidateEmployer.id || organizationId === candidateOrganization.id;
+          const nameMatches = pickText(
+            candidateOrganization.data,
+            "organizationName",
+            "name",
+            "companyName",
+          ) === command.organizationName;
+          return employerLinkMatches && organizationLinkMatches && nameMatches;
+        })
+        .map((candidateOrganization) => ({ employer: candidateEmployer, organization: candidateOrganization }));
+    }));
+    const pairs = [...new Map(
+      pairGroups.flat().map((pair) => [`${pair.employer.id}\0${pair.organization.id}`, pair]),
+    ).values()];
+    if (pairs.length !== 1) {
+      return { error: { ok: false, status: 409, error: "Exact job employer and organization target was not unique" } };
     }
-    organization = organizations[0];
-    const resolvedName = pickText(organization.data, "organizationName", "name", "companyName");
-    if (resolvedName !== command.organizationName) {
-      return { error: { ok: false, status: 409, error: "Organization name did not match the exact job target" } };
-    }
+    employers = [pairs[0].employer];
+    organization = pairs[0].organization;
     jobTarget = {
       documentId: job.id,
       collection: job.collection,
