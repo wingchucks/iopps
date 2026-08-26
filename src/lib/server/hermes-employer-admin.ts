@@ -417,11 +417,14 @@ async function resolveEmployerState(
       return { error: { ok: false, status: 409, error: "Exact job author lookup was not unique" } };
     }
     employers = deduplicateDocuments(await deps.findLinkedEmployers(users[0]));
-    if (employers.length !== 1 || employers[0].id !== employerId) {
+    if (employers.length !== 1 ||
+        (employerId !== employers[0].id && employerId !== authorId)) {
       return { error: { ok: false, status: 409, error: "Exact job employer link was not unique" } };
     }
     const organizations = deduplicateDocuments(await deps.findLinkedOrganizations(users[0], employers[0]));
-    if (organizations.length !== 1 || organizations[0].id !== organizationId) {
+    if (organizations.length !== 1 ||
+        (organizationId !== organizations[0].id && organizationId !== employers[0].id &&
+          organizationId !== authorId)) {
       return { error: { ok: false, status: 409, error: "Exact job organization link was not unique" } };
     }
     organization = organizations[0];
