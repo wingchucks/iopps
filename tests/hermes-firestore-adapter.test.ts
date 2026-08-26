@@ -118,6 +118,16 @@ assert.equal(normalized.ok, true);
 if (!normalized.ok) throw new Error("invalid fixture");
 const command = normalized.command;
 
+const normalizedJob = normalizeHermesEmployerCommand({
+  jobId: "job_exact_1",
+  organizationName: "Correct Organization",
+  subscriptionStart: "2026-08-19",
+  subscriptionEnd: "2027-08-19",
+});
+assert.equal(normalizedJob.ok, true);
+if (!normalizedJob.ok) throw new Error("invalid job fixture");
+const jobCommand = normalizedJob.command;
+
 const boundState: HermesEmployerBoundState = {
   userId: "user_1",
   userVersion: "u1",
@@ -156,6 +166,129 @@ test("Firestore Hermes employer lookup is exact across email fields and deduplic
   });
   const matches = await deps.findEmployersByEmail(command.email);
   assert.deepEqual(matches.map((doc) => doc.id), ["org_1", "org_2"]);
+});
+
+test("Firestore Hermes job target resolves exact links, applies the existing grant, and preserves unrelated fields", async () => {
+  const memory = memoryPort({
+    jobs: {
+      job_exact_1: { version: "j1", data: {
+        authorId: "user_1",
+        employerId: "employer_1",
+        orgId: "organization_1",
+        orgName: "Correct Organization",
+        description: "preserve job",
+      } },
+    },
+    users: {
+      user_1: { version: "u1", data: {
+        uid: "user_1", email: "unknown-login@example.com", role: "community",
+        employerId: "employer_1", orgId: "organization_1", unrelatedUser: "keep",
+      } },
+    },
+    employers: {
+      employer_1: { version: "e1", data: {
+        uid: "user_1", ownerId: "user_1", organizationName: "Correct Organization",
+        status: "pending", unrelatedEmployer: "keep",
+      } },
+    },
+    organizations: {
+      organization_1: { version: "o1", data: {
+        employerId: "employer_1", ownerId: "user_1", name: "Correct Organization",
+        status: "pending", unrelatedOrganization: "keep",
+      } },
+    },
+  });
+  const execution = { keyId: "primary", idempotencyKey: "job-target-apply", requestHash: "9".repeat(64) };
+  const adapter = createHermesFirestoreAdapter(memory.port, {
+    now: () => new Date("2026-08-19T18:00:00.000Z"),
+  });
+  const deps = adapter.createEmployerServiceDeps({ reviewSecret: "s".repeat(64), execution });
+  const reviewed = await reviewHermesEmployer({
+    jobId: jobCommand.jobId,
+    organizationName: jobCommand.organizationName,
+    subscriptionStart: jobCommand.subscriptionStart,
+    subscriptionEnd: jobCommand.subscriptionEnd,
+  }, deps);
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+
+  const applied = await applyHermesEmployer({
+    command: {
+      jobId: jobCommand.jobId,
+      organizationName: jobCommand.organizationName,
+      subscriptionStart: jobCommand.subscriptionStart,
+      subscriptionEnd: jobCommand.subscriptionEnd,
+    },
+    reviewToken: reviewed.reviewToken,
+    confirmation: "APPLY IOPPS EMPLOYER UPDATE",
+  }, deps);
+  assert.equal(applied.ok, true);
+  if (!applied.ok) return;
+  assert.equal(applied.verified.jobId, "job_exact_1");
+  assert.equal(memory.get("jobs", "job_exact_1")?.data.description, "preserve job");
+  assert.equal(memory.get("users", "user_1")?.data.unrelatedUser, "keep");
+  assert.equal(memory.get("employers", "employer_1")?.data.unrelatedEmployer, "keep");
+  assert.equal(memory.get("organizations", "organization_1")?.data.unrelatedOrganization, "keep");
+  assert.equal(memory.get("employers", "employer_1")?.data.subscriptionTier, "premium");
+
+  const audit = memory.get("hermesAdminAudit", hermesIdempotencyDocumentId(execution))?.data ?? {};
+  assert.equal(JSON.stringify(audit).includes("Correct Organization"), false);
+  assert.deepEqual((audit.target as Record<string, unknown>).jobTarget, {
+    documentId: "job_exact_1",
+    collection: "jobs",
+    schema: "employer-job-v1",
+    authorId: "user_1",
+    employerId: "employer_1",
+    organizationId: "organization_1",
+  });
+
+  const cached = await adapter.getIdempotentApply(jobCommand, execution);
+  assert.deepEqual(cached, {
+    status: "applied",
+    committedAt: applied.committedAt,
+    verified: applied.verified,
+  });
+  const storedJob = memory.get("jobs", "job_exact_1");
+  if (!storedJob) throw new Error("missing job fixture");
+  storedJob.version = "j2";
+  await assert.rejects(
+    () => adapter.getIdempotentApply(jobCommand, execution),
+    /Job target changed since review/,
+  );
+});
+
+test("Firestore Hermes transaction rejects a stale job target version before mutation", async () => {
+  const memory = memoryPort({
+    jobs: { job_exact_1: { version: "j2", data: {
+      authorId: "user_1", employerId: "employer_1", orgId: "organization_1",
+    } } },
+    users: { user_1: { version: "u1", data: {} } },
+    employers: { employer_1: { version: "e1", data: {} } },
+    organizations: { organization_1: { version: "o1", data: {} } },
+  });
+  const deps = createHermesFirestoreAdapter(memory.port).createEmployerServiceDeps({
+    reviewSecret: "s".repeat(64),
+    execution: { keyId: "primary", idempotencyKey: "stale-job-target", requestHash: "8".repeat(64) },
+  });
+  const state: HermesEmployerBoundState = {
+    userId: "user_1", userVersion: "u1",
+    employerId: "employer_1", employerVersion: "e1",
+    organizationId: "organization_1", organizationVersion: "o1",
+    subscriptionId: hermesEmployerSubscriptionDocumentId(jobCommand, "employer_1"),
+    subscriptionVersion: "missing",
+    jobTarget: {
+      documentId: "job_exact_1", collection: "jobs", schema: "employer-job-v1", version: "j1",
+      authorId: "user_1", employerId: "employer_1", organizationId: "organization_1",
+    },
+  };
+  await assert.rejects(() => deps.commit({
+    command: jobCommand,
+    boundState: state,
+    plan: buildHermesEmployerMutationPlan(jobCommand, {
+      orgId: "employer_1", organizationId: "organization_1",
+    }),
+  }), /Job target changed since review/);
+  assert.equal(memory.stats().transactionWrites, 0);
 });
 
 test("Firestore Hermes resolution updates unique auto-ID organization and subscription documents without duplicates", async () => {
