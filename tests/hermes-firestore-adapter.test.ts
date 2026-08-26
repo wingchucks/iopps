@@ -173,8 +173,8 @@ test("Firestore Hermes job target resolves exact links, applies the existing gra
     jobs: {
       job_exact_1: { version: "j1", data: {
         authorId: "user_1",
-        employerId: "employer_1",
-        orgId: "organization_1",
+        employerId: "user_1",
+        orgId: "user_1",
         orgName: "Correct Organization",
         description: "preserve job",
       } },
@@ -238,8 +238,8 @@ test("Firestore Hermes job target resolves exact links, applies the existing gra
     collection: "jobs",
     schema: "employer-job-v1",
     authorId: "user_1",
-    employerId: "employer_1",
-    organizationId: "organization_1",
+    employerId: "user_1",
+    organizationId: "user_1",
   });
 
   const cached = await adapter.getIdempotentApply(jobCommand, execution);
