@@ -436,6 +436,32 @@ test("reviewHermesEmployer accepts canonical jobs whose employer links use the a
   });
 });
 
+test("reviewHermesEmployer selects one exact organization pair from multiple linked employer candidates", async () => {
+  const canonical = await jobServiceDeps().findJobCandidates("job_exact_1");
+  const aliased = {
+    ...canonical[0],
+    data: { ...canonical[0].data, employerId: "user_1", orgId: "user_1" },
+  };
+  const matchingEmployer = doc("employer_1", "e1", { uid: "user_1" });
+  const duplicateEmployer = doc("employer_old", "e-old", { uid: "user_1" });
+  const matchingOrganization = doc("organization_1", "o1", {
+    employerId: "employer_1", ownerId: "user_1", name: "Battlefords Agency Tribal Chiefs",
+  });
+  const otherOrganization = doc("organization_old", "o-old", {
+    employerId: "employer_old", ownerId: "user_1", name: "Historical Organization",
+  });
+  const reviewed = await reviewHermesEmployer(jobCommandInput, jobServiceDeps({
+    findJobCandidates: async () => [aliased],
+    findLinkedEmployers: async () => [matchingEmployer, duplicateEmployer],
+    findLinkedOrganizations: async (_user: unknown, employer: { id: string }) =>
+      employer.id === "employer_1" ? [matchingOrganization] : [otherOrganization],
+  }));
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  assert.equal(reviewed.target.employerId, "employer_1");
+  assert.equal(reviewed.target.organizationId, "organization_1");
+});
+
 test("reviewHermesEmployer resolves a legacy job with distinct employer and organization IDs", async () => {
   const canonical = await jobServiceDeps().findJobCandidates("job_exact_1");
   const legacy = {
@@ -486,7 +512,7 @@ test("reviewHermesEmployer rejects dual storage, missing links, and mismatched o
   assert.deepEqual(await reviewHermesEmployer(
     { ...jobCommandInput, organizationName: "Different Organization" },
     jobServiceDeps(),
-  ), { ok: false, status: 409, error: "Organization name did not match the exact job target" });
+  ), { ok: false, status: 409, error: "Exact job employer and organization target was not unique" });
 });
 
 test("applyHermesEmployer rejects a stale job version without committing", async () => {
