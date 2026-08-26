@@ -448,7 +448,7 @@ test("reviewHermesEmployer selects one exact organization pair from multiple lin
     employerId: "employer_1", ownerId: "user_1", name: "Battlefords Agency Tribal Chiefs",
   });
   const otherOrganization = doc("organization_old", "o-old", {
-    employerId: "employer_old", ownerId: "user_1", name: "Historical Organization",
+    employerId: "employer_old", ownerId: "user_1", name: "Battlefords Agency Tribal Chiefs",
   });
   const reviewed = await reviewHermesEmployer(jobCommandInput, jobServiceDeps({
     findJobCandidates: async () => [aliased],

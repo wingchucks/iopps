@@ -421,6 +421,8 @@ async function resolveEmployerState(
     if (employerCandidates.length === 0) {
       return { error: { ok: false, status: 409, error: "Exact job employer link was not unique" } };
     }
+    const userEmployerId = pickText(users[0].data, "employerId");
+    const userOrganizationId = pickText(users[0].data, "orgId");
     const pairGroups = await Promise.all(employerCandidates.map(async (candidateEmployer) => {
       const candidateOrganizations = deduplicateDocuments(
         await findLinkedOrganizations(users[0], candidateEmployer),
@@ -438,16 +440,27 @@ async function resolveEmployerState(
           ) === command.organizationName;
           return employerLinkMatches && organizationLinkMatches && nameMatches;
         })
-        .map((candidateOrganization) => ({ employer: candidateEmployer, organization: candidateOrganization }));
+        .map((candidateOrganization) => {
+          const score =
+            (candidateEmployer.id === userEmployerId ? 32 : 0) +
+            (candidateEmployer.id === userOrganizationId ? 16 : 0) +
+            (pickText(candidateEmployer.data, "uid", "ownerId") === authorId ? 8 : 0) +
+            (candidateOrganization.id === userOrganizationId ? 32 : 0) +
+            (pickText(candidateOrganization.data, "employerId") === candidateEmployer.id ? 16 : 0) +
+            (pickText(candidateOrganization.data, "ownerId", "uid") === authorId ? 8 : 0);
+          return { employer: candidateEmployer, organization: candidateOrganization, score };
+        });
     }));
     const pairs = [...new Map(
       pairGroups.flat().map((pair) => [`${pair.employer.id}\0${pair.organization.id}`, pair]),
     ).values()];
-    if (pairs.length !== 1) {
+    const maxScore = pairs.length ? Math.max(...pairs.map((pair) => pair.score)) : -1;
+    const strongestPairs = pairs.filter((pair) => pair.score === maxScore);
+    if (strongestPairs.length !== 1) {
       return { error: { ok: false, status: 409, error: "Exact job employer and organization target was not unique" } };
     }
-    employers = [pairs[0].employer];
-    organization = pairs[0].organization;
+    employers = [strongestPairs[0].employer];
+    organization = strongestPairs[0].organization;
     jobTarget = {
       documentId: job.id,
       collection: job.collection,
