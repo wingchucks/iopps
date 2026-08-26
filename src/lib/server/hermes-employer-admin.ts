@@ -1,8 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 
-export interface HermesEmployerCommand {
-  email: string;
+interface HermesEmployerCommandIntent {
   organizationName: string;
   role: "employer";
   approved: true;
@@ -15,6 +14,21 @@ export interface HermesEmployerCommand {
   totalAmount: 0;
 }
 
+export type HermesEmployerCommand = HermesEmployerCommandIntent & (
+  | { email: string; jobId?: never }
+  | { jobId: string; email?: never }
+);
+
+export interface HermesEmployerJobTarget {
+  documentId: string;
+  collection: "jobs" | "posts";
+  schema: "employer-job-v1" | "legacy-job-post-v1";
+  version: string;
+  authorId: string;
+  employerId: string;
+  organizationId: string;
+}
+
 export interface HermesEmployerBoundState {
   userId: string;
   userVersion: string;
@@ -24,6 +38,7 @@ export interface HermesEmployerBoundState {
   organizationVersion: string;
   subscriptionId: string;
   subscriptionVersion: string;
+  jobTarget?: HermesEmployerJobTarget;
 }
 
 type NormalizeResult =
@@ -42,18 +57,26 @@ function isStrictDate(value: string): boolean {
 
 export function normalizeHermesEmployerCommand(value: unknown): NormalizeResult {
   if (!isRecord(value)) return { ok: false, error: "Command must be an object" };
-  const allowed = new Set(["email", "organizationName", "subscriptionStart", "subscriptionEnd"]);
-  if (Object.keys(value).some((key) => !allowed.has(key))) {
+  const allowed = new Set(["email", "jobId", "organizationName", "subscriptionStart", "subscriptionEnd"]);
+  const keys = Object.keys(value);
+  if (keys.some((key) => !allowed.has(key))) {
     return { ok: false, error: "Command contains unsupported fields" };
   }
 
   const email = typeof value.email === "string" ? value.email.trim().toLowerCase() : "";
+  const jobId = typeof value.jobId === "string" ? value.jobId.trim() : "";
   const organizationName = typeof value.organizationName === "string" ? value.organizationName.trim() : "";
   const subscriptionStart = typeof value.subscriptionStart === "string" ? value.subscriptionStart.trim() : "";
   const subscriptionEnd = typeof value.subscriptionEnd === "string" ? value.subscriptionEnd.trim() : "";
 
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (keys.length !== 4 || Boolean(email) === Boolean(jobId)) {
+    return { ok: false, error: "Exactly one exact email or jobId target is required" };
+  }
+  if (email && (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
     return { ok: false, error: "A valid exact email is required" };
+  }
+  if (jobId && (jobId.length > 512 || jobId.includes("/") || /[\u0000-\u001f\u007f]/.test(jobId))) {
+    return { ok: false, error: "A valid exact jobId is required" };
   }
   if (
     organizationName.length < 2 ||
@@ -72,7 +95,7 @@ export function normalizeHermesEmployerCommand(value: unknown): NormalizeResult 
   return {
     ok: true,
     command: {
-      email,
+      ...(email ? { email } : { jobId }),
       organizationName,
       role: "employer",
       approved: true,
@@ -268,8 +291,14 @@ export interface HermesEmployerDocument {
   data: Record<string, unknown>;
 }
 
+export interface HermesEmployerJobDocument extends HermesEmployerDocument {
+  collection: HermesEmployerJobTarget["collection"];
+  schema: HermesEmployerJobTarget["schema"];
+}
+
 export interface HermesEmployerVerifiedProjection {
-  email: string;
+  email?: string;
+  jobId?: string;
   organizationName: string;
   role: string;
   status: string;
@@ -285,6 +314,13 @@ export interface HermesEmployerServiceDeps {
   now?: () => Date;
   findUsersByEmail: (email: string) => Promise<HermesEmployerDocument[]>;
   findEmployersByEmail: (email: string) => Promise<HermesEmployerDocument[]>;
+  findJobCandidates?: (jobId: string) => Promise<HermesEmployerJobDocument[]>;
+  findUsersByAuthorId?: (authorId: string) => Promise<HermesEmployerDocument[]>;
+  findLinkedEmployers?: (user: HermesEmployerDocument) => Promise<HermesEmployerDocument[]>;
+  findLinkedOrganizations?: (
+    user: HermesEmployerDocument,
+    employer: HermesEmployerDocument,
+  ) => Promise<HermesEmployerDocument[]>;
   findOrganizationsByEmployerId: (employerId: string) => Promise<HermesEmployerDocument[]>;
   findSubscriptions: (
     orgId: string,
@@ -345,10 +381,74 @@ async function resolveEmployerState(
   command: HermesEmployerCommand,
   deps: HermesEmployerServiceDeps,
 ): Promise<ResolvedEmployerState> {
-  const [users, employers] = await Promise.all([
-    deps.findUsersByEmail(command.email),
-    deps.findEmployersByEmail(command.email),
-  ]);
+  let users: HermesEmployerDocument[];
+  let employers: HermesEmployerDocument[];
+  let organization: HermesEmployerDocument | null;
+  let jobTarget: HermesEmployerJobTarget | undefined;
+
+  if (command.jobId) {
+    if (!deps.findJobCandidates || !deps.findUsersByAuthorId ||
+        !deps.findLinkedEmployers || !deps.findLinkedOrganizations) {
+      return { error: { ok: false, status: 409, error: "Exact job link resolution is unavailable" } };
+    }
+    const jobs = await deps.findJobCandidates(command.jobId);
+    if (jobs.length === 0) {
+      return { error: { ok: false, status: 404, error: "Job target was not found" } };
+    }
+    if (jobs.length !== 1) {
+      return { error: { ok: false, status: 409, error: "Job target was ambiguous" } };
+    }
+    const job = jobs[0];
+    const expectedSchema = job.collection === "jobs" ? "employer-job-v1" : "legacy-job-post-v1";
+    if (job.id !== command.jobId || job.schema !== expectedSchema ||
+        (job.collection === "posts" && job.data.type !== "job")) {
+      return { error: { ok: false, status: 409, error: "Job target identity did not match the exact request" } };
+    }
+    const authorId = pickText(job.data, "authorId");
+    const employerId = job.collection === "jobs"
+      ? pickText(job.data, "employerId")
+      : pickText(job.data, "orgId");
+    const organizationId = pickText(job.data, "orgId");
+    if (!authorId || !employerId || !organizationId) {
+      return { error: { ok: false, status: 409, error: "Job target is missing exact author, employer, or organization links" } };
+    }
+    users = deduplicateDocuments(await deps.findUsersByAuthorId(authorId));
+    if (users.length !== 1 || users[0].id !== authorId) {
+      return { error: { ok: false, status: 409, error: "Exact job author lookup was not unique" } };
+    }
+    employers = deduplicateDocuments(await deps.findLinkedEmployers(users[0]));
+    if (employers.length !== 1 || employers[0].id !== employerId) {
+      return { error: { ok: false, status: 409, error: "Exact job employer link was not unique" } };
+    }
+    const organizations = deduplicateDocuments(await deps.findLinkedOrganizations(users[0], employers[0]));
+    if (organizations.length !== 1 || organizations[0].id !== organizationId) {
+      return { error: { ok: false, status: 409, error: "Exact job organization link was not unique" } };
+    }
+    organization = organizations[0];
+    const resolvedName = pickText(organization.data, "organizationName", "name", "companyName");
+    if (resolvedName !== command.organizationName) {
+      return { error: { ok: false, status: 409, error: "Organization name did not match the exact job target" } };
+    }
+    jobTarget = {
+      documentId: job.id,
+      collection: job.collection,
+      schema: job.schema,
+      version: job.version,
+      authorId,
+      employerId,
+      organizationId,
+    };
+  } else {
+    const email = command.email;
+    if (!email) {
+      return { error: { ok: false, status: 409, error: "Exact email target was missing" } };
+    }
+    [users, employers] = await Promise.all([
+      deps.findUsersByEmail(email),
+      deps.findEmployersByEmail(email),
+    ]);
+    organization = null;
+  }
   if (users.length !== 1) {
     return { error: { ok: false, status: 409, error: "Exact user lookup was not unique" } as HermesEmployerServiceError };
   }
@@ -359,18 +459,20 @@ async function resolveEmployerState(
   const user = users[0];
   const employer = employers[0];
   const subscriptionId = hermesEmployerSubscriptionDocumentId(command, employer.id);
-  const [directOrganization, linkedOrganizations] = await Promise.all([
-    deps.getOrganization(employer.id),
-    deps.findOrganizationsByEmployerId(employer.id),
-  ]);
-  const organizations = deduplicateDocuments([
-    ...(directOrganization ? [directOrganization] : []),
-    ...linkedOrganizations,
-  ]);
-  if (organizations.length > 1) {
-    return { error: { ok: false, status: 409, error: "Organization lookup was not unique" } };
+  if (!jobTarget) {
+    const [directOrganization, linkedOrganizations] = await Promise.all([
+      deps.getOrganization(employer.id),
+      deps.findOrganizationsByEmployerId(employer.id),
+    ]);
+    const organizations = deduplicateDocuments([
+      ...(directOrganization ? [directOrganization] : []),
+      ...linkedOrganizations,
+    ]);
+    if (organizations.length > 1) {
+      return { error: { ok: false, status: 409, error: "Organization lookup was not unique" } };
+    }
+    organization = organizations[0] ?? null;
   }
-  const organization = organizations[0] ?? null;
   const organizationId = organization?.id ?? employer.id;
   const [
     employerSubscriptions,
@@ -408,6 +510,7 @@ async function resolveEmployerState(
     organizationVersion: organization?.version ?? "missing",
     subscriptionId: resolvedSubscriptionId,
     subscriptionVersion: subscription?.version ?? "missing",
+    ...(jobTarget ? { jobTarget } : {}),
   };
   return { user, employer, organization, subscription, boundState };
 }
@@ -494,7 +597,7 @@ export function projectHermesEmployerState(
   const start = pickText(source, "subscriptionStart", "billingStartAt") || pickText(employer.data, "subscriptionStart", "billingStartAt");
   const end = pickText(source, "subscriptionEnd", "expiresAt") || pickText(employer.data, "subscriptionEnd", "expiresAt");
   return {
-    email: command.email,
+    ...(command.email ? { email: command.email } : { jobId: command.jobId }),
     organizationName: pickText(source, "organizationName", "name", "companyName") || pickText(employer.data, "organizationName", "name", "companyName"),
     role: pickText(user.data, "role"),
     status: pickText(source, "status") || pickText(employer.data, "status"),
@@ -508,7 +611,7 @@ export function projectHermesEmployerState(
 
 function desiredProjection(command: HermesEmployerCommand): HermesEmployerVerifiedProjection {
   return {
-    email: command.email,
+    ...(command.email ? { email: command.email } : { jobId: command.jobId }),
     organizationName: command.organizationName,
     role: command.role,
     status: "approved",
@@ -576,7 +679,7 @@ export async function reviewHermesEmployer(
   | {
       ok: true;
       reviewToken: string;
-      target: { userId: string; employerId: string; organizationId: string; email: string };
+      target: { userId: string; employerId: string; organizationId: string; email?: string; jobId?: string };
       current: HermesEmployerVerifiedProjection;
       desired: HermesEmployerVerifiedProjection;
     }
@@ -597,7 +700,9 @@ export async function reviewHermesEmployer(
       userId: resolved.user.id,
       employerId: resolved.employer.id,
       organizationId: resolved.organization?.id ?? resolved.employer.id,
-      email: normalized.command.email,
+      ...(normalized.command.email
+        ? { email: normalized.command.email }
+        : { jobId: normalized.command.jobId }),
     },
     current,
     desired: desiredProjection(normalized.command),

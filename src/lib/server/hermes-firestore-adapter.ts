@@ -9,7 +9,9 @@ import {
   hermesEmployerSubscriptionMatches,
   verifyHermesEmployerDesiredDocuments,
   type HermesEmployerCommand,
+  type HermesEmployerBoundState,
   type HermesEmployerDocument,
+  type HermesEmployerJobTarget,
   type HermesEmployerServiceDeps,
   type HermesEmployerVerifiedProjection,
 } from "./hermes-employer-admin.ts";
@@ -137,6 +139,45 @@ function deduplicateDocuments(groups: HermesEmployerDocument[][]): HermesEmploye
   return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
 }
 
+function stringField(data: Record<string, unknown>, field: string): string {
+  const value = data[field];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function serializedJobTarget(boundState: HermesEmployerBoundState, includeVersion: boolean) {
+  const target = boundState.jobTarget;
+  if (!target) return undefined;
+  return {
+    documentId: target.documentId,
+    collection: target.collection,
+    schema: target.schema,
+    ...(includeVersion ? { version: target.version } : {}),
+    authorId: target.authorId,
+    employerId: target.employerId,
+    organizationId: target.organizationId,
+  };
+}
+
+function verifyJobTarget(
+  document: HermesEmployerDocument | null,
+  target: HermesEmployerJobTarget | undefined,
+): void {
+  if (!target) return;
+  const expectedSchema = target.collection === "jobs" ? "employer-job-v1" : "legacy-job-post-v1";
+  if (target.schema !== expectedSchema) {
+    throw new HermesFirestoreConflictError("Job target schema changed since review");
+  }
+  verifyVersion("Job target", document, target.documentId, target.version);
+  if (!document || stringField(document.data, "authorId") !== target.authorId ||
+      (target.collection === "jobs"
+        ? stringField(document.data, "employerId") !== target.employerId ||
+          stringField(document.data, "orgId") !== target.organizationId
+        : document.data.type !== "job" || stringField(document.data, "orgId") !== target.employerId ||
+          target.organizationId !== target.employerId)) {
+    throw new HermesFirestoreConflictError("Job target links changed since review");
+  }
+}
+
 export function createHermesFirestoreAdapter(
   port: HermesFirestorePort,
   options: { now?: () => Date } = {},
@@ -181,19 +222,34 @@ export function createHermesFirestoreAdapter(
       const employerId = typeof targetRecord.employerId === "string" ? targetRecord.employerId : "";
       const organizationId = typeof targetRecord.organizationId === "string" ? targetRecord.organizationId : "";
       const subscriptionId = typeof targetRecord.subscriptionId === "string" ? targetRecord.subscriptionId : "";
+      const rawJobTarget = targetRecord.jobTarget;
+      const jobTarget = rawJobTarget && typeof rawJobTarget === "object" && !Array.isArray(rawJobTarget)
+        ? rawJobTarget as unknown as HermesEmployerJobTarget
+        : undefined;
       const resultStatus = record.data.resultStatus;
       if (
         !userId || !employerId || !organizationId || !subscriptionId ||
+        (command.jobId
+          ? !jobTarget || jobTarget.documentId !== command.jobId ||
+            (jobTarget.collection !== "jobs" && jobTarget.collection !== "posts") ||
+            (jobTarget.collection === "jobs"
+              ? jobTarget.schema !== "employer-job-v1"
+              : jobTarget.schema !== "legacy-job-post-v1") ||
+            typeof jobTarget.version !== "string" || jobTarget.authorId !== userId ||
+            jobTarget.employerId !== employerId || jobTarget.organizationId !== organizationId
+          : Boolean(jobTarget)) ||
         (resultStatus !== "applied" && resultStatus !== "verified_noop")
       ) {
         throw new HermesFirestoreConflictError("Idempotent request record is invalid");
       }
-      const [user, employer, organization, subscription] = await Promise.all([
+      const [user, employer, organization, subscription, job] = await Promise.all([
         port.getDocument("users", userId),
         port.getDocument("employers", employerId),
         port.getDocument("organizations", organizationId),
         port.getDocument("subscriptions", subscriptionId),
+        jobTarget ? port.getDocument(jobTarget.collection, jobTarget.documentId) : Promise.resolve(null),
       ]);
+      verifyJobTarget(job, jobTarget);
       if (
         !user || !employer || !organization || !subscription ||
         !hermesEmployerSubscriptionMatches(command, subscription, employerId, organizationId)
@@ -243,6 +299,59 @@ export function createHermesFirestoreAdapter(
           ]);
           return deduplicateDocuments(matches);
         },
+        async findJobCandidates(jobId) {
+          const [canonical, legacy] = await Promise.all([
+            port.getDocument("jobs", jobId),
+            port.getDocument("posts", jobId),
+          ]);
+          return [
+            ...(canonical ? [{ ...canonical, collection: "jobs" as const, schema: "employer-job-v1" as const }] : []),
+            ...(legacy?.data.type === "job"
+              ? [{ ...legacy, collection: "posts" as const, schema: "legacy-job-post-v1" as const }]
+              : []),
+          ];
+        },
+        async findUsersByAuthorId(authorId) {
+          const [direct, byUid] = await Promise.all([
+            port.getDocument("users", authorId),
+            port.queryExact("users", "uid", authorId, 2),
+          ]);
+          return deduplicateDocuments([direct ? [direct] : [], byUid]);
+        },
+        async findLinkedEmployers(user) {
+          const candidateIds = new Set([
+            user.id,
+            stringField(user.data, "employerId"),
+            stringField(user.data, "orgId"),
+          ].filter(Boolean));
+          const [direct, byUid, byOwnerId, byEmail, byContactEmail] = await Promise.all([
+            Promise.all([...candidateIds].map((id) => port.getDocument("employers", id))),
+            port.queryExact("employers", "uid", user.id, 2),
+            port.queryExact("employers", "ownerId", user.id, 2),
+            port.queryExact("employers", "email", stringField(user.data, "email"), 2),
+            port.queryExact("employers", "contactEmail", stringField(user.data, "email"), 2),
+          ]);
+          return deduplicateDocuments([
+            direct.filter((document): document is HermesEmployerDocument => Boolean(document)),
+            byUid, byOwnerId, byEmail, byContactEmail,
+          ]);
+        },
+        async findLinkedOrganizations(user, employer) {
+          const candidateIds = new Set([
+            employer.id,
+            stringField(user.data, "orgId"),
+          ].filter(Boolean));
+          const [direct, byEmployerId, byOwnerId, byUid] = await Promise.all([
+            Promise.all([...candidateIds].map((id) => port.getDocument("organizations", id))),
+            port.queryExact("organizations", "employerId", employer.id, 2),
+            port.queryExact("organizations", "ownerId", user.id, 2),
+            port.queryExact("organizations", "uid", user.id, 2),
+          ]);
+          return deduplicateDocuments([
+            direct.filter((document): document is HermesEmployerDocument => Boolean(document)),
+            byEmployerId, byOwnerId, byUid,
+          ]);
+        },
         findOrganizationsByEmployerId: (employerId) =>
           port.queryExact("organizations", "employerId", employerId, 2),
         findSubscriptions: (orgId, plan, billingCycle) => port.queryExactFields(
@@ -286,16 +395,20 @@ export function createHermesFirestoreAdapter(
               }
               return;
             }
-            const [user, employer, organization, subscription] = await Promise.all([
+            const [user, employer, organization, subscription, job] = await Promise.all([
               transaction.getDocument("users", boundState.userId),
               transaction.getDocument("employers", boundState.employerId),
               transaction.getDocument("organizations", boundState.organizationId),
               transaction.getDocument("subscriptions", boundState.subscriptionId),
+              boundState.jobTarget
+                ? transaction.getDocument(boundState.jobTarget.collection, boundState.jobTarget.documentId)
+                : Promise.resolve(null),
             ]);
             verifyVersion("User document", user, boundState.userId, boundState.userVersion);
             verifyVersion("Employer document", employer, boundState.employerId, boundState.employerVersion);
             verifyVersion("Organization document", organization, boundState.organizationId, boundState.organizationVersion);
             verifyVersion("Subscription document", subscription, boundState.subscriptionId, boundState.subscriptionVersion);
+            verifyJobTarget(job, boundState.jobTarget);
 
             const timestamp = now().toISOString();
             const target = {
@@ -303,6 +416,7 @@ export function createHermesFirestoreAdapter(
               employerId: boundState.employerId,
               organizationId: boundState.organizationId,
               subscriptionId: boundState.subscriptionId,
+              ...(boundState.jobTarget ? { jobTarget: serializedJobTarget(boundState, false) } : {}),
             };
             transaction.setDocument(AUDIT_COLLECTION, idempotencyId, {
               protocol: "iopps-hermes-admin-audit-v1",
@@ -319,7 +433,10 @@ export function createHermesFirestoreAdapter(
               operation: "employer_apply",
               keyId: input.execution.keyId,
               requestHash: input.execution.requestHash,
-              target,
+              target: {
+                ...target,
+                ...(boundState.jobTarget ? { jobTarget: serializedJobTarget(boundState, true) } : {}),
+              },
               status: "committed",
               resultStatus: "verified_noop",
               committedAt: timestamp,
@@ -348,11 +465,14 @@ export function createHermesFirestoreAdapter(
               return cachedTime;
             }
 
-            const [user, employer, organization, subscription] = await Promise.all([
+            const [user, employer, organization, subscription, job] = await Promise.all([
               transaction.getDocument("users", boundState.userId),
               transaction.getDocument("employers", boundState.employerId),
               transaction.getDocument("organizations", boundState.organizationId),
               transaction.getDocument("subscriptions", boundState.subscriptionId),
+              boundState.jobTarget
+                ? transaction.getDocument(boundState.jobTarget.collection, boundState.jobTarget.documentId)
+                : Promise.resolve(null),
             ]);
             verifyVersion("User document", user, boundState.userId, boundState.userVersion);
             verifyVersion("Employer document", employer, boundState.employerId, boundState.employerVersion);
@@ -368,6 +488,7 @@ export function createHermesFirestoreAdapter(
               boundState.subscriptionId,
               boundState.subscriptionVersion,
             );
+            verifyJobTarget(job, boundState.jobTarget);
 
             const userPatch = minimalPatch(user?.data ?? {}, plan.userPatch);
             const employerPatch = minimalPatch(employer?.data ?? {}, plan.employerPatch);
@@ -392,6 +513,7 @@ export function createHermesFirestoreAdapter(
               employerId: boundState.employerId,
               organizationId: boundState.organizationId,
               subscriptionId: boundState.subscriptionId,
+              ...(boundState.jobTarget ? { jobTarget: serializedJobTarget(boundState, false) } : {}),
             };
             transaction.setDocument(AUDIT_COLLECTION, idempotencyId, {
               protocol: "iopps-hermes-admin-audit-v1",
@@ -413,7 +535,10 @@ export function createHermesFirestoreAdapter(
               operation: "employer_apply",
               keyId: input.execution.keyId,
               requestHash: input.execution.requestHash,
-              target,
+              target: {
+                ...target,
+                ...(boundState.jobTarget ? { jobTarget: serializedJobTarget(boundState, true) } : {}),
+              },
               status: "committed",
               resultStatus: "applied",
               committedAt: timestamp,
@@ -421,12 +546,16 @@ export function createHermesFirestoreAdapter(
             return timestamp;
           });
 
-          const [user, employer, organization, subscription] = await Promise.all([
+          const [user, employer, organization, subscription, job] = await Promise.all([
             port.getDocument("users", boundState.userId),
             port.getDocument("employers", boundState.employerId),
             port.getDocument("organizations", boundState.organizationId),
             port.getDocument("subscriptions", boundState.subscriptionId),
+            boundState.jobTarget
+              ? port.getDocument(boundState.jobTarget.collection, boundState.jobTarget.documentId)
+              : Promise.resolve(null),
           ]);
+          verifyJobTarget(job, boundState.jobTarget);
           if (
             !user || !employer || !organization ||
             !hermesEmployerSubscriptionMatches(

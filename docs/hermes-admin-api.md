@@ -47,6 +47,19 @@ Send the desired command directly to `POST /api/hermes/v1/employers/review`:
 }
 ```
 
+When no unique login email is known, the same endpoint also accepts this mutually exclusive exact job target shape:
+
+```json
+{
+  "jobId": "exact-firestore-document-id",
+  "organizationName": "Correct Organization Name",
+  "subscriptionStart": "2026-01-01",
+  "subscriptionEnd": "2027-01-01"
+}
+```
+
+Each review command must contain exactly one of `email` or `jobId`; mixing the two or adding fields is rejected. For `jobId`, the server reads the exact ID from `jobs` and the eligible `type: "job"` legacy `posts` fallback, rejects dual storage, and requires the job's exact `authorId`, `employerId`/`orgId`, and organization link. It resolves one direct user plus exactly one employer and organization through the existing link adapters, requires the linked organization's current name to exactly match `organizationName`, and binds the job collection, schema, version, and links into the review token.
+
 The server requires exactly one `users.email` match and exactly one deduplicated `employers.email` or `employers.contactEmail` match. It also resolves at most one organization linked by `organizations.employerId` (including an organization whose document ID differs from the employer ID) and at most one existing subscription matching the bound `employerId`, the resolved `orgId`, or the legacy employer ID stored in `orgId`, together with `plan=tier2` and `billingCycle=annual`; matches are deduplicated and ambiguity is rejected. It returns current and desired safe projections plus an opaque review token bound to the exact user, employer, organization, and subscription document IDs, their Firestore update versions, and the normalized desired state.
 
 After inspecting that response, send `POST /api/hermes/v1/employers/apply`:
@@ -65,6 +78,8 @@ After inspecting that response, send `POST /api/hermes/v1/employers/apply`:
 ```
 
 Apply uses a Firestore transaction to recheck every bound version and then writes only the allowlisted role, organization identity, approved/verified state, and complimentary Premium/tier2 subscription fields. An existing unique tier2 annual subscription keeps its exact document ID; a deterministic subscription ID is used only when no matching subscription exists. The `hermesAdminIdempotency` document ID is deterministic. A sanitized record is written to `hermesAdminAudit`; it contains no signature, nonce, review token, request body, private key, or review secret. After the transaction, the server rereads the user, employer, organization, and subscription documents and verifies the employer and organization desired fields independently. An already-correct target is recorded and returned as `verified_noop` without target writes only when both documents independently match.
+
+For a job-targeted employer grant, use the same apply envelope and repeat the exact four-field job command inside `command`. Apply and exact idempotent retries also reread the bound job without modifying it. A missing job, storage ambiguity, version change, or reassigned author/employer/organization link rejects the apply as stale; unrelated job and account fields remain untouched.
 
 All responses use `Cache-Control: no-store` and omit internal exception details.
 

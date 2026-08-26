@@ -20,6 +20,13 @@ const commandInput = {
   subscriptionEnd: "2027-08-19",
 };
 
+const jobCommandInput = {
+  jobId: "job_exact_1",
+  organizationName: "Battlefords Agency Tribal Chiefs",
+  subscriptionStart: "2026-08-19",
+  subscriptionEnd: "2027-08-19",
+};
+
 const boundState: HermesEmployerBoundState = {
   userId: "user_1",
   userVersion: "2026-08-18T16:12:28.000Z",
@@ -60,10 +67,23 @@ test("Hermes employer commands reject ambiguous or unsafe input", () => {
     { ...commandInput, organizationName: "Good\nBad" },
     { ...commandInput, subscriptionStart: "2027-08-19", subscriptionEnd: "2026-08-19" },
     { ...commandInput, unexpected: true },
+    { ...jobCommandInput, email: "courtney.lewis@batc.ca" },
+    { ...jobCommandInput, jobId: "jobs/job_exact_1" },
   ]) {
     const result = normalizeHermesEmployerCommand(input);
     assert.equal(result.ok, false);
   }
+});
+
+test("Hermes employer commands accept the exact four-field job target alternative", () => {
+  const result = normalizeHermesEmployerCommand(jobCommandInput);
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.command.jobId, "job_exact_1");
+  assert.equal("email" in result.command, false);
+  assert.deepEqual(Object.keys(jobCommandInput).sort(), [
+    "jobId", "organizationName", "subscriptionEnd", "subscriptionStart",
+  ]);
 });
 
 test("Hermes employer review tokens bind exact IDs, versions, and desired state", () => {
@@ -339,6 +359,122 @@ function serviceDeps(overrides: Record<string, unknown> = {}) {
   };
   return { ...base, ...overrides } as typeof base;
 }
+
+function jobServiceDeps(overrides: Record<string, unknown> = {}) {
+  const user = doc("user_1", "u1", {
+    role: "community",
+    employerId: "employer_1",
+    orgId: "organization_1",
+  });
+  const employer = doc("employer_1", "e1", {
+    uid: "user_1",
+    organizationName: "Battlefords Agency Tribal Chiefs",
+    status: "pending",
+  });
+  const organization = doc("organization_1", "o1", {
+    employerId: "employer_1",
+    ownerId: "user_1",
+    name: "Battlefords Agency Tribal Chiefs",
+    status: "pending",
+  });
+  return serviceDeps({
+    findJobCandidates: async () => [{
+      ...doc("job_exact_1", "j1", {
+        authorId: "user_1",
+        employerId: "employer_1",
+        orgId: "organization_1",
+        orgName: "Battlefords Agency Tribal Chiefs",
+      }),
+      collection: "jobs",
+      schema: "employer-job-v1",
+    }],
+    findUsersByAuthorId: async () => [user],
+    findLinkedEmployers: async () => [employer],
+    findLinkedOrganizations: async () => [organization],
+    findOrganizationsByEmployerId: async () => [organization],
+    getOrganization: async () => null,
+    commit: async () => ({
+      committedAt: "2026-08-19T18:00:00.000Z",
+      verified: { ...verifiedProjection(), email: undefined, jobId: "job_exact_1" },
+      userVerified: true,
+      employerVerified: true,
+      organizationVerified: true,
+    }),
+    ...overrides,
+  });
+}
+
+test("reviewHermesEmployer resolves one exact canonical job and binds its exact links", async () => {
+  const reviewed = await reviewHermesEmployer(jobCommandInput, jobServiceDeps());
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  assert.deepEqual(reviewed.target, {
+    userId: "user_1",
+    employerId: "employer_1",
+    organizationId: "organization_1",
+    jobId: "job_exact_1",
+  });
+  assert.equal(reviewed.desired.organizationName, jobCommandInput.organizationName);
+});
+
+test("reviewHermesEmployer rejects dual storage, missing links, and mismatched organization names", async () => {
+  const legacy = {
+    ...doc("job_exact_1", "p1", {
+      type: "job",
+      authorId: "user_1",
+      employerId: "employer_1",
+      orgId: "organization_1",
+      orgName: "Battlefords Agency Tribal Chiefs",
+    }),
+    collection: "posts",
+    schema: "legacy-job-post-v1",
+  };
+  const canonical = await jobServiceDeps().findJobCandidates("job_exact_1");
+  assert.deepEqual(await reviewHermesEmployer(jobCommandInput, jobServiceDeps({
+    findJobCandidates: async () => [...canonical, legacy],
+  })), { ok: false, status: 409, error: "Job target was ambiguous" });
+
+  for (const [name, overrides] of [
+    ["author", { findUsersByAuthorId: async () => [] }],
+    ["employer", { findLinkedEmployers: async () => [] }],
+  ] as const) {
+    const result = await reviewHermesEmployer(jobCommandInput, jobServiceDeps(overrides));
+    assert.equal(result.ok, false, name);
+    if (!result.ok) assert.equal(result.status, 409, name);
+  }
+
+  assert.deepEqual(await reviewHermesEmployer(
+    { ...jobCommandInput, organizationName: "Different Organization" },
+    jobServiceDeps(),
+  ), { ok: false, status: 409, error: "Organization name did not match the exact job target" });
+});
+
+test("applyHermesEmployer rejects a stale job version without committing", async () => {
+  const reviewed = await reviewHermesEmployer(jobCommandInput, jobServiceDeps());
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  let commits = 0;
+  const current = await jobServiceDeps().findJobCandidates("job_exact_1");
+  const result = await applyHermesEmployer({
+    command: jobCommandInput,
+    reviewToken: reviewed.reviewToken,
+    confirmation: "APPLY IOPPS EMPLOYER UPDATE",
+  }, jobServiceDeps({
+    findJobCandidates: async () => [{ ...current[0], version: "j2" }],
+    commit: async () => {
+      commits += 1;
+      return {
+        committedAt: "never",
+        verified: { ...verifiedProjection(), email: undefined, jobId: "job_exact_1" },
+        userVerified: true,
+        employerVerified: true,
+        organizationVerified: true,
+      };
+    },
+  }));
+  assert.deepEqual(result, { ok: false, status: 409, error: "Review token is invalid or stale" });
+  assert.equal(commits, 0);
+});
 
 test("reviewHermesEmployer rejects non-unique targets and returns an opaque token for one exact target", async () => {
   const duplicate = await reviewHermesEmployer(commandInput, serviceDeps({
