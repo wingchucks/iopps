@@ -112,6 +112,40 @@ Apply re-resolves both storage locations and rejects missing, ambiguous, schema-
 
 The transaction writes deterministic `hermesAdminIdempotency` and sanitized `hermesAdminAudit` records containing only protocol/operation metadata, the machine key ID, request hash, exact target identity, changed field names, outcome, and timestamps. Neither record stores the request body, job body, contact details, signature, nonce, review token, private key, or review secret. After commit, the server rereads the exact target and verifies `status: "active"`, `active: true`, and the required `postedAt`. An already-correct target returns `verified_noop` only after that exact reread. Exact apply retries reuse the same body and idempotency key with a fresh nonce/signature; cached success is returned only after re-resolving uniqueness and rereading public-active state.
 
+## Soft-hide one exact event
+
+Event-hide review accepts exactly this body at `POST /api/hermes/v1/events/hide/review`:
+
+```json
+{
+  "eventId": "exact-event-document-id",
+  "title": "exact current title",
+  "organization": "exact current organization",
+  "type": "event",
+  "status": "active"
+}
+```
+
+All five fields are mandatory byte-for-byte assertions; stored titles and organization values—including employer-event `organizerName`—are never trimmed before comparison. The server reads only `events/{eventId}`; that exact collection establishes the resource type, so a missing legacy `type` mirror is accepted while any explicit non-`event` value is rejected. For legacy events, an absent `active` mirror is treated as effectively active only when `status` is exactly `active`; explicit `false`, `null`, or malformed mirror values are rejected. The response contains only safe current/desired projections and an opaque HMAC-SHA256 review token bound to the exact ID, Firestore version, command, and complete current projection. A hidden event may be reviewed with exact `status: "hidden"` for verified idempotent no-op handling.
+
+After inspection, apply at `POST /api/hermes/v1/events/hide/apply` with exactly:
+
+```json
+{
+  "command": {
+    "eventId": "exact-event-document-id",
+    "title": "exact current title",
+    "organization": "exact current organization",
+    "type": "event",
+    "status": "active"
+  },
+  "reviewToken": "token-returned-by-review",
+  "confirmation": "HIDE IOPPS EVENT"
+}
+```
+
+Apply re-reads and revalidates the exact projection and HMAC, then transactionally rechecks the version and changes only `status`, `active`, `hiddenAt`, and `updatedAt`. It sets `status: "hidden"`, `active: false`, and uses Firestore server timestamps. Unrelated fields and every other event—including a newer duplicate with another ID—remain untouched. The transaction writes deterministic sanitized audit/idempotency records, then independently rereads the exact event and verifies hidden state. Already-hidden exact state returns `verified_noop` without an event write.
+
 ## Convert an employer account to an individual account
 
 Conversion review accepts exactly this body at `POST /api/hermes/v1/users/convert-to-individual/review`:
@@ -149,4 +183,4 @@ $env:HERMES_ADMIN_PRIVATE_KEY_PATH = "C:\protected\path\hermes-ed25519-private.p
 node scripts/hermes-admin-client.mjs review .\review-body.json
 ```
 
-For employer apply, use `apply`. For account conversion, use `convert-review` and then `convert-apply`. For one job approval, use `job-review` and then `job-apply`. Each apply uses a new idempotency key and an apply-body file containing the inspected review token and exact confirmation phrase; exact retries reuse that apply idempotency key and body. The alternative `HERMES_ADMIN_PRIVATE_KEY_PEM` input exists for secured process injection; set exactly one private-key source. Plain HTTP is refused except for explicit localhost testing with `HERMES_ADMIN_ALLOW_HTTP_LOCALHOST=true`.
+For employer apply, use `apply`. For account conversion, use `convert-review` and then `convert-apply`. For one job approval, use `job-review` and then `job-apply`. For an exact event soft-hide, use `event-hide-review` and then `event-hide-apply`. Each apply uses a new idempotency key and an apply-body file containing the inspected review token and exact confirmation phrase; exact retries reuse that apply idempotency key and body. The alternative `HERMES_ADMIN_PRIVATE_KEY_PEM` input exists for secured process injection; set exactly one private-key source. Plain HTTP is refused except for explicit localhost testing with `HERMES_ADMIN_ALLOW_HTTP_LOCALHOST=true`.

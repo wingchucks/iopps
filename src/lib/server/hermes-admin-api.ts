@@ -25,6 +25,13 @@ import {
   type HermesJobApprovalProjection,
   type HermesJobApprovalServiceDeps,
 } from "./hermes-job-approval.ts";
+import {
+  applyHermesEventHide,
+  EVENT_HIDE_CONFIRMATION,
+  reviewHermesEventHide,
+  type HermesEventHideProjection,
+  type HermesEventHideServiceDeps,
+} from "./hermes-event-hide.ts";
 
 export interface HermesAdminApiDeps extends HermesMachineAuthDeps {
   reviewSecret: string;
@@ -52,6 +59,16 @@ export interface HermesJobApprovalApiDeps extends HermesMachineAuthDeps {
     status: "applied" | "verified_noop";
     committedAt?: string;
     verified: HermesJobApprovalProjection;
+  } | null>;
+}
+
+export interface HermesEventHideApiDeps extends HermesMachineAuthDeps {
+  reviewSecret: string;
+  createEventHideServiceDeps: (execution: HermesExecutionContext) => HermesEventHideServiceDeps;
+  getIdempotentEventHideApply: (execution: HermesExecutionContext) => Promise<{
+    status: "applied" | "verified_noop";
+    committedAt?: string;
+    verified: HermesEventHideProjection;
   } | null>;
 }
 
@@ -301,6 +318,56 @@ export async function handleHermesJobApprovalApplyRequest(
       authenticated.json,
       deps.createJobApprovalServiceDeps(execution),
     );
+    return result.ok ? safeJson(result) : requestError(result.status, result.error);
+  } catch (error) {
+    if (error && typeof error === "object" && "status" in error &&
+        (error as { status?: unknown }).status === 409) {
+      return requestError(409, "Hermes request conflicted with current state");
+    }
+    return hermesAdminInternalErrorResponse();
+  }
+}
+
+export async function handleHermesEventHideReviewRequest(
+  request: Request,
+  deps: HermesEventHideApiDeps,
+): Promise<Response> {
+  const endpointError = validateEndpoint(request, "/api/hermes/v1/events/hide/review");
+  if (endpointError) return endpointError;
+  try {
+    const authenticated = await authenticateHermesJsonRequest(request, deps);
+    if (!authenticated.ok) return requestError(authenticated.status, authenticated.error);
+    const execution = executionFromAuthenticated(authenticated.keyId, authenticated.idempotencyKey, authenticated.body);
+    const result = await reviewHermesEventHide(authenticated.json, deps.createEventHideServiceDeps(execution));
+    return result.ok ? safeJson(result) : requestError(result.status, result.error);
+  } catch {
+    return hermesAdminInternalErrorResponse();
+  }
+}
+
+function isEventHideApplyEnvelope(value: unknown): value is { command: unknown; reviewToken: string; confirmation: string } {
+  return isRecord(value) &&
+    Object.keys(value).sort().join("\0") === ["command", "confirmation", "reviewToken"].join("\0") &&
+    typeof value.reviewToken === "string" && value.reviewToken.length > 0 &&
+    value.confirmation === EVENT_HIDE_CONFIRMATION;
+}
+
+export async function handleHermesEventHideApplyRequest(
+  request: Request,
+  deps: HermesEventHideApiDeps,
+): Promise<Response> {
+  const endpointError = validateEndpoint(request, "/api/hermes/v1/events/hide/apply");
+  if (endpointError) return endpointError;
+  try {
+    const authenticated = await authenticateHermesJsonRequest(request, deps);
+    if (!authenticated.ok) return requestError(authenticated.status, authenticated.error);
+    if (!isEventHideApplyEnvelope(authenticated.json)) {
+      return requestError(400, "Apply requires the exact command, review token, and confirmation");
+    }
+    const execution = executionFromAuthenticated(authenticated.keyId, authenticated.idempotencyKey, authenticated.body);
+    const idempotent = await deps.getIdempotentEventHideApply(execution);
+    if (idempotent) return safeJson({ ok: true, ...idempotent });
+    const result = await applyHermesEventHide(authenticated.json, deps.createEventHideServiceDeps(execution));
     return result.ok ? safeJson(result) : requestError(result.status, result.error);
   } catch (error) {
     if (error && typeof error === "object" && "status" in error &&
