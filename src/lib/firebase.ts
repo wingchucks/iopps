@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { connectAuthEmulator, getAuth } from "firebase/auth";
-import { connectFirestoreEmulator, initializeFirestore } from "firebase/firestore";
+import { connectFirestoreEmulator, getFirestore, setLogLevel } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
 import { getAppCheckConfiguration } from "@/lib/firebase/app-check-config";
@@ -43,11 +43,10 @@ if (typeof window !== "undefined") {
 }
 
 export const auth = getAuth(app);
-// Close each browser response after receiving data so buffering proxies do not
-// leave profile reads and writes waiting indefinitely on an open stream.
-export const db = initializeFirestore(app, typeof window !== "undefined"
-  ? { experimentalForceLongPolling: true }
-  : {});
+export const db = getFirestore(app);
+if (typeof window !== "undefined" && window.location.hostname === "iopps-git-codex-integrated-redesign-wingchucks-projects.vercel.app") {
+  setLogLevel("debug");
+}
 export const storage = getStorage(app);
 
 if (typeof window !== "undefined" && useEmulators) {
