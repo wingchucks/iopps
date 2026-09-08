@@ -16,11 +16,12 @@ import { useAuth } from "@/lib/auth-context";
 import type { Job } from "@/lib/firestore/jobs";
 
 export default function JobDetailPage() {
+  const params = useParams();
   return (
     <AppShell>
       <div className="min-h-screen bg-bg">
         <Suspense fallback={null}>
-          <JobDetailContent />
+          <JobDetailContent key={String(params.slug)} />
         </Suspense>
       </div>
     </AppShell>
