@@ -30,7 +30,7 @@ test("community signup sends admin notification trigger through profile PATCH", 
   assert.match(signup, /displayName:\s*name/);
   assert.match(profile, /sendAdminNewSignup/);
   assert.match(profile, /adminNotifications/);
-  assert.match(profile, /New community signup/);
+  assert.match(profile, /New individual signup/);
   assert.match(profile, /adminSignupNotifiedAt/);
 });
 

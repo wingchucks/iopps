@@ -21,6 +21,15 @@ const contentSecurityPolicyReportOnly = [
 
 const nextConfig: NextConfig = {
   distDir: process.env.IOPPS_BUILD_DIRECTORY || ".next",
+  async rewrites() {
+    // The private local preview can consume the existing public video feed.
+    // Production continues to use its own authenticated YouTube integration.
+    return {
+      beforeFiles: process.env.NODE_ENV === "development" && process.env.IOPPS_PREVIEW_PUBLIC_FEED === "true"
+        ? [{ source: "/api/livestreams/youtube", destination: "https://iopps.ca/api/livestreams/youtube" }]
+        : [],
+    };
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.squarespace-cdn.com", pathname: "/content/v1/**" },

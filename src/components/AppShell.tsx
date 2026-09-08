@@ -8,7 +8,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const opportunityFlow =
     pathname.startsWith("/jobs/") ||
-    ["/applications", "/saved", "/profile/resume"].includes(pathname);
+    ["/applications", "/saved", "/profile/resume", "/businesses", "/livestreams"].includes(pathname);
   if (opportunityFlow)
     return (
       <>

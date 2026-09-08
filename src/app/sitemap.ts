@@ -16,7 +16,7 @@ import {
 const BASE_URL = "https://www.iopps.ca";
 
 const STATIC_PAGES = [
-  "", "/feed", "/jobs", "/events", "/scholarships", "/training",
+  "", "/feed", "/jobs", "/events", "/conference", "/scholarships", "/training",
   "/stories", "/partners", "/businesses", "/schools", "/education",
   "/shop", "/livestreams", "/spotlight", "/featured-talent",
   "/mentorship", "/for-employers", "/about", "/contact", "/pricing", "/privacy", "/terms",
