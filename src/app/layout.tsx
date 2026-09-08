@@ -10,6 +10,7 @@ import AnalyticsTracker from "@/components/AnalyticsTracker";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { serializeJsonLd, siteJsonLd } from "@/lib/server/seo";
 import "./globals.css";
+import "./opportunity.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s | IOPPS",
   },
   description:
-    "Jobs, events, scholarships, businesses, schools, and livestreams — all in one place for Indigenous people across North America.",
+    "Jobs, events, scholarships, businesses, and livestreams — all in one place for Indigenous people across North America.",
   metadataBase: new URL("https://www.iopps.ca"),
   alternates: { canonical: "/" },
   manifest: "/manifest.json",
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "IOPPS.CA — Empowering Indigenous Success",
     description:
-      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, schools, and livestreams — built for Indigenous communities across North America.",
+      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, and livestreams — built for Indigenous communities across North America.",
     siteName: "IOPPS.CA",
     url: "https://www.iopps.ca",
     type: "website",
@@ -54,7 +55,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "IOPPS.CA — Empowering Indigenous Success",
     description:
-      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, schools, and livestreams — built for Indigenous communities across North America.",
+      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, and livestreams — built for Indigenous communities across North America.",
     images: ["https://www.iopps.ca/og-image.jpg"],
   },
 };
@@ -65,7 +66,10 @@ export const viewport: Viewport = {
 
 const themeScript = `(function(){try{var t=localStorage.getItem("iopps-theme");if(t==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}})()`;
 
-const swScript = `if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js")})}`;
+const swScript =
+  process.env.NODE_ENV === "development"
+    ? `if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(async function(registrations){const owned=registrations.filter(r=>r.active && new URL(r.active.scriptURL).pathname==="/sw.js");if(!owned.length)return;await Promise.all(owned.map(r=>r.unregister()));for(const key of await caches.keys()){if(key.startsWith("iopps-"))await caches.delete(key)}if(navigator.serviceWorker.controller)location.reload()})}`
+    : `if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js")})}`;
 
 export default function RootLayout({
   children,
@@ -75,12 +79,20 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(siteJsonLd) }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(siteJsonLd) }}
+        />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script dangerouslySetInnerHTML={{ __html: swScript }} />
       </head>
       <body className={`${geistSans.variable} antialiased`}>
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-navy">Skip to content</a>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-navy"
+        >
+          Skip to content
+        </a>
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider>
@@ -89,9 +101,7 @@ export default function RootLayout({
                   <SessionManager />
                   <AnalyticsTracker />
                   <GoogleAnalytics />
-                  <main id="main-content">
-                    {children}
-                  </main>
+                  <main id="main-content">{children}</main>
                 </AuthErrorBoundary>
               </OnboardingProvider>
             </ToastProvider>

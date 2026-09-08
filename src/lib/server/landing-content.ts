@@ -9,7 +9,7 @@ import {
   normalizePublicEvent,
 } from "@/lib/public-events";
 import { getPublicSchoolRecords } from "@/lib/server/public-schools";
-import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "@/lib/server/partner-promotion";
+import { buildPartnersPayload } from "@/lib/server/partners-payload";
 import { displayAmount, displayLocation } from "@/lib/utils";
 
 type JsonRecord = Record<string, unknown>;
@@ -155,15 +155,13 @@ async function getStats(): Promise<LandingStats> {
   }
 }
 
-async function getPartners(): Promise<LandingPartner[]> {
+export async function getPartners(): Promise<LandingPartner[]> {
   try {
     const db = getAdminDb();
     const snap = await db.collection("organizations").get();
 
-    return snap.docs
-      .map((doc) => withPartnerPromotion({ id: doc.id, ...doc.data() } as JsonRecord))
-      .filter((org) => isPaidPartner(org))
-      .sort(comparePartnerPromotion)
+    return buildPartnersPayload(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as JsonRecord))).partners
+      .filter((org) => org.partnerTier !== "school")
       .slice(0, 4)
       .map((org) => {
         const name = text(org.name) || text(org.orgName) || "IOPPS Partner";
@@ -188,7 +186,7 @@ async function getPartners(): Promise<LandingPartner[]> {
   }
 }
 
-async function getLatestJobs(): Promise<LandingJob[]> {
+export async function getLatestJobs(): Promise<LandingJob[]> {
   try {
     const db = getAdminDb();
     const [jobsSnap, postsSnap] = await Promise.all([
@@ -227,8 +225,8 @@ async function getLatestJobs(): Promise<LandingJob[]> {
     );
 
     return sortJobsByRecency(publicJobs)
-      .slice(0, 3)
-      .map((job, index) => {
+      .slice(0, 5)
+      .map((job) => {
         const id = text(job.id);
         const slug = slugMap.get(id) || text(job.slug) || id;
         return {
@@ -240,7 +238,7 @@ async function getLatestJobs(): Promise<LandingJob[]> {
           salary: getJobSalary(job),
           href: `/jobs/${slug}`,
           badge: getClosingSoonLabel(job),
-          featured: index < 2,
+          featured: job.featured === true,
         };
       });
   } catch {

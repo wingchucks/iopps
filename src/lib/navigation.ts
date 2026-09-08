@@ -187,8 +187,6 @@ const PUBLIC_EXPLORE_KEYS: NavigationKey[] = [
   "jobs",
   "events",
   "scholarships",
-  "training",
-  "schools",
   "businesses",
   "partners",
   "search",
@@ -200,8 +198,6 @@ const LANDING_INLINE_KEYS: NavigationKey[] = [
   "jobs",
   "events",
   "scholarships",
-  "training",
-  "schools",
   "businesses",
   "partners",
   "live",
@@ -215,9 +211,7 @@ const MEMBER_EXPLORE_KEYS: NavigationKey[] = [
   "events",
   "search",
   "partners",
-  "schools",
   "members",
-  "training",
   "mentorship",
   "businesses",
 ];
@@ -228,8 +222,6 @@ const MEMBER_DESKTOP_TOP_KEYS: NavigationKey[] = [
   "jobs",
   "events",
   "partners",
-  "schools",
-  "training",
   "businesses",
 ];
 

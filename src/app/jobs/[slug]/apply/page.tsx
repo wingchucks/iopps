@@ -12,7 +12,12 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { db, storage } from "@/lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, getBlob } from "firebase/storage";
+
+import { createResumeObjectName, buildApplicationProfileSnapshot } from "@/lib/application-snapshot";
+import { getMemberProfile, type MemberProfile } from "@/lib/firestore/members";
+import { normalizeExternalHref, isMailtoHref } from "@/lib/utils";
+import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
 
 const STEPS = ["Resume", "Cover Letter", "Review & Submit"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -48,10 +53,12 @@ function ApplyWizard() {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [alreadyApplied, setAlreadyApplied] = useState(false);
 
   // Step 1 state
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -83,7 +90,8 @@ function ApplyWizard() {
                 orgName: data.job.employerName || data.job.orgName || "",
                 orgId: data.job.orgId || "",
                 employerId: data.job.employerId || "",
-                status: "active",
+                status: data.job.status || "active",
+                applicationUrl: data.job.applicationUrl || data.job.applicationLink || data.job.externalUrl || data.job.externalApplyUrl || "",
                 description: data.job.description || "",
                 location: data.job.location || "",
                 salary: data.job.salary || "",
@@ -91,12 +99,21 @@ function ApplyWizard() {
             }
           }
         }
+        if (postData) {
+          const record = postData as unknown as Record<string, unknown>;
+          const external = normalizeExternalHref(String(record.applicationUrl || record.applicationLink || record.externalUrl || record.externalApplyUrl || ""));
+          if (postData.type !== "job" || !isPublicJobRecordVisible({status:postData.status,active:record.active as boolean | undefined})) postData = null;
+          else if (external && (!isMailtoHref(external) || !(postData.orgId || postData.employerId))) {
+            router.replace(`/jobs/${slug}`);
+            return;
+          }
+        }
         setPost(postData);
+        if (user) setProfile(await getMemberProfile(user.uid));
         if (postData && user) {
           const applicationSnap = await getDoc(doc(db, "applications", `${user.uid}_${postData.id}`)).catch(() => null);
           if (applicationSnap?.exists()) {
-            showToast("You have already applied to this job", "info");
-            router.replace(`/jobs/${slug}`);
+            setAlreadyApplied(true);
           }
         }
       } catch (err) {
@@ -113,7 +130,7 @@ function ApplyWizard() {
       showToast("Please upload a PDF or DOC file", "error");
       return;
     }
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size >= MAX_FILE_SIZE) {
       showToast("File must be under 5MB", "error");
       return;
     }
@@ -121,7 +138,7 @@ function ApplyWizard() {
 
     setUploading(true);
     try {
-      const storageRef = ref(storage, `resumes/${user.uid}/${file.name}`);
+      const storageRef = ref(storage, `resumes/${user.uid}/${createResumeObjectName(file.name)}`);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       setResumeFile(file);
@@ -150,9 +167,16 @@ function ApplyWizard() {
   };
 
   const handleSubmit = async () => {
-    if (!user || !post) return;
+    if (!user || !post || alreadyApplied || submitting || uploading || (!useProfile && !resumeUrl) || (useProfile && !profile)) return;
     setSubmitting(true);
     try {
+      let applicationResumeUrl = resumeUrl;
+      if (useProfile && profile?.resumeUrl) {
+        const resumeBlob = await getBlob(ref(storage, profile.resumeUrl));
+        const snapshotRef = ref(storage, `resumes/${user.uid}/${createResumeObjectName(profile.resumeFileName || "resume.pdf")}`);
+        await uploadBytes(snapshotRef, resumeBlob, { contentType: resumeBlob.type || "application/pdf" });
+        applicationResumeUrl = await getDownloadURL(snapshotRef);
+      }
       const docId = `${user.uid}_${post.id}`;
       const now = Timestamp.now();
       await setDoc(doc(db, "applications", docId), {
@@ -165,9 +189,10 @@ function ApplyWizard() {
         jobId: post.id,
         status: "submitted",
         statusHistory: [{ status: "submitted", timestamp: now }],
-        resumeUrl: useProfile ? `profile://${user.uid}` : resumeUrl,
+        resumeUrl: applicationResumeUrl,
+        profileSnapshot: profile ? buildApplicationProfileSnapshot(profile, new Date().toISOString()) : null,
         resumeType: useProfile ? "profile" : "file",
-        resumeFileName: resumeFile?.name || null,
+        resumeFileName: useProfile ? profile?.resumeFileName || null : resumeFile?.name || null,
         coverLetter,
         appliedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -221,7 +246,7 @@ function ApplyWizard() {
         });
       }
 
-      router.push("/feed");
+      router.push("/applications");
     } catch (err) {
       console.error("Submit failed:", err);
       showToast("Failed to submit application. Please try again.", "error");
@@ -231,7 +256,7 @@ function ApplyWizard() {
   };
 
   const canAdvance = () => {
-    if (step === 0) return resumeUrl !== "" || useProfile;
+    if (step === 0) return !uploading && (resumeUrl !== "" || (useProfile && !!profile));
     if (step === 1) return true; // cover letter is optional
     return true;
   };
@@ -244,6 +269,10 @@ function ApplyWizard() {
         <div className="skeleton h-[300px] rounded-2xl" />
       </div>
     );
+  }
+
+  if (alreadyApplied) {
+    return <section className="max-w-[640px] mx-auto px-4 py-16"><h1 className="text-2xl font-bold mb-3">You have already applied</h1><p className="mb-6">Your application is saved. You can review its status in your applications.</p><Link className="text-teal font-semibold underline" href="/applications">View my applications</Link></section>;
   }
 
   if (!post) {
@@ -394,6 +423,7 @@ function ApplyWizard() {
               <button
                 type="button"
                 role="switch"
+                disabled={!profile || uploading}
                 aria-checked={useProfile}
                 aria-label="Use my IOPPS Profile as my application"
                 onClick={() => {
@@ -422,7 +452,7 @@ function ApplyWizard() {
               <div>
                 <p className="text-sm font-semibold text-text m-0">Use my IOPPS Profile</p>
                 <p className="text-xs text-text-muted m-0">
-                  Your profile will be shared as your application
+                  A copy of your profile and saved resume will be shared
                 </p>
               </div>
             </div>
@@ -480,6 +510,7 @@ function ApplyWizard() {
             </div>
 
             <textarea
+              aria-label="Cover letter"
               value={coverLetter}
               onChange={(e) => setCoverLetter(e.target.value)}
               placeholder="Write your cover letter here..."
@@ -522,6 +553,7 @@ function ApplyWizard() {
 
             <div className="h-[1px] bg-border mb-4" />
 
+            {profile && <div className="mb-4 text-sm text-text-sec"><p className="font-semibold text-text">{profile.displayName}</p><p>{profile.email}</p><p>{profile.headline}</p><p>{profile.location}</p><p className="mt-2">Your submitted information is saved as a snapshot.</p></div>}
             {/* Resume */}
             <div className="mb-4">
               <div className="flex items-center justify-between">

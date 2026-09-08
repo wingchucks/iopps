@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { getMemberProfile } from "@/lib/firestore/members";
@@ -22,9 +23,8 @@ export default function LoginPage() {
 
 function LoginForm() {
   const { user, loading: authLoading, signIn, signInWithGoogle, reloadUser, signOut } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect");
+  const redirectTo = safeAuthRedirect(searchParams.get("redirect"));
   const reason = searchParams.get("reason");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -107,11 +107,11 @@ function LoginForm() {
 
     const timeout = window.setTimeout(() => setSlowRedirect(true), 3500);
     void resolvePostAuthDestination(user).then((destination) => {
-      router.replace(destination);
+      window.location.replace(destination);
     });
 
     return () => window.clearTimeout(timeout);
-  }, [user, authLoading, router, redirectTo]);
+  }, [user, authLoading, redirectTo]);
 
   if (authLoading || (user && !slowRedirect)) {
     return (
@@ -130,7 +130,7 @@ function LoginForm() {
     try {
       await reloadUser();
       if (user) {
-        router.replace(await resolvePostAuthDestination(user));
+        window.location.replace(await resolvePostAuthDestination(user));
       }
       setSlowRedirect(false);
     } catch (err: unknown) {
@@ -192,7 +192,7 @@ function LoginForm() {
                 padding: "13px 18px",
                 borderRadius: 12,
                 border: "none",
-                background: "var(--teal)",
+                background: "#0F766E",
                 color: "#fff",
                 fontSize: 15,
               }}
@@ -203,7 +203,7 @@ function LoginForm() {
               type="button"
               onClick={() => {
                 void resolvePostAuthDestination(user).then((destination) => {
-                  router.replace(destination);
+                  window.location.replace(destination);
                 });
               }}
               disabled={loading}
@@ -247,7 +247,7 @@ function LoginForm() {
     setLoading(true);
     try {
       const cred = await signIn(email, password);
-      router.push(await resolvePostAuthDestination(cred.user));
+      window.location.assign(await resolvePostAuthDestination(cred.user));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (msg.includes("user-not-found") || msg.includes("wrong-password") || msg.includes("invalid-credential"))
@@ -265,7 +265,7 @@ function LoginForm() {
     setLoading(true);
     try {
       const cred = await signInWithGoogle();
-      router.push(await resolvePostAuthDestination(cred.user));
+      window.location.assign(await resolvePostAuthDestination(cred.user));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (!msg.includes("popup-closed")) setError(msg);
@@ -275,7 +275,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
+    <div className="op-login min-h-screen flex" style={{ background: "var(--bg)" }}>
       {/* Left branding panel */}
       <div
         className="hidden lg:flex flex-col justify-between relative overflow-hidden"
@@ -391,8 +391,9 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-[13px] font-semibold text-text-sec mb-1.5">Email address</label>
+              <label htmlFor="login-email" className="block text-[13px] font-semibold text-text-sec mb-1.5">Email address</label>
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -415,13 +416,14 @@ function LoginForm() {
 
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-[13px] font-semibold text-text-sec">Password</label>
+                <label htmlFor="login-password" className="text-[13px] font-semibold text-text-sec">Password</label>
                 <Link href="/forgot-password" className="text-teal text-[13px] font-semibold no-underline hover:underline">
                   Forgot password?
                 </Link>
               </div>
               <div className="relative">
                 <input
+                  id="login-password"
                   type={showPw ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -444,7 +446,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-sec cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-sec hover:text-text-sec cursor-pointer"
                   style={{ background: "none", border: "none", fontSize: 13, fontWeight: 600 }}
                 >
                   {showPw ? "Hide" : "Show"}
@@ -460,7 +462,7 @@ function LoginForm() {
                 padding: "14px 24px",
                 borderRadius: 12,
                 border: "none",
-                background: "var(--teal)",
+                background: "#0F766E",
                 color: "#fff",
                 fontSize: 16,
                 marginTop: 4,

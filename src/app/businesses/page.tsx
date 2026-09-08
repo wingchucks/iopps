@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -22,24 +23,31 @@ export default function BusinessesPage() {
 function BusinessesPageContent() {
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [search, setSearch] = useDirectoryFilter("q", "");
   const [filter, setFilter] = useDirectoryFilter("type", "All Businesses");
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
+      setLoading(true);
+      setError(false);
       try {
         const res = await fetch("/api/organizations");
         if (!res.ok) throw new Error("Failed to fetch organizations");
         const data = await res.json();
-        setOrgs(Array.isArray(data.orgs) ? data.orgs : []);
+        if (!cancelled) setOrgs(Array.isArray(data.orgs) ? data.orgs : []);
       } catch (err) {
         console.error("Failed to load businesses:", err);
+        if (!cancelled) setError(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     void load();
-  }, []);
+    return () => { cancelled = true; };
+  }, [attempt]);
 
   const businesses = useMemo(() => (
     orgs.filter((org) => org.ownerType !== "school" && org.type !== "school" && org.partnerTier !== "school")
@@ -93,7 +101,7 @@ function BusinessesPageContent() {
         >
           <p
             className="mb-3 inline-block rounded-full text-[11px] font-extrabold tracking-[3px]"
-            style={{ padding: "5px 16px", color: "var(--teal)", background: "rgba(20,184,166,.12)", border: "1px solid rgba(20,184,166,.22)" }}
+            style={{ padding: "5px 16px", color: "#49e7d3", background: "rgba(20,184,166,.12)", border: "1px solid rgba(20,184,166,.22)" }}
           >
             BUSINESS DIRECTORY
           </p>
@@ -117,10 +125,11 @@ function BusinessesPageContent() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search businesses by name, location, or industry..."
-              className="flex-1 border-none bg-transparent text-base text-text outline-none"
+              className="min-w-0 flex-1 border-none bg-transparent text-base text-text outline-none"
             />
             {search && (
               <button
+                aria-label="Clear business search"
                 onClick={() => setSearch("")}
                 className="cursor-pointer border-none bg-transparent text-lg text-text-muted"
               >
@@ -150,7 +159,7 @@ function BusinessesPageContent() {
             ))}
           </div>
 
-          {!loading && (
+          {!loading && !error && (
             <p className="mb-4 text-sm text-text-muted" aria-live="polite">
               {filtered.length} business{filtered.length !== 1 ? "es" : ""} found
             </p>
@@ -162,6 +171,11 @@ function BusinessesPageContent() {
                 <div key={i} className="skeleton h-[240px] rounded-2xl" />
               ))}
             </div>
+          ) : error ? (
+            <Card style={{ padding: 32, textAlign: "center" }}>
+              <p role="alert" className="mb-4">We couldn&apos;t load the businesses. Please try again.</p>
+              <button type="button" className="rounded-xl bg-navy px-5 py-3 text-white" onClick={() => setAttempt(value => value + 1)}>Try again</button>
+            </Card>
           ) : filtered.length === 0 ? (
             <Card style={{ padding: 48, textAlign: "center" }}>
               <p className="mb-3 text-4xl">&#127970;</p>
@@ -208,12 +222,16 @@ function BusinessCard({ org }: { org: Organization }) {
       >
         <div style={{ padding: 20 }}>
           <div className="mb-3 flex items-center gap-3">
-            <Avatar
+            {org.slug === "siga" || org.slug === "inspire-group-of-companies" || org.slug?.startsWith("city-of-saskatoon") ? (
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl p-1.5" style={{ background: org.slug.startsWith("city-of-saskatoon") ? "var(--navy)" : "var(--teal-soft)" }}>
+                <Image src={org.slug === "siga" ? "/redesign/siga.png" : org.slug === "inspire-group-of-companies" ? "/redesign/inspire-group.png" : org.logoUrl || org.logo || "/logo.png"} width={48} height={48} className="h-full w-full object-contain" alt={org.shortName || org.name} />
+              </div>
+            ) : <Avatar
               name={org.shortName || org.name}
               size={48}
               src={org.logoUrl || org.logo}
               gradient={isPremium ? "linear-gradient(135deg, var(--gold), var(--navy))" : "linear-gradient(135deg, var(--navy), var(--teal))"}
-            />
+            />}
             <div className="min-w-0 flex-1">
               {/* M-6: allow long org names to wrap to 2 lines instead of
                   chopping mid-word with a whitespace-nowrap ellipsis. */}

@@ -17,12 +17,23 @@ const contentSecurityPolicyReportOnly = [
   "frame-src 'self' https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com https://*.firebaseapp.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
-  "upgrade-insecure-requests",
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  distDir: process.env.IOPPS_BUILD_DIRECTORY || ".next",
+  async rewrites() {
+    // The private local preview can consume the existing public video feed.
+    // Production continues to use its own authenticated YouTube integration.
+    return {
+      beforeFiles: process.env.NODE_ENV === "development" && process.env.IOPPS_PREVIEW_PUBLIC_FEED === "true"
+        ? [{ source: "/api/livestreams/youtube", destination: "https://iopps.ca/api/livestreams/youtube" }]
+        : [],
+    };
+  },
   images: {
     remotePatterns: [
+      { protocol: "https", hostname: "images.squarespace-cdn.com", pathname: "/content/v1/**" },
+      { protocol: "https", hostname: "rmkcdn.successfactors.com" },
       {
         protocol: "https",
         hostname: "firebasestorage.googleapis.com",

@@ -242,7 +242,7 @@ export default function OrgApplicationsPage() {
 
   const renderAppCard = (app: Application & { postTitle?: string; postId?: string; resumeUrl?: string }, showPostTitle = false) => {
     const sc = statusColors[app.status] || statusColors.submitted;
-    const profile = profiles[app.userId];
+    const profile = app.profileSnapshot || profiles[app.userId];
     const displayName = profile?.displayName || app.userId;
     const avatar = profile?.photoURL;
     const skills = profile?.skills?.slice(0, 3) || [];
@@ -334,6 +334,7 @@ export default function OrgApplicationsPage() {
             {/* Actions row */}
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <select
+                aria-label={`Application status for ${displayName}`}
                 value={app.status}
                 onChange={(e) =>
                   handleStatusChange(
@@ -349,6 +350,7 @@ export default function OrgApplicationsPage() {
                   color: "var(--text)",
                 }}
               >
+                {app.status === "withdrawn" && <option value="withdrawn" disabled>Withdrawn</option>}
                 {statusOptions.map((s) => (
                   <option key={s} value={s}>
                     {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -758,7 +760,7 @@ export default function OrgApplicationsPage() {
                           </p>
                         ) : (
                           apps.map((app) => {
-                            const profile = profiles[app.userId];
+                            const profile = app.profileSnapshot || profiles[app.userId];
                             const displayName = profile?.displayName || app.userId;
                             const avatar = profile?.photoURL;
                             const applicationResumeUrl = (app as Application & { resumeUrl?: string }).resumeUrl;
@@ -848,7 +850,8 @@ export default function OrgApplicationsPage() {
 
                                 {/* Move to dropdown */}
                                 <select
-                                  value={app.status}
+                                  aria-label={`Application status for ${displayName}`}
+                value={app.status}
                                   onChange={(e) =>
                                     handleStatusChange(
                                       app.id,
@@ -863,6 +866,7 @@ export default function OrgApplicationsPage() {
                                     color: "var(--text)",
                                   }}
                                 >
+                                  {app.status === "withdrawn" && <option value="withdrawn" disabled>Withdrawn</option>}
                                   {statusOptions.map((s) => (
                                     <option key={s} value={s}>
                                       {s === app.status ? `Current: ${s}` : `Move to: ${s}`}

@@ -99,6 +99,7 @@ function snippet(text?: string, maxLength = 180) {
 export default function LivestreamsPage() {
   const [data, setData] = useState<YouTubeData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [selectedReplayId, setSelectedReplayId] = useState<string | null>(null);
   const playerRef = useRef<HTMLElement | null>(null);
@@ -107,6 +108,7 @@ export default function LivestreamsPage() {
     let cancelled = false;
 
     async function load() {
+      setLoading(true);
       try {
         const response = await fetch("/api/livestreams/youtube");
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -129,7 +131,7 @@ export default function LivestreamsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
 
   const selectedReplay =
     data?.recent.find((video) => video.id === selectedReplayId) ??
@@ -241,11 +243,12 @@ export default function LivestreamsPage() {
                           )}
                         </div>
                       ) : (
-                        <div className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-border bg-bg px-6 text-center">
+                        <div className="flex flex-col aspect-video items-center justify-center rounded-2xl border border-dashed border-border bg-bg px-6 text-center">
                           <p className="max-w-[420px] text-sm leading-relaxed text-text-sec">
                             {error ||
                               "Nothing is live right now — follow us on YouTube for alerts, or get in touch to have your next event streamed by IOPPS."}
                           </p>
+                          {error && <button type="button" className="mt-4 rounded-xl bg-navy px-5 py-3 text-white" onClick={() => setAttempt(value => value + 1)}>Try again</button>}
                         </div>
                       )}
                     </div>

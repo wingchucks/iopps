@@ -5,6 +5,15 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
+// Resend can resolve with an error response instead of rejecting the promise.
+async function sendCheckedEmail(options: Parameters<Resend["emails"]["send"]>[0]) {
+  if (!resend) throw new Error("Email not configured");
+  const result = await resend.emails.send(options);
+  if (result.error) throw new Error(result.error.message);
+  if (!result.data?.id) throw new Error("Email provider did not confirm acceptance");
+  return result.data;
+}
+
 const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
 const DEFAULT_ADMIN_EMAIL = "nathan.arias@iopps.ca";
 const ADMIN_EMAILS = (process.env.ADMIN_NOTIFICATION_EMAILS || process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL)
@@ -76,8 +85,8 @@ export async function sendApplicationNotification(opts: {
   const html = emailWrapper(`
     <h2 style="${STYLES.h2}">New Application Received! 🎉</h2>
     <p style="${STYLES.text}">
-      <strong>${opts.applicantName}</strong> has applied for
-      <strong>${opts.jobTitle}</strong> at ${opts.employerName}.
+      <strong>${escapeHtml(opts.applicantName)}</strong> has applied for
+      <strong>${escapeHtml(opts.jobTitle)}</strong> at ${escapeHtml(opts.employerName)}.
     </p>
     <p style="${STYLES.text}">
       Review their application and respond promptly — great candidates move fast.
@@ -94,7 +103,7 @@ export async function sendApplicationNotification(opts: {
   `);
 
   try {
-    await resend.emails.send({
+    await sendCheckedEmail({
       from: FROM_EMAIL,
       to: opts.employerEmail,
       subject: `New application: ${opts.applicantName} applied for ${opts.jobTitle}`,
@@ -134,7 +143,7 @@ export async function sendAdminApplicationNotification(opts: {
   `);
 
   try {
-    await resend.emails.send({
+    await sendCheckedEmail({
       from: FROM_EMAIL,
       to: ADMIN_EMAILS,
       subject: `📩 New application: ${opts.applicantName} applied for ${opts.jobTitle}`,
@@ -189,7 +198,7 @@ export async function sendEmployerWelcome(opts: {
   `);
 
   try {
-    await resend.emails.send({
+    await sendCheckedEmail({
       from: FROM_EMAIL,
       to: opts.email,
       subject: `Welcome to IOPPS — ${opts.orgName} is registered!`,
@@ -215,7 +224,7 @@ export async function sendAccountVerificationEmail(opts: {
   }));
 
   try {
-    await resend.emails.send({
+    await sendCheckedEmail({
       from: FROM_EMAIL,
       to: opts.email,
       subject: "Confirm your IOPPS account",
@@ -261,7 +270,7 @@ export async function sendAdminNewSignup(opts: {
   `);
 
   try {
-    await resend.emails.send({
+    await sendCheckedEmail({
       from: FROM_EMAIL,
       to: ADMIN_EMAILS,
       subject,
@@ -310,7 +319,7 @@ export async function sendAdminContentPosted(opts: {
   `);
 
   try {
-    await resend.emails.send({
+    await sendCheckedEmail({
       from: FROM_EMAIL,
       to: ADMIN_EMAILS,
       subject: `${subjectPrefix}: ${opts.contentType} - ${opts.title || "Untitled"}`,
@@ -350,7 +359,7 @@ export async function sendAdminPaymentNotification(opts: {
   `);
 
   try {
-    await resend.emails.send({
+    await sendCheckedEmail({
       from: FROM_EMAIL,
       to: ADMIN_EMAILS,
       subject: `💳 IOPPS payment: ${opts.orgName} - ${opts.planName}`,
@@ -398,7 +407,7 @@ export async function sendSubscriptionConfirmation(opts: {
   `);
 
   try {
-    await resend.emails.send({
+    await sendCheckedEmail({
       from: FROM_EMAIL,
       to: opts.email,
       subject: `IOPPS Payment Confirmed — ${opts.planName} Plan Active`,

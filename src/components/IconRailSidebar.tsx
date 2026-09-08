@@ -368,7 +368,7 @@ export default function IconRailSidebar() {
                     </span>
                     <span
                       className="whitespace-nowrap text-sm font-medium transition-colors duration-200"
-                      style={{ color: active ? "var(--teal)" : "var(--text-sec)" }}
+                      style={{ color: active ? "var(--text)" : "var(--text-sec)" }}
                     >
                       {label}
                     </span>
@@ -469,7 +469,7 @@ export default function IconRailSidebar() {
                     href={item.href}
                     className="rounded-xl px-3.5 py-2.5 text-center text-sm font-semibold no-underline"
                     style={{
-                      background: item.key === "signup" ? "var(--teal)" : "var(--border)",
+                      background: item.key === "signup" ? "#0F766E" : "var(--border)",
                       color: item.key === "signup" ? "#fff" : "var(--text)",
                     }}
                   >

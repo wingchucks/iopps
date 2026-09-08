@@ -134,7 +134,7 @@ function ScholarshipsBrowsePageContent() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-bg">
+      <div className="scholarships-directory min-h-screen bg-bg">
         <div
           className="relative overflow-hidden"
           style={{

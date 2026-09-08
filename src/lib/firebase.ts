@@ -9,12 +9,12 @@ import { getAppCheckConfiguration } from "@/lib/firebase/app-check-config";
 // inject NEXT_PUBLIC_FIREBASE_* (e.g. GitHub Actions CI). Vercel + local .env
 // always supply real values, so production/runtime behavior is unaffected.
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "ci-placeholder-api-key",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "ci-placeholder.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "ci-placeholder",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "ci-placeholder.appspot.com",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "0",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:0:web:ci",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim() || "ci-placeholder-api-key",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim() || "ci-placeholder.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim() || "ci-placeholder",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim() || "ci-placeholder.appspot.com",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?.trim() || "0",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID?.trim() || "1:0:web:ci",
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
