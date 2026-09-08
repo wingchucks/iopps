@@ -11,7 +11,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 import { queueEmail } from "./emailQueue";
 import { applicationStatusEmail } from "../email-templates";
 
@@ -47,10 +47,17 @@ export interface Application {
 const col = collection(db, "applications");
 
 export async function getApplications(userId: string): Promise<Application[]> {
-  const snap = await getDocs(
-    query(col, where("userId", "==", userId), orderBy("appliedAt", "desc"))
-  );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Application);
+  const user = auth.currentUser;
+  if (!user || user.uid !== userId) throw new Error("Sign in to view your applications");
+  const token = await user.getIdToken();
+  const response = await fetch("/api/applications", {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!response.ok) throw new Error("Unable to load applications");
+  const data = await response.json();
+  return data.applications;
 }
 
 export async function getApplicationById(

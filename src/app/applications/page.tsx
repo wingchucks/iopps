@@ -58,6 +58,8 @@ function ApplicationsContent() {
   const { showToast } = useToast();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [filter, setFilter] = useState<ApplicationStatus | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [withdrawing, setWithdrawing] = useState<string | null>(null);
@@ -65,22 +67,38 @@ function ApplicationsContent() {
 
   useEffect(() => {
     if (!user) return;
-    getMemberProfile(user.uid).then((p) => { if (p?.orgId) setHasOrg(true); });
+    getMemberProfile(user.uid)
+      .then((p) => { if (p?.orgId) setHasOrg(true); })
+      .catch(() => { /* Profile routing is optional; application loading has its own recovery UI. */ });
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
+    let active = true;
+    setLoading(true);
+    setLoadError(false);
+    const timeout = setTimeout(() => {
+      if (active) {
+        setLoadError(true);
+        setLoading(false);
+      }
+    }, 15000);
     (async () => {
       try {
         const apps = await getApplications(user.uid);
+        if (!active) return;
         setApplications(apps);
+        setLoadError(false);
       } catch (err) {
         console.error("Failed to load applications:", err);
+        if (active) setLoadError(true);
       } finally {
-        setLoading(false);
+        clearTimeout(timeout);
+        if (active) setLoading(false);
       }
     })();
-  }, [user]);
+    return () => { active = false; clearTimeout(timeout); };
+  }, [user, loadAttempt]);
 
   const handleWithdraw = async (appId: string) => {
     if (!confirm("Are you sure you want to withdraw this application?")) return;
@@ -114,12 +132,24 @@ function ApplicationsContent() {
   if (loading) {
     return (
       <div className="max-w-[800px] mx-auto px-4 py-6 md:px-10 md:py-8">
-        <div className="skeleton h-8 w-48 rounded mb-6" />
+        <p role="status" className="mb-6 text-text-sec">Loading your applications…</p>
         <div className="flex flex-col gap-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="skeleton h-24 rounded-2xl" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-[800px] mx-auto px-4 py-6 md:px-10 md:py-8">
+        <h1 className="text-2xl font-extrabold text-text mb-4">My Applications</h1>
+        <p role="alert" className="text-text-sec mb-5">
+          We couldn’t load your applications. Check your connection and try again.
+        </p>
+        <Button variant="outline" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>Try again</Button>
       </div>
     );
   }
