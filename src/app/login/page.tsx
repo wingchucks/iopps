@@ -192,7 +192,7 @@ function LoginForm() {
                 padding: "13px 18px",
                 borderRadius: 12,
                 border: "none",
-                background: "var(--teal)",
+                background: "#0F766E",
                 color: "#fff",
                 fontSize: 15,
               }}
@@ -446,7 +446,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-sec cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-sec hover:text-text-sec cursor-pointer"
                   style={{ background: "none", border: "none", fontSize: 13, fontWeight: 600 }}
                 >
                   {showPw ? "Hide" : "Show"}
@@ -462,7 +462,7 @@ function LoginForm() {
                 padding: "14px 24px",
                 borderRadius: 12,
                 border: "none",
-                background: "var(--teal)",
+                background: "#0F766E",
                 color: "#fff",
                 fontSize: 16,
                 marginTop: 4,

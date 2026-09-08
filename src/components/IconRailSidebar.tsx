@@ -368,7 +368,7 @@ export default function IconRailSidebar() {
                     </span>
                     <span
                       className="whitespace-nowrap text-sm font-medium transition-colors duration-200"
-                      style={{ color: active ? "var(--teal)" : "var(--text-sec)" }}
+                      style={{ color: active ? "var(--text)" : "var(--text-sec)" }}
                     >
                       {label}
                     </span>
