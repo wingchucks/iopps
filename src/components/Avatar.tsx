@@ -14,7 +14,7 @@ function isValidImageUrl(url: string): boolean {
 }
 
 export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) {
-  const [imgError, setImgError] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string>();
   const safeName = name?.trim() || "Profile";
 
   const initials = safeName
@@ -25,9 +25,13 @@ export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) 
 
   const radius = size > 48 ? 16 : "50%";
 
-  if (src && !imgError && isValidImageUrl(src)) {
+  if (src && failedSrc !== src && isValidImageUrl(src)) {
     return (
       <img
+        ref={(image) => {
+          // Cached failures can finish before React attaches the error listener.
+          if (image?.complete && image.naturalWidth === 0) setFailedSrc(src);
+        }}
         src={src}
         alt={safeName}
         className="shrink-0 object-cover"
@@ -36,7 +40,7 @@ export default function Avatar({ name, size = 40, gradient, src }: AvatarProps) 
           height: size,
           borderRadius: radius,
         }}
-        onError={() => setImgError(true)}
+        onError={() => setFailedSrc(src)}
       />
     );
   }
