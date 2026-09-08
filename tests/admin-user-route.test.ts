@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildAdminUserSoftDeleteUpdate } from "../src/app/api/admin/users/[userId]/route.ts";
+import { buildAdminUserSoftDeleteUpdate } from "../src/lib/server/admin-soft-delete.ts";
 
 test("buildAdminUserSoftDeleteUpdate writes audit metadata for soft deletes", () => {
   assert.deepEqual(

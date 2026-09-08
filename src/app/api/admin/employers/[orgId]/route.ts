@@ -1,3 +1,4 @@
+import { buildOrganizationSoftDeleteMetadata, buildSoftDeleteContentPatch } from "@/lib/server/admin-soft-delete";
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyAdminToken, verifySuperAdminToken } from "@/lib/api-auth";
 import { adminDb, getAdminAuth } from "@/lib/firebase-admin";
@@ -16,39 +17,6 @@ function text(value: unknown): string {
 
 function recordFrom(value: unknown): UnknownRecord {
   return value && typeof value === "object" ? (value as UnknownRecord) : {};
-}
-
-export function buildOrganizationSoftDeleteMetadata(adminId: string, deletedAt: string) {
-  return {
-    disabled: true,
-    status: "disabled",
-    deletedAt,
-    deletedBy: adminId,
-    updatedAt: deletedAt,
-    isPublished: false,
-    publicationStatus: "SUSPENDED",
-    publicVisibility: "hidden",
-    directoryVisible: false,
-    isDirectoryVisible: false,
-  };
-}
-
-export function buildSoftDeleteContentPatch(
-  collectionId: string,
-  deletedAt: string,
-): Record<string, unknown> | null {
-  switch (collectionId) {
-    case "jobs":
-      return { active: false, status: "deleted", updatedAt: deletedAt };
-    case "posts":
-      return { status: "deleted", updatedAt: deletedAt };
-    case "events":
-      return { active: false, status: "deleted", updatedAt: deletedAt };
-    case "scholarships":
-      return { active: false, status: "deleted", updatedAt: deletedAt };
-    default:
-      return null;
-  }
 }
 
 function buildOrganizationMirrorFromEmployer(
