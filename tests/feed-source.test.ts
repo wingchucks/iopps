@@ -11,7 +11,7 @@ function mock(pages:unknown[]){let i=0;return (async (_url,init)=>{
  assert.equal(new Headers(init?.headers).get('Cookie'),'csrf=new');
  assert.equal(new Headers(init?.headers).get('X-CSRF-TOKEN'),'token');
  const body=JSON.parse(String(init?.body)); assert.equal(body.cultureCode,'en-US');
- assert.equal(body.paginationStart,i-3);
+ assert.equal(body.paginationStart,(pages[i-3] as {offset:number}).offset);
  return Response.json(pages[i-3]);
  }) as typeof fetch;}
 test('Dayforce follows CSRF contract and reads all pages',async()=>{
@@ -19,7 +19,7 @@ test('Dayforce follows CSRF contract and reads all pages',async()=>{
  assert.equal(items.length,2);assert.equal(items[1].guid,'2');
 });
 test('Dayforce rejects incomplete pages',async()=>{await assert.rejects(loadFeedItems(board,'dayforce',mock([{jobPostings:[],offset:0,maxCount:2}])),/Incomplete/)});
-test('Dayforce rejects repeated job identities',async()=>{await assert.rejects(loadFeedItems(board,'dayforce',mock([{jobPostings:[job(1)],offset:0,maxCount:2},{jobPostings:[job(1)],offset:1,maxCount:2}])),/repeated a job/)});
+test('Dayforce rejects repeated job identities',async()=>{await assert.rejects(loadFeedItems(board,'dayforce',mock(Array.from({length:6},(_,n)=>({jobPostings:[job(1)],offset:n%2,maxCount:2})))),/repeated or omitted/)});
 test('Dayforce accepts explicitly empty board',async()=>{assert.deepEqual(await loadFeedItems(board,'dayforce',mock([{jobPostings:[],offset:0,maxCount:0}])),[])});
 test('Dayforce rejects HTML without board metadata',async()=>{await assert.rejects(loadFeedItems(board,'dayforce',async()=>new Response('<html>Unavailable</html>')),/metadata/)});
 test('HTTP errors cannot become successful empty syncs',async()=>{await assert.rejects(loadFeedItems(board,'dayforce',async()=>new Response('',{status:403})),/HTTP 403/)});
@@ -47,4 +47,10 @@ test('Dayforce refuses metadata for a different board',async()=>{
 });
 test('Dayforce refuses a changing total rather than silently truncating',async()=>{
  await assert.rejects(loadFeedItems(board,'dayforce',mock([{jobPostings:[job(1)],offset:0,maxCount:2},{jobPostings:[job(2)],offset:1,maxCount:3}])),/changed during pagination/);
+});
+
+test('Dayforce recovers moving page boundaries only when every unique job is accounted for',async()=>{
+ const pages=[{jobPostings:[job(1)],offset:0,maxCount:2},{jobPostings:[job(1)],offset:1,maxCount:2},{jobPostings:[job(2)],offset:0,maxCount:2},{jobPostings:[job(1)],offset:1,maxCount:2}];
+ const items=await loadFeedItems(board,'dayforce',mock(pages));
+ assert.deepEqual(items.map(j=>j.guid).sort(),['1','2']);
 });
