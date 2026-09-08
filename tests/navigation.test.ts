@@ -15,7 +15,8 @@ test("public explore nav includes jobs and excludes private member utilities", (
   assert.equal(publicItems[0]?.href, "/");
   assert(keys.includes("jobs"));
   assert(keys.includes("events"));
-  assert(keys.includes("schools"));
+  assert(!keys.includes("schools"));
+  assert(!keys.includes("training"));
   assert(keys.includes("businesses"));
   assert(keys.includes("search"));
   assert(!keys.includes("saved"));

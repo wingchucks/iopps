@@ -9,7 +9,7 @@ import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 import {
   BackgroundMesh, TopBar, ProgressBar, StepDots, StepHeader,
   FormInput, FormSelect, FormTextarea, CheckboxItem, UploadZone,
-  RoleCard, OrgTypeCard, BtnPrimary, BtnSecondary, BtnGhost,
+  RoleCard, BtnPrimary, BtnSecondary, BtnGhost,
   InfoBanner, ReviewSection, ReviewRow, GoogleButton, PasswordStrength,
 } from "@/components/signup/ui";
 import {
@@ -392,16 +392,9 @@ function UnifiedSignupContent() {
           )}
           <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "What kind of"} highlight={entrepreneurIntent ? "Business Profile" : "account do you need?"} desc={entrepreneurIntent ? "Your free business profile and directory listing helps customers and communities discover what you offer. You can still change your account type below." : "Are you signing up for yourself or on behalf of an organization?"} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <RoleCard icon="👤" label="Individual" desc="For people looking for jobs, training, scholarships, events, or professional connections." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
-            <RoleCard icon="🏢" label="Organization / Employer" desc="For First Nations, tribal councils, businesses, schools, nonprofits, governments, and organizations that want to post opportunities or manage a public profile." selected={role === "organization"} onClick={() => setRole("organization")} />
+            <RoleCard icon="👤" label="Individual" desc="For people looking for jobs, scholarships, events, or professional connections." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
+            <RoleCard icon="🏢" label="Organization / Employer" desc="For First Nations, tribal councils, businesses, nonprofits, governments, and organizations that want to post opportunities or manage a public profile." selected={role === "organization"} onClick={() => { setRole("organization"); setOrgType("employer"); }} />
           </div>
-          {role === "organization" && (<div style={{ marginTop: 24 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: CSS.textMuted }}>What type of organization?</div>
-            <div style={{ display: "grid", gap: 12 }}>
-              <OrgTypeCard icon="💼" label="Employer / Business" desc="Post jobs, list your business, host events, and connect with talent." selected={orgType === "employer"} onClick={() => setOrgType("employer")} />
-              <OrgTypeCard icon="🎓" label="School / Educational Institution" desc="List training programs, post jobs, offer scholarships, and recruit Indigenous students." selected={orgType === "school"} onClick={() => setOrgType("school")} />
-            </div>
-          </div>)}
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
             <BtnPrimary onClick={() => goTo(2)} disabled={!role || (role === "organization" && !orgType)}>Continue →</BtnPrimary>
           </div>

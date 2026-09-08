@@ -17,12 +17,13 @@ const contentSecurityPolicyReportOnly = [
   "frame-src 'self' https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com https://*.firebaseapp.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
-  "upgrade-insecure-requests",
 ].join("; ");
 
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
+      { protocol: "https", hostname: "images.squarespace-cdn.com", pathname: "/content/v1/**" },
+      { protocol: "https", hostname: "rmkcdn.successfactors.com" },
       {
         protocol: "https",
         hostname: "firebasestorage.googleapis.com",

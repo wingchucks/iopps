@@ -275,7 +275,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
+    <div className="op-login min-h-screen flex" style={{ background: "var(--bg)" }}>
       {/* Left branding panel */}
       <div
         className="hidden lg:flex flex-col justify-between relative overflow-hidden"
@@ -391,8 +391,9 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-[13px] font-semibold text-text-sec mb-1.5">Email address</label>
+              <label htmlFor="login-email" className="block text-[13px] font-semibold text-text-sec mb-1.5">Email address</label>
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -415,13 +416,14 @@ function LoginForm() {
 
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-[13px] font-semibold text-text-sec">Password</label>
+                <label htmlFor="login-password" className="text-[13px] font-semibold text-text-sec">Password</label>
                 <Link href="/forgot-password" className="text-teal text-[13px] font-semibold no-underline hover:underline">
                   Forgot password?
                 </Link>
               </div>
               <div className="relative">
                 <input
+                  id="login-password"
                   type={showPw ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

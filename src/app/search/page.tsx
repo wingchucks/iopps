@@ -363,9 +363,9 @@ function SearchContent() {
         fetchJson<{ jobs?: Record<string, unknown>[] }>("/api/jobs?limit=300", { jobs: [] }),
         fetchJson<{ events?: Record<string, unknown>[] }>("/api/events", { events: [] }),
         fetchJson<{ scholarships?: Record<string, unknown>[] }>("/api/scholarships", { scholarships: [] }),
-        fetchJson<{ programs?: Record<string, unknown>[] }>("/api/programs", { programs: [] }),
-        fetchJson<{ training?: Record<string, unknown>[]; programs?: Record<string, unknown>[] }>("/api/training", { training: [] }),
-        fetchJson<Record<string, unknown>[] | { schools?: Record<string, unknown>[] }>("/api/schools", []),
+        Promise.resolve<{ programs?: Record<string, unknown>[] }>({ programs: [] }),
+        Promise.resolve<{ training?: Record<string, unknown>[]; programs?: Record<string, unknown>[] }>({ training: [] }),
+        Promise.resolve<Record<string, unknown>[] | { schools?: Record<string, unknown>[] }>([]),
         fetchJson<{ orgs?: Record<string, unknown>[] }>("/api/organizations", { orgs: [] }),
       ]);
 
@@ -618,7 +618,7 @@ function SearchContent() {
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search jobs, events, scholarships, schools, training, or businesses..."
+              placeholder="Search jobs, events, scholarships, or businesses..."
               className="flex-1 border-none bg-transparent text-base text-text outline-none"
               autoFocus
             />
@@ -643,7 +643,7 @@ function SearchContent() {
 
       <div className="mb-4 flex items-center gap-2">
         <div className="flex flex-1 gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-          {typeFilters.map((filter) => (
+          {typeFilters.filter(type => type !== "Schools" && type !== "Training").map((filter) => (
             <button
               key={filter}
               onClick={() => setTypeFilter(filter)}
@@ -771,7 +771,7 @@ function SearchContent() {
         <div className="py-16 text-center">
           <p className="mb-4 text-5xl">&#128269;</p>
           <h2 className="mb-2 text-xl font-bold text-text">Search IOPPS</h2>
-          <p className="text-sm text-text-sec">Find jobs, events, scholarships, schools, training, and businesses.</p>
+          <p className="text-sm text-text-sec">Find jobs, events, scholarships, and businesses.</p>
         </div>
       ) : totalResults === 0 ? (
         <Card>
@@ -782,7 +782,7 @@ function SearchContent() {
               Try broader keywords, clear a filter, or jump into one of the main opportunity areas below.
             </p>
             <div className="mb-5 flex flex-wrap justify-center gap-2">
-              {["health", "Saskatoon", "remote", "training", "pow wow"].map((suggestion) => (
+              {["health", "Saskatoon", "remote", "business", "pow wow"].map((suggestion) => (
                 <button
                   key={suggestion}
                   onClick={() => setQuery(suggestion)}
@@ -798,7 +798,7 @@ function SearchContent() {
               <span className="text-text-muted">·</span>
               <Link href="/events" className="no-underline" style={{ color: "var(--teal)" }}>Browse events</Link>
               <span className="text-text-muted">·</span>
-              <Link href="/training" className="no-underline" style={{ color: "var(--teal)" }}>Browse training</Link>
+
             </div>
           </div>
         </Card>
@@ -818,7 +818,7 @@ function SearchContent() {
           )}
 
           {shouldLeadWithOpportunities && filteredOpportunities.length > 0 && (
-            <ResultSection label="OPPORTUNITIES" description="Top live matches across jobs, events, scholarships, and training">
+            <ResultSection label="OPPORTUNITIES" description="Top live matches across jobs, events, and scholarships">
               {filteredOpportunities.map((result) => (
                 <SearchResultCard key={`${result.type}-${result.id}`} result={result} />
               ))}
@@ -842,7 +842,7 @@ function SearchContent() {
           )}
 
           {!shouldLeadWithOpportunities && filteredOpportunities.length > 0 && (
-            <ResultSection label="OPPORTUNITIES" description="Live results from jobs, events, scholarships, and training">
+            <ResultSection label="OPPORTUNITIES" description="Live results from jobs, events, and scholarships">
               {filteredOpportunities.map((result) => (
                 <SearchResultCard key={`${result.type}-${result.id}`} result={result} />
               ))}

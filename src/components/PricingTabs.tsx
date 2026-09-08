@@ -357,7 +357,7 @@ export default function PricingTabs({
               },
               {
                 q: "What payment methods do you accept?",
-                a: "We accept all major credit cards. For School plan customers, we also offer invoicing with net-30 payment terms.",
+                a: "We accept all major credit cards.",
               },
               {
                 q: "What happens when my subscription expires?",
