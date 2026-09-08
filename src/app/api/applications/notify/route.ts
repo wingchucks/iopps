@@ -4,7 +4,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { sendAdminApplicationNotification, sendApplicationNotification } from "@/lib/email";
 import {
   buildApplicationDeliveryDocId,
-  buildEmployerNotificationDeliveryPatch,
+  persistEmployerNotificationDelivery,
   resolveEmployerNotificationTargetId,
   type EmployerNotificationStatus,
 } from "@/lib/application-notification-delivery";
@@ -78,15 +78,13 @@ async function writeDeliveryStatus(opts: {
     }
 
     const attemptedAt = Timestamp.now();
-    const patch = buildEmployerNotificationDeliveryPatch({
+    await persistEmployerNotificationDelivery(applicationRef, {
       attemptedAt,
       status: opts.status,
       sentAt: opts.markSent ? Timestamp.now() : undefined,
       error: opts.error,
       employerEmailTarget: opts.employerEmailTarget,
     });
-
-    await applicationRef.set(patch, { merge: true });
   } catch (error) {
     console.warn("[applications/notify] Failed to write delivery status", {
       uid,

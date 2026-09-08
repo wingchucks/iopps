@@ -1,3 +1,5 @@
+import type { DocumentReference } from "firebase-admin/firestore";
+
 export type EmployerNotificationStatus =
   | "sent"
   | "no_employer_doc"
@@ -67,4 +69,12 @@ export function buildEmployerNotificationDeliveryPatch({
   }
 
   return patch;
+}
+
+export async function persistEmployerNotificationDelivery(
+  applicationRef: Pick<DocumentReference, "update">,
+  options: DeliveryPatchOptions,
+): Promise<void> {
+  // update interprets dotted paths and never recreates a deleted application.
+  await applicationRef.update(buildEmployerNotificationDeliveryPatch(options));
 }
