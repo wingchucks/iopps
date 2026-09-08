@@ -30,7 +30,8 @@ export function timestamp(value: unknown): number {
 export const addedAt = (job: Job) => timestamp(job.createdAt) || timestamp(job.postedAt) || timestamp(job.order);
 export const closesAt = (job: Job) => timestamp(job.closingDate || job.expiresAt);
 export function jobSummary(job: Job): string {
-  let text = (job.description || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  const entities: Record<string, string> = { "&nbsp;": " ", "&#160;": " ", "&amp;": "&", "&quot;": '"', "&#39;": "'" };
+  let text = (job.description || "").replace(/<[^>]*>/g, " ").replace(/&(?:nbsp|amp|quot|#160|#39);/g, entity => entities[entity]);
   const summary = text.match(/(?:position summary|about (?:this|the) role|job summary)\s*:?\s*([\s\S]+)/i);
   if (summary) text = summary[1];
   text = text.replace(/\s+/g, " ").trim();
