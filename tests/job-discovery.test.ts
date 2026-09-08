@@ -10,6 +10,7 @@ test("employer branding resolves identity first and unambiguous exact name secon
  assert.equal(employerLogo({id:"job",title:"Worker",employerName:"Saskatoon Tribal Council"},[...brands,{id:"duplicate",name:"Saskatoon Tribal Council",logoUrl:"/duplicate.png"}]),undefined);
 });
 test("summary begins at the actual role summary and strips markup", () => {
+ assert.equal(jobSummary({id:"j",title:"Worker",description:"&amp;quot; &quot;"}), '&quot; "');
  assert.equal(jobSummary({id:"j",title:"Worker",description:"Worker\nLine Authority: Supervisor\nPosition Summary:\n<p>Care for children &amp; youth.</p>"}),"Care for children & youth.");
 });
 test("hourly pay is never multiplied by a thousand or compared with annual pay", () => {
