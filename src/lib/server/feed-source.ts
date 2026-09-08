@@ -60,27 +60,34 @@ export async function fetchDayforceItems(feedUrl: string, fetcher: Fetcher = fet
     const pair = header.split(";", 1)[0];
     cookies.set(pair.split("=", 1)[0], pair);
   }
-  const items: FeedItem[] = [];
-  const ids = new Set<string>();
+  const jobs = new Map<string, FeedItem>();
   let expectedTotal: number | undefined;
-  for (let page = 0; page < 100; page++) {
-    const response = await request(`${context.origin}/api/geo/${encodeURIComponent(context.namespace)}/jobposting/search`, fetcher, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken, Cookie: [...cookies.values()].join("; ") },
-      body: JSON.stringify({ clientNamespace: context.namespace, jobBoardCode: context.board, cultureCode: context.culture, paginationStart: items.length }),
-    });
-    const result = parseDayforcePage(await response.json(), context, items.length);
-    if (expectedTotal !== undefined && result.total !== expectedTotal) throw new Error("Dayforce source changed during pagination; retry sync");
-    expectedTotal = result.total;
-    for (const item of result.items) {
-      if (ids.has(item.guid)) throw new Error("Dayforce source repeated a job across pages; sync stopped");
-      ids.add(item.guid);
-      items.push(item);
+  // The public board occasionally changes ordering between pages without changing
+  // its count. Retry complete traversals, retaining unique jobs, but never import
+  // an incomplete result or more jobs than the board advertises.
+  for (let pass = 0; pass < 3; pass++) {
+    let offset = 0;
+    for (let page = 0; page < 100; page++) {
+      const response = await request(`${context.origin}/api/geo/${encodeURIComponent(context.namespace)}/jobposting/search`, fetcher, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken, Cookie: [...cookies.values()].join("; ") },
+        body: JSON.stringify({ clientNamespace: context.namespace, jobBoardCode: context.board, cultureCode: context.culture, paginationStart: offset }),
+      });
+      const result = parseDayforcePage(await response.json(), context, offset);
+      if (expectedTotal !== undefined && result.total !== expectedTotal) throw new Error("Dayforce source changed during pagination; retry sync");
+      expectedTotal = result.total;
+      for (const item of result.items) jobs.set(item.guid, item);
+      offset += result.items.length;
+      if (offset > result.total || jobs.size > result.total) throw new Error("Inconsistent Dayforce source results");
+      if (offset === result.total) {
+        if (jobs.size === result.total) return [...jobs.values()];
+        break;
+      }
+      if (!result.items.length) throw new Error("Incomplete Dayforce source results");
+      if (page === 99) throw new Error("Dayforce pagination limit exceeded");
     }
-    if (items.length === result.total) return items;
-    if (!result.items.length || items.length > result.total) throw new Error("Incomplete Dayforce source results");
   }
-  throw new Error("Dayforce pagination limit exceeded");
+  throw new Error("Dayforce source repeated or omitted jobs after three complete passes; sync stopped");
 }
 
 export async function fetchOracleItems(feedUrl: string, fetcher: Fetcher = fetch): Promise<FeedItem[]> {
