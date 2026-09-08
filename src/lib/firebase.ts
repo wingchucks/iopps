@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { connectAuthEmulator, getAuth } from "firebase/auth";
-import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
+import { connectFirestoreEmulator, initializeFirestore } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
 import { getAppCheckConfiguration } from "@/lib/firebase/app-check-config";
@@ -43,7 +43,11 @@ if (typeof window !== "undefined") {
 }
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Close each browser response after receiving data so buffering proxies do not
+// leave profile reads and writes waiting indefinitely on an open stream.
+export const db = initializeFirestore(app, typeof window !== "undefined"
+  ? { experimentalForceLongPolling: true }
+  : {});
 export const storage = getStorage(app);
 
 if (typeof window !== "undefined" && useEmulators) {
