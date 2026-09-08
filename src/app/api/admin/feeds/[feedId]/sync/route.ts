@@ -1,3 +1,4 @@
+import { missingSourceJobIds, expirationPatch, sourceLifecyclePatch } from "@/lib/server/job-expiration";
 import { loadFeedItems, feedJobKey, stripCdata } from "@/lib/server/feed-source";
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
@@ -81,17 +82,18 @@ export async function POST(
 
         const existingDoc = byId.get(externalId) || byUrl.get(feedJobKey(externalUrl));
         if (existingDoc) {
-          const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
+          const lifecycle = sourceLifecyclePatch(item, existingDoc.data());
+              const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
           if (feed.updateExistingJobs || (feedType === "dayforce" && feed.updateExistingJobs !== false)) {
-            await existingDoc.ref.update({ ...identity, title, location: item.location || "Canada", description: resolvedDescription, ...(descriptionPatch || {}), updatedAt: FieldValue.serverTimestamp() });
+            await existingDoc.ref.update({ ...identity, title, location: item.location || "Canada", description: resolvedDescription, ...(descriptionPatch || {}), ...lifecycle, updatedAt: FieldValue.serverTimestamp() });
             jobsUpdated++;
-          } else if (feedType === "dayforce" && existingDoc.get("feedId") !== feed.id) {
-            await existingDoc.ref.update(identity);
+          } else if (Object.keys(lifecycle).length || (feedType === "dayforce" && existingDoc.get("feedId") !== feed.id)) {
+            await existingDoc.ref.update({...identity,...lifecycle});
           }
           continue;
         }
 
-        if (descriptionPatch?.active === false || descriptionPatch?.status === "expired") {
+        if (sourceLifecyclePatch(item).active === false || descriptionPatch?.active === false || descriptionPatch?.status === "expired") {
           continue;
         }
 
@@ -110,6 +112,7 @@ export async function POST(
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
           ...(descriptionPatch ? descriptionPatch : {}),
+              ...sourceLifecyclePatch(item),
         };
 
         if (item.pubDate) {
@@ -129,11 +132,18 @@ export async function POST(
       }
     }
 
+        const missingIds = missingSourceJobIds(existingJobs.docs.map(d=>({id:d.id,...d.data()})), items, {id:feed.id,employerId:feed.employerId,feedType,feedUrl:feed.feedUrl!}, jobsFailed, (feed as Record<string, unknown>).lastSyncItemCount === 0 && (feed as Record<string, unknown>).lastSyncJobsFailed === 0 && !(feed as Record<string, unknown>).lastSyncError);
+        for (let start = 0; start < missingIds.length; start += 400) {
+          const batch = adminDb.batch();
+          for (const id of missingIds.slice(start,start+400)) batch.update(adminDb.collection("jobs").doc(id),expirationPatch("removed_from_source"));
+          await batch.commit();
+        }
     // Update feed metadata
     await adminDb.collection("rssFeeds").doc(feedId).update({
       lastSyncedAt: FieldValue.serverTimestamp(),
       lastSyncError: jobsFailed ? `${jobsFailed} job(s) failed during sync` : null,
       lastSyncItemCount: items.length,
+          lastSyncJobsExpired: missingIds.length,
       lastSyncJobsUpdated: jobsUpdated,
       lastSyncJobsFailed: jobsFailed,
       totalJobsImported: (feed.totalJobsImported || 0) + jobsImported,

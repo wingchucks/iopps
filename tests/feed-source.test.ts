@@ -40,7 +40,7 @@ test('XML rejects webpage and unsupported Atom; preserves publication date',()=>
 });
 test('unsupported feed and malformed ADP fail',async()=>{
  await assert.rejects(loadFeedItems(board,'unknown'),/Unsupported/);
- await assert.rejects(loadFeedItems(board,'adp',async()=>Response.json({})),/Unable to parse/);
+ await assert.rejects(loadFeedItems(board,'adp',async()=>Response.json({})),/ADP/);
 });
 test('Dayforce refuses metadata for a different board',async()=>{
  await assert.rejects(loadFeedItems(board.replace('CANDIDATEPORTAL','AGILE'),'dayforce',async()=>new Response(html)),/does not match/);
@@ -53,4 +53,9 @@ test('Dayforce recovers moving page boundaries only when every unique job is acc
  const pages=[{jobPostings:[job(1)],offset:0,maxCount:2},{jobPostings:[job(1)],offset:1,maxCount:2},{jobPostings:[job(2)],offset:0,maxCount:2},{jobPostings:[job(1)],offset:1,maxCount:2}];
  const items=await loadFeedItems(board,'dayforce',mock(pages));
  assert.deepEqual(items.map(j=>j.guid).sort(),['1','2']);
+});
+
+test('ADP retrieves every one-based page before declaring the source complete',async()=>{
+ let n=0;const reader:typeof fetch=async(url)=>{assert.equal(new URL(String(url)).searchParams.get('$skip'),String(n+1));return Response.json({meta:{startSequence:n+1,totalNumber:2},jobRequisitions:[{itemID:String(++n),requisitionTitle:'Job'}]})};
+ assert.equal((await loadFeedItems('https://adp.example/jobs?cid=company','adp',reader)).length,2);
 });

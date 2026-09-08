@@ -42,6 +42,7 @@ export function parseDayforcePage(value: unknown, context: ReturnType<typeof day
       description: text(job.jobDescription),
       location: locations.join("; ") || "Canada",
       pubDate: text(job.postingStartTimestampUTC),
+      closingDate: text(job.postingExpiryTimestampUTC),
       link: `${context.origin}/${encodeURIComponent(context.culture)}/${encodeURIComponent(context.namespace)}/${encodeURIComponent(context.board.toUpperCase())}/jobs/${id}`,
     };
   });
@@ -112,7 +113,7 @@ export async function fetchOracleItems(feedUrl: string, fetcher: Fetcher = fetch
       const id = text(job.Id);
       if (!id || !text(job.Title) || ids.has(id)) throw new Error("Invalid or repeated Oracle job identity");
       ids.add(id);
-      items.push({ guid: id, title: text(job.Title), description: text(job.ShortDescriptionStr), pubDate: text(job.PostedDate), location: text(job.PrimaryLocation) || "Canada", link: `${url.origin}/hcmUI/CandidateExperience/en/sites/${encodeURIComponent(text(result.SiteNumber) || "SIGA")}/job/${encodeURIComponent(id)}` });
+      items.push({ guid: id, title: text(job.Title), description: text(job.ShortDescriptionStr), pubDate: text(job.PostedDate), closingDate: text(job.PostingEndDate), location: text(job.PrimaryLocation) || "Canada", link: `${url.origin}/hcmUI/CandidateExperience/en/sites/${encodeURIComponent(text(result.SiteNumber) || "SIGA")}/job/${encodeURIComponent(id)}` });
     }
     if (items.length === result.TotalJobsCount) return items;
     if (!result.requisitionList.length || items.length > Number(result.TotalJobsCount)) throw new Error("Incomplete Oracle source results");
@@ -131,13 +132,41 @@ export function feedJobKey(value: unknown): string {
   } catch { return ""; }
 }
 
+export async function fetchAdpItems(feedUrl: string, fetcher: Fetcher = fetch): Promise<FeedItem[]> {
+  const url = new URL(feedUrl);
+  const items: FeedItem[] = [];
+  const ids = new Set<string>();
+  let total: number | undefined;
+  for (let page = 0; page < 100; page++) {
+    // This public ADP endpoint uses a one-based startSequence for $skip.
+    url.searchParams.set("$skip", String(items.length + 1));
+    const response = await request(url.href, fetcher);
+    const body = await response.text();
+    const json = record(JSON.parse(body));
+    const meta = record(json.meta);
+    if (!Number.isInteger(meta.totalNumber) || Number(meta.totalNumber) < 0 || meta.startSequence !== items.length + 1) throw new Error("Invalid ADP pagination metadata");
+    if (total !== undefined && total !== meta.totalNumber) throw new Error("ADP source changed during pagination");
+    total = Number(meta.totalNumber);
+    const rows = parseAdp(body, feedUrl);
+    for (const item of rows) {
+      if (!item.guid || !item.title || ids.has(item.guid)) throw new Error("Invalid or repeated ADP job identity");
+      ids.add(item.guid);
+      items.push(item);
+    }
+    if (items.length === total) return items;
+    if (!rows.length || items.length > total) throw new Error("Incomplete ADP source results");
+  }
+  throw new Error("ADP pagination limit exceeded");
+}
+
 export async function loadFeedItems(feedUrl: string, feedType = "xml", fetcher: Fetcher = fetch): Promise<FeedItem[]> {
+  if (feedType === "adp") return fetchAdpItems(feedUrl, fetcher);
   if (feedType === "dayforce") return fetchDayforceItems(feedUrl, fetcher);
   if (feedType === "oracle-hcm") return fetchOracleItems(feedUrl, fetcher);
   if (!["xml", "rss", "adp"].includes(feedType)) throw new Error(`Unsupported feed type: ${feedType}`);
   const response = await request(feedUrl, fetcher);
   const body = await response.text();
-  return feedType === "adp" ? parseAdp(body, feedUrl) : parseSimpleXml(body);
+  return parseSimpleXml(body);
 }
 
 export function parseSimpleXml(xml: string): Array<Record<string, string>> {
