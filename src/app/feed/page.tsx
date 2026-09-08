@@ -10,7 +10,7 @@ import {
 } from "@/lib/public-featured";
 import { displayAmount, displayLocation } from "@/lib/utils";
 
-type FeedItemType = "job" | "program" | "event" | "scholarship" | "school";
+type FeedItemType = "job" | "event" | "scholarship";
 
 interface FeedItem {
   id: string;
@@ -29,10 +29,8 @@ interface FeedItem {
 
 const TYPE_META: Record<FeedItemType, { label: string; icon: string }> = {
   job: { label: "Jobs", icon: "💼" },
-  program: { label: "Programs", icon: "📚" },
   event: { label: "Events", icon: "📅" },
   scholarship: { label: "Scholarships", icon: "🎓" },
-  school: { label: "Schools", icon: "🏫" },
 };
 
 async function fetchJobs(): Promise<FeedItem[]> {
@@ -53,27 +51,6 @@ async function fetchJobs(): Promise<FeedItem[]> {
     href: `/jobs/${job.slug || job.id || ""}`,
     createdAt: (job.createdAt as string) || (job.postedAt as string) || "",
     featured: Boolean(job.featured),
-  }));
-}
-
-async function fetchPrograms(): Promise<FeedItem[]> {
-  const res = await fetch("/api/programs");
-  if (!res.ok) return [];
-  const data = await res.json();
-  const programs = data.programs || [];
-  return programs.map((program: Record<string, unknown>) => ({
-    id: String(program.id || ""),
-    type: "program" as FeedItemType,
-    title: String(program.title || ""),
-    orgName: String(program.orgName || ""),
-    orgLogo: (program.orgLogoUrl as string) || "",
-    orgSlug: (program.orgId as string) || "",
-    subtitle: [displayLocation(program.location), String(program.format || "")].filter(Boolean).join(" · "),
-    detail: (program.duration as string) || "",
-    badge: (program.credential as string) || (program.category as string) || "",
-    href: (program.externalUrl as string) || `/schools/${program.orgId}`,
-    createdAt: (program.createdAt as string) || "",
-    featured: Boolean(program.featured),
   }));
 }
 
@@ -117,38 +94,6 @@ async function fetchScholarships(): Promise<FeedItem[]> {
       createdAt: (scholarship.createdAt as string) || "",
       featured: Boolean(scholarship.featured),
     }));
-}
-
-async function fetchSchools(): Promise<FeedItem[]> {
-  const res = await fetch("/api/schools");
-  if (!res.ok) return [];
-  const data = await res.json();
-  const schools = Array.isArray(data) ? data : (data.schools || []);
-  return schools.map((school: Record<string, unknown>) => {
-    const programCount = Number(school.programCount || 0);
-    const scholarshipCount = Number(school.scholarshipCount || 0);
-    const detail = [
-      programCount > 0 ? `${programCount} programs` : "",
-      scholarshipCount > 0 ? `${scholarshipCount} scholarships` : "",
-    ]
-      .filter(Boolean)
-      .join(" · ");
-
-    return {
-      id: String(school.id || school.slug || ""),
-      type: "school" as FeedItemType,
-      title: String(school.name || ""),
-      orgName: String(school.institutionType || "School"),
-      orgLogo: (school.logoUrl as string) || (school.logo as string) || "",
-      orgSlug: (school.slug as string) || (school.id as string) || "",
-      subtitle: displayLocation(school.location) || String(school.tagline || ""),
-      detail,
-      badge: (school.partnerBadgeLabel as string) || (school.partnerLabel as string) || String(school.type || "School"),
-      href: `/schools/${school.slug || school.id || ""}`,
-      createdAt: (school.updatedAt as string) || (school.createdAt as string) || "",
-      featured: Boolean(school.isPartner || school.featured),
-    };
-  });
 }
 
 function OrgAvatar({ logo, name, size = 40 }: { logo?: string; name: string; size?: number }) {
@@ -239,9 +184,9 @@ function CardLink({ href, children }: { href: string; children: ReactNode }) {
 
 function getCtaLabel(type: FeedItemType): string {
   if (type === "job") return "View & Apply";
-  if (type === "program") return "Learn More";
+
   if (type === "event") return "View Details";
-  if (type === "school") return "View School";
+
   return "Apply Now";
 }
 
@@ -354,16 +299,14 @@ export default function FeedPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [jobs, programs, events, scholarships, schools] = await Promise.all([
+        const [jobs, events, scholarships] = await Promise.all([
           fetchJobs(),
-          fetchPrograms(),
           fetchEvents(),
           fetchScholarships(),
-          fetchSchools(),
         ]);
 
         const merged = sortByRecencyWithFeaturedBoost(
-          [...jobs, ...programs, ...events, ...scholarships, ...schools],
+          [...jobs, ...events, ...scholarships],
           {
             recencyKeys: ["createdAt"],
             featuredKeys: ["featuredAt", "updatedAt", "createdAt"],
@@ -410,15 +353,15 @@ export default function FeedPage() {
         icon: "📅",
       },
       {
-        title: "Build skills and credentials",
-        description: firstByType("program")?.title || "Explore training and education pathways.",
-        href: "/training",
-        cta: "Browse training",
+        title: "Explore Indigenous entrepreneurship",
+        description: "Discover Indigenous businesses and connect with entrepreneurs.",
+        href: "/businesses",
+        cta: "Explore businesses",
         icon: "📚",
       },
       {
         title: "Pick up where you left off",
-        description: "Review saved items, applications, events, and learning from your profile.",
+        description: "Review saved items, applications, and your profile.",
         href: "/profile",
         cta: "Open profile",
         icon: "✨",
@@ -441,7 +384,7 @@ export default function FeedPage() {
               Your Indigenous opportunities, all in one place
             </h1>
             <p className="mt-2 max-w-[620px] text-base text-white/72">
-              Jobs, scholarships, events, and training programs from Indigenous-led and allied organizations across Canada — ready when you are.
+              Jobs, Indigenous businesses, community events, and scholarships — ready when you are.
             </p>
           </div>
         </section>
@@ -496,7 +439,7 @@ export default function FeedPage() {
                 Fresh opportunities
               </h2>
               <p className="text-sm text-text-sec">
-                A mixed stream of fresh jobs, events, training, scholarships, and schools — not just another job board.
+                Fresh jobs, community events, and scholarships to help you take your next step.
               </p>
             </div>
           </div>

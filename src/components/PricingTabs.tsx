@@ -209,7 +209,7 @@ export default function PricingTabs({
 
       {/* Tab content */}
       {activeTab === "Promotion Plans" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <PlanCard
             title={SUBSCRIPTION_PLANS.tier1.title}
             price={SUBSCRIPTION_PLANS.tier1.priceLabel}
@@ -229,15 +229,6 @@ export default function PricingTabs({
             cta={subCta}
             href={subHref("tier2")}
             current={currentPlan === "tier2"}
-          />
-          <PlanCard
-            title={SUBSCRIPTION_PLANS.tier3.title}
-            price={SUBSCRIPTION_PLANS.tier3.priceLabel}
-            period={SUBSCRIPTION_PLANS.tier3.periodLabel}
-            features={SUBSCRIPTION_PLANS.tier3.features}
-            cta={subCta}
-            href={subHref("tier3")}
-            current={currentPlan === "tier3"}
           />
         </div>
       )}

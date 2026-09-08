@@ -16,8 +16,8 @@ import {
 const BASE_URL = "https://www.iopps.ca";
 
 const STATIC_PAGES = [
-  "", "/feed", "/jobs", "/events", "/conference", "/scholarships", "/training",
-  "/stories", "/partners", "/businesses", "/schools", "/education",
+  "", "/jobs", "/events", "/conference", "/scholarships",
+  "/stories", "/partners", "/businesses",
   "/shop", "/livestreams", "/spotlight", "/featured-talent",
   "/mentorship", "/for-employers", "/about", "/contact", "/pricing", "/privacy", "/terms",
 ] as const;
@@ -33,7 +33,6 @@ const COLLECTIONS: CollectionSpec[] = [
   { name: "jobs", prefix: "/jobs", priority: 0.8, changeFrequency: "daily" },
   { name: "events", prefix: "/events", priority: 0.8, changeFrequency: "daily" },
   { name: "scholarships", prefix: "/scholarships", priority: 0.8, changeFrequency: "weekly" },
-  { name: "training_programs", prefix: "/training", priority: 0.7, changeFrequency: "weekly" },
   { name: "organizations", priority: 0.6, changeFrequency: "weekly" },
   { name: "shop_vendors", prefix: "/shop", priority: 0.5, changeFrequency: "weekly" },
 ];
@@ -67,7 +66,7 @@ async function collectionEntries(spec: CollectionSpec): Promise<MetadataRoute.Si
       const path = spec.name === "organizations"
         ? organizationPublicPath(record)
         : slug && spec.prefix ? `${spec.prefix}/${slug}` : null;
-      return path ? [entryForRecord(record, path, spec)] : [];
+      return path && !path.startsWith("/schools/") ? [entryForRecord(record, path, spec)] : [];
     });
   } catch (error) {
     console.error(`Sitemap: failed to read ${spec.name}:`, error);
@@ -83,7 +82,7 @@ async function postEntries(): Promise<MetadataRoute.Sitemap> {
       const record = { id: doc.id, ...doc.data() } as DiscoverableRecord;
       if (!isIndexableRecord(record)) return [];
       const path = publicPostPath(record);
-      if (!path) return [];
+      if (!path || path.startsWith("/training/") || path.startsWith("/schools/") || path.startsWith("/programs/")) return [];
       const type = typeof record.type === "string" ? record.type.toLowerCase() : "";
       const isDaily = type === "job" || type === "conference" || type === "event";
       return [entryForRecord(record, path, {
