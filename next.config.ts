@@ -20,6 +20,7 @@ const contentSecurityPolicyReportOnly = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  distDir: process.env.IOPPS_BUILD_DIRECTORY || ".next",
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.squarespace-cdn.com", pathname: "/content/v1/**" },

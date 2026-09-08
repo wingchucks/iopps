@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { getMemberProfile } from "@/lib/firestore/members";
@@ -22,9 +23,8 @@ export default function LoginPage() {
 
 function LoginForm() {
   const { user, loading: authLoading, signIn, signInWithGoogle, reloadUser, signOut } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect");
+  const redirectTo = safeAuthRedirect(searchParams.get("redirect"));
   const reason = searchParams.get("reason");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -107,11 +107,11 @@ function LoginForm() {
 
     const timeout = window.setTimeout(() => setSlowRedirect(true), 3500);
     void resolvePostAuthDestination(user).then((destination) => {
-      router.replace(destination);
+      window.location.replace(destination);
     });
 
     return () => window.clearTimeout(timeout);
-  }, [user, authLoading, router, redirectTo]);
+  }, [user, authLoading, redirectTo]);
 
   if (authLoading || (user && !slowRedirect)) {
     return (
@@ -130,7 +130,7 @@ function LoginForm() {
     try {
       await reloadUser();
       if (user) {
-        router.replace(await resolvePostAuthDestination(user));
+        window.location.replace(await resolvePostAuthDestination(user));
       }
       setSlowRedirect(false);
     } catch (err: unknown) {
@@ -203,7 +203,7 @@ function LoginForm() {
               type="button"
               onClick={() => {
                 void resolvePostAuthDestination(user).then((destination) => {
-                  router.replace(destination);
+                  window.location.replace(destination);
                 });
               }}
               disabled={loading}
@@ -247,7 +247,7 @@ function LoginForm() {
     setLoading(true);
     try {
       const cred = await signIn(email, password);
-      router.push(await resolvePostAuthDestination(cred.user));
+      window.location.assign(await resolvePostAuthDestination(cred.user));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (msg.includes("user-not-found") || msg.includes("wrong-password") || msg.includes("invalid-credential"))
@@ -265,7 +265,7 @@ function LoginForm() {
     setLoading(true);
     try {
       const cred = await signInWithGoogle();
-      router.push(await resolvePostAuthDestination(cred.user));
+      window.location.assign(await resolvePostAuthDestination(cred.user));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (!msg.includes("popup-closed")) setError(msg);

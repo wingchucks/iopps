@@ -31,6 +31,7 @@ export interface StatusHistoryEntry {
 }
 
 export interface Application {
+  profileSnapshot?: Partial<import("./members").MemberProfile> & { capturedAt?: string };
   id: string;
   userId: string;
   postId: string;

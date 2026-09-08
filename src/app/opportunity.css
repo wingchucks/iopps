@@ -503,6 +503,11 @@
   }
 }
 .op-account-surface {
+  --text-muted: #526277;
+  --teal: #0b766e;
+  --blue: #1d4ed8;
+  --green: #047857;
+  --gold: #92400e;
   background: linear-gradient(
     140deg,
     color-mix(in srgb, #65ded0 18%, var(--bg)),
@@ -512,6 +517,13 @@
 }
 .op-account-surface > div {
   background: transparent;
+}
+[data-theme="dark"] .op-account-surface {
+  --text-muted: inherit;
+  --teal: inherit;
+  --blue: inherit;
+  --green: inherit;
+  --gold: inherit;
 }
 .op-job-card:focus-within {
   outline: 3px solid #00b8ae;

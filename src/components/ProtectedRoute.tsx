@@ -15,14 +15,14 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login");
+      router.replace(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
     }
   }, [user, loading, router]);
 
   // Hard redirect to /verify-email for unverified password users
   useEffect(() => {
     if (!loading && isUnverifiedPassword) {
-      router.replace("/verify-email");
+      router.replace(`/verify-email?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
     }
   }, [loading, isUnverifiedPassword, router]);
 

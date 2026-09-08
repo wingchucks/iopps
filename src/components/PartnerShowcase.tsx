@@ -23,7 +23,7 @@ export default function PartnerShowcase({
               <div className={`op-logo-stage${p.href.startsWith("/org/city-of-saskatoon") ? " op-logo-stage-dark" : ""}`}>
                 {p.logoUrl ? (
                   <Image
-                    src={p.logoUrl}
+                    src={p.href === "/org/siga" ? "/redesign/siga.png" : p.href === "/org/inspire-group-of-companies" ? "/redesign/inspire-group.png" : p.logoUrl}
                     width={320}
                     height={120}
                     sizes="(max-width: 540px) 150px, 280px"

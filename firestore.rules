@@ -138,6 +138,20 @@ service cloud.firestore {
 
     // Applications: applicants can create/read their own applications; employers can manage applications for their org.
     match /applications/{applicationId} {
+      function isApplicantWithdrawal() {
+        let oldHistory = resource.data.get('statusHistory', []);
+        let history = request.resource.data.statusHistory;
+        let last = history[history.size() - 1];
+        return resource.data.userId == request.auth.uid
+          && resource.data.status in ['submitted', 'reviewing', 'shortlisted', 'interview']
+          && request.resource.data.status == 'withdrawn'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusHistory', 'updatedAt'])
+          && history == oldHistory.concat([last])
+          && last.keys().hasOnly(['status', 'timestamp', 'note'])
+          && last.status == 'withdrawn'
+          && last.timestamp is timestamp
+          && request.resource.data.updatedAt == request.time;
+      }
       allow read: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
         isAdmin() ||
@@ -149,6 +163,7 @@ service cloud.firestore {
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.keys().hasAll(["userId", "postId", "jobId", "orgId", "employerId", "postTitle", "status", "appliedAt"]);
       allow update: if isSignedIn() && (
+        isApplicantWithdrawal() ||
         isAdmin() ||
         (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
          memberData().orgId in [resource.data.orgId, resource.data.employerId] &&

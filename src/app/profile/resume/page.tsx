@@ -17,6 +17,8 @@ import {
   deleteObject,
 } from "firebase/storage";
 
+import { createResumeObjectName } from "@/lib/application-snapshot";
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = [
   "application/pdf",
@@ -82,7 +84,7 @@ function ResumeContent() {
       showToast("Please upload a PDF or DOC file", "error");
       return;
     }
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size >= MAX_FILE_SIZE) {
       showToast("File must be under 5MB", "error");
       return;
     }
@@ -90,7 +92,7 @@ function ResumeContent() {
 
     setUploading(true);
     try {
-      const storageRef = ref(storage, `resumes/${user.uid}/${file.name}`);
+      const storageRef = ref(storage, `resumes/${user.uid}/${createResumeObjectName(file.name)}`);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       const now = new Date().toISOString();
@@ -125,7 +127,7 @@ function ResumeContent() {
     try {
       // Try to delete the file from storage
       try {
-        const storageRef = ref(storage, `resumes/${user.uid}/${resume.fileName}`);
+        const storageRef = ref(storage, resume.url);
         await deleteObject(storageRef);
       } catch {
         // File may not exist in storage, continue anyway
