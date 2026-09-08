@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { connectAuthEmulator, getAuth } from "firebase/auth";
-import { connectFirestoreEmulator, getFirestore, setLogLevel } from "firebase/firestore";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
 import { getAppCheckConfiguration } from "@/lib/firebase/app-check-config";
@@ -9,12 +9,12 @@ import { getAppCheckConfiguration } from "@/lib/firebase/app-check-config";
 // inject NEXT_PUBLIC_FIREBASE_* (e.g. GitHub Actions CI). Vercel + local .env
 // always supply real values, so production/runtime behavior is unaffected.
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "ci-placeholder-api-key",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "ci-placeholder.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "ci-placeholder",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "ci-placeholder.appspot.com",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "0",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:0:web:ci",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim() || "ci-placeholder-api-key",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim() || "ci-placeholder.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim() || "ci-placeholder",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim() || "ci-placeholder.appspot.com",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?.trim() || "0",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID?.trim() || "1:0:web:ci",
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
@@ -44,9 +44,6 @@ if (typeof window !== "undefined") {
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-if (typeof window !== "undefined" && window.location.hostname === "iopps-git-codex-integrated-redesign-wingchucks-projects.vercel.app") {
-  setLogLevel("debug");
-}
 export const storage = getStorage(app);
 
 if (typeof window !== "undefined" && useEmulators) {
