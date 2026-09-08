@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildPartnersPayload } from "../src/app/api/partners/route.ts";
+import { buildPartnersPayload } from "../src/lib/server/partners-payload.ts";
 
 test("/api/partners excludes SIIT-style trials and Nicaw-style admin grants", () => {
   const payload = buildPartnersPayload([

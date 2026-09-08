@@ -1,18 +1,10 @@
+import { buildAdminUserSoftDeleteUpdate } from "@/lib/server/admin-soft-delete";
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyAdminToken, verifySuperAdminToken } from "@/lib/api-auth";
 import { adminDb, getAdminAuth } from "@/lib/firebase-admin";
 import { isSuperAdminEmail } from "@/lib/server/super-admin";
 
 export const dynamic = "force-dynamic";
-
-export function buildAdminUserSoftDeleteUpdate(adminId: string, deletedAt: string) {
-  return {
-    status: "deleted",
-    deletedAt,
-    deletedBy: adminId,
-    updatedAt: deletedAt,
-  };
-}
 
 export async function GET(
   request: NextRequest,

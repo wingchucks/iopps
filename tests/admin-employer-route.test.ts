@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   buildOrganizationSoftDeleteMetadata,
   buildSoftDeleteContentPatch,
-} from "../src/app/api/admin/employers/[orgId]/route.ts";
+} from "../src/lib/server/admin-soft-delete.ts";
 
 test("buildOrganizationSoftDeleteMetadata archives org visibility and audit state", () => {
   assert.deepEqual(

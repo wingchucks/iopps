@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildAdminSubscriptionOverrideArtifacts } from "../src/app/api/admin/employers/[orgId]/subscription/route.ts";
+import { buildAdminSubscriptionOverrideArtifacts } from "../src/lib/server/admin-subscription-override.ts";
 
 test("buildAdminSubscriptionOverrideArtifacts mirrors a complimentary premium grant to employer and org records", () => {
   const artifacts = buildAdminSubscriptionOverrideArtifacts(

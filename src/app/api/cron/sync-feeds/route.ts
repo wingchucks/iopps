@@ -1,3 +1,4 @@
+import { loadFeedItems, feedJobKey, stripCdata } from "@/lib/server/feed-source";
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
@@ -7,9 +8,9 @@ import {
 } from "@/lib/server/imported-job-descriptions";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
-const FEED_FETCH_TIMEOUT_MS = 15_000;
+
 // ---------------------------------------------------------------------------
 // GET /api/cron/sync-feeds — Automated daily feed sync (Vercel Cron)
 // ---------------------------------------------------------------------------
@@ -54,46 +55,26 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), FEED_FETCH_TIMEOUT_MS);
-
-        let response: Response;
-        try {
-          response = await fetch(feedUrl, {
-            signal: controller.signal,
-            headers: {
-              Accept: "application/rss+xml, application/xml, text/xml, */*",
-              "User-Agent": "IOPPS-FeedSync/1.0",
-            },
-          });
-        } finally {
-          clearTimeout(timeoutId);
-        }
-
-        if (!response.ok) {
-          const errorMsg = `HTTP ${response.status}`;
-          await adminDb.collection("rssFeeds").doc(feed.id).update({
-            lastSyncError: errorMsg,
-            lastSyncedAt: FieldValue.serverTimestamp(),
-          });
-          results.push({ feedId: feed.id, feedName: feed.feedName, jobsImported: 0, error: errorMsg });
-          continue;
-        }
-
-        const responseText = await response.text();
         const feedType = (feed as Record<string, unknown>).feedType as string || "xml";
-        const items = feedType === "oracle-hcm"
-          ? parseOracleHcm(responseText)
-          : feedType === "adp"
-            ? parseAdp(responseText, feed.feedUrl)
-            : parseSimpleXml(responseText);
+        const items = await loadFeedItems(feed.feedUrl!, feedType);
+        // Scope identity matching to this employer, including historical Dayforce apply URLs.
+        const existingJobs = await adminDb.collection("jobs").where("employerId", "==", feed.employerId).get();
+        const byId = new Map(existingJobs.docs.filter(d => d.get("externalId") && d.get("feedId") === feed.id).map(d => [String(d.get("externalId")), d]));
+        const byUrl = new Map(existingJobs.docs.flatMap(d => [d.get("externalUrl"), d.get("applyUrl"), d.get("applicationUrl")].map(value => [feedJobKey(value), d] as const).filter(([key]) => key)));
+        const seen = new Set<string>();
+        let jobsUpdated = 0;
+        let jobsFailed = 0;
         let jobsImported = 0;
 
         for (const item of items) {
           try {
             const externalId = item.guid || item.id || item.link || "";
             const externalUrl = item.link || item.url || "";
-            const title = item.title || "Untitled Position";
+            const key = feedJobKey(externalUrl) || externalId;
+            if (!key || !item.title) throw new Error("Feed job is missing identity or title");
+            if (seen.has(key)) continue;
+            seen.add(key);
+            const title = item.title;
             const feedDescription = item.description || item.summary || item.content || "";
             const normalizedFeedDescription = normalizeImportedDescription(stripCdata(feedDescription));
             const descriptionPatch = await fetchImportedDescriptionPatch({
@@ -106,22 +87,14 @@ export async function GET(request: NextRequest) {
 
             if (!externalId && !externalUrl) continue;
 
-            // Check for duplicates
-            const duplicateQuery = externalId
-              ? adminDb.collection("jobs").where("externalId", "==", externalId).limit(1)
-              : adminDb.collection("jobs").where("externalUrl", "==", externalUrl).limit(1);
-
-            const existingSnap = await duplicateQuery.get();
-
-            if (!existingSnap.empty) {
-              if (feed.updateExistingJobs) {
-                const existingDoc = existingSnap.docs[0];
-                await existingDoc.ref.update({
-                  title,
-                  description: resolvedDescription,
-                  ...(descriptionPatch ? descriptionPatch : {}),
-                  updatedAt: FieldValue.serverTimestamp(),
-                });
+            const existingDoc = byId.get(externalId) || byUrl.get(feedJobKey(externalUrl));
+            if (existingDoc) {
+              const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
+              if (feed.updateExistingJobs || (feedType === "dayforce" && feed.updateExistingJobs !== false)) {
+                await existingDoc.ref.update({ ...identity, title, location: item.location || "Canada", description: resolvedDescription, ...(descriptionPatch || {}), updatedAt: FieldValue.serverTimestamp() });
+                jobsUpdated++;
+              } else if (feedType === "dayforce" && existingDoc.get("feedId") !== feed.id) {
+                await existingDoc.ref.update(identity);
               }
               continue;
             }
@@ -149,7 +122,8 @@ export async function GET(request: NextRequest) {
 
             if (item.pubDate) {
               try {
-                jobData.publishedAt = new Date(item.pubDate);
+                const publishedAt = new Date(item.pubDate);
+                if (!Number.isNaN(publishedAt.getTime())) jobData.publishedAt = publishedAt;
               } catch {
                 // ignore
               }
@@ -158,17 +132,21 @@ export async function GET(request: NextRequest) {
             await adminDb.collection("jobs").add(jobData);
             jobsImported++;
           } catch (itemErr) {
+            jobsFailed++;
             console.error(`[cron/sync-feeds] Error processing item:`, itemErr);
           }
         }
 
         await adminDb.collection("rssFeeds").doc(feed.id).update({
           lastSyncedAt: FieldValue.serverTimestamp(),
-          lastSyncError: null,
+          lastSyncError: jobsFailed ? `${jobsFailed} job(s) failed during sync` : null,
+          lastSyncItemCount: items.length,
+          lastSyncJobsUpdated: jobsUpdated,
+          lastSyncJobsFailed: jobsFailed,
           totalJobsImported: (feed.totalJobsImported || 0) + jobsImported,
         });
 
-        results.push({ feedId: feed.id, feedName: feed.feedName, jobsImported });
+        results.push({ feedId: feed.id, feedName: feed.feedName, jobsImported, ...(jobsFailed ? { error: `${jobsFailed} job(s) failed during sync` } : {}) });
       } catch (feedErr) {
         const errMsg = feedErr instanceof Error ? feedErr.message : String(feedErr);
         results.push({ feedId: feed.id, feedName: feed.feedName, jobsImported: 0, error: errMsg });
@@ -196,7 +174,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      success: true,
+      success: results.every(result => !result.error),
       feedsProcessed: feedsSnap.size,
       results,
       durationMs: Date.now() - startTime,
@@ -204,102 +182,5 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error("[cron/sync-feeds] Error:", err);
     return NextResponse.json({ error: "Cron sync failed" }, { status: 500 });
-  }
-}
-
-// ---------------------------------------------------------------------------
-// XML parser — supports both <item> (RSS) and <job> (SmartJobBoard) tags
-// ---------------------------------------------------------------------------
-
-function parseSimpleXml(xml: string): Array<Record<string, string>> {
-  const items: Array<Record<string, string>> = [];
-  const itemRegex = /<(?:item|job)>([\s\S]*?)<\/(?:item|job)>/gi;
-  let match: RegExpExecArray | null;
-
-  while ((match = itemRegex.exec(xml)) !== null) {
-    const item: Record<string, string> = {};
-    const content = match[1];
-    const fieldRegex = /<(\w+)(?:\s[^>]*)?>([\s\S]*?)<\/\1>/g;
-    let fieldMatch: RegExpExecArray | null;
-
-    while ((fieldMatch = fieldRegex.exec(content)) !== null) {
-      item[fieldMatch[1].toLowerCase()] = fieldMatch[2]
-        .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-        .trim();
-    }
-
-    // Normalize SmartJobBoard field names to RSS standard
-    if (!item.link && item.url) item.link = item.url;
-    if (!item.guid && item.referencenumber) item.guid = item.referencenumber;
-    if (!item.pubDate && item.date) item.pubDate = item.date;
-    if (!item.location && (item.city || item.state)) {
-      item.location = [item.city, item.state, item.country]
-        .filter(Boolean)
-        .join(", ");
-    }
-
-    items.push(item);
-  }
-
-  return items;
-}
-
-function stripCdata(text: string): string {
-  return text.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").trim();
-}
-
-// ---------------------------------------------------------------------------
-// Oracle HCM parser — handles recruitingCEJobRequisitions JSON response
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// ADP Workforce Now parser
-// ---------------------------------------------------------------------------
-
-function parseAdp(text: string, feedUrl?: string): Array<Record<string, string>> {
-  try {
-    const json = JSON.parse(text);
-    const requisitions = json.jobRequisitions || [];
-    const feedCid = (() => {
-      if (!feedUrl) return "";
-      try {
-        return new URL(feedUrl).searchParams.get("cid") || "";
-      } catch {
-        return "";
-      }
-    })();
-    return requisitions.map((req: Record<string, unknown>) => {
-      const itemID = String(req.itemID || "");
-      const cid = feedCid || String((req as Record<string, unknown>).cid || "");
-      return {
-        title: String(req.requisitionTitle || ""),
-        guid: itemID,
-        link: cid
-          ? `https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=${cid}&jobId=${itemID}&lang=en_CA&source=CC2`
-          : "",
-        pubDate: String((req.postDate as string)?.substring(0, 10) || ""),
-        description: String(req.requisitionDescription || req.shortDescription || ""),
-        location: String(req.location || req.primaryLocation || "Canada"),
-      };
-    });
-  } catch {
-    return [];
-  }
-}
-
-function parseOracleHcm(text: string): Array<Record<string, string>> {
-  try {
-    const json = JSON.parse(text);
-    const requisitions = json.items?.[0]?.requisitionList || [];
-    return requisitions.map((req: Record<string, unknown>) => ({
-      title: String(req.Title || ""),
-      guid: String(req.Id || ""),
-      link: `https://iaayzv.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/SIGA/job/${req.Id}`,
-      pubDate: String(req.PostedDate || ""),
-      description: String(req.ShortDescriptionStr || ""),
-      location: String(req.PrimaryLocation || "Canada"),
-    }));
-  } catch {
-    return [];
   }
 }
