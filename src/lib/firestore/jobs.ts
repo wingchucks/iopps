@@ -46,6 +46,7 @@ export interface Job {
   companyLogoUrl?: string;
   applicationUrl?: string;
   externalApplyUrl?: string;
+  externalUrl?: string;
   contactEmail?: string;
   featured?: boolean;
   active?: boolean;
