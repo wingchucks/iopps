@@ -138,7 +138,7 @@ function EventsBrowsePageContent() {
 
   return (
     <AppShell>
-    <div className="min-h-screen bg-bg">
+    <div className="events-directory min-h-screen bg-bg">
       {/* Hero */}
       <div
         className="relative overflow-hidden"

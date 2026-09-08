@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 /* Readable award and deadline labels on light scholarship cards. */
+:root:not([data-theme="dark"]) .events-directory {
+  --text-muted: #475569;
+}
+
 :root:not([data-theme="dark"]) .scholarships-directory {
   --gold: #92400E;
   --teal: #0F766E;

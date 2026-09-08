@@ -16,11 +16,12 @@ import { useAuth } from "@/lib/auth-context";
 import type { Job } from "@/lib/firestore/jobs";
 
 export default function JobDetailPage() {
+  const params = useParams();
   return (
     <AppShell>
       <div className="min-h-screen bg-bg">
         <Suspense fallback={null}>
-          <JobDetailContent />
+          <JobDetailContent key={String(params.slug)} />
         </Suspense>
       </div>
     </AppShell>
@@ -29,7 +30,7 @@ export default function JobDetailPage() {
 
 type RelatedJob = Pick<
   Job,
-  "id" | "slug" | "title" | "employerName" | "orgName" | "location" | "jobType" | "employmentType" | "salary" | "externalApplyUrl"
+  "id" | "slug" | "title" | "employerName" | "orgName" | "location" | "jobType" | "employmentType" | "salary" | "externalApplyUrl" | "externalUrl" | "applicationUrl"
 >;
 
 function JobDetailContent() {
@@ -494,9 +495,9 @@ function RelatedJobList({ title, jobs }: { title: string; jobs: RelatedJob[] }) 
       <h2 className="text-xl font-extrabold text-text mb-4">{title}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {jobs.map((job) => {
-          const href = `/jobs/${job.slug || job.id}`;
+          const href = `/jobs/${job.id}`;
           const employer = job.employerName || job.orgName || "";
-          const isExternal = Boolean(job.externalApplyUrl);
+          const isExternal = Boolean(normalizeExternalHref(job.applicationUrl || job.externalApplyUrl || job.externalUrl));
           return (
             <Link key={job.id} href={href} className="no-underline">
               <Card className="hover:-translate-y-0.5 transition-transform">
