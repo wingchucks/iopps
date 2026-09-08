@@ -10,10 +10,11 @@ import {
 import Link from "next/link";
 import OpportunityHeader from "@/components/OpportunityHeader";
 import Card from "@/components/Card";
-import Badge from "@/components/Badge";
-import Avatar from "@/components/Avatar";
+import EmployerLogo from "@/components/EmployerLogo";
+import { addedAt, closesAt, employerLogo, employerName as getEmployerName, jobArea, jobSummary, loadEmployerBrands, matchesDiscoveryFilters, salaryInfo, type EmployerBrand } from "@/lib/job-discovery";
 import DirectoryPagination, {
   useDirectoryFilter,
+  useDirectoryFilterActions,
   useDirectoryPagination,
 } from "@/components/DirectoryPagination";
 import { normalizeExternalHref, isMailtoHref } from "@/lib/utils";
@@ -26,6 +27,7 @@ const employmentTypes = [
   "Contract",
   "Temporary",
   "Internship",
+  "Casual",
 ];
 const JOB_RECENCY_KEYS = ["createdAt", "postedAt", "order"];
 function daysAgo(job: Job): string {
@@ -49,17 +51,6 @@ function daysAgo(job: Job): string {
   if (days === 1) return "1 day ago";
   return `${days} days ago`;
 }
-function getSalaryDisplay(job: Job): string {
-  if (job.salary) return job.salary;
-  if (!job.salaryRange) return "";
-  const sr = job.salaryRange;
-  if (sr.disclosed === false) return "";
-  const fmt = (n: number) => `$${n.toLocaleString()}`;
-  if (sr.min && sr.max) return `${fmt(sr.min)} - ${fmt(sr.max)}`;
-  if (sr.min) return `From ${fmt(sr.min)}`;
-  if (sr.max) return `Up to ${fmt(sr.max)}`;
-  return "";
-}
 function getApplyLabel(job: Job): string {
   const record = job as unknown as Record<string, unknown>;
   const url = normalizeExternalHref(
@@ -78,22 +69,6 @@ function getApplyLabel(job: Job): string {
 function getJobHref(job: Job): string {
   return `/jobs/${job.slug || job.id.replace(/^job-/, "")}`;
 }
-function getClosingSoonLabel(job: Job): string | null {
-  const rawDeadline =
-    job.closingDate ??
-    ((job as unknown as Record<string, unknown>).deadline as
-      string | undefined);
-  if (!rawDeadline) return null;
-  const deadlineDate = new Date(rawDeadline);
-  if (Number.isNaN(deadlineDate.getTime())) return null;
-  const daysLeft = Math.ceil(
-    (deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-  );
-  if (daysLeft > 0 && daysLeft <= 7) {
-    return daysLeft === 1 ? "Closes tomorrow" : "Closing Soon";
-  }
-  return null;
-}
 export default function JobsPage() {
   return (
     <Suspense fallback={null}>
@@ -103,6 +78,7 @@ export default function JobsPage() {
 }
 function JobsPageContent() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [brands, setBrands] = useState<EmployerBrand[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -115,6 +91,18 @@ function JobsPageContent() {
   const [salaryMin, setSalaryMin] = useDirectoryFilter("salaryMin", "");
   const [salaryMax, setSalaryMax] = useDirectoryFilter("salaryMax", "");
   const [remoteParam, setRemoteParam] = useDirectoryFilter("remote", "");
+  const [employer, setEmployer] = useDirectoryFilter("employer", "");
+  const [area, setArea] = useDirectoryFilter("area", "");
+  const [added, setAdded] = useDirectoryFilter("added", "");
+  const [closing, setClosing] = useDirectoryFilter("closing", "");
+  const [disclosed, setDisclosed] = useDirectoryFilter("disclosed", "");
+  const [training, setTraining] = useDirectoryFilter("training", "");
+  const [salaryPeriod, setSalaryPeriod] = useDirectoryFilter("salaryPeriod", "year");
+  const [sort, setSort] = useDirectoryFilter("sort", "recommended");
+  const updateFilters = useDirectoryFilterActions();
+  const clearFilters = () => updateFilters(Object.fromEntries(["q","location","type","salaryMin","salaryMax","salaryPeriod","remote","employer","area","added","closing","disclosed","training","sort"].map(key => [key, null])));
+  const employers = useMemo(() => [...new Set(jobs.map(getEmployerName))].sort(), [jobs]);
+  const areas = useMemo(() => [...new Set(jobs.map(jobArea).filter(Boolean))].sort(), [jobs]);
   const remoteOnly = remoteParam === "1";
   const setRemoteOnly = (next: boolean) => setRemoteParam(next ? "1" : "");
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -130,7 +118,8 @@ function JobsPageContent() {
       setLoading(true);
       setLoadError(false);
       try {
-        const res = await fetch("/api/jobs");
+        const [res, employerBrands] = await Promise.all([fetch("/api/jobs"), loadEmployerBrands()]);
+        setBrands(employerBrands);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setJobs(data.jobs ?? []);
@@ -150,8 +139,8 @@ function JobsPageContent() {
       typeFilter !== "All" ||
       Boolean(salaryMin.trim()) ||
       Boolean(salaryMax.trim()) ||
-      remoteOnly,
-    [locationFilter, remoteOnly, salaryMax, salaryMin, search, typeFilter],
+      remoteOnly || Boolean(employer || area || added || closing || disclosed || training),
+    [locationFilter, remoteOnly, salaryMax, salaryMin, search, typeFilter, employer, area, added, closing, disclosed, training],
   );
   const filtered = useMemo(() => {
     let result = [...jobs];
@@ -169,6 +158,8 @@ function JobsPageContent() {
           job.location,
           job.employmentType || job.jobType,
           job.salary,
+          jobArea(job),
+          job.description,
         ]
           .filter(Boolean)
           .join(" ")
@@ -198,31 +189,7 @@ function JobsPageContent() {
           job.remoteFlag,
       );
     }
-    const min = parseFloat(salaryMin);
-    const max = parseFloat(salaryMax);
-    if (!Number.isNaN(min) || !Number.isNaN(max)) {
-      result = result.filter((job) => {
-        const salaryDisplay = getSalaryDisplay(job);
-        if (!salaryDisplay) return false;
-        const values = salaryDisplay.match(/[\d,.]+[kK]?/g);
-        if (!values) return false;
-        const parsed = values
-          .map((value) => {
-            const cleaned = value.replace(/[^0-9.kK]/g, "");
-            const thousands = cleaned.match(/^([\d.]+)[kK]$/);
-            if (thousands) return parseFloat(thousands[1]) * 1000;
-            const numeric = parseFloat(cleaned);
-            return numeric > 0 && numeric < 1000 ? numeric * 1000 : numeric;
-          })
-          .filter((value): value is number => !Number.isNaN(value));
-        if (parsed.length === 0) return false;
-        const highest = Math.max(...parsed);
-        const lowest = Math.min(...parsed);
-        if (!Number.isNaN(min) && highest < min) return false;
-        if (!Number.isNaN(max) && lowest > max) return false;
-        return true;
-      });
-    }
+    result = result.filter(job => matchesDiscoveryFilters(job, { employer, area, added, closing, disclosed, training, salaryPeriod, salaryMin, salaryMax }));
     return result;
   }, [
     jobs,
@@ -231,17 +198,17 @@ function JobsPageContent() {
     salaryMax,
     salaryMin,
     search,
-    typeFilter,
+    typeFilter, employer, area, added, closing, disclosed, training, salaryPeriod,
   ]);
   const mixedJobs = useMemo(
-    () =>
+    () => sort === "newest" ? [...filtered].sort((a,b) => addedAt(b)-addedAt(a)) : sort === "closing" ? [...filtered].sort((a,b) => (closesAt(a) || Infinity)-(closesAt(b) || Infinity)) :
       mixJobsForBrowse(filtered, {
         recencyKeys: JOB_RECENCY_KEYS,
         leadingRegularCount: 2,
         firstWindowSize: 12,
         maxFeaturedInFirstWindow: 2,
       }),
-    [filtered],
+    [filtered, sort],
   );
   const { page, pageItems, totalPages, setPage } =
     useDirectoryPagination(mixedJobs);
@@ -308,7 +275,7 @@ function JobsPageContent() {
               Search
             </button>
           </form>
-          <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <input
               type="search"
               inputMode="search"
@@ -339,23 +306,24 @@ function JobsPageContent() {
                 </option>
               ))}
             </select>
-            <div className="flex gap-2">
+            <div className="flex min-w-0 flex-wrap gap-2">
+              <select aria-label="Pay period" value={salaryPeriod} onChange={e => setSalaryPeriod(e.target.value)} className="w-full rounded-xl px-3 py-2 text-sm" style={inputSurfaceStyle}><option value="year">Annual pay</option><option value="hour">Hourly pay</option><option value="month">Monthly pay</option><option value="week">Weekly pay</option></select>
               <input
                 type="number"
-                aria-label="Minimum salary"
+                min="0" aria-label="Minimum pay"
                 value={salaryMin}
                 onChange={(e) => setSalaryMin(e.target.value)}
                 placeholder="Min $"
-                className="w-full rounded-xl px-4 py-3 text-sm text-text outline-none placeholder:text-text-muted transition-colors"
+                className="min-w-0 w-[calc(50%-4px)] rounded-xl px-3 py-2 text-sm text-text outline-none placeholder:text-text-muted transition-colors"
                 style={inputSurfaceStyle}
               />
               <input
                 type="number"
-                aria-label="Maximum salary"
+                min="0" aria-label="Maximum pay"
                 value={salaryMax}
                 onChange={(e) => setSalaryMax(e.target.value)}
                 placeholder="Max $"
-                className="w-full rounded-xl px-4 py-3 text-sm text-text outline-none placeholder:text-text-muted transition-colors"
+                className="min-w-0 w-[calc(50%-4px)] rounded-xl px-3 py-2 text-sm text-text outline-none placeholder:text-text-muted transition-colors"
                 style={inputSurfaceStyle}
               />
             </div>
@@ -387,6 +355,21 @@ function JobsPageContent() {
               Remote only
             </button>
           </div>
+          <details className="job-more-filters mb-6" open={Boolean(employer || area || added || closing || disclosed || training) || undefined}>
+            <summary>More filters <span>Employer, job area &amp; more</span></summary>
+            <div className="grid gap-3 p-4 sm:grid-cols-3">
+              <label>Employer<select value={employer} onChange={e => setEmployer(e.target.value)}><option value="">All employers</option>{employers.map(name => <option key={name}>{name}</option>)}</select></label>
+              <label>Job area<select value={area} onChange={e => setArea(e.target.value)}><option value="">All job areas</option>{areas.map(name => <option key={name}>{name}</option>)}</select></label>
+              <label>Added to IOPPS<select value={added} onChange={e => setAdded(e.target.value)}><option value="">Any time</option><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select></label>
+            </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-3 px-4 pb-4">
+              <label className="job-check"><input type="checkbox" checked={closing === "1"} onChange={e => setClosing(e.target.checked ? "1" : "")}/>Closing in 7 days</label>
+              <label className="job-check"><input type="checkbox" checked={disclosed === "1"} onChange={e => setDisclosed(e.target.checked ? "1" : "")}/>Pay disclosed</label>
+              <label className="job-check"><input type="checkbox" checked={training === "1"} onChange={e => setTraining(e.target.checked ? "1" : "")}/>Training provided</label>
+            </div>
+            <p className="px-4 pb-4 text-sm text-text-sec">Filters use details supplied in each listing. Pay ranges compare only the selected pay period.</p>
+          </details>
+          {hasActiveFilters && <button className="job-clear mb-5" onClick={clearFilters}>Clear all filters</button>}
           <div
             ref={resultsRef}
             className="mb-4 scroll-mt-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between"
@@ -401,6 +384,7 @@ function JobsPageContent() {
                   : "The newest roles from Indigenous-led and allied employers across Canada."}
               </p>
             </div>
+            <label className="job-sort">Sort by<select value={sort} onChange={e => setSort(e.target.value)}><option value="recommended">Recommended</option><option value="newest">Recently added</option><option value="closing">Closing soon</option></select></label>
             {!loading && (
               <p className="text-sm text-text-muted" aria-live="polite">
                 {mixedJobs.length} job{mixedJobs.length !== 1 ? "s" : ""} found
@@ -408,7 +392,7 @@ function JobsPageContent() {
             )}
           </div>
           {loading ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4">
               {[1, 2, 3, 4, 5, 6].map((index) => (
                 <div key={index} className="skeleton h-[220px] rounded-2xl" />
               ))}
@@ -446,103 +430,26 @@ function JobsPageContent() {
             <div
               id="directory-results"
               tabIndex={-1}
-              className="grid grid-cols-1 gap-4 md:grid-cols-2"
+              className="grid grid-cols-1 gap-4"
             >
               {pageItems.map((job) => {
-                const employerName =
-                  job.employerName ||
-                  job.orgName ||
-                  job.orgShort ||
-                  "Hiring organization";
-                const salary = getSalaryDisplay(job);
+                const employerName = getEmployerName(job);
+                const pay = salaryInfo(job);
+                const summary = jobSummary(job);
+                const closingDate = closesAt(job);
                 const posted = daysAgo(job);
-                const closingSoon = getClosingSoonLabel(job);
                 return (
-                  <Link
-                    key={job.id}
-                    href={getJobHref(job)}
-                    className="no-underline"
-                  >
-                    <Card className="op-job-card h-full cursor-pointer">
-                      <div className="flex h-full flex-col p-5">
-                        <div className="mb-4 flex items-start gap-3">
-                          <Avatar
-                            name={employerName}
-                            src={job.companyLogoUrl}
-                            size={42}
-                            gradient="linear-gradient(135deg, #14B8A6, #0F766E)"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-start justify-between gap-2">
-                              <h3 className="flex-1 text-base font-bold leading-snug text-text">
-                                {job.title}
-                              </h3>
-                              {job.featured && (
-                                <span
-                                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]"
-                                  style={{
-                                    border:
-                                      "1px solid color-mix(in srgb, var(--teal) 35%, var(--border))",
-                                    background:
-                                      "color-mix(in srgb, var(--teal) 12%, var(--card))",
-                                    color: "var(--teal)",
-                                  }}
-                                >
-                                  <span className="h-1.5 w-1.5 rounded-full bg-teal-light" />
-                                  Featured
-                                </span>
-                              )}
-                            </div>
-                            <p className="mt-1 text-sm font-semibold text-[#0F766E]">
-                              {employerName}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mb-4 flex flex-wrap gap-2">
-                          {job.location && (
-                            <span className="text-xs text-text-sec">
-                              &#128205; {job.location}
-                            </span>
-                          )}
-                          {(job.employmentType || job.jobType) && (
-                            <Badge
-                              text={job.employmentType || job.jobType || ""}
-                              color="#0F766E"
-                              bg="rgba(13,148,136,.1)"
-                              small
-                            />
-                          )}
-                        </div>
-                        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-text-sec">
-                          {salary && (
-                            <span className="font-semibold text-text">
-                              &#128176; {salary}
-                            </span>
-                          )}
-                          {posted && <span>{posted}</span>}
-                          {closingSoon && (
-                            <span
-                              className="rounded-full px-2.5 py-1 font-semibold"
-                              style={{
-                                background:
-                                  "color-mix(in srgb, var(--teal) 12%, var(--card))",
-                                color: "var(--teal)",
-                              }}
-                            >
-                              {closingSoon}
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
-                          <span className="text-[11px] font-semibold text-text-muted">
-                            {getApplyLabel(job)}
-                          </span>
-                          <span className="text-sm font-semibold text-[#08766e]">
-                            View details &#8594;
-                          </span>
-                        </div>
-                      </div>
-                    </Card>
+                  <Link key={job.id} href={getJobHref(job)} className="job-rich-card no-underline">
+                    <div className="job-brand-panel"><EmployerLogo name={employerName} src={employerLogo(job, brands)} /><span className="job-brand-name">{employerName}</span></div>
+                    <div className="job-rich-content">
+                      <div className="job-card-kicker"><span>{jobArea(job) || "Career opportunity"}</span>{job.featured && <span className="job-chip">Featured</span>}</div>
+                      <h3>{job.title}</h3>
+                      <div className="job-facts"><span>{job.location || "Location not listed"}</span>{(job.employmentType || job.jobType) && <span>{job.employmentType || job.jobType}</span>}{job.workLocation && <span>{job.workLocation}</span>}</div>
+                      <p className="job-summary">{summary || "Explore this opportunity and review the employer’s application details."}</p>
+                      <div className="job-facts job-benefits">{job.willTrain && <span className="job-chip">Training provided</span>}{job.indigenousPreference && <span className="job-chip">Indigenous preference stated</span>}{job.benefits?.slice(0,2).map(benefit => <span className="job-chip" key={benefit}>{benefit}</span>)}</div>
+                      <div className="job-card-bottom"><div><strong>{pay?.display || "Pay not listed"}</strong><span>{closingDate ? `Closes ${new Date(closingDate).toLocaleDateString("en-CA", {month:"short",day:"numeric",timeZone:"UTC"})}` : "See listing for closing details"}</span></div><span className="job-view">View opportunity <span aria-hidden="true">↗</span></span></div>
+                      <div className="job-footnote"><span>{getApplyLabel(job)}</span>{posted && <span>Added to IOPPS {posted.toLowerCase()}</span>}</div>
+                    </div>
                   </Link>
                 );
               })}

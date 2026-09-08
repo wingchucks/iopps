@@ -4,7 +4,8 @@ import { Suspense, useState, useEffect } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import Avatar from "@/components/Avatar";
+import EmployerLogo from "@/components/EmployerLogo";
+import { employerLogo, loadEmployerBrands } from "@/lib/job-discovery";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
@@ -53,14 +54,14 @@ function JobDetailContent() {
       let loadedJob: Job | null = null;
       // Load job data
       try {
-        const res = await fetch(`/api/jobs/${slug}`);
+        const [res, brands] = await Promise.all([fetch(`/api/jobs/${slug}`), loadEmployerBrands()]);
         if (!res.ok) {
           setJob(null);
           setLoading(false);
           return;
         }
         const data = await res.json();
-        loadedJob = data.job ?? null;
+        loadedJob = data.job ? { ...data.job, companyLogoUrl: employerLogo(data.job, brands) } : null;
         setJob(loadedJob);
 
         // Track view (fire-and-forget)
@@ -232,11 +233,7 @@ function JobDetailContent() {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-text mb-3">{job.title}</h1>
 
             <div className="flex items-center gap-3 mb-3">
-              <Avatar
-                name={job.orgShort || employerName}
-                size={40}
-                gradient="linear-gradient(135deg, var(--navy), var(--blue))"
-              />
+              <EmployerLogo name={employerName} src={job.companyLogoUrl} />
               <div>
                 <p className="text-[15px] text-teal font-bold m-0">{employerName}</p>
               </div>
