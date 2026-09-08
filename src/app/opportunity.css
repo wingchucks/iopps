@@ -263,7 +263,6 @@
   max-width: 100%;
   max-height: 94px;
   object-fit: contain;
-  mix-blend-mode: multiply;
 }
 .op-logo-stage > span {
   font-size: 24px;
@@ -583,3 +582,5 @@ a:focus-visible > .op-job-card {
     font-size: 15px;
   }
 }
+
+.op-logo-stage-dark{background:linear-gradient(135deg,#174455,#071d34)}

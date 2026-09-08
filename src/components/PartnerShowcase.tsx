@@ -20,7 +20,7 @@ export default function PartnerShowcase({
         <div className="op-partner-grid">
           {partners.map((p) => (
             <Link href={p.href} key={p.id} className="op-partner">
-              <div className="op-logo-stage">
+              <div className={`op-logo-stage${p.href.startsWith("/org/city-of-saskatoon") ? " op-logo-stage-dark" : ""}`}>
                 {p.logoUrl ? (
                   <Image
                     src={p.logoUrl}
