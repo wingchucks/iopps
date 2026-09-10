@@ -69,7 +69,7 @@ const themeScript = `(function(){try{var t=localStorage.getItem("iopps-theme");i
 const swScript =
   process.env.NODE_ENV === "development"
     ? `if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(async function(registrations){const owned=registrations.filter(r=>r.active && new URL(r.active.scriptURL).pathname==="/sw.js");if(!owned.length)return;await Promise.all(owned.map(r=>r.unregister()));for(const key of await caches.keys()){if(key.startsWith("iopps-"))await caches.delete(key)}if(navigator.serviceWorker.controller)location.reload()})}`
-    : `if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js")})}`;
+    : `if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js", {updateViaCache: "none"}).then(function(reg){window.addEventListener("focus",function(){reg.update().catch(function(){})})}).catch(function(){})})}`;
 
 export default function RootLayout({
   children,

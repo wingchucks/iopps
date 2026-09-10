@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeJwt } from "jose";
+import { maintenanceResponse } from "./lib/launch-maintenance";
 
 const COOKIE_NAME = "__session";
 
@@ -48,6 +49,8 @@ function isUnverifiedAllowed(pathname: string): boolean {
 }
 
 export function middleware(req: NextRequest) {
+  const maintenance = maintenanceResponse(req.nextUrl.pathname, process.env.IOPPS_MAINTENANCE_MODE, req.method);
+  if (maintenance) return maintenance;
   const { pathname } = req.nextUrl;
   const cookie = req.cookies.get(COOKIE_NAME)?.value;
 
@@ -118,6 +121,6 @@ export const config = {
      * - favicon.ico, logo.png, manifest.json (public assets)
      * - API routes for session management (prevent redirect loops)
      */
-    "/((?!_next/static|_next/image|favicon\\.ico|logo\\.png|manifest\\.json|api/auth/).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|logo\\.png|manifest\\.json).*)",
   ],
 };

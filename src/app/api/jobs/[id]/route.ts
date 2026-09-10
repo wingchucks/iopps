@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   fetchImportedDescriptionPatch,
   normalizeImportedDescription,
 } from "@/lib/server/imported-job-descriptions";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
-import { withPublicDetailCache } from "@/lib/server/public-detail-cache";
+import { normalizeJobDiscoveryMetadata } from "@/lib/job-metadata";
 import { normalizeApplyUrlFields } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -46,11 +47,10 @@ export async function GET(
 
     const { source, routeSlug } = found;
     const data = docRef.data()!;
-
-    if (!data.slug && routeSlug && routeSlug !== docRef.id) {
-      await docRef.ref.set({ slug: routeSlug }, { merge: true });
-      data.slug = routeSlug;
+    if (!isPublicJobRecordVisible(data, new Date())) {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
+
 
     if (source === "jobs") {
       let feedUrl = "";
@@ -74,7 +74,7 @@ export async function GET(
         await docRef.ref.update(firestorePatch);
         Object.assign(data, firestorePatch);
 
-        if (hydratedPatch.active === false || hydratedPatch.status === "expired") {
+        if (!isPublicJobRecordVisible(data, new Date())) {
           return NextResponse.json({ error: "Job not found" }, { status: 404 });
         }
       }
@@ -99,7 +99,7 @@ export async function GET(
       job.description = normalizeImportedDescription(job.description);
     }
 
-    return withPublicDetailCache(NextResponse.json({ job }));
+    return NextResponse.json({ job: normalizeJobDiscoveryMetadata(job) }, {headers:{"Cache-Control":"no-store"}});
   } catch (err) {
     console.error("Job detail API error:", err);
     return NextResponse.json({ error: "Failed to load job" }, { status: 500 });

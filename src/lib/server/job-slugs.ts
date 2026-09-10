@@ -13,6 +13,10 @@ export function buildJobRouteSlug(job: {
   title?: string | null;
 }): string {
   const explicitSlug = typeof job.slug === "string" ? job.slug.trim() : "";
+  // Older detail reads persisted a request-specific collision suffix. Normalize
+  // it at read time so a public URL does not grow another suffix or stop resolving.
+  const suffix = `--${job.id}`;
+  if (explicitSlug.endsWith(suffix) && explicitSlug.length > suffix.length) return explicitSlug.slice(0, -suffix.length);
   if (explicitSlug) return explicitSlug;
 
   const title = typeof job.title === "string" ? job.title.trim() : "";

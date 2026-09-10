@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isJobRecordExpired } from "@/lib/listing-freshness";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 import { displayAmount } from "@/lib/utils";
@@ -56,6 +57,7 @@ function normalizeScholarship(
       ownerName,
       ownerSlug,
     }),
+    intakeClosed: isJobRecordExpired(serialized, new Date()),
     isPartner: Boolean(linkedOrg?.isPartner),
     partnerTier: linkedOrg?.partnerTier,
     partnerLabel: linkedOrg?.partnerLabel,

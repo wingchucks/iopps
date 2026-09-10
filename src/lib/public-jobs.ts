@@ -25,6 +25,7 @@ type JobRouteLike = {
 
 function toTimestamp(value: unknown): number {
   if (!value) return 0;
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.getTime() : 0;
   if (typeof value === "number") return value;
   if (typeof value === "string") {
     const parsed = Date.parse(value);
@@ -65,6 +66,34 @@ export function sortJobsByRecency<T extends JobRecencyLike>(jobs: T[]): T[] {
     );
     return bTime - aTime;
   });
+}
+
+type HomepageJob = JobRecencyLike & {
+  id?: string;
+  employerId?: unknown;
+  orgId?: unknown;
+  employerName?: unknown;
+  orgName?: unknown;
+  companyName?: unknown;
+};
+
+/** Keep recent opportunities visible without one bulk feed taking every homepage slot. */
+export function selectHomepageJobs<T extends HomepageJob>(jobs: T[], count = 5): T[] {
+  const addedAt = (job: T) => toTimestamp(job.createdAt) || toTimestamp(job.postedAt) || toTimestamp(job.publishedAt) || 0;
+  const sorted = [...jobs].sort((a, b) => addedAt(b) - addedAt(a));
+  const seen = new Set<string>();
+  const first: T[] = [];
+  const remaining: T[] = [];
+  for (const job of sorted) {
+    const key = String(job.employerId || job.orgId || job.employerName || job.orgName || job.companyName || "unknown")
+      .trim().toLowerCase();
+    if (seen.has(key)) remaining.push(job);
+    else {
+      seen.add(key);
+      first.push(job);
+    }
+  }
+  return [...first, ...remaining].slice(0, Math.max(0, Math.floor(count)));
 }
 
 export function buildPublicJobRouteSlugMap<T extends JobRouteLike>(

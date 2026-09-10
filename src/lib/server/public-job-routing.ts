@@ -27,30 +27,20 @@ type PublicJobMatch = {
 };
 
 async function loadPublicJobCandidates(db: FirebaseFirestore.Firestore): Promise<PublicJobCandidate[]> {
+  // Full records are needed for prose deadlines and closed authoritative mirrors.
   const [jobsSnap, postsSnap] = await Promise.all([
-    db.collection("jobs")
-      .where("active", "==", true)
-      .select("slug", "title", "status", "active", "createdAt", "updatedAt", "postedAt", "publishedAt", "order")
-      .get(),
-    db.collection("posts")
-      .where("type", "==", "job")
-      .where("status", "==", "active")
-      .select("slug", "title", "status", "active", "createdAt", "updatedAt", "postedAt", "publishedAt", "order")
-      .get(),
+    db.collection("jobs").get(),
+    db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
   ]);
-
+  const authoritativeIds = new Set(jobsSnap.docs.map(doc => doc.id));
   return [
     ...jobsSnap.docs.map((doc): PublicJobCandidate => ({
-      id: doc.id,
-      source: "jobs",
-      ...(doc.data() as Omit<PublicJobCandidate, "id" | "source">),
+      ...(doc.data() as Omit<PublicJobCandidate, "id" | "source">), id: doc.id, source: "jobs",
     })),
-    ...postsSnap.docs.map((doc): PublicJobCandidate => ({
-      id: doc.id,
-      source: "posts",
-      ...(doc.data() as Omit<PublicJobCandidate, "id" | "source">),
+    ...postsSnap.docs.filter(doc => !authoritativeIds.has(doc.id)).map((doc): PublicJobCandidate => ({
+      ...(doc.data() as Omit<PublicJobCandidate, "id" | "source">), id: doc.id, source: "posts",
     })),
-  ].filter((candidate) => isPublicJobVisible(candidate));
+  ].filter(candidate => (candidate.source !== "jobs" || candidate.active === true) && isPublicJobVisible(candidate));
 }
 
 export async function findPublicJobDocument(
@@ -63,7 +53,7 @@ export async function findPublicJobDocument(
 
   if (exactId) {
     const exactMatch = candidates.find((candidate) => candidate.id === exactId);
-    if (exactMatch && slugMap.get(exactMatch.id) === idOrSlug) {
+    if (exactMatch && buildJobRouteSlug(exactMatch) === baseSlug) {
       return {
         id: exactMatch.id,
         source: exactMatch.source,
@@ -72,6 +62,7 @@ export async function findPublicJobDocument(
     }
   }
 
+  if (exactId) return null; // Never redirect an expired exact link to another job.
   const directIdMatch = candidates.find((candidate) => candidate.id === idOrSlug);
   if (directIdMatch) {
     return {

@@ -209,13 +209,13 @@ export default function AdminJobsPage() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`/api/admin/jobs/${job.id}/status`, {
-        method: "PATCH",
+      const res = await fetch("/api/admin/jobs", {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ jobId: job.id, action: newStatus === "active" ? "activate" : "deactivate" }),
       });
 
       if (!res.ok) throw new Error(`API returned ${res.status}`);
@@ -235,9 +235,10 @@ export default function AdminJobsPage() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`/api/admin/jobs/${deleteTarget.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch("/api/admin/jobs", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId: deleteTarget.id, action: "delete" }),
       });
 
       if (!res.ok) throw new Error(`API returned ${res.status}`);

@@ -98,7 +98,7 @@ async function getOwnedJobOrThrow(id: string, context: Awaited<ReturnType<typeof
   const jobSnap = await db.collection("jobs").doc(id).get();
   if (jobSnap.exists) {
     const data = (jobSnap.data() ?? {}) as Record<string, unknown>;
-    if (!isJobOwnedByEmployer(data, context.employerId, context.orgId)) {
+    if (data.status === 'deleted' || data.deletedAt || !isJobOwnedByEmployer(data, context.employerId, context.orgId)) {
       throw new EmployerApiError(404, "Job not found.");
     }
     return { ref: jobSnap.ref, data, source: "jobs" as const };
@@ -107,7 +107,7 @@ async function getOwnedJobOrThrow(id: string, context: Awaited<ReturnType<typeof
   const postSnap = await db.collection("posts").doc(id).get();
   if (postSnap.exists) {
     const data = (postSnap.data() ?? {}) as Record<string, unknown>;
-    if (data.type !== "job" || !isJobOwnedByEmployer(data, context.employerId, context.orgId)) {
+    if (data.status === 'deleted' || data.deletedAt || data.type !== "job" || !isJobOwnedByEmployer(data, context.employerId, context.orgId)) {
       throw new EmployerApiError(404, "Job not found.");
     }
     return { ref: postSnap.ref, data, source: "posts" as const };
@@ -186,7 +186,7 @@ export async function PUT(
           ? { ref: postRef, data: (postSnap.data() ?? {}) as Record<string, unknown>, source: "posts" as const }
           : null;
 
-      if (!current || !isJobOwnedByEmployer(current.data, context.employerId, context.orgId)) {
+      if (!current || current.data.status === 'deleted' || current.data.deletedAt || !isJobOwnedByEmployer(current.data, context.employerId, context.orgId)) {
         throw new EmployerApiError(404, "Job not found.");
       }
 
@@ -199,16 +199,23 @@ export async function PUT(
       }
 
       const employerData = employerSnap.data() ?? {};
-      const activeFeaturedJobs = [
-        ...jobsSnap.docs.map((doc) => ({ id: doc.id, source: "jobs" as const, data: doc.data() })),
-        ...postsSnap.docs
-          .map((doc) => ({ id: doc.id, source: "posts" as const, data: doc.data() }))
-          .filter((doc) => doc.data.type === "job"),
-      ].filter((doc) => isActiveFeaturedJob(doc.data as Record<string, unknown>));
-
-      const activeFeaturedCountExcludingCurrent = activeFeaturedJobs.filter(
-        (doc) => !(doc.id === id && doc.source === current.source)
-      ).length;
+      const mirror = current.source === 'jobs' && postSnap.exists && postSnap.data()?.type === 'job' ? postSnap.data()! : null;
+      if (mirror) {
+        if (!isJobOwnedByEmployer(mirror, context.employerId, context.orgId)) {
+          throw new EmployerApiError(409, 'Conflicting job mirror ownership requires review.');
+        }
+        for (const field of ['featured', 'featuredCreditConsumed']) {
+          if ((mirror[field] === true) !== (current.data[field] === true)) {
+            throw new EmployerApiError(409, 'Conflicting job placement mirrors require review.');
+          }
+        }
+      }
+      // Canonical identity wins before visibility filtering; a mirror is not a second slot.
+      const identities = new Map<string, { id: string; data: Record<string, unknown> }>();
+      for (const doc of postsSnap.docs) if (doc.data().type === 'job') identities.set(doc.id, { id: doc.id, data: doc.data() });
+      for (const doc of jobsSnap.docs) identities.set(doc.id, { id: doc.id, data: doc.data() });
+      const activeFeaturedJobs = [...identities.values()].filter(doc => isActiveFeaturedJob(doc.data));
+      const activeFeaturedCountExcludingCurrent = activeFeaturedJobs.filter(doc => doc.id !== id).length;
 
       const featuredSummary = buildFeaturedJobSummary({
         plan: employerData.plan as string | undefined,
@@ -271,6 +278,7 @@ export async function PUT(
       });
 
       transaction.set(current.ref, updates, { merge: true });
+      if (mirror) transaction.set(postRef, updates, { merge: true });
 
       const nextFeaturedCount = activeFeaturedCountExcludingCurrent + (requestedFeatured && requestedStatus === "active" ? 1 : 0);
       nextFeaturedSummary = buildFeaturedJobSummary({
@@ -306,7 +314,21 @@ export async function DELETE(
       );
     }
 
-    await job.ref.delete();
+    const db = getAdminDb();
+    await db.runTransaction(async transaction => {
+      const jobRef = db.collection('jobs').doc(id);
+      const postRef = db.collection('posts').doc(id);
+      const [canonical, mirror] = await Promise.all([transaction.get(jobRef), transaction.get(postRef)]);
+      const current = canonical.exists ? canonical : mirror;
+      const data = current.data();
+      const source = canonical.exists ? 'jobs' : 'posts';
+      if (!data || data.status === 'deleted' || data.deletedAt || (source === 'posts' && data.type !== 'job') || !isJobOwnedByEmployer(data,context.employerId,context.orgId)) throw new EmployerApiError(404,'Job not found.');
+      if (!isEditableEmployerJob(source,data,context.uid)) throw new EmployerApiError(403,'This job cannot be deleted here.');
+      const patch = {active:false,status:'deleted',deletedAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()};
+      if (canonical.exists) transaction.update(jobRef,patch);
+      else transaction.create(jobRef,{...patch,employerId:context.employerId,orgId:context.orgId,createdAt:FieldValue.serverTimestamp()});
+      if (mirror.exists && mirror.data()?.type === 'job' && isJobOwnedByEmployer(mirror.data()!,context.employerId,context.orgId)) transaction.update(postRef,patch);
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     const status = error instanceof EmployerApiError ? error.status : 500;

@@ -1,7 +1,8 @@
 "use client";
-import { useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { authIntentHref } from "@/lib/auth-redirect";
 import { useAuth } from "@/lib/auth-context";
 import { getAppCheckTokenValue } from "@/lib/firebase";
 
@@ -15,8 +16,13 @@ const ORG_TYPES = [
 ];
 
 export default function OrgUpgradePage() {
+  return <Suspense fallback={<p>Loading…</p>}><OrgUpgradeContent /></Suspense>;
+}
+
+function OrgUpgradeContent() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const formStartedAtRef = useRef(Date.now());
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -81,7 +87,7 @@ export default function OrgUpgradePage() {
       if (!res.ok) throw new Error(data.error || "Upgrade failed");
       // Force token refresh so new role takes effect
       await user!.getIdToken(true);
-      router.push("/org/onboarding");
+      router.push(authIntentHref("/org/onboarding", searchParams));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Something went wrong");
       setLoading(false);

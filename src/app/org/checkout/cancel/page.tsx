@@ -6,11 +6,12 @@ import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
+import { authIntentHref } from "@/lib/auth-redirect";
 
 export default function CheckoutCancelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string }>;
+  searchParams: Promise<{ plan?: string; redirect?: string }>;
 }) {
   const params = use(searchParams);
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function CheckoutCancelPage({
                 <button
                   onClick={() =>
                     router.push(
-                      `/org/checkout${params.plan ? `?plan=${params.plan}` : ""}`
+                      authIntentHref("/org/checkout", new URLSearchParams({ plan: params.plan || "", redirect: params.redirect || "" }))
                     )
                   }
                   className="w-full py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"

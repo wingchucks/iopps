@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { startIsolatedQaServer } from '../scripts/local-qa-server.mjs';
 
 test('applicant history authenticates, isolates ownership, and serializes timestamps', {
   skip: process.env.IOPPS_TEST_EMULATORS !== 'true',
-}, async () => {
+}, async t => {
+  const server = await startIsolatedQaServer();
+  t.after(() => server.stop());
   process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080';
   process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
   const { initializeApp, deleteApp } = await import('firebase-admin/app');
@@ -12,10 +15,13 @@ test('applicant history authenticates, isolates ownership, and serializes timest
   const app = initializeApp({ projectId: 'demo-iopps-preview' }, 'applicant-history-test');
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const uid = 'history-api-test';
-  const base = 'http://127.0.0.1:4181/api/applications';
+  const uid = `history-api-${crypto.randomUUID()}`;
+  const email = `${uid}@example.test`;
+  const origin = server.base;
+  assert.ok(['127.0.0.1','localhost'].includes(new URL(origin).hostname), 'Emulator QA must never target production');
+  const base = origin + '/api/applications';
   try {
-    await auth.createUser({ uid, email: 'history-api@example.test', password: 'LocalPreview123!', emailVerified: true });
+    await auth.createUser({ uid, email, password: 'LocalPreview123!', emailVerified: true });
     await db.doc(`applications/${uid}`).set({ userId: uid, postId: 'test', postTitle: 'Test role',
       status: 'submitted', appliedAt: Timestamp.fromMillis(100000),
       statusHistory: [{ status: 'submitted', timestamp: Timestamp.fromMillis(100000) }],
@@ -23,7 +29,7 @@ test('applicant history authenticates, isolates ownership, and serializes timest
     await db.doc(`applications/${uid}-other`).set({ userId: 'another-user', appliedAt: Timestamp.now() });
     const signIn = await fetch('http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo-local-key', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'history-api@example.test', password: 'LocalPreview123!', returnSecureToken: true }),
+      body: JSON.stringify({ email, password: 'LocalPreview123!', returnSecureToken: true }),
     }).then(r => r.json());
     assert.ok(signIn.idToken);
     assert.equal((await fetch(base)).status, 401);

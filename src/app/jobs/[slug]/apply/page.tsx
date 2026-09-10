@@ -1,4 +1,5 @@
 "use client";
+import { assertLaunchAvailable } from "@/lib/launch-client";
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -11,13 +12,16 @@ import { getPost, type Post } from "@/lib/firestore/posts";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { db, storage } from "@/lib/firebase";
-import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, getBlob } from "firebase/storage";
 
 import { createResumeObjectName, buildApplicationProfileSnapshot } from "@/lib/application-snapshot";
 import { getMemberProfile, type MemberProfile } from "@/lib/firestore/members";
-import { normalizeExternalHref, isMailtoHref } from "@/lib/utils";
-import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
+import { resolveApplicationDestination } from "@/lib/application-destination";
+import { trackJobFunnelEvent } from "@/lib/job-funnel-analytics";
+import { validateApplicationDocuments, validateApplicationSubmission } from "@/lib/application-validation";
+import { buildApplicationReceipt, type ApplicationReceipt } from "@/lib/application-receipt";
+
 
 const STEPS = ["Resume", "Cover Letter", "Review & Submit"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -59,6 +63,9 @@ function ApplyWizard() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [alreadyApplied, setAlreadyApplied] = useState(false);
+  const [receipt, setReceipt] = useState<ApplicationReceipt | null>(null);
+  const [notifying, setNotifying] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
 
   // Step 1 state
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -69,10 +76,24 @@ function ApplyWizard() {
 
   // Step 2 state
   const [coverLetter, setCoverLetter] = useState("");
+  const [references, setReferences] = useState("");
 
   useEffect(() => {
     async function load() {
       try {
+        if (user) {
+          const token = await user.getIdToken();
+          const savedPostId = new URLSearchParams(window.location.search).get("application") || slug;
+          const response = await fetch(`/api/applications?postId=${encodeURIComponent(savedPostId)}`, {headers:{Authorization:`Bearer ${token}`},cache:"no-store"});
+          if (!response.ok) throw new Error("Unable to check your existing application. Please reload.");
+          const saved = await response.json();
+          if (saved.application) {
+            setReceipt(buildApplicationReceipt(saved.application));
+            setAlreadyApplied(true);
+            setNotificationMessage(saved.application.delivery?.employerNotificationStatus === "sent" ? "Employer notification sent." : "Employer notification delivery is not confirmed.");
+            return;
+          }
+        }
         // Try multiple sources: slug directly, job- prefix, then jobs API
         let postData = await getPost(slug).catch(() => null);
         if (!postData) postData = await getPost(`job-${slug}`).catch(() => null);
@@ -84,6 +105,7 @@ function ApplyWizard() {
             if (data.job) {
               // Convert to Post-like shape
               postData = {
+                ...data.job,
                 id: data.job.id,
                 type: "job",
                 title: data.job.title,
@@ -101,19 +123,21 @@ function ApplyWizard() {
         }
         if (postData) {
           const record = postData as unknown as Record<string, unknown>;
-          const external = normalizeExternalHref(String(record.applicationUrl || record.applicationLink || record.externalUrl || record.externalApplyUrl || ""));
-          if (postData.type !== "job" || !isPublicJobRecordVisible({status:postData.status,active:record.active as boolean | undefined})) postData = null;
-          else if (external && (!isMailtoHref(external) || !(postData.orgId || postData.employerId))) {
+          const destination = resolveApplicationDestination(postData, slug);
+          if (destination.kind !== "internal") {
             router.replace(`/jobs/${slug}`);
             return;
           }
+          if (validateApplicationSubmission(record, {resumeUrl:"present",coverLetter:"present",references:"present"})) postData = null;
         }
         setPost(postData);
+        if (postData) trackJobFunnelEvent("application_start", { jobId: postData.id });
         if (user) setProfile(await getMemberProfile(user.uid));
         if (postData && user) {
           const applicationSnap = await getDoc(doc(db, "applications", `${user.uid}_${postData.id}`)).catch(() => null);
           if (applicationSnap?.exists()) {
             setAlreadyApplied(true);
+            setReceipt(buildApplicationReceipt({id:applicationSnap.id,...applicationSnap.data()}));
           }
         }
       } catch (err) {
@@ -138,6 +162,7 @@ function ApplyWizard() {
 
     setUploading(true);
     try {
+      await assertLaunchAvailable();
       const storageRef = ref(storage, `resumes/${user.uid}/${createResumeObjectName(file.name)}`);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
@@ -147,7 +172,7 @@ function ApplyWizard() {
       showToast("Resume uploaded", "success");
     } catch (err) {
       console.error("Upload failed:", err);
-      showToast("Upload failed. Please try again.", "error");
+      showToast(err instanceof Error ? err.message : "Upload failed. Please try again.", "error");
     } finally {
       setUploading(false);
     }
@@ -168,8 +193,11 @@ function ApplyWizard() {
 
   const handleSubmit = async () => {
     if (!user || !post || alreadyApplied || submitting || uploading || (!useProfile && !resumeUrl) || (useProfile && !profile)) return;
+    const validation = validateApplicationDocuments(post, {resumeUrl: useProfile ? profile?.resumeUrl : resumeUrl, coverLetter, references});
+    if (validation) { showToast(validation, "error"); return; }
     setSubmitting(true);
     try {
+      await assertLaunchAvailable();
       let applicationResumeUrl = resumeUrl;
       if (useProfile && profile?.resumeUrl) {
         const resumeBlob = await getBlob(ref(storage, profile.resumeUrl));
@@ -177,9 +205,10 @@ function ApplyWizard() {
         await uploadBytes(snapshotRef, resumeBlob, { contentType: resumeBlob.type || "application/pdf" });
         applicationResumeUrl = await getDownloadURL(snapshotRef);
       }
-      const docId = `${user.uid}_${post.id}`;
-      const now = Timestamp.now();
-      await setDoc(doc(db, "applications", docId), {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/applications", {
+        method: "POST", headers: {"Content-Type":"application/json", Authorization: `Bearer ${idToken}`},
+        body: JSON.stringify({
         userId: user.uid,
         postId: post.id,
         postTitle: post.title,
@@ -188,16 +217,21 @@ function ApplyWizard() {
         employerId: post.employerId || post.orgId || "",
         jobId: post.id,
         status: "submitted",
-        statusHistory: [{ status: "submitted", timestamp: now }],
+
         resumeUrl: applicationResumeUrl,
         profileSnapshot: profile ? buildApplicationProfileSnapshot(profile, new Date().toISOString()) : null,
         resumeType: useProfile ? "profile" : "file",
         resumeFileName: useProfile ? profile?.resumeFileName || null : resumeFile?.name || null,
-        coverLetter,
-        appliedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        coverLetter, references,
+        }),
       });
-      showToast("Application submitted!", "success");
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Failed to submit application.");
+      setReceipt(buildApplicationReceipt(result.application));
+      if (result.created === true) trackJobFunnelEvent("application_submitted", { jobId: post.id });
+      router.replace(`/jobs/${slug}/apply?application=${encodeURIComponent(post.id)}`, {scroll:false});
+      setAlreadyApplied(true);
+      showToast(result.created ? "Application submitted!" : "Your original application is saved.", "success");
 
       // Notify employer (non-blocking — don't let this fail the submission)
       try {
@@ -221,6 +255,7 @@ function ApplyWizard() {
           notifyPayload = null;
         }
 
+        setNotificationMessage(notifyResponse.ok && notifyPayload?.sent ? "Employer notification sent." : "Application saved; employer notification delivery is not confirmed. You can retry below.");
         if (!notifyResponse.ok) {
           console.warn("[jobs/apply] employer notification request returned non-ok status", {
             postId: post.id,
@@ -238,6 +273,7 @@ function ApplyWizard() {
           });
         }
       } catch (notifyError) {
+        setNotificationMessage("Application saved; employer notification delivery could not be confirmed. You can retry below.");
         console.warn("[jobs/apply] employer notification request failed", {
           postId: post.id,
           orgId: post.orgId || "",
@@ -246,18 +282,30 @@ function ApplyWizard() {
         });
       }
 
-      router.push("/applications");
+
     } catch (err) {
       console.error("Submit failed:", err);
-      showToast("Failed to submit application. Please try again.", "error");
+      showToast(err instanceof Error ? err.message : "Failed to submit application. Please try again.", "error");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const retryNotification = async () => {
+    if (!user || !receipt || notifying) return;
+    setNotifying(true);
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/applications/notify", {method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({postId:receipt.postId})});
+      const result = await response.json();
+      setNotificationMessage(response.ok && result.sent ? "Employer notification sent." : result.reason === "in_progress" ? "Notification in progress. Please wait two minutes before retrying." : "Application saved; notification not delivered. You may retry later.");
+    } catch { setNotificationMessage("Application saved; notification delivery could not be confirmed. You may retry later."); }
+    finally { setNotifying(false); }
+  };
+
   const canAdvance = () => {
-    if (step === 0) return !uploading && (resumeUrl !== "" || (useProfile && !!profile));
-    if (step === 1) return true; // cover letter is optional
+    if (step === 0) return !uploading && (resumeUrl !== "" || (useProfile && !!profile && (!(post as unknown as Record<string, unknown>)?.requiresResume || !!profile.resumeUrl)));
+    if (step === 1) return !validateApplicationDocuments(post || {}, {resumeUrl: useProfile ? profile?.resumeUrl : resumeUrl,coverLetter,references});
     return true;
   };
 
@@ -269,6 +317,21 @@ function ApplyWizard() {
         <div className="skeleton h-[300px] rounded-2xl" />
       </div>
     );
+  }
+
+  if (receipt) {
+    return <section className="max-w-[640px] mx-auto px-4 py-16" aria-live="polite">
+      <h1 className="text-2xl font-bold mb-3">Application saved</h1>
+      <p className="font-semibold">{receipt.title} — {receipt.employer}</p>
+      <p className="my-3">Submitted: {receipt.submittedAt ? new Date(receipt.submittedAt).toLocaleString() : "Time unavailable"}</p>
+      <p className="text-sm">Confirmation: {receipt.id}</p>
+      <h2 className="font-semibold mt-5">Submitted documents</h2>
+      {receipt.documents.length ? <ul className="list-disc pl-5 mb-5">{receipt.documents.map(item => <li key={item}>{item}</li>)}</ul> : <p>No documents recorded.</p>}
+      <p className="my-4">Your application is saved on IOPPS. Employer email delivery is separate from submission.</p>
+      <p className="my-3" role="status">{notificationMessage}</p>
+      <Button disabled={notifying} onClick={retryNotification}>{notifying ? "Checking notification..." : "Retry employer notification"}</Button>
+      <div className="mt-5"><Link className="text-teal font-semibold underline" href="/applications">View My Applications</Link></div>
+    </section>;
   }
 
   if (alreadyApplied) {
@@ -484,9 +547,11 @@ function ApplyWizard() {
           <div className="p-5 sm:p-6">
             <h2 className="text-lg font-bold text-text mb-1">Cover Letter</h2>
             <p className="text-sm text-text-sec mb-4">
-              Optional but recommended. Tell the employer why you&apos;re a great fit.
+              {(post as unknown as Record<string, unknown>).requiresCoverLetter ? "Required by this employer." : "Optional but recommended."} Tell the employer why you&apos;re a great fit.
             </p>
 
+            <label className="block text-sm font-semibold mb-2" htmlFor="application-references">References {(post as unknown as Record<string, unknown>).requiresReferences ? "(required)" : "(optional)"}</label>
+            <textarea id="application-references" value={references} onChange={e => setReferences(e.target.value)} rows={3} className="w-full rounded-xl text-sm text-text bg-bg border border-border p-3 mb-5" placeholder="Names and contact details, shared with their permission" />
             {/* Template suggestions */}
             <div className="flex flex-wrap gap-2 mb-4">
               {COVER_LETTER_PROMPTS.map((prompt) => (
@@ -611,11 +676,13 @@ function ApplyWizard() {
 
             <div className="h-[1px] bg-border mb-5" />
 
+            {references && <div className="mb-5"><h3 className="font-semibold">References</h3><p className="text-sm whitespace-pre-line">{references}</p></div>}
             {/* Submit */}
             <Button
               primary
               full
               onClick={handleSubmit}
+              disabled={submitting || uploading || !!validateApplicationDocuments(post, {resumeUrl:useProfile ? profile?.resumeUrl : resumeUrl,coverLetter,references})}
               style={{
                 background: "var(--teal)",
                 padding: "14px 24px",
@@ -643,7 +710,8 @@ function ApplyWizard() {
         {step < 2 && (
           <Button
             primary
-            onClick={() => setStep(step + 1)}
+            disabled={!canAdvance()}
+            onClick={() => { if (canAdvance()) setStep(step + 1); }}
             style={{
               background: canAdvance() ? "var(--teal)" : "var(--border)",
               borderRadius: 14,

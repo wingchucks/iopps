@@ -10,7 +10,10 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ShareButton from "@/components/ShareButton";
-import { buildLoginRedirectHref, displayAmount, displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
+import { buildLoginRedirectHref, displayAmount, displayLocation } from "@/lib/utils";
+import { resolveApplicationDestination } from "@/lib/application-destination";
+import { trackJobFunnelEvent } from "@/lib/job-funnel-analytics";
+import { jobDetailDates } from "@/lib/job-detail-dates";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
@@ -63,6 +66,7 @@ function JobDetailContent() {
         const data = await res.json();
         loadedJob = data.job ? { ...data.job, companyLogoUrl: employerLogo(data.job, brands) } : null;
         setJob(loadedJob);
+        if (loadedJob) trackJobFunnelEvent("job_detail_view", { jobId: loadedJob.id });
 
         // Track view (fire-and-forget)
         if (loadedJob) {
@@ -175,13 +179,10 @@ function JobDetailContent() {
   const closingDate = job.closingDate
     ? new Date(job.closingDate as string).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })
     : null;
-  const applicationUrl = job.applicationUrl
-    || (job as unknown as Record<string, unknown>).applicationLink as string | undefined
-    || (job as unknown as Record<string, unknown>).externalUrl as string | undefined
-    || (job as unknown as Record<string, unknown>).externalApplyUrl as string | undefined;
-  const normalizedApplicationHref = normalizeExternalHref(applicationUrl);
-  const applicationHrefIsMailto = isMailtoHref(normalizedApplicationHref);
-  const shouldUseInternalApply = applicationHrefIsMailto && Boolean(job.orgId || job.employerId);
+  const destination = resolveApplicationDestination(job, slug);
+  const normalizedApplicationHref = destination.href;
+  const applicationHrefIsMailto = destination.kind === "email";
+  const shouldUseInternalApply = destination.kind === "internal";
   const applicationLinkProps = applicationHrefIsMailto ? {} : { target: "_blank", rel: "noopener noreferrer" };
   const internalApplyPath = `/jobs/${slug}/apply`;
   const loginRedirectHref = buildLoginRedirectHref(internalApplyPath);
@@ -243,6 +244,7 @@ function JobDetailContent() {
               {locationLabel && <span>📍 {locationLabel}</span>}
               {salaryLabel && <span>💰 {salaryLabel}</span>}
               {closingDate && <span>📅 Closes: {closingDate}</span>}
+              {jobDetailDates(job).map(row => <span key={row.label}>{row.label}: {row.date}</span>)}
             </div>
           </div>
 
@@ -323,19 +325,17 @@ function JobDetailContent() {
             <div style={{ padding: 20 }}>
               {/* M-4: show where the Apply action routes */}
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">
-                {normalizedApplicationHref && !shouldUseInternalApply
-                  ? "Apply on employer site"
-                  : "Apply on IOPPS"}
+                {destination.label}
               </p>
               {/* Apply button */}
-              {normalizedApplicationHref && !shouldUseInternalApply ? (
-                <a href={normalizedApplicationHref} {...applicationLinkProps} className="block no-underline mb-3">
+              {destination.kind === "unavailable" ? <Button full disabled>Application link unavailable</Button> : normalizedApplicationHref && !shouldUseInternalApply ? (
+                <a href={normalizedApplicationHref} {...applicationLinkProps} onClick={() => trackJobFunnelEvent("external_application_click", { jobId: job.id })} className="block no-underline mb-3">
                   <Button
                     primary
                     full
                     style={{ padding: "14px 24px", borderRadius: 14, fontSize: 16, fontWeight: 700 }}
                   >
-                    Apply Now ↗
+                    {destination.label}
                   </Button>
                 </a>
               ) : !user ? (
@@ -494,7 +494,7 @@ function RelatedJobList({ title, jobs }: { title: string; jobs: RelatedJob[] }) 
         {jobs.map((job) => {
           const href = `/jobs/${job.id}`;
           const employer = job.employerName || job.orgName || "";
-          const isExternal = Boolean(normalizeExternalHref(job.applicationUrl || job.externalApplyUrl || job.externalUrl));
+          const applicationLabel = resolveApplicationDestination(job, job.id).label;
           return (
             <Link key={job.id} href={href} className="no-underline">
               <Card className="hover:-translate-y-0.5 transition-transform">
@@ -511,7 +511,7 @@ function RelatedJobList({ title, jobs }: { title: string; jobs: RelatedJob[] }) 
                     {job.salary && <span>· {job.salary}</span>}
                   </div>
                   <p className="text-[11px] font-semibold text-text-muted mt-1 m-0">
-                    {isExternal ? "Apply on employer site ↗" : "Apply on IOPPS"}
+                    {applicationLabel}
                   </p>
                 </div>
               </Card>

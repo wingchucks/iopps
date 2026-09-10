@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect, useRef } from "react";
+import { authIntentHref, signupPasswordError } from "@/lib/auth-redirect";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { getAppCheckTokenValue } from "@/lib/firebase";
@@ -38,9 +39,14 @@ type OrgType = (typeof ORG_TYPES)[number]["value"];
 type BusinessIdentity = (typeof BUSINESS_IDENTITY_OPTIONS)[number]["value"];
 
 export default function OrgSignupPage() {
+  return <Suspense><OrgSignupContent /></Suspense>;
+}
+
+function OrgSignupContent() {
+  const searchParams = useSearchParams();
   const [orgName, setOrgName] = useState("");
   const [orgType, setOrgType] = useState<OrgType>("business");
-  const [businessIdentity, setBusinessIdentity] = useState<BusinessIdentity>("indigenous");
+  const [businessIdentity, setBusinessIdentity] = useState<BusinessIdentity>("not_specified");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +57,7 @@ export default function OrgSignupPage() {
   const [loading, setLoading] = useState(false);
   const { signUp, signInWithGoogle, user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const onboardingPath = authIntentHref("/org/onboarding", searchParams);
   const signingUpRef = useRef(false); // Prevents useEffect redirect during signup
   const formStartedAtRef = useRef(Date.now());
   const [websiteTrap, setWebsiteTrap] = useState("");
@@ -63,13 +70,13 @@ export default function OrgSignupPage() {
       user.getIdTokenResult().then((result) => {
         const role = result.claims.role;
         if (role === "employer") {
-          router.replace("/org/dashboard");
+          router.replace(authIntentHref("/login", searchParams));
         } else {
-          router.replace("/org/upgrade");
+          router.replace(authIntentHref("/org/upgrade", searchParams));
         }
       });
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, searchParams]);
 
   if (authLoading || (user && !signingUpRef.current)) return null;
 
@@ -115,15 +122,16 @@ export default function OrgSignupPage() {
       setError("Passwords don't match.");
       return;
     }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    const passwordError = signupPasswordError(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
     setLoading(true);
     signingUpRef.current = true; // Block useEffect redirect
     try {
-      await signUp(contactName, email, password, "/org/onboarding");
+      await signUp(contactName, email, password, onboardingPath);
 
       // Get ID token for server-side API call
       const { auth } = await import("@/lib/firebase");
@@ -134,7 +142,7 @@ export default function OrgSignupPage() {
 
       await currentUser.getIdToken(true);
       await currentUser.reload();
-      router.push(currentUser.emailVerified ? "/org/onboarding" : "/verify-email?next=/org/onboarding");
+      router.push(currentUser.emailVerified ? onboardingPath : `/verify-email?next=${encodeURIComponent(onboardingPath)}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to create account";
       if (msg.includes("email-already-in-use")) {
@@ -227,7 +235,7 @@ export default function OrgSignupPage() {
                 const idToken = await cred.user.getIdToken();
                 await createOrganizationProfile(idToken, googleEmail);
                 await cred.user.getIdToken(true);
-                router.push("/org/onboarding");
+                router.push(onboardingPath);
               } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : "Something went wrong.";
                 if (!msg.includes("popup-closed")) setError(msg);
@@ -263,7 +271,7 @@ export default function OrgSignupPage() {
               {emailInUse && (
                 <>
                   {" "}
-                  <Link href="/login" className="text-teal font-semibold underline">
+                  <Link href={authIntentHref("/login", searchParams)} className="text-teal font-semibold underline">
                     Sign in
                   </Link>{" "}
                   to upgrade your account to an organization.
@@ -362,7 +370,7 @@ export default function OrgSignupPage() {
               required
               autoComplete="new-password"
               className={inputClass}
-              placeholder="At least 6 characters"
+              placeholder="At least 8 characters"
             />
           </label>
 
@@ -415,7 +423,7 @@ export default function OrgSignupPage() {
 
           <p className="text-center text-sm text-text-sec mt-6">
             Already have an account?{" "}
-            <Link href="/login" className="text-teal font-semibold no-underline hover:underline">
+            <Link href={authIntentHref("/login", searchParams)} className="text-teal font-semibold no-underline hover:underline">
               Sign in
             </Link>
           </p>

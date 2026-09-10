@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect, useRef } from "react";
+import { authIntentHref, postSignupDestination } from "@/lib/auth-redirect";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { getOrganization } from "@/lib/firestore/organizations";
 import { getBusinessProfileReadiness } from "@/lib/organization-profile";
@@ -107,6 +108,11 @@ const PROVINCES = [
 const STEPS = ["Identity", "Details", "Capabilities", "Contact"];
 
 export default function OrgOnboardingPage() {
+  return <Suspense><OrgOnboardingContent /></Suspense>;
+}
+
+function OrgOnboardingContent() {
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -157,19 +163,19 @@ export default function OrgOnboardingPage() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      router.replace("/org/signup");
+      router.replace(authIntentHref("/org/signup", searchParams));
       return;
     }
 
     (async () => {
       const org = await getOrganization(user.uid);
       if (!org) {
-        router.replace("/org/signup");
+        router.replace(authIntentHref("/org/signup", searchParams));
         return;
       }
       const readiness = getBusinessProfileReadiness(org);
       if (org.onboardingComplete && (org.type === "school" || readiness.isReady)) {
-        router.replace("/org/plans");
+        router.replace(postSignupDestination(searchParams, "/org/plans"));
         return;
       }
       // Populate fields from saved data
@@ -202,7 +208,7 @@ export default function OrgOnboardingPage() {
       if (org.enrollmentStatus) setEnrollmentStatus(org.enrollmentStatus);
       setLoadingData(false);
     })();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, searchParams]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -353,7 +359,7 @@ export default function OrgOnboardingPage() {
         throw new Error(data.error || "Failed to finish organization setup");
       }
 
-      router.push("/org/plans");
+      router.push(postSignupDestination(searchParams, "/org/plans"));
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Failed to finish organization setup");
     }

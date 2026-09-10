@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
@@ -22,12 +23,12 @@ function VerifyEmailContent() {
   const [resent, setResent] = useState(false);
   const [checking, setChecking] = useState(false);
   const nextPath = searchParams.get("next");
-  const redirectPath = nextPath && nextPath.startsWith("/") ? nextPath : "/setup";
+  const redirectPath = safeAuthRedirect(nextPath) || "/setup";
 
   // If already verified, redirect
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/login");
+      router.replace(`/login?redirect=${encodeURIComponent(redirectPath)}`);
     }
     if (user?.emailVerified) {
       router.replace(redirectPath);

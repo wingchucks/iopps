@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { isJobRecordExpired } from "@/lib/listing-freshness";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -203,7 +204,8 @@ function ScholarshipDetailContent() {
   const sourceLabel = getSourceLabel(ownerMeta?.ownerType || (org?.type === "school" ? "school" : undefined));
   const orgLink = ownerHref;
   const isPremium = org?.tier === "premium";
-  const closingSoon = isClosingSoon(scholarship.deadline);
+  const intakeClosed = isJobRecordExpired({...scholarship});
+  const closingSoon = !intakeClosed && isClosingSoon(scholarship.deadline);
   const amountLabel = displayAmount(scholarship.amount) || "Funding varies";
   const descriptionHasHtml = typeof scholarship.description === "string" && scholarship.description.includes("<");
   const eligibilityHasHtml = typeof scholarship.eligibility === "string" && scholarship.eligibility.includes("<");
@@ -510,6 +512,7 @@ function ScholarshipDetailContent() {
         <div>
           <Card className="mb-4" style={{ position: "sticky", top: 80 }}>
             <div style={{ padding: 20 }}>
+              {intakeClosed && <p role="status" className="mb-3 text-sm font-semibold text-text-muted">Intake closed. This program may recur; check the provider for the next application round.</p>}
               {scholarshipApplicationHref ? (
                 <a href={scholarshipApplicationHref} {...scholarshipApplicationLinkProps} className="no-underline">
                   <Button
@@ -524,7 +527,7 @@ function ScholarshipDetailContent() {
                       marginBottom: 12,
                     }}
                   >
-                    Apply Now &#8594;
+                    {intakeClosed ? "Check next intake" : "Apply Now"} &#8594;
                   </Button>
                 </a>
               ) : (

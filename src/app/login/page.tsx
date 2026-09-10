@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { safeAuthRedirect } from "@/lib/auth-redirect";
+import { safeAuthRedirect, authIntentHref, postSignupDestination } from "@/lib/auth-redirect";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { getMemberProfile } from "@/lib/firestore/members";
@@ -43,7 +43,7 @@ function LoginForm() {
           .join(",")
       );
     }
-    return `/org/onboarding?${params.toString()}`;
+    return authIntentHref(`/org/onboarding?${params.toString()}`, searchParams);
   };
 
   const resolvePostAuthDestination = async (
@@ -90,7 +90,7 @@ function LoginForm() {
               return buildOnboardingRedirect(data.missingProfileFields);
             }
 
-            return redirectTo || "/org/dashboard";
+            return postSignupDestination(searchParams, "/org/dashboard");
           }
         }
       }
@@ -329,7 +329,7 @@ function LoginForm() {
           <h1 className="text-2xl font-extrabold text-text mb-1">Sign in to IOPPS</h1>
           <p className="text-text-sec text-[15px] mb-8">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-teal font-semibold no-underline hover:underline">
+            <Link href={authIntentHref("/signup", searchParams)} className="text-teal font-semibold no-underline hover:underline">
               Sign up
             </Link>
           </p>
@@ -474,7 +474,7 @@ function LoginForm() {
 
           <p className="text-text-muted text-xs text-center mt-6 leading-relaxed">
             New to IOPPS?{" "}
-            <Link href="/signup" className="text-teal no-underline hover:underline">
+            <Link href={authIntentHref("/signup", searchParams)} className="text-teal no-underline hover:underline">
               Create a free account
             </Link>
           </p>

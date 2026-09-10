@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, use } from "react";
-import { useRouter } from "next/navigation";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
@@ -32,35 +32,34 @@ const GST_RATE = 0.05;
 export default function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string }>;
+  searchParams: Promise<{ plan?: string; redirect?: string }>;
 }) {
   const params = use(searchParams);
   return (
     <ProtectedRoute>
       <AppShell>
       <div className="min-h-screen bg-bg">
-        <CheckoutContent planKey={params.plan || "tier1"} />
+        <CheckoutContent planKey={params.plan || ""} redirect={safeAuthRedirect(params.redirect || null)} />
       </div>
     </AppShell>
     </ProtectedRoute>
   );
 }
 
-function CheckoutContent({ planKey }: { planKey: string }) {
-  const router = useRouter();
+function CheckoutContent({ planKey, redirect }: { planKey: string; redirect: string | null }) {
   const { user } = useAuth();
 
   const plan = getPlanById(planKey)
     ? plans[planKey as BillingPlanId]
-    : plans.tier1;
-  const gst = plan.price * GST_RATE;
-  const total = plan.price + gst;
+    : null;
+  const gst = (plan?.price || 0) * GST_RATE;
+  const total = (plan?.price || 0) + gst;
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleCheckout() {
-    if (!user || submitting) return;
+    if (!user || submitting || !plan) return;
 
     setSubmitting(true);
     setError(null);
@@ -68,8 +67,8 @@ function CheckoutContent({ planKey }: { planKey: string }) {
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId: planKey, orgId: user.uid }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}` },
+        body: JSON.stringify({ planId: planKey, redirect }),
       });
 
       const data = await res.json();
@@ -92,6 +91,7 @@ function CheckoutContent({ planKey }: { planKey: string }) {
     }
   }
 
+  if (!plan) return <div className="max-w-[600px] mx-auto p-8"><h1>Select a plan</h1><p>A valid plan is required before checkout.</p><Link href="/org/plans">View Plans</Link></div>;
   return (
     <div className="max-w-[600px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Back link */}

@@ -21,6 +21,24 @@ test("hourly pay is never multiplied by a thousand or compared with annual pay",
  assert.equal(matchesDiscoveryFilters({...job,salary:"$50k–$65k annually"},{...empty,salaryMin:"60000"}),true);
  assert.equal(matchesDiscoveryFilters({...job,salary:"Competitive"},{...empty,disclosed:"1"}),false);
 });
+test("a clearly labelled hourly hiring range is discoverable without inventing annual pay", () => {
+ const job = { id: "j", title: "Insurance Advisor", description: "Expected Compensation: The expected hourly hiring range for this role is $23.00 to $27.75 based on a 21-hour work week." };
+ const salary = salaryInfo(job);
+ assert.ok(salary, "an explicit compensation range should be normalized");
+ assert.equal(salary.min, 23);
+ assert.equal(salary.max, 27.75);
+ assert.equal(salary.period, "hour");
+ assert.equal(matchesDiscoveryFilters(job, {...empty, salaryPeriod: "hour", salaryMin: "25"}), true);
+});
+
+test("compensation enrichment never overrides undisclosed pay or guesses from unrelated amounts", () => {
+ const description = "Expected Compensation: The expected hourly hiring range is $23.00 to $27.75 based on a 21-hour work week.";
+ assert.equal(salaryInfo({ id: "j", title: "Worker", salaryRange: { disclosed: false }, description }), null);
+ assert.equal(salaryInfo({ id: "j", title: "Worker", description: "Benefits include a $500 to $1000 training allowance. A 21-hour work week is available." }), null);
+ assert.equal(salaryInfo({ id: "j", title: "Worker", description: "Expected Compensation: The expected hiring range is $43,000 to $53,000 based on a 37.5-hour work week." }), null);
+ assert.equal(salaryInfo({ id: "j", title: "Worker", salary: "$40 / hour", description })?.min, 40);
+});
+
 test("combined discovery filters use explicit job data and reset cleanly", () => {
  const now=Date.parse("2026-09-08T12:00:00Z");
  const job={id:"j",title:"Worker",employerName:"STC",department:"Client Services",createdAt:"2026-09-07T12:00:00Z",closingDate:"2026-09-10T12:00:00Z",willTrain:true};

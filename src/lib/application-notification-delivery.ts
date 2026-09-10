@@ -1,4 +1,18 @@
-import type { DocumentReference } from "firebase-admin/firestore";
+import type { DocumentReference, Firestore } from "firebase-admin/firestore";
+
+/** A short durable lease prevents concurrent retries from sending duplicate email. */
+export async function claimApplicationNotification(db: Firestore, ref: DocumentReference, uid: string, now = Date.now()) {
+  return db.runTransaction(async transaction => {
+    const snap = await transaction.get(ref);
+    if (!snap.exists) throw new Error("Application not found");
+    const application = snap.data()!;
+    if (application.userId !== uid) throw new Error("Application ownership mismatch");
+    if (application.delivery?.employerNotificationStatus === "sent" || application.delivery?.employerNotificationSentAt) return {state:"sent" as const, application};
+    if (Number(application.delivery?.employerNotificationLeaseUntil || 0) > now) return {state:"busy" as const, application};
+    transaction.update(ref, {"delivery.employerNotificationLeaseUntil":now + 120000});
+    return {state:"claimed" as const, application};
+  });
+}
 
 export type EmployerNotificationStatus =
   | "sent"

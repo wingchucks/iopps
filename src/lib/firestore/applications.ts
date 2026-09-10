@@ -2,7 +2,7 @@ import {
   collection,
   getDocs,
   getDoc,
-  setDoc,
+
   updateDoc,
   doc,
   query,
@@ -99,20 +99,17 @@ export async function applyToPost(
   postTitle: string,
   orgName: string
 ): Promise<void> {
-  const docId = `${userId}_${postId}`;
-  const now = Timestamp.now();
-  await setDoc(doc(db, "applications", docId), {
-    userId,
-    postId,
-    postTitle,
-    orgName,
-    status: "submitted" as ApplicationStatus,
-    statusHistory: [
-      { status: "submitted" as ApplicationStatus, timestamp: now },
-    ],
-    appliedAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+  const user = auth.currentUser;
+  if (!user || user.uid !== userId) throw new Error("Sign in to apply");
+  const token = await user.getIdToken();
+  const response = await fetch("/api/applications", {
+    method: "POST", headers: {"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+    body: JSON.stringify({postId, postTitle, orgName}),
   });
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(result.error || "Unable to submit application");
+  }
 }
 
 export async function updateApplicationStatus(

@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "20.x"
+          node-version: "24.x"
           cache: "npm"
           cache-dependency-path: package-lock.json
 
@@ -110,3 +110,53 @@ jobs:
       - name: Run tests
         working-directory: ./mobile
         run: npm test
+
+  root-reliability:
+    name: Root App - Complete Emulator Regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      IOPPS_TEST_EMULATORS: "true"
+      NEXT_PUBLIC_USE_EMULATORS: "true"
+      QA_BUILD_DIR: ${{ github.workspace }}
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_FIREBASE_API_KEY: fictional-emulator-key
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-iopps-preview.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: demo-iopps-preview.appspot.com
+      NEXT_PUBLIC_FIREBASE_APP_CHECK_ENABLED: "false"
+      GCLOUD_PROJECT: demo-iopps-preview
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-iopps-preview
+      FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+      FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+      FIREBASE_STORAGE_EMULATOR_HOST: 127.0.0.1:9199
+      PUPPETEER_SKIP_DOWNLOAD: "true"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24.x"
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: npm ci
+      - name: Run the complete suite in demo emulators
+        run: >-
+          npx --yes firebase-tools@14.17.0 emulators:exec
+          --project demo-iopps-preview --config firebase.ci.json
+          --only firestore,auth,storage
+          "npm run build && node --import ./scripts/test-typescript-loader.mjs --test tests/*.test.ts tests/*.test.mjs && node --test scripts/qa-maintenance-http.mjs"
+      - name: Verify direct-client maintenance containment in separate emulators
+        env:
+          GCLOUD_PROJECT: demo-iopps-launch-freeze
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8180
+          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9299
+          FIREBASE_STORAGE_EMULATOR_HOST: 127.0.0.1:9399
+        run: >-
+          npx --yes firebase-tools@14.17.0 emulators:exec
+          --project demo-iopps-launch-freeze --config firebase.maintenance-ci.json
+          --only firestore,auth,storage
+          "node --test scripts/qa-maintenance-rules.mjs"

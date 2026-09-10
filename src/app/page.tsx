@@ -66,6 +66,12 @@ export default async function Home() {
               Search jobs →
             </button>
           </form>
+          <nav className="op-task-links" aria-label="Choose your next step">
+            <Link href="/jobs">Find work</Link>
+            <Link href="/for-employers">Hire talent</Link>
+            <Link href="/training">Learn</Link>
+            <Link href="/events">Events & live</Link>
+          </nav>
         </div>
       </section>
       <section className="op-jobs">
@@ -99,15 +105,22 @@ export default async function Home() {
       <PartnerShowcase partners={partners} />
       <div className="op-wrap op-discover">
         <div className="op-feature-grid">
-          <Link href="/businesses" className="op-feature">
+          <article className="op-feature">
             <p className="op-eyebrow">Build what’s next</p>
             <h2>Indigenous Entrepreneurship</h2>
             <p>
               Discover Indigenous businesses and connect with the people
               building them.
             </p>
-            <span>Explore entrepreneurship →</span>
-          </Link>
+            <h3>Indigenous Business Spotlight</h3>
+            <p>Built by Indigenous entrepreneurs. Supported by community.</p>
+            <p>Free Indigenous business profiles. Your business could be featured next.</p>
+            <p>Complete business profiles can also be considered for a free IOPPS spotlight.</p>
+            <nav className="op-task-links" aria-label="Indigenous business opportunities">
+              <Link href="/signup?intent=indigenous-business">Add Your Business Free</Link>
+              <Link href="/businesses?type=Indigenous">Browse Indigenous Businesses</Link>
+            </nav>
+          </article>
           <Link href="/livestreams" className="op-feature">
             <p className="op-eyebrow">Real conversations. Inspiring voices.</p>
             <h2>IOPPS Live</h2>

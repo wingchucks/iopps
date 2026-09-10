@@ -20,16 +20,16 @@ test("authoritative public job merge counts imported jobs and active posts once"
   );
 });
 
-test("post duplicates are removed when their slug matches an imported document ID", () => {
+test("a display slug matching another document ID is not proof of a mirror", () => {
   const imported = [{ id: "source-id", slug: "current-role", active: true }];
   const posts = [{ id: "legacy-copy", slug: "source-id", status: "active" }];
-  assert.equal(mergePublicJobRecords(imported, posts).length, 1);
+  assert.deepEqual(mergePublicJobRecords(imported, posts).map(job => job.id), ["source-id", "legacy-copy"]);
 });
 
-test("post duplicates are removed when normalized slugs match despite different IDs", () => {
+test("different authoritative IDs survive colliding normalized display slugs", () => {
   const imported = [{ id: "source-id", slug: "Current Role", active: true }];
   const posts = [{ id: "legacy-copy", slug: "current-role", status: "active" }];
-  assert.equal(mergePublicJobRecords(imported, posts).length, 1);
+  assert.deepEqual(mergePublicJobRecords(imported, posts).map(job => job.id), ["source-id", "legacy-copy"]);
 });
 
 test("organization job counts come from merged public jobs instead of stale profile fields", () => {

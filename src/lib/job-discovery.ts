@@ -1,4 +1,5 @@
 import type { Job } from "./firestore/jobs";
+import { normalizeJobDiscoveryMetadata } from "./job-metadata";
 
 export type EmployerBrand = { id: string; name?: string; employerId?: string; logoUrl?: string };
 export const employerName = (job: Job) => job.employerName || job.orgName || job.companyName || "Hiring organization";
@@ -38,7 +39,8 @@ export function jobSummary(job: Job): string {
   if (text.length <= 240) return text;
   return text.slice(0, 240).replace(/\s+\S*$/, "") + "…";
 }
-export function salaryInfo(job: Job) {
+export function salaryInfo(input: Job) {
+  const job = normalizeJobDiscoveryMetadata(input);
   const range = job.salaryRange;
   if (range?.disclosed === false) return null;
   const text = job.salary || "";
