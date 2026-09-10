@@ -146,6 +146,6 @@ jobs:
       - name: Run the complete suite in demo emulators
         run: >-
           npx --yes firebase-tools@14.17.0 emulators:exec
-          --project demo-iopps-ci --config firebase.ci.json
+          --project demo-iopps-preview --config firebase.ci.json
           --only firestore,auth,storage
           "npm run build && node --import ./scripts/test-typescript-loader.mjs --test tests/*.test.ts tests/*.test.mjs"
