@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, type Firestore, type Transaction } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   EmployerApiError,
@@ -14,6 +14,21 @@ import { isSchoolOrganization } from "@/lib/school-visibility";
 import { sendAdminContentPosted } from "@/lib/email";
 
 export const runtime = "nodejs";
+
+// The backend can invalidate a contention-aborted transaction with code 3,
+// which the SDK does not retry. Restart only that exact closed-transaction case;
+// business denials and all other invalid-argument errors must propagate unchanged.
+async function runCreateTransaction<T>(db: Firestore, action: (tx: Transaction) => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await db.runTransaction(action);
+    } catch (error) {
+      const failure = error as { code?: number; message?: string };
+      if (attempt >= 2 || failure?.code !== 3 ||
+        !failure.message?.includes("Transaction is invalid or closed.")) throw error;
+    }
+  }
+}
 
 type JobStatus = "active" | "draft" | "closed";
 
@@ -177,7 +192,7 @@ export async function GET(req: NextRequest) {
 
     // Build response with application counts
     const jobs = await Promise.all(
-      allDocs.map(async (doc) => {
+      allDocs.filter(doc => doc.data().status !== 'deleted' && !doc.data().deletedAt).map(async (doc) => {
         const d = doc.data();
         let applicationCount = 0;
         try {
@@ -260,7 +275,17 @@ export async function POST(req: NextRequest) {
 
     let nextFeaturedSummary = null;
 
-    await db.runTransaction(async (transaction) => {
+    await runCreateTransaction(db, async (transaction) => {
+
+      // Client-selected slugs are not authorization to replace an existing job.
+      // Read the target in the transaction so concurrent creates also conflict.
+      const [existingJob, existingPost] = await Promise.all([
+        transaction.get(jobRef),
+        transaction.get(db.collection("posts").doc(baseSlug)),
+      ]);
+      if (existingJob.exists || existingPost.exists) {
+        throw new EmployerApiError(409, "A job with this identifier already exists.");
+      }
       const [employerSnap, jobsSnap, postsSnap] = await Promise.all([
         transaction.get(employerRef),
         transaction.get(db.collection("jobs").where("employerId", "==", context.employerId)),
@@ -300,7 +325,7 @@ export async function POST(req: NextRequest) {
         }, { merge: true });
       }
 
-      transaction.set(jobRef, stripUndefined({
+      transaction.create(jobRef, stripUndefined({
         ...payload,
         slug: baseSlug,
         createdAt: FieldValue.serverTimestamp(),

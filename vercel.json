@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "codex/job-flow-reliability-20260908": false
+    }
+  },
   "crons": [
     { "path": "/api/cron/sync-feeds", "schedule": "0 8 * * *" },
     { "path": "/api/cron/check-subscriptions", "schedule": "0 6 * * *" },

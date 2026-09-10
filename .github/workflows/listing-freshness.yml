@@ -1,0 +1,36 @@
+name: Public listing freshness review
+
+on:
+  workflow_dispatch:
+
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-listing-freshness
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Read-only expiry and source-link review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24.x"
+      - name: Collect public inventory and review candidates
+        run: >-
+          node --import ./scripts/test-typescript-loader.mjs
+          scripts/audit-listing-freshness.mjs --live
+          --output artifacts/listing-freshness.json
+          --link-origin https://scoinc.mb.ca
+      - name: Retain read-only review queue
+        uses: actions/upload-artifact@v4
+        with:
+          name: listing-freshness-review
+          path: artifacts/listing-freshness.json
+          if-no-files-found: error
+          retention-days: 14

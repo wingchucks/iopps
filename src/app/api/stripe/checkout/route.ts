@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { authIntentHref } from "@/lib/auth-redirect";
+import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS, type BillingPlanId } from "@/lib/pricing";
 
 export const runtime = "nodejs";
@@ -29,6 +31,26 @@ function getStripe(): Stripe | null {
 }
 
 export async function POST(req: NextRequest) {
+  let context;
+  try {
+    context = await requireEmployerContext(req);
+  } catch (error) {
+    const status = error instanceof EmployerApiError ? error.status : 401;
+    return NextResponse.json({ error: "Checkout authorization failed" }, { status });
+  }
+  let body;
+  try { body = await req.json(); } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid checkout request" }, { status: 400 });
+  }
+  // Canonical organization signup uses the owner's UID as the org document ID.
+  // Profile orgId/orgRole fields are not proof of billing ownership.
+  if (context.uid !== context.orgId || (body.orgId !== undefined && body.orgId !== context.orgId) || context.orgRole !== "owner") {
+    return NextResponse.json({ error: "Organization owner access required" }, { status: 403 });
+  }
+  const orgId = context.orgId;
   const stripe = getStripe();
   if (!stripe) {
     return NextResponse.json(
@@ -38,10 +60,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
-    const { planId, orgId } = body as { planId?: string; orgId?: string };
+    const { planId } = body as { planId?: string };
 
-    if (!planId || !orgId) {
+    if (typeof planId !== "string" || !Object.hasOwn(PLAN_PRICES, planId)) {
       return NextResponse.json(
         { error: "Missing planId or orgId" },
         { status: 400 }
@@ -58,7 +79,10 @@ export async function POST(req: NextRequest) {
 
     const gstAmount = Math.round(plan.amount * GST_RATE);
 
-    const origin = req.headers.get("origin") || "https://iopps.ca";
+    // Never trust Origin/Host headers for payment return URLs.
+    const origin = "https://www.iopps.ca";
+    const intent = new URLSearchParams({ plan: planId });
+    if (typeof body.redirect === "string") intent.set("redirect", body.redirect);
 
     const session = await stripe.checkout.sessions.create({
       mode: plan.mode,
@@ -86,14 +110,13 @@ export async function POST(req: NextRequest) {
         amount: String(plan.amount),
         gstAmount: String(gstAmount),
       },
-      success_url: `${origin}/org/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan=${planId}`,
-      cancel_url: `${origin}/org/checkout/cancel?plan=${planId}`,
+      success_url: `${origin}${authIntentHref("/org/checkout/success", intent)}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}${authIntentHref("/org/checkout/cancel", intent)}`,
     });
 
     return NextResponse.json({ url: session.url });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    console.error("[stripe/checkout] Error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[stripe/checkout] Session creation failed", err instanceof Error ? err.name : "Error");
+    return NextResponse.json({ error: "Unable to start checkout. Please try again." }, { status: 500 });
   }
 }

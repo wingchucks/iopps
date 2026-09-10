@@ -17,7 +17,8 @@ import DirectoryPagination, {
   useDirectoryFilterActions,
   useDirectoryPagination,
 } from "@/components/DirectoryPagination";
-import { normalizeExternalHref, isMailtoHref } from "@/lib/utils";
+import { resolveApplicationDestination } from "@/lib/application-destination";
+import { trackJobFunnelEvent } from "@/lib/job-funnel-analytics";
 import type { Job } from "@/lib/firestore/jobs";
 import { mixJobsForBrowse } from "@/lib/public-featured";
 const employmentTypes = [
@@ -52,19 +53,7 @@ function daysAgo(job: Job): string {
   return `${days} days ago`;
 }
 function getApplyLabel(job: Job): string {
-  const record = job as unknown as Record<string, unknown>;
-  const url = normalizeExternalHref(
-    job.applicationUrl ||
-      String(
-        record.applicationLink ||
-          record.externalUrl ||
-          job.externalApplyUrl ||
-          "",
-      ),
-  );
-  if (isMailtoHref(url))
-    return job.orgId || job.employerId ? "Apply on IOPPS" : "Apply by email";
-  return url ? "Apply on employer site" : "Apply on IOPPS";
+  return resolveApplicationDestination(job, job.slug || job.id).label;
 }
 function getJobHref(job: Job): string {
   return `/jobs/${job.slug || job.id.replace(/^job-/, "")}`;
@@ -200,6 +189,11 @@ function JobsPageContent() {
     search,
     typeFilter, employer, area, added, closing, disclosed, training, salaryPeriod,
   ]);
+  useEffect(() => {
+    if (loading) return;
+    const timer = setTimeout(() => trackJobFunnelEvent("job_search_results", { resultCount: filtered.length }), 500);
+    return () => clearTimeout(timer);
+  }, [filtered, loading]);
   const mixedJobs = useMemo(
     () => sort === "newest" ? [...filtered].sort((a,b) => addedAt(b)-addedAt(a)) : sort === "closing" ? [...filtered].sort((a,b) => (closesAt(a) || Infinity)-(closesAt(b) || Infinity)) :
       mixJobsForBrowse(filtered, {
@@ -358,14 +352,14 @@ function JobsPageContent() {
           <details className="job-more-filters mb-6" open={Boolean(employer || area || added || closing || disclosed || training) || undefined}>
             <summary>More filters <span>Employer, job area &amp; more</span></summary>
             <div className="grid gap-3 p-4 sm:grid-cols-3">
-              <label>Employer<select value={employer} onChange={e => setEmployer(e.target.value)}><option value="">All employers</option>{employers.map(name => <option key={name}>{name}</option>)}</select></label>
-              <label>Job area<select value={area} onChange={e => setArea(e.target.value)}><option value="">All job areas</option>{areas.map(name => <option key={name}>{name}</option>)}</select></label>
-              <label>Added to IOPPS<select value={added} onChange={e => setAdded(e.target.value)}><option value="">Any time</option><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select></label>
+              <label>Employer<select aria-label="Employer" value={employer} onChange={e => setEmployer(e.target.value)}><option value="">All employers</option>{employers.map(name => <option key={name}>{name}</option>)}</select></label>
+              <label>Job area<select aria-label="Job area" value={area} onChange={e => setArea(e.target.value)}><option value="">All job areas</option>{areas.map(name => <option key={name}>{name}</option>)}</select></label>
+              <label>Added to IOPPS<select aria-label="Added to IOPPS" value={added} onChange={e => setAdded(e.target.value)}><option value="">Any time</option><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select></label>
             </div>
             <div className="flex flex-wrap gap-x-6 gap-y-3 px-4 pb-4">
-              <label className="job-check"><input type="checkbox" checked={closing === "1"} onChange={e => setClosing(e.target.checked ? "1" : "")}/>Closing in 7 days</label>
-              <label className="job-check"><input type="checkbox" checked={disclosed === "1"} onChange={e => setDisclosed(e.target.checked ? "1" : "")}/>Pay disclosed</label>
-              <label className="job-check"><input type="checkbox" checked={training === "1"} onChange={e => setTraining(e.target.checked ? "1" : "")}/>Training provided</label>
+              <label className="job-check"><input aria-label="Closing in 7 days" type="checkbox" checked={closing === "1"} onChange={e => setClosing(e.target.checked ? "1" : "")}/>Closing in 7 days</label>
+              <label className="job-check"><input aria-label="Pay disclosed" type="checkbox" checked={disclosed === "1"} onChange={e => setDisclosed(e.target.checked ? "1" : "")}/>Pay disclosed</label>
+              <label className="job-check"><input aria-label="Training provided" type="checkbox" checked={training === "1"} onChange={e => setTraining(e.target.checked ? "1" : "")}/>Training provided</label>
             </div>
             <p className="px-4 pb-4 text-sm text-text-sec">Filters use details supplied in each listing. Pay ranges compare only the selected pay period.</p>
           </details>
@@ -384,7 +378,7 @@ function JobsPageContent() {
                   : "The newest roles from Indigenous-led and allied employers across Canada."}
               </p>
             </div>
-            <label className="job-sort">Sort by<select value={sort} onChange={e => setSort(e.target.value)}><option value="recommended">Recommended</option><option value="newest">Recently added</option><option value="closing">Closing soon</option></select></label>
+            <label className="job-sort">Sort by<select aria-label="Sort by" value={sort} onChange={e => setSort(e.target.value)}><option value="recommended">Recommended</option><option value="newest">Recently added</option><option value="closing">Closing soon</option></select></label>
             {!loading && (
               <p className="text-sm text-text-muted" aria-live="polite">
                 {mixedJobs.length} job{mixedJobs.length !== 1 ? "s" : ""} found

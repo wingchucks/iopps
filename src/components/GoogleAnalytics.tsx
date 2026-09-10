@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
+import { analyticsPath } from "@/lib/analytics/privacy";
+import { flushJobFunnelEvents } from "@/lib/job-funnel-analytics";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-
 declare global {
   interface Window {
     dataLayer?: unknown[];
@@ -13,56 +14,28 @@ declare global {
   }
 }
 
-function PageViewTracker() {
-  const pathname = usePathname();
-  const hasTrackedInitialPageView = useRef(false);
-
-  useEffect(() => {
-    if (!GA_MEASUREMENT_ID || typeof window.gtag !== "function") {
-      return;
-    }
-
-    if (!hasTrackedInitialPageView.current) {
-      hasTrackedInitialPageView.current = true;
-      return;
-    }
-
-    const pagePath = `${pathname}${window.location.search}`;
-
-    window.gtag("config", GA_MEASUREMENT_ID, {
-      page_path: pagePath,
-      page_location: window.location.href,
-      page_title: document.title,
-    });
-  }, [pathname]);
-
-  return null;
-}
-
 export default function GoogleAnalytics() {
-  if (!GA_MEASUREMENT_ID) {
-    return null;
-  }
-
-  return (
-    <>
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-        strategy="afterInteractive"
-      />
-      <Script
-        id="google-analytics"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}');
-          `,
-        }}
-      />
-      <PageViewTracker />
-    </>
-  );
+  const pathname = usePathname();
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!ready || !GA_MEASUREMENT_ID || !window.gtag) return;
+    const pagePath = analyticsPath(pathname);
+    const context = { page_path: pagePath, page_location: `https://www.iopps.ca${pagePath}`, page_title: "IOPPS", page_referrer: "" };
+    window.gtag("set", context);
+    window.gtag("event", "page_view", context);
+  }, [pathname, ready]);
+  if (!GA_MEASUREMENT_ID) return null;
+  return <Script
+    src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+    strategy="afterInteractive"
+    onReady={() => {
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || ((...args: unknown[]) => { window.dataLayer!.push(args); });
+      window.gtag("js", new Date());
+      window.gtag("set", { page_location: "https://www.iopps.ca/", page_title: "IOPPS", page_referrer: "" });
+      window.gtag("config", GA_MEASUREMENT_ID, { send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false });
+      setReady(true);
+      flushJobFunnelEvents();
+    }}
+  />;
 }

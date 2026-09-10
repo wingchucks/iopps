@@ -1,18 +1,8 @@
 import { feedJobKey, type FeedItem } from './feed-source';
 type Job = Record<string, unknown>;
-export function hasJobExpired(value: unknown, now = new Date()): boolean {
-  if (!value) return false;
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const day = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Regina',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
-    return Number.isFinite(Date.parse(value)) && value < day;
-  }
-  let date: Date;
-  if (value instanceof Date) date = value;
-  else if (typeof value === 'object' && value !== null && 'toDate' in value && typeof value.toDate === 'function') date = value.toDate();
-  else if (typeof value === 'string') date = new Date(value);
-  else return false;
-  return Number.isFinite(date.getTime()) && date.getTime() <= now.getTime();
-}
+
+export { hasJobExpired, isJobRecordExpired, descriptionApplicationDeadline } from '../listing-freshness';
+import { isJobRecordExpired } from '../listing-freshness';
 export function expirationPatch(reason: 'closing_date' | 'removed_from_source', now = new Date()) {
   return { active:false, status:'expired', expiredAt:now, expirationReason:reason, updatedAt:now };
 }
@@ -20,7 +10,7 @@ export function sourceLifecyclePatch(item: FeedItem, existing: Job = {}, now = n
   const patch: Job = {};
   if ('closingDate' in item) patch.closingDate = item.closingDate || null;
   if (['deleted','archived','draft','closed','inactive'].includes(String(existing.status))) return patch;
-  if (hasJobExpired(item.closingDate, now)) return {...patch,...expirationPatch('closing_date',now)};
+  if (isJobRecordExpired({...existing, ...item, ...patch}, now)) return {...patch,...expirationPatch('closing_date',now)};
   if (existing.expirationReason === 'removed_from_source' || (existing.expirationReason === 'closing_date' && 'closingDate' in item)) {
     if (existing.status === 'expired') Object.assign(patch,{active:true,status:'active',expiredAt:null,expirationReason:null});
   }

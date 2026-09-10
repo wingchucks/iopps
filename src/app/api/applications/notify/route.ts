@@ -4,6 +4,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { sendAdminApplicationNotification, sendApplicationNotification } from "@/lib/email";
 import {
   buildApplicationDeliveryDocId,
+  claimApplicationNotification,
   persistEmployerNotificationDelivery,
   resolveEmployerNotificationTargetId,
   type EmployerNotificationStatus,
@@ -152,6 +153,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ sent: false, reason: "bad_request", error });
     }
 
+    if (postId.includes("/") || postId.length > 300) return NextResponse.json({sent:false,reason:"bad_request"}, {status:400});
+    const applicationRef = adminDb.collection("applications").doc(buildApplicationDeliveryDocId(applicantUid, postId));
+    const claim = await claimApplicationNotification(adminDb, applicationRef, applicantUid);
+    if (claim.state === "sent") return NextResponse.json({sent:true,reason:"already_sent"});
+    if (claim.state === "busy") return NextResponse.json({sent:false,reason:"in_progress"}, {status:202});
+    // Never trust a retry payload to choose its employer or job title.
+    orgId = normalizeBodyString(claim.application.orgId);
+    employerId = normalizeBodyString(claim.application.employerId);
+    postTitle = normalizeBodyString(claim.application.postTitle);
     const targetOrgId = resolveEmployerNotificationTargetId({ orgId, employerId });
     if (!targetOrgId) {
       const error = "Missing orgId and employerId";

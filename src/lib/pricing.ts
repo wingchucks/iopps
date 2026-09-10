@@ -187,6 +187,6 @@ export function getAnnualPlanAmount(value: unknown): number | null {
 export function getPlanById(planId: string | null | undefined): SubscriptionPlanDefinition | PurchasePlanDefinition | null {
   if (!planId) return null;
   if (isSubscriptionPlanId(planId)) return SUBSCRIPTION_PLANS[planId];
-  if (planId in ONE_TIME_PLANS) return ONE_TIME_PLANS[planId as OneTimePlanId];
+  if (Object.hasOwn(ONE_TIME_PLANS, planId)) return ONE_TIME_PLANS[planId as OneTimePlanId];
   return null;
 }

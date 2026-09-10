@@ -23,7 +23,7 @@ test("guided signup preselects the entrepreneur path without misclassifying gene
   assert.match(signup, /intent\) === "indigenous-business"/);
   assert.match(signup, /entrepreneurIntent \? "organization" : ""/);
   assert.match(signup, /entrepreneurIntent \? "employer" : ""/);
-  assert.match(signup, /entrepreneurIntent \? "indigenous" : "not_specified"/);
+  assert.match(signup, /useState<BusinessIdentity>\("not_specified"\)/);
   assert.match(signup, /Indigenous Entrepreneur Signup/);
   assert.match(signup, /Your free business profile and directory listing/);
 });

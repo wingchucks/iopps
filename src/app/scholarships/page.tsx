@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { isJobRecordExpired } from "@/lib/listing-freshness";
 import AppShell from "@/components/AppShell";
 import DirectoryPagination, { useDirectoryFilter, useDirectoryFilterActions, useDirectoryPagination } from "@/components/DirectoryPagination";
 import { displayAmount, displayLocation } from "@/lib/utils";
@@ -255,7 +256,8 @@ function ScholarshipsBrowsePageContent() {
             <div id="directory-results" tabIndex={-1} className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {pageItems.map((scholarship) => {
                 const slug = scholarship.slug || scholarship.id;
-                const closingSoon = isClosingSoon(scholarship.deadline);
+                const intakeClosed = isJobRecordExpired({...scholarship});
+                const closingSoon = !intakeClosed && isClosingSoon(scholarship.deadline);
                 const amountLabel = displayAmount(scholarship.amount);
                 const knownDeadline = hasKnownDeadline(scholarship.deadline);
                 const rolling = !knownDeadline && isRollingDeadline(scholarship.deadline);
@@ -293,6 +295,7 @@ function ScholarshipsBrowsePageContent() {
                               Amount on application
                             </span>
                           )}
+                          {intakeClosed && <span className="text-xs font-semibold text-text-muted">Intake closed — check next round</span>}
                           {closingSoon && (
                             <span
                               className="inline-block rounded-lg px-2 py-1 text-[10px] font-bold"

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizeJobDiscoveryMetadata } from "@/lib/job-metadata";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { normalizeImportedDescription } from "@/lib/server/imported-job-descriptions";
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
@@ -9,10 +10,10 @@ import {
 import { mergePublicJobRecords } from "@/lib/public-job-merge";
 
 export const runtime = "nodejs";
-export const revalidate = 60; // Cache for 60 seconds
+export const revalidate = 0; // Evaluate public eligibility on every read.
 
 const PUBLIC_LIST_CACHE_HEADERS = {
-  "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+  "Cache-Control": "no-store",
 };
 
 type NormalizedJob = Record<string, unknown> & {
@@ -76,7 +77,8 @@ function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "job
   }
   // Tag source
   serialized._source = source;
-  return serialized as NormalizedJob;
+  if (source === "jobs") serialized.active = data.active === true;
+  return normalizeJobDiscoveryMetadata(serialized) as NormalizedJob;
 }
 
 export async function GET(request: Request) {
@@ -88,15 +90,11 @@ export async function GET(request: Request) {
 
     // Query 1: jobs collection (imported/synced jobs)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let jobsQuery: any = db.collection("jobs").where("active", "==", true);
-    if (employerId) jobsQuery = jobsQuery.where("employerId", "==", employerId);
-    if (employerName) jobsQuery = jobsQuery.where("employerName", "==", employerName);
+    const jobsQuery: any = db.collection("jobs"); // Closed identities suppress stale posts mirrors.
 
     // Query 2: posts collection (employer-posted jobs from dashboard)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let postsQuery: any = db.collection("posts").where("type", "==", "job").where("status", "==", "active");
-    if (employerId) postsQuery = postsQuery.where("orgId", "==", employerId);
-    if (employerName) postsQuery = postsQuery.where("orgName", "==", employerName);
+    const postsQuery: any = db.collection("posts").where("type", "==", "job").where("status", "==", "active");
 
     const [jobsSnap, postsSnap] = await Promise.all([jobsQuery.get(), postsQuery.get()]);
 
@@ -115,7 +113,10 @@ export async function GET(request: Request) {
       job.slug = publicSlugMap.get(String(job.id)) || String(job.slug || job.id);
     });
 
-    const sortedJobs = sortJobsByRecency(publicJobs);
+    const sortedJobs = sortJobsByRecency(publicJobs.filter(job =>
+      (!employerId || job.employerId === employerId || job.orgId === employerId) &&
+      (!employerName || job.employerName === employerName || job.orgName === employerName)
+    ));
 
     return NextResponse.json(
       { jobs: sortedJobs, count: sortedJobs.length },

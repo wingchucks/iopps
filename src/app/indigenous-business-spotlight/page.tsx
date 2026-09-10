@@ -56,7 +56,7 @@ export default function IndigenousBusinessSpotlightPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1180px] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+      <div className="mx-auto max-w-[1180px] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <section className="mx-auto mb-8 max-w-3xl text-center">
           <Badge text="Indigenous Business Spotlight" color="var(--teal)" bg="var(--teal-soft)" />
           <h1 className="mt-5 text-4xl font-black leading-tight text-text sm:text-5xl">
@@ -148,7 +148,7 @@ export default function IndigenousBusinessSpotlightPage() {
             </Link>
           </section>
         </Card>
-      </main>
+      </div>
 
       <Footer />
     </div>

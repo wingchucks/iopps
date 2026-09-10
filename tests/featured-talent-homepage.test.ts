@@ -19,11 +19,11 @@ test("former current Featured Talent profile is removed", () => {
 test("homepage section now supports Indigenous businesses", () => {
   const home = read("src/app/page.tsx");
   const spotlightIndex = home.indexOf("Indigenous Business Spotlight");
-  const partnerIndex = home.indexOf("Partner network");
+  const partnerIndex = home.indexOf("<PartnerShowcase");
 
   assert.ok(spotlightIndex > -1, "homepage should feature the Indigenous Business Spotlight");
   assert.ok(partnerIndex > -1, "homepage should keep the partner section");
-  assert.ok(spotlightIndex < partnerIndex, "business spotlight should appear before partners");
+  assert.ok(partnerIndex < spotlightIndex, "partners should appear before business discovery");
   assert.match(home, /Your business could be featured next/);
   assert.match(home, /Add Your Business Free/);
   assert.match(home, /Browse Indigenous Businesses/);

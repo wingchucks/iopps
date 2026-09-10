@@ -1,5 +1,5 @@
 import { getAdminDb } from "@/lib/firebase-admin";
-import { buildPublicJobRouteSlugMap, isPublicJobVisible, sortJobsByRecency } from "@/lib/public-jobs";
+import { buildPublicJobRouteSlugMap, selectHomepageJobs } from "@/lib/public-jobs";
 import { mergePublicJobRecords } from "@/lib/public-job-merge";
 import {
   getEventDisplayDates,
@@ -130,7 +130,7 @@ async function getStats(): Promise<LandingStats> {
     const db = getAdminDb();
     const [usersSnap, jobsSnap, postsSnap, employersSnap, eventsSnap, schools] = await Promise.all([
       db.collection("users").count().get(),
-      db.collection("jobs").where("active", "==", true).get(),
+      db.collection("jobs").get(),
       db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
       db.collection("employers").where("status", "==", "approved").count().get(),
       db.collection("events").count().get(),
@@ -138,7 +138,7 @@ async function getStats(): Promise<LandingStats> {
     ]);
 
     const publicJobs = mergePublicJobRecords(
-      jobsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      jobsSnap.docs.map((doc) => ({ ...doc.data(), id: doc.id, active: doc.data().active === true })),
       postsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
     );
 
@@ -190,30 +190,13 @@ export async function getLatestJobs(): Promise<LandingJob[]> {
   try {
     const db = getAdminDb();
     const [jobsSnap, postsSnap] = await Promise.all([
-      db.collection("jobs").where("active", "==", true).get(),
+      db.collection("jobs").get(), // Keep closed source identities for mirror suppression.
       db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
     ]);
 
-    const seen = new Set<string>();
-    const jobs: JsonRecord[] = [];
-
-    jobsSnap.docs.forEach((doc) => {
-      seen.add(doc.id);
-      jobs.push(normalizeJobDocument(doc, "jobs"));
-    });
-
-    postsSnap.docs.forEach((doc) => {
-      const slug = text(doc.data().slug) || doc.id;
-      if (!seen.has(doc.id) && !seen.has(slug)) {
-        jobs.push(normalizeJobDocument(doc, "posts"));
-      }
-    });
-
-    const publicJobs = jobs.filter((job) =>
-      isPublicJobVisible({
-        active: typeof job.active === "boolean" ? job.active : undefined,
-        status: text(job.status) || undefined,
-      }),
+    const publicJobs = mergePublicJobRecords<JsonRecord & { id: string }, JsonRecord & { id: string }>(
+      jobsSnap.docs.map((doc) => ({ ...normalizeJobDocument(doc, "jobs"), id: doc.id, active: doc.data().active === true })),
+      postsSnap.docs.map((doc) => ({ ...normalizeJobDocument(doc, "posts"), id: doc.id })),
     );
 
     const slugMap = buildPublicJobRouteSlugMap(
@@ -224,8 +207,7 @@ export async function getLatestJobs(): Promise<LandingJob[]> {
       })),
     );
 
-    return sortJobsByRecency(publicJobs)
-      .slice(0, 5)
+    return selectHomepageJobs(publicJobs, 5)
       .map((job) => {
         const id = text(job.id);
         const slug = slugMap.get(id) || text(job.slug) || id;

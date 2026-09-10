@@ -1,4 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { activateAdminJob } from "@/lib/server/admin-job-lifecycle";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
     }
 
     const snapshot = await query.get();
-    const jobs = snapshot.docs.map((doc) => ({
+    const jobs = snapshot.docs.filter(doc => doc.data().status !== 'deleted' && !doc.data().deletedAt).map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
@@ -126,7 +127,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const jobRef = adminDb.collection("jobs").doc(body.jobId);
+    const db = adminDb;
+    const jobRef = db.collection("jobs").doc(body.jobId);
     const jobSnap = await jobRef.get();
 
     if (!jobSnap.exists) {
@@ -137,22 +139,33 @@ export async function POST(request: NextRequest) {
     }
 
     switch (body.action) {
-      case "activate":
-        await jobRef.update({
-          active: true,
-          updatedAt: FieldValue.serverTimestamp(),
-        });
+      case "activate": {
+        const error = await activateAdminJob(adminDb, body.jobId);
+        if (error) return NextResponse.json({ error }, { status: 400 });
         break;
+      }
 
       case "deactivate":
-        await jobRef.update({
-          active: false,
-          updatedAt: FieldValue.serverTimestamp(),
+        await db.runTransaction(async transaction => {
+          const mirrorRef = db.collection('posts').doc(body.jobId);
+          const [current, mirror] = await Promise.all([transaction.get(jobRef),transaction.get(mirrorRef)]);
+          if (!current.exists) throw new Error('Job no longer exists');
+          if (current.data()?.status === 'deleted' || current.data()?.deletedAt) return;
+          const patch = {active:false,status:'closed',updatedAt:FieldValue.serverTimestamp()};
+          transaction.update(jobRef,patch);
+          if (mirror.exists && mirror.data()?.type === 'job') transaction.update(mirrorRef,patch);
         });
         break;
 
       case "delete":
-        await jobRef.delete();
+        await db.runTransaction(async transaction => {
+          const mirrorRef = db.collection("posts").doc(body.jobId);
+          const [current, mirror] = await Promise.all([transaction.get(jobRef), transaction.get(mirrorRef)]);
+          if (!current.exists) throw new Error("Job no longer exists");
+          const patch = { active: false, status: "deleted", deletedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+          transaction.update(jobRef, patch);
+          if (mirror.exists && mirror.data()?.type === "job") transaction.update(mirrorRef, patch);
+        });
         break;
     }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmSavedJob, type JobSaveConfirmation } from "@/lib/job-save-confirmation";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OrgRoute from "@/components/OrgRoute";
@@ -613,6 +614,7 @@ export default function NewJobWizardPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [featuredSummary, setFeaturedSummary] = useState<FeaturedJobSummary | null>(null);
   const [submitError, setSubmitError] = useState("");
+  const [confirmation, setConfirmation] = useState<JobSaveConfirmation | null>(null);
 
   // Load org & profile
   useEffect(() => {
@@ -749,6 +751,7 @@ export default function NewJobWizardPage() {
         setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
       }
 
+      setConfirmation(await confirmSavedJob(result.jobId, (url) => fetch(url, { headers: { Authorization: `Bearer ${idToken}` } })));
       setStep("success");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -809,7 +812,7 @@ export default function NewJobWizardPage() {
                     margin: "0 0 8px",
                   }}
                 >
-                  Job Posted Successfully!
+                  {confirmation?.title}
                 </h1>
                 <p
                   style={{
@@ -822,7 +825,7 @@ export default function NewJobWizardPage() {
                     lineHeight: 1.6,
                   }}
                 >
-                  Your job posting is now live and visible to Indigenous professionals across Canada.
+                  {confirmation?.description}
                 </p>
 
                 <div
@@ -852,9 +855,8 @@ export default function NewJobWizardPage() {
                       color: "var(--text-sec)",
                     }}
                   >
-                    <li>Candidates will be notified about this opportunity</li>
-                    <li>Your job appears in search results and the jobs feed</li>
-                    <li>Manage applications from your dashboard</li>
+                    <li>Review the saved posting and its status in your dashboard</li>
+                    <li>Drafts stay private until published</li>
                   </ul>
                 </div>
 

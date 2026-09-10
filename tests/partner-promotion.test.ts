@@ -86,7 +86,7 @@ test("trialing school subscriptions do not qualify for partner visibility", () =
       billingStartAt: "2026-03-01T00:00:00.000Z",
       subscriptionEnd: "2026-06-01T00:00:00.000Z",
     },
-  });
+  }, new Date("2026-04-13T00:00:00.000Z"));
 
   assert.equal(eligibility.isEligible, false);
   assert.equal(eligibility.reason, "trial_only");

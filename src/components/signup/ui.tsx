@@ -24,7 +24,7 @@ export function BackgroundMesh() {
 }
 
 /* ── Top Bar ── */
-export function TopBar({ stepLabel, showLogin = true }: { stepLabel: string; showLogin?: boolean }) {
+export function TopBar({ stepLabel, showLogin = true, loginHref = "/login" }: { stepLabel: string; showLogin?: boolean; loginHref?: string }) {
   return (
     <>
       <div style={{
@@ -42,7 +42,7 @@ export function TopBar({ stepLabel, showLogin = true }: { stepLabel: string; sho
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <span style={{ fontSize: 13, color: CSS.textMuted }}>{stepLabel}</span>
           {showLogin && (
-            <a href="/login" style={{ fontSize: 13, color: CSS.accent, textDecoration: "none", fontWeight: 500 }}>
+            <a href={loginHref} style={{ fontSize: 13, color: CSS.accent, textDecoration: "none", fontWeight: 500 }}>
               Already have an account? <strong>Log in</strong>
             </a>
           )}

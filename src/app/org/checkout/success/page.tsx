@@ -6,21 +6,19 @@ import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
-import { getPlanById, isSubscriptionPlanId } from "@/lib/pricing";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 
 export default function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session_id?: string; plan?: string }>;
+  searchParams: Promise<{ session_id?: string; plan?: string; redirect?: string }>;
 }) {
   const params = use(searchParams);
   const router = useRouter();
-  const plan = getPlanById(params.plan);
-  const isSubscription = isSubscriptionPlanId(params.plan);
-  const successTitle = isSubscription ? "Payment Successful!" : "Purchase Successful!";
-  const successMessage = isSubscription
-    ? "Your subscription has been activated. You'll receive a confirmation email shortly."
-    : `${plan?.title || "Your purchase"} has been added to your account and is ready to use.`;
+  // The return query is not evidence of payment or webhook fulfillment.
+  const successTitle = "Checkout returned";
+  const successMessage = "Payment confirmation may still be processing. Check your dashboard for your current plan and posting credits before purchasing again.";
+  const destination = safeAuthRedirect(params.redirect || null) || "/org/dashboard";
 
   return (
     <ProtectedRoute>
@@ -59,11 +57,11 @@ export default function CheckoutSuccessPage({
 
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => router.push("/org/dashboard")}
+                  onClick={() => router.push(destination)}
                   className="w-full py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
                   style={{ background: "var(--navy)", color: "#fff" }}
                 >
-                  Go to Dashboard
+                  Continue
                 </button>
                 <Link
                   href="/org/plans"

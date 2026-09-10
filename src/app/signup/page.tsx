@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useState, useCallback, useRef } from "react";
+import { authIntentHref, postSignupDestination, signupPasswordError } from "@/lib/auth-redirect";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -47,15 +48,17 @@ const BUSINESS_IDENTITY_OPTIONS: Array<{
 function UnifiedSignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const memberDestination = postSignupDestination(new URLSearchParams({ redirect: searchParams.get("redirect") || "" }), "/setup");
+  const orgDestination = postSignupDestination(searchParams, "/org/dashboard");
   const intent = "intent";
   const entrepreneurIntent = searchParams.get(intent) === "indigenous-business";
   const { signUp, signInWithGoogle, user, sendVerificationEmail, reloadUser } = useAuth();
 
   const [step, setStep] = useState(1);
   const formStartedAtRef = useRef(Date.now());
-  const [role, setRole] = useState<Role>(entrepreneurIntent ? "organization" : "");
+  const [role, setRole] = useState<Role>(searchParams.get("resume") === "organization" ? "organization" : entrepreneurIntent ? "organization" : "");
   const [websiteTrap, setWebsiteTrap] = useState("");
-  const [orgType, setOrgType] = useState<OrgType>(entrepreneurIntent ? "employer" : "");
+  const [orgType, setOrgType] = useState<OrgType>(searchParams.get("resume") === "organization" ? (searchParams.get("type") === "school" ? "school" : "employer") : entrepreneurIntent ? "employer" : "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   // C-5: field-level validation errors keyed by input id (name, email, password, confirmPassword)
@@ -84,11 +87,11 @@ function UnifiedSignupContent() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [admissionsEmail, setAdmissionsEmail] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState("tier3");
+  const [selectedPlan, setSelectedPlan] = useState(["tier3", "standard-post", "featured-post", "program-post"].includes(searchParams.get("plan") || "") ? searchParams.get("plan")! : "");
 
   // Employer
   const [orgName, setOrgName] = useState("");
-  const [businessIdentity, setBusinessIdentity] = useState<BusinessIdentity>(entrepreneurIntent ? "indigenous" : "not_specified");
+  const [businessIdentity, setBusinessIdentity] = useState<BusinessIdentity>("not_specified");
   const [empDescription, setEmpDescription] = useState("");
   const [empWebsite, setEmpWebsite] = useState("");
   const [empServices, setEmpServices] = useState("");
@@ -120,7 +123,15 @@ function UnifiedSignupContent() {
   const { labels, total, current } = getStepInfo();
   const percent = Math.max(8, (current / total) * 100);
 
+  const verificationDestination = role === "organization"
+    ? (step === 13 ? orgDestination : authIntentHref(`/signup?resume=organization&type=${orgType}`, searchParams))
+    : memberDestination;
+
   const handleCreateAccount = async () => {
+    if (user) {
+      goTo(user.emailVerified ? (role === "organization" ? (orgType === "school" ? 4 : 10) : 3) : 3);
+      return;
+    }
     setError("");
     // C-5: client-side validation with per-field errors
     const errs: Record<string, string> = {};
@@ -128,8 +139,8 @@ function UnifiedSignupContent() {
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim()) errs.email = "Email is required.";
     else if (!emailRe.test(email.trim())) errs.email = "Please enter a valid email address.";
-    if (!password) errs.password = "Password is required.";
-    else if (password.length < 8) errs.password = "Password must be at least 8 characters.";
+    const passwordError = signupPasswordError(password);
+    if (passwordError) errs.password = passwordError;
     if (!confirmPassword) errs.confirmPassword = "Please confirm your password.";
     else if (password && confirmPassword !== password) errs.confirmPassword = "Passwords don't match.";
 
@@ -151,7 +162,7 @@ function UnifiedSignupContent() {
     setFieldErrors({});
     setSubmitting(true);
     try {
-        await signUp(name, email, password);
+        await signUp(name, email, password, verificationDestination);
         try {
           const { getAuth } = await import("firebase/auth");
           const cu = getAuth().currentUser;
@@ -193,7 +204,7 @@ function UnifiedSignupContent() {
         if (role === "organization") {
           goTo(orgType === "school" ? 4 : 10);
         } else {
-          router.push("/setup");
+          router.push(memberDestination);
         }
       }
     catch (err: unknown) { setError(err instanceof Error ? err.message : "Google sign-in failed"); }
@@ -218,7 +229,7 @@ function UnifiedSignupContent() {
       if (role === "organization") {
         goTo(orgType === "school" ? 4 : 10);
       } else {
-        router.push("/setup");
+        router.push(memberDestination);
       }
     } finally {
       setSubmitting(false);
@@ -230,7 +241,7 @@ function UnifiedSignupContent() {
     setError("");
     setSubmitting(true);
     try {
-      await sendVerificationEmail(role === "organization" ? "/org/dashboard" : "/setup");
+      await sendVerificationEmail(verificationDestination);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to resend verification email");
     } finally {
@@ -246,6 +257,7 @@ function UnifiedSignupContent() {
 
   const handleSchoolSubmit = async () => {
     if (!user) return;
+    if (!selectedPlan) { goTo(8); setError("Choose a plan before continuing."); return; }
     setSubmitting(true); setError("");
     try {
       const logoUrl = logoFile ? await uploadFile(logoFile, `org-logos/${user.uid}`) : "";
@@ -288,12 +300,10 @@ function UnifiedSignupContent() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to create school profile");
       }
-      const checkoutRes = await fetch("/api/stripe/checkout", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId: selectedPlan, orgId: user.uid }),
-      });
-      if (checkoutRes.ok) { const { url } = await checkoutRes.json(); if (url) { window.location.href = url; return; } }
-      router.push("/org/dashboard");
+      // Navigate to authenticated checkout for explicit review; signup never grants a plan.
+      const checkoutIntent = new URLSearchParams(searchParams.toString());
+      checkoutIntent.set("plan", selectedPlan);
+      router.push(postSignupDestination(checkoutIntent, "/org/plans"));
     } catch (err: unknown) { setError(err instanceof Error ? err.message : "Failed to submit"); }
     finally { setSubmitting(false); }
   };
@@ -339,7 +349,7 @@ function UnifiedSignupContent() {
       }
       // If email already verified, go straight to dashboard; otherwise stay in wizard verify step
       if (user.emailVerified) {
-        router.push("/org/dashboard");
+        router.push(orgDestination);
       } else {
         goTo(13); // success+verify step
       }
@@ -357,7 +367,7 @@ function UnifiedSignupContent() {
     <div style={{ fontFamily: "'Inter',sans-serif", background: CSS.bg, color: CSS.text, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <BackgroundMesh />
       <div style={{ position: "sticky", top: 0, zIndex: 50, flexShrink: 0 }}>
-        <TopBar stepLabel={`Step ${current} of ${total}`} />
+        <TopBar loginHref={authIntentHref("/login", searchParams)} stepLabel={`Step ${current} of ${total}`} />
         <ProgressBar percent={percent} />
       </div>
       <div style={{ position: "relative", zIndex: 1, maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px", flex: 1, width: "100%" }}>
@@ -392,7 +402,7 @@ function UnifiedSignupContent() {
           )}
           <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "What kind of"} highlight={entrepreneurIntent ? "Business Profile" : "account do you need?"} desc={entrepreneurIntent ? "Your free business profile and directory listing helps customers and communities discover what you offer. You can still change your account type below." : "Are you signing up for yourself or on behalf of an organization?"} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <RoleCard icon="👤" label="Individual" desc="For people looking for jobs, scholarships, events, or professional connections." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
+            <RoleCard icon="👤" label="Individual" desc="For people looking for jobs, training, scholarships, events, or professional connections." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
             <RoleCard icon="🏢" label="Organization / Employer" desc="For First Nations, tribal councils, businesses, nonprofits, governments, and organizations that want to post opportunities or manage a public profile." selected={role === "organization"} onClick={() => { setRole("organization"); setOrgType("employer"); }} />
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
@@ -570,7 +580,7 @@ function UnifiedSignupContent() {
               : "None selected"} />
           </ReviewSection>
           <ReviewSection icon="💳" title="Selected Plan" onEdit={() => goTo(8)}>
-            <ReviewRow label="Plan" value={<span style={{ color: CSS.accent, fontWeight: 600 }}>{selectedPlan === "tier3" ? `School - ${SUBSCRIPTION_PLANS.tier3.priceLabel}/yr` : selectedPlan === "program-post" ? `${ONE_TIME_PLANS["program-post"].title} - ${ONE_TIME_PLANS["program-post"].priceLabel}` : selectedPlan === "standard-post" ? `${ONE_TIME_PLANS["standard-post"].title} - ${ONE_TIME_PLANS["standard-post"].priceLabel}` : `${ONE_TIME_PLANS["featured-post"].title} - ${ONE_TIME_PLANS["featured-post"].priceLabel}`}</span>} />
+            <ReviewRow label="Plan" value={<span style={{ color: CSS.accent, fontWeight: 600 }}>{!selectedPlan ? "No plan selected" : selectedPlan === "tier3" ? `School - ${SUBSCRIPTION_PLANS.tier3.priceLabel}/yr` : selectedPlan === "program-post" ? `${ONE_TIME_PLANS["program-post"].title} - ${ONE_TIME_PLANS["program-post"].priceLabel}` : selectedPlan === "standard-post" ? `${ONE_TIME_PLANS["standard-post"].title} - ${ONE_TIME_PLANS["standard-post"].priceLabel}` : `${ONE_TIME_PLANS["featured-post"].title} - ${ONE_TIME_PLANS["featured-post"].priceLabel}`}</span>} />
             {selectedPlan === "tier3" && <><ReviewRow label="Programs" value="20 program listings" /><ReviewRow label="Jobs" value="Unlimited" /><ReviewRow label="Featured" value="6 included" /></>}
           </ReviewSection>
           <InfoBanner icon="💳"><strong style={{ color: CSS.text }}>Ready to pay?</strong> Secure Stripe checkout. Account activates immediately after payment.</InfoBanner>
@@ -691,7 +701,7 @@ function UnifiedSignupContent() {
             <BtnSecondary onClick={handleResendVerification}>
               {submitting ? "Sending..." : "Resend Verification Email"}
             </BtnSecondary>
-            <BtnPrimary onClick={() => router.push("/verify-email?next=/org/dashboard")}>Verify Email to Continue &rarr;</BtnPrimary>
+            <BtnPrimary onClick={() => router.push(`/verify-email?next=${encodeURIComponent(orgDestination)}`)}>Verify Email to Continue &rarr;</BtnPrimary>
           </div>
         </div>)}
 

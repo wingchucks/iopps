@@ -1,29 +1,16 @@
 import { getAppCheckTokenValue } from "@/lib/firebase";
+import { analyticsPath, anonymousVisitorId } from "./privacy";
 import type { AnalyticsEventName, AnalyticsEventPayload } from "./types";
 
-const VISITOR_STORAGE_KEY = "iopps.analytics.visitorId";
-
-function getVisitorId(): string | undefined {
-  if (typeof window === "undefined") return undefined;
-
+function getAnonymousVisitorId(): string | undefined {
   try {
-    const existing = window.localStorage.getItem(VISITOR_STORAGE_KEY);
+    const key = "iopps.analytics.visitorId";
+    const existing = anonymousVisitorId(window.localStorage.getItem(key));
     if (existing) return existing;
-
-    const generated =
-      typeof window.crypto?.randomUUID === "function"
-        ? window.crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    window.localStorage.setItem(VISITOR_STORAGE_KEY, generated);
+    const generated = window.crypto.randomUUID();
+    window.localStorage.setItem(key, generated);
     return generated;
-  } catch {
-    return undefined;
-  }
-}
-
-function cleanText(value: string | null | undefined): string | undefined {
-  const cleaned = value?.replace(/\s+/g, " ").trim();
-  return cleaned ? cleaned.slice(0, 140) : undefined;
+  } catch { return undefined; }
 }
 
 export function trackAnalyticsEvent(
@@ -31,27 +18,18 @@ export function trackAnalyticsEvent(
   payload: Partial<AnalyticsEventPayload> = {},
 ): void {
   if (typeof window === "undefined") return;
-
+  // No free text/URLs or caller-supplied identities; only a random visitor UUID.
   const body: AnalyticsEventPayload = {
     eventName,
-    path: payload.path ?? `${window.location.pathname}${window.location.search}`,
-    title: cleanText(payload.title ?? document.title),
-    href: payload.href,
-    label: cleanText(payload.label),
-    referrer: payload.referrer ?? document.referrer,
-    visitorId: payload.visitorId ?? getVisitorId(),
+    path: analyticsPath(payload.path ?? window.location.pathname),
+    visitorId: getAnonymousVisitorId(),
   };
-
   void (async () => {
     const appCheckToken = await getAppCheckTokenValue();
     if (!appCheckToken) return;
-
     await fetch("/api/analytics/event", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Firebase-AppCheck": appCheckToken,
-      },
+      headers: { "Content-Type": "application/json", "X-Firebase-AppCheck": appCheckToken },
       body: JSON.stringify(body),
       keepalive: true,
     });

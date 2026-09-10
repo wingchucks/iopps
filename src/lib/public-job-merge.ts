@@ -1,3 +1,5 @@
+import { isJobRecordExpired } from "./listing-freshness";
+
 export interface PublicJobMergeRecord {
   id: string;
   slug?: string | null;
@@ -29,9 +31,9 @@ function normalizeIdentity(value: unknown): string {
     : "";
 }
 
-export function isPublicJobRecordVisible(job: Pick<PublicJobMergeRecord, "active" | "status">): boolean {
+export function isPublicJobRecordVisible(job: Pick<PublicJobMergeRecord, "active" | "status"> & Record<string, unknown>, now = new Date()): boolean {
   if (job.active === false) return false;
-  return !HIDDEN_JOB_STATUSES.has(normalizeStatus(job.status));
+  return !HIDDEN_JOB_STATUSES.has(normalizeStatus(job.status)) && !isJobRecordExpired(job, now);
 }
 
 export function mergePublicJobRecords<
@@ -41,19 +43,18 @@ export function mergePublicJobRecords<
   importedJobs: TImported[],
   employerPosts: TPost[],
 ): Array<TImported | TPost> {
-  const importedIdentities = new Set(
-    importedJobs.flatMap((job) => [normalizeIdentity(job.id), normalizeIdentity(job.slug)]).filter(Boolean),
-  );
+  // Display slugs are not identity: even one employer can reuse a title slug.
+  // Only matching document IDs prove a mirror of an authoritative job.
+  const importedIdentities = new Set(importedJobs.map((job) => job.id));
   const merged: Array<TImported | TPost> = [...importedJobs];
 
   for (const post of employerPosts) {
-    const postIdentities = [normalizeIdentity(post.id), normalizeIdentity(post.slug)].filter(Boolean);
-    if (!postIdentities.some((identity) => importedIdentities.has(identity))) {
+    if (!importedIdentities.has(post.id)) {
       merged.push(post);
     }
   }
 
-  return merged.filter(isPublicJobRecordVisible);
+  return merged.filter(job => isPublicJobRecordVisible(job));
 }
 
 export function withAuthoritativeJobCounts<

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { authIntentHref } from "@/lib/auth-redirect";
 import Link from "next/link";
 import Card from "@/components/Card";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
@@ -176,10 +177,10 @@ export default function PricingTabs({
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const subHref = (plan: string) =>
-    variant === "org" ? `/org/checkout?plan=${plan}` : "/org/signup";
+    variant === "org" ? `/org/checkout?plan=${plan}` : authIntentHref("/org/signup", new URLSearchParams({ plan }));
   const subCta = variant === "org" ? "Select Plan" : "Get Started";
   const postHref = (plan: string) =>
-    variant === "org" ? `/org/checkout?plan=${plan}` : "/org/signup";
+    variant === "org" ? `/org/checkout?plan=${plan}` : authIntentHref("/org/signup", new URLSearchParams({ plan }));
   const postCta = variant === "org" ? "Post Now" : "Get Started";
   const freeHref = variant === "org" ? "/org/dashboard" : "/org/signup";
   const freeSuffix = variant === "org" ? "" : " \u2014 It's Free";

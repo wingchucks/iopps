@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { analyticsPath, anonymousVisitorId } from "@/lib/analytics/privacy";
 import { NextResponse, type NextRequest } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
@@ -22,17 +24,7 @@ function dateKeyForRegina(date = new Date()): string {
   return `${value("year")}-${value("month")}-${value("day")}`;
 }
 
-function safeText(value: unknown, fallback = "unknown"): string {
-  if (typeof value !== "string") return fallback;
-  const cleaned = value.replace(/\s+/g, " ").trim();
-  return cleaned ? cleaned.slice(0, 180) : fallback;
-}
 
-function safeVisitorId(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const cleaned = value.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
-  return cleaned || null;
-}
 
 export async function POST(request: NextRequest) {
   if (!adminDb) {
@@ -61,11 +53,8 @@ export async function POST(request: NextRequest) {
   // Firestore's 1 MiB document limit. V2 keeps only fixed-cardinality totals on
   // the day document and moves unbounded labels to metric documents.
   const dayRef = adminDb.collection("analyticsDailyV2").doc(dateKey);
-  const legacyDayRef = adminDb.collection("analyticsDaily").doc(dateKey);
-  const visitorId = safeVisitorId(payload.visitorId);
-  const path = safeText(payload.path, "/");
-  const href = safeText(payload.href, "");
-  const label = safeText(payload.label || payload.title || href || path, eventName);
+  const path = analyticsPath(payload.path);
+  const label = eventName;
   const deltas = buildAnalyticsDeltas(eventName);
 
   try {
@@ -105,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (isTrackedClick(eventName)) {
-      const clickLabel = label || href || eventName;
+      const clickLabel = label;
       batch.set(
         dayRef.collection("metrics").doc(buildMetricDocumentId("click", clickLabel)),
         {
@@ -118,19 +107,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (visitorId) {
-      // Keep the original visitor subcollection as the single source of truth so
-      // the transition does not double-count people who visit before and after V2.
-      batch.set(
-        legacyDayRef.collection("visitors").doc(visitorId),
-        {
-          firstSeenAt: FieldValue.serverTimestamp(),
-          lastSeenAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true },
-      );
-    }
 
+
+    const visitorId = anonymousVisitorId(payload.visitorId);
+    if (visitorId) {
+      // Preserve aggregate unique visits without persisting a reusable raw identifier.
+      const dailyId = createHash("sha256").update(`${dateKey}:${visitorId}`).digest("hex");
+      batch.set(adminDb.collection("analyticsDaily").doc(dateKey).collection("visitors").doc(dailyId), {
+        lastSeenAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
     await batch.commit();
     return NextResponse.json({ ok: true, schemaVersion: 2 });
   } catch (error) {

@@ -44,6 +44,10 @@ export async function PATCH(req: NextRequest) {
     const signupRole = data.signupRole;
     // Strip dangerous fields
     delete data.role;
+    delete data.admin;
+    delete data.orgId;
+    delete data.orgRole;
+    delete data.employerId;
     delete data.uid;
     delete data.email;
     delete data.signupRole;

@@ -24,9 +24,9 @@ test("server-side metadata lookups use the shared Next data cache", () => {
   assert.match(source, /cachedFindFirst/);
 });
 
-test("high-read public detail APIs emit the shared CDN cache policy", () => {
+test("non-eligibility detail APIs retain shared CDN caching; job eligibility is checked fresh", () => {
+  assert.match(read("../src/app/api/jobs/[id]/route.ts"), /"Cache-Control":\s*"no-store"/);
   for (const route of [
-    "../src/app/api/jobs/[id]/route.ts",
     "../src/app/api/jobs/[id]/related/route.ts",
     "../src/app/api/events/[id]/route.ts",
   ]) {
