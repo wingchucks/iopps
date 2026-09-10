@@ -17,14 +17,9 @@ export const maxDuration = 300;
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest) {
-  // Vercel Cron sends CRON_SECRET automatically if set.
-  // In production, also allow requests without secret for manual triggers.
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!cronSecret || request.headers.get("authorization") !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   if (!adminDb) {

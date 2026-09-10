@@ -1,4 +1,5 @@
 "use client";
+import { assertLaunchAvailable } from "@/lib/launch-client";
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -161,6 +162,7 @@ function ApplyWizard() {
 
     setUploading(true);
     try {
+      await assertLaunchAvailable();
       const storageRef = ref(storage, `resumes/${user.uid}/${createResumeObjectName(file.name)}`);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
@@ -170,7 +172,7 @@ function ApplyWizard() {
       showToast("Resume uploaded", "success");
     } catch (err) {
       console.error("Upload failed:", err);
-      showToast("Upload failed. Please try again.", "error");
+      showToast(err instanceof Error ? err.message : "Upload failed. Please try again.", "error");
     } finally {
       setUploading(false);
     }
@@ -195,6 +197,7 @@ function ApplyWizard() {
     if (validation) { showToast(validation, "error"); return; }
     setSubmitting(true);
     try {
+      await assertLaunchAvailable();
       let applicationResumeUrl = resumeUrl;
       if (useProfile && profile?.resumeUrl) {
         const resumeBlob = await getBlob(ref(storage, profile.resumeUrl));

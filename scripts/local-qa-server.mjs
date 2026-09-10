@@ -5,7 +5,8 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
 
-export async function startIsolatedQaServer() {
+export async function startIsolatedQaServer({ maintenanceMode } = {}) {
+  assert.ok(maintenanceMode === undefined || maintenanceMode === 'paused', 'Unsupported QA maintenance mode');
   const directory = process.env.QA_BUILD_DIR;
   assert.ok(directory, 'QA_BUILD_DIR must point to the prepared credential-free build');
   for (const name of ['.env', '.env.local', '.env.production', '.env.production.local']) {
@@ -30,6 +31,7 @@ export async function startIsolatedQaServer() {
     NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: 'demo-iopps-preview.appspot.com', NEXT_PUBLIC_FIREBASE_APP_CHECK_ENABLED: 'false',
     FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080', FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099', FIREBASE_STORAGE_EMULATOR_HOST: '127.0.0.1:9199',
   });
+  if (maintenanceMode) env.IOPPS_MAINTENANCE_MODE = maintenanceMode;
   const child = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', String(port)], { cwd: directory, env, stdio: ['ignore', 'pipe', 'pipe'] });
   let logs = ''; let spawnError;
   child.on('error', error => { spawnError = error; });
@@ -48,8 +50,8 @@ export async function startIsolatedQaServer() {
     }
     // Readiness must not depend on homepage database queries under a parallel emulator suite.
     // Allow bounded cold route loading while the complete test suite saturates local workers.
-    const health = await fetch(base + '/api/applications', { redirect: 'error', signal: AbortSignal.timeout(30000) });
-    assert.equal(health.status, 401);
+    const health = await fetch(base + (maintenanceMode ? '/api/launch-status' : '/api/applications'), { redirect: 'error', signal: AbortSignal.timeout(30000) });
+    assert.equal(health.status, maintenanceMode ? 200 : 401);
     return { base, stop };
   } catch (error) { await stop(); throw new Error(`Isolated QA startup failed: ${logs}`, { cause: error }); }
 }

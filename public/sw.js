@@ -1,5 +1,5 @@
 // IOPPS Service Worker
-const CACHE_NAME = "iopps-v2";
+const CACHE_NAME = "iopps-launch-v1";
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = ["/offline"];
@@ -52,16 +52,14 @@ self.addEventListener("install", (event) => {
 
 // Activate: clean up old caches
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(key => key.startsWith('iopps-') && key !== CACHE_NAME).map(key => caches.delete(key)));
+    await self.clients.claim();
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windows) client.postMessage({ type: 'IOPPS_RELEASE_UPDATED' });
+    // Never navigate an existing tab automatically: it may contain unsaved application text.
+  })());
 });
 
 // Fetch: network-first for navigation and API, cache-first for static assets

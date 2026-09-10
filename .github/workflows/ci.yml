@@ -148,4 +148,15 @@ jobs:
           npx --yes firebase-tools@14.17.0 emulators:exec
           --project demo-iopps-preview --config firebase.ci.json
           --only firestore,auth,storage
-          "npm run build && node --import ./scripts/test-typescript-loader.mjs --test tests/*.test.ts tests/*.test.mjs"
+          "npm run build && node --import ./scripts/test-typescript-loader.mjs --test tests/*.test.ts tests/*.test.mjs && node --test scripts/qa-maintenance-http.mjs"
+      - name: Verify direct-client maintenance containment in separate emulators
+        env:
+          GCLOUD_PROJECT: demo-iopps-launch-freeze
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8180
+          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9299
+          FIREBASE_STORAGE_EMULATOR_HOST: 127.0.0.1:9399
+        run: >-
+          npx --yes firebase-tools@14.17.0 emulators:exec
+          --project demo-iopps-launch-freeze --config firebase.maintenance-ci.json
+          --only firestore,auth,storage
+          "node --test scripts/qa-maintenance-rules.mjs"
