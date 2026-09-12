@@ -11,18 +11,26 @@ service firebase.storage {
         && request.resource.contentType.matches('image/.*');
     }
 
-    // Org logo uploads: authenticated users can upload for their org
+    // Org logo uploads: the uploading user must own the filename. Convention:
+    // the filename starts with the uploader's Firebase UID, matching the
+    // paths used at signup/onboarding (`org-logos/<uid>` or with an
+    // extension). Prevents one authenticated user from overwriting another
+    // org's logo by guessing the filename. Server-side admin SDK uploads
+    // via /api/org/upload use signed URLs and bypass these rules, so that
+    // path (which enforces org ownership itself) is unaffected.
     match /org-logos/{fileName} {
       allow read: if true;
       allow write: if request.auth != null
+        && fileName.matches(request.auth.uid + '([.].*)?')
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
 
-    // Org banner uploads: authenticated users can upload for their org
+    // Org banner uploads: same ownership constraint as org-logos.
     match /org-banners/{fileName} {
       allow read: if true;
       allow write: if request.auth != null
+        && fileName.matches(request.auth.uid + '([.].*)?')
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
