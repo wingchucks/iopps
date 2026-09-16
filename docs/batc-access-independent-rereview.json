@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "security_concerns": [],
+  "logic_errors": [],
+  "suggestions": [
+    "Local code approval only. Orchestrator owns fresh emulator and browser verification; this review does not approve deployment or a production assignment.",
+    "Retain the documented Auth race limitation: Auth is outside the Firestore transaction. A post-commit Auth change may cause failed readback after the assignment committed. Inspect before retrying; failure does not imply rollback.",
+    "Keep bounded identity/team scans and exact-mirror/affiliation blockers fail-closed. Reconcile unsupported production identities separately rather than relaxing checks."
+  ],
+  "evidence": {
+    "decision": "Approve current local CODE: no demonstrated blocking defect found in the reviewed change.",
+    "scope": "Read-only local review except this JSON report. No build, lint, production access, credential inspection, emulator/browser rerun, deploy, push, commit, or Git configuration write.",
+    "report": "docs/batc-access-independent-rereview.json",
+    "head": "1f0e0f3d4c6b09f87b81dd80ff3c9c7bc99f70ad",
+    "branch": "fix/batc-pete-admin",
+    "integrity": "All 15 implementation, test, rules and release-safeguard SHA256 values match docs/batc-access-independent-fix-report.json. Git diff --check passed. Tracked diff consists only of admin page integration, API capability, branch deployment safeguard and matching safeguard test. Untracked paths comprise assignment implementation/tests and review reports; no unrelated source changes observed.",
+    "focused_tests": [
+      {
+        "command": "node --import ./scripts/test-typescript-loader.mjs --test tests/organization-admin-assignment.test.ts tests/organization-admin-assignment-route.test.ts tests/organization-admin-assignment-ui.test.ts tests/release-preview-safety.test.mjs",
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "command": "node --import ./scripts/test-typescript-loader.mjs --test tests/employer-auth.test.ts tests/account-access.test.ts tests/api-auth.test.ts tests/organization-profile.test.ts tests/school-visibility.test.ts",
+        "passed": 26,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "independent_probes": {
+      "execution": "Inline Node ESM through stdin; synthetic in-memory stores; no probe files written or network calls.",
+      "visibility": "1296 pairs formed from status disabled/incomplete/approved, disabled true/false, publicVisibility absent/public/hidden, and incomplete/verified-ready profiles. Actual review/apply and actual normalization/visibility consumer: all 5184 individual/merged views avoided a false-to-true public transition.",
+      "disabled_enable_false": "All 1152 disabled-target pairs rejected review with zero writes.",
+      "preservation": "Mirror documents equal originals plus only reviewed disabled/status/publicVisibility patches; Auth/custom claims, owner IDs, billing and peer membership data preserved. Existing tests verify exact user/member preservation apart from intended affiliation/admin fields.",
+      "stale_state": "Ten mutations rejected apply with zero writes: Auth disabled, claim affiliation, Auth email, user owner role, member affiliation, mirror version, billing state, peer membership, duplicate identity and split mirror.",
+      "app_consumer": "Actual requireEmployerContext with injected synthetic Auth/Firestore dependencies resolved orgId=target, employerId=target, orgRole=admin after actual assignment, retaining platform role community. This is not a browser or real Firestore rules execution."
+    },
+    "code_review": {
+      "validation": "src/lib/server/organization-admin-assignment.ts:46-96 validates identity, ownership-role and affiliation conflicts, lifecycle, explicit enabling, and both mirror merge orders for visibility transitions.",
+      "write_readback": "src/lib/server/organization-admin-assignment.ts:120-155 binds review to actor, desired state, snapshot, nonce and expiry; checks exact confirmation; receipt retry prevents repeat writes; durable receipt and independent state readback required for verified success.",
+      "adapter": "src/lib/server/organization-admin-assignment-firestore.ts uses exact Auth email lookup, UID-keyed user/member documents, same-ID mirrors, complete bounded case-normalized identity scans, alias/ownership conflicts and peer snapshots. Transaction reads precede narrow updates/create and atomic receipt creation.",
+      "authorization": "Administrator POST invokes verifySuperAdminToken before parsing/store access; existing verifier requires active account, admin claims and configured superadmin email. Strict bounded flat JSON rejects duplicate decoded keys and extra fields; responses are no-store and unexpected adapter errors sanitized.",
+      "consumers": "Read actual employer-auth, account-access, organization-profile, school-visibility, public organization API, Firestore manager/protected-field rules, assignment UI and emulator/browser test sources. Fresh enforcement and interactive runs remain delegated to orchestrator."
+    },
+    "release_safety": "Compared actual vercel.json against HEAD: only fix/batc-pete-admin:false added; existing codex/job-flow-reliability-20260908:false retained. Four cron paths/schedules unchanged; no master deployment override introduced. Actual current branch matches disabled deployment entry. No hosting state accessed.",
+    "build": "User reports ordinary npm build exit 0. Existing output/batc-assignment/orchestrator-build.txt ends with the completed route summary. Build was not independently rerun; prior fix-report build blockers are not treated as current code defects.",
+    "limitations": "Approval applies only to the reviewed local code. No claim of transactional Auth guarantees, fresh emulator/browser success, current production identity readiness, or release readiness."
+  }
+}

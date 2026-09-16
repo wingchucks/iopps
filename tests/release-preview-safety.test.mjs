@@ -6,6 +6,7 @@ test('release branch disables automatic Vercel deployment without disabling mast
   const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
   assert.deepEqual(config.git?.deploymentEnabled, {
     'codex/job-flow-reliability-20260908': false,
+    'fix/batc-pete-admin': false,
   });
   assert.deepEqual(config.crons, [
     { path: '/api/cron/sync-feeds', schedule: '0 8 * * *' },
