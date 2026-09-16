@@ -214,23 +214,18 @@ function JobsPageContent() {
   return (
     <>
       <OpportunityHeader />
-      <div className="op-jobs min-h-screen text-text transition-colors">
-        <section
-          className="text-center text-white"
-          style={{
-            background: "linear-gradient(135deg, #061329 0%, #103d4a 100%)",
-            padding: "clamp(32px, 5vw, 60px) clamp(20px, 6vw, 80px)",
-          }}
-        >
+      <div className="op-jobs journey-jobs min-h-screen text-text transition-colors">
+        <section className="journey-jobs-hero">
+          <p className="op-eyebrow">Careers / Your next chapter</p>
           <h1 className="mb-2 text-3xl font-extrabold md:text-4xl">
-            Find work. Move forward.
+            Find work. <span>Move forward.</span>
           </h1>
           <p className="mx-auto mb-0 max-w-[560px] text-base text-white/78">
             Discover Indigenous and allied employers hiring across Canada.
           </p>
           <Link href="/for-employers" className="mt-4 inline-block text-sm font-semibold text-white underline underline-offset-4">Hiring? Post a job on IOPPS →</Link>
         </section>
-        <div className="mx-auto max-w-[1100px] px-4 py-6 md:px-8">
+        <div className="journey-jobs-body mx-auto max-w-[1100px] px-4 py-6 md:px-8">
           <form
             onSubmit={submitSearch}
             className="mb-4 flex items-center gap-3 rounded-[20px] px-4 py-3 shadow-sm transition-colors sm:px-5 sm:py-4"
@@ -270,7 +265,7 @@ function JobsPageContent() {
               Search
             </button>
           </form>
-          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <input
               type="search"
               inputMode="search"
@@ -301,27 +296,7 @@ function JobsPageContent() {
                 </option>
               ))}
             </select>
-            <div className="flex min-w-0 flex-wrap gap-2">
-              <select aria-label="Pay period" value={salaryPeriod} onChange={e => setSalaryPeriod(e.target.value)} className="w-full rounded-xl px-3 py-2 text-sm" style={inputSurfaceStyle}><option value="year">Annual pay</option><option value="hour">Hourly pay</option><option value="month">Monthly pay</option><option value="week">Weekly pay</option></select>
-              <input
-                type="number"
-                min="0" aria-label="Minimum pay"
-                value={salaryMin}
-                onChange={(e) => setSalaryMin(e.target.value)}
-                placeholder="Min $"
-                className="min-w-0 w-[calc(50%-4px)] rounded-xl px-3 py-2 text-sm text-text outline-none placeholder:text-text-muted transition-colors"
-                style={inputSurfaceStyle}
-              />
-              <input
-                type="number"
-                min="0" aria-label="Maximum pay"
-                value={salaryMax}
-                onChange={(e) => setSalaryMax(e.target.value)}
-                placeholder="Max $"
-                className="min-w-0 w-[calc(50%-4px)] rounded-xl px-3 py-2 text-sm text-text outline-none placeholder:text-text-muted transition-colors"
-                style={inputSurfaceStyle}
-              />
-            </div>
+
             <button
               type="button"
               aria-pressed={remoteOnly}
@@ -350,8 +325,29 @@ function JobsPageContent() {
               Remote only
             </button>
           </div>
-          <details className="job-more-filters mb-6" open={Boolean(employer || area || added || closing || disclosed || training) || undefined}>
-            <summary>More filters <span>Employer, job area &amp; more</span></summary>
+          <details className="job-more-filters mb-6" open={Boolean(employer || area || added || closing || disclosed || training || salaryMin || salaryMax || salaryPeriod !== "year") || undefined}>
+            <summary>More filters <span>Pay, employer, job area &amp; more</span></summary>
+            <div className="border-b border-border p-4"><p className="mb-2 text-sm font-semibold">Pay range</p>            <div className="flex min-w-0 flex-wrap gap-2">
+              <select aria-label="Pay period" value={salaryPeriod} onChange={e => setSalaryPeriod(e.target.value)} className="w-full rounded-xl px-3 py-2 text-sm" style={inputSurfaceStyle}><option value="year">Annual pay</option><option value="hour">Hourly pay</option><option value="month">Monthly pay</option><option value="week">Weekly pay</option></select>
+              <input
+                type="number"
+                min="0" aria-label="Minimum pay"
+                value={salaryMin}
+                onChange={(e) => setSalaryMin(e.target.value)}
+                placeholder="Min $"
+                className="min-w-0 w-[calc(50%-4px)] rounded-xl px-3 py-2 text-sm text-text outline-none placeholder:text-text-muted transition-colors"
+                style={inputSurfaceStyle}
+              />
+              <input
+                type="number"
+                min="0" aria-label="Maximum pay"
+                value={salaryMax}
+                onChange={(e) => setSalaryMax(e.target.value)}
+                placeholder="Max $"
+                className="min-w-0 w-[calc(50%-4px)] rounded-xl px-3 py-2 text-sm text-text outline-none placeholder:text-text-muted transition-colors"
+                style={inputSurfaceStyle}
+              />
+            </div></div>
             <div className="grid gap-3 p-4 sm:grid-cols-3">
               <label>Employer<select aria-label="Employer" value={employer} onChange={e => setEmployer(e.target.value)}><option value="">All employers</option>{employers.map(name => <option key={name}>{name}</option>)}</select></label>
               <label>Job area<select aria-label="Job area" value={area} onChange={e => setArea(e.target.value)}><option value="">All job areas</option>{areas.map(name => <option key={name}>{name}</option>)}</select></label>
@@ -410,16 +406,9 @@ function JobsPageContent() {
                 No jobs found
               </h3>
               <p className="mx-auto max-w-[420px] text-sm text-text-muted">
-                Try adjusting your filters or browse all public opportunities in{" "}
-                <Link
-                  href="/feed"
-                  className="font-semibold no-underline"
-                  style={{ color: "#08766e" }}
-                >
-                  the feed
-                </Link>
-                .
+                Try a different keyword or location, or clear your filters to see all jobs.
               </p>
+              {hasActiveFilters && <button className="op-button mt-5" onClick={clearFilters}>Show all jobs</button>}
             </Card>
           ) : (
             <div

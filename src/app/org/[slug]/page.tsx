@@ -2,7 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import AppShell from "@/components/AppShell";
@@ -78,7 +78,6 @@ export default function OrgProfilePage() {
 
 function OrgProfileContent() {
   const params = useParams();
-  const router = useRouter();
   const slug = params.slug as string;
   const { user } = useAuth();
   const [org, setOrg] = useState<Organization | null>(null);
@@ -90,11 +89,6 @@ function OrgProfileContent() {
   const [activeOppTab, setActiveOppTab] = useState<"jobs"|"events"|"scholarships"|"training">("jobs");
   const [expandedOppTab, setExpandedOppTab] = useState<"jobs"|"events"|"scholarships"|"training"|null>(null);
   const [shareMsg, setShareMsg] = useState("");
-
-  const handleMessage = () => {
-    if (!user) { router.push("/login"); return; }
-    router.push(`/messages?to=${org?.id || slug}`);
-  };
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -177,7 +171,6 @@ function OrgProfileContent() {
   }
 
   const websiteUrl = org.website ? (org.website.startsWith("http") ? org.website : `https://${org.website}`) : null;
-  const location = displayLocation(org.location);
   const profileJobCount = jobs.length || org.openJobs || 0;
   const relatedJobCount = jobs.length;
   // H-3 — only show foundedYear if admin-verified or owner-set. Scraper-set
@@ -254,7 +247,7 @@ function OrgProfileContent() {
 
       {/* Header Card */}
       <div className="px-4 -mt-[60px] relative z-[5]">
-        <div className="bg-card rounded-2xl border border-border p-6">
+        <div className="journey-business-heading bg-card rounded-2xl border border-border p-6">
           <div className="flex flex-col sm:flex-row gap-5 items-start">
             <div className="-mt-10" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
               <Avatar name={org.shortName || org.name} size={80} src={org.logoUrl || org.logo} />
@@ -288,25 +281,10 @@ function OrgProfileContent() {
               </p>
             </div>
             {/* Action Buttons */}
-            <div className="flex gap-2 flex-wrap shrink-0">
-              {hasOpportunities && (
-                <a href="#opportunities" className="no-underline">
-                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-white text-[#0f172a] transition-all hover:-translate-y-0.5">
-                    ✨ Explore Opportunities
-                  </button>
-                </a>
-              )}
-              {websiteUrl && (
-                <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-teal text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)] hover:-translate-y-0.5">
-                    🌐 Visit Website
-                  </button>
-                </a>
-              )}
-              <button onClick={handleMessage}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:border-teal hover:text-teal">
-                💬 Message
-              </button>
+            <div className="journey-business-actions">
+              {hasContact && <a href="#business-contact" className="journey-contact-button">Contact business</a>}
+              {websiteUrl && <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="journey-profile-button">Visit website ↗</a>}
+              {hasOpportunities && <a href="#opportunities" className="journey-profile-button">View opportunities</a>}
               <button onClick={handleShare} className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:border-teal hover:text-teal relative">
                 📤 Share
                 {shareMsg && (
@@ -646,7 +624,7 @@ function OrgProfileContent() {
           )}
 
           {/* Sign-in CTA */}
-          {!user && (
+          {!user && profileJobCount > 0 && (
             <div className="rounded-2xl p-6 text-center border border-teal/20"
               style={{ background: "linear-gradient(135deg, rgba(13,148,136,0.08), rgba(6,182,212,0.05))" }}>
               <h4 className="text-base font-bold text-text">Ready to apply?</h4>
@@ -673,35 +651,35 @@ function OrgProfileContent() {
         <div className="flex flex-col gap-5">
           {/* Contact Card */}
           {hasContact && (
-            <div className="bg-card rounded-2xl border border-border p-5">
+            <div id="business-contact" className="journey-business-contact bg-card rounded-2xl border border-border p-5">
               <h3 className="text-[13px] font-bold uppercase tracking-wider text-text-muted mb-3.5">Contact</h3>
               <div className="flex flex-col">
                 {websiteUrl && (
                   <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
                     <span className="text-base w-5 text-center shrink-0">🌐</span>
-                    <div><p className="text-[11px] text-text-muted">Website</p>
-                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-[13px] text-teal no-underline hover:underline">{org.website}</a>
+                    <div><p className="text-xs text-text-muted">Website</p>
+                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="break-words text-base text-teal no-underline hover:underline">{org.website}</a>
                     </div>
                   </div>
                 )}
                 {org.contactEmail && (
                   <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
                     <span className="text-base w-5 text-center shrink-0">✉️</span>
-                    <div><p className="text-[11px] text-text-muted">Email</p>
-                      <a href={`mailto:${org.contactEmail}`} className="text-[13px] text-teal no-underline hover:underline">{org.contactEmail}</a>
+                    <div><p className="text-xs text-text-muted">Email</p>
+                      <a href={`mailto:${org.contactEmail}`} className="break-words text-base text-teal no-underline hover:underline">{org.contactEmail}</a>
                     </div>
                   </div>
                 )}
                 {org.phone && (
                   <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
                     <span className="text-base w-5 text-center shrink-0">📞</span>
-                    <div><p className="text-[11px] text-text-muted">Phone</p><p className="text-[13px] text-text">{org.phone}</p></div>
+                    <div><p className="text-xs text-text-muted">Phone</p><a href={`tel:${org.phone.replace(/[^+\d]/g, "")}`} className="text-base text-teal hover:underline">{org.phone}</a></div>
                   </div>
                 )}
                 {org.address && (
                   <div className="flex items-center gap-2.5 py-2.5">
                     <span className="text-base w-5 text-center shrink-0">📍</span>
-                    <div><p className="text-[11px] text-text-muted">Address</p><p className="text-[13px] text-text">{org.address}</p></div>
+                    <div><p className="text-xs text-text-muted">Address</p><p className="text-[13px] text-text">{org.address}</p></div>
                   </div>
                 )}
               </div>
