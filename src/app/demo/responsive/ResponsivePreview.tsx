@@ -9,6 +9,7 @@ const pages = [
   ["/demo/employer?workspace=business", "Business workspace"],
   ["/", "Homepage"],
   ["/jobs", "Job board"],
+  ["/livestreams", "IOPPS Live"],
 ] as const;
 const sizes = [[320, "Small phone"], [390, "Phone"], [768, "Tablet"], [1280, "Desktop"]] as const;
 

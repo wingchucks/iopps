@@ -6,21 +6,7 @@ import path from "node:path";
 const root = process.cwd();
 const read = (relativePath: string) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
-test("YouTube livestream route always checks current live search before manual fallback", () => {
-  const route = read("src/app/api/livestreams/youtube/route.ts");
-
-  assert.doesNotMatch(route, /STgbVkwfuYA/, "stale hard-coded live video must not remain");
-  assert.match(route, /eventType:\s*"live"/);
-  assert.match(route, /maxResults:\s*"3"/);
-  assert.match(route, /Manual IDs are emergency fallbacks only/);
-  assert.doesNotMatch(route, /shouldUseManualLiveIds/);
-
-  const liveSearchIndex = route.indexOf('eventType: "live"');
-  const manualFallbackIndex = route.indexOf("getManualLiveFallback");
-  assert.ok(liveSearchIndex > -1, "must search YouTube for live videos");
-  assert.ok(manualFallbackIndex > -1, "manual fallback still exists for emergencies");
-  assert.ok(liveSearchIndex < route.lastIndexOf("getManualLiveFallback"), "live search should happen before fallback is selected");
-});
+// Livestream status and fallback behavior are covered by youtube-feed.test.ts.
 
 test("community signup sends admin notification trigger through profile PATCH", () => {
   const signup = read("src/app/signup/page.tsx");
