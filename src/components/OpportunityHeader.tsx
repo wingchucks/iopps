@@ -6,8 +6,8 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 const links = [
   ["/jobs", "Jobs"],
-  ["/businesses", "Indigenous Businesses"],
   ["/livestreams", "IOPPS Live"],
+  ["/businesses", "Indigenous Businesses"],
   ["/scholarships", "Scholarships"],
   ["/events", "Events"],
 ];

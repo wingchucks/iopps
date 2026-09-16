@@ -877,3 +877,45 @@ a:focus-visible > .op-job-card {
   .journey-business-actions { flex-direction: row; flex-wrap: wrap; width: 100%; }
   .journey-business-actions > * { flex: 1 1 140px; }
 }
+
+/* Employer workspace: hiring actions and recorded activity. */
+.employer-workspace { --employer-accent: #0d9488; }
+.employer-hero { background: linear-gradient(120deg,#071b2c,#0a3844) !important; border-color: #195461 !important; }
+.employer-hero h1 { background: none !important; -webkit-text-fill-color: #fff !important; color: #fff !important; }
+.employer-hero p, .employer-hero a { color: #cce6ea !important; }
+.employer-hero button { background: #21d4c5 !important; color: #071b2c !important; box-shadow: none !important; }
+.employer-tabs button { min-height: 44px; }
+.employer-tabs button[aria-current="page"] { color: var(--text) !important; background: rgba(13,148,136,.14) !important; border-color: #0d9488 !important; }
+.employer-launch { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.employer-launch h2 { font-size: clamp(26px,3vw,36px); letter-spacing: -.035em; font-weight: 850; margin: 5px 0 10px; color: var(--text); }
+.employer-launch p, .employer-panel p, .employer-actions p { color: var(--text-sec); line-height: 1.65; }
+.employer-eyebrow, .employer-actions > a > span { font-size: 11px; font-weight: 800; letter-spacing: .12em; color: var(--teal) !important; }
+.employer-primary { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; padding: 12px 20px; border-radius: 12px; background: #0f766e; color: #fff; text-decoration: none; font-size: 14px; font-weight: 750; border: 0; cursor: pointer; flex-shrink: 0; }
+.employer-primary:hover { background: #115e59; }
+.employer-workspace a:focus-visible, .employer-workspace button:focus-visible { outline: 3px solid #21d4c5; outline-offset: 4px; }
+.employer-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin-bottom: 24px; }
+.employer-actions > a { border: 1px solid var(--border); border-radius: 18px; background: var(--card); padding: 24px; text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 12px; }
+.employer-actions > a:hover { border-color: #0d9488; }
+.employer-actions h3 { font-size: 20px; font-weight: 750; line-height: 1.3; }
+.employer-actions p { font-size: 14px; flex: 1; }
+.employer-actions strong { color: var(--teal); font-size: 14px; }
+.employer-panel { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 24px; min-width: 0; }
+.employer-panel h2 { font-size: 19px; font-weight: 750; color: var(--text); }
+.employer-panel h3 { color: var(--text); font-weight: 700; }
+.employer-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin-bottom: 24px; }
+.employer-metrics span { font-size: 12px; color: var(--text-sec); }
+.employer-metrics strong { display: block; font-size: 32px; letter-spacing: -.04em; color: var(--text); margin-top: 8px; }
+.employer-metrics small { color: var(--text-muted); }
+.employer-columns { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+.employer-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.employer-section-heading a { color: var(--teal); font-size: 13px; }
+.employer-job-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--border); text-decoration: none; color: var(--text-sec); font-size: 13px; }
+.employer-job-row h3 { font-size: 16px; margin: 6px 0; overflow-wrap: anywhere; }
+.employer-job-row > span { flex-shrink: 0; }
+.employer-status { display: inline-block; padding: 3px 8px; border-radius: 5px; background: rgba(13,148,136,.1); color: var(--teal); text-transform: capitalize; font-size: 11px; font-weight: 750; }
+.employer-empty { padding: 32px 0; }
+.employer-empty p { margin: 12px 0 20px; }
+.employer-activity { padding: 16px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.employer-activity small { color: var(--text-muted); }
+.employer-note { margin-top: 20px; padding: 18px; border-radius: 12px; background: rgba(13,148,136,.07); color: var(--text-sec); font-size: 13px; line-height: 1.6; }
+@media (max-width: 800px) { .employer-actions, .employer-columns { grid-template-columns: 1fr; } .employer-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .employer-launch { align-items: flex-start; flex-direction: column; } .employer-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; } .employer-tabs button { flex-shrink: 0; } .employer-hero { padding: 24px !important; } .employer-hero > div > div { flex-wrap: wrap; } .employer-job-row { align-items: flex-start; flex-direction: column; gap: 6px; } .employer-panel { padding: 20px; } }

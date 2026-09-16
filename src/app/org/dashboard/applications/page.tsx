@@ -40,6 +40,7 @@ export default function OrgApplicationsPage() {
   const { user } = useAuth();
   const [groups, setGroups] = useState<GroupedApplications[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   // Applicant profiles cache: userId -> MemberProfile
   const [profiles, setProfiles] = useState<Record<string, MemberProfile>>({});
   // Reviewer notes editing state
@@ -89,6 +90,7 @@ export default function OrgApplicationsPage() {
         setProfiles((data.profiles || {}) as Record<string, MemberProfile>);
       } catch (err) {
         console.error("Failed to load employer applications:", err);
+        setLoadError("Applications couldn’t be loaded. Please reload and try again.");
       } finally {
         setLoading(false);
       }
@@ -625,6 +627,8 @@ export default function OrgApplicationsPage() {
                 <div key={i} className="h-40 rounded-2xl skeleton" />
               ))}
             </div>
+          ) : loadError ? (
+            <Card className="p-8"><div role="alert"><h2 className="text-lg font-bold mb-2">Applications unavailable</h2><p>{loadError}</p><button className="employer-primary mt-4" onClick={() => window.location.reload()}>Reload applications</button></div></Card>
           ) : groups.length === 0 ? (
             <Card className="p-8 text-center">
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>

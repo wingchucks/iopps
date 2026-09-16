@@ -71,8 +71,8 @@ export default async function Home() {
           <nav className="op-task-links" aria-label="Choose your next step">
             <Link href="/jobs">Find work</Link>
             <Link href="/for-employers">Hire talent</Link>
-            <Link href="/signup?intent=indigenous-business">Promote your business</Link>
             <Link href="/livestreams">Watch IOPPS Live</Link>
+            <Link href="/signup?intent=indigenous-business">Promote your business</Link>
           </nav>
         </div>
       </section>
@@ -104,6 +104,18 @@ export default async function Home() {
           )}
         </div>
       </section>
+      <section className="journey-live" aria-labelledby="live-heading">
+        <div className="op-wrap journey-live-grid">
+          <div>
+            <p className="journey-live-wordmark">IOPPS <span>LIVE</span></p>
+            <h2 id="live-heading">Your community.<br /><span>Front and centre.</span></h2>
+            <p>Powwows, conversations, conferences, and the moments that bring us together. Watch live coverage and catch the replays.</p>
+            <Link className="op-button" href="/livestreams">Explore IOPPS Live</Link>
+            <Link className="journey-text-link" href="/contact">Bring IOPPS to your event →</Link>
+          </div>
+          <LandingLivePreview />
+        </div>
+      </section>
       <section className="journey-business op-wrap" aria-labelledby="business-heading">
         <div className="journey-business-intro">
           <p className="op-eyebrow">Indigenous businesses & entrepreneurship</p>
@@ -115,18 +127,6 @@ export default async function Home() {
         <div className="journey-paths">
           <Link href="/businesses?type=Indigenous"><span className="journey-path-kicker">01 / Discover <span aria-hidden="true">↗</span></span><h3>Find your next collaborator.</h3><p>Explore Indigenous business profiles, services, and the people behind them.</p><strong>Browse businesses →</strong></Link>
           <Link href="/businesses#business-support"><span className="journey-path-kicker">02 / Grow <span aria-hidden="true">↗</span></span><h3>Build with support.</h3><p>Explore our plans to connect entrepreneurs with funding and business support organizations.</p><strong>Funding & business support →</strong></Link>
-        </div>
-      </section>
-      <section className="journey-live" aria-labelledby="live-heading">
-        <div className="op-wrap journey-live-grid">
-          <div>
-            <p className="journey-live-wordmark">IOPPS <span>LIVE</span></p>
-            <h2 id="live-heading">Your community.<br /><span>Front and centre.</span></h2>
-            <p>Powwows, conversations, conferences, and the moments that bring us together. Watch live coverage and catch the replays.</p>
-            <Link className="op-button" href="/livestreams">Explore IOPPS Live</Link>
-            <Link className="journey-text-link" href="/contact">Bring IOPPS to your event →</Link>
-          </div>
-          <LandingLivePreview />
         </div>
       </section>
       <PartnerShowcase partners={partners} />

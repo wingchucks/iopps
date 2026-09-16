@@ -118,8 +118,8 @@ const TREATY_OPTIONS = [
 ];
 
 /* ─── amber accent color ─── */
-const AMBER = "#D97706";
-const AMBER_RGB = "217,119,6";
+const AMBER = "#0D9488";
+const AMBER_RGB = "13,148,136";
 const MS_PER_DAY = 86_400_000;
 
 function SectionNumberBadge({
@@ -173,6 +173,8 @@ function OrgDashboardContent() {
   const [stats, setStats] = useState<DashboardStats>({ totalPosts: 0, activePosts: 0, applications: 0, profileViews: 0 });
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [statsAvailable, setStatsAvailable] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>("Overview");
   const [profileSub, setProfileSub] = useState<(typeof PROFILE_SUBS)[number]>("Identity");
   const isSchoolOrg = isSchoolOrganization(org);
@@ -305,6 +307,7 @@ function OrgDashboardContent() {
         if (statsRes.ok) {
           const s = await statsRes.json();
           setStats(s);
+          setStatsAvailable(true);
         }
 
         // Fetch activity
@@ -315,6 +318,7 @@ function OrgDashboardContent() {
         }
       } catch (err) {
         console.error("[Dashboard] load failed:", err);
+        setLoadError("We couldn’t load your dashboard. Please reload to try again.");
       } finally {
         setLoading(false);
       }
@@ -475,12 +479,6 @@ function OrgDashboardContent() {
     return `${days}d ago`;
   };
 
-  // Chart data (mock 30-day data based on actual view count)
-  const chartBars = Array.from({ length: 12 }, (_, i) => {
-    const base = stats.profileViews > 0 ? Math.max(10, Math.floor(Math.random() * 100)) : 0;
-    return base + i * 3;
-  });
-  const maxBar = Math.max(...chartBars, 1);
   const publicProfileHref = getOrganizationPublicHref(org);
   const heroDescription = isSchoolOrg
     ? "Manage your school profile, programs, scholarships, and student recruitment."
@@ -502,7 +500,7 @@ function OrgDashboardContent() {
   return (
     <OrgRoute>
       <AppShell>
-        <div className="min-h-screen relative" style={{ background: "var(--bg, #020617)" }}>
+        <div className="employer-workspace min-h-screen relative" style={{ background: "var(--bg, #020617)" }}>
           {/* Ambient background */}
           <div className="fixed inset-0 pointer-events-none z-0" style={{
             background: `radial-gradient(ellipse 120% 80% at 20% -30%, rgba(${AMBER_RGB},0.08), transparent 60%),
@@ -511,10 +509,10 @@ function OrgDashboardContent() {
           }} />
 
           <div className="relative z-[1] max-w-[1100px] mx-auto px-4 py-8 md:px-10">
-            {loading ? <LoadingSkeleton /> : (
+            {loading ? <LoadingSkeleton /> : loadError ? <div role="alert" className="employer-panel"><h1>Dashboard unavailable</h1><p>{loadError}</p><button className="employer-primary" onClick={() => window.location.reload()}>Reload dashboard</button></div> : (
               <>
                 {/* ─── HERO ─── */}
-                <div className="relative rounded-[20px] p-8 md:p-10 mb-8 overflow-hidden" style={{
+                <div className="employer-hero relative rounded-[20px] p-8 md:p-10 mb-8 overflow-hidden" style={{
                   background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.08), rgba(59,130,246,0.06), rgba(167,139,250,0.04))`,
                   border: `1px solid rgba(${AMBER_RGB},0.15)`,
                 }}>
@@ -623,11 +621,12 @@ function OrgDashboardContent() {
                 )}
 
                 {/* ─── TAB PILLS ─── */}
-                <div className="flex flex-wrap gap-2 mb-8">
+                <div className="employer-tabs flex flex-wrap gap-2 mb-8">
                   {availableTabs.map((tab) => (
                     <button
                       key={tab}
-                      onClick={() => setActiveTab(tab)}
+                      onClick={() => tab === "Applications" ? router.push("/org/dashboard/applications") : router.push(`/org/dashboard?tab=${encodeURIComponent(tab)}`, { scroll: false })}
+                      aria-current={activeTab === tab ? "page" : undefined}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium cursor-pointer transition-all border-none hover:-translate-y-0.5"
                       style={activeTab === tab ? {
                         color: "#fff",
@@ -663,12 +662,12 @@ function OrgDashboardContent() {
                       timeAgo={timeAgo}
                     />
                   ) : (
-                    <OverviewTab stats={stats} chartBars={chartBars} maxBar={maxBar} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
+                    <OverviewTab stats={stats} statsAvailable={statsAvailable} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
                   )
                 )}
 
                 {activeTab === "Analytics" && (
-                  <AnalyticsTab stats={stats} chartBars={chartBars} maxBar={maxBar} jobs={jobs} formatTimestamp={formatTimestamp} />
+                  <AnalyticsTab stats={stats} statsAvailable={statsAvailable} jobs={jobs} formatTimestamp={formatTimestamp} />
                 )}
 
                 {activeTab === "Edit Profile" && (
@@ -698,7 +697,7 @@ function OrgDashboardContent() {
                 {activeTab === "Programs" && <ProgramsTab programs={schoolPrograms} formatTimestamp={formatTimestamp} />}
                 {activeTab === "Student Inquiries" && <StudentInquiriesTab inquiries={studentInquiries} timeAgo={timeAgo} />}
                 {activeTab === "Jobs" && <JobsTab jobs={jobs} formatTimestamp={formatTimestamp} />}
-                {activeTab === "Applications" && <ApplicationsTab getToken={getToken} />}
+                {activeTab === "Applications" && <ApplicationsTab />}
                 {activeTab === "Events" && <EventsTab getToken={getToken} />}
                 {activeTab === "Scholarships" && <ScholarshipsTab getToken={getToken} />}
                 {activeTab === "Talent Search" && <TalentSearchTab />}
@@ -717,143 +716,36 @@ function OrgDashboardContent() {
 /* ═══════════════════════════════════════════════════════════
    OVERVIEW TAB
    ═══════════════════════════════════════════════════════════ */
-function OverviewTab({ stats, chartBars, maxBar, activity, jobs, timeAgo, formatTimestamp }: {
-  stats: DashboardStats;
-  chartBars: number[];
-  maxBar: number;
-  activity: ActivityItem[];
-  jobs: DashJob[];
-  timeAgo: (ts: unknown) => string;
-  formatTimestamp: (ts: unknown) => string;
+function OverviewTab({ stats, statsAvailable, activity, jobs, timeAgo, formatTimestamp }: {
+  stats: DashboardStats; statsAvailable: boolean; activity: ActivityItem[]; jobs: DashJob[];
+  timeAgo: (ts: unknown) => string; formatTimestamp: (ts: unknown) => string;
 }) {
-  const statCards = [
-    { label: "Total Posts", value: stats.totalPosts, color: AMBER, rgb: AMBER_RGB },
-    { label: "Active Posts", value: stats.activePosts, color: "#3B82F6", rgb: "59,130,246" },
-    { label: "Applications", value: stats.applications, color: "#A78BFA", rgb: "167,139,250" },
-    { label: "Profile Views", value: stats.profileViews, color: "#F59E0B", rgb: "245,158,11" },
-  ];
+  const drafts = jobs.filter((job) => job.status === "draft");
+  return <>
+    <div className="employer-launch">
+      <div><p className="employer-eyebrow">YOUR HIRING WORKSPACE</p><h2>Build your next great team.</h2><p>Create a clear opportunity, reach candidates, and keep your hiring moving.</p></div>
+      <Link href="/org/dashboard/jobs/new" className="employer-primary">+ Post a job</Link>
+    </div>
+    <div className="employer-actions">
+      <Link href="/org/dashboard?tab=Jobs"><span>01 / JOBS</span><h3>{drafts.length ? `${drafts.length} draft${drafts.length === 1 ? "" : "s"} to finish` : "Manage your openings"}</h3><p>Edit roles, review posting status, and keep listings current.</p><strong>Manage jobs →</strong></Link>
+      <Link href="/org/dashboard/applications"><span>02 / CANDIDATES</span><h3>Find your next hire</h3><p>Review applications, shortlist candidates, and record notes.</p><strong>Review applicants →</strong></Link>
+      <Link href="/org/dashboard?tab=Edit%20Profile"><span>03 / YOUR ORGANIZATION</span><h3>Make a strong first impression</h3><p>Tell candidates who you are and why they should join you.</p><strong>Edit employer profile →</strong></Link>
+    </div>
+    <EmployerMetrics stats={stats} available={statsAvailable} />
+    <div className="employer-columns">
+      <section className="employer-panel"><div className="employer-section-heading"><h2>Recent jobs</h2><Link href="/org/dashboard?tab=Jobs">View all →</Link></div>
+        {!jobs.length ? <div className="employer-empty"><h3>Your first opportunity starts here.</h3><p>Draft your job, choose how candidates apply, then review it before publishing.</p><Link href="/org/dashboard/jobs/new" className="employer-primary">Create your first job</Link></div> : jobs.slice(0, 5).map(job => <Link key={job.id} className="employer-job-row" href={`/org/dashboard/jobs/${job.id}/edit`}><div><span className="employer-status">{job.status || "active"}</span><h3>{job.title}</h3><p>{formatTimestamp(job.createdAt)}</p></div><span>{job.applicationCount || 0} applications <span aria-hidden="true">↗</span></span></Link>)}
+      </section>
+      <section className="employer-panel"><h2>Recent activity</h2>{!activity.length ? <p className="employer-empty">No activity to show yet.</p> : activity.slice(0,5).map(item => <div className="employer-activity" key={item.id}><p>{item.message}</p><small>{timeAgo(item.timestamp)}</small></div>)}<div className="employer-note"><strong>Where applications arrive</strong><p>Applications submitted on IOPPS appear in your applicant workspace. When a job links to an external careers site, review those applications there.</p></div></section>
+    </div>
+  </>;
+}
 
-  return (
-    <>
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {statCards.map((s) => (
-          <DashCard key={s.label}>
-            <div className="w-11 h-11 rounded-xl mb-4 flex items-center justify-center" style={{ background: `rgba(${s.rgb},0.1)` }}>
-              <StatIcon label={s.label} color={s.color} />
-            </div>
-            <div className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted, #64748b)" }}>{s.label}</div>
-            <div className="text-3xl font-black tracking-tight" style={{
-              background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            }}>
-              {s.value >= 1000 ? `${(s.value / 1000).toFixed(1)}k` : s.value}
-            </div>
-          </DashCard>
-        ))}
-      </div>
-
-      {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        {/* Profile Views Chart */}
-        <DashCard>
-          <div className="flex items-center justify-between mb-5">
-            <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Profile Views — 30 Days</span>
-            <span className="px-3 py-1 rounded-lg text-[11px] font-semibold" style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER }}>
-              {stats.profileViews > 0 ? `${stats.profileViews} total` : "No data yet"}
-            </span>
-          </div>
-          <div className="relative h-[180px] flex items-end gap-1.5">
-            {chartBars.map((val, i) => (
-              <div
-                key={i}
-                className="flex-1 rounded-t-md transition-all duration-300 hover:brightness-125 cursor-pointer min-h-[4px]"
-                style={{
-                  height: `${(val / maxBar) * 100}%`,
-                  background: i % 3 === 0
-                    ? `linear-gradient(to top, ${AMBER}, rgba(${AMBER_RGB},0.15))`
-                    : `linear-gradient(to top, #3B82F6, rgba(59,130,246,0.15))`,
-                }}
-                title={`${val} views`}
-              />
-            ))}
-          </div>
-        </DashCard>
-
-        {/* Recent Activity */}
-        <DashCard>
-          <div className="flex items-center justify-between mb-5">
-            <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Recent Activity</span>
-            <span className="px-3 py-1 rounded-lg text-[11px] font-semibold" style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER }}>Live</span>
-          </div>
-          {activity.length === 0 ? (
-            <p className="text-sm py-8 text-center" style={{ color: "var(--text-muted, #64748b)" }}>No activity yet. Activity will appear as your profile gets views and applications.</p>
-          ) : (
-            <div className="flex flex-col">
-              {activity.slice(0, 5).map((a, i) => {
-                const colors = [AMBER, "#3B82F6", "#A78BFA", "#22C55E"];
-                const dotColor = colors[i % colors.length];
-                return (
-                  <div key={a.id} className="flex items-start gap-3.5 py-3.5 transition-all hover:pl-1" style={{ borderBottom: i < activity.length - 1 ? "1px solid rgba(30,41,59,0.4)" : "none" }}>
-                    <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ background: dotColor, boxShadow: `0 0 8px ${dotColor}60` }} />
-                    <div>
-                      <div className="text-[13px] leading-relaxed" style={{ color: "var(--text-sec, #cbd5e1)" }}>{a.message}</div>
-                      <div className="text-[11px] mt-0.5" style={{ color: "var(--text-muted, #64748b)" }}>{timeAgo(a.timestamp)}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </DashCard>
-      </div>
-
-      {/* Top Performing Jobs */}
-      <DashCard>
-        <div className="flex items-center justify-between mb-5">
-          <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Top Performing Jobs</span>
-          <Link href="/org/dashboard/jobs/new" className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline transition-all hover:-translate-y-0.5" style={{
-            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-sec, #cbd5e1)",
-          }}>View All</Link>
-        </div>
-        {jobs.length === 0 ? (
-          <p className="text-sm py-8 text-center" style={{ color: "var(--text-muted, #64748b)" }}>No jobs posted yet. Post your first job to start tracking performance.</p>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {jobs.slice(0, 5).map((job, i) => {
-              const rankColors = [
-                { bg: `rgba(${AMBER_RGB},0.1)`, text: AMBER },
-                { bg: "rgba(59,130,246,0.1)", text: "#3B82F6" },
-                { bg: "rgba(167,139,250,0.1)", text: "#A78BFA" },
-                { bg: "rgba(34,197,94,0.1)", text: "#22C55E" },
-                { bg: "rgba(245,158,11,0.1)", text: "#F59E0B" },
-              ];
-              const rc = rankColors[i % rankColors.length];
-              return (
-                <div key={job.id} className="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all cursor-pointer hover:translate-x-1" style={{
-                  background: "rgba(255,255,255,0.02)", border: "1px solid transparent",
-                }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[13px] font-extrabold shrink-0" style={{ background: rc.bg, color: rc.text }}>
-                    #{i + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold truncate" style={{ color: "var(--text, #f8fafc)" }}>{job.title}</div>
-                    <div className="text-xs mt-0.5" style={{ color: "var(--text-muted, #64748b)" }}>
-                      {formatTimestamp(job.createdAt)} {job.location && `· ${job.location}`}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-extrabold tracking-tight" style={{ color: rc.text }}>{job.applicationCount}</div>
-                    <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--text-muted, #64748b)" }}>apps</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </DashCard>
-    </>
-  );
+function EmployerMetrics({stats, available}: {stats: DashboardStats; available: boolean}) {
+  return <div className="employer-metrics">{[
+    ["Total job posts", stats.totalPosts], ["Active job posts", stats.activePosts],
+    ["Recorded applications", stats.applications], ["Recorded profile views", stats.profileViews],
+  ].map(([label,value]) => <div className="employer-panel" key={label}><span>{label}</span><strong>{available ? value : "—"}</strong>{!available && <small>Unavailable</small>}</div>)}</div>;
 }
 
 function SchoolOverviewTab({
@@ -1213,157 +1105,14 @@ function StudentInquiriesTab({ inquiries, timeAgo }: {
 /* ═══════════════════════════════════════════════════════════
    ANALYTICS TAB
    ═══════════════════════════════════════════════════════════ */
-function AnalyticsTab({ stats, chartBars, maxBar, jobs, formatTimestamp }: {
-  stats: DashboardStats;
-  chartBars: number[];
-  maxBar: number;
-  jobs: DashJob[];
-  formatTimestamp: (ts: unknown) => string;
+function AnalyticsTab({stats, statsAvailable, jobs, formatTimestamp}: {
+  stats: DashboardStats; statsAvailable: boolean; jobs: DashJob[]; formatTimestamp: (ts: unknown) => string;
 }) {
-  const metricCards = [
-    { label: "Profile Views", value: stats.profileViews, color: AMBER, rgb: AMBER_RGB },
-    { label: "Job Views", value: stats.totalPosts * 50, color: "#3B82F6", rgb: "59,130,246" },
-    { label: "Applications", value: stats.applications, color: "#A78BFA", rgb: "167,139,250" },
-    { label: "Avg. Time to Fill", value: "14d", color: "#22C55E", rgb: "34,197,94", isText: true },
-  ];
-
-  const sources = [
-    { name: "IOPPS Job Board", pct: 68, color: AMBER, rgb: AMBER_RGB },
-    { name: "Direct Profile", pct: 18, color: "#3B82F6", rgb: "59,130,246" },
-    { name: "Email Alerts", pct: 10, color: "#A78BFA", rgb: "167,139,250" },
-    { name: "External Link", pct: 4, color: "#F59E0B", rgb: "245,158,11" },
-  ];
-
-  const demographics = [
-    { label: "Saskatchewan", pct: "72%", color: AMBER },
-    { label: "Alberta", pct: "15%", color: "#3B82F6" },
-    { label: "Manitoba", pct: "8%", color: "#A78BFA" },
-    { label: "Other", pct: "5%", color: "#F59E0B" },
-  ];
-
-  return (
-    <>
-      <h2 className="text-xl font-extrabold tracking-tight mb-5" style={{
-        background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
-        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-      }}>Analytics</h2>
-
-      {/* Metric cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        {metricCards.map((m) => (
-          <DashCard key={m.label}>
-            <div className="w-11 h-11 rounded-xl mb-4 flex items-center justify-center" style={{ background: `rgba(${m.rgb},0.1)` }}>
-              <StatIcon label={m.label} color={m.color} />
-            </div>
-            <div className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted, #64748b)" }}>{m.label}</div>
-            <div className="text-3xl font-black tracking-tight" style={{
-              background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            }}>
-              {"isText" in m ? m.value : typeof m.value === "number" && m.value >= 1000 ? `${(m.value / 1000).toFixed(1)}k` : m.value}
-            </div>
-          </DashCard>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        {/* Views chart */}
-        <DashCard>
-          <div className="flex items-center justify-between mb-5">
-            <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Views Over Time</span>
-            <span className="px-3 py-1 rounded-lg text-[11px] font-semibold" style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER }}>30 days</span>
-          </div>
-          <div className="relative h-[180px] flex items-end gap-1.5">
-            {chartBars.map((val, i) => (
-              <div key={i} className="flex-1 rounded-t-md transition-all duration-300 hover:brightness-125 cursor-pointer min-h-[4px]"
-                style={{
-                  height: `${(val / maxBar) * 100}%`,
-                  background: i % 2 === 0
-                    ? `linear-gradient(to top, ${AMBER}, rgba(${AMBER_RGB},0.15))`
-                    : `linear-gradient(to top, #3B82F6, rgba(59,130,246,0.15))`,
-                }}
-                title={`${val} views`}
-              />
-            ))}
-          </div>
-        </DashCard>
-
-        {/* Application Sources */}
-        <DashCard>
-          <div className="flex items-center justify-between mb-5">
-            <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Application Sources</span>
-          </div>
-          <div className="flex flex-col">
-            {sources.map((s, i) => (
-              <div key={s.name} className="flex items-center gap-3 py-3" style={{ borderBottom: i < sources.length - 1 ? "1px solid rgba(30,41,59,0.3)" : "none" }}>
-                <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: s.color }} />
-                <span className="text-[13px] flex-1" style={{ color: "var(--text-sec, #cbd5e1)" }}>{s.name}</span>
-                <span className="text-sm font-bold min-w-[40px] text-right" style={{ color: s.color }}>{s.pct}%</span>
-                <div className="w-[100px] h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(30,41,59,0.5)" }}>
-                  <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${s.pct}%`, background: `linear-gradient(90deg, ${s.color}, rgba(${s.rgb},0.6))` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </DashCard>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Top jobs */}
-        <DashCard>
-          <div className="flex items-center justify-between mb-5">
-            <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Top Performing Jobs</span>
-          </div>
-          {jobs.length === 0 ? (
-            <p className="text-sm py-6 text-center" style={{ color: "var(--text-muted, #64748b)" }}>No jobs posted yet.</p>
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              {jobs.slice(0, 3).map((job, i) => {
-                const colors = [AMBER, "#3B82F6", "#A78BFA"];
-                const c = colors[i % colors.length];
-                return (
-                  <div key={job.id} className="flex items-center gap-4 px-4 py-3 rounded-xl" style={{ background: "rgba(255,255,255,0.02)" }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[13px] font-extrabold shrink-0" style={{ background: `${c}18`, color: c }}>#{i + 1}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold truncate" style={{ color: "var(--text, #f8fafc)" }}>{job.title}</div>
-                      <div className="text-xs" style={{ color: "var(--text-muted, #64748b)" }}>{formatTimestamp(job.createdAt)}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-extrabold" style={{ color: c }}>{job.applicationCount}</div>
-                      <div className="text-[10px] uppercase" style={{ color: "var(--text-muted, #64748b)" }}>apps</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </DashCard>
-
-        {/* Demographics */}
-        <DashCard>
-          <div className="flex items-center justify-between mb-5">
-            <span className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>Visitor Demographics</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {demographics.map((d) => (
-              <div key={d.label} className="p-4 rounded-xl text-center transition-all hover:-translate-y-0.5" style={{
-                background: "rgba(255,255,255,0.02)", border: "1px solid var(--border, rgba(30,41,59,0.6))",
-              }}>
-                <div className="text-2xl font-black tracking-tight" style={{ color: d.color }}>{d.pct}</div>
-                <div className="text-[11px] mt-1.5 font-medium" style={{ color: "var(--text-muted, #64748b)" }}>{d.label}</div>
-              </div>
-            ))}
-          </div>
-        </DashCard>
-      </div>
-    </>
-  );
+  return <><h2 className="text-xl font-bold mb-5">Hiring activity</h2><EmployerMetrics stats={stats} available={statsAvailable} />
+    <section className="employer-panel"><h3>Jobs by recorded applications</h3>{[...jobs].sort((a,b) => (b.applicationCount || 0) - (a.applicationCount || 0)).slice(0,5).map(job => <Link className="employer-job-row" key={job.id} href={`/org/dashboard/jobs/${job.id}/edit`}><div><h3>{job.title}</h3><p>{formatTimestamp(job.createdAt)}</p></div><strong>{job.applicationCount || 0}</strong></Link>)}{!jobs.length && <p>No jobs to report yet.</p>}</section>
+    <p className="employer-note">These are recorded totals, not a date-filtered report. Visitor trends, referral sources, and time-to-hire reporting are not available yet.</p></>;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   EDIT PROFILE TAB
-   ═══════════════════════════════════════════════════════════ */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function EditProfileTab({
   profileSub, setProfileSub, profileForm, setProfileForm,
   hours, setHours, gallery, setGallery, tags, setTags,
@@ -1857,7 +1606,7 @@ function JobsTab({ jobs, formatTimestamp }: {
                     </p>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <button onClick={() => router.push(`/org/dashboard/jobs/${job.slug || job.id}/edit`)}
+                    <button onClick={() => router.push(`/org/dashboard/jobs/${job.id}/edit`)}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
                       style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-sec)", border: "1px solid rgba(255,255,255,0.1)" }}>
                       Edit
@@ -1876,96 +1625,10 @@ function JobsTab({ jobs, formatTimestamp }: {
 /* ═══════════════════════════════════════════════════════════
    APPLICATIONS TAB
    ═══════════════════════════════════════════════════════════ */
-function ApplicationsTab({ getToken }: { getToken: () => Promise<string> }) {
-  const [applications, setApplications] = useState<Array<{id:string; jobTitle:string; applicantName:string; email:string; status:string; appliedAt:string; resumeUrl?:string}>>([]);
-  const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const token = await getToken();
-        const res = await fetch("/api/employer/applications", { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) {
-          const data = await res.json();
-          setApplications(data.applications || []);
-        }
-      } catch { /* */ }
-      setLoading(false);
-    })();
-  }, [getToken]);
-
-  const statusColors: Record<string, {bg:string;text:string}> = {
-    new: { bg: "rgba(59,130,246,0.1)", text: "#3B82F6" },
-    reviewed: { bg: "rgba(245,158,11,0.1)", text: "#F59E0B" },
-    shortlisted: { bg: "rgba(34,197,94,0.1)", text: "#22C55E" },
-    rejected: { bg: "rgba(239,68,68,0.1)", text: "#EF4444" },
-  };
-
-  const filtered = statusFilter === "all" ? applications : applications.filter((a) => a.status === statusFilter);
-
-  return (
-    <>
-      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-        <h2 className="text-xl font-extrabold tracking-tight" style={{
-          background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
-          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-        }}>Applications ({applications.length})</h2>
-        <div className="flex gap-2">
-          {["all","new","reviewed","shortlisted","rejected"].map((s) => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all capitalize"
-              style={statusFilter === s ? { background: `rgba(${AMBER_RGB},0.12)`, color: AMBER } : { background: "rgba(255,255,255,0.03)", color: "var(--text-muted)" }}
-            >{s}</button>
-          ))}
-        </div>
-      </div>
-      {loading ? (
-        <div className="flex flex-col gap-3">{[1,2,3].map((i) => <div key={i} className="h-24 rounded-2xl skeleton" />)}</div>
-      ) : filtered.length === 0 ? (
-        <DashCard>
-          <div className="text-center py-12">
-            <p className="text-4xl mb-3 opacity-30">📋</p>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>No applications yet. Applications will appear here when candidates apply to your jobs.</p>
-          </div>
-        </DashCard>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {filtered.map((app) => {
-            const sc = statusColors[app.status] || statusColors.new;
-            return (
-              <DashCard key={app.id}>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: sc.bg, color: sc.text }}>
-                    {app.applicantName?.charAt(0)?.toUpperCase() || "?"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{app.applicantName}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Applied for: {app.jobTitle} · {app.email}</p>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0" style={{ background: sc.bg, color: sc.text }}>
-                    {app.status}
-                  </span>
-                  {app.resumeUrl && (
-                    <a href={app.resumeUrl} target="_blank" rel="noopener noreferrer"
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline transition-all shrink-0"
-                      style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-sec)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                      Resume
-                    </a>
-                  )}
-                </div>
-              </DashCard>
-            );
-          })}
-        </div>
-      )}
-    </>
-  );
+function ApplicationsTab() {
+  return <section className="employer-panel"><h2>Applicant workspace</h2><p>Review candidates, update hiring stages, and save reviewer notes in one place.</p><Link className="employer-primary" href="/org/dashboard/applications">Open applicant workspace →</Link></section>;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   EVENTS TAB
-   ═══════════════════════════════════════════════════════════ */
 function EventsTab({ getToken }: { getToken: () => Promise<string> }) {
   const [events, setEvents] = useState<Array<{id:string;title:string;eventType?:string;date?:string;location?:string;status?:string}>>([]);
   const [loading, setLoading] = useState(true);
@@ -2872,101 +2535,12 @@ function TalentSearchTab() {
    TEAM TAB
    ═══════════════════════════════════════════════════════════ */
 function TeamTab() {
-  const [showInvite, setShowInvite] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("editor");
-  const [saving] = useState(false);
-  const [members] = useState<Array<{email:string; role:string; name?:string}>>([]);
-  const inputCls = "w-full px-4 py-3 rounded-xl text-sm";
-  const inputSt: React.CSSProperties = { background: "rgba(2,6,23,0.6)", border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit" };
-  const lblSt: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" as const, letterSpacing: "0.5px" };
-
-  const roleColors: Record<string, {bg:string;text:string}> = {
-    owner: { bg: `rgba(${AMBER_RGB},0.1)`, text: AMBER },
-    admin: { bg: "rgba(167,139,250,0.1)", text: "#A78BFA" },
-    editor: { bg: "rgba(59,130,246,0.1)", text: "#3B82F6" },
-    viewer: { bg: "rgba(148,163,184,0.1)", text: "#94A3B8" },
-  };
-
-  return (
-    <>
-      <div className="flex items-center justify-between mb-5 gap-3">
-        <h2 className="text-xl font-extrabold tracking-tight text-text shrink-0">Team</h2>
-        <GlowButton onClick={() => setShowInvite(!showInvite)}>{showInvite ? "Cancel" : "+ Invite Member"}</GlowButton>
-      </div>
-      {showInvite && (
-        <DashCard>
-          <h3 className="text-base font-bold mb-5" style={{ color: "var(--text)" }}>Invite Team Member</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
-            <div><label style={lblSt}>Email *</label><input type="email" className={inputCls} style={inputSt} value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="team@example.com" /></div>
-            <div><label style={lblSt}>Role</label><select className={inputCls} style={{ ...inputSt, cursor: "pointer" }} value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
-              <option value="admin">Admin — Full access</option><option value="editor">Editor — Post jobs, events, scholarships</option><option value="viewer">Viewer — View applications & analytics</option>
-            </select></div>
-          </div>
-          <GlowButton disabled={saving || !inviteEmail.trim()} onClick={() => { /* TODO: POST /api/employer/team */ }}>Send Invite</GlowButton>
-        </DashCard>
-      )}
-      {members.length === 0 ? (
-        <DashCard><div className="text-center py-12"><p className="text-4xl mb-3 opacity-30">👥</p><p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No team members yet</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>Invite people to help manage your organization on IOPPS.</p></div></DashCard>
-      ) : (
-        <div className="flex flex-col gap-2 mt-4">
-          {members.map((m) => {
-            const rc = roleColors[m.role] || roleColors.viewer;
-            return (
-              <DashCard key={m.email}>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: rc.bg, color: rc.text }}>{(m.name || m.email).charAt(0).toUpperCase()}</div>
-                  <div className="flex-1 min-w-0"><p className="text-sm font-bold" style={{ color: "var(--text)" }}>{m.name || m.email}</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>{m.email}</p></div>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase" style={{ background: rc.bg, color: rc.text }}>{m.role}</span>
-                </div>
-              </DashCard>
-            );
-          })}
-        </div>
-      )}
-    </>
-  );
+  return <section className="employer-panel"><h2>Team access</h2><p>Team invitations are not available yet. Continue managing your organization with your existing account.</p></section>;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   TEMPLATES TAB
-   ═══════════════════════════════════════════════════════════ */
 function TemplatesTab() {
-  const [templates] = useState<Array<{id:string; title:string; usedCount:number}>>([]);
-  const [showForm, setShowForm] = useState(false);
-
-  return (
-    <>
-      <div className="flex items-center justify-between mb-5 gap-3">
-        <h2 className="text-xl font-extrabold tracking-tight text-text shrink-0">Templates</h2>
-        <GlowButton onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Create Template"}</GlowButton>
-      </div>
-      {showForm && (
-        <DashCard>
-          <h3 className="text-base font-bold mb-3" style={{ color: "var(--text)" }}>New Template</h3>
-          <p className="text-xs mb-5" style={{ color: "var(--text-muted)" }}>Create a job posting template to speed up future posts. Go to &quot;Post a Job&quot; and fill in the details, then save as template.</p>
-          <GlowButton onClick={() => setShowForm(false)}>Got It</GlowButton>
-        </DashCard>
-      )}
-      {templates.length === 0 && !showForm ? (
-        <DashCard><div className="text-center py-12"><p className="text-4xl mb-3 opacity-30">📄</p><p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No templates yet</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>Save job posting templates for faster creation.</p></div></DashCard>
-      ) : (
-        <div className="flex flex-col gap-2 mt-4">
-          {templates.map((t) => (
-            <DashCard key={t.id}>
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: `rgba(${AMBER_RGB},0.08)` }}>📄</div>
-                <div className="flex-1 min-w-0"><p className="text-sm font-bold" style={{ color: "var(--text)" }}>{t.title}</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>Used {t.usedCount} time{t.usedCount !== 1 ? "s" : ""}</p></div>
-                <button className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none" style={{ background: `rgba(${AMBER_RGB},0.1)`, color: AMBER }}>Use Template</button>
-              </div>
-            </DashCard>
-          ))}
-        </div>
-      )}
-    </>
-  );
+  return <section className="employer-panel"><h2>Job templates</h2><p>Reusable templates are not available yet. You can create a job and save it as a draft to finish later.</p><Link href="/org/dashboard/jobs/new" className="employer-primary">Create a job draft →</Link></section>;
 }
-
 
 /* ═══════════════════════════════════════════════════════════
    PLACEHOLDER TAB
@@ -3036,23 +2610,6 @@ function GlowButton({ children, onClick, disabled }: { children: React.ReactNode
   );
 }
 
-function StatIcon({ label, color }: { label: string; color: string }) {
-  const icons: Record<string, React.ReactNode> = {
-    "Total Posts": <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />,
-    "Active Posts": <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />,
-    "Applications": <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />,
-    "Profile Views": <><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></>,
-    "Job Views": <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25" />,
-    "Avg. Time to Fill": <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />,
-  };
-
-  return (
-    <svg width="20" height="20" fill="none" stroke={color} strokeWidth="1.5" viewBox="0 0 24 24">
-      {icons[label] || icons["Total Posts"]}
-    </svg>
-  );
-}
-
 function LoadingSkeleton() {
   return (
     <div className="flex flex-col gap-4">
@@ -3060,7 +2617,7 @@ function LoadingSkeleton() {
       <div className="flex gap-2">
         {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-9 w-24 rounded-xl skeleton" />)}
       </div>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-28 rounded-2xl skeleton" />)}
       </div>
       <div className="grid grid-cols-2 gap-4">
