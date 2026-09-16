@@ -1,4 +1,5 @@
 "use client";
+import JobLocationFields, { formatJobLocation } from "@/components/employer/JobLocationFields";
 
 import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
 import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
@@ -55,6 +56,8 @@ interface FormState {
   employmentType: string;
   workLocation: string;
   location: string;
+  locationCity: string;
+  locationProvince: string;
   salaryMin: string;
   salaryMax: string;
   salaryPeriod: string;
@@ -80,6 +83,8 @@ const emptyForm: FormState = {
   employmentType: "",
   workLocation: "",
   location: "",
+  locationCity: "",
+  locationProvince: "",
   salaryMin: "",
   salaryMax: "",
   salaryPeriod: "Annual",
@@ -655,7 +660,7 @@ export default function NewJobWizardPage() {
     const e: Record<string, string> = {};
     if (!form.title.trim()) e.title = "Title is required";
     if (!form.category) e.category = "Category is required";
-    if (!form.location.trim()) e.location = "Location is required";
+    if (!form.locationProvince) e.location = "Select a province, territory, or multiple-province option";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -1012,13 +1017,8 @@ export default function NewJobWizardPage() {
                       </FormField>
                     </div>
 
-                    <FormField label="Location" required error={errors.location}>
-                      <TextInput
-                        value={form.location}
-                        onChange={(v) => set("location", v)}
-                        placeholder="e.g. Saskatoon, SK"
-                      />
-                    </FormField>
+                    <JobLocationFields required city={form.locationCity} province={form.locationProvince} onChange={(city,province)=>setForm(prev=>({...prev,locationCity:city,locationProvince:province,location:formatJobLocation(city,province)}))} />
+                    {errors.location && <p role="alert" className="text-red-500 text-sm mb-4">{errors.location}</p>}
 
                     {/* Salary */}
                     <div style={{ marginBottom: 16 }}>

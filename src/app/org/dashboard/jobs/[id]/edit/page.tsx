@@ -1,4 +1,5 @@
 "use client";
+import JobLocationFields from "@/components/employer/JobLocationFields";
 import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
 import { normalizeHiringDetails } from "@/lib/job-hiring-details";
 
@@ -422,41 +423,7 @@ export default function JobEditPage() {
                     />
                   </div>
 
-                  {/* Location */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        className="block text-sm font-semibold mb-1.5"
-                        style={{ color: "var(--text)" }}
-                      >
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        value={locationCity}
-                        onChange={(e) => setLocationCity(e.target.value)}
-                        placeholder="e.g. Toronto"
-                        className="w-full px-4 py-3 rounded-xl text-sm"
-                        style={inputStyle}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className="block text-sm font-semibold mb-1.5"
-                        style={{ color: "var(--text)" }}
-                      >
-                        Province
-                      </label>
-                      <input
-                        type="text"
-                        value={locationProvince}
-                        onChange={(e) => setLocationProvince(e.target.value)}
-                        placeholder="e.g. ON"
-                        className="w-full px-4 py-3 rounded-xl text-sm"
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
+                  <JobLocationFields city={locationCity} province={locationProvince} onChange={(city,province)=>{setLocationCity(city);setLocationProvince(province);}} />
 
                   {/* Employment Type */}
                   <div>
