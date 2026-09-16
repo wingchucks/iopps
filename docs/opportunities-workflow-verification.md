@@ -14,9 +14,11 @@ Anonymous Save and RSVP actions go to the existing sign-in flow and retain inten
 
 ## Storage and publication
 
-Unpublished content is stored in `organizationOpportunityDrafts`, a server-only collection covered by the existing default-deny rule. A public routing tombstone contains only ID, slug, ownership, status, revision and update time. Publishing atomically moves the content into the public collection; saving a published listing as a draft or closing it moves its content back to private storage. Public discovery and detail APIs suppress matching legacy feed copies when a canonical record is hidden.
+Unpublished content is stored in `organizationOpportunityDrafts`, a server-only collection covered by the existing default-deny rule. New drafts have no public record, including no title-derived public slug. When a previously public listing is withdrawn, a routing tombstone retains only its already-public ID, slug, ownership, status, revision and update time. Publishing atomically moves the content into the public collection; saving a published listing as a draft or closing it moves its content back to private storage. Public discovery and detail APIs suppress matching legacy feed copies when a canonical record is hidden.
 
 Authentication resolves the organization server-side. Only owners/admins may change listings; publishing also requires verified email and completed organization setup. Creation IDs are scoped to the organization and request ID; retries do not duplicate listings. Edits require the current revision. Publication URLs are unique even when titles repeat. Input cannot grant featured placement, verification or another organization's ownership.
+
+The existing administrator email notification is retained for first publication; private draft saves, edits, request retries and reopening previously published listings do not send that notification.
 
 The public projection uses an allowlist, accepts only HTTP(S) application/registration links, and has no stale response cache. The cron scholarship endpoint rejects requests when no secret is configured.
 
@@ -29,7 +31,7 @@ The public projection uses an allowlist, accepts only HTTP(S) application/regist
 - `tests/opportunity-rules-emulator.test.ts`: verifies private reads, direct-write bypass prevention and continued admin corrections.
 - Existing release rules and scholarship freshness checks pass. Combined Node test run: eight passed, zero failed.
 
-Browser review confirmed draft editing, province changes, review/publish, close, and rolling-deadline publication in the fictional workspace. The editor had no horizontal overflow at 320, 390 and 1280px and visible form controls met a 44px minimum target height. Live-data review caught and corrected a location formatting issue so imported venue/city details are preserved. Funding type filters use concise scholarship/bursary/grant/award labels instead of imported subject descriptions. Event and funding detail pages now retain the same Jobs → IOPPS Live → Indigenous Businesses navigation as their directories.
+Browser review confirmed draft editing, province changes, review/publish, close, and rolling-deadline publication in the fictional workspace. The editor had no horizontal overflow at 320, 390 and 1280px and visible form controls met a 44px minimum target height. Live-data review caught and corrected a location formatting issue so imported venue/city details are preserved. Wrapped card titles use a full clickable block so taps between lines still open the listing. Funding type filters use concise scholarship/bursary/grant/award labels instead of imported subject descriptions. Event and funding detail pages now retain the same Jobs → IOPPS Live → Indigenous Businesses navigation as their directories.
 
 Fictional preview workspace: `/demo/opportunities`. The same editor runs locally in that page; demo actions do not create accounts or write to Firebase. `/demo/responsive` includes both public directories and this editor for 320, 390, 768 and 1280px review.
 

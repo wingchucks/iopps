@@ -37,7 +37,7 @@ try {
     const privatePath = `organizationOpportunityDrafts/${kind}-${id}`, publicPath = `${kind}/${id}`;
     documents.add(privatePath); documents.add(publicPath);
     assert.equal(draft.data.status, 'draft'); assert.equal(draft.data.orgId, owner.uid); assert.notEqual(draft.data.featured, true);
-    assert.equal((await db.doc(publicPath).get()).data().title, undefined);
+    assert.equal((await db.doc(publicPath).get()).exists, false, "A new draft must not expose even its slug in the public collection");
     assert.equal((await db.doc(privatePath).get()).data().title, title);
     assert.equal((await request('GET', `/api/${kind}/${draft.data.slug}`)).status, 404);
     assert.equal((await request('GET', `/api/${kind}`)).data[kind].some(item => item.id === id), false);
@@ -48,7 +48,7 @@ try {
     assert.equal((await request('PATCH', endpoint, owner.token, { id, revision: 1, status: 'active' })).status, 422);
     pass(kind + ': incomplete drafts stay private, retries do not duplicate, and ownership is enforced');
     const active = await request('PATCH', endpoint, owner.token, { ...full, id, revision: 1, status: 'active', privateNotes: 'PRIVATE_CANARY', featured: true });
-    assert.equal(active.status, 200, JSON.stringify(active)); assert.equal(active.data.revision, 2);
+    assert.equal(active.status, 200, JSON.stringify(active)); assert.equal(active.data.revision, 2); assert.ok(active.data.firstPublishedAt);
     assert.equal((await db.doc(privatePath).get()).exists, false);
     const detail = await request('GET', `/api/${kind}/${active.data.slug}`); const record = detail.data[kind === 'events' ? 'event' : 'scholarship'];
     assert.equal(detail.status, 200, JSON.stringify(detail)); assert.equal(detail.cache, 'no-store');
@@ -72,7 +72,7 @@ try {
     const html = await fetch(server.base + `/${kind}/${active.data.slug}`).then(response => response.text());
     assert.ok(!html.includes(title), 'Closed content must not leak into metadata');
     const reopened = await request('PATCH', endpoint, owner.token, { id, revision: 3, status: 'active' });
-    assert.equal(reopened.status, 200, JSON.stringify(reopened)); assert.equal(reopened.data.title, title);
+    assert.equal(reopened.status, 200, JSON.stringify(reopened)); assert.equal(reopened.data.title, title); assert.equal(reopened.data.firstPublishedAt, active.data.firstPublishedAt);
     const unpublished = await request('PATCH', endpoint, owner.token, { id, revision: 4, status: 'draft' });
     assert.equal(unpublished.status, 200); assert.equal((await request('GET', `/api/${kind}/${id}`)).status, 404);
     pass(kind + ': closing, reopening and unpublishing work; old feed copies and metadata cannot revive a hidden listing');

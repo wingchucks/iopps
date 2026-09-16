@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { sendAdminContentPosted } from "@/lib/email";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 import { serialize } from "@/lib/server/public-ownership";
@@ -69,7 +70,7 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
       const record = { ...validation.data, id, kind, slug, orgId: context.orgId, employerId: context.orgId, orgName,
         ...(kind === "events" ? { organizerName: orgName } : { organization: orgName }),
         status, active: status === "active", revision: (Number(previous.revision) || 0) + 1,
-        createdAt: previous.createdAt || now, updatedAt: now, order: previous.order || Date.now() };
+        createdAt: previous.createdAt || now, updatedAt: now, firstPublishedAt: previous.firstPublishedAt || (status === "active" ? now : null), order: previous.order || Date.now() };
       if (status === "active") {
         tx.set(publicRef, record);
         tx.delete(draftRef);
@@ -77,11 +78,24 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
         tx.set(draftRef, record);
         // A tombstone prevents an old feed copy from resurfacing after unpublishing.
         // Only routing and ownership remain public; the draft itself is private.
-        tx.set(publicRef, { id, slug, orgId: context.orgId, employerId: context.orgId, status, active: false, revision: record.revision, updatedAt: now });
+        // A brand-new draft has no public record at all, including no title-derived slug.
+        if (publicDoc.exists) tx.set(publicRef, { id, slug, orgId: context.orgId, employerId: context.orgId, status, active: false, revision: record.revision, updatedAt: now });
       }
-      return { record };
+      return { record, firstPublication: status === "active" && !previous.firstPublishedAt && (!exists || previous.status === "draft") };
     });
     if (result.errors) return NextResponse.json({ error: "Please check the highlighted fields.", fields: result.errors }, { status: 422, headers: noStore });
+    // Retain the existing administrator notification, once on first publication.
+    // Draft saves, edits, retries and reopening an already published item stay quiet.
+    if (result.firstPublication && result.record) {
+      const record = result.record as Record<string, unknown>;
+      sendAdminContentPosted({
+        contentType: kind === "events" ? "event" : "scholarship",
+        title: String(record.title || "Opportunity"), status: "active", orgName: String(record.orgName || ""),
+        authorName: String(context.userData.displayName || context.memberData.displayName || "") || null,
+        authorEmail: String(context.userData.email || context.memberData.email || context.employerData.contactEmail || "") || null,
+        id: String(record.id), urlPath: `/${kind}/${record.slug || record.id}`,
+      }).catch(error => console.error("Opportunity publication notification:", error));
+    }
     return NextResponse.json(serialize(result.record), { status: editing || result.duplicate ? 200 : 201, headers: noStore });
   } catch (error) { return failure(error); }
 }
