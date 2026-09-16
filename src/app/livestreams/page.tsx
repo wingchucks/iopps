@@ -55,7 +55,7 @@ function LivestreamExperience() {
     }
   }
 
-  return <main className={styles.page}>
+  return <article className={styles.page}>
     <section className={styles.stage} aria-labelledby="live-heading">
       <div className={styles.wrap}>
         <header className={styles.intro}>
@@ -141,9 +141,9 @@ function LivestreamExperience() {
     </div></section>
     <div className={`${styles.wrap} ${styles.communityLinks}`}><p>Keep the connection going.</p><Link href="/jobs">Find your next opportunity ↗</Link><Link href="/businesses">Meet Indigenous businesses ↗</Link></div>
     <Footer />
-  </main>;
+  </article>;
 }
 
 export default function LivestreamsPage() {
-  return <AppShell><Suspense fallback={<main className={styles.loading} role="status">Loading IOPPS Live…</main>}><LivestreamExperience /></Suspense></AppShell>;
+  return <AppShell><Suspense fallback={<div className={styles.loading} role="status">Loading IOPPS Live…</div>}><LivestreamExperience /></Suspense></AppShell>;
 }

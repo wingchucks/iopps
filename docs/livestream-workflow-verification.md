@@ -32,6 +32,13 @@ Primary references:
 - Feed tests cover ended manual overrides, ended live metadata, upcoming-to-live transitions, deduplication and cache separation, partial/full outages, verification failure, missing configuration, older shared videos, channel/privacy boundaries, scheduled sorting, valid empty feeds and preserved Nation names.
 - Changed-source ESLint: passed.
 - Optimized Next.js build and TypeScript: passed.
-- Deployed browser verification: pending.
+- HTTP handler check with missing configuration: 503, `Cache-Control: no-store`, no false live video.
+- Vercel preview `c351e9cc6340b722d424abfbc770b151d6bb1428`: build READY.
+- Browser: 12 recent replays loaded; searching “James Smith” returned two; selecting Sunday Funday updated both the player and the share URL. Copy confirmed, reopening retained the exact video, and browser Back restored the previous player.
+- Browser: invalid shared video showed the unavailable state; Back to IOPPS Live recovered. On the phone frame, a search with no matches showed a clear reset and restored all 12 replays.
+- Layout: 320px, 390px and 1280px review frames had no horizontal page overflow (actual content widths 301px, 371px and 1261px after frame borders and scrollbars). These are frame-size checks, not physical-device tests. Phone and desktop screenshots were visually inspected.
+- Homepage: updated card loaded the verified replay and linked directly to its IOPPS watch URL. The public navigation remains Jobs → IOPPS Live → Indigenous Businesses.
+- Player: YouTube embed and duration loaded, but continuous advancing playback was not confirmed in this cloud browser. Keep the explicit YouTube alternative and test playback on a physical phone before launch.
+- Final accessibility follow-up removes a nested main landmark; the application layout already supplies the page's main element.
 
 Actual live-broadcast transitions, email-client handoff, and physical phone playback require validation in their real environments. No active broadcast was available during the initial audit.
