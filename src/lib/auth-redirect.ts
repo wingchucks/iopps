@@ -11,7 +11,9 @@ export function authIntentHref(path: string, query: IntentQuery): string {
   const params = new URLSearchParams();
   const redirect = safeAuthRedirect(query.get('redirect'));
   const plan = query.get('plan');
+  const intent = query.get('intent');
   if (redirect) params.set('redirect', redirect);
+  if (intent === "indigenous-business" || intent === "hiring") params.set("intent", intent);
   if (plan && PLAN_IDS.includes(plan)) params.set('plan', plan);
   return path + (params.size ? `${path.includes('?') ? '&' : '?'}${params}` : '');
 }

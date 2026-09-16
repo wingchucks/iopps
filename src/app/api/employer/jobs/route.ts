@@ -1,3 +1,4 @@
+import { normalizeHiringDetails } from "@/lib/job-hiring-details";
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue, type Firestore, type Transaction } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
@@ -33,6 +34,7 @@ async function runCreateTransaction<T>(db: Firestore, action: (tx: Transaction) 
 type JobStatus = "active" | "draft" | "closed";
 
 interface EmployerJobInput {
+  hiringDetails?: unknown;
   title?: string;
   slug?: string;
   department?: string;
@@ -120,8 +122,9 @@ function buildJobPayload(input: EmployerJobInput, authorContext: { uid: string; 
     indigenousPreference: Boolean(input.indigenousPreference),
     indigenousPreferenceLevel: normalizeString(input.indigenousPreferenceLevel),
     communityTags: normalizeStringArray(input.communityTags),
-    willTrain: Boolean(input.willTrain),
-    driversLicense: Boolean(input.driversLicense),
+    hiringDetails: normalizeHiringDetails(input.hiringDetails, input),
+    willTrain: normalizeHiringDetails(input.hiringDetails, input).willTrain,
+    driversLicense: normalizeHiringDetails(input.hiringDetails, input).driversLicense,
     featured,
     requiresResume: input.requiresResume !== false,
     requiresCoverLetter: Boolean(input.requiresCoverLetter),

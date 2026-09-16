@@ -327,6 +327,7 @@ function LoginForm() {
           </Link>
 
           <h1 className="text-2xl font-extrabold text-text mb-1">Sign in to IOPPS</h1>
+          <p className="text-text-sec text-sm mb-4">One sign-in for job seekers, businesses and organizations. Use your existing account to return to your workspace.</p>
           <p className="text-text-sec text-[15px] mb-8">
             Don&apos;t have an account?{" "}
             <Link href={authIntentHref("/signup", searchParams)} className="text-teal font-semibold no-underline hover:underline">

@@ -135,7 +135,7 @@ export default function ForEmployersPage() {
 
         <div className="relative flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            href="/org/signup"
+            href="/signup?resume=organization&intent=hiring"
             className="inline-block rounded-[14px] px-10 py-4 font-bold text-lg no-underline transition-all"
             style={{ background: "var(--teal)", color: "#fff" }}
           >
@@ -217,7 +217,7 @@ export default function ForEmployersPage() {
               ))}
             </ul>
             <Link
-              href="/org/signup"
+              href="/signup?resume=organization&intent=hiring"
               className="block text-center rounded-xl py-3 font-bold text-sm no-underline transition-all"
               style={{
                 border: "1.5px solid var(--border)",
@@ -280,7 +280,7 @@ export default function ForEmployersPage() {
               ))}
             </ul>
             <Link
-              href="/org/signup"
+              href="/signup?resume=organization&intent=hiring"
               className="block text-center rounded-xl py-3 font-bold text-sm no-underline transition-all"
               style={{ background: "var(--teal)", color: "#fff" }}
             >
@@ -300,7 +300,7 @@ export default function ForEmployersPage() {
           stronger, more inclusive workplaces.
         </p>
         <Link
-          href="/org/signup"
+          href="/signup?resume=organization&intent=hiring"
           className="inline-block rounded-[14px] px-10 py-4 font-bold text-lg no-underline transition-all"
           style={{ background: "var(--teal)", color: "#fff" }}
         >

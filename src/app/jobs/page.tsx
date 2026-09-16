@@ -221,7 +221,7 @@ function JobsPageContent() {
             Find work. <span>Move forward.</span>
           </h1>
           <p className="mx-auto mb-0 max-w-[560px] text-base text-white/78">
-            Discover Indigenous and allied employers hiring across Canada.
+            Connecting First Nations, Métis and Inuit talent with Indigenous and allied employers across Canada. Everyone is welcome to explore and apply.
           </p>
           <Link href="/for-employers" className="mt-4 inline-block text-sm font-semibold text-white underline underline-offset-4">Hiring? Post a job on IOPPS →</Link>
         </section>

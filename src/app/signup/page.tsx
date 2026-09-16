@@ -97,7 +97,7 @@ function UnifiedSignupContent() {
   const [empServices, setEmpServices] = useState("");
   const [empProvince, setEmpProvince] = useState("");
   const [empCity, setEmpCity] = useState("");
-  const [capabilities, setCapabilities] = useState<string[]>(["post_jobs"]);
+  const [capabilities, setCapabilities] = useState<string[]>(searchParams.get("intent") === "hiring" ? ["post_jobs"] : ["list_business"]);
   const [empLogoFile, setEmpLogoFile] = useState<File | null>(null);
   const [empBannerFile, setEmpBannerFile] = useState<File | null>(null);
 
@@ -589,7 +589,7 @@ function UnifiedSignupContent() {
 
         {/* STEP 10: Employer Basics */}
         {step === 10 && (<div>
-          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 1 of 3" : "Employer Setup — 1 of 3"} title="About your" highlight={entrepreneurIntent ? "Business" : "Organization"} desc={entrepreneurIntent ? "Share the essentials customers need to discover your business." : "Tell us about your business."} />
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 1 of 3" : "Organization Setup — 1 of 3"} title="About your" highlight={entrepreneurIntent ? "Business" : "Organization"} desc={entrepreneurIntent ? "Share the essentials customers need to discover your business." : "Tell us about your business."} />
           <div style={{ display: "grid", gap: 20 }}>
             <FormInput label={entrepreneurIntent ? "Business Name" : "Organization Name"} required placeholder="e.g., Northern Resources Inc." value={orgName} onChange={e => setOrgName(e.target.value)} />
             <FormTextarea label="Short Business Description" required placeholder="Tell people what your business does and who you serve." maxLength={600} value={empDescription} onChange={e => setEmpDescription(e.target.value)} />
@@ -622,7 +622,7 @@ function UnifiedSignupContent() {
               <FormSelect label="Province / Territory" required={entrepreneurIntent} value={empProvince} onChange={e => setEmpProvince(e.target.value)} options={[{ value: "", label: "Select..." }, ...PROVINCES.map(p => ({ value: p, label: p }))]} />
               <FormInput label="City" required={entrepreneurIntent} placeholder="City" value={empCity} onChange={e => setEmpCity(e.target.value)} />
             </div>
-            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>What do you want to do on IOPPS?</div>
+            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>What do you want to do on IOPPS?</div><p style={{fontSize:13,color:CSS.textMuted,marginBottom:12}}>One account for your organization. Promote your business, hire, or do both. Posting jobs is optional.</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{EMPLOYER_CAPABILITIES.map(c => <CheckboxItem key={c.id} icon={c.icon} label={c.label} checked={capabilities.includes(c.id)} onToggle={() => toggleCapability(c.id)} />)}</div>
             </div>
           </div>

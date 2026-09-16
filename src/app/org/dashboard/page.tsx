@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import BusinessOverview from "@/components/employer/BusinessOverview";
 import { EmployerOverview, EmployerMetrics } from "@/components/employer/EmployerOverview";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
@@ -179,6 +180,7 @@ function OrgDashboardContent() {
   const [activeTab, setActiveTab] = useState<DashboardTab>("Overview");
   const [profileSub, setProfileSub] = useState<(typeof PROFILE_SUBS)[number]>("Identity");
   const isSchoolOrg = isSchoolOrganization(org);
+  const businessFirst = !isSchoolOrg && org?.capabilities?.includes("list_business") === true && !org?.capabilities?.includes("post_jobs");
   const schoolIsPublic = isSchoolPubliclyVisible(org);
   const availableTabs = isSchoolOrg ? SCHOOL_TABS : ORG_TABS;
 
@@ -483,9 +485,10 @@ function OrgDashboardContent() {
   const publicProfileHref = getOrganizationPublicHref(org);
   const heroDescription = isSchoolOrg
     ? "Manage your school profile, programs, scholarships, and student recruitment."
-    : "Manage your organization, jobs, and applications";
-  const primaryActionLabel = isSchoolOrg ? "Manage Programs" : "Post a Job";
+    : businessFirst ? "Promote your business, share your services, and help people find you." : "Manage your organization, jobs, and applications";
+  const primaryActionLabel = isSchoolOrg ? "Manage Programs" : businessFirst ? "Edit Business Profile" : "Post a Job";
   const primaryAction = () => {
+    if (businessFirst) { router.push("/org/dashboard?tab=Edit%20Profile"); return; }
     if (isSchoolOrg) {
       setActiveTab("Programs");
       return;
@@ -663,7 +666,7 @@ function OrgDashboardContent() {
                       timeAgo={timeAgo}
                     />
                   ) : (
-                    <EmployerOverview stats={stats} statsAvailable={statsAvailable} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
+                    businessFirst ? <BusinessOverview publicHref={publicProfileHref} /> : <EmployerOverview stats={stats} statsAvailable={statsAvailable} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
                   )
                 )}
 

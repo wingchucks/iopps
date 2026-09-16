@@ -61,6 +61,7 @@ export interface Job {
   indigenousPreference?: boolean;
   indigenousPreferenceLevel?: string;
   communityTags?: string[];
+  hiringDetails?: import("@/lib/job-hiring-details").HiringDetails;
   willTrain?: boolean;
   driversLicense?: boolean;
   requiresResume?: boolean;

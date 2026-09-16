@@ -1,4 +1,6 @@
 "use client";
+import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
+import { normalizeHiringDetails } from "@/lib/job-hiring-details";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -31,6 +33,9 @@ interface EditableJob {
   externalApplyUrl?: string;
   status?: PostStatus;
   featured?: boolean;
+  hiringDetails?: unknown;
+  willTrain?: boolean;
+  driversLicense?: boolean;
 }
 
 const employmentTypes = [
@@ -95,6 +100,7 @@ export default function JobEditPage() {
   const [requirementInput, setRequirementInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
+  const [hiringDetails, setHiringDetails] = useState(() => normalizeHiringDetails({}));
   const [closingDate, setClosingDate] = useState("");
   const [applicationUrl, setApplicationUrl] = useState("");
   const [status, setStatus] = useState<PostStatus>("draft");
@@ -135,6 +141,7 @@ export default function JobEditPage() {
         setSkills(p.badges || []);
         setClosingDate(p.closingDate || "");
         setApplicationUrl(p.applicationUrl || p.externalApplyUrl || "");
+        setHiringDetails(normalizeHiringDetails(p.hiringDetails, p));
         setStatus(p.status || "active");
         setFeatured(Boolean(p.featured));
       } catch (err) {
@@ -182,6 +189,7 @@ export default function JobEditPage() {
             display: salary,
             currency: "CAD",
           } : undefined,
+          hiringDetails,
           qualifications: requirements.filter((r) => r.trim()),
           badges: skills,
           closingDate,
@@ -648,6 +656,7 @@ export default function JobEditPage() {
                     />
                   </div>
 
+                  <HiringDetailsFields value={hiringDetails} onChange={setHiringDetails} />
                   {/* Application URL */}
                   <div>
                     <label

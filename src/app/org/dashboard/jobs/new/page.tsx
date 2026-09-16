@@ -1,5 +1,8 @@
 "use client";
 
+import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
+import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
+import { normalizeHiringDetails, type HiringDetails } from "@/lib/job-hiring-details";
 import { confirmSavedJob, type JobSaveConfirmation } from "@/lib/job-save-confirmation";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -63,8 +66,7 @@ interface FormState {
   benefits: string[];
   indigenousPreferenceLevel: string;
   communityTags: string[];
-  willTrain: boolean;
-  driversLicense: boolean;
+  hiringDetails: HiringDetails;
   featured: boolean;
   requiresResume: boolean;
   requiresCoverLetter: boolean;
@@ -89,8 +91,7 @@ const emptyForm: FormState = {
   benefits: [],
   indigenousPreferenceLevel: "",
   communityTags: [],
-  willTrain: false,
-  driversLicense: false,
+  hiringDetails: normalizeHiringDetails({}),
   featured: false,
   requiresResume: true,
   requiresCoverLetter: false,
@@ -726,8 +727,9 @@ export default function NewJobWizardPage() {
         indigenousPreference: form.indigenousPreferenceLevel !== "" && form.indigenousPreferenceLevel !== "open",
         indigenousPreferenceLevel: form.indigenousPreferenceLevel || undefined,
         communityTags: form.communityTags,
-        willTrain: form.willTrain,
-        driversLicense: form.driversLicense,
+        hiringDetails: normalizeHiringDetails(form.hiringDetails),
+        willTrain: form.hiringDetails.willTrain,
+        driversLicense: form.hiringDetails.driversLicense,
         featured: form.featured,
         requiresResume: form.requiresResume,
           requiresCoverLetter: form.requiresCoverLetter,
@@ -1174,17 +1176,7 @@ export default function NewJobWizardPage() {
                         title="Job Options"
                       />
                       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        <Checkbox
-                          checked={form.willTrain}
-                          onChange={(v) => set("willTrain", v)}
-                          label="Will Train"
-                          description="Employer will provide on-the-job training"
-                        />
-                        <Checkbox
-                          checked={form.driversLicense}
-                          onChange={(v) => set("driversLicense", v)}
-                          label="Driver's License Required"
-                        />
+                        <HiringDetailsFields value={form.hiringDetails} onChange={value => set("hiringDetails", value)} />
                         <FeaturedJobControl
                           summary={featuredSummary}
                           checked={form.featured}
@@ -1336,7 +1328,7 @@ export default function NewJobWizardPage() {
                                 )?.label || "Indigenous Preferred"}
                               </span>
                             )}
-                          {form.willTrain && (
+                          {form.hiringDetails.willTrain && (
                             <span
                               style={{
                                 padding: "4px 10px",
@@ -1429,6 +1421,7 @@ export default function NewJobWizardPage() {
                           ))}
 
                         {/* Community tags */}
+                        <HiringDetailsSummary value={form.hiringDetails} />
                         {form.communityTags.length > 0 && (
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                             {form.communityTags.map((tag) => (

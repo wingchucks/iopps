@@ -42,3 +42,11 @@ test('sign-in return paths stay on this site and preserve the application route'
   assert.equal(safeAuthRedirect('/jobs/example/apply?step=resume'), '/jobs/example/apply?step=resume');
   for (const value of [null, '', 'https://example.com', '//example.com', '/\\example.com', '/\n/example.com']) assert.equal(safeAuthRedirect(value), null);
 });
+
+test('business and hiring intent survive shared sign-in without changing entitlements', () => {
+  for (const intent of ['indigenous-business', 'hiring']) {
+    assert.equal(authIntent.authIntentHref('/login',new URLSearchParams({intent})),`/login?intent=${intent}`);
+    assert.equal(authIntent.postSignupDestination(new URLSearchParams({intent}),'/org/dashboard'),'/org/dashboard');
+  }
+  assert.equal(authIntent.authIntentHref('/login',new URLSearchParams({intent:'admin'})),'/login');
+});

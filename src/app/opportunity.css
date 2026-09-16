@@ -922,3 +922,16 @@ a:focus-visible > .op-job-card {
 .demo-banner { padding: 14px 24px; background: #0a3844; color: #e1fffa; font-size: 13px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; }
 .demo-input { display: block; width: 100%; min-height: 44px; padding: 11px 13px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 9px; font-size: 16px; }
 .demo-input:focus-visible { outline: 2px solid #0d9488; outline-offset: 2px; }
+.hiring-fields { border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin: 20px 0; min-width: 0; color: var(--text); }
+.hiring-fields legend, .hiring-summary h3 { font-size: 18px; font-weight: 750; }
+.hiring-fields > p { margin: 10px 0 18px; color: var(--text-sec); line-height: 1.6; }
+.hiring-fields label { display: block; font-size: 14px; margin: 8px 0; }
+.hiring-fields label input:not([type="checkbox"]), .hiring-fields select, .hiring-fields textarea { display: block; width: 100%; min-height: 44px; margin-top: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 16px; }
+.hiring-fields .hiring-check { display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; padding: 8px 0; }
+.hiring-check input { margin-top: 4px; width: 18px; height: 18px; flex-shrink: 0; accent-color: #0d9488; }
+.hiring-fields-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 20px; }
+.hiring-summary { padding: 22px; margin: 24px 0; border: 1px solid var(--border); border-radius: 16px; background: var(--card); }
+.hiring-summary dl > div { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.hiring-summary dt { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+.hiring-summary dd { margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
+@media(max-width:640px) { .hiring-fields-grid { grid-template-columns: 1fr; } .hiring-fields { padding: 16px; } }

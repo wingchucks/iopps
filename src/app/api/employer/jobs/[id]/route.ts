@@ -1,3 +1,4 @@
+import { normalizeHiringDetails } from "@/lib/job-hiring-details";
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
@@ -16,6 +17,7 @@ export const runtime = "nodejs";
 type JobStatus = "active" | "draft" | "closed";
 
 interface EmployerJobInput {
+  hiringDetails?: unknown;
   title?: string;
   department?: string;
   category?: string;
@@ -248,7 +250,11 @@ export async function PUT(
         }, { merge: true });
       }
 
+      const hiringDetails = body.hiringDetails === undefined ? undefined : normalizeHiringDetails(body.hiringDetails, current.data);
       const updates = stripUndefined({
+        hiringDetails,
+        willTrain: hiringDetails?.willTrain,
+        driversLicense: hiringDetails?.driversLicense,
         title: normalizeString(body.title),
         department: normalizeString(body.department),
         category: normalizeString(body.category),

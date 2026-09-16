@@ -1,4 +1,5 @@
 "use client";
+import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
 
 import { Suspense, useState, useEffect } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -297,6 +298,7 @@ function JobDetailContent() {
             </div>
           ) : null}
 
+          <HiringDetailsSummary value={job.hiringDetails} legacy={job} />
           {/* Requirements */}
           {job.requirements && (
             <>
