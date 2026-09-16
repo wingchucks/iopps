@@ -31,7 +31,7 @@ test('signup resume and reverse sign-in links keep intent without recreating an 
 test('auth pages wire intent through signup, verification and onboarding', () => {
   const read = (p: string) => readFileSync(`src/${p}`, 'utf8');
   assert.match(read('app/login/page.tsx'), /href=\{authIntentHref\("\/signup", searchParams\)\}/);
-  assert.match(read('app/login/page.tsx'), /authIntentHref\(`\/org\/onboarding/);
+  assert.match(read('app/login/page.tsx'), /authIntentHref\(destination, searchParams\)/);
   assert.match(read('app/verify-email/page.tsx'), /safeAuthRedirect\(nextPath\)/);
   assert.match(read('app/verify-email/page.tsx'), /encodeURIComponent\(redirectPath\)/);
   for (const p of ['app/signup/page.tsx', 'app/org/signup/page.tsx', 'app/org/onboarding/page.tsx']) assert.match(read(p), /authIntentHref|postSignupDestination/);

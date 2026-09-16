@@ -14,7 +14,9 @@ test('application withdrawal permissions and resume ownership', {
   const { getAuth, connectAuthEmulator, signInWithEmailAndPassword } = await import('firebase/auth');
   const { getFirestore, connectFirestoreEmulator, doc, updateDoc, getDoc, serverTimestamp, Timestamp, terminate } = await import('firebase/firestore');
   const { getStorage, connectStorageEmulator, ref, uploadBytes, deleteObject } = await import('firebase/storage');
-  const projectId = 'demo-iopps-preview';
+  // The Auth emulator routes client API keys to the CLI's default project.
+  const projectId = process.env.GCLOUD_PROJECT || 'demo-iopps-preview';
+  assert.ok(projectId.startsWith('demo-'), 'Use a demo project for emulator tests');
   const server = admin.initializeApp({ projectId }, 'application-rule-tests');
   const client = initializeApp({ projectId, apiKey: 'demo-local-key', storageBucket: `${projectId}.appspot.com` }, 'application-rule-tests');
   const db = getFirestore(client);

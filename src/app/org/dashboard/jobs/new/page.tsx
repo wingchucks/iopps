@@ -11,9 +11,7 @@ import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import FeaturedJobControl, { type FeaturedJobSummary } from "@/components/FeaturedJobControl";
 import { useAuth } from "@/lib/auth-context";
-import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
-import { getOrganization } from "@/lib/firestore/organizations";
 import type { Organization } from "@/lib/firestore/organizations";
 
 /* ------------------------------------------------------------------ */
@@ -613,6 +611,7 @@ export default function NewJobWizardPage() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const [step, setStep] = useState<WizardStep>(0);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -639,14 +638,9 @@ export default function NewJobWizardPage() {
           setLoading(false);
           return;
         }
+        setLoadError("Your organization couldn’t be loaded. Please reload before posting a job.");
       } catch {
-        // fall through
-      }
-      const mp = await getMemberProfile(user.uid);
-      if (mp?.orgId) {
-        setProfile(mp);
-        const organization = await getOrganization(mp.orgId);
-        setOrg(organization);
+        setLoadError("Your organization couldn’t be loaded. Check your connection and reload.");
       }
       setLoading(false);
     })();
@@ -688,7 +682,7 @@ export default function NewJobWizardPage() {
 
   /* ---- Save ---- */
   const handleSave = async (status: "active" | "draft") => {
-    if (!profile?.orgId || !user) return;
+    if (!profile?.orgId || !user) { setSubmitError("Your organization session isn’t ready. Please reload and try again."); return; }
     setSubmitError("");
     setSaving(true);
     try {
@@ -788,7 +782,7 @@ export default function NewJobWizardPage() {
               padding: "32px 16px 64px",
             }}
           >
-            {loading ? (
+            {loadError ? <div role="alert" className="employer-panel"><h1>Unable to open job posting</h1><p>{loadError}</p><button onClick={() => window.location.reload()} className="employer-primary mt-4">Reload</button></div> : loading ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div className="skeleton" style={{ height: 32, width: 240, borderRadius: 10 }} />
                 <div className="skeleton" style={{ height: 400, borderRadius: 16 }} />

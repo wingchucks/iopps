@@ -1,4 +1,5 @@
 "use client";
+import { updateApplicationBatch } from "@/lib/employer-application-updates";
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
@@ -40,6 +41,9 @@ export default function OrgApplicationsPage() {
   const { user } = useAuth();
   const [groups, setGroups] = useState<GroupedApplications[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState("");
+  const [actionNotice, setActionNotice] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
   const [loadError, setLoadError] = useState("");
   // Applicant profiles cache: userId -> MemberProfile
   const [profiles, setProfiles] = useState<Record<string, MemberProfile>>({});
@@ -113,30 +117,26 @@ export default function OrgApplicationsPage() {
     postId: string,
     newStatus: ApplicationStatus
   ) => {
-    if (!user) return;
-    const idToken = await user.getIdToken();
-    const response = await fetch("/api/employer/applications", {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ appId, status: newStatus }),
-    });
-    if (!response.ok) throw new Error("Failed to update application status");
-    setGroups((prev) =>
-      prev.map((g) => {
-        if (g.post.id !== postId) return g;
-        return {
-          ...g,
-          applications: g.applications.map((a) =>
-            a.id === appId ? { ...a, status: newStatus } : a
-          ),
-        };
-      })
-    );
+    if (!user || updatingStatus[appId] || bulkUpdating) return;
+    setActionError(""); setActionNotice("");
+    setUpdatingStatus(prev => ({...prev,[appId]:true}));
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/employer/applications", {
+        method:"PUT", headers:{Authorization:`Bearer ${idToken}`,"Content-Type":"application/json"},
+        body:JSON.stringify({appId,status:newStatus}),
+      });
+      if (!response.ok) throw new Error("Application status wasn’t saved. Please retry.");
+      setGroups(prev=>prev.map(g=>g.post.id!==postId?g:{...g,applications:g.applications.map(a=>a.id===appId?{...a,status:newStatus}:a)}));
+      setActionNotice("Application status saved.");
+    } catch (error) { setActionError(error instanceof Error ? error.message : "Application status wasn’t saved. Please retry."); }
+    finally { setUpdatingStatus(prev=>({...prev,[appId]:false})); }
   };
 
   const handleSaveNote = async (appId: string) => {
     const note = editingNote[appId];
     if (note === undefined) return;
+    setActionError(""); setActionNotice("");
     setSavingNote((prev) => ({ ...prev, [appId]: true }));
     try {
       if (!user) return;
@@ -156,7 +156,9 @@ export default function OrgApplicationsPage() {
           ),
         }))
       );
+      setActionNotice("Reviewer note saved.");
     } catch (err) {
+      setActionError("Reviewer note wasn’t saved. Your text is still here—please retry.");
       console.error("Failed to save note:", err);
     } finally {
       setSavingNote((prev) => ({ ...prev, [appId]: false }));
@@ -164,39 +166,25 @@ export default function OrgApplicationsPage() {
   };
 
   const handleBulkStatusChange = async () => {
-    if (selected.size === 0) return;
-    setBulkUpdating(true);
+    if (!user || !selected.size || bulkUpdating || Object.values(updatingStatus).some(Boolean)) return;
+    setBulkUpdating(true); setActionError(""); setActionNotice("");
     try {
-      await Promise.all(
-        Array.from(selected).map(async (appId) => {
-          if (!user) return;
-          const idToken = await user.getIdToken();
-          const response = await fetch("/api/employer/applications", {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ appId, status: bulkStatus }),
-          });
-          if (!response.ok) throw new Error("Failed to update application status");
-        })
-      );
-      // Update local state
-      setGroups((prev) =>
-        prev.map((g) => ({
-          ...g,
-          applications: g.applications.map((a) =>
-            selected.has(a.id) ? { ...a, status: bulkStatus } : a
-          ),
-        }))
-      );
-      setSelected(new Set());
-    } catch (err) {
-      console.error("Bulk update failed:", err);
-    } finally {
-      setBulkUpdating(false);
-    }
+      const idToken = await user.getIdToken();
+      const result = await updateApplicationBatch([...selected], async appId => {
+        const response = await fetch("/api/employer/applications", {method:"PUT",headers:{Authorization:`Bearer ${idToken}`,"Content-Type":"application/json"},body:JSON.stringify({appId,status:bulkStatus})});
+        if (!response.ok) throw new Error("Status update failed");
+      });
+      const saved = new Set(result.saved);
+      setGroups(prev=>prev.map(g=>({...g,applications:g.applications.map(a=>saved.has(a.id)?{...a,status:bulkStatus}:a)})));
+      setSelected(new Set(result.failed));
+      if (result.failed.length) setActionError(`${result.saved.length} saved; ${result.failed.length} couldn’t be updated. Failed applications remain selected for retry.`);
+      else setActionNotice(`${result.saved.length} application statuses saved.`);
+    } catch { setActionError("Application statuses couldn’t be saved. Please retry."); }
+    finally { setBulkUpdating(false); }
   };
 
   const toggleSelect = (appId: string) => {
+    if (bulkUpdating) return;
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(appId)) next.delete(appId);
@@ -206,6 +194,7 @@ export default function OrgApplicationsPage() {
   };
 
   const selectAll = () => {
+    if (bulkUpdating) return;
     if (selected.size === allApps.length) {
       setSelected(new Set());
     } else {
@@ -337,6 +326,7 @@ export default function OrgApplicationsPage() {
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <select
                 aria-label={`Application status for ${displayName}`}
+                disabled={bulkUpdating || updatingStatus[app.id]}
                 value={app.status}
                 onChange={(e) =>
                   handleStatusChange(
@@ -564,6 +554,8 @@ export default function OrgApplicationsPage() {
             </div>
           </div>
 
+          {actionError && <p role="alert" className="p-4 mb-4 rounded-xl bg-red-50 text-red-800">{actionError}</p>}
+          {actionNotice && <p role="status" className="p-4 mb-4 rounded-xl bg-teal-50 text-teal-900">{actionNotice}</p>}
           {/* Bulk action bar */}
           {selected.size > 0 && (
             <div
@@ -580,6 +572,8 @@ export default function OrgApplicationsPage() {
                 {selected.size} selected
               </span>
               <select
+                aria-label="Bulk application status"
+                disabled={bulkUpdating}
                 value={bulkStatus}
                 onChange={(e) => setBulkStatus(e.target.value as ApplicationStatus)}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer"
@@ -597,7 +591,7 @@ export default function OrgApplicationsPage() {
               </select>
               <button
                 onClick={handleBulkStatusChange}
-                disabled={bulkUpdating}
+                disabled={bulkUpdating || Object.values(updatingStatus).some(Boolean)}
                 className="px-4 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                 style={{
                   background: "var(--teal)",
@@ -609,6 +603,7 @@ export default function OrgApplicationsPage() {
               </button>
               <button
                 onClick={() => setSelected(new Set())}
+                disabled={bulkUpdating}
                 className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                 style={{
                   background: "var(--bg)",
@@ -855,7 +850,8 @@ export default function OrgApplicationsPage() {
                                 {/* Move to dropdown */}
                                 <select
                                   aria-label={`Application status for ${displayName}`}
-                value={app.status}
+                                  disabled={bulkUpdating || updatingStatus[app.id]}
+                                  value={app.status}
                                   onChange={(e) =>
                                     handleStatusChange(
                                       app.id,

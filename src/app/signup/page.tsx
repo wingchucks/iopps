@@ -5,7 +5,7 @@ import { authIntentHref, postSignupDestination, signupPasswordError } from "@/li
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { auth, getAppCheckTokenValue, storage } from "@/lib/firebase";
+import { getAppCheckTokenValue, storage } from "@/lib/firebase";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 import {
   BackgroundMesh, TopBar, ProgressBar, StepDots, StepHeader,
@@ -220,8 +220,7 @@ function UnifiedSignupContent() {
 
     setSubmitting(true);
     try {
-      await reloadUser();
-      if (!auth.currentUser?.emailVerified) {
+      if (!await reloadUser()) {
         setError("Please verify your email before continuing.");
         return;
       }
@@ -231,6 +230,8 @@ function UnifiedSignupContent() {
       } else {
         router.push(memberDestination);
       }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "We couldn’t verify your session. Please retry.");
     } finally {
       setSubmitting(false);
     }
@@ -636,12 +637,12 @@ function UnifiedSignupContent() {
 
         {/* STEP 11: Employer Brand */}
         {step === 11 && (<div>
-          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 2 of 3" : "Organization Setup — 2 of 3"} title="Brand your" highlight="Profile" desc="Add your logo and a cover image so people recognize your work. You can also add these later." />
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 2 of 3" : "Organization Setup — 2 of 3"} title="Brand your" highlight="Profile" desc="Add your logo to complete your organization profile. A cover image is optional." />
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
-            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Logo</div><UploadZone label="Upload Logo" hint="400×400px, PNG or JPG" hasFile={!!empLogoFile} onFileChange={setEmpLogoFile} /></div>
+            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Logo (required)</div><UploadZone label="Upload Logo" hint="400×400px, PNG or JPG" hasFile={!!empLogoFile} onFileChange={setEmpLogoFile} /></div>
             <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Cover Image</div><UploadZone label="Upload Cover" hint="1200×400px recommended" hasFile={!!empBannerFile} onFileChange={setEmpBannerFile} /></div>
           </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(10)}>← Back</BtnGhost><BtnSecondary onClick={() => goTo(12)}>Skip for now</BtnSecondary><BtnPrimary onClick={() => goTo(12)}>Continue →</BtnPrimary></div>
+          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(10)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(12)} disabled={!empLogoFile}>Continue →</BtnPrimary></div>
         </div>)}
 
         {/* STEP 12: Employer Launch */}
