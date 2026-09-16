@@ -216,7 +216,7 @@ function BusinessCard({ org }: { org: Organization }) {
   return (
     <Link href={`/org/${org.slug || org.id}`} className="no-underline">
       <Card
-        className="h-full transition-shadow hover:shadow-lg"
+        className="journey-business-card h-full transition-shadow hover:shadow-lg"
         style={isPremium ? { borderColor: "rgba(251,191,36,.28)", boxShadow: "0 20px 34px -28px rgba(251,191,36,.45)" } : undefined}
       >
         <div style={{ padding: 20 }}>
