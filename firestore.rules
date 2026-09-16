@@ -90,12 +90,10 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Scholarships: public read, admin write, org owner/admin can create/update/delete their org's
+    // Scholarships: public API reads; organization edits use authenticated server routes.
     match /scholarships/{scholarshipId} {
-      allow read: if true;
+      allow read: if isAdmin() || isOwner(resource.data.get('orgId', '')) || isOrgMember(resource.data.get('orgId', ''));
       allow write: if isAdmin();
-      allow create: if isOrgManager(request.resource.data.orgId);
-      allow update, delete: if isOrgManager(resource.data.orgId);
     }
 
     // Conferences: public read, admin write, org owner/admin can create/update/delete their org's
@@ -106,12 +104,10 @@ service cloud.firestore {
       allow update, delete: if isOrgManager(resource.data.orgId);
     }
 
-    // Events: public read, admin write, org owner/admin can create/update/delete their org's
+    // Events: public API reads; organization edits use authenticated server routes.
     match /events/{eventId} {
-      allow read: if true;
+      allow read: if isAdmin() || isOwner(resource.data.get('orgId', '')) || isOrgMember(resource.data.get('orgId', ''));
       allow write: if isAdmin();
-      allow create: if isOrgManager(request.resource.data.orgId);
-      allow update, delete: if isOrgManager(resource.data.orgId);
     }
 
     // RSS feeds collection: public read, admin write
@@ -382,6 +378,11 @@ service cloud.firestore {
       );
       allow create: if isSignedIn() && request.resource.data.menteeId == request.auth.uid;
       allow update: if isSignedIn() && resource.data.mentorId == request.auth.uid;
+    }
+
+    // Unpublished scholarship and event content is only accessible through owner APIs.
+    match /organizationOpportunityDrafts/{id} {
+      allow read, write: if false;
     }
 
     // Default: deny all

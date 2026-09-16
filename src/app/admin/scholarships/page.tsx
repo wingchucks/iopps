@@ -6,7 +6,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { Card, CardContent, Badge } from "@/components/ui";
 import { formatDate } from "@/lib/format-date";
 import {
-  getScholarships,
+  getAdminScholarships,
   updateScholarship,
   deleteScholarship,
   type Scholarship,
@@ -152,7 +152,7 @@ export default function AdminScholarshipsPage() {
 
   // Load real data from Firestore
   useEffect(() => {
-    getScholarships()
+    getAdminScholarships()
       .then((items) => setScholarships(items.map(toRow)))
       .catch((err) => console.error("Failed to load scholarships:", err))
       .finally(() => setLoading(false));

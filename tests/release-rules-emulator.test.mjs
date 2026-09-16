@@ -37,7 +37,7 @@ test('release rules preserve organization management while isolating private app
     await setDoc(invite, { email: 'invite@example.test' });
     assert.equal((await getDoc(invite)).data().email, 'invite@example.test');
     await deleteDoc(invite);
-    for (const collection of ['events', 'conferences', 'scholarships']) {
+    for (const collection of ['conferences']) {
       const item = doc(clientDb, collection, 'release-owned-item');
       await setDoc(item, { orgId, title: 'Fictional' });
       await updateDoc(item, { title: 'Updated' });

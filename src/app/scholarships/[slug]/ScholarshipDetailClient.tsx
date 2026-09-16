@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { isJobRecordExpired } from "@/lib/listing-freshness";
 import AppShell from "@/components/AppShell";
@@ -12,11 +12,11 @@ import Card from "@/components/Card";
 import ReportButton from "@/components/ReportButton";
 import ShareButton from "@/components/ShareButton";
 import { useAuth } from "@/lib/auth-context";
-import { getPost, getPosts } from "@/lib/firestore/posts";
+import { plainOpportunityText } from "@/lib/opportunity-posting";
 import { getPublicOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { getScholarshipBySlug, getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
-import { displayAmount, displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
+import { buildLoginRedirectHref, displayAmount, displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
 
 interface ScholarshipOwnerMeta {
   ownerType?: "school" | "business" | "organization" | "unknown";
@@ -53,7 +53,7 @@ export default function ScholarshipDetailClient() {
   return (
     <AppShell>
       <div className="min-h-screen bg-bg">
-        <ScholarshipDetailContent />
+        <Suspense fallback={null}><ScholarshipDetailContent /></Suspense>
       </div>
     </AppShell>
   );
@@ -66,107 +66,63 @@ function ScholarshipDetailContent() {
   const [org, setOrg] = useState<Organization | null>(null);
   const [related, setRelated] = useState<Scholarship[]>([]);
   const [ownerMeta, setOwnerMeta] = useState<ScholarshipOwnerMeta | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [notice, setNotice] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [attempt, setAttempt] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [actionLoading, setActionLoading] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
+    let live = true;
+    setLoading(true); setLoadError(""); setScholarship(null); setOrg(null); setSaved(false);
     async function load() {
       try {
-        let data = await getScholarshipBySlug(slug);
-
-        if (!data) {
-          const post = await getPost(`scholarship-${slug}`);
-          if (post) {
-            data = {
-              id: post.id,
-              title: post.title,
-              slug: post.slug || slug,
-              description: post.description,
-              eligibility: post.eligibility,
-              amount: post.amount,
-              deadline: post.deadline,
-              orgId: post.orgId,
-              orgName: post.orgName,
-              orgShort: post.orgShort,
-              applicationUrl: post.applicationUrl,
-              requirements: post.requirements,
-              location: post.location,
-              featured: post.featured,
-              badges: post.badges,
-              source: post.source,
-            };
-          }
-        }
-
-        setScholarship(data);
-        if (data?.orgId) {
-          const orgData = await getPublicOrganization(data.orgId);
-          setOrg(orgData);
-        }
-        const publicScholarshipsRes = await fetch("/api/scholarships").catch(() => null);
-        if (publicScholarshipsRes?.ok) {
-          const payload = await publicScholarshipsRes.json() as { scholarships?: Array<Record<string, unknown>> };
-          const normalized = (payload.scholarships || []).find((item) =>
-            String(item.slug || item.id || "") === slug || String(item.id || "") === data?.id,
-          );
-          if (normalized) {
-            setOwnerMeta({
-              ownerType: normalized.ownerType as ScholarshipOwnerMeta["ownerType"],
-              ownerSlug: typeof normalized.ownerSlug === "string" ? normalized.ownerSlug : undefined,
-              ownerName: typeof normalized.ownerName === "string" ? normalized.ownerName : undefined,
-              isPartner: Boolean(normalized.isPartner),
-              partnerTier: typeof normalized.partnerTier === "string" ? normalized.partnerTier as ScholarshipOwnerMeta["partnerTier"] : undefined,
-              partnerLabel: typeof normalized.partnerLabel === "string" ? normalized.partnerLabel : undefined,
-              partnerBadgeLabel: typeof normalized.partnerBadgeLabel === "string" ? normalized.partnerBadgeLabel : undefined,
-            });
-          }
-        }
-        if (data && user) {
-          const isSaved = await isPostSaved(user.uid, data.id);
-          setSaved(isSaved);
-        }
-
-        let allScholarships = await getScholarships();
-        if (allScholarships.length === 0) {
-          const posts = await getPosts({ type: "scholarship", max: 10 });
-          allScholarships = posts.map((p) => ({
-            id: p.id,
-            title: p.title,
-            slug: p.slug || p.id.replace(/^scholarship-/, ""),
-            orgName: p.orgName,
-            amount: p.amount,
-            deadline: p.deadline,
-          }));
-        }
-        setRelated(allScholarships.filter((s) => s.id !== data?.id).slice(0, 3));
-      } catch (err) {
-        console.error("Failed to load scholarship:", err);
-      } finally {
-        setLoading(false);
-      }
+        const [data, all] = await Promise.all([getScholarshipBySlug(slug), getScholarships().catch(() => [])]);
+        const [organization, savedItem] = await Promise.all([data?.orgId ? getPublicOrganization(data.orgId).catch(() => null) : null, data && user ? isPostSaved(user.uid, data.id).catch(() => false) : false]);
+        if (live) { setScholarship(data); setOwnerMeta(data as ScholarshipOwnerMeta); setOrg(organization); setSaved(savedItem); setRelated(all.filter(item => item.id !== data?.id).slice(0, 3)); }
+      } catch (error) { if (live) setLoadError(error instanceof Error ? error.message : "This opportunity could not load."); }
+      finally { if (live) setLoading(false); }
     }
-    load();
-  }, [slug, user]);
+    void load();
+    return () => { live = false; };
+  }, [slug, user, attempt]);
 
   const handleSave = async () => {
-    if (!user || !scholarship) return;
+    if (!scholarship) return;
+    if (!user) { router.push(buildLoginRedirectHref(`${pathname || `/scholarships/${slug}`}?save=1`)); return; }
     setActionLoading("save");
     try {
       if (saved) {
         await unsavePost(user.uid, scholarship.id);
         setSaved(false);
+        setNotice("Removed from your saved opportunities.");
       } else {
         await savePost(user.uid, scholarship.id, scholarship.title, "scholarship");
         setSaved(true);
+        setNotice("Saved. Find it in Saved Items anytime.");
       }
     } catch (err) {
       console.error("Save failed:", err);
+      setNotice("Your saved opportunity could not update. Please try again.");
     } finally {
       setActionLoading("");
     }
   };
+
+  useEffect(() => {
+    if (!user || !scholarship || loading || searchParams.get("save") !== "1") return;
+    const clean = new URLSearchParams(searchParams.toString()); clean.delete("save");
+    router.replace(`${pathname}${clean.size ? `?${clean}` : ""}`);
+    if (!saved) void handleSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, scholarship, loading, saved]);
+
+  if (loadError) return <div role="alert" className="mx-auto max-w-xl p-8 text-center"><h1 className="text-2xl font-bold">Opportunity couldn’t load</h1><p className="my-4">{loadError}</p><Button onClick={() => setAttempt(n => n + 1)}>Try again</Button></div>;
 
   if (loading) {
     return (
@@ -174,7 +130,7 @@ function ScholarshipDetailContent() {
         <div className="skeleton h-4 w-24 rounded mb-4" />
         <div className="skeleton h-[180px] rounded-2xl mb-6" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
+          <div className="min-w-0 md:col-span-2">
             <div className="skeleton h-[150px] rounded-2xl mb-6" />
             <div className="skeleton h-[100px] rounded-2xl" />
           </div>
@@ -202,16 +158,11 @@ function ScholarshipDetailContent() {
   const ownerHref = ownerMeta?.ownerSlug ? (ownerMeta.ownerType === "school" ? `/schools/${ownerMeta.ownerSlug}` : `/org/${ownerMeta.ownerSlug}`) : (org ? `/org/${org.id}` : "#");
   const ownerName = ownerMeta?.ownerName || scholarship.orgName || org?.name || "";
   const sourceLabel = getSourceLabel(ownerMeta?.ownerType || (org?.type === "school" ? "school" : undefined));
-  const orgLink = ownerHref;
+  const orgLink = org ? ownerHref : null;
   const isPremium = org?.tier === "premium";
   const intakeClosed = isJobRecordExpired({...scholarship});
   const closingSoon = !intakeClosed && isClosingSoon(scholarship.deadline);
   const amountLabel = displayAmount(scholarship.amount) || "Funding varies";
-  const descriptionHasHtml = typeof scholarship.description === "string" && scholarship.description.includes("<");
-  const eligibilityHasHtml = typeof scholarship.eligibility === "string" && scholarship.eligibility.includes("<");
-  const applicationInstructionsHasHtml =
-    typeof scholarship.applicationInstructions === "string" &&
-    scholarship.applicationInstructions.includes("<");
   const scholarshipApplicationHref = normalizeExternalHref(scholarship.applicationUrl);
   const scholarshipApplicationLinkProps = isMailtoHref(scholarshipApplicationHref)
     ? {}
@@ -263,7 +214,7 @@ function ScholarshipDetailContent() {
             )}
             {closingSoon && <Badge text="Closing Soon" color="var(--red)" bg="var(--red-soft)" small />}
           </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-text mb-2">{scholarship.title}</h1>
+          <h1 className="break-words text-2xl sm:text-4xl font-extrabold text-text mb-2">{scholarship.title}</h1>
           <div className="flex flex-wrap justify-center gap-4 text-sm text-text-sec">
             {scholarship.orgName && <span>{scholarship.orgName}</span>}
             <span>&#128176; {amountLabel}</span>
@@ -274,7 +225,7 @@ function ScholarshipDetailContent() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
+        <div className="min-w-0 md:col-span-2">
           {(org || ownerName) && (
             <div className="flex items-center gap-3 mb-6">
               <Avatar
@@ -283,9 +234,7 @@ function ScholarshipDetailContent() {
                 gradient={isPremium ? "linear-gradient(135deg, var(--navy), var(--teal))" : undefined}
               />
               <div>
-                <Link href={orgLink} className="text-[15px] text-teal font-bold no-underline hover:underline">
-                  {ownerName}
-                </Link>
+                {orgLink ? <Link href={orgLink} className="text-[15px] text-teal font-bold no-underline hover:underline">{ownerName}</Link> : <p className="font-bold text-text">{ownerName}</p>}
                 <p className="m-0 text-[11px] text-text-muted">{sourceLabel}</p>
                 {isPremium && (
                   <div className="flex items-center gap-1.5">
@@ -296,51 +245,25 @@ function ScholarshipDetailContent() {
             </div>
           )}
 
+          {scholarship.imageUrl && <a href={scholarship.imageUrl} target="_blank" rel="noopener noreferrer" className="mb-5 inline-flex min-h-11 items-center font-bold text-teal underline">View opportunity poster ↗</a>}
           {scholarship.description && (
             <>
-              <h3 className="text-lg font-bold text-text mb-2">About This Scholarship</h3>
-              {descriptionHasHtml ? (
-                <div
-                  className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: scholarship.description }}
-                />
-              ) : (
-                <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                  {scholarship.description}
-                </p>
-              )}
+              <h3 className="text-lg font-bold text-text mb-2">About This Opportunity</h3>
+              <p className="mb-6 whitespace-pre-line break-words text-sm leading-relaxed text-text-sec">{plainOpportunityText(scholarship.description)}</p>
             </>
           )}
 
           {scholarship.eligibility && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">Eligibility</h3>
-              {eligibilityHasHtml ? (
-                <div
-                  className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: scholarship.eligibility }}
-                />
-              ) : (
-                <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                  {scholarship.eligibility}
-                </p>
-              )}
+              <p className="mb-6 whitespace-pre-line break-words text-sm leading-relaxed text-text-sec">{plainOpportunityText(scholarship.eligibility)}</p>
             </>
           )}
 
           {scholarship.applicationInstructions && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">Application Instructions</h3>
-              {applicationInstructionsHasHtml ? (
-                <div
-                  className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: scholarship.applicationInstructions }}
-                />
-              ) : (
-                <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                  {scholarship.applicationInstructions}
-                </p>
-              )}
+              <p className="mb-6 whitespace-pre-line break-words text-sm leading-relaxed text-text-sec">{plainOpportunityText(scholarship.applicationInstructions)}</p>
             </>
           )}
 
@@ -479,7 +402,7 @@ function ScholarshipDetailContent() {
 
           {related.length > 0 && (
             <>
-              <h3 className="text-lg font-bold text-text mb-3">Related Scholarships</h3>
+              <h3 className="text-lg font-bold text-text mb-3">More Funding Opportunities</h3>
               <div className="flex flex-col gap-2 mb-6">
                 {related.map((r) => {
                   const rSlug = r.slug || r.id;
@@ -514,43 +437,16 @@ function ScholarshipDetailContent() {
             <div style={{ padding: 20 }}>
               {intakeClosed && <p role="status" className="mb-3 text-sm font-semibold text-text-muted">Intake closed. This program may recur; check the provider for the next application round.</p>}
               {scholarshipApplicationHref ? (
-                <a href={scholarshipApplicationHref} {...scholarshipApplicationLinkProps} className="no-underline">
-                  <Button
-                    primary
-                    full
-                    style={{
-                      background: "var(--green)",
-                      padding: "14px 24px",
-                      borderRadius: 14,
-                      fontSize: 16,
-                      fontWeight: 700,
-                      marginBottom: 12,
-                    }}
-                  >
-                    {intakeClosed ? "Check next intake" : "Apply Now"} &#8594;
-                  </Button>
+                <a href={scholarshipApplicationHref} {...scholarshipApplicationLinkProps} className="mb-3 flex min-h-12 items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-center font-bold text-white no-underline">
+                  {intakeClosed ? "Check next intake" : "Apply on provider website"} ↗
                 </a>
-              ) : (
-                <Button
-                  primary
-                  full
-                  style={{
-                    background: "var(--teal)",
-                    padding: "14px 24px",
-                    borderRadius: 14,
-                    fontSize: 16,
-                    fontWeight: 700,
-                    marginBottom: 12,
-                    opacity: 0.6,
-                    cursor: "default",
-                  }}
-                >
-                  Application Details TBD
-                </Button>
-              )}
+              ) : <p className="mb-4 rounded-xl bg-slate-100 p-3 text-sm text-slate-700">{scholarship.applicationInstructions ? "Follow the application instructions on this page." : scholarship.contactEmail ? "Contact the provider below for application details." : "An application link has not been provided. Confirm details with the provider."}</p>}
+              {scholarshipApplicationHref && <p className="mb-4 break-words text-xs text-text-muted">Opens {scholarshipApplicationHref.replace(/^https?:\/\//, "").split("/")[0]}. Confirm eligibility and the current deadline with the provider.</p>}
+              {notice && <p role="status" className="mb-3 text-sm text-teal-800">{notice}</p>}
               <Button
                 full
                 onClick={handleSave}
+                disabled={actionLoading !== ""}
                 style={{
                   borderRadius: 14,
                   padding: "12px 24px",
@@ -641,9 +537,9 @@ function ScholarshipDetailContent() {
                     {(org.description || "").length > 120 ? `${(org.description || "").slice(0, 120)}...` : org.description}
                   </p>
                 )}
-                <Link href={orgLink} className="text-xs text-teal font-semibold no-underline hover:underline">
+                {orgLink && <Link href={orgLink} className="text-xs text-teal font-semibold no-underline hover:underline">
                   {ownerMeta?.ownerType === "school" ? "View School Profile" : "View Organization Profile"} &#8594;
-                </Link>
+                </Link>}
               </div>
             </Card>
           )}

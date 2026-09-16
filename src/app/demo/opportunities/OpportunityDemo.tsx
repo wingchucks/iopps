@@ -1,0 +1,14 @@
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+import OpportunityManager from "@/components/opportunities/OpportunityManager";
+import { opportunityButton, opportunityPrimary } from "@/components/opportunities/OpportunityEditor";
+import type { OpportunityKind, OpportunityRecord } from "@/lib/opportunity-posting";
+const examples: Record<OpportunityKind, OpportunityRecord[]> = {
+  events: [{ id: "fictional-event", title: "Community connections day — example", eventType: "Networking", description: "A fictional gathering for exploring the IOPPS event posting flow. No real event is being advertised.", status: "draft", revision: 1, startDate: "2027-06-12", delivery: "in_person", city: "Saskatoon", province: "SK", venue: "Example community centre", price: "Free", contactEmail: "hello@example.invalid", rsvpLink: "https://example.invalid/community-day" }],
+  scholarships: [{ id: "fictional-funding", title: "Next step learning bursary — example", category: "Bursary", description: "A fictional bursary used to explore the application information and publishing flow.", status: "draft", revision: 1, amount: "$2,000", deadlineType: "date", deadline: "2027-05-31", eligibility: "Example eligibility only: learners beginning a post-secondary program. This is not a real funding offer.", applicationUrl: "https://example.invalid/apply", applicationInstructions: "Example: complete the provider’s form and attach a statement of learning goals.", province: "SK", contactEmail: "funding@example.invalid" }],
+};
+export default function OpportunityDemo() {
+  const [kind, setKind] = useState<OpportunityKind>("events");
+  return <main className="min-h-screen bg-slate-100 px-3 py-6 text-slate-900 sm:px-6 sm:py-10"><div className="mx-auto max-w-5xl"><header className="mb-6 rounded-2xl bg-[#102d42] p-5 text-white sm:p-8"><p className="text-xs font-bold uppercase tracking-widest text-cyan-300">IOPPS · Organization preview</p><h1 className="mt-3 text-3xl font-extrabold">More ways to connect.</h1><p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-200">Try creating, editing, publishing and closing an opportunity. This is a fictional workspace; changes stay on this page and reset when you refresh.</p><Link href="/demo/employer" className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-cyan-200">← Back to employer preview</Link></header><div className="mb-5 flex flex-wrap gap-2">{([["events", "Events"], ["scholarships", "Scholarships & funding"]] as const).map(([value, label]) => <button key={value} aria-pressed={kind === value} onClick={() => setKind(value)} className={kind === value ? opportunityPrimary : opportunityButton}>{label}</button>)}</div>{(["events", "scholarships"] as const).map(value => <div key={value} hidden={kind !== value}><OpportunityManager kind={value} demo demoInitial={examples[value]} /></div>)}</div></main>;
+}
