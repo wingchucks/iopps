@@ -209,7 +209,7 @@ function OrgProfileContent() {
   const hasGallery = org.gallery && Array.isArray(org.gallery) && org.gallery.length > 0;
 
   const typeLabel =
-    org.type === "employer" ? "Employer"
+    org.type === "employer" ? "Organization"
     : org.type === "school" ? "Education"
     : org.type === "non-profit" ? "Non-Profit"
     : org.type === "government" ? "Government"
