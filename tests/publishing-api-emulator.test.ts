@@ -111,6 +111,19 @@ test('job location and optional hiring details survive create, unrelated edits, 
   assert.equal(saved?.hiringDetails.trainingDetails, '');
 });
 
+test('employers can revise required documents and return an external job to IOPPS applications', { skip: !enabled }, async t => {
+  const h = await harness(t); const id = h.id('application-settings');
+  assert.equal((await h.create({ title: 'Coordinator', slug: id, status: 'draft', requiresResume: true, requiresCoverLetter: true, requiresReferences: true, applicationUrl: 'https://example.invalid/apply', closingDate: '2099-12-31' })).status, 200);
+  assert.equal((await h.edit(id, { requiresReferences: false, applicationUrl: '', closingDate: '' })).status, 200);
+  const saved = (await h.db.doc(`jobs/${id}`).get()).data();
+  assert.equal(saved?.requiresReferences, false);
+  assert.equal(saved?.requiresResume, true);
+  assert.equal(saved?.requiresCoverLetter, true);
+  assert.equal(saved?.applicationUrl, '');
+  assert.equal(saved?.externalApplyUrl, '');
+  assert.equal(saved?.closingDate, '');
+});
+
 test('concurrent server publishing cannot spend the same featured credit twice', { skip: !enabled }, async t => {
   const h = await harness(t); await h.employer.update({ featuredPostCredits: 1 });
   const a = h.id('race-a'); const b = h.id('race-b');

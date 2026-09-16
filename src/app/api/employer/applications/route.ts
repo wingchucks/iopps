@@ -86,16 +86,17 @@ export async function GET(req: NextRequest) {
     const context = await requireEmployerContext(req);
     const db = getAdminDb();
 
+    // Legacy applications can have either ownership field. Both fields must be
+    // queried even when the employer and organization identifiers are equal.
+    const ownerIds = [...new Set([context.employerId, context.orgId])];
     const [byEmployerSnap, byOrgSnap] = await Promise.all([
-      db.collection("applications").where("employerId", "==", context.employerId).limit(200).get(),
-      context.orgId === context.employerId
-        ? Promise.resolve(null)
-        : db.collection("applications").where("orgId", "==", context.orgId).limit(200).get(),
+      db.collection("applications").where("employerId", "in", ownerIds).limit(200).get(),
+      db.collection("applications").where("orgId", "in", ownerIds).limit(200).get(),
     ]);
 
     const docs = new Map<string, QueryDocumentSnapshot>();
     for (const doc of byEmployerSnap.docs) docs.set(doc.id, doc);
-    for (const doc of byOrgSnap?.docs ?? []) docs.set(doc.id, doc);
+    for (const doc of byOrgSnap.docs) docs.set(doc.id, doc);
 
     const applications = Array.from(docs.values())
       .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }) as Record<string, unknown> & { id: string })

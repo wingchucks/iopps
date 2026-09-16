@@ -37,6 +37,9 @@ interface EditableJob {
   hiringDetails?: unknown;
   willTrain?: boolean;
   driversLicense?: boolean;
+  requiresResume?: boolean;
+  requiresCoverLetter?: boolean;
+  requiresReferences?: boolean;
 }
 
 const employmentTypes = [
@@ -104,6 +107,7 @@ export default function JobEditPage() {
   const [hiringDetails, setHiringDetails] = useState(() => normalizeHiringDetails({}));
   const [closingDate, setClosingDate] = useState("");
   const [applicationUrl, setApplicationUrl] = useState("");
+  const [documents, setDocuments] = useState({ requiresResume: true, requiresCoverLetter: false, requiresReferences: false });
   const [status, setStatus] = useState<PostStatus>("draft");
   const [featured, setFeatured] = useState(false);
   const [featuredSummary, setFeaturedSummary] = useState<FeaturedJobSummary | null>(null);
@@ -142,6 +146,7 @@ export default function JobEditPage() {
         setSkills(p.badges || []);
         setClosingDate(p.closingDate || "");
         setApplicationUrl(p.applicationUrl || p.externalApplyUrl || "");
+        setDocuments({ requiresResume: p.requiresResume === true, requiresCoverLetter: p.requiresCoverLetter === true, requiresReferences: p.requiresReferences === true });
         setHiringDetails(normalizeHiringDetails(p.hiringDetails, p));
         setStatus(p.status || "active");
         setFeatured(Boolean(p.featured));
@@ -195,6 +200,7 @@ export default function JobEditPage() {
           badges: skills,
           closingDate,
           applicationUrl,
+          ...documents,
           status,
           featured,
         }),
@@ -627,12 +633,14 @@ export default function JobEditPage() {
                   {/* Application URL */}
                   <div>
                     <label
+                      htmlFor="job-application-url"
                       className="block text-sm font-semibold mb-1.5"
                       style={{ color: "var(--text)" }}
                     >
                       Application URL (external)
                     </label>
                     <input
+                      id="job-application-url"
                       type="url"
                       value={applicationUrl}
                       onChange={(e) => setApplicationUrl(e.target.value)}
@@ -640,7 +648,22 @@ export default function JobEditPage() {
                       className="w-full px-4 py-3 rounded-xl text-sm"
                       style={inputStyle}
                     />
+                    <p className="text-sm mt-2" style={{ color: "var(--text-sec)" }}>Leave blank to accept applications on IOPPS.</p>
                   </div>
+
+                  <fieldset className="space-y-2" disabled={isImported}>
+                    <legend className="text-sm font-semibold mb-2">Required application documents</legend>
+                    <p className="text-sm" style={{ color: "var(--text-sec)" }}>Choose what applicants must include when applying on IOPPS.</p>
+                    {([
+                      ["requiresResume", "Resume / CV"],
+                      ["requiresCoverLetter", "Cover letter"],
+                      ["requiresReferences", "References"],
+                    ] as const).map(([key, label]) => <label key={key} className="flex min-h-11 items-center gap-3 text-sm cursor-pointer">
+                      <input type="checkbox" checked={documents[key]} className="h-4 w-4 accent-teal-600"
+                        onChange={event => setDocuments(current => ({ ...current, [key]: event.target.checked }))} />
+                      {label}
+                    </label>)}
+                  </fieldset>
 
                   <FeaturedJobControl
                     summary={featuredSummary}
