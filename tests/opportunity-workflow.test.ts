@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateOpportunity, scholarshipDeadlineType, plainOpportunityText, safeOpportunityUrl } from "../src/lib/opportunity-posting.ts";
+import { validateOpportunity, fundingTypeLabel, scholarshipDeadlineType, plainOpportunityText, safeOpportunityUrl } from "../src/lib/opportunity-posting.ts";
 import { matchesEventDate, matchesFundingDeadline, opportunityProvince } from "../src/lib/opportunity-discovery.ts";
 import { createEventCalendar } from "../src/lib/event-calendar.ts";
 import { getEventEndDate, getEventStartDate } from "../src/lib/public-events.ts";
@@ -24,6 +24,9 @@ test("drafts allow incomplete content; publication checks date, location and app
   assert.equal(validateOpportunity("scholarships", { title: "Edit" }, "draft", { businessPlanRequired: "Yes", industrySector: ["Design"] }).data.businessPlanRequired, "Yes");
 });
 test("unknown funding deadlines never imply rolling applications", () => {
+  assert.equal(fundingTypeLabel({ title: "Education bursary", category: "Long imported prose about education eligibility" }), "Bursary");
+  assert.equal(fundingTypeLabel({ title: "Funding program", category: "Business Grant" }), "Business Grant");
+  assert.equal(fundingTypeLabel({ title: "Learning support", category: "Health / all fields" }), "Other Funding");
   for (const deadline of ["", "Check provider", "Varies", "Open", undefined]) assert.equal(scholarshipDeadlineType({ deadline }), "unknown");
   assert.equal(scholarshipDeadlineType({ deadline: "Rolling" }), "rolling");
   const now = new Date("2027-06-12T12:00:00");
@@ -55,6 +58,8 @@ test("public sources cannot resurrect drafts or disclose owner-only fields", () 
   const merged = mergeOpportunitySources([{ id: "id1", slug: "old-listing", status: "draft", active: false }], [{ id: "event-old-listing", slug: "old-listing", title: "Old public copy" }], "events");
   assert.equal(merged.length, 1); assert.equal(publicOpportunityRecord(merged[0], "events"), null);
   for (const status of ["draft", "closed", "rejected", "pending", "flagged"]) assert.equal(publicOpportunityRecord({ id: "x", title: "Private", status }, "scholarships"), null);
+  assert.equal(publicOpportunityRecord({ id: "conference", title: "Conference", status: "active", startDate: "2027-06-12", location: "Calgary, AB", province: "AB" }, "events")?.location, "Calgary, AB");
+  assert.equal(publicOpportunityRecord({ id: "gathering", title: "Gathering", startDate: "2027-06-12", location: "Use the east entrance", city: "Winnipeg", province: "MB" }, "events")?.location, "Use the east entrance, Winnipeg, MB");
   const record = publicOpportunityRecord({ id: "x", title: "Public", status: "active", externalUrl: "https://example.invalid/apply", howToApply: "Apply here", privateNotes: "CANARY", billingEmail: "CANARY", employerId: "org", organization: "Provider", description: '<p>Hello</p><script>alert(1)</script>' }, "scholarships")!;
   assert.equal(record.applicationUrl, "https://example.invalid/apply"); assert.equal(record.applicationInstructions, "Apply here"); assert.equal(record.orgName, "Provider");
   assert.ok(!JSON.stringify(record).includes("CANARY")); assert.equal(record.description, "Hello");

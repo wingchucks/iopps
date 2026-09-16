@@ -24,7 +24,12 @@ export function publicOpportunityRecord(raw: JsonRecord, kind: OpportunityKind):
   record.id = raw.id;
   record.slug = raw.slug || String(raw.id).replace(kind === "events" ? /^event-/ : /^scholarship-/, "");
   record.orgId = raw.orgId || raw.employerId || "";
-  record.location = raw.delivery === "online" ? "Online" : [raw.venue, raw.city, raw.province].filter(Boolean).join(", ") || normalized.location || "";
+  const originalLocation = String(normalized.location || "").trim();
+  const locationParts = originalLocation ? [originalLocation] : [];
+  for (const value of [raw.venue, raw.city, raw.province]) {
+    if (typeof value === "string" && value.trim() && !locationParts.some(part => part.toLowerCase().split(/[,;]\s*/).includes(value.trim().toLowerCase()))) locationParts.push(value.trim());
+  }
+  record.location = raw.delivery === "online" ? "Online" : locationParts.join(", ");
   for (const key of ["description", "eligibility", "applicationInstructions"]) if (record[key]) record[key] = plainOpportunityText(record[key]);
   record.orgName = raw.orgName || raw.organizerName || raw.organization || "";
   for (const key of ["applicationUrl", "rsvpLink", "imageUrl"]) record[key] = safeOpportunityUrl(record[key]);

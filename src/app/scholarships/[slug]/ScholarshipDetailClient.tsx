@@ -12,7 +12,7 @@ import Card from "@/components/Card";
 import ReportButton from "@/components/ReportButton";
 import ShareButton from "@/components/ShareButton";
 import { useAuth } from "@/lib/auth-context";
-import { plainOpportunityText } from "@/lib/opportunity-posting";
+import { plainOpportunityText, fundingTypeLabel } from "@/lib/opportunity-posting";
 import { getPublicOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { getScholarshipBySlug, getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
@@ -36,16 +36,16 @@ function isClosingSoon(deadline?: string): boolean {
   return diff > 0 && diff < 14 * 24 * 60 * 60 * 1000;
 }
 
-function getSourceLabel(ownerType?: ScholarshipOwnerMeta["ownerType"]) {
+function getSourceLabel(ownerType: ScholarshipOwnerMeta["ownerType"], fallback: string) {
   switch (ownerType) {
     case "school":
-      return "School Scholarship";
+      return "School funding";
     case "business":
-      return "Employer Scholarship";
+      return "Employer funding";
     case "organization":
-      return "Organization Scholarship";
+      return "Organization funding";
     default:
-      return "Scholarship";
+      return fallback;
   }
 }
 
@@ -146,8 +146,8 @@ function ScholarshipDetailContent() {
     return (
       <div className="max-w-[600px] mx-auto px-4 py-20 text-center">
         <p className="text-5xl mb-4">&#127891;</p>
-        <h2 className="text-2xl font-extrabold text-text mb-2">Scholarship Not Found</h2>
-        <p className="text-text-sec mb-6">This scholarship doesn&apos;t exist or may have been removed.</p>
+        <h2 className="text-2xl font-extrabold text-text mb-2">Opportunity Not Found</h2>
+        <p className="text-text-sec mb-6">This opportunity doesn&apos;t exist or may have been removed.</p>
         <Link href="/scholarships">
           <Button primary>Browse Scholarships &#8594;</Button>
         </Link>
@@ -157,7 +157,7 @@ function ScholarshipDetailContent() {
 
   const ownerHref = ownerMeta?.ownerSlug ? (ownerMeta.ownerType === "school" ? `/schools/${ownerMeta.ownerSlug}` : `/org/${ownerMeta.ownerSlug}`) : (org ? `/org/${org.id}` : "#");
   const ownerName = ownerMeta?.ownerName || scholarship.orgName || org?.name || "";
-  const sourceLabel = getSourceLabel(ownerMeta?.ownerType || (org?.type === "school" ? "school" : undefined));
+  const sourceLabel = getSourceLabel(ownerMeta?.ownerType || (org?.type === "school" ? "school" : undefined), fundingTypeLabel({ ...scholarship }));
   const orgLink = org ? ownerHref : null;
   const isPremium = org?.tier === "premium";
   const intakeClosed = isJobRecordExpired({...scholarship});
@@ -412,7 +412,7 @@ function ScholarshipDetailContent() {
                         <div className="flex gap-3 items-center" style={{ padding: "14px 16px" }}>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <Badge text="Scholarship" color="var(--green)" bg="var(--green-soft)" small />
+                              <Badge text={fundingTypeLabel({ ...r })} color="var(--green)" bg="var(--green-soft)" small />
                             </div>
                             <h4 className="text-sm font-bold text-text m-0 mb-0.5">{r.title}</h4>
                             <div className="flex flex-wrap gap-2 text-xs text-text-sec">
@@ -455,12 +455,12 @@ function ScholarshipDetailContent() {
                   opacity: actionLoading === "save" ? 0.7 : 1,
                 }}
               >
-                {saved ? "✔ Saved" : "🔖 Save Scholarship"}
+                {saved ? "✔ Saved" : "🔖 Save Opportunity"}
               </Button>
 
               <ShareButton
                 title={scholarship.title}
-                text="Share Scholarship"
+                text="Share Opportunity"
                 full
                 style={{
                   borderRadius: 14,
@@ -471,7 +471,7 @@ function ScholarshipDetailContent() {
               />
 
               <div className="border-t border-border pt-4">
-                <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">SCHOLARSHIP DETAILS</p>
+                <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">FUNDING DETAILS</p>
                 <div className="flex flex-col gap-2.5">
                   <div className="flex justify-between">
                     <span className="text-xs text-text-muted">Value</span>

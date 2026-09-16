@@ -14,7 +14,7 @@ export function createEventCalendar(event: Record<string, unknown>, now = new Da
   const start = getEventStartDate(event), end = getEventEndDate(event);
   if (!start || !end || end < start) return null;
   const exclusiveEnd = new Date(end); exclusiveEnd.setDate(exclusiveEnd.getDate() + 1);
-  const location = event.delivery === "online" ? "Online" : [event.venue, event.city, event.province].filter(Boolean).join(", ") || displayLocation(event.location);
+  const location = event.delivery === "online" ? "Online" : displayLocation(event.location) || [event.venue, event.city, event.province].filter(Boolean).join(", ");
   const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//IOPPS//Community Events//EN", "CALSCALE:GREGORIAN", "BEGIN:VEVENT",
     `UID:${escapeText(String(event.id || event.slug || "event"))}@iopps.ca`,
     `DTSTAMP:${now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")}`,

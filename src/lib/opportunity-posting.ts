@@ -99,3 +99,16 @@ export function validateOpportunity(kind: OpportunityKind, raw: Record<string, u
 export function plainOpportunityText(value: unknown): string {
   return String(value || "").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "").replace(/<\/?(?:p|div|br|li|h[1-6])\b[^>]*>/gi, "\n").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\n{3,}/g, "\n\n").trim();
 }
+
+/** Legacy categories describe subjects, so they must not become giant type-menu options. */
+export function fundingTypeLabel(record: Record<string, unknown>): string {
+  const explicit = String(record.category || record.opportunityType || "").trim();
+  const known = [...FUNDING_CATEGORIES, "Grant", "Award"].find(value => value.toLowerCase() === explicit.toLowerCase());
+  if (known) return known;
+  const title = String(record.title || "").toLowerCase();
+  if (/\bbursar(?:y|ies)\b/.test(title)) return "Bursary";
+  if (/\bscholarships?\b/.test(title)) return "Scholarship";
+  if (/\bgrants?\b/.test(title)) return "Grant";
+  if (/\bawards?\b/.test(title)) return "Award";
+  return "Other Funding";
+}

@@ -29,6 +29,8 @@ The public projection uses an allowlist, accepts only HTTP(S) application/regist
 - `tests/opportunity-rules-emulator.test.ts`: verifies private reads, direct-write bypass prevention and continued admin corrections.
 - Existing release rules and scholarship freshness checks pass. Combined Node test run: eight passed, zero failed.
 
+Browser review confirmed draft editing, province changes, review/publish, close, and rolling-deadline publication in the fictional workspace. The editor had no horizontal overflow at 320, 390 and 1280px and visible form controls met a 44px minimum target height. Live-data review caught and corrected a location formatting issue so imported venue/city details are preserved. Funding type filters use concise scholarship/bursary/grant/award labels instead of imported subject descriptions. Event and funding detail pages now retain the same Jobs → IOPPS Live → Indigenous Businesses navigation as their directories.
+
 Fictional preview workspace: `/demo/opportunities`. The same editor runs locally in that page; demo actions do not create accounts or write to Firebase. `/demo/responsive` includes both public directories and this editor for 320, 390, 768 and 1280px review.
 
 ## Release boundaries
