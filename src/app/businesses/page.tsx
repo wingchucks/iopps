@@ -120,7 +120,7 @@ function BusinessesPageContent() {
             className="mb-4 flex items-center gap-3 rounded-2xl"
             style={{ padding: "14px 20px", background: "var(--card)", border: "2px solid var(--border)" }}
           >
-            <span aria-hidden="true" className="text-xl text-text-muted">&#128269;</span>
+            <span aria-hidden="true" className="text-xl text-text-sec">&#128269;</span>
             <input
               type="search"
               aria-label="Search businesses"
@@ -133,7 +133,7 @@ function BusinessesPageContent() {
               <button
                 aria-label="Clear business search"
                 onClick={() => setSearch("")}
-                className="cursor-pointer border-none bg-transparent text-lg text-text-muted"
+                className="cursor-pointer border-none bg-transparent text-lg text-text-sec"
               >
                 &#10005;
               </button>
@@ -167,10 +167,10 @@ function BusinessesPageContent() {
             ))}
           </div>
 
-          <p className="text-xs text-text-muted mb-4">Indigenous identity is provided in each organization’s profile. All businesses and organizations are welcome.</p>
+          <p className="text-xs text-text-sec mb-4">Indigenous identity is provided in each organization’s profile. All businesses and organizations are welcome.</p>
 
           {!loading && !error && (
-            <p className="mb-4 text-sm text-text-muted" aria-live="polite">
+            <p className="mb-4 text-sm text-text-sec" aria-live="polite">
               {filtered.length} profile{filtered.length !== 1 ? "s" : ""} found
             </p>
           )}
@@ -190,7 +190,7 @@ function BusinessesPageContent() {
             <Card style={{ padding: 48, textAlign: "center" }}>
               <p className="mb-3 text-4xl">&#127970;</p>
               <h3 className="mb-2 text-lg font-bold text-text">No businesses found</h3>
-              <p className="mx-auto max-w-[420px] text-sm text-text-muted">
+              <p className="mx-auto max-w-[420px] text-sm text-text-sec">
                 {search || province || industry || filter !== "All Businesses"
                   ? "Try adjusting your search or filter."
                   : "Business profiles will appear here once added."}
@@ -342,7 +342,7 @@ function BusinessCard({ org }: { org: Organization }) {
               View profile &#8594;
             </span>
             {org.openJobs > 0 && (
-              <span className="text-text-muted">
+              <span className="text-text-sec">
                 {org.openJobs} open job{org.openJobs === 1 ? "" : "s"}
               </span>
             )}

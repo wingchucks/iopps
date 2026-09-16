@@ -201,7 +201,7 @@ export default function CanonicalEditProfileTab({
     display: "block",
     fontSize: 12,
     fontWeight: 600,
-    color: "var(--text-muted, #94a3b8)",
+    color: "var(--text-sec)",
     marginBottom: 8,
     textTransform: "uppercase",
     letterSpacing: "0.5px",
@@ -283,7 +283,9 @@ export default function CanonicalEditProfileTab({
         Edit Profile
       </h2>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_0.7fr] gap-4 mb-6">
+      <details className="business-profile-checklist" open={isSchool || undefined}>
+        <summary><strong>Profile checklist</strong><span>{profileChecks.completed} of {profileChecks.total} filled</span><span className="checklist-review">Review details</span></summary>
+      <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_0.7fr] gap-4 mt-4">
         <SectionCard>
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
@@ -293,7 +295,7 @@ export default function CanonicalEditProfileTab({
               <h3 className="text-lg font-bold mt-1" style={{ color: "var(--text, #f8fafc)" }}>
                 {profileChecks.percent}% complete
               </h3>
-              <p className="text-sm mt-2" style={{ color: "var(--text-muted, #94a3b8)" }}>
+              <p className="text-sm mt-2" style={{ color: "var(--text-sec)" }}>
                 Help people get to know your work. Save each section when you’re ready.
               </p>
             </div>
@@ -308,7 +310,7 @@ export default function CanonicalEditProfileTab({
               <div className="text-2xl font-black" style={{ color: TEAL }}>
                 {profileChecks.completed}/{profileChecks.total}
               </div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted, #94a3b8)" }}>
+              <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-sec)" }}>
                 Fields filled
               </div>
             </div>
@@ -332,7 +334,7 @@ export default function CanonicalEditProfileTab({
                 style={{
                   background: check.done ? "rgba(13,148,136,0.08)" : "var(--bg)",
                   borderColor: check.done ? "rgba(13,148,136,0.2)" : "var(--border)",
-                  color: check.done ? "var(--teal)" : "var(--text-muted, #94a3b8)",
+                  color: check.done ? "var(--teal)" : "var(--text-sec)",
                 }}
               >
                 <div className="text-[11px] font-semibold uppercase tracking-wider mb-1">{check.done ? "Ready" : "Needs work"}</div>
@@ -356,21 +358,10 @@ export default function CanonicalEditProfileTab({
             <h3 className="text-lg font-bold mt-2" style={{ color: "var(--text, #f8fafc)" }}>
               {nextMissing ? `Finish ${nextMissing}` : "Your checklist is complete"}
             </h3>
-            <p className="text-sm mt-3" style={{ color: "var(--text-muted, #94a3b8)" }}>
+            <p className="text-sm mt-3" style={{ color: "var(--text-sec)" }}>
               This checklist reflects the details in your editor. Save your changes, then view your public profile to see what visitors see.
             </p>
-            {saveMsg && (
-              <div
-                role="status"
-                className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold"
-                style={{
-                  background: saveMsg === "Saved!" ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)",
-                  color: saveMsg === "Saved!" ? "var(--teal)" : "var(--text)",
-                }}
-              >
-                {saveMsg}
-              </div>
-            )}
+
           </div>
 
           {isSchool && (
@@ -383,7 +374,7 @@ export default function CanonicalEditProfileTab({
                   <h3 className="text-lg font-bold mt-2" style={{ color: "var(--text, #f8fafc)" }}>
                     {schoolIsPublished ? "School profile is public" : "School profile is hidden"}
                   </h3>
-                  <p className="text-sm mt-2" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                  <p className="text-sm mt-2" style={{ color: "var(--text-sec)" }}>
                     {schoolStatusMessage}
                   </p>
                 </div>
@@ -411,6 +402,9 @@ export default function CanonicalEditProfileTab({
         </div>
       </div>
 
+      </details>
+      {saveMsg && <p role={saveMsg === "Saved!" ? "status" : "alert"} className="business-profile-save" data-error={saveMsg !== "Saved!"}>{saveMsg}</p>}
+
       <div className="flex flex-wrap gap-2 mb-6">
         {(["Identity", "Story", "Credibility", "Discoverability", "Contact", "Media"] as ProfileSection[]).map((section) => (
           <button
@@ -424,7 +418,7 @@ export default function CanonicalEditProfileTab({
               background: `linear-gradient(135deg, rgba(${TEAL_RGB},0.15), rgba(13,148,136,0.1))`,
               border: `1px solid rgba(${TEAL_RGB},0.4)`,
             } : {
-              color: "var(--text-muted, #94a3b8)",
+              color: "var(--text-sec)",
               background: "var(--bg)",
               border: "1px solid var(--border)",
             }}
@@ -524,7 +518,7 @@ export default function CanonicalEditProfileTab({
               <h4 className="text-xl font-bold" style={{ color: "var(--text, #f8fafc)" }}>
                 {profileForm.tagline || "Add a strong tagline"}
               </h4>
-              <p className="text-sm leading-7 mt-4 whitespace-pre-wrap" style={{ color: "var(--text-muted, #94a3b8)" }}>
+              <p className="text-sm leading-7 mt-4 whitespace-pre-wrap" style={{ color: "var(--text-sec)" }}>
                 {profileForm.description || "Add an organization story to help members understand your mission, community ties, and opportunities."}
               </p>
             </div>
@@ -536,7 +530,7 @@ export default function CanonicalEditProfileTab({
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-4">
           <SectionCard>
             <h3 className="text-base font-bold mb-1" style={{ color: "var(--text, #f8fafc)" }}>Business Hours</h3>
-            <p className="text-[13px] mb-6" style={{ color: "var(--text-muted, #64748b)" }}>
+            <p className="text-[13px] mb-6" style={{ color: "var(--text-sec)" }}>
               Publish accurate hours so members know when to call, visit, or expect a response.
             </p>
             <div className="flex flex-col gap-2">
@@ -546,11 +540,11 @@ export default function CanonicalEditProfileTab({
                   {hours[day].isOpen ? (
                     <div className="profile-hours-times">
                       <input className="text-center text-[13px] font-medium" aria-label={`${DAY_LABELS[day]} opening time`} style={{ ...inputStyle, minWidth: 0, padding: "8px", borderRadius: 8 }} value={hours[day].open} onChange={(event) => setHours((prev) => ({ ...prev, [day]: { ...prev[day], open: event.target.value } }))} />
-                      <span className="text-xs" style={{ color: "var(--text-muted, #64748b)" }}>to</span>
+                      <span className="text-xs" style={{ color: "var(--text-sec)" }}>to</span>
                       <input className="text-center text-[13px] font-medium" aria-label={`${DAY_LABELS[day]} closing time`} style={{ ...inputStyle, minWidth: 0, padding: "8px", borderRadius: 8 }} value={hours[day].close} onChange={(event) => setHours((prev) => ({ ...prev, [day]: { ...prev[day], close: event.target.value } }))} />
                     </div>
                   ) : (
-                    <span className="text-[13px] italic" style={{ gridArea: "hours", color: "var(--text-muted, #64748b)" }}>Closed</span>
+                    <span className="text-[13px] italic" style={{ gridArea: "hours", color: "var(--text-sec)" }}>Closed</span>
                   )}
                   <button
                     type="button"
@@ -590,7 +584,7 @@ export default function CanonicalEditProfileTab({
           <div className="flex flex-col gap-4">
             <div className="rounded-2xl p-7 relative overflow-hidden" style={{ background: `linear-gradient(135deg, rgba(${TEAL_RGB},0.06), rgba(59,130,246,0.04))`, border: `1px solid rgba(${TEAL_RGB},0.15)` }}>
               <h3 className="text-base font-bold mb-1" style={{ color: TEAL }}>Identity & community</h3>
-              <p className="text-[13px] mb-5" style={{ color: "var(--text-muted, #94a3b8)" }}>
+              <p className="text-[13px] mb-5" style={{ color: "var(--text-sec)" }}>
                 Share your identity and community connections if you wish. All of these details are optional.
               </p>
               <BusinessIdentityField value={profileForm.businessIdentity} onChange={businessIdentity => setProfileForm(prev => ({ ...prev, businessIdentity }))} />
@@ -603,7 +597,7 @@ export default function CanonicalEditProfileTab({
                     aria-pressed={indigenousGroups.includes(group)}
                     onClick={() => setIndigenousGroups((prev) => prev.includes(group) ? prev.filter((entry) => entry !== group) : [...prev, group])}
                     className="flex-1 py-4 rounded-xl text-center text-sm font-semibold cursor-pointer transition-all border"
-                    style={indigenousGroups.includes(group) ? { background: `rgba(${TEAL_RGB},0.08)`, borderColor: `rgba(${TEAL_RGB},0.4)`, color: TEAL } : { background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-muted, #94a3b8)" }}
+                    style={indigenousGroups.includes(group) ? { background: `rgba(${TEAL_RGB},0.08)`, borderColor: `rgba(${TEAL_RGB},0.4)`, color: TEAL } : { background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-sec)" }}
                   >
                     {indigenousGroups.includes(group) && <span className="mr-1">✓</span>}
                     {group}
@@ -656,7 +650,7 @@ export default function CanonicalEditProfileTab({
                 <ProvinceSelect id="business-province" style={inputStyle} value={profileForm.province} onChange={province => setProfileForm(prev => ({ ...prev, province }))} />
               </div>
             </div>
-            <p className="text-sm mb-4" style={{ color: "var(--text-muted, #94a3b8)" }}>
+            <p className="text-sm mb-4" style={{ color: "var(--text-sec)" }}>
               Your location and services help customers and collaborators find your business.
             </p>
             <ActionButton disabled={saving} onClick={saveDiscoverability}>{saving ? "Saving..." : "Save services & location"}</ActionButton>
@@ -664,7 +658,7 @@ export default function CanonicalEditProfileTab({
 
           <SectionCard>
             <h3 className="text-base font-bold mb-1" style={{ color: "var(--text, #f8fafc)" }}>Tags & Services</h3>
-            <p className="text-[13px] mb-6" style={{ color: "var(--text-muted, #64748b)" }}>
+            <p className="text-[13px] mb-6" style={{ color: "var(--text-sec)" }}>
               Use tags for discovery and services for what members can expect from your organization.
             </p>
             <div className="mb-5">
@@ -685,7 +679,7 @@ export default function CanonicalEditProfileTab({
               </div>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTED_TAGS.filter((tag) => !tags.includes(tag)).map((tag) => (
-                  <button type="button" key={tag} className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--bg)", color: "var(--text-muted, #94a3b8)", border: "1px solid var(--border)" }} onClick={() => setTags((prev) => [...prev, tag])}>+ {tag}</button>
+                  <button type="button" key={tag} className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--bg)", color: "var(--text-sec)", border: "1px solid var(--border)" }} onClick={() => setTags((prev) => [...prev, tag])}>+ {tag}</button>
                 ))}
               </div>
             </div>
@@ -707,7 +701,7 @@ export default function CanonicalEditProfileTab({
               </div>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTED_SERVICES.filter((service) => !services.includes(service)).map((service) => (
-                  <button type="button" key={service} className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--bg)", color: "var(--text-muted, #94a3b8)", border: "1px solid var(--border)" }} onClick={() => setServices((prev) => [...prev, service])}>+ {service}</button>
+                  <button type="button" key={service} className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--bg)", color: "var(--text-sec)", border: "1px solid var(--border)" }} onClick={() => setServices((prev) => [...prev, service])}>+ {service}</button>
                 ))}
               </div>
             </div>
@@ -777,7 +771,7 @@ export default function CanonicalEditProfileTab({
               disabled={saving}
             />
             <div className="flex items-center gap-3">
-              <span className="text-xs" style={{ color: "var(--text-muted, #64748b)" }}>{gallery.length} {gallery.length === 1 ? "image" : "images"}</span>
+              <span className="text-xs" style={{ color: "var(--text-sec)" }}>{gallery.length} {gallery.length === 1 ? "image" : "images"}</span>
               <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(30,41,59,0.5)" }}>
                 <div className="h-full rounded-full" style={{ width: `${(Math.min(gallery.length, 6) / 6) * 100}%`, background: `linear-gradient(90deg, ${TEAL}, #0F766E)` }} />
               </div>
@@ -792,7 +786,7 @@ export default function CanonicalEditProfileTab({
                 Your photos
               </div>
               {gallery.length === 0 ? (
-                <div className="rounded-xl border border-dashed px-4 py-8 text-center text-sm" style={{ color: "var(--text-muted, #94a3b8)", borderColor: "var(--border)" }}>
+                <div className="rounded-xl border border-dashed px-4 py-8 text-center text-sm" style={{ color: "var(--text-sec)", borderColor: "var(--border)" }}>
                   Add at least one uploaded or imported image to show your organization, team, or space.
                 </div>
               ) : (

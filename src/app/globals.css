@@ -269,3 +269,12 @@ input, textarea, select {
 @media(min-width:640px){.organization-profile-editor .profile-hours-row{grid-template-areas:"day hours toggle";grid-template-columns:82px minmax(0,1fr) auto}}
 @media(max-width:767px){.business-support-grid,.business-demo-public-content{grid-template-columns:1fr}.business-support-grid>a{padding:22px}.organization-profile-editor>.grid>div,.organization-profile-editor>.grid>section{min-width:0}.organization-profile-editor .rounded-2xl.p-6,.organization-profile-editor .rounded-2xl.p-7{padding:18px}.business-demo-toolbar .employer-primary{width:100%;justify-content:center;text-align:center}}
 @media(prefers-reduced-motion:reduce){.business-support-grid>a{transition:none}.business-support-grid>a:hover{transform:none}}
+.business-profile-checklist{margin-bottom:22px}
+.business-profile-checklist>summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 18px;border:1px solid var(--border);border-radius:14px;background:var(--card);cursor:pointer;font-size:13px;color:var(--text-sec)}
+.business-profile-checklist>summary strong{color:var(--text)}
+.business-profile-checklist>summary .checklist-review{margin-left:auto;font-weight:700;color:var(--teal)}
+.business-profile-checklist>summary .checklist-review::after{content:" +"}
+.business-profile-checklist[open]>summary .checklist-review::after{content:" −"}
+.business-profile-checklist>summary:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+.business-profile-save{padding:12px 16px;margin:0 0 20px;border:1px solid var(--border);border-radius:12px;background:var(--teal-soft);color:var(--text);font-size:14px;font-weight:600}
+.business-profile-save[data-error=true]{background:rgba(239,68,68,.1)}

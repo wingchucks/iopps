@@ -760,7 +760,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
           <h3 className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>
             {props.title}
           </h3>
-          <p className="text-[13px] mt-1" style={{ color: "var(--text-muted, #94a3b8)" }}>
+          <p className="text-[13px] mt-1" style={{ color: "var(--text-sec)" }}>
             {props.description}
           </p>
         </div>
@@ -818,7 +818,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
               <div className="text-sm font-bold" style={{ color: "var(--text, #f8fafc)" }}>
                 Drag and drop a {props.slot}
               </div>
-              <p className="text-[13px] mt-2 max-w-[320px]" style={{ color: "var(--text-muted, #94a3b8)" }}>
+              <p className="text-[13px] mt-2 max-w-[320px]" style={{ color: "var(--text-sec)" }}>
                 Use local files, Google Drive, or a public cloud share link. Files are copied into IOPPS storage.
               </p>
             </div>
@@ -829,7 +829,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
             <div className="text-sm font-bold" style={{ color: "var(--text, #f8fafc)" }}>
               Drag images here for the public gallery
             </div>
-            <p className="text-[13px] mt-2 max-w-[340px]" style={{ color: "var(--text-muted, #94a3b8)" }}>
+            <p className="text-[13px] mt-2 max-w-[340px]" style={{ color: "var(--text-sec)" }}>
               Add workplace, team, community, or space photos. The gallery supports up to {maxGalleryItems} images.
             </p>
           </div>
@@ -858,7 +858,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
         </button>
       </div>
 
-      <div className="text-[11px] mt-3" style={{ color: "var(--text-muted, #64748b)" }}>
+      <div className="text-[11px] mt-3" style={{ color: "var(--text-sec)" }}>
         Supported: JPEG, PNG, WebP, GIF. Max size {describeMaxSize()} each.
       </div>
 
@@ -944,7 +944,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
       {props.mode === "gallery" && (
         <>
           {galleryItems.length === 0 ? (
-            <div className="mt-5 rounded-xl border border-dashed px-4 py-8 text-center text-sm" style={{ color: "var(--text-muted, #94a3b8)", borderColor: "var(--border)" }}>
+            <div className="mt-5 rounded-xl border border-dashed px-4 py-8 text-center text-sm" style={{ color: "var(--text-sec)", borderColor: "var(--border)" }}>
               Add at least one image to show your organization, team, or space.
             </div>
           ) : (
@@ -982,7 +982,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
                         {item.error}
                       </div>
                     ) : (
-                      <div className="text-[12px]" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                      <div className="text-[12px]" style={{ color: "var(--text-sec)" }}>
                         {item.status === "uploading" ? "Copying into IOPPS storage..." : "Ready for your public gallery"}
                       </div>
                     )}
