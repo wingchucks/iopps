@@ -919,3 +919,6 @@ a:focus-visible > .op-job-card {
 .employer-activity small { color: var(--text-muted); }
 .employer-note { margin-top: 20px; padding: 18px; border-radius: 12px; background: rgba(13,148,136,.07); color: var(--text-sec); font-size: 13px; line-height: 1.6; }
 @media (max-width: 800px) { .employer-actions, .employer-columns { grid-template-columns: 1fr; } .employer-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .employer-launch { align-items: flex-start; flex-direction: column; } .employer-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; } .employer-tabs button { flex-shrink: 0; } .employer-hero { padding: 24px !important; } .employer-hero > div > div { flex-wrap: wrap; } .employer-job-row { align-items: flex-start; flex-direction: column; gap: 6px; } .employer-panel { padding: 20px; } }
+.demo-banner { padding: 14px 24px; background: #0a3844; color: #e1fffa; font-size: 13px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; }
+.demo-input { display: block; width: 100%; min-height: 44px; padding: 11px 13px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 9px; font-size: 16px; }
+.demo-input:focus-visible { outline: 2px solid #0d9488; outline-offset: 2px; }
