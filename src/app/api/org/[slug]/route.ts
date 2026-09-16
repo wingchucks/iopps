@@ -9,7 +9,7 @@ import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/li
 import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -128,8 +128,12 @@ async function resolveOrganization(
     .get();
 
   if (!employerQuery.empty) {
+    const employer = employerQuery.docs[0];
+    const linkedId = employer.data().orgId || employer.id;
+    const canonical = typeof linkedId === "string" && !linkedId.includes("/")
+      ? await db.collection("organizations").doc(linkedId).get() : null;
     return normalizeOrganizationRecord(
-      applyNormalizedSubscriptionState(serializeDoc(employerQuery.docs[0]))
+      applyNormalizedSubscriptionState(serializeDoc(canonical?.exists ? canonical : employer))
     );
   }
 

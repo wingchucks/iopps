@@ -13,7 +13,7 @@ import ReportButton from "@/components/ReportButton";
 import ShareButton from "@/components/ShareButton";
 import { useAuth } from "@/lib/auth-context";
 import { getPost, getPosts } from "@/lib/firestore/posts";
-import { getOrganization, type Organization } from "@/lib/firestore/organizations";
+import { getPublicOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { getScholarshipBySlug, getScholarships, type Scholarship } from "@/lib/firestore/scholarships";
 import { displayAmount, displayLocation, isMailtoHref, normalizeExternalHref } from "@/lib/utils";
@@ -102,7 +102,7 @@ function ScholarshipDetailContent() {
 
         setScholarship(data);
         if (data?.orgId) {
-          const orgData = await getOrganization(data.orgId);
+          const orgData = await getPublicOrganization(data.orgId);
           setOrg(orgData);
         }
         const publicScholarshipsRes = await fetch("/api/scholarships").catch(() => null);

@@ -31,7 +31,8 @@ test('release rules preserve organization management while isolating private app
     await db.doc(`organizations/${orgId}`).set({ name: 'Before' });
     await db.doc('applications/release-other-org').set({ userId: 'other-person', orgId: 'other-org', employerId: 'other-org', status: 'submitted' });
     await signInWithEmailAndPassword(auth, 'release-rules@example.test', 'LocalRules123!');
-    await updateDoc(doc(clientDb, 'organizations', orgId), { name: 'After' });
+    await assert.rejects(updateDoc(doc(clientDb, 'organizations', orgId), { name: 'After' }), e => e.code === 'permission-denied');
+    await updateDoc(doc(clientDb, 'organizations', orgId), { emailTemplates: { interview: 'Private template' } });
     const invite = doc(clientDb, 'organizations', orgId, 'teamInvites', 'test-invite');
     await setDoc(invite, { email: 'invite@example.test' });
     assert.equal((await getDoc(invite)).data().email, 'invite@example.test');

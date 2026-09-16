@@ -13,13 +13,13 @@ NACCA and BDC links are independent official resources, not IOPPS partnerships.
 
 ## Verified API handoffs
 
-`scripts/qa-business-journey-http.mjs` passed eight checks against a production
+`scripts/qa-business-journey-http.mjs` now passes sixteen checks (including the listing review cycle described in `business-listing-review-verification.md`) against a production
 Next.js build and Firebase emulators using `demo-iopps-preview`:
 
 1. Business-only signup reaches the shared organization dashboard.
 2. Owner edits save identity, location and services without changing entitlements
    or another organization supplied in the request body.
-3. Public profile and directory return saved details but omit owner identifiers,
+3. After directory approval, public profile and directory return saved details but omit owner identifiers,
    billing metadata, internal notes and email templates.
 4. Anonymous and unrelated accounts cannot edit the business.
 5. Clearing identity preserves separate Nation and territory fields.
@@ -36,7 +36,7 @@ province name/code matching, normalization and visibility.
 Use a credential-free build directory, as enforced by the QA server helper.
 
 ```sh
-node --experimental-strip-types --test tests/organization-profile.test.ts tests/public-organization.test.ts
+node --import ./scripts/test-typescript-loader.mjs --experimental-strip-types --test tests/organization-profile.test.ts tests/public-organization.test.ts
 
 QA_BUILD_DIR=/absolute/path/to/credential-free-build \
   npx firebase-tools@14 emulators:exec \

@@ -1,3 +1,4 @@
+import { newBusinessListingReview } from "@/lib/business-listing-review";
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
@@ -211,6 +212,7 @@ export async function POST(req: NextRequest) {
       onboardingComplete: profileSubmitted,
       plan: null,
       status: signupStatus,
+      ...(type !== "school" ? { directoryReview: newBusinessListingReview() } : {}),
       emailVerified,
       verified: false,
       ...(emailVerified ? { approvedAt: now } : {}),
@@ -237,6 +239,7 @@ export async function POST(req: NextRequest) {
       plan: "free",
       subscriptionTier: "free",
       status: signupStatus,
+      ...(type !== "school" ? { directoryReview: newBusinessListingReview() } : {}),
       emailVerified,
       verified: false,
       onboardingComplete: profileSubmitted,

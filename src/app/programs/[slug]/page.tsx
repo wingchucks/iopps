@@ -11,7 +11,7 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ShareButton from "@/components/ShareButton";
 import { getPost, getPosts, type Post } from "@/lib/firestore/posts";
-import { getOrganization, type Organization } from "@/lib/firestore/organizations";
+import { getPublicOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { useAuth } from "@/lib/auth-context";
 import ReportButton from "@/components/ReportButton";
@@ -46,7 +46,7 @@ function ProgramDetailContent() {
         const postData = await getPost(`program-${slug}`);
         setPost(postData);
         if (postData?.orgId) {
-          const orgData = await getOrganization(postData.orgId);
+          const orgData = await getPublicOrganization(postData.orgId);
           setOrg(orgData);
         }
         if (postData && user) {

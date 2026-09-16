@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import BusinessListingStatus from "@/components/business-review/BusinessListingStatus";
+import type { BusinessListingReview } from "@/lib/business-listing-review";
 import BusinessOverview from "@/components/employer/BusinessOverview";
 import { EmployerOverview, EmployerMetrics } from "@/components/employer/EmployerOverview";
 import OrgRoute from "@/components/OrgRoute";
@@ -12,7 +14,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Organization } from "@/lib/firestore/organizations";
 import Avatar from "@/components/Avatar";
 import CanonicalEditProfileTab from "@/components/org-dashboard/CanonicalEditProfileTab";
-import { getOrganizationBusinessIdentity, normalizeOrganizationRecord } from "@/lib/organization-profile";
+import { getOrganizationBusinessIdentity, normalizeOrganizationRecord, isOrganizationPubliclyVisible } from "@/lib/organization-profile";
 import {
   buildSchoolVisibilityPatch,
   getOrganizationPublicHref,
@@ -374,6 +376,7 @@ function OrgDashboardContent() {
       throw new Error(payload?.error || "Error saving");
     }
 
+    const payload = await res.json();
     setOrg((prev) => {
       if (!prev) return prev;
 
@@ -385,8 +388,27 @@ function OrgDashboardContent() {
       return normalizeOrganizationRecord({
         ...prev,
         ...nextFields,
+        ...payload.updates,
+        directoryReview: payload.directoryReview || undefined,
       } as Organization);
     });
+  };
+
+  const submitListing = async (revision: number): Promise<BusinessListingReview> => {
+    const response = await fetch("/api/employer/business-review", {
+      method: "POST", headers: { Authorization: `Bearer ${await getToken()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ revision }),
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "Unable to submit listing.");
+    setOrg(previous => previous ? { ...previous, directoryReview: payload.review } : previous);
+    return payload.review;
+  };
+  const refreshListing = async () => {
+    const response = await fetch("/api/employer/business-review", { headers: { Authorization: `Bearer ${await getToken()}` } });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "Unable to refresh listing status.");
+    setOrg(previous => previous ? { ...previous, ...payload.org, directoryReview: payload.review || undefined } : previous);
   };
 
   /* ─── profile save handler ─── */
@@ -484,7 +506,8 @@ function OrgDashboardContent() {
     return `${days}d ago`;
   };
 
-  const publicProfileHref = getOrganizationPublicHref(org);
+  const businessIsPublic = org ? isOrganizationPubliclyVisible(org) : false;
+  const publicProfileHref = !isSchoolOrg && !businessIsPublic ? "/org/dashboard?tab=Edit%20Profile" : getOrganizationPublicHref(org);
   const heroDescription = isSchoolOrg
     ? "Manage your school profile, programs, scholarships, and student recruitment."
     : businessFirst ? "Promote your business, share your services, and help people find you." : "Manage your organization, jobs, and applications";
@@ -571,7 +594,7 @@ function OrgDashboardContent() {
                           color: "var(--text-sec, #cbd5e1)",
                         }}>
                           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-                          View Profile
+                          {isSchoolOrg || businessIsPublic ? "View Profile" : "Review listing"}
                         </Link>
                       )}
                       <button
@@ -653,6 +676,11 @@ function OrgDashboardContent() {
                   ))}
                 </div>
 
+                {!isSchoolOrg && org && (activeTab === "Overview" || activeTab === "Edit Profile") && <BusinessListingStatus
+                  org={org as unknown as Record<string, unknown>} onSubmit={submitListing}
+                  onEdit={() => setActiveTab("Edit Profile")} onRefresh={refreshListing}
+                />}
+
                 {/* ─── TAB CONTENT ─── */}
                 {activeTab === "Overview" && (
                   isSchoolOrg ? (
@@ -668,7 +696,7 @@ function OrgDashboardContent() {
                       timeAgo={timeAgo}
                     />
                   ) : (
-                    businessFirst ? <BusinessOverview publicHref={publicProfileHref} /> : <EmployerOverview stats={stats} statsAvailable={statsAvailable} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
+                    businessFirst ? <BusinessOverview publicHref={publicProfileHref} isPublic={businessIsPublic} /> : <EmployerOverview stats={stats} statsAvailable={statsAvailable} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
                   )
                 )}
 

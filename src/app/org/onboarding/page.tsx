@@ -453,7 +453,7 @@ function OrgOnboardingContent() {
 
           {profileIncomplete ? (
             <div className="mb-6 rounded-xl border border-[rgba(20,184,166,0.2)] bg-[rgba(20,184,166,0.08)] px-4 py-3 text-sm font-medium text-text">
-              Before you can continue to your dashboard or show on the business directory, please {requiredFieldMessage}.
+              Before you finish setup, please {requiredFieldMessage}. Your business listing is submitted for review separately from your dashboard.
             </div>
           ) : null}
 

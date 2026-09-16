@@ -1,3 +1,5 @@
+import { businessListingReviewAllowsPublic } from "../business-listing-review";
+import { toPublicOrganization } from "../public-organization";
 import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "./partner-promotion";
 
 export type JsonRecord = Record<string, unknown>;
@@ -133,11 +135,12 @@ function dedupePartners(records: JsonRecord[]): JsonRecord[] {
 
 export function buildPartnersPayload(records: JsonRecord[]) {
   const promotedRecords = dedupePartners(
-    records.map((record) => withPartnerPromotion(serialize(record) as JsonRecord)),
+    records.filter(businessListingReviewAllowsPublic).map((record) => withPartnerPromotion(serialize(record) as JsonRecord)),
   );
   const partners = promotedRecords
     .filter((org) => isPaidPartner(org))
-    .sort(comparePartnerPromotion);
+    .sort(comparePartnerPromotion)
+    .map(toPublicOrganization);
 
   return {
     partners,

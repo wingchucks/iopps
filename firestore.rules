@@ -64,41 +64,21 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Explicit profile fields only. Billing, approval and ownership are server-owned.
-    function organizationProfileFields() {
-      return ['name', 'slug', 'type', 'businessIdentity', 'contactName', 'contactEmail',
-        'email', 'logo', 'logoUrl', 'bannerUrl', 'tagline', 'description', 'foundedYear',
-        'foundedYearVerified', 'communityAffiliation', 'industry', 'size', 'location',
-        'website', 'services', 'capabilities', 'hiringStatus', 'partnershipInterests',
-        'phone', 'address', 'socialLinks', 'indigenousGroups', 'institutionType',
-        'studentBodySize', 'accreditation', 'campusCount', 'enrollmentStatus',
-        'onboardingComplete', 'updatedAt', 'emailTemplates', 'shortName', 'employees',
-        'since', 'indigenousOwned', 'hours', 'gallery', 'videos', 'treatyTerritory',
-        'nation', 'tags', 'programs', 'keyStudyAreas'];
+    function isOrgMember(orgId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/members/$(request.auth.uid))
+        && memberData().get('orgId', '') == orgId;
     }
 
-    function safeOrganizationCreate() {
-      let data = request.resource.data;
-      return data.keys().hasOnly(organizationProfileFields().concat(['createdAt', 'plan', 'uid', 'id', 'employerId']))
-        && data.get('plan', null) == null
-        && data.get('uid', request.auth.uid) == request.auth.uid
-        && data.get('id', request.auth.uid) == request.auth.uid
-        && data.get('employerId', request.auth.uid) == request.auth.uid;
-    }
-
-    function safeOrganizationUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(organizationProfileFields());
+    // Public organization data is served through a sanitized, visibility-checked API.
+    // All listing creation and public edits use server routes to preserve review state.
+    function safePrivateOrganizationUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailTemplates', 'updatedAt']);
     }
 
     match /employers/{employerId} {
-      allow read: if true;
-      allow create: if isOwner(employerId) && safeOrganizationCreate();
-      allow update: if isSignedIn() && safeOrganizationUpdate() && (
-        employerId == request.auth.uid ||
-        resource.data.get('uid', null) == request.auth.uid ||
-        resource.data.get('id', null) == request.auth.uid ||
-        isAdmin()
-      );
+      allow read: if isOwner(employerId) || isOrgMember(employerId) || isAdmin();
+      allow create: if false;
+      allow update: if false;
       allow delete: if isAdmin();
     }
 
@@ -203,11 +183,10 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Organizations: public read, org owner/admin can update own org, admin can write any
     match /organizations/{orgId} {
-      allow read: if true;
-      allow create: if isOwner(orgId) && safeOrganizationCreate();
-      allow update: if (isOrgManager(orgId) || isAdmin()) && safeOrganizationUpdate();
+      allow read: if isOwner(orgId) || isOrgMember(orgId) || isAdmin();
+      allow create: if false;
+      allow update: if (isOrgManager(orgId) || isAdmin()) && safePrivateOrganizationUpdate();
       allow delete: if isAdmin();
     }
 

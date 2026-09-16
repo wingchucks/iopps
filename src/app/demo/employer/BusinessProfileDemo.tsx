@@ -50,7 +50,7 @@ export default function BusinessProfileDemo({ publicView, onNameSaved }: { publi
 
   return <section>
     <div className="business-demo-toolbar">
-      <p>Save a section, then preview it. Changes stay in this demo for this visit.</p>
+      <p>Save a section, then preview it. Changes stay in this demo for this visit. <Link href="/demo/business-review" className="underline">Try the listing review flow →</Link></p>
       <Link className="employer-primary" href={publicView ? "/demo/employer?workspace=business&tab=Profile" : "/demo/employer?workspace=business&tab=Profile&view=public"}>{publicView ? "Edit sample profile" : "Preview sample profile →"}</Link>
     </div>
     {publicView ? <article className="business-demo-public">

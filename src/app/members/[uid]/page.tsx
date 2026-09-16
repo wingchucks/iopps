@@ -23,7 +23,7 @@ import ReportButton from "@/components/ReportButton";
 import Toast from "@/components/Toast";
 
 import { interestLabels } from "@/lib/constants/interests";
-import { getOrganization } from "@/lib/firestore/organizations";
+import { getPublicOrganization } from "@/lib/firestore/organizations";
 import { getPublicAccountTypeLabel } from "@/lib/account-labels";
 
 export default function MemberProfilePage() {
@@ -61,7 +61,7 @@ function MemberProfileContent() {
 
         if (data?.orgId && user?.uid === uid) {
           try {
-            const organization = await getOrganization(data.orgId);
+            const organization = await getPublicOrganization(data.orgId);
             const publicKey = organization?.slug || data.orgId;
             router.replace(
               organization?.type === "school" ? `/schools/${publicKey}` : `/org/${publicKey}`,

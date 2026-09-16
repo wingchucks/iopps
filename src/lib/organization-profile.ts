@@ -1,3 +1,5 @@
+import { businessListingReviewAllowsPublic } from "./business-listing-review";
+
 export interface OrganizationLocation {
   city: string;
   province: string;
@@ -315,6 +317,7 @@ export function getBusinessProfileReadiness(org: {
 }
 
 export function isOrganizationPubliclyVisible(org: {
+  directoryReview?: unknown;
   type?: unknown;
   ownerType?: unknown;
   partnerTier?: unknown;
@@ -352,6 +355,7 @@ export function isOrganizationPubliclyVisible(org: {
 }
 
 export function hasOrganizationVisibilityBlock(org: {
+  directoryReview?: unknown;
   disabled?: unknown;
   status?: unknown;
   publicVisibility?: unknown;
@@ -360,6 +364,7 @@ export function hasOrganizationVisibilityBlock(org: {
   directoryVisible?: unknown;
   isDirectoryVisible?: unknown;
 }): boolean {
+  if (!businessListingReviewAllowsPublic(org)) return true;
   if (org.disabled === true) return true;
 
   const status = normalizeString(org.status).toLowerCase();

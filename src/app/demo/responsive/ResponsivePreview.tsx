@@ -8,6 +8,7 @@ const pages = [
   ["/demo/employer?tab=Applicants", "Demo applicants"],
   ["/demo/employer?workspace=business", "Business workspace"],
   ["/demo/employer?workspace=business&tab=Profile", "Business profile editor"],
+  ["/demo/business-review", "Business listing review"],
   ["/businesses", "Business directory"],
   ["/", "Homepage"],
   ["/jobs", "Job board"],
