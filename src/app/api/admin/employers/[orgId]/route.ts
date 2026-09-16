@@ -352,6 +352,7 @@ export async function GET(
       },
       actionHistory,
       capabilities: {
+        canAssignAdministrator: viewerIsSuperAdmin,
         canAssignSubscription: viewerIsSuperAdmin,
         canDelete: viewerIsSuperAdmin,
       },
