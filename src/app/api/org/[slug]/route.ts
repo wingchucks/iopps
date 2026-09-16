@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { toPublicOrganization } from "@/lib/public-organization";
 import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
 import { getLocalDevOrganizationPayload } from "@/lib/local-dev-business-data";
 import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
@@ -381,7 +382,7 @@ export async function GET(
     ]);
 
     return NextResponse.json({
-      org,
+      org: toPublicOrganization(org),
       jobs,
       events,
       scholarships,

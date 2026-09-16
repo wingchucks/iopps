@@ -66,8 +66,8 @@ interface GalleryUploaderProps extends BaseProps {
 type ProfileMediaUploaderProps = SingleUploaderProps | GalleryUploaderProps;
 
 const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
-const AMBER = "#D97706";
-const AMBER_RGB = "217,119,6";
+const TEAL = "var(--teal)";
+const TEAL_RGB = "13,148,136";
 
 function createClientId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -721,8 +721,8 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
     minHeight: 42,
     padding: "0 14px",
     borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.1)",
-    background: "rgba(255,255,255,0.04)",
+    border: "1px solid var(--border)",
+    background: "var(--bg)",
     color: "var(--text-sec, #cbd5e1)",
     fontSize: 13,
     fontWeight: 700,
@@ -735,16 +735,16 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
     minHeight: props.mode === "single" ? (props.slot === "banner" ? 180 : 220) : 168,
     padding: props.mode === "single" ? 18 : 24,
     borderRadius: 18,
-    border: dragActive ? `1px solid rgba(${AMBER_RGB},0.6)` : "1px dashed rgba(255,255,255,0.15)",
+    border: dragActive ? `1px solid rgba(${TEAL_RGB},0.6)` : "1px dashed var(--border)",
     background: dragActive
-      ? `linear-gradient(135deg, rgba(${AMBER_RGB},0.14), rgba(20,184,166,0.08))`
-      : "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(15,23,42,0.72))",
+      ? `linear-gradient(135deg, rgba(${TEAL_RGB},0.14), rgba(20,184,166,0.08))`
+      : "var(--bg)",
     overflow: "hidden",
     transition: "all 0.2s ease",
   };
 
   return (
-    <div className="rounded-2xl p-5 border" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}>
+    <div className="rounded-2xl p-5 border" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
       <input
         ref={inputRef}
         type="file"
@@ -766,7 +766,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
         </div>
         {props.mode === "gallery" && (
           <div className="text-right">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: AMBER }}>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: TEAL }}>
               Gallery Limit
             </div>
             <div className="text-sm font-bold mt-1" style={{ color: "var(--text, #f8fafc)" }}>
@@ -866,17 +866,18 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
         <div
           className="mt-4 rounded-xl px-4 py-3 text-sm"
           style={{
-            background: "rgba(217,119,6,0.12)",
-            color: "#FCD34D",
+            background: "var(--teal-soft)",
+            color: "var(--text-sec)",
           }}
         >
-          Native Google Drive picking needs project setup. Public Google Drive share links still work through Import Link.
+          Google Drive picking is unavailable here. You can paste a public Google Drive share link using Import Link.
         </div>
       )}
 
       {showLinkInput && (
         <div className="mt-4 flex flex-col md:flex-row gap-2">
           <input
+            aria-label={`Import ${props.title.toLowerCase()} image link`}
             value={linkInput}
             onChange={(event) => setLinkInput(event.target.value)}
             onKeyDown={(event) => {
@@ -888,8 +889,8 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
             placeholder="Paste a Google Drive, Dropbox, OneDrive, SharePoint, or direct image link"
             className="flex-1 rounded-xl px-4 py-3 text-sm outline-none"
             style={{
-              background: "rgba(2,6,23,0.6)",
-              border: "1px solid rgba(30,41,59,0.6)",
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
               color: "var(--text, #f8fafc)",
             }}
           />
@@ -899,7 +900,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
             disabled={props.disabled || !linkInput.trim()}
             className="px-4 py-3 rounded-xl text-sm font-semibold"
             style={{
-              background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`,
+              background: `linear-gradient(135deg, ${TEAL}, #0F766E)`,
               color: "#fff",
               border: "none",
               opacity: props.disabled || !linkInput.trim() ? 0.6 : 1,
@@ -916,7 +917,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
           className="mt-4 rounded-xl px-4 py-3 text-sm"
           style={{
             background: "rgba(239,68,68,0.12)",
-            color: "#FCA5A5",
+            color: "var(--text)",
           }}
         >
           {surfaceError || singleError}
@@ -930,8 +931,8 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
             onClick={retrySingleUpload}
             className="px-4 py-2.5 rounded-xl text-sm font-semibold"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
               color: "var(--text-sec, #cbd5e1)",
             }}
           >
@@ -943,7 +944,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
       {props.mode === "gallery" && (
         <>
           {galleryItems.length === 0 ? (
-            <div className="mt-5 rounded-xl border border-dashed px-4 py-8 text-center text-sm" style={{ color: "var(--text-muted, #94a3b8)", borderColor: "rgba(255,255,255,0.12)" }}>
+            <div className="mt-5 rounded-xl border border-dashed px-4 py-8 text-center text-sm" style={{ color: "var(--text-muted, #94a3b8)", borderColor: "var(--border)" }}>
               Add at least one image to show your organization, team, or space.
             </div>
           ) : (
@@ -953,8 +954,8 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
                   key={item.id}
                   className="rounded-[16px] overflow-hidden border"
                   style={{
-                    background: "rgba(2,6,23,0.55)",
-                    borderColor: item.status === "error" ? "rgba(239,68,68,0.32)" : "rgba(255,255,255,0.08)",
+                    background: "var(--bg)",
+                    borderColor: item.status === "error" ? "rgba(239,68,68,0.32)" : "var(--border)",
                   }}
                 >
                   <div className="aspect-square relative overflow-hidden">
@@ -993,7 +994,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
                           onClick={() => retryGalleryUpload(item.id)}
                           className="flex-1 rounded-lg px-3 py-2 text-xs font-semibold"
                           style={{
-                            background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`,
+                            background: `linear-gradient(135deg, ${TEAL}, #0F766E)`,
                             color: "#fff",
                             border: "none",
                           }}
@@ -1006,9 +1007,9 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
                         onClick={() => removeGalleryItem(item.id)}
                         className="flex-1 rounded-lg px-3 py-2 text-xs font-semibold"
                         style={{
-                          background: "rgba(255,255,255,0.04)",
+                          background: "var(--bg)",
                           color: "var(--text-sec, #cbd5e1)",
-                          border: "1px solid rgba(255,255,255,0.08)",
+                          border: "1px solid var(--border)",
                         }}
                       >
                         Remove

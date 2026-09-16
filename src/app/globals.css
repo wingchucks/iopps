@@ -225,3 +225,47 @@ input, textarea, select {
 .auth-float-slow {
   animation: authFloatSlow 6s ease-in-out infinite;
 }
+
+/* Organization discovery and the shared profile editor. */
+.business-directory-filters{display:flex;flex-wrap:wrap;gap:14px;align-items:end;margin:0 0 20px}
+.business-directory-filters label{display:grid;gap:8px;flex:1 1 220px;font-size:13px;font-weight:700;color:var(--text-sec);min-width:0}
+.business-directory-filters select{width:100%;min-width:0;min-height:46px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font:inherit}
+.business-directory-filters>button{min-height:46px;font-size:13px;color:var(--teal);font-weight:700;text-decoration:underline;text-underline-offset:4px}
+.business-support-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:28px 0 20px}
+.business-support-grid>a{display:flex;flex-direction:column;padding:24px;border:1px solid var(--border);border-radius:18px;background:var(--card);color:var(--text);transition:transform .2s,box-shadow .2s}
+.business-support-grid>a:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(15,43,60,.09)}
+.business-support-grid span{color:var(--teal);font-size:11px;font-weight:800;letter-spacing:.08em}
+.business-support-grid h3{font-size:21px;line-height:1.3;margin:16px 0 12px;letter-spacing:-.035em}
+.business-support-grid p{font-size:14px;line-height:1.7;margin:0 0 22px;color:var(--text-sec)}
+.business-support-grid strong{font-size:13px;color:var(--teal);margin-top:auto}
+.journey-support .business-resource-note{font-size:12px;max-width:75ch;color:var(--text-muted);line-height:1.6;margin-bottom:22px}
+.organization-profile-editor{min-width:0}
+.organization-profile-editor input,.organization-profile-editor select,.organization-profile-editor textarea{max-width:100%;min-height:44px}
+.organization-profile-editor input:focus-visible,.organization-profile-editor select:focus-visible,.organization-profile-editor textarea:focus-visible,.organization-profile-editor button:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+.organization-profile-editor button{min-height:40px;overflow-wrap:anywhere}
+.organization-profile-editor .profile-hours-row{display:grid;grid-template-areas:"day toggle" "hours hours";grid-template-columns:1fr auto;align-items:center;gap:8px 12px;padding:12px;background:var(--bg);border:1px solid var(--border)}
+.profile-hours-row button[role=switch]{min-height:26px}
+.profile-hours-times{grid-area:hours;display:flex;align-items:center;gap:8px;min-width:0}
+.profile-hours-times input{flex:1;width:0}
+.business-identity-field{min-width:0;margin:0 0 24px;padding:0;border:0}
+.business-identity-field legend{font-size:14px;font-weight:700;color:var(--text)}
+.business-identity-field legend span{font-weight:400;color:var(--text-muted)}
+.business-identity-field p{font-size:12px;line-height:1.6;color:var(--text-sec);margin:8px 0 14px}
+.business-identity-field label{display:flex;align-items:center;gap:10px;font-size:13px;padding:12px;margin:8px 0;border:1px solid var(--border);border-radius:10px;cursor:pointer;background:var(--card);color:var(--text)}
+.business-identity-field label:has(input:checked){border-color:var(--teal);background:var(--teal-soft)}
+.business-identity-field input{accent-color:var(--teal);width:18px;min-height:18px;height:18px;flex-shrink:0}
+.business-demo-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.business-demo-toolbar p{font-size:13px;color:var(--text-sec);max-width:52ch}
+.business-demo-public{overflow:hidden;border:1px solid var(--border);border-radius:22px;background:var(--card)}
+.business-demo-public>header{padding:clamp(24px,5vw,48px);background:linear-gradient(135deg,#102d45,#115450);color:white}
+.business-demo-public>header h2{font-size:clamp(25px,4vw,36px);font-weight:800;line-height:1.2;letter-spacing:-.035em;margin:14px 0;overflow-wrap:anywhere}
+.business-demo-public>header .op-eyebrow{color:#8ce6d9}
+.business-demo-public-content{display:grid;grid-template-columns:1.5fr 1fr;gap:36px;padding:clamp(20px,4vw,36px)}
+.business-demo-public-content h3{font-size:18px;font-weight:800;margin:0 0 12px}
+.business-demo-public-content h3:not(:first-child){margin-top:26px}
+.business-demo-public-content p{color:var(--text-sec);line-height:1.8;overflow-wrap:anywhere}
+.business-demo-public-content aside{padding:22px;background:var(--bg);border-radius:16px;min-width:0}
+.business-demo-badge{display:inline-flex;padding:7px 12px;border-radius:99px;background:var(--teal-soft);color:var(--teal);font-size:12px;font-weight:700}
+@media(min-width:640px){.organization-profile-editor .profile-hours-row{grid-template-areas:"day hours toggle";grid-template-columns:82px minmax(0,1fr) auto}}
+@media(max-width:767px){.business-support-grid,.business-demo-public-content{grid-template-columns:1fr}.business-support-grid>a{padding:22px}.organization-profile-editor>.grid>div,.organization-profile-editor>.grid>section{min-width:0}.organization-profile-editor .rounded-2xl.p-6,.organization-profile-editor .rounded-2xl.p-7{padding:18px}.business-demo-toolbar .employer-primary{width:100%;justify-content:center;text-align:center}}
+@media(prefers-reduced-motion:reduce){.business-support-grid>a{transition:none}.business-support-grid>a:hover{transform:none}}

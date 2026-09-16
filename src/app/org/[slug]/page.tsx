@@ -86,6 +86,8 @@ function OrgProfileContent() {
   const [scholarships, setScholarships] = useState<OrgScholarship[]>([]);
   const [training, setTraining] = useState<OrgTraining[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [activeOppTab, setActiveOppTab] = useState<"jobs"|"events"|"scholarships"|"training">("jobs");
   const [expandedOppTab, setExpandedOppTab] = useState<"jobs"|"events"|"scholarships"|"training"|null>(null);
   const [shareMsg, setShareMsg] = useState("");
@@ -95,18 +97,27 @@ function OrgProfileContent() {
     if (navigator.share) {
       try { await navigator.share({ title: org?.name || "IOPPS", url }); } catch { /* cancelled */ }
     } else {
-      await navigator.clipboard.writeText(url);
-      setShareMsg("Link copied!");
-      setTimeout(() => setShareMsg(""), 2000);
+      try {
+        await navigator.clipboard.writeText(url);
+        setShareMsg("Link copied!");
+        setTimeout(() => setShareMsg(""), 2000);
+      } catch {
+        setShareMsg("Copy the address from your browser to share this profile.");
+      }
     }
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     async function load() {
+      setLoading(true);
+      setLoadError(false);
       try {
-        const orgRes = await fetch(`/api/org/${encodeURIComponent(slug)}`);
-        if (!orgRes.ok) { setOrg(null); setLoading(false); return; }
+        const orgRes = await fetch(`/api/org/${encodeURIComponent(slug)}`, { signal: controller.signal });
+        if (orgRes.status === 404) { setOrg(null); return; }
+        if (!orgRes.ok) throw new Error("Profile could not be loaded");
         const orgJson = await orgRes.json() as OrgContentResponse;
+        if (controller.signal.aborted) return;
         const orgData = orgJson.org;
         setOrg(orgData);
         if (orgData) {
@@ -135,13 +146,17 @@ function OrgProfileContent() {
           else if (nextTraining.length > 0) setActiveOppTab("training");
         }
       } catch (err) {
-        console.error("Failed to load organization:", err);
+        if (!controller.signal.aborted) {
+          console.error("Failed to load organization:", err);
+          setLoadError(true);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
-    load();
-  }, [slug]);
+    void load();
+    return () => controller.abort();
+  }, [slug, loadAttempt]);
 
   if (loading) {
     return (
@@ -155,6 +170,10 @@ function OrgProfileContent() {
         </div>
       </div>
     );
+  }
+
+  if (loadError) {
+    return <div className="max-w-[600px] mx-auto px-4 py-20 text-center"><h2 className="text-2xl font-extrabold mb-3">We couldn’t load this profile.</h2><p role="alert" className="text-text-sec mb-6">Please try again in a moment.</p><button type="button" className="employer-primary" onClick={() => setLoadAttempt(value => value + 1)}>Try again</button></div>;
   }
 
   if (!org) {
@@ -213,7 +232,7 @@ function OrgProfileContent() {
   const proofItems = [
     org.nation ? `Nation — ${org.nation}` : "",
     org.treatyTerritory ? `Treaty Territory — ${org.treatyTerritory}` : "",
-    isIndigenousOwned ? "Indigenous-led organization" : "",
+    isIndigenousOwned ? "Indigenous-owned or led organization" : "",
   ].filter((item): item is string => Boolean(item));
 
   return (
@@ -239,7 +258,7 @@ function OrgProfileContent() {
           {isIndigenousOwned && (
             <div className="absolute top-4 right-4 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold"
               style={{ background: "rgba(245,158,11,0.2)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.4)", backdropFilter: "blur(12px)" }}>
-              Indigenous-led
+              Indigenous-owned or led
             </div>
           )}
         </div>

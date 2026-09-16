@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Organization } from "@/lib/firestore/organizations";
 import Avatar from "@/components/Avatar";
 import CanonicalEditProfileTab from "@/components/org-dashboard/CanonicalEditProfileTab";
-import { normalizeOrganizationRecord } from "@/lib/organization-profile";
+import { getOrganizationBusinessIdentity, normalizeOrganizationRecord } from "@/lib/organization-profile";
 import {
   buildSchoolVisibilityPatch,
   getOrganizationPublicHref,
@@ -187,6 +187,7 @@ function OrgDashboardContent() {
   // Edit profile state
   const [profileForm, setProfileForm] = useState({
     name: "",
+    businessIdentity: "not_specified" as import("@/lib/organization-profile").OrganizationBusinessIdentity,
     tagline: "",
     description: "",
     industry: "",
@@ -279,6 +280,7 @@ function OrgDashboardContent() {
         const o = normalizedOrg;
         setProfileForm({
           name: o.name || "",
+          businessIdentity: getOrganizationBusinessIdentity(o),
           tagline: o.tagline || "",
           description: o.description || "",
           industry: o.industry || "",
