@@ -400,10 +400,10 @@ function UnifiedSignupContent() {
           {entrepreneurIntent && (
             <InfoBanner icon="🪶"><strong style={{ color: CSS.text }}>Indigenous Entrepreneur Signup</strong><br />Your free business profile and directory listing starts here.</InfoBanner>
           )}
-          <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "What kind of"} highlight={entrepreneurIntent ? "Business Profile" : "account do you need?"} desc={entrepreneurIntent ? "Your free business profile and directory listing helps customers and communities discover what you offer. You can still change your account type below." : "Are you signing up for yourself or on behalf of an organization?"} />
+          <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "What kind of"} highlight={entrepreneurIntent ? "Business Profile" : "account do you need?"} desc={entrepreneurIntent ? "Help customers discover your work with a free business profile. First, choose who you’re joining as." : "Are you signing up for yourself or on behalf of an organization?"} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <RoleCard icon="👤" label="Individual" desc="For people looking for jobs, training, scholarships, events, or professional connections." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
-            <RoleCard icon="🏢" label="Organization / Employer" desc="For First Nations, tribal councils, businesses, nonprofits, governments, and organizations that want to post opportunities or manage a public profile." selected={role === "organization"} onClick={() => { setRole("organization"); setOrgType("employer"); }} />
+            <RoleCard icon="🏢" label={entrepreneurIntent ? "My business" : "Business or organization"} desc={entrepreneurIntent ? "Showcase your products and services, share your story, and help customers find you." : "Create a public profile, promote your work, or hire talent. For businesses, First Nations, nonprofits, and organizations."} selected={role === "organization"} onClick={() => { setRole("organization"); setOrgType("employer"); }} />
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
             <BtnPrimary onClick={() => goTo(2)} disabled={!role || (role === "organization" && !orgType)}>Continue →</BtnPrimary>
@@ -636,8 +636,8 @@ function UnifiedSignupContent() {
 
         {/* STEP 11: Employer Brand */}
         {step === 11 && (<div>
-          <StepHeader eyebrow="Employer Setup — 2 of 3" title="Brand your" highlight="Profile" desc="Profiles with branding get 4× more engagement." />
-          <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 24 }}>
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 2 of 3" : "Organization Setup — 2 of 3"} title="Brand your" highlight="Profile" desc="Add your logo and a cover image so people recognize your work. You can also add these later." />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
             <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Logo</div><UploadZone label="Upload Logo" hint="400×400px, PNG or JPG" hasFile={!!empLogoFile} onFileChange={setEmpLogoFile} /></div>
             <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Cover Image</div><UploadZone label="Upload Cover" hint="1200×400px recommended" hasFile={!!empBannerFile} onFileChange={setEmpBannerFile} /></div>
           </div>
@@ -646,7 +646,7 @@ function UnifiedSignupContent() {
 
         {/* STEP 12: Employer Launch */}
         {step === 12 && (<div>
-          <StepHeader eyebrow="Employer Setup — 3 of 3" title="Ready to" highlight="Launch?" desc="Your organization profile is ready." />
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 3 of 3" : "Organization Setup — 3 of 3"} title="Ready to" highlight="Launch?" desc="Your organization profile is ready." />
           <ReviewSection icon="🏢" title="Organization Summary" onEdit={() => goTo(10)}>
             <ReviewRow label="Name" value={orgName} />
             <ReviewRow label="Business Identity" value={BUSINESS_IDENTITY_OPTIONS.find(option => option.value === businessIdentity)?.label || "Not set"} />

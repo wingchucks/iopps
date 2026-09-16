@@ -1,17 +1,21 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 const links = [
   ["/jobs", "Jobs"],
-  ["/businesses", "Entrepreneurship"],
+  ["/businesses", "Indigenous Businesses"],
   ["/livestreams", "IOPPS Live"],
+  ["/scholarships", "Scholarships"],
   ["/events", "Events"],
 ];
 export default function OpportunityHeader() {
+  const pathname = usePathname();
   const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`) || (href === "/businesses" && /^\/org\/[^/]+$/.test(pathname));
   return (
     <header className="op-header">
       <div className="op-wrap op-header-row">
@@ -21,7 +25,7 @@ export default function OpportunityHeader() {
         </Link>
         <nav className="op-desktop-nav" aria-label="Main navigation">
           {links.map(([href, label]) => (
-            <Link key={href} href={href}>
+            <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined}>
               {label}
             </Link>
           ))}
@@ -60,7 +64,7 @@ export default function OpportunityHeader() {
         }}
       >
         {links.map(([href, label]) => (
-          <Link key={href} href={href} onClick={() => setOpen(false)}>
+          <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined} onClick={() => setOpen(false)}>
             {label}
           </Link>
         ))}

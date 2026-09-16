@@ -26,7 +26,7 @@ function BusinessesPageContent() {
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [search, setSearch] = useDirectoryFilter("q", "");
-  const [filter, setFilter] = useDirectoryFilter("type", "All Businesses");
+  const [filter, setFilter] = useDirectoryFilter("type", "Indigenous");
 
   useEffect(() => {
     let cancelled = false;
@@ -92,25 +92,17 @@ function BusinessesPageContent() {
   return (
     <AppShell>
       <div className="min-h-screen bg-bg">
-        <section
-          className="text-center"
-          style={{
-            background: "linear-gradient(160deg, var(--navy-deep) 0%, var(--navy) 58%, #0D3B66 100%)",
-            padding: "clamp(32px, 5vw, 60px) clamp(20px, 6vw, 80px)",
-          }}
-        >
-          <p
-            className="mb-3 inline-block rounded-full text-[11px] font-extrabold tracking-[3px]"
-            style={{ padding: "5px 16px", color: "#49e7d3", background: "rgba(20,184,166,.12)", border: "1px solid rgba(20,184,166,.22)" }}
-          >
-            BUSINESS DIRECTORY
-          </p>
-          <h1 className="mb-2 text-3xl font-extrabold text-white md:text-4xl">
-            Businesses & Employers
-          </h1>
-          <p className="mx-auto mb-0 max-w-[560px] text-base text-white/70">
-            Explore employers, organizations, and paid partner businesses creating opportunities across Indigenous communities.
-          </p>
+        <section className="journey-directory-hero">
+          <div className="op-wrap">
+            <p className="op-eyebrow">Indigenous businesses & entrepreneurship</p>
+            <h1>Make your next connection.</h1>
+            <p>Discover Indigenous businesses, explore their work, and connect with the people building them.</p>
+            <div className="journey-actions">
+              <Link className="op-button" href="/signup?intent=indigenous-business">Add your business free</Link>
+              <a href="#business-support">Funding & business support ↓</a>
+              <Link href="/login?redirect=%2Forg%2Fdashboard">Manage your profile</Link>
+            </div>
+          </div>
         </section>
 
         <div className="mx-auto max-w-[1100px] px-4 py-6 md:px-10">
@@ -151,7 +143,7 @@ function BusinessesPageContent() {
                   color: filter === option ? "#fff" : "var(--text-sec)",
                 }}
               >
-                {option}
+                {option === "All Businesses" ? "All businesses & organizations" : option === "Indigenous" ? "Indigenous-led" : option}
                 {option === "Partners" ? ` (${partnerCount})` : ""}
                 {option === "Verified" ? ` (${verifiedCount})` : ""}
                 {option === "Indigenous" ? ` (${indigenousCount})` : ""}
@@ -161,7 +153,7 @@ function BusinessesPageContent() {
 
           {!loading && !error && (
             <p className="mb-4 text-sm text-text-muted" aria-live="polite">
-              {filtered.length} business{filtered.length !== 1 ? "es" : ""} found
+              {filtered.length} profile{filtered.length !== 1 ? "s" : ""} found
             </p>
           )}
 
@@ -194,6 +186,13 @@ function BusinessesPageContent() {
             </div>
           )}
           <DirectoryPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          <section id="business-support" className="journey-support" aria-labelledby="support-heading">
+            <p className="op-eyebrow">Coming next / Business support</p>
+            <h2 id="support-heading">Support for what you’re building.</h2>
+            <p>We’re developing a place to connect Indigenous entrepreneurs with organizations offering loans, grants, and business guidance. Program listings and confirmed funding partners will appear here as they are added.</p>
+            <div className="journey-support-types"><span>Business grants</span><span>Business loans</span><span>Mentorship & guidance</span></div>
+            <Link className="journey-text-link" href="/contact">Does your organization support entrepreneurs? Get in touch →</Link>
+          </section>
         </div>
       </div>
     </AppShell>
@@ -277,14 +276,14 @@ function BusinessCard({ org }: { org: Organization }) {
           )}
 
           {location && (
-            <p className="m-0 mb-2.5 text-xs text-text-sec">
+            <p className="m-0 mb-2.5 text-sm text-text-sec">
               &#128205; {location}
             </p>
           )}
 
           {summary && (
             <p
-              className="m-0 mb-3 text-xs leading-relaxed text-text-sec"
+              className="m-0 mb-3 text-sm leading-relaxed text-text-sec"
               style={{
                 display: "-webkit-box",
                 WebkitLineClamp: 2,

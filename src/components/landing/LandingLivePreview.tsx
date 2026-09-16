@@ -131,7 +131,7 @@ export default function LandingLivePreview() {
         </div>
         <div className="p-4">
           {featured ? (
-            <YouTubePlayer videoId={featured.id} autoplay={isLive} live={isLive} />
+            <YouTubePlayer videoId={featured.id} autoplay={false} live={isLive} />
           ) : (
             <div className="flex aspect-video items-center justify-center rounded-[22px] border border-dashed border-border bg-bg px-6 text-center">
               <div>

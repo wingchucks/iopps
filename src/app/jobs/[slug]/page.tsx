@@ -144,7 +144,7 @@ function JobDetailContent() {
 
   if (loading) {
     return (
-      <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
+      <div className="journey-job-detail max-w-[1120px] mx-auto px-4 py-6 md:px-10 md:py-8">
         <div className="skeleton h-4 w-24 rounded mb-4" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
@@ -196,7 +196,7 @@ function JobDetailContent() {
   const locationLabel = displayLocation(job.location);
 
   return (
-    <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
+    <div className="journey-job-detail max-w-[1120px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Back link */}
       <Link
         href="/jobs"

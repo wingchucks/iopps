@@ -220,11 +220,11 @@ function OrgProfileContent() {
   const proofItems = [
     org.nation ? `Nation — ${org.nation}` : "",
     org.treatyTerritory ? `Treaty Territory — ${org.treatyTerritory}` : "",
-    isIndigenousOwned ? "🪶 Indigenous-led organization" : "",
+    isIndigenousOwned ? "Indigenous-led organization" : "",
   ].filter((item): item is string => Boolean(item));
 
   return (
-    <div className="max-w-[960px] mx-auto pb-16">
+    <div className="journey-profile max-w-[1120px] mx-auto pb-16">
       {/* Back Link */}
       <div className="px-4 pt-4">
         <Link href="/businesses" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal">
@@ -239,14 +239,14 @@ function OrgProfileContent() {
           style={{
             background: org.bannerUrl
               ? `url(${org.bannerUrl}) center/cover no-repeat`
-              : "linear-gradient(135deg, #2d1b4e, #1e293b, #0f172a)",
+              : "linear-gradient(135deg, var(--navy-deep), var(--navy), var(--teal))",
           }}
         >
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(2,6,23,0.95) 0%, rgba(2,6,23,0.3) 40%, transparent 70%)" }} />
           {isIndigenousOwned && (
             <div className="absolute top-4 right-4 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold"
               style={{ background: "rgba(245,158,11,0.2)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.4)", backdropFilter: "blur(12px)" }}>
-              🪶 Indigenous-Owned Business
+              Indigenous-led
             </div>
           )}
         </div>
@@ -278,7 +278,7 @@ function OrgProfileContent() {
                 )}
               </div>
               {org.tagline && (
-                <p className="mt-2 max-w-[560px] text-sm font-medium text-white/80">
+                <p className="mt-2 max-w-[560px] text-base font-medium text-text-sec">
                   {org.tagline}
                 </p>
               )}

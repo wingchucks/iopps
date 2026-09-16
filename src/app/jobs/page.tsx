@@ -223,11 +223,12 @@ function JobsPageContent() {
           }}
         >
           <h1 className="mb-2 text-3xl font-extrabold md:text-4xl">
-            Find your next opportunity.
+            Find work. Move forward.
           </h1>
           <p className="mx-auto mb-0 max-w-[560px] text-base text-white/78">
             Discover Indigenous and allied employers hiring across Canada.
           </p>
+          <Link href="/for-employers" className="mt-4 inline-block text-sm font-semibold text-white underline underline-offset-4">Hiring? Post a job on IOPPS →</Link>
         </section>
         <div className="mx-auto max-w-[1100px] px-4 py-6 md:px-8">
           <form
