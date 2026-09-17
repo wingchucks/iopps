@@ -413,7 +413,7 @@ function CategorySection({
                 <button
                   onClick={handleAdd}
                   disabled={saving || !newName.trim()}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 shrink-0"
+                  className="inline-flex items-center gap-1.5 rounded-lg button-gradient px-3 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 shrink-0"
                 >
                   <PlusIcon className="h-3.5 w-3.5" />
                   Add

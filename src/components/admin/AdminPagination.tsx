@@ -25,7 +25,7 @@ export function AdminPagination({
           type="button"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="rounded-lg border border-[var(--card-border)] bg-[var(--input-bg)] px-3 py-1.5 text-sm text-foreground transition-colors hover:border-[var(--card-border-hover)] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg border border-[var(--card-border)] button-gradient-soft px-3 py-1.5 text-sm text-foreground transition-colors hover:border-[var(--card-border-hover)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           Previous
         </button>
@@ -36,7 +36,7 @@ export function AdminPagination({
           type="button"
           disabled={page >= safeTotalPages}
           onClick={() => onPageChange(page + 1)}
-          className="rounded-lg border border-[var(--card-border)] bg-[var(--input-bg)] px-3 py-1.5 text-sm text-foreground transition-colors hover:border-[var(--card-border-hover)] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg border border-[var(--card-border)] button-gradient-soft px-3 py-1.5 text-sm text-foreground transition-colors hover:border-[var(--card-border-hover)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           Next
         </button>

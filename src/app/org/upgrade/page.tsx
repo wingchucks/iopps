@@ -185,7 +185,7 @@ function OrgUpgradeContent() {
                   setError("");
                   setStep(2);
                 }}
-                className="w-full py-3 rounded-xl bg-teal text-white font-bold hover:bg-teal/90 transition-colors mt-2"
+                className="w-full py-3 rounded-xl button-gradient text-white font-bold hover:bg-teal/90 transition-colors mt-2"
               >
                 Continue →
               </button>
@@ -242,7 +242,7 @@ function OrgUpgradeContent() {
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex-2 flex-grow py-3 rounded-xl bg-teal text-white font-bold hover:bg-teal/90 transition-colors disabled:opacity-50"
+                  className="flex-2 flex-grow py-3 rounded-xl button-gradient text-white font-bold hover:bg-teal/90 transition-colors disabled:opacity-50"
                 >
                   {loading ? "Setting up…" : "Create Organization Page →"}
                 </button>

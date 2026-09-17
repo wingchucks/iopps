@@ -136,10 +136,10 @@ export default function OrgDashboardNav({
           key={item.href}
           href={item.href}
           target={item.external ? "_blank" : undefined}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold no-underline transition-all hover:opacity-80"
+          className="brand-button inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold no-underline transition-all hover:opacity-80"
           style={{
-            background: "var(--card)",
-            color: "var(--text-sec, var(--text-muted))",
+            background: "var(--button-gradient-soft)",
+            color: "var(--button-gradient-soft-text)",
             border: "1px solid var(--border)",
           }}
         >
@@ -158,8 +158,8 @@ export default function OrgDashboardNav({
       {onPostJob && (
         <button
           onClick={onPostJob}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all hover:opacity-80"
-          style={{ background: "var(--teal)", color: "#fff" }}
+          className="brand-button inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all hover:opacity-80"
+          style={{ background: "var(--button-gradient)", color: "#fff" }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />

@@ -459,14 +459,14 @@ export default function OnboardingTour() {
           {isFirst || isLast ? (
             <>
               {!isLast && (
-                <button
+                <button className="brand-button"
                   onClick={skipTour}
                   style={{
                     padding: "8px 16px",
                     borderRadius: 10,
                     border: "1px solid var(--border)",
-                    background: "transparent",
-                    color: "var(--text-muted)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                     fontSize: 13,
                     fontWeight: 600,
                     cursor: "pointer",
@@ -475,13 +475,13 @@ export default function OnboardingTour() {
                   Skip Tour
                 </button>
               )}
-              <button
+              <button className="brand-button"
                 onClick={handleNext}
                 style={{
                   padding: "10px 24px",
                   borderRadius: 10,
                   border: "none",
-                  background: "var(--navy)",
+                  background: "var(--button-gradient)",
                   color: "#fff",
                   fontSize: 14,
                   fontWeight: 700,
@@ -493,14 +493,14 @@ export default function OnboardingTour() {
             </>
           ) : (
             <>
-              <button
+              <button className="brand-button"
                 onClick={skipTour}
                 style={{
                   padding: "8px 14px",
                   borderRadius: 10,
                   border: "none",
-                  background: "transparent",
-                  color: "var(--text-muted)",
+                  background: "var(--button-gradient-soft)",
+                  color: "var(--button-gradient-soft-text)",
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: "pointer",
@@ -509,14 +509,14 @@ export default function OnboardingTour() {
                 Skip
               </button>
               <div style={{ display: "flex", gap: 8 }}>
-                <button
+                <button className="brand-button"
                   onClick={prevStep}
                   style={{
                     padding: "8px 16px",
                     borderRadius: 10,
                     border: "1px solid var(--border)",
-                    background: "transparent",
-                    color: "var(--text-sec)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                     fontSize: 13,
                     fontWeight: 600,
                     cursor: "pointer",
@@ -524,13 +524,13 @@ export default function OnboardingTour() {
                 >
                   Back
                 </button>
-                <button
+                <button className="brand-button"
                   onClick={handleNext}
                   style={{
                     padding: "8px 20px",
                     borderRadius: 10,
                     border: "none",
-                    background: "var(--navy)",
+                    background: "var(--button-gradient)",
                     color: "#fff",
                     fontSize: 13,
                     fontWeight: 700,

@@ -11,10 +11,10 @@ export function HeroCTA() {
     return (
       <div className="relative flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
         <Link href="/feed">
-          <Button
+          <Button className="brand-button"
             primary
             style={{
-              background: "var(--teal)",
+              background: "var(--button-gradient)",
               fontSize: 17,
               padding: "16px 40px",
               borderRadius: 14,
@@ -31,10 +31,10 @@ export function HeroCTA() {
   return (
     <div className="relative flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
       <Link href="/signup">
-        <Button
+        <Button className="brand-button"
           primary
           style={{
-            background: "var(--teal)",
+            background: "var(--button-gradient)",
             fontSize: 17,
             padding: "16px 40px",
             borderRadius: 14,
@@ -45,10 +45,10 @@ export function HeroCTA() {
         </Button>
       </Link>
       <Link href="/login">
-        <Button
+        <Button className="brand-button"
           style={{
-            color: "#fff",
-            background: "rgba(255,255,255,.12)",
+            color: "var(--button-gradient-soft-text)",
+            background: "var(--button-gradient-soft)",
             borderColor: "rgba(255,255,255,.3)",
             fontSize: 17,
             padding: "16px 40px",
@@ -78,11 +78,11 @@ export function PartnerStripCTA() {
         View all partners &rarr;
       </Link>
       <Link href={cta.href}>
-        <Button
+        <Button className="brand-button"
           small
           primary
           style={{
-            background: "var(--gold)",
+            background: "var(--button-gradient)",
             borderRadius: 10,
             fontWeight: 700,
           }}
@@ -99,10 +99,10 @@ export function BottomCTA() {
 
   return (
     <Link href={user ? "/feed" : "/signup"}>
-      <Button
+      <Button className="brand-button"
         primary
         style={{
-          background: "var(--teal)",
+          background: "var(--button-gradient)",
           fontSize: 16,
           padding: "14px 36px",
           borderRadius: 14,

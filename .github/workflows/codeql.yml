@@ -29,3 +29,21 @@ jobs:
         uses: github/codeql-action/autobuild@v4
       - name: Perform Analysis
         uses: github/codeql-action/analyze@v4
+        with:
+          output: codeql-results
+      - name: Encrypt analysis evidence for the release reviewer
+        if: github.event_name == 'pull_request' && github.head_ref == 'codex/security-remediation-20260917'
+        shell: bash
+        run: |
+          for report in codeql-results/*.sarif; do
+            openssl cms -encrypt -aes-256-gcm -binary -in "$report" \
+              -out "$report.cms" -outform DER .github/security-review-recipient.crt
+          done
+      - name: Retain encrypted analysis results for independent triage
+        if: github.event_name == 'pull_request' && github.head_ref == 'codex/security-remediation-20260917'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: codeql-encrypted-${{ github.event.pull_request.head.sha || github.sha }}
+          path: codeql-results/*.sarif.cms
+          if-no-files-found: error
+          retention-days: 7

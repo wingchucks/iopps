@@ -1,0 +1,114 @@
+.page { background: #f5f8f8; color: #102b46; min-width: 0; }
+.page * { box-sizing: border-box; }
+.page a, .page button { -webkit-tap-highlight-color: transparent; }
+.page a { text-decoration: none; }
+.page button { cursor: pointer; font: inherit; }
+.page button:disabled { cursor: wait; opacity: .65; }
+.page :is(a, button, input):focus-visible { outline: 3px solid #11b8a5; outline-offset: 5px; }
+.wrap { width: min(1280px, 100%); margin-inline: auto; padding-inline: 32px; }
+.stage { background: radial-gradient(ellipse at 92% 0%, #155b60 0%, transparent 47%), #0a2139; color: #fff; padding: 42px 0 48px; }
+.intro { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 32px; }
+.wordmark { display: flex; align-items: center; gap: 9px; font-size: 14px; letter-spacing: .12em; font-weight: 900; margin: 0 0 15px; }
+.wordmark > span:last-child { color: #74e2cf; font-weight: 600; }
+.signal { color: #6aebd2; font-size: 23px; line-height: 1; }
+.intro h1 { font-size: clamp(34px, 4vw, 57px); letter-spacing: -.055em; line-height: 1.07; margin: 0; font-weight: 850; }
+.intro h1 span { color: #79e5d0; }
+.lead { color: #c3d4df; font-size: 15px; line-height: 1.75; margin: 17px 0 0; }
+.primaryButton, .outlineButton, .lightButton { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; border-radius: 10px; padding: 12px 17px; font-size: 13px !important; font-weight: 750 !important; line-height: 1.45; text-align: center; }
+.primaryButton { background: var(--button-gradient); color: #fff; border: 1px solid transparent; box-shadow: var(--button-gradient-shadow); }
+.primaryButton:hover:not(:disabled) { background: var(--button-gradient-hover); }
+.outlineButton { border: 1px solid #477889; color: #e1f5ff; background: linear-gradient(110deg, #153c40, #203858); }
+.outlineButton:hover:not(:disabled) { background: linear-gradient(110deg, #1d5054, #28466d); }
+.intro .outlineButton { flex-shrink: 0; margin-bottom: 4px; }
+.watchGrid { display: grid; grid-template-columns: minmax(0, 2.5fr) minmax(250px, 1fr); gap: 26px; align-items: start; }
+.watch { min-width: 0; background: #102c46; border: 1px solid #355066; border-radius: 18px; overflow: hidden; scroll-margin-top: 110px; }
+.watch:focus { outline: none; }
+.watch:focus-visible { outline: 3px solid #78e5d0; outline-offset: 4px; }
+.watch > div:has(> iframe) { border-radius: 0; }
+.playerBar { padding: 11px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pill { display: inline-flex; background: #25465c; border-radius: 5px; padding: 5px 8px; color: #abeedc; font-size: 10px; letter-spacing: .1em; font-weight: 800; }
+.livePill { color: #fff; background: #b92239; }
+.refresh { border: 0; background: transparent; min-height: 36px; font-size: 12px !important; color: #cedeeb; }
+.videoInfo { padding: 22px; }
+.meta { font-size: 11px; color: #526574; letter-spacing: .02em; line-height: 1.6; }
+.videoInfo .meta { color: #a6becf; margin: 0 0 8px; }
+.videoInfo h2 { margin: 0; font-size: clamp(17px, 2vw, 23px); line-height: 1.35; letter-spacing: -.015em; font-weight: 750; overflow-wrap: anywhere; }
+.description { font-size: 13px; line-height: 1.7; color: #c3d4df; margin: 10px 0 0; overflow-wrap: anywhere; }
+.videoActions { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; margin-top: 19px; }
+.videoActions > a:not(.primaryButton) { color: #9ae9da; font-size: 12px; font-weight: 650; min-height: 44px; display: inline-flex; align-items: center; }
+.playbackHelp, .smallPrint { font-size: 11px; line-height: 1.6; color: #b2c6d2; margin-top: 12px; }
+.shareResult { margin-top: 12px; color: #a5ebdc; font-size: 12px; }
+.shareResult input { display: block; background: #fff; color: #102b46; border: 0; border-radius: 6px; padding: 10px; width: 100%; margin-top: 8px; }
+.comingUp { padding: 26px 0 0 8px; }
+.eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .14em; color: #87ded1; margin: 0 0 12px; }
+.comingUp h2 { font-size: 27px; line-height: 1.2; font-weight: 750; letter-spacing: -.035em; margin: 0 0 16px; }
+.comingUp > p:not(.eyebrow):not(.smallPrint) { color: #c0d3df; font-size: 13px; line-height: 1.85; margin-bottom: 20px; }
+.comingUp > .primaryButton { width: 100%; margin-top: 5px; }
+.asideBottom { border-top: 1px solid #3d5569; margin-top: 28px; padding-top: 22px; display: flex; align-items: center; gap: 13px; }
+.asideBottom > span { border: 1px solid #3d5569; border-radius: 10px; padding: 9px 15px; color: #7fe8d4; font-size: 24px; }
+.asideBottom p { font-size: 11px; line-height: 1.9; color: #b3cbd8; }
+.asideBottom a { color: #fff; font-weight: 700; }
+.returnLive { margin-bottom: 26px; border-bottom: 1px solid #3d5569; padding-bottom: 26px; }
+.returnLive h2 { margin-top: 14px; font-size: 18px; }
+.upcomingList { display: grid; gap: 15px; margin: 20px 0; }
+.upcomingItem { display: grid; grid-template-columns: 70px 1fr; align-items: start; gap: 12px; text-align: left; background: transparent; border: 0; color: #fff; }
+.upcomingImage { aspect-ratio: 16 / 10; position: relative; overflow: hidden; border-radius: 5px; }
+.upcomingItem strong { display: block; font-size: 12px; line-height: 1.4; }
+.upcomingItem small { display: block; font-size: 10px; color: #c0d3df; margin-top: 7px; }
+.thumbnail { object-fit: cover; }
+.poster { position: relative; aspect-ratio: 16 / 9; background: #071a2a; }
+.posterOverlay { position: absolute; inset: 0; background: #06182ed9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 22px; text-align: center; }
+.posterOverlay p { font-size: 14px; margin: 0; }
+.posterOverlay .primaryButton { margin-top: 8px; }
+.emptyPlayer { min-height: 360px; padding: 36px 24px; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
+.emptyPlay { display: grid; place-items: center; border: 1px solid #5a7a8c; border-radius: 50%; padding: 18px; color: #80e3d2; }
+.emptyPlayer h2 { font-size: 23px; margin: 20px 0 10px; line-height: 1.3; }
+.emptyPlayer p { color: #c0d3df; max-width: 420px; line-height: 1.7; font-size: 14px; margin: 0; }
+.emptyPlayer .videoActions { justify-content: center; }
+.notice { padding: 14px 18px; border: 1px solid #a19150; background: #5a4a293d; margin-bottom: 20px; border-radius: 10px; display: flex; gap: 12px; flex-wrap: wrap; color: #ffe7af; font-size: 13px; line-height: 1.6; }
+.notice a { color: #fff; text-decoration: underline; }
+.library { padding-block: 55px 45px; scroll-margin-top: 100px; }
+.library .eyebrow { color: #087b71; }
+.libraryHeader { display: flex; align-items: end; gap: 24px; justify-content: space-between; }
+.library h2 { font-size: clamp(25px, 3vw, 34px); letter-spacing: -.045em; line-height: 1.2; font-weight: 800; margin: 0; max-width: 620px; }
+.libraryHeader p:not(.eyebrow) { font-size: 14px; color: #526574; margin: 12px 0 0; }
+.search { min-width: 260px; }
+.search span { font-size: 11px; display: block; font-weight: 750; margin-bottom: 6px; }
+.search input { width: 100%; min-height: 46px; border: 1px solid #a9bdbf; color: #102b46; background: #fff; border-radius: 10px; padding: 11px 14px; font-size: 13px; }
+.resultCount { margin: 28px 0 13px; font-size: 11px; color: #526574; }
+.replayGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.replayCard { text-align: left; background: #fff; border: 1px solid #d7e3e5; border-radius: 13px; overflow: hidden; padding: 0; display: flex; flex-direction: column; min-width: 0; transition: border-color .15s, box-shadow .15s; color: #102b46; }
+.replayCard:hover { border-color: #088f80; box-shadow: 0 8px 20px #0a343710; }
+.replayCard.selected { border-color: #088f80; box-shadow: 0 0 0 2px #088f80; }
+.replayImage { position: relative; display: block; aspect-ratio: 16 / 9; width: 100%; background: #0a2139; }
+.replayImage::after { content: ""; position: absolute; inset: 50% 0 0; background: linear-gradient(transparent, #061c38a6); }
+.playCircle { position: absolute; z-index: 1; display: grid; place-items: center; right: 13px; bottom: 13px; width: 35px; height: 35px; border-radius: 50%; background: #ffffffef; color: #0a514c; }
+.imageLabel { position: absolute; left: 13px; bottom: 19px; z-index: 1; font-size: 9px; letter-spacing: .1em; color: #fff; font-weight: 750; }
+.replayInfo { padding: 18px; display: flex; flex-direction: column; flex: 1; }
+.replayInfo strong { display: block; margin: 8px 0 18px; font-size: 14px; line-height: 1.5; font-weight: 750; overflow-wrap: anywhere; }
+.cardBottom { margin-top: auto; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #526574; }
+.cardBottom > span:last-child { font-size: 20px; color: #078477; }
+.archiveLink { display: flex; justify-content: center; align-items: center; gap: 16px; border: 1px solid #b8ccce; min-height: 48px; border-radius: 10px; margin-top: 27px; color: #0b655d; font-weight: 750; font-size: 13px; text-align: center; padding: 10px 15px; }
+.archiveLink:hover { background: #e1f3ee; }
+.noResults { text-align: center; background: #fff; border: 1px dashed #b3cacc; border-radius: 12px; padding: 40px 20px; margin-top: 25px; }
+.noResults h3 { margin: 0; font-size: 19px; }
+.noResults p { font-size: 13px; color: #526574; }
+.lightButton { border: 1px solid var(--button-gradient-border); color: var(--button-gradient-soft-text); background: var(--button-gradient-soft); margin-top: 8px; }
+.booking { background: #103b46; color: #fff; padding: 50px 0; scroll-margin-top: 100px; }
+.bookingGrid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 90px; align-items: center; }
+.booking h2 { margin: 0; font-size: clamp(28px, 3.5vw, 41px); line-height: 1.15; letter-spacing: -.04em; font-weight: 800; }
+.booking p:not(.eyebrow):not(.smallPrint) { font-size: 13px; line-height: 1.9; color: #c2dcdf; margin: 20px 0; max-width: 530px; }
+.booking .primaryButton { margin-top: 6px; }
+.bookingSteps > p { display: flex; gap: 18px; padding: 19px 0; border-bottom: 1px solid #427078; margin: 0 !important; }
+.bookingSteps > p:last-child { border-bottom: 0; }
+.bookingSteps > p > span { font-size: 11px; color: #79e5d0; font-weight: 800; padding-top: 3px; }
+.bookingSteps strong { font-size: 14px; font-weight: 700; color: #fff; }
+.bookingSteps small { display: block; font-size: 12px; font-weight: 400; color: #c2dcdf; margin-top: 3px; }
+.communityLinks { padding-block: 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 15px 25px; font-size: 13px; }
+.communityLinks p { font-weight: 750; margin: 0; }
+.communityLinks a { color: #0c7167; font-weight: 650; min-height: 44px; display: flex; align-items: center; }
+.loading { padding: 60px 24px; min-height: 60vh; text-align: center; }
+@media (max-width: 1000px) { .watchGrid { grid-template-columns: minmax(0, 2fr) minmax(230px, 1fr); gap: 22px; } .wrap { padding-inline: 24px; } .replayGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .libraryHeader { align-items: start; } .bookingGrid { gap: 40px; } }
+@media (max-width: 760px) { .watchGrid { grid-template-columns: minmax(0, 1fr); } .comingUp { padding: 22px; border: 1px solid #355066; border-radius: 14px; } .comingUp h2 br { display: none; } .comingUp h2 { font-size: 24px; } .asideBottom { margin-top: 18px; padding-top: 18px; } .comingUp > .primaryButton { width: auto; } .libraryHeader { flex-direction: column; } .search { width: 100%; } .intro { align-items: start; } .intro .outlineButton { display: none; } .bookingGrid { grid-template-columns: 1fr; gap: 22px; } }
+@media (max-width: 600px) { .wrap { padding-inline: 18px; } .stage { padding-block: 28px; } .wordmark { font-size: 12px; margin-bottom: 16px; } .intro { margin-bottom: 24px; } .intro h1 { font-size: 38px; max-width: 340px; } .lead { font-size: 13px; line-height: 1.8; margin-top: 14px; } .desktopBreak { display: none; } .watchGrid { gap: 20px; } .videoInfo { padding: 18px; } .playerBar { padding: 8px 12px; } .pill { font-size: 9px; } .videoActions { gap: 6px 16px; } .videoActions .outlineButton { padding-inline: 12px; } .replayGrid { grid-template-columns: minmax(0, 1fr); gap: 20px; } .library { padding-block: 36px; } .library h2 { max-width: 320px; } .libraryHeader { gap: 21px; } .libraryHeader p:not(.eyebrow) { line-height: 1.7; } .booking { padding-block: 36px; } .communityLinks { flex-direction: column; align-items: start; gap: 4px; padding-block: 23px; } .communityLinks p { margin-bottom: 7px; } .poster { min-height: 220px; } .posterOverlay { padding: 15px; } .posterOverlay p { font-size: 12px; } .emptyPlayer { min-height: 320px; padding: 26px 18px; } .search { min-width: 0; } }
+@media (prefers-reduced-motion: reduce) { .replayCard { transition: none; } }

@@ -31,7 +31,7 @@ test('signup resume and reverse sign-in links keep intent without recreating an 
 test('auth pages wire intent through signup, verification and onboarding', () => {
   const read = (p: string) => readFileSync(`src/${p}`, 'utf8');
   assert.match(read('app/login/page.tsx'), /href=\{authIntentHref\("\/signup", searchParams\)\}/);
-  assert.match(read('app/login/page.tsx'), /authIntentHref\(`\/org\/onboarding/);
+  assert.match(read('app/login/page.tsx'), /authIntentHref\(destination, searchParams\)/);
   assert.match(read('app/verify-email/page.tsx'), /safeAuthRedirect\(nextPath\)/);
   assert.match(read('app/verify-email/page.tsx'), /encodeURIComponent\(redirectPath\)/);
   for (const p of ['app/signup/page.tsx', 'app/org/signup/page.tsx', 'app/org/onboarding/page.tsx']) assert.match(read(p), /authIntentHref|postSignupDestination/);
@@ -41,4 +41,12 @@ test('auth pages wire intent through signup, verification and onboarding', () =>
 test('sign-in return paths stay on this site and preserve the application route', () => {
   assert.equal(safeAuthRedirect('/jobs/example/apply?step=resume'), '/jobs/example/apply?step=resume');
   for (const value of [null, '', 'https://example.com', '//example.com', '/\\example.com', '/\n/example.com']) assert.equal(safeAuthRedirect(value), null);
+});
+
+test('business and hiring intent survive shared sign-in without changing entitlements', () => {
+  for (const intent of ['indigenous-business', 'hiring']) {
+    assert.equal(authIntent.authIntentHref('/login',new URLSearchParams({intent})),`/login?intent=${intent}`);
+    assert.equal(authIntent.postSignupDestination(new URLSearchParams({intent}),'/org/dashboard'),'/org/dashboard');
+  }
+  assert.equal(authIntent.authIntentHref('/login',new URLSearchParams({intent:'admin'})),'/login');
 });

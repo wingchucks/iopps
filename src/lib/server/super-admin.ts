@@ -1,35 +1,47 @@
-const DEFAULT_SUPER_ADMIN_EMAILS = ["nathan.arias@iopps.ca"];
+import type { Auth, DecodedIdToken, UserRecord } from "firebase-admin/auth";
 
-function normalizeEmail(value: unknown): string {
-  return typeof value === "string" ? value.trim().toLowerCase() : "";
+// This is an ownership policy, not a configurable list of administrators.
+export const SUPER_ADMIN_EMAIL = "nathan.arias@iopps.ca";
+
+export function isSuperAdminEmail(email: unknown): boolean {
+  return typeof email === "string" && email.trim().toLowerCase() === SUPER_ADMIN_EMAIL;
 }
 
-export function parseSuperAdminEmails(value?: string | null): string[] {
-  if (!value) return [];
+function hasAdminClaim(claims: Record<string, unknown> | undefined): boolean {
+  return claims?.admin === true || claims?.role === "admin";
+}
 
-  return Array.from(
-    new Set(
-      value
-        .split(/[\s,;]+/)
-        .map((entry) => normalizeEmail(entry))
-        .filter(Boolean),
-    ),
+export function isSuperAdminIdentity(
+  token: Pick<DecodedIdToken, "uid" | "email" | "email_verified"> & Record<string, unknown>,
+  authUser: Pick<UserRecord, "uid" | "email" | "emailVerified" | "disabled" | "customClaims"> | null,
+): boolean {
+  // Check the signed identity and the current Auth record. Profile fields and
+  // stale claims must never grant ownership privileges.
+  return Boolean(
+    authUser &&
+      authUser.uid === token.uid &&
+      !authUser.disabled &&
+      isSuperAdminEmail(token.email) &&
+      isSuperAdminEmail(authUser.email) &&
+      token.email_verified === true &&
+      authUser.emailVerified === true &&
+      hasAdminClaim(token) &&
+      hasAdminClaim(authUser.customClaims),
   );
 }
 
-export function getSuperAdminEmailAllowlist(
-  envValue = process.env.SUPER_ADMIN_EMAILS,
-): string[] {
-  const configured = parseSuperAdminEmails(envValue);
-  if (configured.length > 0) return configured;
-  return DEFAULT_SUPER_ADMIN_EMAILS;
-}
-
-export function isSuperAdminEmail(
-  email?: string | null,
-  envValue = process.env.SUPER_ADMIN_EMAILS,
-): boolean {
-  const normalized = normalizeEmail(email);
-  if (!normalized) return false;
-  return getSuperAdminEmailAllowlist(envValue).includes(normalized);
+/** Protect the owner's Auth account even if its editable profile email changes. */
+export async function isSuperAdminAccount(
+  uid: string,
+  auth: Pick<Auth, "getUser">,
+): Promise<boolean> {
+  try {
+    return isSuperAdminEmail((await auth.getUser(uid)).email);
+  } catch (error) {
+    if (
+      typeof error === "object" && error !== null && "code" in error &&
+      error.code === "auth/user-not-found"
+    ) return false;
+    throw error;
+  }
 }

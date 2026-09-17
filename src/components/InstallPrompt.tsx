@@ -89,17 +89,17 @@ export default function InstallPrompt() {
         <div className="flex gap-2 mt-3">
           <button
             onClick={handleInstall}
-            className="flex-1 py-2.5 rounded-xl border-none cursor-pointer text-sm font-bold text-white"
-            style={{ background: "var(--teal)" }}
+            className="brand-button flex-1 py-2.5 rounded-xl border-none cursor-pointer text-sm font-bold text-white"
+            style={{ background: "var(--button-gradient)" }}
           >
             Install App
           </button>
           <button
             onClick={handleDismiss}
-            className="py-2.5 px-4 rounded-xl border-none cursor-pointer text-sm font-semibold"
+            className="brand-button py-2.5 px-4 rounded-xl border-none cursor-pointer text-sm font-semibold"
             style={{
-              background: "rgba(255,255,255,.08)",
-              color: "rgba(255,255,255,.6)",
+              background: "var(--button-gradient-soft)",
+              color: "var(--button-gradient-soft-text)",
             }}
           >
             Not now

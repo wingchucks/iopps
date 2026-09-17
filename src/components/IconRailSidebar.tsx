@@ -467,9 +467,9 @@ export default function IconRailSidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="rounded-xl px-3.5 py-2.5 text-center text-sm font-semibold no-underline"
+                    className="brand-button rounded-xl px-3.5 py-2.5 text-center text-sm font-semibold no-underline"
                     style={{
-                      background: item.key === "signup" ? "#0F766E" : "var(--border)",
+                      background: item.key === "signup" ? "var(--button-gradient)" : "var(--border)",
                       color: item.key === "signup" ? "#fff" : "var(--text)",
                     }}
                   >

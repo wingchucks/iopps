@@ -454,17 +454,17 @@ export default function TrainingDetailPage() {
               href={officialUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-[14px] px-4 py-3 text-sm font-bold text-white no-underline"
-              style={{ background: "var(--teal)" }}
+              className="brand-button inline-flex items-center justify-center rounded-[14px] px-4 py-3 text-sm font-bold text-white no-underline"
+              style={{ background: "var(--button-gradient)" }}
             >
               View provider details
             </a>
           ) : (
-            <Button
+            <Button className="brand-button"
               primary
               onClick={handleEnroll}
               style={{
-                background: alreadyEnrolled ? "var(--green)" : "var(--teal)",
+                background: alreadyEnrolled ? "var(--green)" : "var(--button-gradient)",
                 borderRadius: 14,
                 opacity: enrolling ? 0.7 : 1,
               }}
@@ -563,8 +563,8 @@ function EnrollSidebar({
               href={officialUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center justify-center rounded-[14px] px-6 py-3.5 text-sm font-bold text-white no-underline"
-              style={{ background: "var(--teal)" }}
+              className="brand-button flex w-full items-center justify-center rounded-[14px] px-6 py-3.5 text-sm font-bold text-white no-underline"
+              style={{ background: "var(--button-gradient)" }}
             >
               View official provider details
             </a>
@@ -574,12 +574,12 @@ function EnrollSidebar({
           </>
         ) : (
           <>
-            <Button
+            <Button className="brand-button"
               primary
               full
               onClick={onEnroll}
               style={{
-                background: alreadyEnrolled ? "var(--green)" : "var(--teal)",
+                background: alreadyEnrolled ? "var(--green)" : "var(--button-gradient)",
                 borderRadius: 14,
                 padding: "14px 24px",
                 opacity: enrolling ? 0.7 : 1,

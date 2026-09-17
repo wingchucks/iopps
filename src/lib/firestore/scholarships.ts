@@ -1,19 +1,15 @@
 import {
   collection,
   getDocs,
-  getDoc,
   setDoc,
   updateDoc,
   deleteDoc,
   doc,
   query,
-  orderBy,
   where,
   serverTimestamp,
-  type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { isPublicScholarshipVisible } from "@/lib/access-state";
 
 export interface Scholarship {
   id: string;
@@ -30,6 +26,7 @@ export interface Scholarship {
   authorId?: string;
   url?: string;
   applicationUrl?: string;
+  imageUrl?: string;
   applicationInstructions?: string;
   applyMethod?: string;
   requirements?: string[];
@@ -84,36 +81,21 @@ function normalizeScholarship(id: string, data: Record<string, unknown>): Schola
 }
 
 export async function getScholarships(): Promise<Scholarship[]> {
-  const constraints: QueryConstraint[] = [orderBy("order", "asc")];
-  const snap = await getDocs(query(col, ...constraints));
-  return snap.docs
-    .map((d) => normalizeScholarship(d.id, d.data()))
-    .filter((scholarship) => isPublicScholarshipVisible(scholarship));
+  const response = await fetch("/api/scholarships", { cache: "no-store" });
+  if (!response.ok) throw new Error("Could not load scholarships.");
+  return (await response.json()).scholarships || [];
 }
-
 export async function getScholarship(id: string): Promise<Scholarship | null> {
-  const snap = await getDoc(doc(col, id));
-  if (!snap.exists()) return null;
-  const scholarship = normalizeScholarship(snap.id, snap.data());
-  return isPublicScholarshipVisible(scholarship) ? scholarship : null;
+  const response = await fetch(`/api/scholarships/${encodeURIComponent(id)}`, { cache: "no-store" });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Could not load listing.");
+  return (await response.json()).scholarship;
 }
+export const getScholarshipBySlug = getScholarship;
 
-export async function getScholarshipBySlug(
-  slug: string
-): Promise<Scholarship | null> {
-  const byId = await getDoc(doc(col, slug));
-  if (byId.exists()) {
-    const scholarship = normalizeScholarship(byId.id, byId.data());
-    if (isPublicScholarshipVisible(scholarship)) {
-      return scholarship;
-    }
-  }
-
-  const snap = await getDocs(query(col, where("slug", "==", slug)));
-  if (snap.empty) return null;
-  const d = snap.docs[0];
-  const scholarship = normalizeScholarship(d.id, d.data());
-  return isPublicScholarshipVisible(scholarship) ? scholarship : null;
+export async function getAdminScholarships(): Promise<Scholarship[]> {
+  const snap = await getDocs(col);
+  return snap.docs.map(doc => normalizeScholarship(doc.id, doc.data())).filter(item => item.title);
 }
 
 export async function getScholarshipsByOrg(orgId: string): Promise<Scholarship[]> {

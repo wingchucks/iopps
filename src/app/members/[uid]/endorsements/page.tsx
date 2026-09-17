@@ -238,12 +238,12 @@ function EndorsementsContent() {
                 <button
                   key={tab.key}
                   onClick={() => setFilter(tab.key)}
-                  className="px-4 py-2 rounded-lg border-none cursor-pointer text-sm font-semibold whitespace-nowrap transition-all"
+                  className="brand-button px-4 py-2 rounded-lg border-none cursor-pointer text-sm font-semibold whitespace-nowrap transition-all"
                   style={{
                     background:
                       filter === tab.key
                         ? "rgba(217,119,6,.12)"
-                        : "var(--card)",
+                        : "var(--button-gradient-soft)",
                     color:
                       filter === tab.key ? "#D97706" : "var(--text-muted)",
                     border:
@@ -263,8 +263,8 @@ function EndorsementsContent() {
                 primary
                 full
                 onClick={() => setShowForm(true)}
-                className="mb-5"
-                style={{ background: "#D97706" }}
+                className="brand-button mb-5"
+                style={{ background: "var(--button-gradient)" }}
               >
                 Write an Endorsement
               </Button>
@@ -287,12 +287,12 @@ function EndorsementsContent() {
                       <button
                         key={t}
                         onClick={() => setFormType(t)}
-                        className="px-4 py-2 rounded-lg border-none cursor-pointer text-sm font-semibold capitalize transition-all"
+                        className="brand-button px-4 py-2 rounded-lg border-none cursor-pointer text-sm font-semibold capitalize transition-all"
                         style={{
                           background:
                             formType === t
                               ? "rgba(217,119,6,.12)"
-                              : "var(--bg)",
+                              : "var(--button-gradient-soft)",
                           color: formType === t ? "#D97706" : "var(--text-muted)",
                           border:
                             formType === t
@@ -375,11 +375,11 @@ function EndorsementsContent() {
 
                   {/* Actions */}
                   <div className="flex gap-2">
-                    <Button
+                    <Button className="brand-button"
                       primary
                       onClick={handleSubmit}
                       style={{
-                        background: "#D97706",
+                        background: "var(--button-gradient)",
                         opacity: !formMessage.trim() || submitting ? 0.5 : 1,
                       }}
                     >

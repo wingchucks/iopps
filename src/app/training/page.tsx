@@ -201,9 +201,9 @@ function TrainingPageContent() {
                     key={format}
                     aria-pressed={active}
                     onClick={() => setSelectedFormat(format)}
-                    className="whitespace-nowrap rounded-xl border-none px-4 py-2.5 text-sm font-semibold"
+                    className="brand-button whitespace-nowrap rounded-xl border-none px-4 py-2.5 text-sm font-semibold"
                     style={{
-                      background: active ? "var(--teal)" : "var(--card)",
+                      background: active ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                       color: active ? "#fff" : "var(--text-sec)",
                       border: active ? "none" : "1px solid var(--border)",
                     }}
@@ -253,8 +253,8 @@ function TrainingPageContent() {
                     <button
                       type="button"
                       onClick={() => setFilters({ q: null, category: null, format: null })}
-                      className="rounded-xl border-none px-4 py-2.5 text-sm font-semibold cursor-pointer"
-                      style={{ background: "var(--teal)", color: "#fff" }}
+                      className="brand-button rounded-xl border-none px-4 py-2.5 text-sm font-semibold cursor-pointer"
+                      style={{ background: "var(--button-gradient)", color: "#fff" }}
                     >
                       Reset filters
                     </button>
@@ -262,17 +262,17 @@ function TrainingPageContent() {
                     <>
                       <Link
                         href="/education"
-                        className="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
-                        style={{ background: "var(--teal)", color: "#fff" }}
+                        className="brand-button inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
+                        style={{ background: "var(--button-gradient)", color: "#fff" }}
                       >
                         Explore Education Hub
                       </Link>
                       <Link
                         href="/schools"
-                        className="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
+                        className="brand-button inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
                         style={{
-                          background: "var(--card)",
-                          color: "var(--text)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                           border: "1px solid var(--border)",
                         }}
                       >

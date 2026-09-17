@@ -217,11 +217,11 @@ export default function CreatePostModal({
           <button
             onClick={() => fileRef.current?.click()}
             disabled={submitting}
-            className="flex items-center gap-1.5 text-sm font-semibold cursor-pointer border-none rounded-lg"
+            className="brand-button flex items-center gap-1.5 text-sm font-semibold cursor-pointer border-none rounded-lg"
             style={{
               padding: "8px 14px",
-              background: "var(--bg)",
-              color: "var(--text-sec)",
+              background: "var(--button-gradient-soft)",
+              color: "var(--button-gradient-soft-text)",
               border: "1.5px solid var(--border)",
             }}
           >

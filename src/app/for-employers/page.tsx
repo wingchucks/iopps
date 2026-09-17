@@ -100,9 +100,9 @@ export default function ForEmployersPage() {
             </Link>
             <Link
               href="/signup"
-              className="text-sm font-semibold no-underline rounded-lg px-4 py-2"
+              className="brand-button text-sm font-semibold no-underline rounded-lg px-4 py-2"
               style={{
-                background: "var(--teal)",
+                background: "var(--button-gradient)",
                 color: "#fff",
               }}
             >
@@ -135,19 +135,19 @@ export default function ForEmployersPage() {
 
         <div className="relative flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            href="/org/signup"
-            className="inline-block rounded-[14px] px-10 py-4 font-bold text-lg no-underline transition-all"
-            style={{ background: "var(--teal)", color: "#fff" }}
+            href="/signup?resume=organization&intent=hiring"
+            className="brand-button inline-block rounded-[14px] px-10 py-4 font-bold text-lg no-underline transition-all"
+            style={{ background: "var(--button-gradient)", color: "#fff" }}
           >
             Get Started
           </Link>
           <Link
             href="/partners"
-            className="inline-block rounded-[14px] px-10 py-4 font-bold text-lg no-underline transition-all"
+            className="brand-button inline-block rounded-[14px] px-10 py-4 font-bold text-lg no-underline transition-all"
             style={{
-              color: "#fff",
+              color: "var(--button-gradient-soft-text)",
               border: "1.5px solid rgba(255,255,255,.25)",
-              background: "transparent",
+              background: "var(--button-gradient-soft)",
             }}
           >
             View Partners
@@ -217,12 +217,12 @@ export default function ForEmployersPage() {
               ))}
             </ul>
             <Link
-              href="/org/signup"
-              className="block text-center rounded-xl py-3 font-bold text-sm no-underline transition-all"
+              href="/signup?resume=organization&intent=hiring"
+              className="brand-button block text-center rounded-xl py-3 font-bold text-sm no-underline transition-all"
               style={{
                 border: "1.5px solid var(--border)",
-                color: "var(--text)",
-                background: "transparent",
+                color: "var(--button-gradient-soft-text)",
+                background: "var(--button-gradient-soft)",
               }}
             >
               Get Started
@@ -280,9 +280,9 @@ export default function ForEmployersPage() {
               ))}
             </ul>
             <Link
-              href="/org/signup"
-              className="block text-center rounded-xl py-3 font-bold text-sm no-underline transition-all"
-              style={{ background: "var(--teal)", color: "#fff" }}
+              href="/signup?resume=organization&intent=hiring"
+              className="brand-button block text-center rounded-xl py-3 font-bold text-sm no-underline transition-all"
+              style={{ background: "var(--button-gradient)", color: "#fff" }}
             >
               Get Premium
             </Link>
@@ -300,9 +300,9 @@ export default function ForEmployersPage() {
           stronger, more inclusive workplaces.
         </p>
         <Link
-          href="/org/signup"
-          className="inline-block rounded-[14px] px-10 py-4 font-bold text-lg no-underline transition-all"
-          style={{ background: "var(--teal)", color: "#fff" }}
+          href="/signup?resume=organization&intent=hiring"
+          className="brand-button inline-block rounded-[14px] px-10 py-4 font-bold text-lg no-underline transition-all"
+          style={{ background: "var(--button-gradient)", color: "#fff" }}
         >
           Get Started Today
         </Link>

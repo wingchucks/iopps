@@ -9,7 +9,6 @@ import Avatar from "@/components/Avatar";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { getMembersPaginated, type MemberProfile } from "@/lib/firestore/members";
-import type { QueryDocumentSnapshot } from "firebase/firestore";
 
 const communityFilters = [
   "All",
@@ -39,7 +38,7 @@ function MembersContent() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const { user } = useAuth();
-  const cursorRef = useRef<QueryDocumentSnapshot | null>(null);
+  const cursorRef = useRef<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -135,9 +134,9 @@ function MembersContent() {
           <button
             key={f}
             onClick={() => setActiveFilter(f)}
-            className="px-4 py-2 rounded-full border-none whitespace-nowrap font-semibold text-[13px] cursor-pointer transition-colors"
+            className="brand-button px-4 py-2 rounded-full border-none whitespace-nowrap font-semibold text-[13px] cursor-pointer transition-colors"
             style={{
-              background: activeFilter === f ? "var(--navy)" : "var(--border)",
+              background: activeFilter === f ? "var(--button-gradient)" : "var(--border)",
               color: activeFilter === f ? "#fff" : "var(--text-sec)",
             }}
           >
@@ -186,11 +185,11 @@ function MembersContent() {
           {/* Load More */}
           {hasMore && !search && activeFilter === "All" && (
             <div className="text-center mt-6">
-              <Button
+              <Button className="brand-button"
                 onClick={loadMore}
                 style={{
-                  background: "var(--card)",
-                  color: "var(--text-sec)",
+                  background: "var(--button-gradient-soft)",
+                  color: "var(--button-gradient-soft-text)",
                   border: "1px solid var(--border)",
                   opacity: loadingMore ? 0.6 : 1,
                 }}

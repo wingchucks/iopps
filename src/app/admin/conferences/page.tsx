@@ -366,14 +366,14 @@ function ConferenceFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-muted"
+              className="rounded-lg border border-[var(--card-border)] button-gradient-soft px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-muted"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!form.title.trim() || loading}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg button-gradient px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading && <SpinnerIcon />}
               {editingId ? "Save Changes" : "Create Conference"}
@@ -622,7 +622,7 @@ export default function AdminConferencesPage() {
         </div>
         <button
           onClick={() => setFormModal({ open: true, editingId: null, data: EMPTY_FORM })}
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent/90"
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg button-gradient px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent/90"
         >
           <PlusIcon className="h-4 w-4" />
           Add Conference
@@ -654,8 +654,8 @@ export default function AdminConferencesPage() {
             className={cn(
               "rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-150",
               statusFilter === tab.value
-                ? "bg-accent text-white shadow-sm"
-                : "bg-[var(--card-bg)] border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-accent/50 hover:text-foreground",
+                ? "button-gradient text-white shadow-sm"
+                : "button-gradient-soft border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-accent/50 hover:text-foreground",
             )}
           >
             {tab.label}

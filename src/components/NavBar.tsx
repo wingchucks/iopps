@@ -161,9 +161,9 @@ export default function NavBar() {
                     key={href}
                     href={href}
                     aria-current={active ? "page" : undefined}
-                    className="px-4 py-2 rounded-lg border-none font-semibold text-sm transition-all no-underline flex items-center gap-1.5 whitespace-nowrap"
+                    className="brand-button px-4 py-2 rounded-lg border-none font-semibold text-sm transition-all no-underline flex items-center gap-1.5 whitespace-nowrap"
                     style={{
-                      background: active ? "rgba(255,255,255,.12)" : "transparent",
+                      background: active ? "var(--button-gradient)" : "transparent",
                       color: active ? "#fff" : "rgba(255,255,255,.6)",
                     }}
                   >
@@ -188,7 +188,7 @@ export default function NavBar() {
               <button
                 onClick={() => setShowChooser(true)}
                 className="flex items-center justify-center w-9 h-9 rounded-[10px] border-none cursor-pointer transition-all hover:brightness-110"
-                style={{ background: "var(--teal)", color: "#fff" }}
+                style={{ background: "var(--button-gradient)", color: "#fff" }}
                 title="Create"
                 aria-label="Create"
               >
@@ -201,9 +201,9 @@ export default function NavBar() {
 
             <Link
               href="/search"
-              className="flex items-center gap-2 px-4 py-2 rounded-[10px] w-44 xl:w-60 no-underline transition-all hover:bg-white/[.12]"
+              className="brand-button flex items-center gap-2 px-4 py-2 rounded-[10px] w-44 xl:w-60 no-underline transition-all hover:bg-white/[.12]"
               style={{
-                background: "rgba(255,255,255,.08)",
+                background: "var(--button-gradient-soft)",
                 border: "1px solid rgba(255,255,255,.1)",
               }}
             >
@@ -253,10 +253,10 @@ export default function NavBar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="rounded-[10px] px-4 py-2 text-sm font-semibold no-underline transition-all"
+                  className="brand-button rounded-[10px] px-4 py-2 text-sm font-semibold no-underline transition-all"
                   style={{
-                    background: link.key === "signup" ? "var(--teal)" : "rgba(255,255,255,.08)",
-                    color: link.key === "signup" ? "#fff" : "rgba(255,255,255,.9)",
+                    background: link.key === "signup" ? "var(--button-gradient)" : "var(--button-gradient-soft)",
+                    color: link.key === "signup" ? "#fff" : "var(--button-gradient-soft-text)",
                     border: link.key === "signup" ? "none" : "1px solid rgba(255,255,255,.1)",
                   }}
                 >
@@ -271,7 +271,7 @@ export default function NavBar() {
               <button
                 onClick={() => setShowChooser(true)}
                 className="flex items-center justify-center w-10 h-10 rounded-[12px] border-none cursor-pointer transition-all hover:brightness-110"
-                style={{ background: "var(--teal)", color: "#fff" }}
+                style={{ background: "var(--button-gradient)", color: "#fff" }}
                 title="Create"
                 aria-label="Create"
               >
@@ -394,10 +394,10 @@ export default function NavBar() {
                             href={href}
                             aria-current={active ? "page" : undefined}
                             onClick={() => setMenuOpen(false)}
-                            className="flex items-center justify-between rounded-[20px] border px-4 py-3.5 text-sm font-semibold no-underline transition-all"
+                            className="brand-button flex items-center justify-between rounded-[20px] border px-4 py-3.5 text-sm font-semibold no-underline transition-all"
                             style={{
-                              color: active ? "#fff" : "rgba(255,255,255,.82)",
-                              background: active ? "rgba(20,184,166,.18)" : "rgba(255,255,255,.04)",
+                              color: active ? "#fff" : "var(--button-gradient-soft-text)",
+                              background: active ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                               borderColor: active ? "rgba(20,184,166,.35)" : "rgba(255,255,255,.08)",
                             }}
                           >
@@ -431,10 +431,10 @@ export default function NavBar() {
                             href={href}
                             aria-current={active ? "page" : undefined}
                             onClick={() => setMenuOpen(false)}
-                            className="flex items-center justify-between rounded-[20px] border px-4 py-3.5 text-sm font-semibold no-underline transition-all"
+                            className="brand-button flex items-center justify-between rounded-[20px] border px-4 py-3.5 text-sm font-semibold no-underline transition-all"
                             style={{
-                              color: active ? "#fff" : "rgba(255,255,255,.82)",
-                              background: active ? "rgba(20,184,166,.18)" : "rgba(255,255,255,.04)",
+                              color: active ? "#fff" : "var(--button-gradient-soft-text)",
+                              background: active ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                               borderColor: active ? "rgba(20,184,166,.35)" : "rgba(255,255,255,.08)",
                             }}
                           >
@@ -447,10 +447,10 @@ export default function NavBar() {
                       <button
                         type="button"
                         onClick={toggle}
-                        className="flex w-full items-center justify-between rounded-[20px] border px-4 py-3.5 text-left text-sm font-semibold transition-all"
+                        className="brand-button flex w-full items-center justify-between rounded-[20px] border px-4 py-3.5 text-left text-sm font-semibold transition-all"
                         style={{
-                          color: "rgba(255,255,255,.82)",
-                          background: "rgba(255,255,255,.04)",
+                          color: "var(--button-gradient-soft-text)",
+                          background: "var(--button-gradient-soft)",
                           border: "1px solid rgba(255,255,255,.08)",
                         }}
                       >
@@ -490,8 +490,8 @@ export default function NavBar() {
                           <Link
                             href={profileHref}
                             onClick={() => setMenuOpen(false)}
-                            className="flex items-center justify-between rounded-[18px] px-4 py-3 text-sm font-semibold no-underline transition-all hover:bg-white/8"
-                            style={{ color: "rgba(255,255,255,.82)", background: "rgba(255,255,255,.04)" }}
+                            className="brand-button flex items-center justify-between rounded-[18px] px-4 py-3 text-sm font-semibold no-underline transition-all hover:bg-white/8"
+                            style={{ color: "var(--button-gradient-soft-text)", background: "var(--button-gradient-soft)" }}
                           >
                             <span>{profileLabel}</span>
                             <span style={{ color: "rgba(255,255,255,.32)" }}>&#8594;</span>
@@ -528,11 +528,11 @@ export default function NavBar() {
                               key={link.href}
                               href={link.href}
                               onClick={() => setMenuOpen(false)}
-                              className="block rounded-[18px] px-4 py-3 text-center text-sm font-semibold no-underline"
+                              className="brand-button block rounded-[18px] px-4 py-3 text-center text-sm font-semibold no-underline"
                               style={{
                                 background:
-                                  link.key === "signup" ? "rgba(20,184,166,.16)" : "rgba(59,130,246,.16)",
-                                color: link.key === "signup" ? "#99F6E4" : "#93C5FD",
+                                  link.key === "signup" ? "var(--button-gradient)" : "var(--button-gradient-soft)",
+                                color: link.key === "signup" ? "#fff" : "var(--button-gradient-soft-text)",
                               }}
                             >
                               {link.label}

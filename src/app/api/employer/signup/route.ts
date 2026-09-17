@@ -1,3 +1,4 @@
+import { newBusinessListingReview } from "@/lib/business-listing-review";
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
@@ -54,6 +55,21 @@ function cleanLocation(value: unknown): { city: string; province: string } | und
   return city || province ? { city, province } : undefined;
 }
 
+async function existingSignupResponse(uid: string) {
+  if (!adminDb) return null;
+  const [organization, employer] = await Promise.all([
+    adminDb.collection("organizations").doc(uid).get(),
+    adminDb.collection("employers").doc(uid).get(),
+  ]);
+  if (!organization.exists && !employer.exists) return null;
+  const existing = organization.data() || employer.data() || {};
+  return NextResponse.json({
+    success: true, alreadyExists: true, orgId: uid,
+    slug: typeof existing.slug === "string" ? existing.slug : "",
+    confirmationEmailSent: false,
+  });
+}
+
 /**
  * POST /api/employer/signup
  * Creates all required Firestore documents for a new employer account.
@@ -89,6 +105,16 @@ export async function POST(req: NextRequest) {
     emailVerified = decoded.email_verified === true;
   } catch {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  }
+
+  // Retrying a completed signup must not reset a profile, plan, credits or role.
+  // Check before spam protection, which is intended only for new signups.
+  try {
+    const existing = await existingSignupResponse(uid);
+    if (existing) return existing;
+  } catch (error) {
+    console.error("[employer/signup] Existing organization lookup failed:", error);
+    return NextResponse.json({ error: "Unable to check your organization. Please try again." }, { status: 503 });
   }
 
   // Parse body
@@ -169,7 +195,7 @@ export async function POST(req: NextRequest) {
     const batch = adminDb.batch();
 
     // 1. organizations/{uid}
-    batch.set(adminDb.collection("organizations").doc(uid), {
+    batch.create(adminDb.collection("organizations").doc(uid), {
       name,
       type,
       contactName,
@@ -186,6 +212,7 @@ export async function POST(req: NextRequest) {
       onboardingComplete: profileSubmitted,
       plan: null,
       status: signupStatus,
+      ...(type !== "school" ? { directoryReview: newBusinessListingReview() } : {}),
       emailVerified,
       verified: false,
       ...(emailVerified ? { approvedAt: now } : {}),
@@ -194,7 +221,7 @@ export async function POST(req: NextRequest) {
     });
 
     // 2. employers/{uid}
-    batch.set(adminDb.collection("employers").doc(uid), {
+    batch.create(adminDb.collection("employers").doc(uid), {
       id: uid,
       name,
       slug,
@@ -212,6 +239,7 @@ export async function POST(req: NextRequest) {
       plan: "free",
       subscriptionTier: "free",
       status: signupStatus,
+      ...(type !== "school" ? { directoryReview: newBusinessListingReview() } : {}),
       emailVerified,
       verified: false,
       onboardingComplete: profileSubmitted,
@@ -293,6 +321,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, orgId: uid, slug, confirmationEmailSent: true });
   } catch (err) {
+    // A concurrent signup may finish after the initial lookup. The create
+    // preconditions keep the entire batch from overwriting the winning account.
+    if (err && typeof err === "object" && "code" in err && err.code === 6) {
+      const existing = await existingSignupResponse(uid);
+      if (existing) return existing;
+    }
     console.error("[employer/signup] Failed:", err);
     const message = err instanceof Error ? err.message : "Failed to create organization";
     return NextResponse.json({ error: message }, { status: 500 });

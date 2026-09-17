@@ -85,7 +85,7 @@ export async function POST(
           const lifecycle = sourceLifecyclePatch(item, existingDoc.data());
               const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
           if (feed.updateExistingJobs || (feedType === "dayforce" && feed.updateExistingJobs !== false)) {
-            await existingDoc.ref.update({ ...identity, title, location: item.location || "Canada", description: resolvedDescription, ...(descriptionPatch || {}), ...lifecycle, updatedAt: FieldValue.serverTimestamp() });
+            await existingDoc.ref.update({ ...identity, title, location: item.location || "Canada", description: resolvedDescription, descriptionFormat: "plain-text", ...(descriptionPatch || {}), ...lifecycle, updatedAt: FieldValue.serverTimestamp() });
             jobsUpdated++;
           } else if (Object.keys(lifecycle).length || (feedType === "dayforce" && existingDoc.get("feedId") !== feed.id)) {
             await existingDoc.ref.update({...identity,...lifecycle});
@@ -99,7 +99,7 @@ export async function POST(
 
         const jobData: Record<string, unknown> = {
           title,
-          description: resolvedDescription,
+          description: resolvedDescription, descriptionFormat: "plain-text",
           status: "active",
           active: true,
           source: "feed",

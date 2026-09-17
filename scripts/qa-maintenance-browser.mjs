@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';import fs from 'node:fs/promises';import path from 'node:path';import {chromium} from 'playwright';import {startIsolatedQaServer} from './local-qa-server.mjs';
 const server=await startIsolatedQaServer({maintenanceMode:'paused'});let browser;
 try {
- browser=await chromium.launch({executablePath:process.env.QA_CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+ browser=await chromium.launch({headless:true,...(process.env.QA_CHROME_PATH?{executablePath:process.env.QA_CHROME_PATH}:{})});
  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'allow'});
  await context.route('**/*',route=>new URL(route.request().url()).origin===server.base?route.continue():route.abort());
  const page=await context.newPage();assert.equal((await page.goto(server.base)).status(),503);

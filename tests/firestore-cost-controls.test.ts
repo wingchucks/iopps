@@ -24,13 +24,14 @@ test("server-side metadata lookups use the shared Next data cache", () => {
   assert.match(source, /cachedFindFirst/);
 });
 
-test("non-eligibility detail APIs retain shared CDN caching; job eligibility is checked fresh", () => {
-  assert.match(read("../src/app/api/jobs/[id]/route.ts"), /"Cache-Control":\s*"no-store"/);
+test("publication and eligibility detail APIs stay fresh; related-job suggestions retain bounded CDN caching", () => {
   for (const route of [
-    "../src/app/api/jobs/[id]/related/route.ts",
+    "../src/app/api/jobs/[id]/route.ts",
     "../src/app/api/events/[id]/route.ts",
+    "../src/app/api/scholarships/[id]/route.ts",
   ]) {
     const source = read(route);
-    assert.match(source, /withPublicDetailCache/, `${route} must cache successful public responses`);
+    assert.match(source, /"Cache-Control":\s*"no-store"/, `${route} must not serve stale eligibility or unpublished content`);
   }
+  assert.match(read("../src/app/api/jobs/[id]/related/route.ts"), /withPublicDetailCache/);
 });
