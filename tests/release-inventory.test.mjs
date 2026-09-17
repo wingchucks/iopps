@@ -1,10 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { AUDIT_FIELDS, scanCollection, summarizeCollections } from '../src/lib/server/release-inventory.mjs';
+import { AUDIT_FIELDS, scanCollection, summarizeCollections, buildReviewReferences } from '../src/lib/server/release-inventory.mjs';
 
 function emptyScans() {
   return Object.fromEntries(Object.keys(AUDIT_FIELDS).map(name => [name, { rows: new Map(), complete: true }]));
 }
+
+test('review references never treat a current employer as proven historical ownership', () => {
+  const scans = emptyScans();
+  scans.applications.rows.set('application', { userId: 'private-user', postId: 'job', email: 'private@example.test', resumeUrl: 'private-resume' });
+  scans.jobs.rows.set('job', { orgId: 'organization', title: 'Fictional job' });
+  scans.organizations.rows.set('organization', { name: 'Fictional organization' });
+  const review = buildReviewReferences(scans);
+  assert.equal(review.applications[0].candidateOrgId, 'organization');
+  assert.equal(review.applications[0].reviewRequired, true);
+  assert.equal(review.automaticRepairsAllowed, false);
+  assert.doesNotMatch(JSON.stringify(review), /private-user|private@example|private-resume/);
+  scans.jobs.rows.clear();
+  assert.equal(buildReviewReferences(scans).applications[0].candidateOrgId, null);
+});
 
 test('release inventory identifies legacy application ownership without returning identities', () => {
   const scans = emptyScans();

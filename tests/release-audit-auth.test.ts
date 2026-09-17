@@ -20,6 +20,7 @@ test('read-only release audit denies unauthenticated and non-owner requests befo
       AUDIT_FIELDS: { users: ['role'] },
       scanCollection: async () => { scans++; return {}; },
       summarizeCollections: () => ({ countsOnly: true }),
+      buildReviewReferences: () => ({ automaticRepairsAllowed: false }),
     },
   };
   vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/admin/release-audit/route.ts', 'utf8'), {

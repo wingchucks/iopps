@@ -1,15 +1,16 @@
-// Read-only, projected database inventory. Never returns document contents or IDs.
+// Read-only projected inventory. Aggregate counts and minimal owner review references;
+// never applicant contact information, resumes or application content.
 const PROFILE_FIELDS = ['role', 'orgId', 'employerId', 'orgRole', 'status', 'deletedAt', 'claimsValidAfter'];
 const REVIEW_FIELDS = ['directoryReview.status', 'directoryReview.revision', 'directoryReview.approvedRevision'];
 export const AUDIT_FIELDS = Object.freeze({
   users: PROFILE_FIELDS,
   members: ['role', 'orgId', 'orgRole'],
-  organizations: ['employerId', 'status', 'disabled', 'deletedAt', ...REVIEW_FIELDS],
-  employers: ['status', 'disabled', 'deletedAt', ...REVIEW_FIELDS],
+  organizations: ['name', 'employerId', 'status', 'disabled', 'deletedAt', ...REVIEW_FIELDS],
+  employers: ['name', 'organizationName', 'status', 'disabled', 'deletedAt', ...REVIEW_FIELDS],
   events: ['slug', 'status', 'active', 'orgId', 'employerId'],
   scholarships: ['slug', 'status', 'active', 'orgId', 'employerId'],
-  posts: ['type', 'slug', 'status', 'active', 'orgId', 'employerId'],
-  jobs: ['status', 'active', 'orgId', 'employerId'],
+  posts: ['title', 'type', 'slug', 'status', 'active', 'orgId', 'employerId'],
+  jobs: ['title', 'status', 'active', 'orgId', 'employerId'],
   applications: ['userId', 'memberId', 'postId', 'jobId', 'orgId', 'employerId', 'status', 'appliedAt'],
   organizationOpportunityDrafts: ['kind', 'id', 'orgId', 'status', 'revision'],
 });
@@ -140,4 +141,39 @@ export function summarizeCollections(scans) {
     applications: { ...applications, jobTargetScanComplete: scans.jobs.complete && posts.complete },
     privateOpportunities: { checked: scans.organizationOpportunityDrafts.rows.size },
   };
+}
+
+// Only the owner-authorized route exposes these minimal review references.
+// A current job owner is a candidate, never proof of historical application ownership.
+export function buildReviewReferences(scans) {
+  const applications = [];
+  for (const [id, app] of scans.applications.rows) {
+    if (text(app.orgId) || text(app.employerId)) continue;
+    const jobId = text(app.postId) || text(app.jobId);
+    const job = scans.jobs.rows.get(jobId) || scans.posts.rows.get(jobId);
+    const candidateOrgId = text(job?.orgId) || text(job?.employerId);
+    const org = scans.organizations.rows.get(candidateOrgId) || scans.employers.rows.get(candidateOrgId);
+    applications.push({
+      applicationId: id,
+      jobId,
+      jobTitle: text(job?.title).slice(0, 200),
+      candidateOrgId: candidateOrgId || null,
+      candidateName: text(org?.name || org?.organizationName).slice(0, 200),
+      candidateTargetPresent: Boolean(org),
+      reviewRequired: true,
+      reason: candidateOrgId ? 'Current job ownership found; confirm historical ownership before assigning access.' : 'No current job ownership found. Preserve applicant history; do not guess an employer.',
+    });
+  }
+  const missingOrganizationTargets = [];
+  for (const [uid, user] of scans.users.rows) {
+    if (blockedUser(user)) continue;
+    const member = scans.members.rows.get(uid) || {};
+    const organizationRole = ['employer', 'school', 'organization'].includes(user.role) || ['employer', 'school', 'organization'].includes(member.role);
+    const orgId = text(member.orgId) || text(user.orgId) || text(user.employerId) || (organizationRole ? uid : '');
+    const employerId = text(user.employerId) || text(user.orgId) || text(member.orgId) || (organizationRole ? uid : '');
+    if (orgId && !scans.organizations.rows.has(orgId) && !scans.employers.rows.has(employerId) && !scans.employers.rows.has(orgId)) {
+      missingOrganizationTargets.push({ userId: uid, orgId, employerId, reviewRequired: true });
+    }
+  }
+  return { applications, missingOrganizationTargets, complete: Object.values(scans).every(scan => scan.complete), automaticRepairsAllowed: false };
 }

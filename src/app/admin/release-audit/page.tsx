@@ -31,7 +31,7 @@ export default function ReleaseAuditPage() {
 
   return <section className="mx-auto max-w-5xl space-y-5 p-4 md:p-8">
     <h1 className="text-2xl font-bold">Release readiness audit</h1>
-    <p>Review database compatibility before launch. This owner-only check reads up to 1,000 records per collection and reports counts. It does not change records or approve a release.</p>
+    <p>Review database compatibility before launch. This owner-only check reads up to 1,000 records per collection and reports counts and references for review. It does not change records or approve a release.</p>
     <button type="button" disabled={!user || busy} onClick={runAudit}
       className="min-h-11 rounded-xl bg-gradient-to-r from-teal-700 via-cyan-700 to-blue-600 px-5 py-3 font-semibold text-white disabled:opacity-50">
       {busy ? "Checking database…" : "Run read-only audit"}

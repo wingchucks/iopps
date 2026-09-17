@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldPath } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { getAdminApp, getAdminDb } from "@/lib/firebase-admin";
-import { AUDIT_FIELDS, scanCollection, summarizeCollections } from "@/lib/server/release-inventory.mjs";
+import { AUDIT_FIELDS, scanCollection, summarizeCollections, buildReviewReferences } from "@/lib/server/release-inventory.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,10 +33,12 @@ export async function POST(request: NextRequest) {
       auditedAt: new Date().toISOString(),
       maxDocumentsPerCollection: 1000,
       ...summarizeCollections(scans),
+      reviewReferences: buildReviewReferences(scans),
       limitations: [
         "Counts flag records for review; they do not approve a release or authorize data changes.",
         "Scans are bounded, sequential reads, not a consistent snapshot. Incomplete scans make missing joins inconclusive.",
-        "No names, contact information, resumes or listing content are returned.",
+        "Review references include record IDs, job titles and organization names, but no applicant names, contact details, resumes or application content.",
+        "Current job ownership is not proof of historical application ownership. References require review before access is assigned.",
         "Draft content and private counterparts, historical aliases, billing, Storage access, and production write containment need separate verification.",
       ],
     }, { headers });
