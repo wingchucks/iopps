@@ -1,12 +1,14 @@
+import { publicContentRecord } from "@/lib/server/public-content-record";
 import { NextRequest, NextResponse } from "next/server";
 import { ANONYMOUS_MEMBER_NAME } from "@/lib/account-labels";
 import { FieldValue } from "firebase-admin/firestore";
-import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyAuthToken } from "@/lib/api-auth";
 import { isPublicPostVisible } from "@/lib/access-state";
 import { sendAdminContentPosted } from "@/lib/email";
 
 export const runtime = "nodejs";
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 function serialize(value: unknown): unknown {
   if (value === null || value === undefined) return value;
@@ -24,12 +26,6 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
-function getBearerToken(req: NextRequest): string | null {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  return authHeader.slice("Bearer ".length).trim() || null;
-}
-
 function slugify(value: string): string {
   return value
     .toLowerCase()
@@ -38,17 +34,19 @@ function slugify(value: string): string {
     .replace(/-{2,}/g, "-");
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const db = getAdminDb();
     const snap = await db.collection("posts")
       .orderBy("order", "asc")
       .get();
 
+    const requestedId = request.nextUrl.searchParams.get("id");
     const posts = snap.docs
       .map((doc) => serialize({ id: doc.id, ...doc.data() }))
-      .filter((post) => isPublicPostVisible(post));
-    return NextResponse.json({ posts });
+      .filter((post) => isPublicPostVisible(post))
+      .filter((post) => !requestedId || (post as Record<string, unknown>).id === requestedId || (post as Record<string, unknown>).slug === requestedId);
+    return NextResponse.json({ posts: posts.map(post => publicContentRecord(post as Record<string, unknown>)) }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     console.error("Posts API error:", err);
     return NextResponse.json({ error: "Failed to load posts" }, { status: 500 });
@@ -56,10 +54,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const token = getBearerToken(req);
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const access = await verifyAuthToken(req);
+  if (!access.success) return access.response;
 
   let body: {
     title?: string;
@@ -84,8 +80,7 @@ export async function POST(req: NextRequest) {
     : description.slice(0, 60);
 
   try {
-    const auth = getAdminAuth();
-    const decoded = await auth.verifyIdToken(token);
+    const decoded = access.decodedToken;
     const db = getAdminDb();
     const userDoc = await db.collection("users").doc(decoded.uid).get();
     const memberDoc = await db.collection("members").doc(decoded.uid).get();

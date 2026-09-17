@@ -247,6 +247,14 @@
         { "fieldPath": "menteeId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "conversations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "participants", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "unreadBy", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

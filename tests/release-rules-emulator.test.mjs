@@ -45,6 +45,8 @@ test('release rules preserve organization management while isolating private app
     }
     await assert.rejects(getDoc(doc(clientDb, 'applications', 'release-other-org')), e => e.code === 'permission-denied');
     await assert.rejects(updateDoc(doc(clientDb, 'applications', 'release-other-org'), { status: 'offered' }), e => e.code === 'permission-denied');
+    await getAdminAuth(server).setCustomUserClaims(uid, { admin: true });
+    await auth.currentUser.getIdToken(true);
     await uploadBytes(ref(storage, `livestream-promos/${uid}/test.png`), new Uint8Array([137,80,78,71]), { contentType: 'image/png' });
     await assert.rejects(uploadBytes(ref(storage, 'livestream-promos/other-user/test.png'), new Uint8Array([1]), { contentType: 'image/png' }), e => e.code === 'storage/unauthorized');
   } finally {

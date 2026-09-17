@@ -36,8 +36,8 @@ test('application withdrawal permissions and resume ownership', {
     await assert.rejects(updateDoc(clientDoc, { status: 'offered' }), e => e.code === 'permission-denied');
     const withdrawal = { status: 'withdrawn', statusHistory: [{ status: 'withdrawn', timestamp: Timestamp.now(), note: 'Withdrawn by applicant' }], updatedAt: serverTimestamp() };
     await assert.rejects(updateDoc(clientDoc, { ...withdrawal, resumeUrl: 'tampered' }), e => e.code === 'permission-denied');
-    await updateDoc(clientDoc, withdrawal);
-    assert.equal((await getDoc(clientDoc)).data().status, 'withdrawn');
+    await assert.rejects(updateDoc(clientDoc, withdrawal), e => e.code === 'permission-denied');
+    await assert.rejects(getDoc(clientDoc), e => e.code === 'permission-denied');
     await serverDoc.update({ ...data, userId: 'someone-else' });
     await assert.rejects(updateDoc(clientDoc, withdrawal), e => e.code === 'permission-denied');
     const own = ref(storage, `resumes/${uid}/rules.pdf`);

@@ -9,7 +9,6 @@ import Avatar from "@/components/Avatar";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { getMembersPaginated, type MemberProfile } from "@/lib/firestore/members";
-import type { QueryDocumentSnapshot } from "firebase/firestore";
 
 const communityFilters = [
   "All",
@@ -39,7 +38,7 @@ function MembersContent() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const { user } = useAuth();
-  const cursorRef = useRef<QueryDocumentSnapshot | null>(null);
+  const cursorRef = useRef<string | null>(null);
 
   useEffect(() => {
     async function load() {

@@ -33,7 +33,7 @@ test("opportunity drafts are server-only and owners cannot bypass publishing thr
       await assert.rejects(setDoc(doc(client, "organizationOpportunityDrafts", "example"), { orgId: uid, title: "Bypass" }), denied);
     }
     await server.doc(`members/${uid}`).update({ role: "admin" });
-    await updateDoc(doc(clients[0], "scholarships", "test"), { title: "Admin correction" });
+    await assert.rejects(updateDoc(doc(clients[0], "scholarships", "test"), { title: "Forged profile admin" }), denied);
   } finally {
     await Promise.all([server.doc(`members/${uid}`).delete(), server.doc("events/test").delete(), server.doc("scholarships/test").delete(), server.doc("organizationOpportunityDrafts/example").delete()]);
     await Promise.all(clients.map(terminate)); await Promise.all(apps.map(deleteApp)); await server.terminate(); await deleteAdmin(admin);

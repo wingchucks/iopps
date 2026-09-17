@@ -8,11 +8,10 @@ import {
   updatePassword,
   EmailAuthProvider,
   reauthenticateWithCredential,
-  deleteUser,
 } from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
-import { updateMemberProfile, deleteMemberProfile } from "@/lib/firestore/members";
+import { updateMemberProfile, deleteOwnAccount } from "@/lib/firestore/members";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
@@ -117,8 +116,8 @@ function AccountContent() {
         deletePassword
       );
       await reauthenticateWithCredential(user, credential);
-      await deleteMemberProfile(user.uid);
-      await deleteUser(user);
+      await deleteOwnAccount(user.uid);
+      await signOut();
       router.push("/");
     } catch (err: unknown) {
       const message =
@@ -287,8 +286,9 @@ function AccountContent() {
             Delete Account
           </h3>
           <p className="text-xs text-text-muted mb-3">
-            Permanently delete your account and all associated data. This action
-            cannot be undone.
+            Permanently remove your sign-in and member profile. Applications and
+            messages you already shared may remain with their recipients. This
+            action cannot be undone.
           </p>
           {!showDelete ? (
             <button

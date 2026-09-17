@@ -11,8 +11,8 @@ import Button from "@/components/Button";
 import { getPost, type Post } from "@/lib/firestore/posts";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
-import { db, storage } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { storage } from "@/lib/firebase";
+import { getApplicantReceipt } from "@/lib/firestore/applications";
 import { ref, uploadBytes, getDownloadURL, getBlob } from "firebase/storage";
 
 import { createResumeObjectName, buildApplicationProfileSnapshot } from "@/lib/application-snapshot";
@@ -134,10 +134,10 @@ function ApplyWizard() {
         if (postData) trackJobFunnelEvent("application_start", { jobId: postData.id });
         if (user) setProfile(await getMemberProfile(user.uid));
         if (postData && user) {
-          const applicationSnap = await getDoc(doc(db, "applications", `${user.uid}_${postData.id}`)).catch(() => null);
-          if (applicationSnap?.exists()) {
+          const application = await getApplicantReceipt(postData.id);
+          if (application) {
             setAlreadyApplied(true);
-            setReceipt(buildApplicationReceipt({id:applicationSnap.id,...applicationSnap.data()}));
+            setReceipt(buildApplicationReceipt(application));
           }
         }
       } catch (err) {

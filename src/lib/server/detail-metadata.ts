@@ -1,3 +1,4 @@
+import { visibleMemberProfile } from "@/lib/server/member-privacy";
 import type { Metadata } from "next";
 import { cache } from "react";
 import { getPublicOpportunity } from "@/lib/server/public-opportunities";
@@ -378,7 +379,9 @@ export async function generateMemberMetadata(uid: string): Promise<Metadata> {
         "View this Indigenous professional's profile on IOPPS.",
       );
     }
-    const data = doc.data() || {};
+    const [settings, account] = await db.getAll(db.doc(`member_settings/${uid}`), db.doc(`users/${uid}`));
+    const data = visibleMemberProfile(uid, doc.data() || {}, settings.data() || {}, account.data() || {}, false);
+    if (!data) return { ...fallbackMetadata("Member Profile", "IOPPS member profile."), robots: { index: false, follow: false } };
     const name = clean(data.name) || clean(data.displayName) || "IOPPS Member";
     const headline = clean(data.headline) || clean(data.title);
     const nation = clean(data.nation);

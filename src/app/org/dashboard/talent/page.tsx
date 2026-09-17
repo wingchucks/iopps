@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import { getAllMembers } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
+import { useAuth } from "@/lib/auth-context";
 
 interface SavedSearch {
   name: string;
@@ -18,7 +19,6 @@ interface SavedSearch {
     workPref: string;
     communityFilter: string;
     openOnly: boolean;
-    hasResumeOnly: boolean;
   };
 }
 
@@ -39,6 +39,7 @@ function persistSavedSearches(searches: SavedSearch[]) {
 }
 
 export default function TalentSearchPage() {
+  const { user } = useAuth();
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -49,24 +50,32 @@ export default function TalentSearchPage() {
   const [workPref, setWorkPref] = useState("all");
   const [communityFilter, setCommunityFilter] = useState("");
   const [openOnly, setOpenOnly] = useState(false);
-  const [hasResumeOnly, setHasResumeOnly] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   // Saved searches
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [saveSearchName, setSaveSearchName] = useState("");
   const [showSaveInput, setShowSaveInput] = useState(false);
 
   useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
     (async () => {
-      const all = await getAllMembers();
-      setMembers(all);
-      setLoading(false);
+      try {
+        const all = await getAllMembers();
+        if (!cancelled) { setMembers(all); setLoadError(false); }
+      } catch {
+        if (!cancelled) setLoadError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     setSavedSearches(loadSavedSearches());
-  }, []);
+    return () => { cancelled = true; };
+  }, [user]);
 
   const hasActiveFilters =
     search || skillFilter.length > 0 || locationFilter || educationFilter ||
-    workPref !== "all" || communityFilter || openOnly || hasResumeOnly;
+    workPref !== "all" || communityFilter || openOnly;
 
   const handleSaveSearch = () => {
     if (!saveSearchName.trim()) return;
@@ -80,7 +89,6 @@ export default function TalentSearchPage() {
         workPref,
         communityFilter,
         openOnly,
-        hasResumeOnly,
       },
     };
     const updated = [...savedSearches, newSearch];
@@ -98,7 +106,6 @@ export default function TalentSearchPage() {
     setWorkPref(saved.filters.workPref);
     setCommunityFilter(saved.filters.communityFilter);
     setOpenOnly(saved.filters.openOnly);
-    setHasResumeOnly(saved.filters.hasResumeOnly);
   };
 
   const handleDeleteSearch = (index: number) => {
@@ -116,7 +123,6 @@ export default function TalentSearchPage() {
     setWorkPref("all");
     setCommunityFilter("");
     setOpenOnly(false);
-    setHasResumeOnly(false);
   };
 
   const filtered = useMemo(() => {
@@ -166,10 +172,9 @@ export default function TalentSearchPage() {
       // Open to work
       if (openOnly && !m.openToWork) return false;
       // Has resume
-      if (hasResumeOnly && !m.resumeUrl) return false;
       return true;
     });
-  }, [members, search, skillFilter, locationFilter, educationFilter, communityFilter, workPref, openOnly, hasResumeOnly]);
+  }, [members, search, skillFilter, locationFilter, educationFilter, communityFilter, workPref, openOnly]);
 
   const addSkill = () => {
     const trimmed = skillInput.trim();
@@ -420,33 +425,7 @@ export default function TalentSearchPage() {
                 </span>
               </div>
 
-              {/* Has Resume toggle */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setHasResumeOnly(!hasResumeOnly)}
-                  className="relative h-7 w-12 rounded-full border-none cursor-pointer transition-colors duration-200 shrink-0"
-                  style={{
-                    background: hasResumeOnly ? "var(--teal)" : "transparent",
-                    border: hasResumeOnly
-                      ? "none"
-                      : "2px solid var(--border)",
-                  }}
-                >
-                  <span
-                    className="absolute top-[3px] h-5 w-5 rounded-full transition-all duration-200"
-                    style={{
-                      background: hasResumeOnly ? "#fff" : "var(--text-muted)",
-                      left: hasResumeOnly ? 24 : 3,
-                    }}
-                  />
-                </button>
-                <span
-                  className="text-sm font-semibold"
-                  style={{ color: "var(--text)" }}
-                >
-                  Has Resume only
-                </span>
-              </div>
+              <p className="text-sm text-text-muted">Résumés are shared when candidates apply to your jobs.</p>
 
               {/* Save / Clear actions */}
               <div className="flex items-center gap-2 pt-1 flex-wrap">
@@ -569,6 +548,8 @@ export default function TalentSearchPage() {
                 <div key={i} className="h-56 rounded-2xl skeleton" />
               ))}
             </div>
+          ) : loadError ? (
+            <Card className="p-10 text-center" role="alert">Unable to load members. Please refresh to try again.</Card>
           ) : filtered.length === 0 ? (
             <Card className="p-10 text-center">
               <div

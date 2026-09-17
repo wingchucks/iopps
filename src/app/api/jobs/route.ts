@@ -1,3 +1,4 @@
+import { publicContentRecord } from "@/lib/server/public-content-record";
 import { NextResponse } from "next/server";
 import { normalizeJobDiscoveryMetadata } from "@/lib/job-metadata";
 import { getAdminDb } from "@/lib/firebase-admin";
@@ -119,7 +120,7 @@ export async function GET(request: Request) {
     ));
 
     return NextResponse.json(
-      { jobs: sortedJobs, count: sortedJobs.length },
+      { jobs: sortedJobs.map(publicContentRecord), count: sortedJobs.length },
       { headers: PUBLIC_LIST_CACHE_HEADERS },
     );
   } catch (err) {
