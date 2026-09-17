@@ -389,9 +389,9 @@ function EventDetailContent() {
                   href={event.rsvpLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold no-underline cursor-pointer transition-opacity hover:opacity-90 mb-4"
+                  className="brand-button flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold no-underline cursor-pointer transition-opacity hover:opacity-90 mb-4"
                   style={{
-                    background: "var(--teal)",
+                    background: "var(--button-gradient)",
                     color: "#fff",
                     border: "none",
                   }}

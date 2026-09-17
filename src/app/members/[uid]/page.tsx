@@ -209,11 +209,11 @@ function MemberProfileContent() {
             ) : (
               <>
                 <Link href={`/messages?to=${encodeURIComponent(profile.uid)}`}>
-                  <Button
+                  <Button className="brand-button"
                     small
                     primary
                     style={{
-                      background: "var(--teal)",
+                      background: "var(--button-gradient)",
                     }}
                   >
                     Send Message
@@ -489,10 +489,10 @@ function MemberProfileContent() {
                   rel="noopener noreferrer"
                   className="no-underline"
                 >
-                  <Button
+                  <Button className="brand-button"
                     small
                     style={{
-                      background: "var(--teal)",
+                      background: "var(--button-gradient)",
                       color: "#fff",
                     }}
                   >

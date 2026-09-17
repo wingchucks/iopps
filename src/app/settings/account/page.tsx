@@ -163,9 +163,9 @@ function AccountContent() {
             <button
               onClick={handleUpdateName}
               disabled={savingName || !displayName.trim()}
-              className="px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+              className="brand-button px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
               style={{
-                background: "var(--teal)",
+                background: "var(--button-gradient)",
                 opacity: savingName || !displayName.trim() ? 0.5 : 1,
               }}
             >
@@ -231,9 +231,9 @@ function AccountContent() {
               disabled={
                 savingPassword || !currentPassword || !newPassword || !confirmPassword
               }
-              className="px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+              className="brand-button px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
               style={{
-                background: "var(--teal)",
+                background: "var(--button-gradient)",
                 opacity:
                   savingPassword ||
                   !currentPassword ||
@@ -323,11 +323,11 @@ function AccountContent() {
                     setDeletePassword("");
                     setDeleteError("");
                   }}
-                  className="px-5 py-2.5 rounded-xl font-semibold text-sm cursor-pointer"
+                  className="brand-button px-5 py-2.5 rounded-xl font-semibold text-sm cursor-pointer"
                   style={{
                     border: "1.5px solid var(--border)",
-                    background: "var(--card)",
-                    color: "var(--text)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                   }}
                 >
                   Cancel

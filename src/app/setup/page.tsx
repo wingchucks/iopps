@@ -325,12 +325,12 @@ function SetupWizard() {
 
               <button
                 onClick={() => setStep(2)}
-                className="w-full font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
+                className="brand-button w-full font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
                 style={{
-                  background: "linear-gradient(135deg, var(--teal), var(--navy))",
+                  background: "var(--button-gradient)",
                   padding: "14px 24px",
                   fontSize: 15,
-                  boxShadow: "0 4px 14px rgba(13,148,136,.25)",
+                  boxShadow: "var(--button-gradient-shadow)",
                 }}
               >
                 Continue
@@ -395,19 +395,19 @@ function SetupWizard() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 bg-card text-text border border-border hover:border-text-muted"
+                  className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 button-gradient-soft text-text border border-border hover:border-text-muted"
                   style={{ padding: "14px 24px", fontSize: 15 }}
                 >
                   Back
                 </button>
                 <button
                   onClick={() => setStep(3)}
-                  className="flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
+                  className="brand-button flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
                   style={{
-                    background: "linear-gradient(135deg, var(--teal), var(--navy))",
+                    background: "var(--button-gradient)",
                     padding: "14px 24px",
                     fontSize: 15,
-                    boxShadow: "0 4px 14px rgba(13,148,136,.25)",
+                    boxShadow: "var(--button-gradient-shadow)",
                   }}
                 >
                   Continue
@@ -470,19 +470,19 @@ function SetupWizard() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(2)}
-                  className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 bg-card text-text border border-border hover:border-text-muted"
+                  className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 button-gradient-soft text-text border border-border hover:border-text-muted"
                   style={{ padding: "14px 24px", fontSize: 15 }}
                 >
                   Back
                 </button>
                 <button
                   onClick={() => setStep(4)}
-                  className="flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
+                  className="brand-button flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
                   style={{
-                    background: "linear-gradient(135deg, var(--teal), var(--navy))",
+                    background: "var(--button-gradient)",
                     padding: "14px 24px",
                     fontSize: 15,
-                    boxShadow: "0 4px 14px rgba(13,148,136,.25)",
+                    boxShadow: "var(--button-gradient-shadow)",
                   }}
                 >
                   Continue
@@ -545,19 +545,19 @@ function SetupWizard() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(3)}
-                  className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 bg-card text-text border border-border hover:border-text-muted"
+                  className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 button-gradient-soft text-text border border-border hover:border-text-muted"
                   style={{ padding: "14px 24px", fontSize: 15 }}
                 >
                   Back
                 </button>
                 <button
                   onClick={() => setStep(5)}
-                  className="flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
+                  className="brand-button flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0"
                   style={{
-                    background: "linear-gradient(135deg, var(--teal), var(--navy))",
+                    background: "var(--button-gradient)",
                     padding: "14px 24px",
                     fontSize: 15,
-                    boxShadow: "0 4px 14px rgba(13,148,136,.25)",
+                    boxShadow: "var(--button-gradient-shadow)",
                   }}
                 >
                   Continue
@@ -660,7 +660,7 @@ function SetupWizard() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(4)}
-                  className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 bg-card text-text border border-border hover:border-text-muted"
+                  className="flex-1 font-semibold rounded-xl cursor-pointer transition-all duration-200 button-gradient-soft text-text border border-border hover:border-text-muted"
                   style={{ padding: "14px 24px", fontSize: 15 }}
                 >
                   Back
@@ -668,12 +668,12 @@ function SetupWizard() {
                 <button
                   onClick={handleFinish}
                   disabled={saving}
-                  className="flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0 disabled:opacity-60"
+                  className="brand-button flex-[2] font-bold text-white rounded-xl transition-all duration-200 cursor-pointer border-0 disabled:opacity-60"
                   style={{
-                    background: "linear-gradient(135deg, var(--teal), var(--navy))",
+                    background: "var(--button-gradient)",
                     padding: "14px 24px",
                     fontSize: 15,
-                    boxShadow: "0 4px 14px rgba(13,148,136,.25)",
+                    boxShadow: "var(--button-gradient-shadow)",
                   }}
                 >
                   {saving ? "Saving..." : "Go to My Feed"}

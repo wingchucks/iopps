@@ -5,8 +5,8 @@ import { CANADIAN_PROVINCES } from "@/lib/canadian-provinces";
 import { EVENT_CATEGORIES, FUNDING_CATEGORIES, normalizeOpportunityInput, scholarshipDeadlineType, validateOpportunity, type OpportunityKind, type OpportunityRecord, type OpportunityStatus } from "@/lib/opportunity-posting";
 
 const control = "mt-2 block min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700";
-export const opportunityButton = "inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-wait disabled:opacity-50";
-export const opportunityPrimary = `${opportunityButton} border-teal-700! bg-teal-700! text-white! hover:bg-teal-800!`;
+export const opportunityButton = "inline-flex min-h-11 items-center justify-center rounded-xl border button-gradient-soft px-4 py-2.5 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-wait disabled:opacity-50";
+export const opportunityPrimary = `${opportunityButton} button-gradient`;
 export class OpportunitySaveError extends Error {
   fields: Record<string, string>;
   constructor(message: string, fields: Record<string, string> = {}) { super(message); this.fields = fields; }

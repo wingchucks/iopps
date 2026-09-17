@@ -54,8 +54,8 @@ export default function BusinessReviewPanel({ item, onDecision }: { item: Listin
       <textarea id="review-feedback" maxLength={2000} rows={3} value={feedback} onChange={event => setFeedback(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm" placeholder="Explain what to update and how to resubmit." />
       {pending && <label className="mt-4 flex items-start gap-3 text-sm leading-6"><input type="checkbox" checked={checked} onChange={event => setChecked(event.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-teal-700" />I reviewed the profile, its contact details and any ownership or affiliation claims.</label>}
       <div className="mt-5 flex flex-wrap gap-3">
-        {pending && <button type="button" onClick={() => decide("approve")} disabled={busy || !checked || item.issues.length > 0 || !item.emailVerified} className="min-h-11 rounded-xl bg-[#006b62] px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">Approve listing</button>}
-        <button type="button" onClick={() => decide("changes_requested")} disabled={busy} className="min-h-11 rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold disabled:opacity-50">Request changes</button>
+        {pending && <button type="button" onClick={() => decide("approve")} disabled={busy || !checked || item.issues.length > 0 || !item.emailVerified} className="min-h-11 rounded-xl button-gradient px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">Approve listing</button>}
+        <button type="button" onClick={() => decide("changes_requested")} disabled={busy} className="button-gradient-soft min-h-11 rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold disabled:opacity-50">Request changes</button>
         <button type="button" onClick={() => decide("reject")} disabled={busy} className="min-h-11 rounded-xl border border-red-200 px-4 py-3 text-sm font-bold text-red-800 disabled:opacity-50">Reject listing</button>
       </div>
       {busy && <p role="status" className="mt-3 text-sm">Saving decision…</p>}

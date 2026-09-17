@@ -107,9 +107,9 @@ export default function VerificationQueuePage() {
             onClick={() => { setLoading(true); setFilter(f.value); }}
             className={cn(
               "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-              filter === f.value ? "bg-blue-600 text-white" : ""
+              filter === f.value ? "button-gradient text-white" : ""
             )}
-            style={filter !== f.value ? { background: "var(--input-bg)", border: "1px solid var(--input-border)" } : undefined}
+            style={filter !== f.value ? { background: "var(--button-gradient-soft)", border: "1px solid var(--input-border)" } : undefined}
           >
             {f.label}
           </button>

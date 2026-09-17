@@ -389,7 +389,7 @@ export default function TeamPage() {
                               </div>
                               <button
                                 onClick={() => handleCancelInvite(invite.id)}
-                                className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                                className="button-gradient-soft px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                                 style={{
                                   background: "rgba(107,114,128,.1)",
                                   color: "#6B7280",

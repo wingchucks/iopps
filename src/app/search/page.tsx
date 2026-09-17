@@ -647,8 +647,8 @@ function SearchContent() {
             <button
               key={filter}
               onClick={() => setTypeFilter(filter)}
-              className="whitespace-nowrap rounded-full border-none px-4 py-2 text-[13px] font-semibold"
-              style={{ background: typeFilter === filter ? "var(--navy)" : "var(--border)", color: typeFilter === filter ? "#fff" : "var(--text-sec)" }}
+              className="brand-button whitespace-nowrap rounded-full border-none px-4 py-2 text-[13px] font-semibold"
+              style={{ background: typeFilter === filter ? "var(--button-gradient)" : "var(--border)", color: typeFilter === filter ? "#fff" : "var(--text-sec)" }}
             >
               {filter}
             </button>
@@ -656,8 +656,8 @@ function SearchContent() {
         </div>
         <button
           onClick={() => setShowFilters((current) => !current)}
-          className="flex items-center gap-1.5 rounded-full border-none px-4 py-2 text-[13px] font-semibold"
-          style={{ background: showFilters || activeFilterCount > 0 ? "var(--navy)" : "var(--border)", color: showFilters || activeFilterCount > 0 ? "#fff" : "var(--text-sec)" }}
+          className="brand-button flex items-center gap-1.5 rounded-full border-none px-4 py-2 text-[13px] font-semibold"
+          style={{ background: showFilters || activeFilterCount > 0 ? "var(--button-gradient)" : "var(--border)", color: showFilters || activeFilterCount > 0 ? "#fff" : "var(--text-sec)" }}
         >
           <span style={{ fontSize: 14 }}>&#9776;</span>
           Filters
@@ -737,8 +737,8 @@ function SearchContent() {
                     <button
                       key={tag}
                       onClick={() => toggleTag(tag)}
-                      className="rounded-full border-none px-3 py-1.5 text-xs font-semibold"
-                      style={{ background: selectedTags.includes(tag) ? "var(--navy)" : "var(--border)", color: selectedTags.includes(tag) ? "#fff" : "var(--text-sec)" }}
+                      className="brand-button rounded-full border-none px-3 py-1.5 text-xs font-semibold"
+                      style={{ background: selectedTags.includes(tag) ? "var(--button-gradient)" : "var(--border)", color: selectedTags.includes(tag) ? "#fff" : "var(--text-sec)" }}
                     >
                       {tag}
                     </button>
@@ -762,7 +762,7 @@ function SearchContent() {
             <p className="mb-4 text-5xl">&#9888;&#65039;</p>
             <h2 className="mb-2 text-xl font-bold text-text">Search unavailable</h2>
             <p className="mb-5 text-sm text-text-sec">{error}</p>
-            <button onClick={() => void loadSearchData()} className="rounded-xl border-none px-5 py-3 text-sm font-bold text-white" style={{ background: "var(--teal)" }}>
+            <button onClick={() => void loadSearchData()} className="brand-button rounded-xl border-none px-5 py-3 text-sm font-bold text-white" style={{ background: "var(--button-gradient)" }}>
               Try again
             </button>
           </div>
@@ -786,8 +786,8 @@ function SearchContent() {
                 <button
                   key={suggestion}
                   onClick={() => setQuery(suggestion)}
-                  className="rounded-full border-none px-3 py-1.5 text-xs font-semibold"
-                  style={{ background: "var(--teal-soft)", color: "var(--teal)" }}
+                  className="brand-button rounded-full border-none px-3 py-1.5 text-xs font-semibold"
+                  style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)" }}
                 >
                   {suggestion}
                 </button>

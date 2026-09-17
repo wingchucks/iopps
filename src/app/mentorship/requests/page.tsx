@@ -144,9 +144,9 @@ export default function MentorshipRequestsPage() {
           >
             <button
               onClick={() => setTab("received")}
-              className="flex-1 py-2 rounded-lg text-sm font-bold transition-colors"
+              className="brand-button flex-1 py-2 rounded-lg text-sm font-bold transition-colors"
               style={{
-                background: tab === "received" ? "var(--card)" : "transparent",
+                background: tab === "received" ? "var(--button-gradient-soft)" : "transparent",
                 color:
                   tab === "received"
                     ? "var(--purple)"
@@ -157,9 +157,9 @@ export default function MentorshipRequestsPage() {
             </button>
             <button
               onClick={() => setTab("sent")}
-              className="flex-1 py-2 rounded-lg text-sm font-bold transition-colors"
+              className="brand-button flex-1 py-2 rounded-lg text-sm font-bold transition-colors"
               style={{
-                background: tab === "sent" ? "var(--card)" : "transparent",
+                background: tab === "sent" ? "var(--button-gradient-soft)" : "transparent",
                 color:
                   tab === "sent" ? "var(--purple)" : "var(--text-muted)",
               }}
@@ -278,8 +278,8 @@ export default function MentorshipRequestsPage() {
                       {req.status === "accepted" && (
                         <Link
                           href="/messages"
-                          className="block text-center py-2 rounded-xl text-sm font-bold text-white no-underline transition-colors hover:opacity-90"
-                          style={{ background: "var(--teal)" }}
+                          className="brand-button block text-center py-2 rounded-xl text-sm font-bold text-white no-underline transition-colors hover:opacity-90"
+                          style={{ background: "var(--button-gradient)" }}
                         >
                           Message {req.menteeName.split(" ")[0]}
                         </Link>
@@ -369,11 +369,11 @@ export default function MentorshipRequestsPage() {
                       <button
                         onClick={() => handleCancel(req.id)}
                         disabled={updating === req.id}
-                        className="w-full py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+                        className="brand-button w-full py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
                         style={{
                           border: "1px solid var(--border)",
-                          color: "var(--text-sec)",
-                          background: "transparent",
+                          color: "var(--button-gradient-soft-text)",
+                          background: "var(--button-gradient-soft)",
                         }}
                       >
                         {updating === req.id ? "..." : "Cancel Request"}
@@ -383,8 +383,8 @@ export default function MentorshipRequestsPage() {
                     {req.status === "accepted" && (
                       <Link
                         href="/messages"
-                        className="block text-center py-2 rounded-xl text-sm font-bold text-white no-underline transition-colors hover:opacity-90"
-                        style={{ background: "var(--teal)" }}
+                        className="brand-button block text-center py-2 rounded-xl text-sm font-bold text-white no-underline transition-colors hover:opacity-90"
+                        style={{ background: "var(--button-gradient)" }}
                       >
                         Message {req.mentorName.split(" ")[0]}
                       </Link>

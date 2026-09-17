@@ -103,9 +103,9 @@ function NotificationsContent() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="px-4 py-2 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all"
+              className="brand-button px-4 py-2 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all"
               style={{
-                background: activeTab === tab ? "var(--navy)" : "var(--card)",
+                background: activeTab === tab ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                 color: activeTab === tab ? "#fff" : "var(--text-sec)",
                 border: activeTab === tab ? "none" : "1px solid var(--border)",
               }}

@@ -29,8 +29,8 @@ export default function BusinessListingStatus({ org, onSubmit, onEdit, onRefresh
     {review?.feedback && <div className="mt-4 rounded-xl border border-[#c7d9dd] bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide">Feedback from IOPPS</p><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">{review.feedback}</p></div>}
     {canSubmit && issues.length > 0 && <div className="mt-4"><p className="text-sm font-bold">Before you submit</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm">{issues.map(issue => <li key={issue}>{issue}</li>)}</ul></div>}
     <div className="mt-4 flex flex-wrap gap-3">
-      {canSubmit && <button type="button" disabled={busy || issues.length > 0 || Boolean(correctionNeeded)} onClick={() => run(() => onSubmit(review.revision))} className="min-h-11 rounded-xl bg-[#006b62] px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{busy ? "Submitting…" : review.submittedAt ? "Resubmit for review" : "Submit for review"}</button>}
-      <button type="button" onClick={onEdit} className="min-h-11 rounded-xl border border-[#8bb8b7] bg-white px-4 py-3 text-sm font-bold">Edit profile</button>
+      {canSubmit && <button type="button" disabled={busy || issues.length > 0 || Boolean(correctionNeeded)} onClick={() => run(() => onSubmit(review.revision))} className="min-h-11 rounded-xl button-gradient px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{busy ? "Submitting…" : review.submittedAt ? "Resubmit for review" : "Submit for review"}</button>}
+      <button type="button" onClick={onEdit} className="min-h-11 rounded-xl border border-[#8bb8b7] button-gradient-soft px-4 py-3 text-sm font-bold">Edit profile</button>
       {onRefresh && <button type="button" disabled={busy} onClick={() => run(onRefresh)} className="min-h-11 px-2 py-3 text-sm font-bold underline disabled:opacity-50">Refresh status</button>}
     </div>
     {correctionNeeded && <p className="mt-3 text-sm">Save your corrections before resubmitting.</p>}

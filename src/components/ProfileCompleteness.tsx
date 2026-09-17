@@ -159,8 +159,8 @@ export default function ProfileCompleteness() {
       {nextStep && (
         <Link
           href={nextStep.link}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white no-underline"
-          style={{ background: "var(--teal)" }}
+          className="brand-button inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white no-underline"
+          style={{ background: "var(--button-gradient)" }}
         >
           {nextStep.label} &rarr;
         </Link>

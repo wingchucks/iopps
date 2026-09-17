@@ -577,9 +577,9 @@ function OrgOnboardingContent() {
                           key={opt}
                           type="button"
                           onClick={() => setStudentBodySize(opt)}
-                          className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                          className="brand-button px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
                           style={{
-                            background: studentBodySize === opt ? "var(--teal)" : "var(--card)",
+                            background: studentBodySize === opt ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                             color: studentBodySize === opt ? "#fff" : "var(--text)",
                             borderColor: studentBodySize === opt ? "var(--teal)" : "var(--border)",
                           }}
@@ -622,9 +622,9 @@ function OrgOnboardingContent() {
                         key={opt}
                         type="button"
                         onClick={() => setSize(opt)}
-                        className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                        className="brand-button px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
                         style={{
-                          background: size === opt ? "var(--teal)" : "var(--card)",
+                          background: size === opt ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                           color: size === opt ? "#fff" : "var(--text)",
                           borderColor: size === opt ? "var(--teal)" : "var(--border)",
                         }}
@@ -690,9 +690,9 @@ function OrgOnboardingContent() {
                       key={svc}
                       type="button"
                       onClick={() => toggleList(services, svc, setServices)}
-                      className="px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all border text-left"
+                      className="brand-button px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all border text-left"
                       style={{
-                        background: services.includes(svc) ? "var(--teal)" : "var(--card)",
+                        background: services.includes(svc) ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                         color: services.includes(svc) ? "#fff" : "var(--text)",
                         borderColor: services.includes(svc) ? "var(--teal)" : "var(--border)",
                       }}
@@ -712,9 +712,9 @@ function OrgOnboardingContent() {
                         key={opt}
                         type="button"
                         onClick={() => setEnrollmentStatus(opt)}
-                        className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                        className="brand-button px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
                         style={{
-                          background: enrollmentStatus === opt ? "var(--teal)" : "var(--card)",
+                          background: enrollmentStatus === opt ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                           color: enrollmentStatus === opt ? "#fff" : "var(--text)",
                           borderColor: enrollmentStatus === opt ? "var(--teal)" : "var(--border)",
                         }}
@@ -733,9 +733,9 @@ function OrgOnboardingContent() {
                         key={opt}
                         type="button"
                         onClick={() => setHiringStatus(opt)}
-                        className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                        className="brand-button px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
                         style={{
-                          background: hiringStatus === opt ? "var(--teal)" : "var(--card)",
+                          background: hiringStatus === opt ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                           color: hiringStatus === opt ? "#fff" : "var(--text)",
                           borderColor: hiringStatus === opt ? "var(--teal)" : "var(--border)",
                         }}
@@ -755,9 +755,9 @@ function OrgOnboardingContent() {
                       key={opt}
                       type="button"
                       onClick={() => toggleList(partnershipInterests, opt, setPartnershipInterests)}
-                      className="px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all border text-left"
+                      className="brand-button px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all border text-left"
                       style={{
-                        background: partnershipInterests.includes(opt) ? "var(--teal)" : "var(--card)",
+                        background: partnershipInterests.includes(opt) ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                         color: partnershipInterests.includes(opt) ? "#fff" : "var(--text)",
                         borderColor: partnershipInterests.includes(opt) ? "var(--teal)" : "var(--border)",
                       }}
@@ -874,11 +874,11 @@ function OrgOnboardingContent() {
             )}
 
             {step < STEPS.length - 1 ? (
-              <Button
+              <Button className="brand-button"
                 primary
                 onClick={handleNext}
                 style={{
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   padding: "14px 24px",
                   borderRadius: 14,
                   fontSize: 15,
@@ -891,11 +891,11 @@ function OrgOnboardingContent() {
                 {saving ? "Saving..." : "Next"}
               </Button>
             ) : (
-              <Button
+              <Button className="brand-button"
                 primary
                 onClick={handleComplete}
                 style={{
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   padding: "14px 24px",
                   borderRadius: 14,
                   fontSize: 15,

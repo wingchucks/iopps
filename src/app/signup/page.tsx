@@ -600,7 +600,7 @@ function UnifiedSignupContent() {
               <div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>How should we represent your business?</div>
               <div style={{ display: "grid", gap: 12 }}>
                 {BUSINESS_IDENTITY_OPTIONS.map((option) => (
-                  <button
+                  <button className="brand-button"
                     key={option.value}
                     type="button"
                     onClick={() => setBusinessIdentity(option.value)}

@@ -317,11 +317,11 @@ function ProgramDetailContent() {
             <div style={{ padding: 20 }}>
               {post.programUrl ? (
                 <a href={post.programUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                  <Button
+                  <Button className="brand-button"
                     primary
                     full
                     style={{
-                      background: "var(--teal)",
+                      background: "var(--button-gradient)",
                       padding: "14px 24px",
                       borderRadius: 14,
                       fontSize: 16,
@@ -334,11 +334,11 @@ function ProgramDetailContent() {
                 </a>
               ) : programApplicationHref ? (
                 <a href={programApplicationHref} {...programApplicationLinkProps} className="no-underline">
-                  <Button
+                  <Button className="brand-button"
                     primary
                     full
                     style={{
-                      background: "var(--teal)",
+                      background: "var(--button-gradient)",
                       padding: "14px 24px",
                       borderRadius: 14,
                       fontSize: 16,
@@ -350,11 +350,11 @@ function ProgramDetailContent() {
                   </Button>
                 </a>
               ) : (
-                <Button
+                <Button className="brand-button"
                   primary
                   full
                   style={{
-                    background: "var(--teal)",
+                    background: "var(--button-gradient)",
                     padding: "14px 24px",
                     borderRadius: 14,
                     fontSize: 16,

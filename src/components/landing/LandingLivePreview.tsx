@@ -27,7 +27,7 @@ export default function LandingLivePreview() {
         {featured?.embeddable ? <YouTubePlayer videoId={featured.id} title={`Watch ${featured.title}`} /> : <div className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-border bg-bg px-6 text-center"><a href={featured ? videoUrl(featured.id) : YOUTUBE_CHANNEL_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-teal underline">Watch IOPPS on YouTube ↗</a></div>}
       </div>
       <div className="border-t border-border p-5">
-        <Link href={featured ? `/livestreams?video=${featured.id}` : "/livestreams"} className="flex min-h-12 items-center justify-center rounded-xl bg-teal px-4 py-3 text-sm font-bold text-white no-underline">{isLive ? "Join the broadcast" : "Watch & explore IOPPS Live"} <span aria-hidden="true" className="ml-2">↗</span></Link>
+        <Link href={featured ? `/livestreams?video=${featured.id}` : "/livestreams"} className="flex min-h-12 items-center justify-center rounded-xl button-gradient px-4 py-3 text-sm font-bold text-white no-underline">{isLive ? "Join the broadcast" : "Watch & explore IOPPS Live"} <span aria-hidden="true" className="ml-2">↗</span></Link>
       </div>
     </Card>
   </section>;

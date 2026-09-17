@@ -56,8 +56,8 @@ export default function CheckoutCancelPage({
                       authIntentHref("/org/checkout", new URLSearchParams({ plan: params.plan || "", redirect: params.redirect || "" }))
                     )
                   }
-                  className="w-full py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
-                  style={{ background: "var(--navy)", color: "#fff" }}
+                  className="brand-button w-full py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
+                  style={{ background: "var(--button-gradient)", color: "#fff" }}
                 >
                   Try Again
                 </button>

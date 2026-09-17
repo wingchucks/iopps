@@ -107,8 +107,8 @@ export default function AboutPage() {
           <div className="flex gap-4 flex-wrap">
             <Link
               href="/signup"
-              className="inline-block text-sm font-bold no-underline rounded-xl px-6 py-3 transition-opacity hover:opacity-90"
-              style={{ background: "var(--teal)", color: "#fff" }}
+              className="brand-button inline-block text-sm font-bold no-underline rounded-xl px-6 py-3 transition-opacity hover:opacity-90"
+              style={{ background: "var(--button-gradient)", color: "#fff" }}
             >
               Join the Community
             </Link>

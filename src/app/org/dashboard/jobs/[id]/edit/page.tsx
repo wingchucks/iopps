@@ -514,10 +514,10 @@ export default function JobEditPage() {
                       />
                       <button
                         onClick={addRequirement}
-                        className="px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
+                        className="brand-button px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
                         style={{
-                          background: "rgba(13,148,136,.1)",
-                          color: "var(--teal)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                         }}
                       >
                         Add
@@ -578,10 +578,10 @@ export default function JobEditPage() {
                       />
                       <button
                         onClick={addSkill}
-                        className="px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
+                        className="brand-button px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
                         style={{
-                          background: "rgba(13,148,136,.1)",
-                          color: "var(--teal)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                         }}
                       >
                         Add

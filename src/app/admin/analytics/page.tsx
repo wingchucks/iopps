@@ -132,8 +132,8 @@ export default function AdminAnalyticsPage() {
                 onClick={() => setRange(option.value)}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                   range === option.value
-                    ? "bg-teal text-white"
-                    : "border border-card-border bg-card text-text-sec hover:text-text"
+                    ? "button-gradient text-white"
+                    : "border border-card-border button-gradient-soft text-text-sec hover:text-text"
                 }`}
               >
                 {option.label}
@@ -181,7 +181,7 @@ export default function AdminAnalyticsPage() {
                 </div>
                 <button
                   onClick={copyDailySummary}
-                  className="rounded-full bg-teal px-4 py-2 text-sm font-semibold text-white"
+                  className="rounded-full button-gradient px-4 py-2 text-sm font-semibold text-white"
                 >
                   {copied ? "Copied" : "Copy summary"}
                 </button>

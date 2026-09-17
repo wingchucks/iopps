@@ -105,11 +105,11 @@ export default function ForgotPasswordPage() {
               <div className="flex flex-col gap-3">
                 <Link
                   href="/login"
-                  className="block w-full text-center font-bold no-underline transition-all duration-150 hover:opacity-90"
+                  className="brand-button block w-full text-center font-bold no-underline transition-all duration-150 hover:opacity-90"
                   style={{
                     padding: "14px 24px",
                     borderRadius: 12,
-                    background: "var(--teal)",
+                    background: "var(--button-gradient)",
                     color: "#fff",
                     fontSize: 16,
                   }}
@@ -118,13 +118,13 @@ export default function ForgotPasswordPage() {
                 </Link>
                 <button
                   onClick={() => { setSent(false); setEmail(""); }}
-                  className="w-full font-semibold cursor-pointer transition-all duration-150 hover:opacity-80"
+                  className="brand-button w-full font-semibold cursor-pointer transition-all duration-150 hover:opacity-80"
                   style={{
                     padding: "12px 24px",
                     borderRadius: 12,
                     border: "1.5px solid var(--border)",
-                    background: "var(--card)",
-                    color: "var(--text-sec)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                     fontSize: 15,
                   }}
                 >
@@ -190,12 +190,12 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
+                  className="brand-button w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
                   style={{
                     padding: "14px 24px",
                     borderRadius: 12,
                     border: "none",
-                    background: "var(--teal)",
+                    background: "var(--button-gradient)",
                     color: "#fff",
                     fontSize: 16,
                     marginTop: 4,

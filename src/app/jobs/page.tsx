@@ -259,8 +259,8 @@ function JobsPageContent() {
             )}
             <button
               type="submit"
-              className="shrink-0 cursor-pointer rounded-full border-none px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
-              style={{ background: "var(--teal)" }}
+              className="brand-button shrink-0 cursor-pointer rounded-full border-none px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+              style={{ background: "var(--button-gradient)" }}
             >
               Search
             </button>
@@ -301,15 +301,15 @@ function JobsPageContent() {
               type="button"
               aria-pressed={remoteOnly}
               onClick={() => setRemoteOnly(!remoteOnly)}
-              className="flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors"
+              className="brand-button flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors"
               style={{
                 border: remoteOnly
                   ? "1px solid color-mix(in srgb, var(--teal) 70%, var(--border))"
                   : "1px solid var(--border)",
                 background: remoteOnly
-                  ? "color-mix(in srgb, var(--teal) 12%, var(--card))"
-                  : "var(--card)",
-                color: remoteOnly ? "var(--teal)" : "var(--text-sec)",
+                  ? "var(--button-gradient)"
+                  : "var(--button-gradient-soft)",
+                color: remoteOnly ? "#fff" : "var(--button-gradient-soft-text)",
               }}
             >
               <span

@@ -43,8 +43,9 @@
   padding: 12px 22px;
   border: 0;
   border-radius: 7px;
-  background: linear-gradient(120deg, #00ddc9, #00bbae);
-  color: #031827;
+  background: var(--button-gradient);
+  color: #fff;
+  box-shadow: var(--button-gradient-shadow);
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -755,7 +756,7 @@ a:focus-visible > .op-job-card {
 .journey-home .op-search label > span { color: var(--journey-ink); font-size: 12px; font-weight: 700; }
 .journey-home .op-search input { min-height: 34px; padding: 5px 0; background: white; color: var(--journey-ink); border-radius: 0; }
 .journey-home .op-search input:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
-.journey-home .op-search .op-button { padding-inline: 32px; border-radius: 10px; font-size: 16px; background: var(--journey-cyan); }
+.journey-home .op-search .op-button { padding-inline: 32px; border-radius: 10px; font-size: 16px; background: var(--button-gradient); }
 .journey-home .op-task-links { margin-top: 22px; gap: 10px; }
 .journey-home .op-task-links a { text-decoration: none; padding: 7px 16px; border: 1px solid color-mix(in srgb, var(--journey-muted-light) 28%, transparent); border-radius: 30px; color: white; font-size: 13px; min-height: 40px; font-weight: 500; transition: background .18s, border-color .18s; }
 .journey-home .op-task-links a:hover { background: color-mix(in srgb, var(--journey-cyan) 12%, transparent); border-color: var(--journey-cyan); }
@@ -847,7 +848,7 @@ a:focus-visible > .op-job-card {
 .journey-job-detail .text-text-muted { color: var(--text-sec); }
 .journey-job-detail h3 { letter-spacing: -.015em; margin-top: 22px; }
 .journey-application-card { border-top: 4px solid var(--teal); }
-.journey-apply-button { display: flex; width: 100%; align-items: center; justify-content: center; min-height: 50px; padding: 14px 18px; margin-bottom: 12px; border: 0; border-radius: 10px; background: var(--teal); color: white; font-size: 16px; font-weight: 700; text-align: center; text-decoration: none; cursor: pointer; }
+.journey-apply-button { display: flex; width: 100%; align-items: center; justify-content: center; min-height: 50px; padding: 14px 18px; margin-bottom: 12px; border: 0; border-radius: 10px; background: var(--button-gradient); color: white; font-size: 16px; font-weight: 700; text-align: center; text-decoration: none; cursor: pointer; }
 .journey-apply-button:disabled { cursor: default; background: var(--border); color: var(--text-sec); }
 .journey-apply-button:focus-visible, .journey-profile-button:focus-visible, .journey-contact-button:focus-visible, .journey-save-button:focus-visible { outline: 3px solid var(--teal); outline-offset: 4px; }
 .journey-mobile-apply { display: none; }
@@ -855,8 +856,8 @@ a:focus-visible > .op-job-card {
 .journey-business-heading h1 { letter-spacing: -.035em; overflow-wrap: anywhere; }
 .journey-business-actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; flex-shrink: 0; }
 .journey-contact-button, .journey-profile-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 650; text-decoration: none; }
-.journey-contact-button { background: var(--teal); color: white; }
-.journey-profile-button { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.journey-contact-button { background: var(--button-gradient); color: white; }
+.journey-profile-button { background: var(--button-gradient-soft); color: var(--button-gradient-soft-text); border: 1px solid var(--button-gradient-border); }
 .journey-business-contact { scroll-margin-top: 28px; border-top: 3px solid var(--teal); }
 .journey-business-contact a { overflow-wrap: anywhere; }
 .journey-business-contact .flex.items-center > div { min-width: 0; }
@@ -870,7 +871,7 @@ a:focus-visible > .op-job-card {
   .journey-role-heading .job-employer-logo { width: 80px; height: 64px; }
   .journey-mobile-apply { display: block; padding: 20px; margin-bottom: 28px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
   .journey-mobile-apply > p { color: var(--text-sec); font-size: 13px; margin-bottom: 12px; }
-  .journey-save-button { display: block; width: 100%; min-height: 44px; border: 1px solid var(--border); border-radius: 10px; color: var(--text); background: var(--card); font-size: 14px; font-weight: 600; cursor: pointer; }
+  .journey-save-button { display: block; width: 100%; min-height: 44px; border: 1px solid var(--border); border-radius: 10px; color: var(--button-gradient-soft-text); background: var(--button-gradient-soft); font-size: 14px; font-weight: 600; cursor: pointer; }
   .journey-save-button:disabled { opacity: .6; cursor: wait; }
   .journey-desktop-apply { display: none; }
   .journey-application-card { position: static !important; }
@@ -882,16 +883,16 @@ a:focus-visible > .op-job-card {
 .employer-workspace { --employer-accent: #0d9488; }
 .employer-hero { background: linear-gradient(120deg,#071b2c,#0a3844) !important; border-color: #195461 !important; }
 .employer-hero h1 { background: none !important; -webkit-text-fill-color: #fff !important; color: #fff !important; }
-.employer-hero p, .employer-hero a { color: #cce6ea !important; }
-.employer-hero button { background: #21d4c5 !important; color: #071b2c !important; box-shadow: none !important; }
+.employer-hero p, .employer-hero a:not(.brand-button):not(.button-gradient):not(.button-gradient-soft):not(.employer-primary) { color: #cce6ea !important; }
+.employer-hero button { background: var(--button-gradient) !important; color: #fff !important; box-shadow: var(--button-gradient-shadow) !important; }
 .employer-tabs button { min-height: 44px; }
-.employer-tabs button[aria-current="page"] { color: var(--text) !important; background: rgba(13,148,136,.14) !important; border-color: #0d9488 !important; }
+.employer-tabs button[aria-current="page"] { color: #fff !important; background: var(--button-gradient) !important; border-color: transparent !important; }
 .employer-launch { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
 .employer-launch h2 { font-size: clamp(26px,3vw,36px); letter-spacing: -.035em; font-weight: 850; margin: 5px 0 10px; color: var(--text); }
 .employer-launch p, .employer-panel p, .employer-actions p { color: var(--text-sec); line-height: 1.65; }
 .employer-eyebrow, .employer-actions > a > span { font-size: 11px; font-weight: 800; letter-spacing: .12em; color: var(--teal) !important; }
-.employer-primary { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; padding: 12px 20px; border-radius: 12px; background: #0f766e; color: #fff; text-decoration: none; font-size: 14px; font-weight: 750; border: 0; cursor: pointer; flex-shrink: 0; }
-.employer-primary:hover { background: #115e59; }
+.employer-primary { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; padding: 12px 20px; border-radius: 12px; background: var(--button-gradient); color: #fff; text-decoration: none; font-size: 14px; font-weight: 750; border: 0; cursor: pointer; flex-shrink: 0; }
+.employer-primary:hover:not(:disabled) { background: var(--button-gradient-hover); }
 .employer-workspace a:focus-visible, .employer-workspace button:focus-visible { outline: 3px solid #21d4c5; outline-offset: 4px; }
 .employer-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin-bottom: 24px; }
 .employer-actions > a { border: 1px solid var(--border); border-radius: 18px; background: var(--card); padding: 24px; text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 12px; }

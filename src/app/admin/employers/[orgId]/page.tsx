@@ -322,8 +322,8 @@ export default function OrganizationDetailPage() {
             <button
               onClick={() => handleAction({ verified: !employer.verified })}
               disabled={actionLoading}
-              className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-              style={{ background: "var(--input-bg)", border: "1px solid var(--input-border)" }}
+              className="brand-button rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+              style={{ background: "var(--button-gradient-soft)", border: "1px solid var(--input-border)" }}
             >
               {employer.verified ? "Remove Verified" : "Mark Verified"}
             </button>
@@ -420,8 +420,8 @@ export default function OrganizationDetailPage() {
               <button
                 type="button"
                 onClick={() => setSubscriptionDraft(buildAdminSubscriptionDraft(employer))}
-                className="rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors hover:border-[var(--card-border-hover)]"
-                style={{ borderColor: "var(--input-border)", background: "var(--card-bg)" }}
+                className="brand-button rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors hover:border-[var(--card-border-hover)]"
+                style={{ borderColor: "var(--input-border)", background: "var(--button-gradient-soft)" }}
               >
                 Reset Defaults
               </button>
@@ -553,7 +553,7 @@ export default function OrganizationDetailPage() {
                 type="button"
                 onClick={() => void handleSubscriptionSubmit()}
                 disabled={subscriptionSaving}
-                className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl button-gradient px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {subscriptionSaving ? "Applying..." : `Apply ${selectedPlan.title}`}
               </button>
@@ -576,8 +576,8 @@ export default function OrganizationDetailPage() {
             href={`https://dashboard.stripe.com/customers/${employer.stripeCustomerId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:opacity-80"
-            style={{ background: "var(--input-bg)", border: "1px solid var(--input-border)" }}
+            className="brand-button mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:opacity-80"
+            style={{ background: "var(--button-gradient-soft)", border: "1px solid var(--input-border)" }}
           >
             View in Stripe
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -683,8 +683,8 @@ export default function OrganizationDetailPage() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDisableModal(false)}
-                className="rounded-lg px-4 py-2 text-sm font-medium"
-                style={{ background: "var(--input-bg)", border: "1px solid var(--input-border)" }}
+                className="brand-button rounded-lg px-4 py-2 text-sm font-medium"
+                style={{ background: "var(--button-gradient-soft)", border: "1px solid var(--input-border)" }}
               >
                 Cancel
               </button>
@@ -751,8 +751,8 @@ export default function OrganizationDetailPage() {
                   setDeleteConfirmValue("");
                   setLinkedUserPolicy("unlink");
                 }}
-                className="rounded-lg px-4 py-2 text-sm font-medium"
-                style={{ background: "var(--input-bg)", border: "1px solid var(--input-border)" }}
+                className="brand-button rounded-lg px-4 py-2 text-sm font-medium"
+                style={{ background: "var(--button-gradient-soft)", border: "1px solid var(--input-border)" }}
               >
                 Cancel
               </button>

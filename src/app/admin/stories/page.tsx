@@ -95,7 +95,7 @@ export default function StoriesPage() {
             className={cn(
               "rounded-md px-4 py-2 text-sm font-medium capitalize transition-colors",
               activeTab === tab
-                ? "bg-white shadow-sm dark:bg-zinc-700"
+                ? "button-gradient-soft shadow-sm dark:bg-zinc-700"
                 : "hover:bg-white/50 dark:hover:bg-zinc-700/50"
             )}
           >

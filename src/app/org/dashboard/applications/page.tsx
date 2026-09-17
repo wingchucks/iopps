@@ -351,10 +351,10 @@ export default function OrgApplicationsPage() {
               </select>
               <Link
                 href={`/members/${app.userId}`}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline"
+                className="brand-button px-3 py-1.5 rounded-lg text-xs font-semibold no-underline"
                 style={{
-                  background: "rgba(13,148,136,.1)",
-                  color: "var(--teal)",
+                  background: "var(--button-gradient-soft)",
+                  color: "var(--button-gradient-soft-text)",
                 }}
               >
                 View Profile
@@ -365,10 +365,10 @@ export default function OrgApplicationsPage() {
                   href={resumeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline"
+                  className="brand-button px-3 py-1.5 rounded-lg text-xs font-semibold no-underline"
                   style={{
-                    background: "rgba(30,64,175,.1)",
-                    color: "var(--navy)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                   }}
                 >
                   View Resume
@@ -401,13 +401,13 @@ export default function OrgApplicationsPage() {
                     }));
                   }
                 }}
-                className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                className="brand-button px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                 style={{
                   background: noteOpen
                     ? "rgba(139,92,246,.1)"
                     : app.reviewerNote
                       ? "rgba(245,158,11,.1)"
-                      : "var(--bg)",
+                      : "var(--button-gradient-soft)",
                   color: noteOpen
                     ? "#8B5CF6"
                     : app.reviewerNote
@@ -444,9 +444,9 @@ export default function OrgApplicationsPage() {
                   <button
                     onClick={() => handleSaveNote(app.id)}
                     disabled={savingNote[app.id]}
-                    className="px-3 py-1 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                    className="brand-button px-3 py-1 rounded-lg border-none cursor-pointer text-xs font-semibold"
                     style={{
-                      background: "var(--teal)",
+                      background: "var(--button-gradient)",
                       color: "#fff",
                       opacity: savingNote[app.id] ? 0.5 : 1,
                     }}
@@ -461,8 +461,8 @@ export default function OrgApplicationsPage() {
                         return next;
                       })
                     }
-                    className="px-3 py-1 rounded-lg border-none cursor-pointer text-xs font-semibold"
-                    style={{ background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                    className="brand-button px-3 py-1 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                    style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", border: "1px solid var(--border)" }}
                   >
                     Cancel
                   </button>
@@ -534,7 +534,7 @@ export default function OrgApplicationsPage() {
                   onClick={() => setViewMode("list")}
                   className="px-3 py-1.5 text-xs font-semibold border-none cursor-pointer"
                   style={{
-                    background: viewMode === "list" ? "var(--teal)" : "var(--bg)",
+                    background: viewMode === "list" ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                     color: viewMode === "list" ? "#fff" : "var(--text-muted)",
                   }}
                 >
@@ -544,7 +544,7 @@ export default function OrgApplicationsPage() {
                   onClick={() => setViewMode("board")}
                   className="px-3 py-1.5 text-xs font-semibold border-none cursor-pointer"
                   style={{
-                    background: viewMode === "board" ? "var(--teal)" : "var(--bg)",
+                    background: viewMode === "board" ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                     color: viewMode === "board" ? "#fff" : "var(--text-muted)",
                   }}
                 >
@@ -592,9 +592,9 @@ export default function OrgApplicationsPage() {
               <button
                 onClick={handleBulkStatusChange}
                 disabled={bulkUpdating || Object.values(updatingStatus).some(Boolean)}
-                className="px-4 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                className="brand-button px-4 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                 style={{
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   color: "#fff",
                   opacity: bulkUpdating ? 0.5 : 1,
                 }}
@@ -604,10 +604,10 @@ export default function OrgApplicationsPage() {
               <button
                 onClick={() => setSelected(new Set())}
                 disabled={bulkUpdating}
-                className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                className="brand-button px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                 style={{
-                  background: "var(--bg)",
-                  color: "var(--text-muted)",
+                  background: "var(--button-gradient-soft)",
+                  color: "var(--button-gradient-soft-text)",
                   border: "1px solid var(--border)",
                 }}
               >
@@ -824,10 +824,10 @@ export default function OrgApplicationsPage() {
                                       href={resumeUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-[10px] font-semibold no-underline px-1.5 py-0.5 rounded"
+                                      className="brand-button text-[10px] font-semibold no-underline px-1.5 py-0.5 rounded"
                                       style={{
-                                        background: "rgba(30,64,175,.1)",
-                                        color: "var(--navy)",
+                                        background: "var(--button-gradient-soft)",
+                                        color: "var(--button-gradient-soft-text)",
                                       }}
                                     >
                                       Resume

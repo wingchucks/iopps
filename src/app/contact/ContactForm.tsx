@@ -126,11 +126,11 @@ export default function ContactForm() {
         />
       </label>
 
-      <Button
+      <Button className="brand-button"
         primary
         full
         style={{
-          background: "var(--teal)",
+          background: "var(--button-gradient)",
           padding: "14px 24px",
           borderRadius: 14,
           fontSize: 15,

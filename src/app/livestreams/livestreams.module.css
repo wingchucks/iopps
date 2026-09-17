@@ -15,10 +15,10 @@
 .intro h1 span { color: #79e5d0; }
 .lead { color: #c3d4df; font-size: 15px; line-height: 1.75; margin: 17px 0 0; }
 .primaryButton, .outlineButton, .lightButton { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; border-radius: 10px; padding: 12px 17px; font-size: 13px !important; font-weight: 750 !important; line-height: 1.45; text-align: center; }
-.primaryButton { background: #78e5d0; color: #092d35; border: 1px solid #78e5d0; }
-.primaryButton:hover { background: #a2f1e2; }
-.outlineButton { border: 1px solid #617688; color: #f3f9fc; background: transparent; }
-.outlineButton:hover { background: #ffffff12; }
+.primaryButton { background: var(--button-gradient); color: #fff; border: 1px solid transparent; box-shadow: var(--button-gradient-shadow); }
+.primaryButton:hover:not(:disabled) { background: var(--button-gradient-hover); }
+.outlineButton { border: 1px solid #477889; color: #e1f5ff; background: linear-gradient(110deg, #153c40, #203858); }
+.outlineButton:hover:not(:disabled) { background: linear-gradient(110deg, #1d5054, #28466d); }
 .intro .outlineButton { flex-shrink: 0; margin-bottom: 4px; }
 .watchGrid { display: grid; grid-template-columns: minmax(0, 2.5fr) minmax(250px, 1fr); gap: 26px; align-items: start; }
 .watch { min-width: 0; background: #102c46; border: 1px solid #355066; border-radius: 18px; overflow: hidden; scroll-margin-top: 110px; }
@@ -93,7 +93,7 @@
 .noResults { text-align: center; background: #fff; border: 1px dashed #b3cacc; border-radius: 12px; padding: 40px 20px; margin-top: 25px; }
 .noResults h3 { margin: 0; font-size: 19px; }
 .noResults p { font-size: 13px; color: #526574; }
-.lightButton { border: 1px solid #0c766d; color: #0c766d; background: #e9faf4; margin-top: 8px; }
+.lightButton { border: 1px solid var(--button-gradient-border); color: var(--button-gradient-soft-text); background: var(--button-gradient-soft); margin-top: 8px; }
 .booking { background: #103b46; color: #fff; padding: 50px 0; scroll-margin-top: 100px; }
 .bookingGrid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 90px; align-items: center; }
 .booking h2 { margin: 0; font-size: clamp(28px, 3.5vw, 41px); line-height: 1.15; letter-spacing: -.04em; font-weight: 800; }

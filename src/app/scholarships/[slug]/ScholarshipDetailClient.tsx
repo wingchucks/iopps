@@ -437,7 +437,7 @@ function ScholarshipDetailContent() {
             <div style={{ padding: 20 }}>
               {intakeClosed && <p role="status" className="mb-3 text-sm font-semibold text-text-muted">Intake closed. This program may recur; check the provider for the next application round.</p>}
               {scholarshipApplicationHref ? (
-                <a href={scholarshipApplicationHref} {...scholarshipApplicationLinkProps} className="mb-3 flex min-h-12 items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-center font-bold text-white no-underline">
+                <a href={scholarshipApplicationHref} {...scholarshipApplicationLinkProps} className="mb-3 flex min-h-12 items-center justify-center rounded-xl button-gradient px-4 py-3 text-center font-bold text-white no-underline">
                   {intakeClosed ? "Check next intake" : "Apply on provider website"} ↗
                 </a>
               ) : <p className="mb-4 rounded-xl bg-slate-100 p-3 text-sm text-slate-700">{scholarship.applicationInstructions ? "Follow the application instructions on this page." : scholarship.contactEmail ? "Contact the provider below for application details." : "An application link has not been provided. Confirm details with the provider."}</p>}

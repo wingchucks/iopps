@@ -257,10 +257,10 @@ export default function TalentSearchPage() {
                     />
                     <button
                       onClick={addSkill}
-                      className="px-3 py-2 rounded-xl border-none cursor-pointer text-sm font-semibold"
+                      className="brand-button px-3 py-2 rounded-xl border-none cursor-pointer text-sm font-semibold"
                       style={{
-                        background: "rgba(13,148,136,.1)",
-                        color: "var(--teal)",
+                        background: "var(--button-gradient-soft)",
+                        color: "var(--button-gradient-soft-text)",
                       }}
                     >
                       Add
@@ -454,7 +454,7 @@ export default function TalentSearchPage() {
                   <>
                     <button
                       onClick={() => setShowSaveInput(!showSaveInput)}
-                      className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                      className="button-gradient-soft px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                       style={{
                         background: "rgba(139,92,246,.1)",
                         color: "#8B5CF6",
@@ -464,10 +464,10 @@ export default function TalentSearchPage() {
                     </button>
                     <button
                       onClick={handleClearFilters}
-                      className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                      className="brand-button px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                       style={{
-                        background: "var(--bg)",
-                        color: "var(--text-muted)",
+                        background: "var(--button-gradient-soft)",
+                        color: "var(--button-gradient-soft-text)",
                         border: "1px solid var(--border)",
                       }}
                     >
@@ -501,17 +501,17 @@ export default function TalentSearchPage() {
                   />
                   <button
                     onClick={handleSaveSearch}
-                    className="px-3 py-2 rounded-xl border-none cursor-pointer text-xs font-semibold"
-                    style={{ background: "var(--teal)", color: "#fff" }}
+                    className="brand-button px-3 py-2 rounded-xl border-none cursor-pointer text-xs font-semibold"
+                    style={{ background: "var(--button-gradient)", color: "#fff" }}
                   >
                     Save
                   </button>
                   <button
                     onClick={() => { setShowSaveInput(false); setSaveSearchName(""); }}
-                    className="px-3 py-2 rounded-xl border-none cursor-pointer text-xs font-semibold"
+                    className="brand-button px-3 py-2 rounded-xl border-none cursor-pointer text-xs font-semibold"
                     style={{
-                      background: "var(--bg)",
-                      color: "var(--text-muted)",
+                      background: "var(--button-gradient-soft)",
+                      color: "var(--button-gradient-soft-text)",
                       border: "1px solid var(--border)",
                     }}
                   >
@@ -721,20 +721,20 @@ function MemberCard({ member }: { member: MemberProfile }) {
       <div className="flex gap-2 mt-auto pt-1">
         <Link
           href={`/members/${member.uid}`}
-          className="flex-1 py-2 rounded-xl text-center text-xs font-semibold no-underline transition-opacity hover:opacity-80"
+          className="brand-button flex-1 py-2 rounded-xl text-center text-xs font-semibold no-underline transition-opacity hover:opacity-80"
           style={{
-            background: "rgba(13,148,136,.1)",
-            color: "var(--teal)",
+            background: "var(--button-gradient-soft)",
+            color: "var(--button-gradient-soft-text)",
           }}
         >
           View Profile
         </Link>
         <Link
           href={`/messages?to=${member.uid}`}
-          className="flex-1 py-2 rounded-xl text-center text-xs font-semibold no-underline transition-opacity hover:opacity-80"
+          className="brand-button flex-1 py-2 rounded-xl text-center text-xs font-semibold no-underline transition-opacity hover:opacity-80"
           style={{
-            background: "var(--bg)",
-            color: "var(--text)",
+            background: "var(--button-gradient-soft)",
+            color: "var(--button-gradient-soft-text)",
             border: "1px solid var(--border)",
           }}
         >

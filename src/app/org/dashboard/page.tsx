@@ -320,8 +320,8 @@ function OrgDashboardContent() {
           </p>
           <Link href="/org/plans" className="no-underline">
             <button
-              className="px-8 py-3.5 rounded-xl border-none font-bold text-base cursor-pointer"
-              style={{ background: "var(--teal)", color: "#fff" }}
+              className="brand-button px-8 py-3.5 rounded-xl border-none font-bold text-base cursor-pointer"
+              style={{ background: "var(--button-gradient)", color: "#fff" }}
             >
               View Plans &amp; Pricing →
             </button>
@@ -560,11 +560,11 @@ function OrgDashboardContent() {
                     </div>
                     <div className="flex gap-3">
                       {org && (
-                        <Link href={publicProfileHref} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold no-underline transition-all hover:-translate-y-0.5" style={{
-                          background: "rgba(255,255,255,0.05)",
+                        <Link href={publicProfileHref} className="brand-button inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold no-underline transition-all hover:-translate-y-0.5" style={{
+                          background: "var(--button-gradient-soft)",
                           backdropFilter: "blur(12px)",
                           border: "1px solid rgba(255,255,255,0.1)",
-                          color: "var(--text-sec, #cbd5e1)",
+                          color: "var(--button-gradient-soft-text)",
                         }}>
                           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
                           {isSchoolOrg || businessIsPublic ? "View Profile" : "Review listing"}
@@ -572,11 +572,11 @@ function OrgDashboardContent() {
                       )}
                       <button
                         onClick={primaryAction}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer transition-all hover:-translate-y-0.5"
+                        className="brand-button inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer transition-all hover:-translate-y-0.5"
                         style={{
-                          background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`,
+                          background: "var(--button-gradient)",
                           color: "#fff",
-                          boxShadow: `0 4px 20px rgba(${AMBER_RGB},0.3)`,
+                          boxShadow: "var(--button-gradient-shadow)",
                         }}
                       >
                         <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
@@ -609,10 +609,10 @@ function OrgDashboardContent() {
                           setActiveTab("Edit Profile");
                           setProfileSub("Identity");
                         }}
-                        className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none"
+                        className="brand-button px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none"
                         style={{
-                          background: "rgba(255,255,255,0.06)",
-                          color: "var(--text-sec, #cbd5e1)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                           border: "1px solid rgba(255,255,255,0.12)",
                         }}
                       >
@@ -629,15 +629,15 @@ function OrgDashboardContent() {
                       key={tab}
                       onClick={() => tab === "Applications" ? router.push("/org/dashboard/applications") : router.push(`/org/dashboard?tab=${encodeURIComponent(tab)}`, { scroll: false })}
                       aria-current={activeTab === tab ? "page" : undefined}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium cursor-pointer transition-all border-none hover:-translate-y-0.5"
+                      className="brand-button inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium cursor-pointer transition-all border-none hover:-translate-y-0.5"
                       style={activeTab === tab ? {
-                        color: "#fff",
-                        background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.15), rgba(245,158,11,0.1))`,
+                        color: "var(--button-gradient-soft-text)",
+                        background: "var(--button-gradient-soft)",
                         border: `1px solid rgba(${AMBER_RGB},0.4)`,
                         boxShadow: `0 0 20px rgba(${AMBER_RGB},0.1)`,
                       } : {
-                        color: "var(--text-muted, #94a3b8)",
-                        background: "rgba(255,255,255,0.03)",
+                        color: "var(--button-gradient-soft-text)",
+                        background: "var(--button-gradient-soft)",
                         border: "1px solid var(--border, rgba(30,41,59,0.6))",
                         backdropFilter: "blur(8px)",
                       }}
@@ -868,7 +868,7 @@ function SchoolOverviewTab({
             <button
               type="button"
               onClick={() => setActiveTab("Student Inquiries")}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none"
+              className="button-gradient-soft px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none"
               style={{ background: `rgba(${AMBER_RGB},0.08)`, color: AMBER }}
             >
               View all
@@ -1142,14 +1142,14 @@ function EditProfileTab({
           <button
             key={sub}
             onClick={() => setProfileSub(sub)}
-            className="px-4 py-2 rounded-xl text-[13px] font-medium cursor-pointer transition-all border-none"
+            className="brand-button px-4 py-2 rounded-xl text-[13px] font-medium cursor-pointer transition-all border-none"
             style={profileSub === sub ? {
-              color: "#fff",
-              background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.15), rgba(245,158,11,0.1))`,
+              color: "var(--button-gradient-soft-text)",
+              background: "var(--button-gradient-soft)",
               border: `1px solid rgba(${AMBER_RGB},0.4)`,
             } : {
-              color: "var(--text-muted, #94a3b8)",
-              background: "rgba(255,255,255,0.03)",
+              color: "var(--button-gradient-soft-text)",
+              background: "var(--button-gradient-soft)",
               border: "1px solid var(--border, rgba(30,41,59,0.6))",
             }}
           >
@@ -1199,7 +1199,7 @@ function EditProfileTab({
               <h3 className="text-base font-bold mb-5" style={{ color: "var(--text, #f8fafc)" }}>Logo & Banner</h3>
               <div className="flex items-center gap-4 mb-4">
                 <Avatar name={org?.shortName || org?.name || ""} size={64} src={org?.logoUrl || org?.logo} gradient={`linear-gradient(135deg, ${AMBER}, #F59E0B)`} />
-                <button className="px-4 py-2 rounded-lg text-sm font-semibold border-none cursor-pointer" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-sec, #cbd5e1)" }}>
+                <button className="brand-button px-4 py-2 rounded-lg text-sm font-semibold border-none cursor-pointer" style={{ background: "var(--button-gradient-soft)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--button-gradient-soft-text)" }}>
                   Upload Logo
                 </button>
               </div>
@@ -1270,8 +1270,8 @@ function EditProfileTab({
             <GlowButton disabled={saving} onClick={() => saveProfile({ hours })}>
               {saving ? "Saving..." : "Save Hours"}
             </GlowButton>
-            <button className="px-4 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer" style={{
-              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-sec, #cbd5e1)",
+            <button className="brand-button px-4 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer" style={{
+              background: "var(--button-gradient-soft)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--button-gradient-soft-text)",
             }} onClick={() => {
               const weekday = hours.monday;
               setHours((prev) => {
@@ -1402,7 +1402,7 @@ function EditProfileTab({
               <button
                 key={group}
                 onClick={() => setIndigenousGroups((prev) => prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group])}
-                className="flex-1 py-4 rounded-xl text-center text-sm font-semibold cursor-pointer transition-all border relative overflow-hidden"
+                className="button-gradient-soft flex-1 py-4 rounded-xl text-center text-sm font-semibold cursor-pointer transition-all border relative overflow-hidden"
                 style={indigenousGroups.includes(group) ? {
                   background: `rgba(${AMBER_RGB},0.08)`, borderColor: `rgba(${AMBER_RGB},0.4)`, color: AMBER,
                   boxShadow: `0 0 24px rgba(${AMBER_RGB},0.08)`,
@@ -1504,9 +1504,9 @@ function BillingTab({ org }: { org: Organization | null }) {
             Current Plan: <span className="font-bold uppercase" style={{ color: AMBER }}>{org?.plan || "Free"}</span>
           </div>
           <p className="text-sm mb-6" style={{ color: "var(--text-muted, #64748b)" }}>Manage your plan, payment methods, and invoices.</p>
-          <Link href="/org/plans" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold no-underline transition-all hover:-translate-y-0.5" style={{
-            background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`, color: "#fff",
-            boxShadow: `0 4px 20px rgba(${AMBER_RGB},0.3)`,
+          <Link href="/org/plans" className="brand-button inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold no-underline transition-all hover:-translate-y-0.5" style={{
+            background: "var(--button-gradient)", color: "#fff",
+            boxShadow: "var(--button-gradient-shadow)",
           }}>
             Upgrade Plan
           </Link>
@@ -1549,8 +1549,8 @@ function JobsTab({ jobs, formatTimestamp }: {
         <div className="flex gap-2">
           {(["all","active","draft","expired"] as const).map((f) => (
             <button key={f} onClick={() => setFilter(f)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all capitalize"
-              style={filter === f ? { background: `rgba(${AMBER_RGB},0.12)`, color: AMBER } : { background: "rgba(255,255,255,0.03)", color: "var(--text-muted)" }}
+              className="brand-button px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all capitalize"
+              style={filter === f ? { background: `rgba(${AMBER_RGB},0.12)`, color: AMBER } : { background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)" }}
             >{f === "all" ? `All (${jobs.length})` : f}</button>
           ))}
         </div>
@@ -1582,8 +1582,8 @@ function JobsTab({ jobs, formatTimestamp }: {
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button onClick={() => router.push(`/org/dashboard/jobs/${job.id}/edit`)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
-                      style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-sec)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                      className="brand-button px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
+                      style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", border: "1px solid rgba(255,255,255,0.1)" }}>
                       Edit
                     </button>
                   </div>
@@ -1730,11 +1730,11 @@ function GlowButton({ children, onClick, disabled }: { children: React.ReactNode
     <button
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:pointer-events-none"
+      className="brand-button inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:pointer-events-none"
       style={{
-        background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`,
+        background: "var(--button-gradient)",
         color: "#fff",
-        boxShadow: `0 4px 20px rgba(${AMBER_RGB},0.3)`,
+        boxShadow: "var(--button-gradient-shadow)",
       }}
     >
       {children}

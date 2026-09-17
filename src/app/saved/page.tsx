@@ -204,9 +204,9 @@ function SavedContent() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="px-4 py-2 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all whitespace-nowrap"
+              className="brand-button px-4 py-2 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all whitespace-nowrap"
               style={{
-                background: active ? "var(--navy)" : "var(--card)",
+                background: active ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                 color: active ? "#fff" : "var(--text-sec)",
                 border: active ? "none" : "1px solid var(--border)",
               }}
@@ -233,10 +233,10 @@ function SavedContent() {
                 : "Try a different filter or browse the feed to save more items."}
             </p>
             <Link href="/feed">
-              <Button
+              <Button className="brand-button"
                 primary
                 style={{
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   borderRadius: 14,
                   padding: "12px 28px",
                 }}

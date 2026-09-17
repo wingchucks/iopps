@@ -153,9 +153,9 @@ function BusinessesPageContent() {
                 key={option}
                 aria-pressed={filter === option}
                 onClick={() => setFilter(option)}
-                className="rounded-full border-none px-4 py-2 text-[13px] font-semibold"
+                className="brand-button rounded-full border-none px-4 py-2 text-[13px] font-semibold"
                 style={{
-                  background: filter === option ? "var(--navy)" : "var(--border)",
+                  background: filter === option ? "var(--button-gradient)" : "var(--border)",
                   color: filter === option ? "#fff" : "var(--text-sec)",
                 }}
               >
@@ -184,7 +184,7 @@ function BusinessesPageContent() {
           ) : error ? (
             <Card style={{ padding: 32, textAlign: "center" }}>
               <p role="alert" className="mb-4">We couldn&apos;t load the businesses. Please try again.</p>
-              <button type="button" className="rounded-xl bg-navy px-5 py-3 text-white" onClick={() => setAttempt(value => value + 1)}>Try again</button>
+              <button type="button" className="rounded-xl button-gradient px-5 py-3 text-white" onClick={() => setAttempt(value => value + 1)}>Try again</button>
             </Card>
           ) : filtered.length === 0 ? (
             <Card style={{ padding: 48, textAlign: "center" }}>

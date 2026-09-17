@@ -422,7 +422,7 @@ function ChipSelect({
       {options.map((tag) => {
         const active = selected.includes(tag);
         return (
-          <button
+          <button className="brand-button"
             key={tag}
             type="button"
             onClick={() => toggle(tag)}
@@ -430,8 +430,8 @@ function ChipSelect({
               padding: "6px 14px",
               borderRadius: 20,
               border: active ? "1.5px solid var(--teal)" : "1px solid var(--border)",
-              background: active ? "rgba(13,148,136,.1)" : "var(--card)",
-              color: active ? "var(--teal)" : "var(--text-sec)",
+              background: active ? "var(--button-gradient)" : "var(--button-gradient-soft)",
+              color: active ? "#fff" : "var(--button-gradient-soft-text)",
               fontSize: 13,
               fontWeight: active ? 600 : 500,
               cursor: "pointer",
@@ -540,15 +540,15 @@ function ListBuilder({
           placeholder={placeholder || `Add a ${label.toLowerCase().replace(/ies$/, "y").replace(/s$/, "")}...`}
           style={{ ...inputStyle, flex: 1 }}
         />
-        <button
+        <button className="brand-button"
           type="button"
           onClick={add}
           style={{
             padding: "8px 16px",
             borderRadius: 10,
             border: "none",
-            background: "rgba(13,148,136,.1)",
-            color: "var(--teal)",
+            background: "var(--button-gradient-soft)",
+            color: "var(--button-gradient-soft-text)",
             fontSize: 13,
             fontWeight: 600,
             cursor: "pointer",
@@ -862,7 +862,7 @@ export default function NewJobWizardPage() {
                 </div>
 
                 <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                  <button
+                  <button className="brand-button"
                     onClick={() => {
                       setForm(emptyForm);
                       setStep(0);
@@ -872,8 +872,8 @@ export default function NewJobWizardPage() {
                       padding: "12px 24px",
                       borderRadius: 10,
                       border: "1px solid var(--border)",
-                      background: "var(--card)",
-                      color: "var(--text)",
+                      background: "var(--button-gradient-soft)",
+                      color: "var(--button-gradient-soft-text)",
                       fontSize: 14,
                       fontWeight: 600,
                       cursor: "pointer",
@@ -881,13 +881,13 @@ export default function NewJobWizardPage() {
                   >
                     Post Another Job
                   </button>
-                  <button
+                  <button className="brand-button"
                     onClick={() => router.push("/org/dashboard")}
                     style={{
                       padding: "12px 24px",
                       borderRadius: 10,
                       border: "none",
-                      background: "var(--navy)",
+                      background: "var(--button-gradient)",
                       color: "#fff",
                       fontSize: 14,
                       fontWeight: 600,
@@ -1511,14 +1511,14 @@ export default function NewJobWizardPage() {
                   }}
                 >
                   {typeof step === "number" && step > 0 && (
-                    <button
+                    <button className="brand-button"
                       onClick={goBack}
                       style={{
                         padding: "12px 24px",
                         borderRadius: 10,
                         border: "1px solid var(--border)",
-                        background: "var(--card)",
-                        color: "var(--text)",
+                        background: "var(--button-gradient-soft)",
+                        color: "var(--button-gradient-soft-text)",
                         fontSize: 14,
                         fontWeight: 600,
                         cursor: "pointer",
@@ -1530,15 +1530,15 @@ export default function NewJobWizardPage() {
 
                   {step === 2 ? (
                     <div style={{ display: "flex", gap: 12 }}>
-                      <button
+                      <button className="brand-button"
                         onClick={() => handleSave("draft")}
                         disabled={saving}
                         style={{
                           padding: "12px 24px",
                           borderRadius: 10,
                           border: "1px solid var(--border)",
-                          background: "var(--card)",
-                          color: "var(--text)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                           fontSize: 14,
                           fontWeight: 600,
                           cursor: saving ? "default" : "pointer",
@@ -1547,14 +1547,14 @@ export default function NewJobWizardPage() {
                       >
                         {saving ? "Saving..." : "Save as Draft"}
                       </button>
-                      <button
+                      <button className="brand-button"
                         onClick={() => handleSave("active")}
                         disabled={saving}
                         style={{
                           padding: "12px 24px",
                           borderRadius: 10,
                           border: "none",
-                          background: "var(--teal)",
+                          background: "var(--button-gradient)",
                           color: "#fff",
                           fontSize: 14,
                           fontWeight: 600,
@@ -1566,13 +1566,13 @@ export default function NewJobWizardPage() {
                       </button>
                     </div>
                   ) : (
-                    <button
+                    <button className="brand-button"
                       onClick={goNext}
                       style={{
                         padding: "12px 24px",
                         borderRadius: 10,
                         border: "none",
-                        background: "var(--navy)",
+                        background: "var(--button-gradient)",
                         color: "#fff",
                         fontSize: 14,
                         fontWeight: 600,

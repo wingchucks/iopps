@@ -441,8 +441,8 @@ export default function ModerationDetailPage() {
                         </button>
                         <button
                           onClick={() => { setConfirmAction(null); setConfirmMessage(""); }}
-                          className="rounded-lg px-3 py-2 text-xs font-medium transition-colors"
-                          style={{ background: "var(--card-bg)", color: "var(--text-muted)", border: "1px solid var(--card-border)" }}
+                          className="brand-button rounded-lg px-3 py-2 text-xs font-medium transition-colors"
+                          style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", border: "1px solid var(--card-border)" }}
                         >
                           Cancel
                         </button>
@@ -483,8 +483,8 @@ export default function ModerationDetailPage() {
             <button
               onClick={saveAdminNotes}
               disabled={notesSaving}
-              className="mt-2 w-full rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
-              style={{ background: "var(--input-bg)", border: "1px solid var(--input-border)", color: "var(--text-secondary)" }}
+              className="brand-button mt-2 w-full rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+              style={{ background: "var(--button-gradient-soft)", border: "1px solid var(--input-border)", color: "var(--button-gradient-soft-text)" }}
             >
               {notesSaving ? "Saving..." : "Save Notes"}
             </button>

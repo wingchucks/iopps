@@ -175,10 +175,10 @@ function ApplicationsContent() {
             <button
               key={opt.value}
               onClick={() => setFilter(opt.value)}
-              className="rounded-full text-xs font-bold cursor-pointer transition-all"
+              className="brand-button rounded-full text-xs font-bold cursor-pointer transition-all"
               style={{
                 padding: "6px 14px",
-                background: isActive ? "var(--navy)" : "var(--card)",
+                background: isActive ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                 color: isActive ? "#fff" : "var(--text-sec)",
                 border: isActive ? "none" : "1px solid var(--border)",
               }}

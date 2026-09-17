@@ -11,6 +11,7 @@ import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { serializeJsonLd, siteJsonLd } from "@/lib/server/seo";
 import "./globals.css";
 import "./opportunity.css";
+import "./buttons.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

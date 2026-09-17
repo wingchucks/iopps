@@ -220,7 +220,7 @@ export default function UserDetailPage() {
               <button
                 onClick={() => apiCall("PATCH", { role: selectedRole })}
                 disabled={actionLoading || isSuperAdmin || isDeleted}
-                className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
+                className="rounded-md button-gradient px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
               >
                 Save
               </button>

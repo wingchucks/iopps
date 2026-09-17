@@ -146,12 +146,12 @@ function LoginForm() {
               type="button"
               onClick={handleSessionRecovery}
               disabled={loading}
-              className="w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
+              className="brand-button w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
               style={{
                 padding: "13px 18px",
                 borderRadius: 12,
                 border: "none",
-                background: "#0F766E",
+                background: "var(--button-gradient)",
                 color: "#fff",
                 fontSize: 15,
               }}
@@ -397,12 +397,12 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
+              className="brand-button w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
               style={{
                 padding: "14px 24px",
                 borderRadius: 12,
                 border: "none",
-                background: "#0F766E",
+                background: "var(--button-gradient)",
                 color: "#fff",
                 fontSize: 16,
                 marginTop: 4,

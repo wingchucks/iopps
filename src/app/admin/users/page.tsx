@@ -104,7 +104,7 @@ function RoleDropdown({
           setOpen(!open);
         }}
         disabled={loading}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--card-border)] bg-[var(--input-bg)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--card-border-hover)] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--card-border)] button-gradient-soft px-3 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--card-border-hover)] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
         aria-expanded={open}
         aria-haspopup="listbox"
       >

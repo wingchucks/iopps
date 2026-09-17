@@ -182,7 +182,7 @@ function OrgProfileContent() {
         <p className="text-5xl mb-4">&#127970;</p>
         <h2 className="text-2xl font-extrabold text-text mb-2">Organization Not Found</h2>
         <p className="text-text-sec mb-6">This organization doesn&apos;t exist or hasn&apos;t been added yet.</p>
-        <Link href="/businesses" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold bg-teal text-white no-underline hover:opacity-90 transition-opacity">
+        <Link href="/businesses" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold button-gradient text-white no-underline hover:opacity-90 transition-opacity">
           Browse Businesses
         </Link>
       </div>
@@ -320,25 +320,25 @@ function OrgProfileContent() {
             <div className="flex gap-2 flex-wrap mt-4">
               {org.socialLinks!.instagram && (
                 <a href={org.socialLinks!.instagram} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted button-gradient-soft hover:border-teal hover:text-teal hover:-translate-y-px">
                   📸 Instagram
                 </a>
               )}
               {org.socialLinks!.facebook && (
                 <a href={org.socialLinks!.facebook} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted button-gradient-soft hover:border-teal hover:text-teal hover:-translate-y-px">
                   📘 Facebook
                 </a>
               )}
               {org.socialLinks!.linkedin && (
                 <a href={org.socialLinks!.linkedin} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted button-gradient-soft hover:border-teal hover:text-teal hover:-translate-y-px">
                   💼 LinkedIn
                 </a>
               )}
               {org.socialLinks!.twitter && (
                 <a href={org.socialLinks!.twitter} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted button-gradient-soft hover:border-teal hover:text-teal hover:-translate-y-px">
                   🐦 Twitter / X
                 </a>
               )}
@@ -466,8 +466,8 @@ function OrgProfileContent() {
                       <button
                         type="button"
                         onClick={() => setExpandedOppTab((current) => (current === "jobs" ? null : "jobs"))}
-                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
-                        style={{ color: "#14B8A6", border: "1px solid rgba(20,184,166,0.2)", background: "rgba(20,184,166,0.04)" }}
+                        className="brand-button flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        style={{ color: "var(--button-gradient-soft-text)", border: "1px solid rgba(20,184,166,0.2)", background: "var(--button-gradient-soft)" }}
                       >
                         {expandedOppTab === "jobs" ? "Show fewer jobs" : `Show all ${relatedJobCount} jobs`}
                       </button>
@@ -506,7 +506,7 @@ function OrgProfileContent() {
                       <button
                         type="button"
                         onClick={() => setExpandedOppTab((current) => (current === "events" ? null : "events"))}
-                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        className="button-gradient-soft flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
                         style={{ color: "#F59E0B", border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.04)" }}
                       >
                         {expandedOppTab === "events" ? "Show fewer events" : `Show all ${events.length} events`}
@@ -545,7 +545,7 @@ function OrgProfileContent() {
                       <button
                         type="button"
                         onClick={() => setExpandedOppTab((current) => (current === "scholarships" ? null : "scholarships"))}
-                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        className="button-gradient-soft flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
                         style={{ color: "#FBBF24", border: "1px solid rgba(251,191,36,0.2)", background: "rgba(251,191,36,0.04)" }}
                       >
                         {expandedOppTab === "scholarships" ? "Show fewer scholarships" : `Show all ${scholarships.length} scholarships`}
@@ -582,7 +582,7 @@ function OrgProfileContent() {
                       <button
                         type="button"
                         onClick={() => setExpandedOppTab((current) => (current === "training" ? null : "training"))}
-                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        className="button-gradient-soft flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
                         style={{ color: "#A78BFA", border: "1px solid rgba(167,139,250,0.2)", background: "rgba(167,139,250,0.04)" }}
                       >
                         {expandedOppTab === "training" ? "Show less training" : `Show all ${training.length} training opportunities`}
@@ -652,7 +652,7 @@ function OrgProfileContent() {
               </p>
               <div className="flex gap-2 justify-center mt-3.5">
                 <Link href="/signup" className="no-underline">
-                  <button className="px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-teal text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)]">
+                  <button className="px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none button-gradient text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)]">
                     Join Free
                   </button>
                 </Link>

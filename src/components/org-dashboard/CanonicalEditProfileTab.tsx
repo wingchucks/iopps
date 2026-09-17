@@ -131,18 +131,18 @@ function ActionButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+      className="brand-button px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       style={
         variant === "primary"
           ? {
-              background: `linear-gradient(135deg, ${TEAL}, #0F766E)`,
+              background: "var(--button-gradient)",
               color: "#fff",
               border: "none",
-              boxShadow: `0 8px 24px rgba(${TEAL_RGB},0.24)`,
+              boxShadow: "var(--button-gradient-shadow)",
             }
           : {
-              background: "rgba(255,255,255,0.05)",
-              color: "var(--text-sec, #cbd5e1)",
+              background: "var(--button-gradient-soft)",
+              color: "var(--button-gradient-soft-text)",
               border: "1px solid var(--border)",
             }
       }
@@ -412,14 +412,14 @@ export default function CanonicalEditProfileTab({
             type="button"
             aria-pressed={profileSub === section}
             onClick={() => setProfileSub(section)}
-            className="px-4 py-2 rounded-xl text-[13px] font-medium cursor-pointer transition-all border-none"
+            className="brand-button px-4 py-2 rounded-xl text-[13px] font-medium cursor-pointer transition-all border-none"
             style={profileSub === section ? {
-              color: "var(--teal)",
-              background: `linear-gradient(135deg, rgba(${TEAL_RGB},0.15), rgba(13,148,136,0.1))`,
+              color: "#fff",
+              background: "var(--button-gradient)",
               border: `1px solid rgba(${TEAL_RGB},0.4)`,
             } : {
-              color: "var(--text-sec)",
-              background: "var(--bg)",
+              color: "var(--button-gradient-soft-text)",
+              background: "var(--button-gradient-soft)",
               border: "1px solid var(--border)",
             }}
           >
@@ -596,8 +596,8 @@ export default function CanonicalEditProfileTab({
                     type="button"
                     aria-pressed={indigenousGroups.includes(group)}
                     onClick={() => setIndigenousGroups((prev) => prev.includes(group) ? prev.filter((entry) => entry !== group) : [...prev, group])}
-                    className="flex-1 py-4 rounded-xl text-center text-sm font-semibold cursor-pointer transition-all border"
-                    style={indigenousGroups.includes(group) ? { background: `rgba(${TEAL_RGB},0.08)`, borderColor: `rgba(${TEAL_RGB},0.4)`, color: TEAL } : { background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-sec)" }}
+                    className="brand-button flex-1 py-4 rounded-xl text-center text-sm font-semibold cursor-pointer transition-all border"
+                    style={indigenousGroups.includes(group) ? { background: `rgba(${TEAL_RGB},0.08)`, borderColor: `rgba(${TEAL_RGB},0.4)`, color: TEAL } : { background: "var(--button-gradient-soft)", borderColor: "var(--border)", color: "var(--button-gradient-soft-text)" }}
                   >
                     {indigenousGroups.includes(group) && <span className="mr-1">✓</span>}
                     {group}
@@ -679,7 +679,7 @@ export default function CanonicalEditProfileTab({
               </div>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTED_TAGS.filter((tag) => !tags.includes(tag)).map((tag) => (
-                  <button type="button" key={tag} className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--bg)", color: "var(--text-sec)", border: "1px solid var(--border)" }} onClick={() => setTags((prev) => [...prev, tag])}>+ {tag}</button>
+                  <button type="button" key={tag} className="brand-button px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", border: "1px solid var(--border)" }} onClick={() => setTags((prev) => [...prev, tag])}>+ {tag}</button>
                 ))}
               </div>
             </div>
@@ -701,7 +701,7 @@ export default function CanonicalEditProfileTab({
               </div>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTED_SERVICES.filter((service) => !services.includes(service)).map((service) => (
-                  <button type="button" key={service} className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--bg)", color: "var(--text-sec)", border: "1px solid var(--border)" }} onClick={() => setServices((prev) => [...prev, service])}>+ {service}</button>
+                  <button type="button" key={service} className="brand-button px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", border: "1px solid var(--border)" }} onClick={() => setServices((prev) => [...prev, service])}>+ {service}</button>
                 ))}
               </div>
             </div>

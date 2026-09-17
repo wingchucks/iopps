@@ -722,8 +722,8 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
     padding: "0 14px",
     borderRadius: 12,
     border: "1px solid var(--border)",
-    background: "var(--bg)",
-    color: "var(--text-sec, #cbd5e1)",
+    background: "var(--button-gradient-soft)",
+    color: "var(--button-gradient-soft-text)",
     fontSize: 13,
     fontWeight: 700,
     cursor: props.disabled ? "not-allowed" : "pointer",
@@ -837,12 +837,12 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
       </div>
 
       <div className="flex flex-wrap gap-2 mt-4">
-        <button type="button" style={actionButtonStyle} onClick={triggerBrowse} disabled={props.disabled}>
+        <button type="button" className="brand-button" style={actionButtonStyle} onClick={triggerBrowse} disabled={props.disabled}>
           Browse Files
         </button>
         <button
           type="button"
-          style={actionButtonStyle}
+          className="brand-button" style={actionButtonStyle}
           onClick={openGoogleDrivePicker}
           disabled={props.disabled || googleLoading || !googleConfigured}
         >
@@ -850,7 +850,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
         </button>
         <button
           type="button"
-          style={actionButtonStyle}
+          className="brand-button" style={actionButtonStyle}
           onClick={() => setShowLinkInput((prev) => !prev)}
           disabled={props.disabled}
         >
@@ -898,9 +898,9 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
             type="button"
             onClick={() => void handleImportLink()}
             disabled={props.disabled || !linkInput.trim()}
-            className="px-4 py-3 rounded-xl text-sm font-semibold"
+            className="brand-button px-4 py-3 rounded-xl text-sm font-semibold"
             style={{
-              background: `linear-gradient(135deg, ${TEAL}, #0F766E)`,
+              background: "var(--button-gradient)",
               color: "#fff",
               border: "none",
               opacity: props.disabled || !linkInput.trim() ? 0.6 : 1,
@@ -929,11 +929,11 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
           <button
             type="button"
             onClick={retrySingleUpload}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold"
+            className="brand-button px-4 py-2.5 rounded-xl text-sm font-semibold"
             style={{
-              background: "var(--bg)",
+              background: "var(--button-gradient-soft)",
               border: "1px solid var(--border)",
-              color: "var(--text-sec, #cbd5e1)",
+              color: "var(--button-gradient-soft-text)",
             }}
           >
             Retry Upload
@@ -992,9 +992,9 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
                         <button
                           type="button"
                           onClick={() => retryGalleryUpload(item.id)}
-                          className="flex-1 rounded-lg px-3 py-2 text-xs font-semibold"
+                          className="brand-button flex-1 rounded-lg px-3 py-2 text-xs font-semibold"
                           style={{
-                            background: `linear-gradient(135deg, ${TEAL}, #0F766E)`,
+                            background: "var(--button-gradient)",
                             color: "#fff",
                             border: "none",
                           }}
@@ -1005,10 +1005,10 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
                       <button
                         type="button"
                         onClick={() => removeGalleryItem(item.id)}
-                        className="flex-1 rounded-lg px-3 py-2 text-xs font-semibold"
+                        className="brand-button flex-1 rounded-lg px-3 py-2 text-xs font-semibold"
                         style={{
-                          background: "var(--bg)",
-                          color: "var(--text-sec, #cbd5e1)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                           border: "1px solid var(--border)",
                         }}
                       >

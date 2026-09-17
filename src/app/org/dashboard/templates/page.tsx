@@ -197,10 +197,10 @@ export default function EmailTemplatesPage() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleReset(cfg.key)}
-                        className="text-xs font-semibold cursor-pointer border-none rounded-lg px-3 py-1.5"
+                        className="brand-button text-xs font-semibold cursor-pointer border-none rounded-lg px-3 py-1.5"
                         style={{
-                          background: "var(--bg)",
-                          color: "var(--text-muted)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                           border: "1px solid var(--border)",
                         }}
                       >
@@ -212,10 +212,10 @@ export default function EmailTemplatesPage() {
                             previewKey === cfg.key ? null : cfg.key
                           )
                         }
-                        className="text-xs font-semibold cursor-pointer border-none rounded-lg px-3 py-1.5"
+                        className="brand-button text-xs font-semibold cursor-pointer border-none rounded-lg px-3 py-1.5"
                         style={{
-                          background: "rgba(13,148,136,.1)",
-                          color: "var(--teal)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                         }}
                       >
                         {previewKey === cfg.key ? "Hide Preview" : "Preview"}

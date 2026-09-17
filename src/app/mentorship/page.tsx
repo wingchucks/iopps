@@ -408,8 +408,8 @@ export default function MentorshipPage() {
                             }
                             setRequestModal(mentor);
                           }}
-                          className="w-full py-2 rounded-xl text-sm font-bold text-white transition-colors"
-                          style={{ background: "var(--purple)" }}
+                          className="brand-button w-full py-2 rounded-xl text-sm font-bold text-white transition-colors"
+                          style={{ background: "var(--button-gradient)" }}
                           onMouseEnter={(e) =>
                             (e.currentTarget.style.background = "#6D28D9")
                           }
@@ -451,8 +451,8 @@ export default function MentorshipPage() {
           </p>
           <Link
             href="/mentorship/become"
-            className="inline-block px-6 py-3 rounded-xl text-white font-bold transition-colors"
-            style={{ background: "var(--purple)" }}
+            className="brand-button inline-block px-6 py-3 rounded-xl text-white font-bold transition-colors"
+            style={{ background: "var(--button-gradient)" }}
             onMouseEnter={(e) =>
               (e.currentTarget.style.background = "#6D28D9")
             }
@@ -539,8 +539,8 @@ export default function MentorshipPage() {
               <button
                 onClick={handleRequestSubmit}
                 disabled={submitting}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50"
-                style={{ background: "var(--purple)" }}
+                className="brand-button flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50"
+                style={{ background: "var(--button-gradient)" }}
               >
                 {submitting ? "Sending..." : "Send Request"}
               </button>

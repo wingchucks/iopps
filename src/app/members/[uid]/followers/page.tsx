@@ -161,11 +161,11 @@ function FollowersContent() {
 
             {hasMore && (
               <div className="text-center mt-6">
-                <Button
+                <Button className="brand-button"
                   onClick={loadMore}
                   style={{
-                    background: "var(--card)",
-                    color: "var(--text-sec)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                     border: "1px solid var(--border)",
                     opacity: loadingMore ? 0.6 : 1,
                   }}
