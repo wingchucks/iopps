@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { verifyAdminToken, verifySuperAdminToken } from "@/lib/api-auth";
 import { adminDb, getAdminAuth } from "@/lib/firebase-admin";
 import { isSuperAdminAccount } from "@/lib/server/super-admin";
+import { changeAdminUserRole } from "@/lib/server/admin-user-role";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,7 @@ export async function GET(
       applicationCount: applications.length,
       isSuperAdmin: targetIsSuperAdmin,
       capabilities: {
+        canChangeRole: viewerIsSuperAdmin && !targetIsSuperAdmin && userData.status !== "deleted",
         canDelete:
           viewerIsSuperAdmin &&
           !targetIsSuperAdmin &&
@@ -108,10 +110,12 @@ export async function PATCH(
     const updates: Record<string, unknown> = {};
 
     if (body.role !== undefined) {
+      if (!auth.isSuperAdmin) {
+        return NextResponse.json({ error: "Super admin access is required to change account roles" }, { status: 403 });
+      }
       if (!["member", "community", "employer", "school", "organization", "moderator", "admin"].includes(body.role)) {
         return NextResponse.json({ error: "Invalid user role" }, { status: 400 });
       }
-      updates.role = body.role;
     }
 
     if (body.action === "suspend") {
@@ -124,9 +128,12 @@ export async function PATCH(
       updates.suspendedAt = null;
     }
 
-    await adminDb.collection("users").doc(userId).update(updates);
+    if (body.role !== undefined) {
+      await changeAdminUserRole(userId, body.role, { auth: getAdminAuth(), db: adminDb, isSuperAdmin: auth.isSuperAdmin });
+    }
+    if (Object.keys(updates).length) await adminDb.collection("users").doc(userId).update(updates);
 
-    return NextResponse.json({ success: true, updates });
+    return NextResponse.json({ success: true, updates: { ...updates, ...(body.role !== undefined ? { role: body.role } : {}) } });
   } catch (error) {
     console.error("Error updating user:", error);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });

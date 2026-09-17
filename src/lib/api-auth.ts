@@ -117,7 +117,8 @@ export async function verifyAdminToken(
 
   const { decodedToken } = result;
   const isAdmin =
-    decodedToken.admin === true || decodedToken.role === "admin";
+    (decodedToken.admin === true || decodedToken.role === "admin") &&
+    (result.userData.claimsValidAfter === undefined || result.userData.role === "admin");
 
   if (!isAdmin) {
     return {

@@ -87,3 +87,10 @@ test("ordinary member authentication never infers ownership from a profile", asy
   assert.equal(result.success, true);
   if (result.success) assert.equal(result.isSuperAdmin, false);
 });
+
+test("a managed demotion overrides lagging signed admin claims after a fresh sign-in", async () => {
+  const { request, deps } = fixture({ token: { auth_time: 201 }, profile: { role: "member", claimsValidAfter: 200 } });
+  const result = await verifyAdminToken(request, deps);
+  assert.equal(result.success, false);
+  if (!result.success) assert.equal(result.response.status, 403);
+});

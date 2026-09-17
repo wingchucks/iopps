@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import { getSubscriptionPlanByTier, SUBSCRIPTION_PLANS, type SubscriptionTier } from "@/lib/pricing";
 import toast from "react-hot-toast";
+import OrganizationAdminAssignment from "@/components/admin/OrganizationAdminAssignment";
 
 interface Employer {
   id: string;
@@ -60,6 +61,7 @@ interface OrgData {
   actionHistory: ActionHistoryItem[];
   capabilities?: {
     canAssignSubscription?: boolean;
+    canAssignAdministrator?: boolean;
     canDelete?: boolean;
   };
 }
@@ -618,6 +620,9 @@ export default function OrganizationDetailPage() {
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>No team members found.</p>
           )}
         </div>
+        {data.capabilities?.canAssignAdministrator && user && <OrganizationAdminAssignment
+          key={`${orgId}:${user.uid}`} orgId={orgId} getToken={() => user.getIdToken()} onApplied={fetchData}
+        />}
       </div>
 
       {canDelete && (

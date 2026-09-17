@@ -69,6 +69,9 @@ try {
   for (const [actor, expected] of [[owner, true], [staff, false]]) {
     const userView = await expectStatus(200, 'GET', memberPath, actor.token);
     assert.equal(userView.capabilities.canDelete, expected);
+    assert.equal(userView.capabilities.canChangeRole, expected);
+    const userList = await expectStatus(200, 'GET', '/api/admin/users', actor.token);
+    assert.equal(userList.capabilities.canChangeRoles, expected);
     const orgView = await expectStatus(200, 'GET', orgPath, actor.token);
     assert.equal(orgView.capabilities.canAssignSubscription, expected);
     assert.equal(orgView.capabilities.canDelete, expected);
@@ -102,9 +105,46 @@ try {
   await expectStatus(403, 'POST', '/api/admin/fix-user', owner.token, { uid: owner.uid });
   await expectStatus(400, 'PATCH', memberPath, owner.token, { role: 'super_admin' });
   await expectStatus(400, 'POST', '/api/admin/users', owner.token, { userId: member.uid, role: 'super_admin' });
-  await expectStatus(200, 'PATCH', memberPath, staff.token, { role: 'moderator' });
+  await expectStatus(403, 'PATCH', memberPath, staff.token, { role: 'moderator' });
+  await expectStatus(403, 'POST', '/api/admin/users', staff.token, { userId: member.uid, role: 'admin' });
+  await expectStatus(200, 'PATCH', memberPath, staff.token, { action: 'suspend' });
+  await expectStatus(200, 'PATCH', memberPath, staff.token, { action: 'unsuspend' });
   assert.equal((await db.doc('users/' + owner.uid).get()).data().role, 'admin');
   console.log('PASS owner account resists role changes, suspension, deletion and password repair; ordinary moderation still works');
+
+  await save('members/' + member.uid, { role: 'community' });
+  await auth.setCustomUserClaims(member.uid, { customFeature: true });
+  await expectStatus(200, 'POST', '/api/admin/users', owner.token, { userId: member.uid, role: 'admin' });
+  const promoted = await auth.getUser(member.uid);
+  assert.equal(promoted.customClaims.admin, true);
+  assert.equal(promoted.customClaims.role, 'admin');
+  assert.equal(promoted.customClaims.customFeature, true);
+  assert.equal((await db.doc('members/' + member.uid).get()).data().role, 'admin');
+  await new Promise(resolve => setTimeout(resolve, 1100));
+  const promotedToken = await signIn(member.uid);
+  await expectStatus(200, 'GET', memberPath, promotedToken);
+  // Auth token revocation timestamps have second precision.
+  await new Promise(resolve => setTimeout(resolve, 1100));
+  await expectStatus(200, 'PATCH', memberPath, owner.token, { role: 'community' });
+  const demoted = await auth.getUser(member.uid);
+  assert.equal(demoted.customClaims.admin, undefined);
+  assert.equal(demoted.customClaims.role, 'community');
+  assert.equal(demoted.customClaims.customFeature, true);
+  assert.equal((await db.doc('users/' + member.uid).get()).data().role, 'community');
+  assert.equal((await db.doc('members/' + member.uid).get()).data().role, 'community');
+  const staleAdmin = await request('GET', memberPath, promotedToken);
+  assert.ok([401, 403].includes(staleAdmin.status), JSON.stringify(staleAdmin));
+  await new Promise(resolve => setTimeout(resolve, 1100));
+  await expectStatus(403, 'GET', memberPath, await signIn(member.uid));
+  member.token = await signIn(member.uid);
+  console.log('PASS only the owner changes roles; promotion and demotion synchronize claims and invalidate old admin sessions');
+
+  for (const method of ['POST', 'DELETE']) {
+    await expectStatus(410, method, '/api/admin/create-test-account', undefined, { uid: owner.uid, email: ownerEmail }, { authorization: 'Bearer undefined' });
+    await expectStatus(410, method, '/api/admin/create-test-account', owner.token, { uid: owner.uid, email: ownerEmail });
+  }
+  assert.equal((await auth.getUser(owner.uid)).customClaims.admin, true);
+  console.log('PASS obsolete test-account endpoints cannot create, overwrite or delete live identities');
 
   await auth.updateUser(owner.uid, { emailVerified: false });
   await expectStatus(403, 'DELETE', memberPath, owner.token);

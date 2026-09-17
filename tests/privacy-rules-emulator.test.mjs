@@ -106,6 +106,16 @@ test('database privacy boundaries apply to direct client requests, including sig
       await deleteObject(ref(applicant.storage, resume));
       await assert.rejects(uploadBytes(ref(applicant.storage, `livestream-promos/${applicant.uid}/test.png`), new Uint8Array([1]), { contentType: 'image/png' }), storageDenied);
     });
+    await t.test('role changes revoke old client authority and fail closed if Auth claims lag', async () => {
+      await db.doc(`users/${staff.uid}`).update({ role: 'community', claimsValidAfter: Math.floor(Date.now() / 1000) });
+      await assert.rejects(getDocFromServer(doc(staff.db, 'members', staff.uid)), denied);
+      await assert.rejects(updateDoc(doc(staff.db, 'events', prefix), { title: 'Stale admin' }), denied);
+      // Even after a fresh sign-in, lagging admin claims cannot override the
+      // server-managed demotion. Past marker simulates that later sign-in.
+      await db.doc(`users/${staff.uid}`).update({ claimsValidAfter: 1 });
+      assert.equal((await getDocFromServer(doc(staff.db, 'members', staff.uid))).exists(), true);
+      await assert.rejects(updateDoc(doc(staff.db, 'events', prefix), { title: 'Lagging admin claim' }), denied);
+    });
   } finally {
     for (const path of paths) await db.recursiveDelete(db.doc(path));
     for (const app of apps) { await terminate(getFirestore(app)); await deleteApp(app); }

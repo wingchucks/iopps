@@ -32,6 +32,7 @@ interface UserDetail {
   isSuperAdmin: boolean;
   capabilities?: {
     canDelete?: boolean;
+    canChangeRole?: boolean;
   };
 }
 
@@ -129,6 +130,7 @@ export default function UserDetailPage() {
   const isSuspended = userData.status === "suspended";
   const isDeleted = userData.status === "deleted";
   const canDelete = userData.capabilities?.canDelete === true;
+  const canChangeRole = userData.capabilities?.canChangeRole === true;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -205,7 +207,7 @@ export default function UserDetailPage() {
 
         <div className="flex flex-wrap gap-3">
           {/* Edit Role */}
-          {editingRole ? (
+          {canChangeRole && (editingRole ? (
             <div className="flex items-center gap-2">
               <select
                 value={selectedRole}
@@ -239,7 +241,7 @@ export default function UserDetailPage() {
             >
               Edit Role
             </button>
-          )}
+          ))}
 
           {/* Suspend / Unsuspend */}
           {isSuspended ? (

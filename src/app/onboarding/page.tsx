@@ -313,7 +313,7 @@ export default function OnboardingPage() {
                     style={{ display: "none" }}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file && user) uploadFile(file, `avatars/${user.uid}/profile`, setPhotoURL);
+                      if (file && user) uploadFile(file, `avatars/${user.uid}.${file.name.split(".").pop() || "jpg"}`, setPhotoURL);
                     }}
                   />
                   <button

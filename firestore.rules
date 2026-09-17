@@ -9,7 +9,8 @@ service cloud.firestore {
       return request.auth != null && (
         !exists(/databases/$(database)/documents/users/$(request.auth.uid)) || (
           !(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', 'active') in ['suspended', 'deleted', 'disabled']) &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('deletedAt', null) == null
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('deletedAt', null) == null &&
+          request.auth.token.get('auth_time', 0) > get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('claimsValidAfter', -1)
         )
       );
     }
@@ -42,11 +43,16 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileFields());
     }
     // Platform privileges come from signed claims, never an editable profile role.
+    function currentManagedRoleMatches(role) {
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('claimsValidAfter', null) == null ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == role;
+    }
     function isAdmin() {
-      return isSignedIn() && (request.auth.token.get('admin', false) == true || request.auth.token.get('role', '') == 'admin');
+      return isSignedIn() && currentManagedRoleMatches('admin') && (request.auth.token.get('admin', false) == true || request.auth.token.get('role', '') == 'admin');
     }
     function isAdminOrMod() {
-      return isAdmin() || (isSignedIn() && request.auth.token.get('role', '') == 'moderator');
+      return isAdmin() || (isSignedIn() && currentManagedRoleMatches('moderator') && request.auth.token.get('role', '') == 'moderator');
     }
 
     function isOrgManager(orgId) {

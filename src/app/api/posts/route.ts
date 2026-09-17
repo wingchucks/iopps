@@ -4,7 +4,8 @@ import { ANONYMOUS_MEMBER_NAME } from "@/lib/account-labels";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyAuthToken } from "@/lib/api-auth";
-import { isPublicPostVisible } from "@/lib/access-state";
+import { publicFeedPosts } from "@/lib/server/public-feed-posts";
+import type { JsonRecord } from "@/lib/server/public-ownership";
 import { sendAdminContentPosted } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -41,11 +42,15 @@ export async function GET(request: NextRequest) {
       .orderBy("order", "asc")
       .get();
 
+    const records = snap.docs.map(doc => serialize({ ...doc.data(), id: doc.id }) as JsonRecord);
+    const [events, scholarships] = await Promise.all([
+      records.some(post => post.type === "event") ? db.collection("events").get() : Promise.resolve(null),
+      records.some(post => post.type === "scholarship") ? db.collection("scholarships").get() : Promise.resolve(null),
+    ]);
+    const canonicalRecords = (source: FirebaseFirestore.QuerySnapshot | null) => source?.docs.map(doc => serialize({ ...doc.data(), id: doc.id }) as JsonRecord) || [];
     const requestedId = request.nextUrl.searchParams.get("id");
-    const posts = snap.docs
-      .map((doc) => serialize({ id: doc.id, ...doc.data() }))
-      .filter((post) => isPublicPostVisible(post))
-      .filter((post) => !requestedId || (post as Record<string, unknown>).id === requestedId || (post as Record<string, unknown>).slug === requestedId);
+    const posts = publicFeedPosts(records, { events: canonicalRecords(events), scholarships: canonicalRecords(scholarships) })
+      .filter(post => !requestedId || post.id === requestedId || post.slug === requestedId);
     return NextResponse.json({ posts: posts.map(post => publicContentRecord(post as Record<string, unknown>)) }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     console.error("Posts API error:", err);

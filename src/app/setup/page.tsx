@@ -71,7 +71,7 @@ function SetupWizard() {
     try {
       let photoURL: string | undefined;
       if (photoFile) {
-        const storageRef = ref(storage, `avatars/${user.uid}`);
+        const storageRef = ref(storage, `avatars/${user.uid}.${photoFile.name.split(".").pop() || "jpg"}`);
         await uploadBytes(storageRef, photoFile);
         photoURL = await getDownloadURL(storageRef);
         await updateProfile(user, { photoURL });
