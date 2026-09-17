@@ -13,7 +13,7 @@ await fs.mkdir(output, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.QA_CHROME_EXECUTABLE ? { executablePath: process.env.QA_CHROME_EXECUTABLE } : {}) });
 const fixtures = [
   { id: 'qa-explicit-hourly', slug: 'qa-explicit-hourly', title: 'QA Community Coordinator', employerName: 'QA Community Organization', employerId: 'qa-org', location: 'Saskatoon, SK', employmentType: 'Full-time', status: 'active', active: true, description: 'Expected Compensation: The expected hourly hiring range is $23.00 to $27.75 based on a 21-hour work week.', externalUrl: 'https://employer.example/jobs/qa-role', createdAt: new Date().toISOString() },
-  { id: 'qa-internal', slug: 'qa-internal', title: 'QA Program Assistant', employerName: 'QA Second Organization', employerId: 'qa-second', orgId: 'qa-second', location: 'Regina, SK', employmentType: 'Part-time', active: true, status: 'active', description: 'Fictional internal application QA fixture.', requiresResume: true, requiresCoverLetter: true, requiresReferences: true },
+  { id: 'qa-internal', slug: 'qa-internal', title: 'QA Program Assistant', employerName: 'QA Second Organization', employerId: 'qa-second', orgId: 'qa-second', location: 'Regina, SK', employmentType: 'Part-time', active: true, status: 'active', description: 'Fictional internal application QA fixture.\n<img src="/qa-inert-image" onerror="void 0">', descriptionFormat: 'plain-text', requiresResume: true, requiresCoverLetter: true, requiresReferences: true },
 ];
 const findings = [];
 try {
@@ -59,7 +59,10 @@ try {
     assert.equal(events.some(e => e[1] === 'application_submitted'), false);
     await page.screenshot({ path: path.join(output, `detail-${viewport.width}.png`), fullPage: true });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), false, 'detail must not overflow horizontally');
-    findings.push({ viewport, search: 'pass', destination: 'pass', funnelEvents: 'pass', externalClickIsNotSubmission: true, horizontalOverflow: false, pageErrors: errors });
+    await page.goto(`${base}/jobs/qa-internal`, { waitUntil: 'domcontentloaded' });
+    await page.getByText('<img src="/qa-inert-image" onerror="void 0">', { exact: false }).waitFor();
+    assert.equal(await page.locator('img[src="/qa-inert-image"]').count(), 0, 'description must render as escaped text');
+    findings.push({ viewport, search: 'pass', destination: 'pass', funnelEvents: 'pass', escapedDescription: 'pass', externalClickIsNotSubmission: true, horizontalOverflow: false, pageErrors: errors });
     assert.deepEqual(errors, [], 'no client runtime errors');
     await context.close();
   }

@@ -28,8 +28,8 @@ test('local browser: desktop/mobile review, exact confirmation, cancel/focus, ap
   const css=cssFiles.map(f=>fs.readFileSync(path.join(cssDirectory,f),'utf8')).join('\n');
   const id='demo-batc-browser-'+Date.now();const app=initializeApp({projectId:id},id);const db=getFirestore(app);const auth=getAuth(app);
   t.after(async()=>{await db.terminate();await deleteApp(app);});
-  await auth.createUser({uid:'pete',email:'Pete.Rojaiye@batc.ca'});
-  await db.doc('users/pete').set({email:'Pete.Rojaiye@batc.ca',role:'community'});
+  await auth.createUser({uid:'pete',email:'Admin.QA@example.test'});
+  await db.doc('users/pete').set({email:'Admin.QA@example.test',role:'community'});
   await db.doc('employers/batc').set({disabled:true,status:'disabled',ownerId:'original',onboardingComplete:true,logo:'/fixture.png',description:'Fixture',contactEmail:'fixture@example.test'});
   await db.doc('organizations/batc').set({disabled:true,status:'disabled',ownerId:'original',onboardingComplete:true,logo:'/fixture.png',description:'Fixture',contactEmail:'fixture@example.test'});
   const server=http.createServer(async(req,res)=>{
@@ -52,7 +52,7 @@ test('local browser: desktop/mobile review, exact confirmation, cancel/focus, ap
   const url=`http://127.0.0.1:${server.address().port}`;
   for(const width of [1280,390]){
     await page.setViewportSize({width,height:900});await page.goto(url);
-    await page.getByLabel('Exact existing user email').fill('Pete.Rojaiye@batc.ca');
+    await page.getByLabel('Exact existing user email').fill('Admin.QA@example.test');
     assert.equal(await page.getByRole('button',{name:'Review assignment',exact:true}).isDisabled(),true);
     await page.getByLabel('Organization role',{exact:true}).selectOption('admin');
     await page.getByLabel('Enable this organization',{exact:false}).check();
@@ -71,7 +71,7 @@ test('local browser: desktop/mobile review, exact confirmation, cancel/focus, ap
   }
   await page.getByRole('button',{name:'Review assignment',exact:true}).click();
   await page.getByRole('dialog').waitFor({state:'visible'});
-  const exact='ASSIGN Pete.Rojaiye@batc.ca TO batc AS admin ENABLE YES';
+  const exact='ASSIGN Admin.QA@example.test TO batc AS admin ENABLE YES';
   await page.getByLabel('Exact assignment confirmation').fill(exact);
   await page.getByRole('button',{name:'Confirm assignment',exact:true}).click();
   await page.getByRole('status').waitFor();

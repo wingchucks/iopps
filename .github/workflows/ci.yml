@@ -111,6 +111,44 @@ jobs:
         working-directory: ./mobile
         run: npm test
 
+  root-browser:
+    name: Root App - Isolated Browser Regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: "true"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24.x"
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: npm ci
+      - name: Install browser and system dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Verify browser flows in demo emulators
+        run: >-
+          node scripts/run-isolated-qa.mjs --emulators
+          npx --yes firebase-tools@14.17.0 emulators:exec
+          --project demo-iopps-preview --config firebase.ci.json
+          --only firestore,auth,storage
+          "npm run build && node scripts/qa-release-browser.mjs"
+      - name: Retain fixture browser evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-browser-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            test-results/release-browser/
+            output/playwright/organization-admin-assignment/*.png
+          retention-days: 7
+
   root-reliability:
     name: Root App - Complete Emulator Regressions
     runs-on: ubuntu-latest
