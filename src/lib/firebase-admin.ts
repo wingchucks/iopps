@@ -122,6 +122,7 @@ export function getAdminApp(): App {
   }
 
   _app = initializeApp({
+    projectId,
     credential: cert({ projectId, clientEmail, privateKey }),
   });
   return _app;
