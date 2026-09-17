@@ -20,7 +20,9 @@ const pages = [
 const sizes = [[320, "Small phone"], [390, "Phone"], [768, "Tablet"], [1280, "Desktop"]] as const;
 
 export default function ResponsivePreview() {
-  const [path, setPath] = useState<string>(pages[0][0]);
+  const [pageIndex, setPageIndex] = useState(0);
+  // Resolve navigation from trusted constants, never from a DOM option value.
+  const path = (pages[pageIndex] ?? pages[0])[0];
   const [width, setWidth] = useState(390);
 
   return <div className="min-h-screen bg-slate-100 text-slate-900 p-4 md:p-8">
@@ -30,7 +32,7 @@ export default function ResponsivePreview() {
       <p className="mt-2 text-sm">Explore the current preview at different screen widths. Demo actions use fictional data and do not publish anything.</p>
       <div className="flex flex-wrap gap-4 mt-5">
         <label className="flex flex-col gap-1 text-sm font-semibold">Page
-          <select value={path} onChange={event => setPath(event.target.value)} className="min-h-11 rounded-lg border border-slate-300 bg-white px-3">
+          <select value={path} onChange={event => setPageIndex(event.currentTarget.selectedIndex)} className="min-h-11 rounded-lg border border-slate-300 bg-white px-3">
             {pages.map(([url, label]) => <option key={url} value={url}>{label}</option>)}
           </select>
         </label>
