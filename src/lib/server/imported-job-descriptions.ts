@@ -1,3 +1,7 @@
+import { Parser } from "htmlparser2";
+import { descriptionText } from "@/lib/description-text";
+import { OutboundFetchError, safeOutboundFetch } from "@/lib/server/safe-outbound-fetch";
+
 const IMPORT_FETCH_TIMEOUT_MS = 15_000;
 
 const BROKEN_DESCRIPTION_PATTERNS = [
@@ -23,6 +27,7 @@ export interface ImportedJobDescriptionInput {
 
 export interface ImportedJobDescriptionPatch {
   description?: string;
+  descriptionFormat: "plain-text";
   descriptionFetchedAt: Date;
   descriptionSource: "adp-detail" | "oracle-meta" | "adp-closed";
   location?: string;
@@ -46,47 +51,6 @@ interface AdpDetailResponse {
   };
 }
 
-function normalizeWhitespace(value: string): string {
-  return value
-    .replace(/\r/g, "")
-    .replace(/\u00a0/g, " ")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-function decodeHtmlEntities(value: string): string {
-  const named: Record<string, string> = {
-    nbsp: " ",
-    amp: "&",
-    lt: "<",
-    gt: ">",
-    quot: "\"",
-    apos: "'",
-    rsquo: "'",
-    lsquo: "'",
-    ldquo: "\"",
-    rdquo: "\"",
-    mdash: "—",
-    ndash: "–",
-    bull: "•",
-    hellip: "…",
-  };
-
-  return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (_match, entity: string) => {
-    const lower = entity.toLowerCase();
-    if (lower.startsWith("#x")) {
-      const codePoint = Number.parseInt(lower.slice(2), 16);
-      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : _match;
-    }
-    if (lower.startsWith("#")) {
-      const codePoint = Number.parseInt(lower.slice(1), 10);
-      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : _match;
-    }
-    return named[lower] ?? _match;
-  });
-}
-
 function repairMojibake(value: string): string {
   if (!MOJIBAKE_MARKERS.test(value)) return value;
 
@@ -97,23 +61,9 @@ function repairMojibake(value: string): string {
   return repairedScore < originalScore ? repaired : value;
 }
 
-export function normalizeImportedDescription(value: MaybeString): string {
+export function normalizeImportedDescription(value: MaybeString, format?: unknown): string {
   if (!value) return "";
-  return normalizeWhitespace(repairMojibake(decodeHtmlEntities(value)));
-}
-
-function htmlToText(html: string): string {
-  return normalizeImportedDescription(
-    html
-      .replace(/<link\b[^>]*>/gi, "")
-      .replace(/<style[\s\S]*?<\/style>/gi, "")
-      .replace(/<script[\s\S]*?<\/script>/gi, "")
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/(p|div|section|article|h1|h2|h3|h4|h5|h6|ul|ol)>/gi, "\n")
-      .replace(/<li\b[^>]*>/gi, "• ")
-      .replace(/<\/li>/gi, "\n")
-      .replace(/<[^>]+>/g, "")
-  );
+  return descriptionText(repairMojibake(value), format);
 }
 
 function looksLikeBrokenImportedDescription(value: string): boolean {
@@ -129,27 +79,35 @@ export function shouldHydrateImportedDescription(input: ImportedJobDescriptionIn
 }
 
 async function fetchText(url: string): Promise<string> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), IMPORT_FETCH_TIMEOUT_MS);
+  const origin = new URL(url).origin;
+  const response = await safeOutboundFetch(url, {
+    maxBytes: 2 * 1024 * 1024,
+    timeoutMs: IMPORT_FETCH_TIMEOUT_MS,
+    accept: "application/json, text/html, text/plain",
+    validateUrl: (next) => {
+      if (next.origin !== origin) throw new OutboundFetchError("Provider redirect changed origin");
+    },
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.body.toString("utf8");
+}
 
-  try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        Accept: "application/json, text/plain, */*",
-        "User-Agent": "IOPPS-JobDescription/1.0",
-      },
-      cache: "no-store",
-    });
+function isHttpsOrigin(url: URL): boolean {
+  return url.protocol === "https:" && !url.username && !url.password && (!url.port || url.port === "443");
+}
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-
-    return await res.text();
-  } finally {
-    clearTimeout(timeoutId);
-  }
+/** Supported Oracle HCM tenants are bound to the configured feed's exact origin.
+ * A remote job URL cannot nominate a different tenant or a lookalike hostname.
+ */
+function isSupportedOracleJob(url: URL, feedUrl: MaybeString): boolean {
+  if (!feedUrl || !isHttpsOrigin(url)) return false;
+  const feed = new URL(feedUrl);
+  const labels = url.hostname.split(".");
+  return isHttpsOrigin(feed) && feed.origin === url.origin &&
+    labels.length === 5 && Boolean(labels[0]) && labels[1] === "fa" && Boolean(labels[2]) &&
+    labels[3] === "oraclecloud" && labels[4] === "com" &&
+    url.pathname.startsWith("/hcmUI/CandidateExperience/") &&
+    feed.pathname.startsWith("/hcmRestApi/") && feed.pathname.endsWith("/recruitingCEJobRequisitions");
 }
 
 function extractAdpDepartment(payload: AdpDetailResponse): string | undefined {
@@ -208,6 +166,7 @@ async function fetchAdpDescription(
   if (!hasVisiblePosting) {
     return {
       description: "",
+      descriptionFormat: "plain-text",
       descriptionFetchedAt: new Date(),
       descriptionSource: "adp-closed",
       active: false,
@@ -215,7 +174,7 @@ async function fetchAdpDescription(
     };
   }
 
-  const description = htmlToText(payload.requisitionDescription || "");
+  const description = normalizeImportedDescription(payload.requisitionDescription || "");
 
   if (!description || looksLikeBrokenImportedDescription(description)) {
     return null;
@@ -227,6 +186,7 @@ async function fetchAdpDescription(
 
   return {
     description,
+    descriptionFormat: "plain-text",
     descriptionFetchedAt: new Date(),
     descriptionSource: "adp-detail",
     ...(location ? { location } : {}),
@@ -236,13 +196,18 @@ async function fetchAdpDescription(
 }
 
 function extractMetaContent(html: string, property: string): string {
-  const escapedProperty = property.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const metaRegex = new RegExp(
-    `<meta[^>]+(?:property|name)=["']${escapedProperty}["'][^>]+content=["']([\\s\\S]*?)["'][^>]*>`,
-    "i"
-  );
-  const match = html.match(metaRegex);
-  return normalizeImportedDescription(match?.[1] || "");
+  let content = "";
+  const parser = new Parser({
+    onopentag(name, attributes) {
+      if (!content && name === "meta" && (attributes.property || attributes.name) === property) {
+        // Attribute entities have already been decoded by the parser. Treat the
+        // result as text; never parse decoded markup a second time.
+        content = normalizeImportedDescription(attributes.content || "", "plain-text");
+      }
+    },
+  }, { decodeEntities: true });
+  parser.end(html);
+  return content;
 }
 
 async function fetchOracleDescription(externalUrl: string): Promise<ImportedJobDescriptionPatch | null> {
@@ -255,6 +220,7 @@ async function fetchOracleDescription(externalUrl: string): Promise<ImportedJobD
 
   return {
     description,
+    descriptionFormat: "plain-text",
     descriptionFetchedAt: new Date(),
     descriptionSource: "oracle-meta",
   };
@@ -268,15 +234,14 @@ export async function fetchImportedDescriptionPatch(
 
   try {
     const parsed = new URL(externalUrl);
-    if (parsed.hostname.includes("workforcenow.adp.com")) {
+    if (isHttpsOrigin(parsed) && parsed.hostname === "workforcenow.adp.com") {
       return await fetchAdpDescription(externalUrl, input.feedUrl);
     }
-    if (parsed.hostname.includes("oraclecloud.com")) {
+    if (isSupportedOracleJob(parsed, input.feedUrl)) {
       return await fetchOracleDescription(externalUrl);
     }
   } catch (error) {
     console.error("[imported-job-descriptions] Failed to hydrate description", {
-      externalUrl,
       error: error instanceof Error ? error.message : String(error),
     });
   }

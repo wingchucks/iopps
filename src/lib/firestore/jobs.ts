@@ -32,6 +32,7 @@ export interface Job {
     disclosed?: boolean;
   };
   description?: string;
+  descriptionFormat?: "plain-text";
   requirements?: string;
   responsibilities?: string[];
   qualifications?: string[];

@@ -274,16 +274,9 @@ function JobDetailContent() {
           {job.description ? (
             <>
               <h3 className="text-lg font-bold text-text mb-2">About This Role</h3>
-              {job.description.includes("<") ? (
-                <div
-                  className="journey-role-description text-base text-text-sec leading-relaxed mb-6 prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: job.description }}
-                />
-              ) : (
-                <p className="text-base text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                  {job.description}
-                </p>
-              )}
+              <p className="journey-role-description text-base text-text-sec leading-relaxed mb-6 whitespace-pre-line">
+                {job.description}
+              </p>
             </>
           ) : normalizedApplicationHref && !shouldUseInternalApply ? (
             <div className="mb-6 p-5 rounded-2xl border border-border bg-[var(--card)]">

@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "codex/security-remediation-20260917": false,
       "codex/job-flow-reliability-20260908": false,
       "fix/batc-pete-admin": false
     }

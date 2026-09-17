@@ -74,7 +74,8 @@ function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "job
     serialized.employerName = serialized.orgName || serialized.companyName || "";
   }
   if (typeof serialized.description === "string") {
-    serialized.description = normalizeImportedDescription(serialized.description);
+    serialized.description = normalizeImportedDescription(serialized.description, serialized.descriptionFormat);
+    serialized.descriptionFormat = "plain-text";
   }
   // Tag source
   serialized._source = source;

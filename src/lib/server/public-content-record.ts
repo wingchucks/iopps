@@ -1,3 +1,5 @@
+import { descriptionText } from "@/lib/description-text";
+
 // Public responses are positive projections, so future internal fields stay private.
 const fields = new Set([
   "id", "slug", "type", "title", "status", "active", "orgId", "employerId", "orgName", "orgShort",
@@ -13,5 +15,10 @@ const fields = new Set([
   "featuredImage", "excerpt", "badges", "province", "city", "country", "remote", "applyMethod",
 ]);
 export function publicContentRecord(record: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(record).filter(([key]) => fields.has(key)));
+  const projected = Object.fromEntries(Object.entries(record).filter(([key]) => fields.has(key)));
+  if (typeof record.description === "string") {
+    projected.description = descriptionText(record.description, record.descriptionFormat);
+    projected.descriptionFormat = "plain-text";
+  }
+  return projected;
 }

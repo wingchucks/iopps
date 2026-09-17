@@ -97,7 +97,8 @@ export async function GET(
       job.employerName = job.orgName || job.companyName || "";
     }
     if (typeof job.description === "string") {
-      job.description = normalizeImportedDescription(job.description);
+      job.description = normalizeImportedDescription(job.description, job.descriptionFormat);
+      job.descriptionFormat = "plain-text";
     }
 
     return NextResponse.json({ job: publicContentRecord(normalizeJobDiscoveryMetadata(job)) }, {headers:{"Cache-Control":"no-store"}});

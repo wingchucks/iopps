@@ -1,5 +1,4 @@
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
+import { OutboundFetchError, safeOutboundFetch } from "@/lib/server/safe-outbound-fetch";
 import { NextRequest, NextResponse } from "next/server";
 import { getStorage } from "firebase-admin/storage";
 import { verifyAuthToken } from "@/lib/api-auth";
@@ -9,8 +8,6 @@ import {
   buildProfileMediaStoragePath,
   inferProfileMediaMimeType,
   isAllowedProfileMediaMimeType,
-  isBlockedRemoteHostname,
-  isPrivateIpAddress,
   normalizeCloudImportUrl,
   resolveImportedProfileMediaFileName,
   type ProfileMediaSlot,
@@ -145,27 +142,6 @@ async function persistProfileMedia(args: {
   };
 }
 
-async function assertSafeRemoteUrl(value: string) {
-  const parsed = new URL(value);
-  if (parsed.protocol !== "https:") {
-    throw new UploadRouteError(400, "Only HTTPS image links are supported");
-  }
-
-  const hostname = parsed.hostname.toLowerCase();
-  if (isBlockedRemoteHostname(hostname)) {
-    throw new UploadRouteError(400, "Private or local network URLs are not allowed");
-  }
-
-  if (isIP(hostname) && isPrivateIpAddress(hostname)) {
-    throw new UploadRouteError(400, "Private or local network URLs are not allowed");
-  }
-
-  const addresses = await lookup(hostname, { all: true, verbatim: true });
-  if (addresses.some((entry) => isPrivateIpAddress(entry.address))) {
-    throw new UploadRouteError(400, "Private or local network URLs are not allowed");
-  }
-}
-
 async function fetchRemoteImage(args: {
   url: string;
   originalUrl?: string;
@@ -178,12 +154,9 @@ async function fetchRemoteImage(args: {
   size: number;
   originalName: string;
 }> {
-  await assertSafeRemoteUrl(args.url);
-
-  const response = await fetch(args.url, {
-    headers: args.authorization ? { Authorization: args.authorization } : undefined,
-    redirect: "follow",
-    cache: "no-store",
+  const response = await safeOutboundFetch(args.url, {
+    authorization: args.authorization,
+    maxBytes: PROFILE_MEDIA_MAX_BYTES,
   });
 
   if (!response.ok) {
@@ -194,10 +167,6 @@ async function fetchRemoteImage(args: {
       throw new UploadRouteError(404, "The selected image could not be found");
     }
     throw new UploadRouteError(400, "Failed to download the selected image");
-  }
-
-  if (response.url) {
-    await assertSafeRemoteUrl(response.url);
   }
 
   const headerType = response.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
@@ -216,8 +185,7 @@ async function fetchRemoteImage(args: {
     throw new UploadRouteError(400, "File too large (max 5MB)");
   }
 
-  const arrayBuffer = await response.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+  const buffer = response.body;
   validateUploadedImage(inferredType, buffer.byteLength);
 
   const originalName = resolveImportedProfileMediaFileName({
@@ -294,11 +262,14 @@ async function handleGoogleDriveImport(body: Record<string, unknown>, access: Or
     throw new UploadRouteError(400, "Google Drive import requires a file and access token");
   }
 
-  const metadataResponse = await fetch(
+  const metadataResponse = await safeOutboundFetch(
     `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,size&supportsAllDrives=true`,
     {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      cache: "no-store",
+      authorization: `Bearer ${accessToken}`,
+      maxBytes: 64 * 1024,
+      validateUrl: (url) => {
+        if (url.origin !== "https://www.googleapis.com") throw new OutboundFetchError("Unsupported Drive metadata destination");
+      },
     }
   );
 
@@ -309,7 +280,7 @@ async function handleGoogleDriveImport(body: Record<string, unknown>, access: Or
     throw new UploadRouteError(400, "Unable to access the selected Google Drive image");
   }
 
-  const metadata = (await metadataResponse.json()) as {
+  const metadata = JSON.parse(metadataResponse.body.toString("utf8")) as {
     name?: string;
     mimeType?: string;
     size?: string;
@@ -368,6 +339,9 @@ async function handleLegacySignedUpload(body: Record<string, unknown>, access: O
 }
 
 function respondWithRouteError(error: unknown) {
+  if (error instanceof OutboundFetchError) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
   if (error instanceof UploadRouteError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
