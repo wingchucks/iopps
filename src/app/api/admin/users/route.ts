@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { adminDb, getAdminAuth } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { normalizeAdminUserRow } from "@/lib/admin/users";
+import { isSuperAdminAccount } from "@/lib/server/super-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -130,6 +131,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
+      );
+    }
+
+    if (await isSuperAdminAccount(body.userId, getAdminAuth())) {
+      return NextResponse.json(
+        { error: "Cannot modify super admin account" },
+        { status: 403 },
       );
     }
 

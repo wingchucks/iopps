@@ -4,7 +4,7 @@ import { verifyAdminToken, verifySuperAdminToken } from "@/lib/api-auth";
 import { adminDb, getAdminAuth } from "@/lib/firebase-admin";
 import { FieldValue, type DocumentReference, type Query } from "firebase-admin/firestore";
 import { normalizeAdminEmployerRow } from "@/lib/admin/employers";
-import { isSuperAdminEmail } from "@/lib/server/super-admin";
+import { isSuperAdminAccount } from "@/lib/server/super-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -151,7 +151,7 @@ async function unlinkUserFromOrganization(uid: string, orgId: string): Promise<v
   const userData = recordFrom(userDoc.data());
   const memberData = recordFrom(memberDoc.data());
 
-  if (isSuperAdminEmail(text(userData.email))) {
+  if (await isSuperAdminAccount(uid, auth)) {
     return;
   }
 
@@ -215,9 +215,7 @@ async function softDeleteLinkedUser(uid: string, orgId: string, adminId: string,
   const userRef = adminDb.collection("users").doc(uid);
   const memberRef = adminDb.collection("members").doc(uid);
   const [userDoc, memberDoc] = await Promise.all([userRef.get(), memberRef.get()]);
-  const userData = recordFrom(userDoc.data());
-
-  if (isSuperAdminEmail(text(userData.email))) {
+  if (await isSuperAdminAccount(uid, getAdminAuth())) {
     return;
   }
 
@@ -283,9 +281,7 @@ export async function GET(
     if (!employerDoc.exists) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
-    const viewerIsSuperAdmin = isSuperAdminEmail(
-      auth.viewerEmail ?? auth.decodedToken.email ?? null,
-    );
+    const viewerIsSuperAdmin = auth.isSuperAdmin;
 
     const rawEmployer = { id: employerDoc.id, ...employerDoc.data() } as Record<string, unknown>;
     const normalizedEmployer = normalizeAdminEmployerRow(rawEmployer, employerDoc.id);
@@ -379,9 +375,7 @@ export async function PATCH(
   try {
     const employerRef = adminDb.collection("employers").doc(orgId);
     const organizationRef = adminDb.collection("organizations").doc(orgId);
-    const viewerIsSuperAdmin = isSuperAdminEmail(
-      auth.viewerEmail ?? auth.decodedToken.email ?? null,
-    );
+    const viewerIsSuperAdmin = auth.isSuperAdmin;
 
     if (text(body.action).toLowerCase() === "softdelete") {
       if (!viewerIsSuperAdmin) {
@@ -663,15 +657,16 @@ export async function DELETE(
       await unlinkUserFromOrganization(uid, orgId);
     }
 
+    const deletedAuthUsers: string[] = [];
     if (deleteAuthUser) {
       const authService = getAdminAuth();
       for (const uid of ownerIds) {
         try {
-          const userDoc = await adminDb.collection("users").doc(uid).get();
-          if (isSuperAdminEmail(userDoc.data()?.email)) {
+          if (await isSuperAdminAccount(uid, authService)) {
             continue;
           }
           await authService.deleteUser(uid);
+          deletedAuthUsers.push(uid);
         } catch (error) {
           console.error(`[admin/employers/${orgId}] Failed to delete auth user ${uid}:`, error);
         }
@@ -684,7 +679,7 @@ export async function DELETE(
       linkedUsers: Array.from(ownerIds),
       linkedContent: relatedContent.counts,
       deletedDocumentCount,
-      deletedAuthUsers: deleteAuthUser ? Array.from(ownerIds) : [],
+      deletedAuthUsers,
     });
   } catch (error) {
     console.error(`Error deleting employer ${orgId}:`, error);
