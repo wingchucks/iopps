@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { request as httpsRequest, createServer } from 'node:https';
+import { createConnection, isIP } from 'node:net';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -10,18 +11,20 @@ import { offlineNetwork, sourceModule, uploadRoute } from './helpers/security-fi
 const load = net => sourceModule('src/lib/server/safe-outbound-fetch.ts', { ...net, baseline: false }).safeOutboundFetch;
 const publicUrl = 'https://fixture.test/file';
 
-for (const all of [true, false]) {
-  test(`transport lookup pins one validated address (all=${all}) and keeps TLS hostname`, async () => {
-    const net = offlineNetwork({ all, answer: () => [{ address: '8.8.8.8', family: 4 }, { address: '1.1.1.1', family: 4 }] });
-    const result = await load(net)(publicUrl, { maxBytes: 100 });
-    assert.equal(result.body.toString(), 'image');
-    assert.equal(net.dnsCalls.length, 1);
-    assert.equal(net.connections[0].address, '8.8.8.8');
-    assert.equal(net.requests[0].url.hostname, 'fixture.test');
-    assert.equal(net.requests[0].options.rejectUnauthorized, true);
-    assert.equal(net.requests[0].options.agent, false);
-  });
-}
+test('transport connects to one validated numeric address and keeps TLS and HTTP hostname', async () => {
+  const net = offlineNetwork({ answer: (_host, count) => count === 1 ? [{ address: '8.8.8.8', family: 4 }, { address: '1.1.1.1', family: 4 }] : [{ address: '127.0.0.1', family: 4 }] });
+  const result = await load(net)(publicUrl, { maxBytes: 100 });
+  assert.equal(result.body.toString(), 'image');
+  assert.equal(net.dnsCalls.length, 1);
+  assert.equal(net.connections[0].address, '8.8.8.8');
+  assert.equal(net.requests[0].url.hostname, 'fixture.test');
+  assert.equal(net.requests[0].options.hostname, '8.8.8.8');
+  assert.equal(net.requests[0].options.servername, 'fixture.test');
+  assert.equal(net.requests[0].options.headers.Host, 'fixture.test');
+  assert.equal(net.requests[0].options.lookup, undefined, 'numeric target cannot trigger another DNS lookup');
+  assert.equal(net.requests[0].options.rejectUnauthorized, true);
+  assert.equal(net.requests[0].options.agent, false);
+});
 
 for (const addresses of [[], [{ address: '127.0.0.1', family: 4 }], [{ address: '8.8.8.8', family: 4 }, { address: '::ffff:10.0.0.1', family: 6 }], [{ address: 'fe90::1', family: 6 }], [{ address: 'not-an-address', family: 4 }]]) {
   test(`DNS answers fail closed before transport: ${JSON.stringify(addresses)}`, async () => {
@@ -102,6 +105,14 @@ test('one deadline covers the entire redirect chain, not a fresh timeout per hop
   assert.equal(net.connections.length, 1);
 });
 
+test('a DNS answer arriving after the deadline cannot start a request', async () => {
+  const net = offlineNetwork({ answer: () => new Promise(resolve => setTimeout(() => resolve([{ address: '8.8.8.8', family: 4 }]), 30)) });
+  await assert.rejects(load(net)(publicUrl, { maxBytes: 10, timeoutMs: 5 }), /timed out/);
+  await new Promise(resolve => setTimeout(resolve, 50));
+  assert.equal(net.requests.length, 0);
+  assert.equal(net.connections.length, 0);
+});
+
 test('Google Drive metadata and authorized media both use the bounded transport', async () => {
   const net = offlineNetwork({ response: url => url.searchParams.has('fields') ? { body: JSON.stringify({ name: 'fixture.png', mimeType: 'image/png', size: '5' }) } : { body: 'image', headers: { 'content-type': 'image/png' } } });
   const route = uploadRoute(net);
@@ -114,35 +125,38 @@ test('Google Drive metadata and authorized media both use the bounded transport'
 test('real Node TLS verifies certificates and hostname while retaining SNI (loopback-only adapter)', async t => {
   const directory = mkdtempSync(join(tmpdir(), 'iopps-tls-fixture-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
-  execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', join(directory, 'key.pem'), '-out', join(directory, 'cert.pem'), '-days', '1', '-subj', '/CN=fixture.test', '-addext', 'subjectAltName=DNS:fixture.test'], { stdio: 'ignore' });
+  execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', join(directory, 'key.pem'), '-out', join(directory, 'cert.pem'), '-days', '1', '-subj', '/CN=1.1.1.1', '-addext', 'subjectAltName=DNS:fixture.test,DNS:9.9.9.9,IP:8.8.8.8,IP:2606:4700:4700::1111'], { stdio: 'ignore' });
   const cert = readFileSync(join(directory, 'cert.pem'));
-  const sni = [];
-  const server = createServer({ key: readFileSync(join(directory, 'key.pem')), cert }, (req, res) => { res.end('fixture'); });
+  const sni = [], hosts = [];
+  const server = createServer({ key: readFileSync(join(directory, 'key.pem')), cert }, (req, res) => { hosts.push(req.headers.host); res.end('fixture'); });
   server.on('secureConnection', socket => sni.push(socket.servername));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => server.close(resolve)));
   const port = server.address().port;
-  for (const [hostname, trust, success] of [['fixture.test', true, true], ['mismatch.test', true, false], ['fixture.test', false, false]]) {
-    const net = offlineNetwork();
+  for (const [hostname, trust, success, dnsAddress = '8.8.8.8'] of [
+    ['fixture.test', true, true], ['mismatch.test', true, false], ['fixture.test', false, false],
+    ['8.8.8.8', true, true], ['8.8.8.8', false, false], ['1.1.1.1', true, false], ['9.9.9.9', true, false],
+    ['[2606:4700:4700::1111]', true, true], ['[2606:4700:4700::1111]', false, false], ['[2606:4700:4700::2222]', true, false],
+    ['fixture.test', true, true, '2606:4700:4700::1111'],
+  ]) {
+    const net = offlineNetwork({ answer: () => [{ address: dnsAddress, family: isIP(dnsAddress) }] });
     const validated = [];
-    net.mocks['node:https'] = { request(url, options, callback) {
+    net.mocks['node:https'] = { request(options, callback) {
       assert.equal(options.rejectUnauthorized, true);
       assert.equal(options.agent, false);
-      // Test-only adapter: AFTER the real policy validates the DNS answer,
-      // route its selected address to the isolated loopback TLS fixture. No
-      // public socket can be opened; production code has no adapter/bypass.
-      const lookup = (host, opts, cb) => options.lookup(host, opts, (error, value, family) => {
-        if (error) return cb(error);
-        const selected = opts.all ? value[0] : { address: value, family };
-        assert.equal(selected.address, '8.8.8.8'); validated.push(selected.address);
-        if (opts.all) cb(null, [{ address: '127.0.0.1', family: 4 }]); else cb(null, '127.0.0.1', 4);
-      });
-      return httpsRequest(url, { ...options, port, lookup, ...(trust ? { ca: cert } : {}) }, callback);
+      // Test-only adapter: supply a TCP socket connected solely to loopback.
+      // Keep all production hostname, SNI and native TLS identity checks intact.
+      const originalHost = hostname.replace(/^\[|\]$/g, '');
+      assert.equal(options.hostname, isIP(originalHost) ? originalHost : dnsAddress); validated.push(options.hostname);
+      assert.equal(options.lookup, undefined);
+      assert.equal(options.servername, isIP(originalHost) ? undefined : hostname);
+      return httpsRequest({ ...options, socket: createConnection({ host: '127.0.0.1', port }), ...(trust ? { ca: cert } : {}) }, callback);
     } };
     const operation = load(net)(`https://${hostname}/fixture`, { maxBytes: 100 });
     if (success) assert.equal((await operation).body.toString(), 'fixture');
-    else await assert.rejects(operation, trust ? /Hostname\/IP does not match/ : /self-signed certificate/);
+    else await assert.rejects(operation, trust ? /does not match/ : /self-signed certificate/);
     assert.equal(validated.length, 1);
   }
-  assert.deepEqual(sni, ['fixture.test']);
+  assert.deepEqual(sni, ['fixture.test', false, false, 'fixture.test']);
+  assert.deepEqual(hosts, ['fixture.test', '8.8.8.8', '[2606:4700:4700::1111]', 'fixture.test']);
 });

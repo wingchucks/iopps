@@ -16,16 +16,21 @@ organization link/Drive imports and ADP/Oracle description hydration.
 
 - HTTPS, port 443, no embedded URL credentials; three redirects by default.
 - Every redirect passes URL and provider policy before DNS or connection.
-- Native HTTPS `lookup` validates all DNS answers and returns one validated
-  address to the actual socket. There is no separate check-then-resolve fetch.
-  IP literals are checked before constructing the request because Node skips
-  lookup for them. A fresh agent prevents pooled/proxy connections bypassing it.
+- Resolve once, validate every DNS answer, and pass a selected numeric public
+  address as the HTTPS connection target. There is no second hostname lookup
+  between validation and connection. IP literals also pass URL/address policy;
+  Node's resolver handles them locally. A fresh agent prevents pooled/proxy
+  connections bypassing the pinned destination.
 - `ipaddr.js` 2.5.0 provides address parsing and special-use classification.
   IPv4-mapped IPv6 is classified by its IPv4 address; IPv6 is additionally
   restricted to allocated global unicast space. The package supports Node >=10;
   root CI and local verification use Node 24. No edge-runtime use is supported.
-- The original hostname remains available for SNI and TLS certificate checks.
-  Certificate verification is explicitly enabled. Authorization survives only
+- The original hostname is retained for HTTP Host, SNI and TLS identity checks.
+  Native TLS certificate-chain verification is explicitly enabled. DNS names
+  use Node's hostname verifier; IP literals use Node/OpenSSL `X509Certificate.checkIP`
+  to require an exact IP SAN, including IPv6 (Node 24.19's default hostname
+  verifier incorrectly applies domain-name conversion to IPv6 literals).
+  Authorization survives only
   same-origin redirects and is permanently removed on a cross-origin hop.
 - One 15-second deadline covers DNS, connection, TLS, redirects and response
   body. Image bodies are limited to 5 MiB, Drive metadata to 64 KiB and provider
@@ -92,8 +97,8 @@ assertions, not one separate vulnerability per failing test.
 
 Proofs use offline DNS/HTTP/Firestore doubles and the actual React page renderer.
 The TLS test alone opens sockets, exclusively to a generated loopback fixture.
-Its test-only adapter translates an already policy-validated address to the
-fixture while exercising real Node TLS hostname, CA and SNI behavior. No test
+Its test-only adapter supplies a loopback TCP socket while preserving the
+production TLS hostname, IP identity, CA, SNI and HTTP Host checks. No test
 executes an event handler, sends exploit traffic or queries production records.
 
 ## Release gates

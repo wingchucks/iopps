@@ -54,7 +54,13 @@ export function offlineNetwork({ answer = () => [{ address: '8.8.8.8', family: 4
     return result;
   }
   function request(url, options, callback) {
-    url = new URL(url);
+    if (typeof options === 'function') {
+      callback = options;
+      options = url;
+      url = new URL(`https://${options.headers.Host}${options.path}`);
+    } else {
+      url = new URL(url);
+    }
     requests.push({ url, options });
     const req = new EventEmitter();
     let aborted = false;
@@ -64,7 +70,7 @@ export function offlineNetwork({ answer = () => [{ address: '8.8.8.8', family: 4
       queueMicrotask(async () => {
         try {
           let address, family;
-          const hostname = url.hostname.replace(/^\[|\]$/g, '');
+          const hostname = (options.hostname || url.hostname).replace(/^\[|\]$/g, '');
           if (isIP(hostname)) { address = hostname; family = isIP(hostname); }
           else {
             assert.equal(typeof options.lookup, 'function', 'actual transport must use validating lookup');

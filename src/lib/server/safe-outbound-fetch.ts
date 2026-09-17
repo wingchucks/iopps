@@ -1,6 +1,8 @@
 import { lookup } from "node:dns";
+import { X509Certificate } from "node:crypto";
 import { request } from "node:https";
-import type { LookupFunction } from "node:net";
+import { isIP } from "node:net";
+import { checkServerIdentity } from "node:tls";
 import { isBlockedRemoteHostname } from "@/lib/profile-media";
 import { isPublicIpAddress } from "@/lib/public-ip";
 
@@ -38,36 +40,58 @@ function validateDestination(value: string, policy?: OutboundOptions["validateUr
   return url;
 }
 
-/** The returned, validated address is the address net/tls actually connects to.
- * There is no preflight DNS lookup followed by a second transport resolution.
+/** Resolve once, then connect only to the validated numeric address. Node's
+ * lookup handles IP literals locally; net/tls never resolves the hostname again.
  */
-function transportLookup(signal: AbortSignal): LookupFunction {
-  return (hostname, options, callback) => {
-    lookup(hostname, { all: true, verbatim: true }, (error, addresses) => {
-      if (signal.aborted) return callback(new OutboundFetchError("Outbound request timed out"), "", 0);
-      if (error) return callback(error, "", 0);
-      if (!addresses.length || addresses.some(({ address }) => !isPublicIpAddress(address))) {
-        return callback(new OutboundFetchError("DNS returned a nonpublic destination"), "", 0);
-      }
-      // Pin one answer, including when Node requests all addresses for family
-      // selection. A retry/redirect must pass through this boundary again.
-      const selected = addresses[0];
-      if (options.all) callback(null, [selected]);
-      else callback(null, selected.address, selected.family);
-    });
-  };
+function resolvePublicAddress(url: URL, signal: AbortSignal): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(new OutboundFetchError("Outbound request timed out"));
+    if (signal.aborted) return abort();
+    signal.addEventListener("abort", abort, { once: true });
+    const hostname = url.hostname.replace(/^\[|\]$/g, "");
+    try {
+      lookup(hostname, { all: true, verbatim: true }, (error, addresses) => {
+        signal.removeEventListener("abort", abort);
+        if (signal.aborted) return;
+        if (error) return reject(error);
+        if (!addresses.length || addresses.some(({ address }) => !isIP(address) || !isPublicIpAddress(address))) {
+          return reject(new OutboundFetchError("DNS returned a nonpublic destination"));
+        }
+        resolve(addresses[0].address);
+      });
+    } catch (error) {
+      signal.removeEventListener("abort", abort);
+      reject(error);
+    }
+  });
 }
 
-function requestOnce(url: URL, options: OutboundOptions, signal: AbortSignal, authorization?: string): Promise<OutboundResponse> {
+function requestOnce(url: URL, address: string, options: OutboundOptions, signal: AbortSignal, authorization?: string): Promise<OutboundResponse> {
   return new Promise((resolve, reject) => {
-    const req = request(url, {
+    const hostname = url.hostname.replace(/^\[|\]$/g, "");
+    const req = request({
+      protocol: "https:",
+      hostname: address, // Numeric and validated: no second DNS resolution or rebinding.
+      port: 443,
+      path: url.pathname + url.search,
+      servername: isIP(hostname) ? undefined : hostname,
       method: "GET",
-      agent: false, // No pooled connection or environment proxy bypasses lookup.
-      lookup: transportLookup(signal),
-      rejectUnauthorized: true, // Keep the URL hostname for SNI and certificate verification.
+      agent: false, // No pooled connection or environment proxy bypasses the pinned address.
+      rejectUnauthorized: true, // Native TLS still verifies the certificate chain before identity.
+      checkServerIdentity: (servername, certificate) => {
+        if (!isIP(hostname)) return checkServerIdentity(servername, certificate);
+        // Node 24.19's default identity check applies domainToASCII to IPs,
+        // which rejects IPv6 literals. Use Node/OpenSSL's native IP SAN check;
+        // never treat a DNS SAN or CN as authorization for an IP destination.
+        try {
+          if (new X509Certificate(certificate.raw).checkIP(hostname)) return undefined;
+        } catch { /* An unreadable certificate must fail closed. */ }
+        return new OutboundFetchError("TLS certificate does not match IP destination");
+      },
       signal,
       maxHeaderSize: 16 * 1024,
       headers: {
+        Host: url.host,
         Accept: options.accept || "*/*",
         "Accept-Encoding": "identity",
         "User-Agent": "IOPPS-Import/1.0",
@@ -132,7 +156,9 @@ export async function safeOutboundFetch(value: string, options: OutboundOptions)
     let url = validateDestination(value, options.validateUrl);
     for (let hop = 0; ; hop++) {
       controller.signal.throwIfAborted();
-      const response = await requestOnce(url, options, controller.signal, authorization);
+      const address = await resolvePublicAddress(url, controller.signal);
+      controller.signal.throwIfAborted();
+      const response = await requestOnce(url, address, options, controller.signal, authorization);
       if (!REDIRECTS.has(response.status)) return response;
       if (hop >= maxRedirects) throw new OutboundFetchError("Too many redirects");
       const location = response.headers.get("location");
