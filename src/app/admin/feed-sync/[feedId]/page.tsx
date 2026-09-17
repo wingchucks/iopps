@@ -396,7 +396,7 @@ export default function FeedDetailPage() {
           <button
             onClick={handleTestFeed}
             disabled={testing}
-            className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] button-gradient-soft px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] disabled:opacity-50"
           >
             <ZapIcon className="h-4 w-4" />
             {testing ? "Testing..." : "Test Feed"}
@@ -404,7 +404,7 @@ export default function FeedDetailPage() {
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#D97706] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#B45309] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg button-gradient px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#B45309] disabled:opacity-50"
           >
             <RefreshIcon className={cn("h-4 w-4", syncing && "animate-spin")} />
             {syncing ? "Syncing..." : "Re-Sync Now"}
@@ -527,7 +527,7 @@ export default function FeedDetailPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#D97706] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#B45309] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg button-gradient px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#B45309] disabled:opacity-50"
           >
             <SaveIcon className="h-4 w-4" />
             {saving ? "Saving..." : "Save Changes"}

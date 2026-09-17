@@ -24,7 +24,6 @@ const STATUS_VALUES = new Set<ApplicationStatus>([
   "interview",
   "offered",
   "rejected",
-  "withdrawn",
 ]);
 
 function serialize(value: unknown): unknown {
@@ -57,7 +56,9 @@ async function loadMemberProfiles(userIds: string[]) {
       const snap = await db.collection("members").doc(uid).get();
       if (!snap.exists) return null;
       const data = snap.data() ?? {};
-      return [uid, serialize({ id: uid, ...data })] as const;
+      return [uid, serialize({ id: uid, uid, ...Object.fromEntries(
+        ["displayName", "photoURL", "email", "headline", "community", "location", "bio", "skills", "education"].filter(key => data[key] !== undefined).map(key => [key, data[key]])
+      ) })] as const;
     })
   );
   return Object.fromEntries(entries.filter(Boolean) as Array<readonly [string, unknown]>);
@@ -84,18 +85,20 @@ async function loadJobs(jobIds: string[]) {
 export async function GET(req: NextRequest) {
   try {
     const context = await requireEmployerContext(req);
+    if (!["owner", "admin"].includes(context.orgRole)) throw new EmployerApiError(403, "Hiring manager access required");
     const db = getAdminDb();
 
+    // Legacy applications can have either ownership field. Both fields must be
+    // queried even when the employer and organization identifiers are equal.
+    const ownerIds = [...new Set([context.employerId, context.orgId])];
     const [byEmployerSnap, byOrgSnap] = await Promise.all([
-      db.collection("applications").where("employerId", "==", context.employerId).limit(200).get(),
-      context.orgId === context.employerId
-        ? Promise.resolve(null)
-        : db.collection("applications").where("orgId", "==", context.orgId).limit(200).get(),
+      db.collection("applications").where("employerId", "in", ownerIds).limit(200).get(),
+      db.collection("applications").where("orgId", "in", ownerIds).limit(200).get(),
     ]);
 
     const docs = new Map<string, QueryDocumentSnapshot>();
     for (const doc of byEmployerSnap.docs) docs.set(doc.id, doc);
-    for (const doc of byOrgSnap?.docs ?? []) docs.set(doc.id, doc);
+    for (const doc of byOrgSnap.docs) docs.set(doc.id, doc);
 
     const applications = Array.from(docs.values())
       .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }) as Record<string, unknown> & { id: string })
@@ -127,40 +130,33 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const context = await requireEmployerContext(req);
+    if (!["owner", "admin"].includes(context.orgRole)) throw new EmployerApiError(403, "Hiring manager access required");
     const body = (await req.json()) as { appId?: unknown; status?: unknown; reviewerNote?: unknown };
     const appId = normalizeString(body.appId);
-    if (!appId) {
+    if (!appId || appId.includes("/") || appId.length > 500) {
       return NextResponse.json({ error: "Application id is required." }, { status: 400 });
     }
 
     const db = getAdminDb();
     const appRef = db.collection("applications").doc(appId);
-    const appSnap = await appRef.get();
-    if (!appSnap.exists) {
-      return NextResponse.json({ error: "Application not found." }, { status: 404 });
-    }
-
-    const data = (appSnap.data() ?? {}) as Record<string, unknown>;
-    if (!isOwnedApplication(data, context.employerId, context.orgId)) {
-      return NextResponse.json({ error: "Application not found." }, { status: 404 });
-    }
-
-    const patch: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() };
     const status = normalizeString(body.status) as ApplicationStatus;
-    if (status) {
-      if (!STATUS_VALUES.has(status)) {
-        return NextResponse.json({ error: "Invalid status." }, { status: 400 });
+    if (status && !STATUS_VALUES.has(status)) return NextResponse.json({ error: "Invalid employer status." }, { status: 400 });
+    await db.runTransaction(async tx => {
+      const appSnap = await tx.get(appRef);
+      const data = (appSnap.data() ?? {}) as Record<string, unknown>;
+      if (!appSnap.exists || !isOwnedApplication(data, context.employerId, context.orgId)) {
+        throw new EmployerApiError(404, "Application not found.");
       }
-      const history = Array.isArray(data.statusHistory) ? data.statusHistory : [];
-      patch.status = status;
-      patch.statusHistory = [...history, { status, timestamp: Timestamp.now() }];
-    }
-
-    if (typeof body.reviewerNote === "string") {
-      patch.reviewerNote = body.reviewerNote;
-    }
-
-    await appRef.set(patch, { merge: true });
+      if (data.status === "withdrawn" && status) throw new EmployerApiError(409, "A withdrawn application cannot be reopened by an employer.");
+      const patch: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() };
+      if (status && status !== data.status) {
+        const history = Array.isArray(data.statusHistory) ? data.statusHistory : [];
+        patch.status = status;
+        patch.statusHistory = [...history, { status, timestamp: Timestamp.now() }];
+      }
+      if (typeof body.reviewerNote === "string") patch.reviewerNote = body.reviewerNote;
+      tx.update(appRef, patch);
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     const status = error instanceof EmployerApiError ? error.status : 500;

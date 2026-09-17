@@ -218,7 +218,7 @@ function MessagesContent() {
         >
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-extrabold text-text">Messages</h2>
-            <Button small onClick={openNewChat} style={{ background: "var(--teal)", color: "#fff", border: "none" }}>
+            <Button className="brand-button" small onClick={openNewChat} style={{ background: "var(--button-gradient)", color: "#fff", border: "none" }}>
               + New
             </Button>
           </div>
@@ -466,9 +466,9 @@ function MessagesContent() {
                 <button
                   onClick={handleSend}
                   disabled={!newMessage.trim() || sending}
-                  className="px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-bold text-white"
+                  className="brand-button px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-bold text-white"
                   style={{
-                    background: "var(--teal)",
+                    background: "var(--button-gradient)",
                     opacity: !newMessage.trim() || sending ? 0.5 : 1,
                   }}
                 >

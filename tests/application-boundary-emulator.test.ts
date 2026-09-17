@@ -50,7 +50,8 @@ test('emulator: server requirements, racing retries, direct create/delete and em
   await assert.rejects(deleteDoc(ref),e=>e.code==='permission-denied');
   await server.doc(`members/${uid}`).set({orgId:'test-org',orgRole:'owner'});
   await assert.rejects(updateDoc(ref,{coverLetter:'Employer modified candidate letter'}),e=>e.code==='permission-denied');
-  await updateDoc(ref,{status:'reviewing'});
+  await assert.rejects(updateDoc(ref,{status:'reviewing'}),e=>e.code==='permission-denied');
+  await server.doc(`applications/${uid}_enforced-role`).update({status:'reviewing'});
   const repeat=await submitApplication(server,uid,{...input,coverLetter:'Overwrite'});
   assert.equal(repeat.application.status,'reviewing');
   assert.equal(repeat.application.coverLetter,'Original letter');

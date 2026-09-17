@@ -76,7 +76,7 @@ export default function DirectoryPagination({
     <nav className="mt-8 flex items-center justify-center gap-3" aria-label="Directory pages">
       <button
         type="button"
-        className="rounded-xl border border-border bg-card px-4 py-2 font-semibold text-text disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-xl border border-border button-gradient-soft px-4 py-2 font-semibold text-text disabled:cursor-not-allowed disabled:opacity-50"
         disabled={page <= 1}
         onClick={() => onPageChange(page - 1)}
         aria-label="Previous results page"
@@ -88,7 +88,7 @@ export default function DirectoryPagination({
       </span>
       <button
         type="button"
-        className="rounded-xl border border-border bg-card px-4 py-2 font-semibold text-text disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-xl border border-border button-gradient-soft px-4 py-2 font-semibold text-text disabled:cursor-not-allowed disabled:opacity-50"
         disabled={page >= totalPages}
         onClick={() => onPageChange(page + 1)}
         aria-label="Next results page"

@@ -11,8 +11,8 @@ import Button from "@/components/Button";
 import { getPost, type Post } from "@/lib/firestore/posts";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
-import { db, storage } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { storage } from "@/lib/firebase";
+import { getApplicantReceipt } from "@/lib/firestore/applications";
 import { ref, uploadBytes, getDownloadURL, getBlob } from "firebase/storage";
 
 import { createResumeObjectName, buildApplicationProfileSnapshot } from "@/lib/application-snapshot";
@@ -134,10 +134,10 @@ function ApplyWizard() {
         if (postData) trackJobFunnelEvent("application_start", { jobId: postData.id });
         if (user) setProfile(await getMemberProfile(user.uid));
         if (postData && user) {
-          const applicationSnap = await getDoc(doc(db, "applications", `${user.uid}_${postData.id}`)).catch(() => null);
-          if (applicationSnap?.exists()) {
+          const application = await getApplicantReceipt(postData.id);
+          if (application) {
             setAlreadyApplied(true);
-            setReceipt(buildApplicationReceipt({id:applicationSnap.id,...applicationSnap.data()}));
+            setReceipt(buildApplicationReceipt(application));
           }
         }
       } catch (err) {
@@ -561,12 +561,12 @@ function ApplyWizard() {
                     if (!coverLetter) setCoverLetter(prompt + " ");
                     else setCoverLetter(coverLetter + "\n\n" + prompt + " ");
                   }}
-                  className="text-xs font-semibold rounded-xl cursor-pointer transition-opacity hover:opacity-80"
+                  className="brand-button text-xs font-semibold rounded-xl cursor-pointer transition-opacity hover:opacity-80"
                   style={{
                     padding: "8px 14px",
-                    background: "rgba(13,148,136,.06)",
+                    background: "var(--button-gradient-soft)",
                     border: "1.5px solid rgba(13,148,136,.15)",
-                    color: "var(--teal)",
+                    color: "var(--button-gradient-soft-text)",
                   }}
                 >
                   {prompt}
@@ -678,13 +678,13 @@ function ApplyWizard() {
 
             {references && <div className="mb-5"><h3 className="font-semibold">References</h3><p className="text-sm whitespace-pre-line">{references}</p></div>}
             {/* Submit */}
-            <Button
+            <Button className="brand-button"
               primary
               full
               onClick={handleSubmit}
               disabled={submitting || uploading || !!validateApplicationDocuments(post, {resumeUrl:useProfile ? profile?.resumeUrl : resumeUrl,coverLetter,references})}
               style={{
-                background: "var(--teal)",
+                background: "var(--button-gradient)",
                 padding: "14px 24px",
                 borderRadius: 14,
                 fontSize: 16,
@@ -708,12 +708,12 @@ function ApplyWizard() {
           <div />
         )}
         {step < 2 && (
-          <Button
+          <Button className="brand-button"
             primary
             disabled={!canAdvance()}
             onClick={() => { if (canAdvance()) setStep(step + 1); }}
             style={{
-              background: canAdvance() ? "var(--teal)" : "var(--border)",
+              background: canAdvance() ? "var(--button-gradient)" : "var(--border)",
               borderRadius: 14,
               opacity: canAdvance() ? 1 : 0.5,
               cursor: canAdvance() ? "pointer" : "not-allowed",

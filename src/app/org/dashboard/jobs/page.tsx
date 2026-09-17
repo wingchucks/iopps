@@ -275,8 +275,8 @@ export default function OrgDashboardJobsPage() {
                 <div className="mb-6">
                   <Link
                     href="/org/dashboard/jobs/new"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold no-underline transition-all hover:opacity-80"
-                    style={{ background: "var(--teal)", color: "#fff" }}
+                    className="brand-button inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold no-underline transition-all hover:opacity-80"
+                    style={{ background: "var(--button-gradient)", color: "#fff" }}
                   >
                     <svg
                       width="14"
@@ -346,8 +346,8 @@ export default function OrgDashboardJobsPage() {
                     </p>
                     <Link
                       href="/org/dashboard/jobs/new"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold no-underline transition-all hover:opacity-80"
-                      style={{ background: "var(--teal)", color: "#fff" }}
+                      className="brand-button inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold no-underline transition-all hover:opacity-80"
+                      style={{ background: "var(--button-gradient)", color: "#fff" }}
                     >
                       Post New Job
                     </Link>
@@ -422,10 +422,10 @@ export default function OrgDashboardJobsPage() {
                             <div className="flex items-center gap-2 shrink-0 flex-wrap">
                               <Link
                                 href={`/org/dashboard/jobs/${job.id}/edit`}
-                                className="px-3 py-1.5 rounded-lg no-underline text-xs font-semibold transition-all hover:opacity-80"
+                                className="brand-button px-3 py-1.5 rounded-lg no-underline text-xs font-semibold transition-all hover:opacity-80"
                                 style={{
-                                  background: "rgba(13,148,136,.1)",
-                                  color: "var(--teal)",
+                                  background: "var(--button-gradient-soft)",
+                                  color: "var(--button-gradient-soft-text)",
                                 }}
                               >
                                 Edit
@@ -434,7 +434,7 @@ export default function OrgDashboardJobsPage() {
                                 <button
                                   onClick={() => handleToggleStatus(job)}
                                   disabled={isDisabled}
-                                  className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold transition-all hover:opacity-80"
+                                  className="button-gradient-soft px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold transition-all hover:opacity-80"
                                   style={{
                                     background:
                                       currentStatus === "active"
@@ -455,7 +455,7 @@ export default function OrgDashboardJobsPage() {
                                 <button
                                   onClick={() => handleClosePosition(job)}
                                   disabled={isDisabled}
-                                  className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold transition-all hover:opacity-80"
+                                  className="button-gradient-soft px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold transition-all hover:opacity-80"
                                   style={{
                                     background: "rgba(107,114,128,.1)",
                                     color: "#6B7280",
@@ -468,7 +468,7 @@ export default function OrgDashboardJobsPage() {
                                 <button
                                   onClick={() => handleToggleStatus(job)}
                                   disabled={isDisabled}
-                                  className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold transition-all hover:opacity-80"
+                                  className="button-gradient-soft px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold transition-all hover:opacity-80"
                                   style={{
                                     background: "rgba(16,185,129,.1)",
                                     color: "#10B981",

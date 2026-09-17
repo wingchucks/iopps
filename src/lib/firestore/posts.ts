@@ -1,20 +1,12 @@
 import {
-  collection,
-  getDocs,
   getDoc,
   setDoc,
   updateDoc,
   deleteDoc,
   doc,
-  query,
-  orderBy,
-  where,
-  limit,
   serverTimestamp,
-  type QueryConstraint,
 } from "firebase/firestore";
-import { db } from "../firebase";
-import { isPublicPostVisible } from "@/lib/access-state";
+import { auth, db } from "../firebase";
 
 export type PostType =
   | "job"
@@ -77,7 +69,6 @@ export interface Post {
   order: number;
 }
 
-const col = collection(db, "posts");
 
 function normalizePost(id: string, data: Record<string, unknown>): Post {
   const loc = data.location;
@@ -92,31 +83,23 @@ function normalizePost(id: string, data: Record<string, unknown>): Post {
   return { id, ...data } as Post;
 }
 
-export async function getPosts(opts?: {
-  type?: PostType;
-  max?: number;
-}): Promise<Post[]> {
-  const constraints: QueryConstraint[] = [orderBy("order", "asc")];
-  if (opts?.type) constraints.unshift(where("type", "==", opts.type));
-  if (opts?.max) constraints.push(limit(opts.max));
-  const snap = await getDocs(query(col, ...constraints));
-  return snap.docs
-    .map((d) => normalizePost(d.id, d.data()))
-    .filter((post) => isPublicPostVisible(post));
+export async function getPosts(opts?: { type?: PostType; max?: number }): Promise<Post[]> {
+  const response = await fetch("/api/posts", { cache: "no-store" });
+  if (!response.ok) throw new Error("Unable to load posts");
+  const data = await response.json();
+  const posts = data.posts.map((post: Record<string, unknown>) => normalizePost(String(post.id), post)).filter((post: Post) => !opts?.type || post.type === opts.type);
+  return opts?.max ? posts.slice(0, opts.max) : posts;
 }
 
 export async function getPostsByOrg(orgId: string): Promise<Post[]> {
-  const snap = await getDocs(
-    query(col, where("orgId", "==", orgId), orderBy("order", "asc"))
-  );
-  return snap.docs.map((d) => normalizePost(d.id, d.data()));
+  return (await getPosts()).filter(post => post.orgId === orgId);
 }
 
 export async function getPost(id: string): Promise<Post | null> {
-  const snap = await getDoc(doc(db, "posts", id));
-  if (!snap.exists()) return null;
-  const post = normalizePost(snap.id, snap.data());
-  return isPublicPostVisible(post) ? post : null;
+  const response = await fetch("/api/posts?id=" + encodeURIComponent(id), { cache: "no-store" });
+  if (!response.ok) throw new Error("Unable to load post");
+  const data = await response.json();
+  return data.posts[0] ? normalizePost(data.posts[0].id, data.posts[0]) : null;
 }
 
 export async function setPost(
@@ -131,10 +114,12 @@ export async function deletePost(id: string): Promise<void> {
 }
 
 export async function getOrgPosts(orgId: string): Promise<Post[]> {
-  const snap = await getDocs(
-    query(col, where("orgId", "==", orgId), orderBy("createdAt", "desc"))
-  );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Post);
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sign in to view organization content");
+  const response = await fetch("/api/employer/jobs", { headers: { Authorization: `Bearer ${await user.getIdToken()}` }, cache: "no-store" });
+  if (!response.ok) throw new Error("Unable to load organization content");
+  const data = await response.json();
+  return data.jobs.filter((job: Post) => [job.orgId, job.employerId].includes(orgId)).map((job: Post) => ({ ...job, type: "job" }));
 }
 
 export async function createPost(

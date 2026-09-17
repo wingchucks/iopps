@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import { generateEventJsonLd, generateEventMetadata } from "@/lib/server/detail-metadata";
 import { serializeJsonLd } from "@/lib/server/seo";

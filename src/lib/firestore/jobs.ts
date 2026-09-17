@@ -1,19 +1,12 @@
 import {
   collection,
-  getDocs,
-  getDoc,
   doc,
   setDoc,
   updateDoc,
   deleteDoc,
   serverTimestamp,
-  query,
-  where,
-  orderBy,
-  type QueryConstraint,
 } from "firebase/firestore";
-import { db } from "../firebase";
-import { isPublicJobVisible } from "../public-jobs";
+import { auth, db } from "../firebase";
 
 export interface Job {
   id: string;
@@ -61,6 +54,7 @@ export interface Job {
   indigenousPreference?: boolean;
   indigenousPreferenceLevel?: string;
   communityTags?: string[];
+  hiringDetails?: import("@/lib/job-hiring-details").HiringDetails;
   willTrain?: boolean;
   driversLicense?: boolean;
   requiresResume?: boolean;
@@ -74,26 +68,20 @@ export interface Job {
 const col = collection(db, "jobs");
 
 export async function getJobs(): Promise<Job[]> {
-  const constraints: QueryConstraint[] = [
-    where("active", "==", true),
-  ];
-
-  const snap = await getDocs(query(col, ...constraints));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Job));
+  const response = await fetch("/api/jobs", { cache: "no-store" });
+  if (!response.ok) throw new Error("Unable to load jobs");
+  return (await response.json()).jobs;
 }
 
 export async function getJobById(id: string): Promise<Job | null> {
-  const snap = await getDoc(doc(col, id));
-  if (!snap.exists()) return null;
-  const job = { id: snap.id, ...snap.data() } as Job;
-  return isPublicJobVisible(job) ? job : null;
+  const response = await fetch("/api/jobs/" + encodeURIComponent(id), { cache: "no-store" });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Unable to load job");
+  return (await response.json()).job;
 }
 
 export async function getJobsByEmployer(employerId: string): Promise<Job[]> {
-  const snap = await getDocs(
-    query(col, where("employerId", "==", employerId), where("active", "==", true))
-  );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Job));
+  return (await getJobs()).filter(job => [job.employerId, job.orgId].includes(employerId));
 }
 
 export async function createJob(
@@ -127,10 +115,11 @@ export async function updateJob(
 }
 
 export async function getJobsByOrg(orgId: string): Promise<Job[]> {
-  const snap = await getDocs(
-    query(col, where("orgId", "==", orgId), orderBy("createdAt", "desc"))
-  );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Job));
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sign in required");
+  const response = await fetch("/api/employer/jobs", { headers: { Authorization: `Bearer ${await user.getIdToken()}` }, cache: "no-store" });
+  if (!response.ok) throw new Error("Unable to load organization jobs");
+  return (await response.json()).jobs.filter((job: Job) => [job.orgId, job.employerId].includes(orgId));
 }
 
 export async function deleteJob(id: string): Promise<void> {

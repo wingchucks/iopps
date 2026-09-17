@@ -1,4 +1,7 @@
+import { visibleMemberProfile } from "@/lib/server/member-privacy";
 import type { Metadata } from "next";
+import { cache } from "react";
+import { getPublicOpportunity } from "@/lib/server/public-opportunities";
 import { unstable_cache } from "next/cache";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { PUBLIC_DETAIL_CACHE_SECONDS } from "@/lib/server/public-detail-cache";
@@ -10,6 +13,8 @@ import {
   stripHtml,
   truncate,
 } from "@/lib/server/seo";
+
+const opportunityForMetadata = cache(async (kind: "events" | "scholarships", slug: string) => getPublicOpportunity(kind, slug).catch(() => null));
 
 type JsonLd = Record<string, unknown>;
 
@@ -156,8 +161,7 @@ export async function generateJobJsonLd(slug: string): Promise<JsonLd | null> {
 }
 
 export async function generateEventMetadata(slug: string): Promise<Metadata> {
-  const lookup: EntityLookup = { collections: ["events", "posts"] };
-  const event = await findFirst(lookup.collections, slug, lookup.slugFields);
+  const event = await opportunityForMetadata("events", slug);
   if (!event) {
     return buildListingMetadata({
       title: "Event",
@@ -185,7 +189,7 @@ export async function generateEventMetadata(slug: string): Promise<Metadata> {
 }
 
 export async function generateEventJsonLd(slug: string): Promise<JsonLd | null> {
-  const event = await findFirst(["events", "posts"], slug);
+  const event = await opportunityForMetadata("events", slug);
   if (!event) return null;
   return buildEventJsonLd({
     slug,
@@ -332,7 +336,7 @@ export async function generateShopJsonLd(slug: string): Promise<JsonLd | null> {
 }
 
 export async function generateScholarshipMetadata(slug: string): Promise<Metadata> {
-  const scholarship = await findFirst(["scholarships"], slug);
+  const scholarship = await opportunityForMetadata("scholarships", slug);
   if (!scholarship) return fallbackMetadata("Scholarship Opportunity", "View scholarship details on IOPPS.ca.", `/scholarships/${slug}`);
   const title = field(scholarship, "title", "name") || "Scholarship Opportunity";
   const provider = field(scholarship, "provider", "organization", "orgName");
@@ -345,7 +349,7 @@ export async function generateScholarshipMetadata(slug: string): Promise<Metadat
 }
 
 export async function generateScholarshipJsonLd(slug: string): Promise<JsonLd | null> {
-  const scholarship = await findFirst(["scholarships"], slug);
+  const scholarship = await opportunityForMetadata("scholarships", slug);
   if (!scholarship) return null;
   return {
     "@context": "https://schema.org",
@@ -375,7 +379,9 @@ export async function generateMemberMetadata(uid: string): Promise<Metadata> {
         "View this Indigenous professional's profile on IOPPS.",
       );
     }
-    const data = doc.data() || {};
+    const [settings, account] = await db.getAll(db.doc(`member_settings/${uid}`), db.doc(`users/${uid}`));
+    const data = visibleMemberProfile(uid, doc.data() || {}, settings.data() || {}, account.data() || {}, false);
+    if (!data) return { ...fallbackMetadata("Member Profile", "IOPPS member profile."), robots: { index: false, follow: false } };
     const name = clean(data.name) || clean(data.displayName) || "IOPPS Member";
     const headline = clean(data.headline) || clean(data.title);
     const nation = clean(data.nation);

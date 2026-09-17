@@ -199,10 +199,10 @@ export default function ShopPage() {
           <button
             onClick={handleSearch}
             disabled={searching}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border-none cursor-pointer"
+            className="brand-button absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border-none cursor-pointer"
             style={{
               padding: "8px 14px",
-              background: "var(--gold)",
+              background: "var(--button-gradient)",
               color: "#fff",
               fontSize: 13,
               fontWeight: 700,
@@ -226,9 +226,9 @@ export default function ShopPage() {
                   setSearchResults(null);
                   setSearchQuery("");
                 }}
-                className="px-5 py-2.5 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all whitespace-nowrap"
+                className="brand-button px-5 py-2.5 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all whitespace-nowrap"
                 style={{
-                  background: active ? "var(--gold)" : "var(--card)",
+                  background: active ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                   color: active ? "#fff" : "var(--text-sec)",
                   border: active ? "none" : "1px solid var(--border)",
                 }}

@@ -1,5 +1,9 @@
 "use client";
+import JobLocationFields, { formatJobLocation } from "@/components/employer/JobLocationFields";
 
+import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
+import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
+import { normalizeHiringDetails, type HiringDetails } from "@/lib/job-hiring-details";
 import { confirmSavedJob, type JobSaveConfirmation } from "@/lib/job-save-confirmation";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -7,9 +11,7 @@ import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import FeaturedJobControl, { type FeaturedJobSummary } from "@/components/FeaturedJobControl";
 import { useAuth } from "@/lib/auth-context";
-import { getMemberProfile } from "@/lib/firestore/members";
 import type { MemberProfile } from "@/lib/firestore/members";
-import { getOrganization } from "@/lib/firestore/organizations";
 import type { Organization } from "@/lib/firestore/organizations";
 
 /* ------------------------------------------------------------------ */
@@ -52,6 +54,8 @@ interface FormState {
   employmentType: string;
   workLocation: string;
   location: string;
+  locationCity: string;
+  locationProvince: string;
   salaryMin: string;
   salaryMax: string;
   salaryPeriod: string;
@@ -63,8 +67,7 @@ interface FormState {
   benefits: string[];
   indigenousPreferenceLevel: string;
   communityTags: string[];
-  willTrain: boolean;
-  driversLicense: boolean;
+  hiringDetails: HiringDetails;
   featured: boolean;
   requiresResume: boolean;
   requiresCoverLetter: boolean;
@@ -78,6 +81,8 @@ const emptyForm: FormState = {
   employmentType: "",
   workLocation: "",
   location: "",
+  locationCity: "",
+  locationProvince: "",
   salaryMin: "",
   salaryMax: "",
   salaryPeriod: "Annual",
@@ -89,8 +94,7 @@ const emptyForm: FormState = {
   benefits: [],
   indigenousPreferenceLevel: "",
   communityTags: [],
-  willTrain: false,
-  driversLicense: false,
+  hiringDetails: normalizeHiringDetails({}),
   featured: false,
   requiresResume: true,
   requiresCoverLetter: false,
@@ -418,7 +422,7 @@ function ChipSelect({
       {options.map((tag) => {
         const active = selected.includes(tag);
         return (
-          <button
+          <button className="brand-button"
             key={tag}
             type="button"
             onClick={() => toggle(tag)}
@@ -426,8 +430,8 @@ function ChipSelect({
               padding: "6px 14px",
               borderRadius: 20,
               border: active ? "1.5px solid var(--teal)" : "1px solid var(--border)",
-              background: active ? "rgba(13,148,136,.1)" : "var(--card)",
-              color: active ? "var(--teal)" : "var(--text-sec)",
+              background: active ? "var(--button-gradient)" : "var(--button-gradient-soft)",
+              color: active ? "#fff" : "var(--button-gradient-soft-text)",
               fontSize: 13,
               fontWeight: active ? 600 : 500,
               cursor: "pointer",
@@ -536,15 +540,15 @@ function ListBuilder({
           placeholder={placeholder || `Add a ${label.toLowerCase().replace(/ies$/, "y").replace(/s$/, "")}...`}
           style={{ ...inputStyle, flex: 1 }}
         />
-        <button
+        <button className="brand-button"
           type="button"
           onClick={add}
           style={{
             padding: "8px 16px",
             borderRadius: 10,
             border: "none",
-            background: "rgba(13,148,136,.1)",
-            color: "var(--teal)",
+            background: "var(--button-gradient-soft)",
+            color: "var(--button-gradient-soft-text)",
             fontSize: 13,
             fontWeight: 600,
             cursor: "pointer",
@@ -607,6 +611,7 @@ export default function NewJobWizardPage() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const [step, setStep] = useState<WizardStep>(0);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -633,14 +638,9 @@ export default function NewJobWizardPage() {
           setLoading(false);
           return;
         }
+        setLoadError("Your organization couldn’t be loaded. Please reload before posting a job.");
       } catch {
-        // fall through
-      }
-      const mp = await getMemberProfile(user.uid);
-      if (mp?.orgId) {
-        setProfile(mp);
-        const organization = await getOrganization(mp.orgId);
-        setOrg(organization);
+        setLoadError("Your organization couldn’t be loaded. Check your connection and reload.");
       }
       setLoading(false);
     })();
@@ -654,7 +654,7 @@ export default function NewJobWizardPage() {
     const e: Record<string, string> = {};
     if (!form.title.trim()) e.title = "Title is required";
     if (!form.category) e.category = "Category is required";
-    if (!form.location.trim()) e.location = "Location is required";
+    if (!form.locationProvince) e.location = "Select a province, territory, or multiple-province option";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -682,7 +682,7 @@ export default function NewJobWizardPage() {
 
   /* ---- Save ---- */
   const handleSave = async (status: "active" | "draft") => {
-    if (!profile?.orgId || !user) return;
+    if (!profile?.orgId || !user) { setSubmitError("Your organization session isn’t ready. Please reload and try again."); return; }
     setSubmitError("");
     setSaving(true);
     try {
@@ -726,8 +726,9 @@ export default function NewJobWizardPage() {
         indigenousPreference: form.indigenousPreferenceLevel !== "" && form.indigenousPreferenceLevel !== "open",
         indigenousPreferenceLevel: form.indigenousPreferenceLevel || undefined,
         communityTags: form.communityTags,
-        willTrain: form.willTrain,
-        driversLicense: form.driversLicense,
+        hiringDetails: normalizeHiringDetails(form.hiringDetails),
+        willTrain: form.hiringDetails.willTrain,
+        driversLicense: form.hiringDetails.driversLicense,
         featured: form.featured,
         requiresResume: form.requiresResume,
           requiresCoverLetter: form.requiresCoverLetter,
@@ -781,7 +782,7 @@ export default function NewJobWizardPage() {
               padding: "32px 16px 64px",
             }}
           >
-            {loading ? (
+            {loadError ? <div role="alert" className="employer-panel"><h1>Unable to open job posting</h1><p>{loadError}</p><button onClick={() => window.location.reload()} className="employer-primary mt-4">Reload</button></div> : loading ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div className="skeleton" style={{ height: 32, width: 240, borderRadius: 10 }} />
                 <div className="skeleton" style={{ height: 400, borderRadius: 16 }} />
@@ -861,7 +862,7 @@ export default function NewJobWizardPage() {
                 </div>
 
                 <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                  <button
+                  <button className="brand-button"
                     onClick={() => {
                       setForm(emptyForm);
                       setStep(0);
@@ -871,8 +872,8 @@ export default function NewJobWizardPage() {
                       padding: "12px 24px",
                       borderRadius: 10,
                       border: "1px solid var(--border)",
-                      background: "var(--card)",
-                      color: "var(--text)",
+                      background: "var(--button-gradient-soft)",
+                      color: "var(--button-gradient-soft-text)",
                       fontSize: 14,
                       fontWeight: 600,
                       cursor: "pointer",
@@ -880,13 +881,13 @@ export default function NewJobWizardPage() {
                   >
                     Post Another Job
                   </button>
-                  <button
+                  <button className="brand-button"
                     onClick={() => router.push("/org/dashboard")}
                     style={{
                       padding: "12px 24px",
                       borderRadius: 10,
                       border: "none",
-                      background: "var(--navy)",
+                      background: "var(--button-gradient)",
                       color: "#fff",
                       fontSize: 14,
                       fontWeight: 600,
@@ -1010,13 +1011,8 @@ export default function NewJobWizardPage() {
                       </FormField>
                     </div>
 
-                    <FormField label="Location" required error={errors.location}>
-                      <TextInput
-                        value={form.location}
-                        onChange={(v) => set("location", v)}
-                        placeholder="e.g. Saskatoon, SK"
-                      />
-                    </FormField>
+                    <JobLocationFields required city={form.locationCity} province={form.locationProvince} onChange={(city,province)=>setForm(prev=>({...prev,locationCity:city,locationProvince:province,location:formatJobLocation(city,province)}))} />
+                    {errors.location && <p role="alert" className="text-red-500 text-sm mb-4">{errors.location}</p>}
 
                     {/* Salary */}
                     <div style={{ marginBottom: 16 }}>
@@ -1174,17 +1170,7 @@ export default function NewJobWizardPage() {
                         title="Job Options"
                       />
                       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        <Checkbox
-                          checked={form.willTrain}
-                          onChange={(v) => set("willTrain", v)}
-                          label="Will Train"
-                          description="Employer will provide on-the-job training"
-                        />
-                        <Checkbox
-                          checked={form.driversLicense}
-                          onChange={(v) => set("driversLicense", v)}
-                          label="Driver's License Required"
-                        />
+                        <HiringDetailsFields value={form.hiringDetails} onChange={value => set("hiringDetails", value)} />
                         <FeaturedJobControl
                           summary={featuredSummary}
                           checked={form.featured}
@@ -1336,7 +1322,7 @@ export default function NewJobWizardPage() {
                                 )?.label || "Indigenous Preferred"}
                               </span>
                             )}
-                          {form.willTrain && (
+                          {form.hiringDetails.willTrain && (
                             <span
                               style={{
                                 padding: "4px 10px",
@@ -1429,6 +1415,7 @@ export default function NewJobWizardPage() {
                           ))}
 
                         {/* Community tags */}
+                        <HiringDetailsSummary value={form.hiringDetails} />
                         {form.communityTags.length > 0 && (
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                             {form.communityTags.map((tag) => (
@@ -1524,14 +1511,14 @@ export default function NewJobWizardPage() {
                   }}
                 >
                   {typeof step === "number" && step > 0 && (
-                    <button
+                    <button className="brand-button"
                       onClick={goBack}
                       style={{
                         padding: "12px 24px",
                         borderRadius: 10,
                         border: "1px solid var(--border)",
-                        background: "var(--card)",
-                        color: "var(--text)",
+                        background: "var(--button-gradient-soft)",
+                        color: "var(--button-gradient-soft-text)",
                         fontSize: 14,
                         fontWeight: 600,
                         cursor: "pointer",
@@ -1543,15 +1530,15 @@ export default function NewJobWizardPage() {
 
                   {step === 2 ? (
                     <div style={{ display: "flex", gap: 12 }}>
-                      <button
+                      <button className="brand-button"
                         onClick={() => handleSave("draft")}
                         disabled={saving}
                         style={{
                           padding: "12px 24px",
                           borderRadius: 10,
                           border: "1px solid var(--border)",
-                          background: "var(--card)",
-                          color: "var(--text)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                           fontSize: 14,
                           fontWeight: 600,
                           cursor: saving ? "default" : "pointer",
@@ -1560,14 +1547,14 @@ export default function NewJobWizardPage() {
                       >
                         {saving ? "Saving..." : "Save as Draft"}
                       </button>
-                      <button
+                      <button className="brand-button"
                         onClick={() => handleSave("active")}
                         disabled={saving}
                         style={{
                           padding: "12px 24px",
                           borderRadius: 10,
                           border: "none",
-                          background: "var(--teal)",
+                          background: "var(--button-gradient)",
                           color: "#fff",
                           fontSize: 14,
                           fontWeight: 600,
@@ -1579,13 +1566,13 @@ export default function NewJobWizardPage() {
                       </button>
                     </div>
                   ) : (
-                    <button
+                    <button className="brand-button"
                       onClick={goNext}
                       style={{
                         padding: "12px 24px",
                         borderRadius: 10,
                         border: "none",
-                        background: "var(--navy)",
+                        background: "var(--button-gradient)",
                         color: "#fff",
                         fontSize: 14,
                         fontWeight: 600,

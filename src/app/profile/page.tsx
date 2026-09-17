@@ -297,7 +297,7 @@ function ProfileContent() {
             </div>
           </div>
           <div className="flex gap-2.5 mt-2 sm:mt-0">
-            <Button
+            <Button className="brand-button"
               small
               onClick={() => {
                 if (editing) {
@@ -308,7 +308,7 @@ function ProfileContent() {
                   setEditSection("identity");
                 }
               }}
-              style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)", background: "rgba(255,255,255,.12)" }}
+              style={{ color: "var(--button-gradient-soft-text)", borderColor: "rgba(255,255,255,.25)", background: "var(--button-gradient-soft)" }}
             >
               {editing ? "Cancel" : "Edit Profile"}
             </Button>
@@ -517,11 +517,11 @@ function ProfileContent() {
               >
                 Cancel
               </Button>
-              <Button
+              <Button className="brand-button"
                 primary
                 onClick={handleSave}
                 style={{
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   borderRadius: 14,
                   padding: "12px 24px",
                   opacity: saving ? 0.7 : 1,

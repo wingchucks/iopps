@@ -56,10 +56,10 @@ export default function LandingMobileMenu() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className="rounded-xl px-3 py-2.5 text-center text-sm font-black no-underline"
+                  className="brand-button rounded-xl px-3 py-2.5 text-center text-sm font-black no-underline"
                   style={{
-                    background: link.key === "signup" ? "var(--teal)" : "rgba(255,255,255,.08)",
-                    color: "#FFFFFF",
+                    background: link.key === "signup" ? "var(--button-gradient)" : "var(--button-gradient-soft)",
+                    color: link.key === "signup" ? "#fff" : "var(--button-gradient-soft-text)",
                   }}
                 >
                   {link.label}

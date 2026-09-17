@@ -13,11 +13,8 @@ import type { MemberProfile } from "@/lib/firestore/members";
 import { getOrganization } from "@/lib/firestore/organizations";
 import {
   collection,
-  query,
-  where,
   getDocs,
   doc,
-  updateDoc,
   setDoc,
   deleteDoc,
   serverTimestamp,
@@ -55,13 +52,10 @@ export default function TeamPage() {
       const org = await getOrganization(profile.orgId);
       if (org) setOrgName(org.name);
 
-      // Fetch team members
-      const membersSnap = await getDocs(
-        query(collection(db, "members"), where("orgId", "==", profile.orgId))
-      );
-      setMembers(
-        membersSnap.docs.map((d) => d.data() as MemberProfile)
-      );
+      const token = await user.getIdToken();
+      const response = await fetch("/api/employer/team", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+      if (!response.ok) throw new Error("Unable to load team members");
+      setMembers((await response.json()).members);
 
       // Fetch pending invites
       const invitesSnap = await getDocs(
@@ -71,9 +65,11 @@ export default function TeamPage() {
         invitesSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as TeamInvite)
       );
 
-      setLoading(false);
-    })();
-  }, [user]);
+    })().catch(error => {
+      console.error("Unable to load team:", error);
+      showToast("Unable to load your team. Please try again.", "error");
+    }).finally(() => setLoading(false));
+  }, [user, showToast]);
 
   const handleInvite = async () => {
     if (!inviteEmail.trim() || !orgId) return;
@@ -112,9 +108,15 @@ export default function TeamPage() {
     }
   };
 
+  const updateTeam = async (uid: string, role: string) => {
+    if (!user) throw new Error("Sign in required");
+    const response = await fetch("/api/employer/team", { method: "PATCH", headers: { Authorization: `Bearer ${await user.getIdToken()}`, "Content-Type": "application/json" }, body: JSON.stringify({ uid, role }) });
+    if (!response.ok) throw new Error((await response.json()).error || "Unable to update team");
+  };
+
   const handleRoleChange = async (uid: string, newRole: "admin" | "member") => {
     try {
-      await updateDoc(doc(db, "members", uid), { orgRole: newRole });
+      await updateTeam(uid, newRole);
       setMembers((prev) =>
         prev.map((m) => (m.uid === uid ? { ...m, orgRole: newRole } : m))
       );
@@ -128,10 +130,7 @@ export default function TeamPage() {
   const handleRemoveMember = async (uid: string) => {
     if (!confirm("Remove this member from your organization?")) return;
     try {
-      await updateDoc(doc(db, "members", uid), {
-        orgId: null,
-        orgRole: null,
-      });
+      await updateTeam(uid, "remove");
       setMembers((prev) => prev.filter((m) => m.uid !== uid));
       showToast("Member removed", "success");
     } catch (err) {
@@ -389,7 +388,7 @@ export default function TeamPage() {
                               </div>
                               <button
                                 onClick={() => handleCancelInvite(invite.id)}
-                                className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                                className="button-gradient-soft px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                                 style={{
                                   background: "rgba(107,114,128,.1)",
                                   color: "#6B7280",

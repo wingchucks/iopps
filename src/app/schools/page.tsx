@@ -134,17 +134,17 @@ function SchoolsPageContent() {
               <div className="mt-5 flex flex-wrap justify-center gap-3">
                 <Link
                   href="/education"
-                  className="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
-                  style={{ background: "var(--teal)", color: "#fff" }}
+                  className="brand-button inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
+                  style={{ background: "var(--button-gradient)", color: "#fff" }}
                 >
                   Explore Education Hub
                 </Link>
                 <Link
                   href="/training"
-                  className="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
+                  className="brand-button inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold no-underline"
                   style={{
-                    background: "var(--card)",
-                    color: "var(--text)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                     border: "1px solid var(--border)",
                   }}
                 >

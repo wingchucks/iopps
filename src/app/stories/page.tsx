@@ -90,10 +90,10 @@ export default function StoriesBrowsePage() {
             <button
               key={key}
               onClick={() => setTab(key)}
-              className="px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all"
+              className="brand-button px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all"
               style={{
                 background:
-                  tab === key ? "var(--teal)" : "var(--card)",
+                  tab === key ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                 color: tab === key ? "#fff" : "var(--text-sec)",
                 border:
                   tab === key
@@ -155,8 +155,8 @@ export default function StoriesBrowsePage() {
             </p>
             <Link
               href="/feed"
-              className="inline-block px-6 py-3 rounded-xl text-sm font-bold text-white no-underline"
-              style={{ background: "var(--teal)" }}
+              className="brand-button inline-block px-6 py-3 rounded-xl text-sm font-bold text-white no-underline"
+              style={{ background: "var(--button-gradient)" }}
             >
               Back to Feed
             </Link>

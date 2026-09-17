@@ -10,7 +10,8 @@ test("partners and livestreams declare canonical metadata without duplicating th
   const livestreams = readFileSync(path.join(root, "src", "app", "livestreams", "layout.tsx"), "utf8");
 
   assert.match(partners, /alternates:\s*\{\s*canonical:\s*["']\/partners["']/);
-  assert.match(livestreams, /title:\s*["']Livestreams — Watch & Hire IOPPS["']/);
+  assert.match(livestreams, /title:\s*["']IOPPS Live — Watch Live & Explore Replays["']/);
+  assert.match(livestreams, /alternates:\s*\{\s*canonical:\s*["']\/livestreams["']/);
   assert.doesNotMatch(livestreams, /title:[^\n]*\| IOPPS/);
 });
 

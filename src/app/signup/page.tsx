@@ -5,7 +5,7 @@ import { authIntentHref, postSignupDestination, signupPasswordError } from "@/li
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { auth, getAppCheckTokenValue, storage } from "@/lib/firebase";
+import { getAppCheckTokenValue, storage } from "@/lib/firebase";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 import {
   BackgroundMesh, TopBar, ProgressBar, StepDots, StepHeader,
@@ -97,7 +97,7 @@ function UnifiedSignupContent() {
   const [empServices, setEmpServices] = useState("");
   const [empProvince, setEmpProvince] = useState("");
   const [empCity, setEmpCity] = useState("");
-  const [capabilities, setCapabilities] = useState<string[]>(["post_jobs"]);
+  const [capabilities, setCapabilities] = useState<string[]>(searchParams.get("intent") === "hiring" ? ["post_jobs"] : ["list_business"]);
   const [empLogoFile, setEmpLogoFile] = useState<File | null>(null);
   const [empBannerFile, setEmpBannerFile] = useState<File | null>(null);
 
@@ -220,8 +220,7 @@ function UnifiedSignupContent() {
 
     setSubmitting(true);
     try {
-      await reloadUser();
-      if (!auth.currentUser?.emailVerified) {
+      if (!await reloadUser()) {
         setError("Please verify your email before continuing.");
         return;
       }
@@ -231,6 +230,8 @@ function UnifiedSignupContent() {
       } else {
         router.push(memberDestination);
       }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "We couldn’t verify your session. Please retry.");
     } finally {
       setSubmitting(false);
     }
@@ -400,10 +401,10 @@ function UnifiedSignupContent() {
           {entrepreneurIntent && (
             <InfoBanner icon="🪶"><strong style={{ color: CSS.text }}>Indigenous Entrepreneur Signup</strong><br />Your free business profile and directory listing starts here.</InfoBanner>
           )}
-          <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "What kind of"} highlight={entrepreneurIntent ? "Business Profile" : "account do you need?"} desc={entrepreneurIntent ? "Your free business profile and directory listing helps customers and communities discover what you offer. You can still change your account type below." : "Are you signing up for yourself or on behalf of an organization?"} />
+          <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "What kind of"} highlight={entrepreneurIntent ? "Business Profile" : "account do you need?"} desc={entrepreneurIntent ? "Help customers discover your work with a free business profile. First, choose who you’re joining as." : "Are you signing up for yourself or on behalf of an organization?"} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <RoleCard icon="👤" label="Individual" desc="For people looking for jobs, training, scholarships, events, or professional connections." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
-            <RoleCard icon="🏢" label="Organization / Employer" desc="For First Nations, tribal councils, businesses, nonprofits, governments, and organizations that want to post opportunities or manage a public profile." selected={role === "organization"} onClick={() => { setRole("organization"); setOrgType("employer"); }} />
+            <RoleCard icon="🏢" label={entrepreneurIntent ? "My business" : "Business or organization"} desc={entrepreneurIntent ? "Showcase your products and services, share your story, and help customers find you." : "Create a public profile, promote your work, or hire talent. For businesses, First Nations, nonprofits, and organizations."} selected={role === "organization"} onClick={() => { setRole("organization"); setOrgType("employer"); }} />
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
             <BtnPrimary onClick={() => goTo(2)} disabled={!role || (role === "organization" && !orgType)}>Continue →</BtnPrimary>
@@ -589,7 +590,7 @@ function UnifiedSignupContent() {
 
         {/* STEP 10: Employer Basics */}
         {step === 10 && (<div>
-          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 1 of 3" : "Employer Setup — 1 of 3"} title="About your" highlight={entrepreneurIntent ? "Business" : "Organization"} desc={entrepreneurIntent ? "Share the essentials customers need to discover your business." : "Tell us about your business."} />
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 1 of 3" : "Organization Setup — 1 of 3"} title="About your" highlight={entrepreneurIntent ? "Business" : "Organization"} desc={entrepreneurIntent ? "Share the essentials customers need to discover your business." : "Tell us about your business."} />
           <div style={{ display: "grid", gap: 20 }}>
             <FormInput label={entrepreneurIntent ? "Business Name" : "Organization Name"} required placeholder="e.g., Northern Resources Inc." value={orgName} onChange={e => setOrgName(e.target.value)} />
             <FormTextarea label="Short Business Description" required placeholder="Tell people what your business does and who you serve." maxLength={600} value={empDescription} onChange={e => setEmpDescription(e.target.value)} />
@@ -599,7 +600,7 @@ function UnifiedSignupContent() {
               <div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>How should we represent your business?</div>
               <div style={{ display: "grid", gap: 12 }}>
                 {BUSINESS_IDENTITY_OPTIONS.map((option) => (
-                  <button
+                  <button className="brand-button"
                     key={option.value}
                     type="button"
                     onClick={() => setBusinessIdentity(option.value)}
@@ -622,7 +623,7 @@ function UnifiedSignupContent() {
               <FormSelect label="Province / Territory" required={entrepreneurIntent} value={empProvince} onChange={e => setEmpProvince(e.target.value)} options={[{ value: "", label: "Select..." }, ...PROVINCES.map(p => ({ value: p, label: p }))]} />
               <FormInput label="City" required={entrepreneurIntent} placeholder="City" value={empCity} onChange={e => setEmpCity(e.target.value)} />
             </div>
-            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>What do you want to do on IOPPS?</div>
+            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>What do you want to do on IOPPS?</div><p style={{fontSize:13,color:CSS.textMuted,marginBottom:12}}>One account for your organization. Promote your business, hire, or do both. Posting jobs is optional.</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{EMPLOYER_CAPABILITIES.map(c => <CheckboxItem key={c.id} icon={c.icon} label={c.label} checked={capabilities.includes(c.id)} onToggle={() => toggleCapability(c.id)} />)}</div>
             </div>
           </div>
@@ -636,17 +637,17 @@ function UnifiedSignupContent() {
 
         {/* STEP 11: Employer Brand */}
         {step === 11 && (<div>
-          <StepHeader eyebrow="Employer Setup — 2 of 3" title="Brand your" highlight="Profile" desc="Profiles with branding get 4× more engagement." />
-          <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 24 }}>
-            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Logo</div><UploadZone label="Upload Logo" hint="400×400px, PNG or JPG" hasFile={!!empLogoFile} onFileChange={setEmpLogoFile} /></div>
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 2 of 3" : "Organization Setup — 2 of 3"} title="Brand your" highlight="Profile" desc="Add your logo to complete your organization profile. A cover image is optional." />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
+            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Logo (required)</div><UploadZone label="Upload Logo" hint="400×400px, PNG or JPG" hasFile={!!empLogoFile} onFileChange={setEmpLogoFile} /></div>
             <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Cover Image</div><UploadZone label="Upload Cover" hint="1200×400px recommended" hasFile={!!empBannerFile} onFileChange={setEmpBannerFile} /></div>
           </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(10)}>← Back</BtnGhost><BtnSecondary onClick={() => goTo(12)}>Skip for now</BtnSecondary><BtnPrimary onClick={() => goTo(12)}>Continue →</BtnPrimary></div>
+          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(10)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(12)} disabled={!empLogoFile}>Continue →</BtnPrimary></div>
         </div>)}
 
         {/* STEP 12: Employer Launch */}
         {step === 12 && (<div>
-          <StepHeader eyebrow="Employer Setup — 3 of 3" title="Ready to" highlight="Launch?" desc="Your organization profile is ready." />
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 3 of 3" : "Organization Setup — 3 of 3"} title="Ready to" highlight="Launch?" desc="Your organization profile is ready." />
           <ReviewSection icon="🏢" title="Organization Summary" onEdit={() => goTo(10)}>
             <ReviewRow label="Name" value={orgName} />
             <ReviewRow label="Business Identity" value={BUSINESS_IDENTITY_OPTIONS.find(option => option.value === businessIdentity)?.label || "Not set"} />

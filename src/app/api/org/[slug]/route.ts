@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { toPublicOrganization } from "@/lib/public-organization";
 import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
 import { getLocalDevOrganizationPayload } from "@/lib/local-dev-business-data";
 import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
@@ -8,7 +9,7 @@ import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/li
 import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -127,8 +128,12 @@ async function resolveOrganization(
     .get();
 
   if (!employerQuery.empty) {
+    const employer = employerQuery.docs[0];
+    const linkedId = employer.data().orgId || employer.id;
+    const canonical = typeof linkedId === "string" && !linkedId.includes("/")
+      ? await db.collection("organizations").doc(linkedId).get() : null;
     return normalizeOrganizationRecord(
-      applyNormalizedSubscriptionState(serializeDoc(employerQuery.docs[0]))
+      applyNormalizedSubscriptionState(serializeDoc(canonical?.exists ? canonical : employer))
     );
   }
 
@@ -381,7 +386,7 @@ export async function GET(
     ]);
 
     return NextResponse.json({
-      org,
+      org: toPublicOrganization(org),
       jobs,
       events,
       scholarships,

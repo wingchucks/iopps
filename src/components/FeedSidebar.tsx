@@ -75,7 +75,7 @@ export default function FeedSidebar({
               href={hasOrg ? "/org/dashboard" : "/profile"}
               className="flex-1 text-center text-xs font-semibold rounded-lg no-underline py-2"
               style={{
-                background: "color-mix(in srgb, var(--teal) 8%, transparent)",
+                background: "var(--button-gradient-soft)",
                 color: "var(--teal)",
               }}
             >
@@ -101,7 +101,7 @@ export default function FeedSidebar({
             href="/signin"
             className="block text-center text-xs font-semibold rounded-lg no-underline py-2"
             style={{
-              background: "color-mix(in srgb, var(--teal) 8%, transparent)",
+              background: "var(--button-gradient-soft)",
               color: "var(--teal)",
             }}
           >

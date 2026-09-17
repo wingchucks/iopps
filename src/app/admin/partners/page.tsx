@@ -157,9 +157,9 @@ export default function PartnersPage() {
             <button
               key={value}
               onClick={() => setFilter(value)}
-              className="rounded-full px-4 py-2 text-xs font-semibold transition-colors"
+              className="brand-button rounded-full px-4 py-2 text-xs font-semibold transition-colors"
               style={{
-                background: filter === value ? "var(--navy)" : "var(--card)",
+                background: filter === value ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                 color: filter === value ? "#fff" : "var(--text-sec)",
                 border: filter === value ? "none" : "1px solid var(--border)",
               }}

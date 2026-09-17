@@ -28,9 +28,11 @@ test('payment rules: server-owned billing with compatible owner profile updates'
   const org = doc(db, 'organizations', uid);
   const receipt = doc(db, 'subscriptions', uid);
   try {
-    await t.test('owner can create a non-billing profile', async () => {
-      await setDoc(employer, { name: 'Fictional organization', uid, id: uid, contactEmail: 'fictional@example.invalid' });
-      await setDoc(org, { name: 'Fictional organization', type: 'business', contactName: 'Test', contactEmail: 'fictional@example.invalid', onboardingComplete: false, plan: null, createdAt: new Date(), updatedAt: new Date() });
+    await t.test('owner creation must use the server signup route', async () => {
+      await assert.rejects(setDoc(employer, { name: 'Fictional organization', uid, id: uid, contactEmail: 'fictional@example.invalid' }), denied);
+      await server.doc(employer.path).set({ name: 'Fictional organization', uid, id: uid });
+      await assert.rejects(setDoc(org, { name: 'Fictional organization', type: 'business', plan: null }), denied);
+      await server.doc(org.path).set({ name: 'Fictional organization', type: 'business' });
       await server.doc(`members/${uid}`).set({ role: 'employer', orgId: uid, orgRole: 'owner' });
     });
     await t.test('owner cannot mint any credit or subscription field', async () => {
@@ -47,12 +49,13 @@ test('payment rules: server-owned billing with compatible owner profile updates'
       await assert.rejects(setDoc(org, { name: 'Forged', plan: 'school' }), denied);
       await assert.rejects(setDoc(org, { name: 'Forged', employerId: 'victim' }), denied);
     });
-    await t.test('ordinary edits preserve server-issued billing and immutable ownership', async () => {
+    await t.test('public edits require the server; private templates preserve billing', async () => {
       const billing = { plan: 'premium', subscriptionTier: 'premium', featuredPostCredits: 2, subscriptionStatus: 'active' };
       await server.doc(`employers/${uid}`).set({ ...billing, uid, id: uid, name: 'Before' });
       await server.doc(`organizations/${uid}`).set({ ...billing, employerId: uid, name: 'Before' });
+      await updateDoc(org, { emailTemplates: { offer: 'A private template' }, updatedAt: new Date() });
       for (const ref of [employer, org]) {
-        await updateDoc(ref, { name: 'After', description: 'Profile edit', logoUrl: '/fictional.png', location: { city: 'Test' }, socialLinks: { linkedin: 'https://example.invalid' }, onboardingComplete: true, updatedAt: new Date() });
+        await assert.rejects(updateDoc(ref, { name: 'After', description: 'Profile edit', onboardingComplete: true }), denied);
         assert.equal((await getDoc(ref)).data()?.featuredPostCredits, 2);
         await assert.rejects(updateDoc(ref, { featuredPostCredits: deleteField() }), denied);
         await assert.rejects(setDoc(ref, { name: 'Overwrite billing' }), denied);
