@@ -54,6 +54,7 @@ export function summarizeCollections(scans) {
   const { users, members, organizations, employers, events, scholarships, posts } = scans;
   const usersReport = { checked: users.rows.size, blockedRecords: 0, reauthenticationBoundaryPresent: 0, organizationRoleWithoutExplicitLink: 0, conflictingUserAndMemberOrgLinks: 0, organizationEmployerLinkDisagreement: 0, linkedNonSelfWithoutManagementRole: 0, missingMatchingMemberLinkForClientRules: 0, resolvedOrganizationAbsentFromScannedTargets: 0, linkedBlockedTargets: 0 };
   const allTargetsRead = organizations.complete && employers.complete;
+  const activeAccess = { checked: 0, missingMemberLinkForDifferentOrganization: 0, ownerWithoutMemberLink: 0, targetAbsent: 0, linkedNonSelfWithoutManagementRole: 0 };
   for (const [uid, user] of users.rows) {
     const member = members.rows.get(uid) || {};
     if (blockedUser(user)) usersReport.blockedRecords++;
@@ -73,6 +74,16 @@ export function summarizeCollections(scans) {
     if (text(organization.employerId) && organization.employerId !== employerId) usersReport.organizationEmployerLinkDisagreement++;
     const employer = employers.rows.get(employerId) || employers.rows.get(orgId) || {};
     if ([organization, employer].some(data => data.disabled === true || data.deletedAt != null || ['disabled', 'deleted', 'archived'].includes(status(data)))) usersReport.linkedBlockedTargets++;
+    const blockedTarget = [organization, employer].some(data => data.disabled === true || data.deletedAt != null || ['disabled', 'deleted', 'archived'].includes(status(data)));
+    if (!blockedUser(user) && !blockedTarget) {
+      activeAccess.checked++;
+      if (!organizations.rows.has(orgId) && !employers.rows.has(employerId) && !employers.rows.has(orgId)) activeAccess.targetAbsent++;
+      if (text(member.orgId) !== orgId) {
+        if (orgId === uid) activeAccess.ownerWithoutMemberLink++;
+        else activeAccess.missingMemberLinkForDifferentOrganization++;
+      }
+      if (orgId !== uid && !['owner', 'admin'].includes(role)) activeAccess.linkedNonSelfWithoutManagementRole++;
+    }
   }
   const opportunities = {};
   for (const [kind, canonical] of [['events', events], ['scholarships', scholarships]]) {
@@ -96,7 +107,7 @@ export function summarizeCollections(scans) {
     }
     opportunities[kind] = counts;
   }
-  const applications = { checked: 0, missingCurrentOwner: 0, legacyOwnerOnly: 0, conflictingOwnerFields: 0, missingCurrentJobLink: 0, missingAppliedAt: 0, unknownStatus: 0, missingOrganizationLink: 0, jobAbsentFromScannedTargets: 0 };
+  const applications = { checked: 0, missingCurrentOwner: 0, legacyOwnerOnly: 0, conflictingOwnerFields: 0, missingCurrentJobLink: 0, missingAppliedAt: 0, unknownStatus: 0, missingOrganizationLink: 0, jobAbsentFromScannedTargets: 0, missingOrgWithCanonicalJobOwner: 0, missingOrgWithoutCanonicalJobOwner: 0 };
   for (const app of scans.applications.rows.values()) {
     applications.checked++;
     if (!text(app.userId)) applications.missingCurrentOwner++;
@@ -108,6 +119,11 @@ export function summarizeCollections(scans) {
     if (!text(app.orgId) && !text(app.employerId)) applications.missingOrganizationLink++;
     const id = text(app.postId) || text(app.jobId);
     if (!id || (!scans.jobs.rows.has(id) && !posts.rows.has(id))) applications.jobAbsentFromScannedTargets++;
+    if (!text(app.orgId) && !text(app.employerId)) {
+      const target = scans.jobs.rows.get(id) || posts.rows.get(id) || {};
+      if (text(target.orgId) || text(target.employerId)) applications.missingOrgWithCanonicalJobOwner++;
+      else applications.missingOrgWithoutCanonicalJobOwner++;
+    }
   }
   const jobs = { checked: scans.jobs.rows.size, missingOrganizationLink: 0, hiddenStatusOrInactive: 0 };
   for (const job of scans.jobs.rows.values()) {
@@ -117,6 +133,7 @@ export function summarizeCollections(scans) {
   return {
     scans: Object.fromEntries(Object.entries(scans).map(([name, scan]) => [name, { documentsRead: scan.rows.size, complete: scan.complete }])),
     users: { ...usersReport, memberJoinComplete: members.complete, organizationTargetScanComplete: allTargetsRead },
+    activeOrganizationAccess: activeAccess,
     organizationReview: reviewCounts(organizations.rows), employerReview: reviewCounts(employers.rows), opportunities,
     posts: { checked: posts.rows.size, hiddenStatusOrInactive: [...posts.rows.values()].filter(hiddenOpportunity).length },
     jobs,

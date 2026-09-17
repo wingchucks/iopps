@@ -14,9 +14,25 @@ test('release inventory identifies legacy application ownership without returnin
   assert.equal(report.applications.missingCurrentJobLink, 1);
   assert.equal(report.applications.missingAppliedAt, 1);
   assert.equal(report.applications.unknownStatus, 1);
+  assert.equal(report.applications.missingOrgWithoutCanonicalJobOwner, 1);
+  scans.jobs.rows.set('old-job', { employerId: 'organization' });
+  assert.equal(summarizeCollections(scans).applications.missingOrgWithCanonicalJobOwner, 1);
   assert.doesNotMatch(JSON.stringify(report), /private-id|private-owner|old-job/);
   scans.jobs.complete = false;
   assert.equal(summarizeCollections(scans).applications.jobTargetScanComplete, false);
+});
+
+test('active-access findings distinguish self-owned legacy accounts from blocked accounts', () => {
+  const scans = emptyScans();
+  scans.users.rows.set('owner', { role: 'employer' });
+  scans.organizations.rows.set('owner', { status: 'active' });
+  scans.users.rows.set('blocked', { role: 'employer', orgId: 'different', status: 'suspended' });
+  scans.users.rows.set('team', { role: 'employer', orgId: 'different', orgRole: 'admin' });
+  const report = summarizeCollections(scans);
+  assert.equal(report.activeOrganizationAccess.checked, 2);
+  assert.equal(report.activeOrganizationAccess.ownerWithoutMemberLink, 1);
+  assert.equal(report.activeOrganizationAccess.missingMemberLinkForDifferentOrganization, 1);
+  assert.equal(report.activeOrganizationAccess.targetAbsent, 1);
 });
 
 test('release inventory flags conflicting organization links and hidden canonical mirrors', () => {
