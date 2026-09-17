@@ -23,7 +23,7 @@ export default function BusinessReviewDemo() {
   const [notice, setNotice] = useState("");
   const review = getBusinessListingReview(org)!;
   const visible = isOrganizationPubliclyVisible(org);
-  return <main className="min-h-screen bg-[#f4f7f8] px-4 py-6 text-[#153347] sm:px-8 sm:py-10">
+  return <div className="min-h-screen bg-[#f4f7f8] px-4 py-6 text-[#153347] sm:px-8 sm:py-10">
     <div className="mx-auto max-w-6xl">
       <header className="mb-7 overflow-hidden rounded-3xl bg-[#102f43] p-6 text-white sm:p-10">
         <div className="flex flex-wrap items-center justify-between gap-4"><Link href="/demo/employer?workspace=business" className="text-xl font-black tracking-wide text-white">IOPPS<span className="ml-2 text-teal-300">/ business</span></Link><span className="rounded-full border border-white/30 px-3 py-1 text-xs font-bold tracking-wide">INTERACTIVE PREVIEW</span></div>
@@ -46,5 +46,5 @@ export default function BusinessReviewDemo() {
       {view === "public" && <section className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 sm:p-9"><p className="text-xs font-bold uppercase tracking-wide text-teal-700">Directory preview · fictional example</p>{visible ? <><h2 className="mt-3 text-2xl font-bold">{String(org.name)}</h2><p className="mt-2 text-sm text-slate-500">Saskatoon, Saskatchewan · Event planning and communications</p><p className="mt-5 whitespace-pre-wrap text-base leading-7">{String(org.description)}</p><p className="mt-5 text-sm">Public contact: hello@example.invalid</p><p className="mt-6 border-t border-slate-200 pt-4 text-xs text-slate-500">Sample contact only. Review feedback and account information do not appear on public profiles.</p></> : <><h2 className="mt-3 text-2xl font-bold">This business is not in the directory yet</h2><p className="mt-3 text-sm leading-6">Only approved profiles appear publicly. Return to Business owner to submit or update the listing, then try Admin review.</p></>}</section>}
       <p className="mt-8 text-center text-xs leading-6 text-slate-500">Demo only · No account, payment or live business record is created.</p>
     </div>
-  </main>;
+  </div>;
 }

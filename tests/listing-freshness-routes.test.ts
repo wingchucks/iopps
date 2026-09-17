@@ -12,11 +12,30 @@ import * as freshness from '../src/lib/listing-freshness.ts';
 import * as publicJobs from '../src/lib/public-jobs.ts';
 import * as jobSlugs from '../src/lib/server/job-slugs.ts';
 import * as metadata from '../src/lib/job-metadata.ts';
+import * as contentProjection from '../src/lib/server/public-content-record.ts';
+import * as publicEvents from '../src/lib/public-events.ts';
+import * as opportunityPosting from '../src/lib/opportunity-posting.ts';
 const nativeRequire = createRequire(import.meta.url);
 function loadRoute(path: string, mocks: Record<string, unknown>) {
   const exports: Record<string, any> = {};
   const source = ts.transpileModule(readFileSync(path, 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-  vm.runInNewContext(source, {exports, require:(id: string) => mocks[id] || (id === '@/lib/server/job-expiration' ? expiration : id === '@/lib/public-job-merge' ? visibility : id === '@/lib/listing-freshness' ? freshness : id === '@/lib/job-metadata' ? metadata : nativeRequire(id)), Response, URL, console, process:{env:{CRON_SECRET:'test-only'}}, Date:class extends Date { constructor(value: any = '2026-09-08T12:00:00Z') { super(value); } } });
+  const dependencies: Record<string, unknown> = {
+    '@/lib/server/job-expiration': expiration,
+    '@/lib/public-job-merge': visibility,
+    '@/lib/listing-freshness': freshness,
+    '@/lib/job-metadata': metadata,
+    '@/lib/server/public-content-record': contentProjection,
+    '@/lib/public-events': publicEvents,
+    '@/lib/opportunity-posting': opportunityPosting,
+    ...mocks,
+  };
+  vm.runInNewContext(source, {exports, require:(id: string) => {
+    if (Object.hasOwn(dependencies, id)) return dependencies[id];
+    // Run the actual delegated implementation against the same isolated DB and
+    // provider doubles, rather than requiring an alias through a CJS fallback.
+    if (id === '@/lib/server/public-opportunities') return loadRoute('src/lib/server/public-opportunities.ts', mocks);
+    return nativeRequire(id);
+  }, Response, URL, console, process:{env:{CRON_SECRET:'test-only'}}, Date:class extends Date { constructor(value: any = '2026-09-08T12:00:00Z') { super(value); } } });
   return exports;
 }
 test('job detail rechecks fresh full data before hydration or any write', async () => {
@@ -38,15 +57,18 @@ test('job detail rechecks fresh full data before hydration or any write', async 
 });
 
 test('scholarship API marks closed intakes without deleting recurring programs', async () => {
-  const rows = [{id:'annual',status:'active',deadline:'August 31, 2026'}, {id:'rolling',status:'active',deadline:'Rolling'}];
+  const rows = [{id:'annual',title:'Fictional annual scholarship',status:'active',deadline:'August 31, 2026'}, {id:'rolling',title:'Fictional rolling scholarship',status:'active',deadline:'Rolling'}];
   const route = loadRoute('src/app/api/scholarships/route.ts', {
     'next/server':next,
-    '@/lib/firebase-admin':{getAdminDb:()=>({collection:()=>({where:()=>({get:async()=>({docs:rows.map(row=>({id:row.id,data:()=>row}))})}),get:async()=>({docs:[]})})})},
+    '@/lib/firebase-admin':{getAdminDb:()=>({collection:(name:string)=>{
+      const query={where:()=>query,get:async()=>({docs:name==='scholarships'?rows.map(row=>({id:row.id,data:()=>row})):[]})};return query;
+    }})},
     '@/lib/server/public-ownership':ownership,
     '@/lib/server/partner-promotion':{withPartnerPromotion:(r:unknown)=>r},
     '@/lib/utils':{displayAmount:(v:unknown)=>String(v)},
   });
   const response = await route.GET(new Request('https://example.test/api/scholarships'));
+  assert.equal(response.status,200);
   const body = await response.json();
   assert.equal(body.scholarships.length,2,'recurring program remains discoverable');
   assert.equal(body.scholarships.find((s:any)=>s.id==='annual').intakeClosed,true);

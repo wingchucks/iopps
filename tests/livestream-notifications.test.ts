@@ -25,6 +25,7 @@ test("admin notification emails cover signups, content, applications, and paymen
   const stripeWebhook = read("src/app/api/stripe/webhook/route.ts");
   const jobs = read("src/app/api/employer/jobs/route.ts");
   const events = read("src/app/api/employer/events/route.ts");
+  const opportunities = read("src/lib/server/organization-opportunities.ts");
   const posts = read("src/app/api/posts/route.ts");
   const applications = read("src/app/api/applications/notify/route.ts");
 
@@ -35,7 +36,9 @@ test("admin notification emails cover signups, content, applications, and paymen
   assert.match(email, /sendAdminPaymentNotification/);
   assert.match(stripeWebhook, /sendAdminPaymentNotification/);
   assert.match(jobs, /sendAdminContentPosted/);
-  assert.match(events, /sendAdminContentPosted/);
+  assert.match(events, /saveOrganizationOpportunity\(req, "events"\)/);
+  assert.match(events, /saveOrganizationOpportunity\(req, "events", true\)/);
+  assert.match(opportunities, /if \(result\.firstPublication && result\.record\)\s*\{[\s\S]*sendAdminContentPosted/);
   assert.match(posts, /sendAdminContentPosted/);
   assert.match(applications, /sendApplicationNotification/);
   assert.match(applications, /sendAdminApplicationNotification/);

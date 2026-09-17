@@ -23,7 +23,7 @@ export default function ResponsivePreview() {
   const [path, setPath] = useState<string>(pages[0][0]);
   const [width, setWidth] = useState(390);
 
-  return <main className="min-h-screen bg-slate-100 text-slate-900 p-4 md:p-8">
+  return <div className="min-h-screen bg-slate-100 text-slate-900 p-4 md:p-8">
     <header className="mx-auto max-w-5xl mb-6">
       <p className="text-sm font-bold text-teal-700">IOPPS · PREVIEW REVIEW</p>
       <h1 className="text-2xl font-bold mt-2">One experience. Every screen.</h1>
@@ -47,5 +47,5 @@ export default function ResponsivePreview() {
         className="block mx-auto rounded-2xl border-2 border-slate-300 bg-white shadow-lg"
         style={{ width, height: 850, maxWidth: "none" }} />
     </div>
-  </main>;
+  </div>;
 }

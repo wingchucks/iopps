@@ -42,7 +42,7 @@ export default function OpportunityDirectory({ kind }: { kind: OpportunityKind }
   }).sort((a, b) => events ? (getEventStartDate(a)?.getTime() || Infinity) - (getEventStartDate(b)?.getTime() || Infinity) : Number(isJobRecordExpired(a)) - Number(isJobRecordExpired(b))), [items, search, province, category, events, dateFilter, deadlineFilter]);
   const { page, pageItems, totalPages, setPage } = useDirectoryPagination(filtered, 12);
   function clear() { setFilters({ q: null, province: null, type: null, category: null, date: null, deadline: null, closing: null, rolling: null, eligibility: null, location: null }); }
-  return <AppShell><main className="min-h-screen bg-[#f5f7f6] text-slate-900">
+  return <AppShell><div className="min-h-screen bg-[#f5f7f6] text-slate-900">
     <section className="relative overflow-hidden bg-[#102d42] px-4 py-10 sm:px-8 sm:py-14">
       <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-28 size-80 rounded-full border-[40px] border-teal-400/10 sm:size-[440px]" />
       <div className="relative mx-auto max-w-6xl"><p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">IOPPS · Community connections</p><h1 className="mt-4 max-w-3xl text-3xl font-extrabold tracking-tight text-white sm:text-5xl">{events ? "Find your next gathering." : "Support for your next chapter."}</h1><p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-200">{events ? "Powwows, conferences, career fairs and community events. Find a place to learn, celebrate and connect." : "Explore scholarships, bursaries and grants supporting Indigenous learners, entrepreneurs and communities. Check each provider’s eligibility before applying."}</p><Link href={`/org/dashboard/${kind}/new`} className="mt-6 inline-flex min-h-11 items-center rounded-xl border border-cyan-200/40 bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/20">{events ? "Share an event" : "Share a funding opportunity"} <span className="ml-3">↗</span></Link></div>
@@ -75,5 +75,5 @@ export default function OpportunityDirectory({ kind }: { kind: OpportunityKind }
       {!error && !loading && <DirectoryPagination page={page} totalPages={totalPages} onPageChange={setPage} />}
       <aside className="mt-9 flex flex-col justify-between gap-4 rounded-2xl bg-[#e7f2ef] p-6 sm:flex-row sm:items-center"><div><h2 className="text-lg font-extrabold">{events ? "Make room for more connections." : "Know an opportunity worth sharing?"}</h2><p className="mt-2 text-sm text-slate-700">Use your organization account to post {events ? "events" : "scholarships and grants"}. The same sign-in works across IOPPS.</p></div><Link href={`/org/dashboard/${kind}/new`} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl button-gradient px-4 py-3 text-sm font-bold text-white">{events ? "Share an event" : "Share funding"}</Link></aside>
     </div>
-  </main></AppShell>;
+  </div></AppShell>;
 }

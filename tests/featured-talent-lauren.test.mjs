@@ -14,9 +14,10 @@ test('the former current person no longer appears in public spotlight sources', 
 });
 
 test('the replacement section is fully focused on Indigenous entrepreneurs', () => {
-  assert.match(homePage, /Indigenous Business Spotlight/);
-  assert.match(homePage, /Built by Indigenous entrepreneurs\. Supported by community/);
-  assert.match(homePage, /Free Indigenous business profiles/);
+  assert.match(homePage, /Indigenous businesses & entrepreneurship/);
+  assert.match(homePage, /Share your story, showcase your services/);
+  assert.match(homePage, /Add your business free/);
+  assert.match(homePage, /href="\/signup\?intent=indigenous-business"/);
   assert.match(businessSpotlight, /Indigenous businesses deserve to be easier to find/);
   assert.match(businessSpotlight, /Consideration for a free Indigenous Business Spotlight/);
 });
