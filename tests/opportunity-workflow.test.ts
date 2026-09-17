@@ -6,6 +6,16 @@ import { createEventCalendar } from "../src/lib/event-calendar.ts";
 import { getEventEndDate, getEventStartDate } from "../src/lib/public-events.ts";
 import { mergeOpportunitySources, publicOpportunityRecord } from "../src/lib/server/public-opportunities.ts";
 
+test("imported rich text uses parser semantics and decodes entities only once", () => {
+  assert.equal(plainOpportunityText('<p>Before</p><script>alert(1)</script ><style>body{display:none}</style ><p>After</p>'), "Before\n\nAfter");
+  assert.equal(plainOpportunityText('<p title="a > b">A &amp; B&nbsp;C</p><!-- hidden --><p>Next</p>'), "A & B C\n\nNext");
+  assert.equal(plainOpportunityText('Keep<script>unterminated'), "Keep");
+  assert.equal(plainOpportunityText('Keep<style>unterminated'), "Keep");
+  assert.equal(plainOpportunityText('&amp;lt;script&amp;gt;'), "&lt;script&gt;");
+  assert.equal(plainOpportunityText('&lt;strong&gt;literal&lt;/strong&gt;'), "<strong>literal</strong>");
+  assert.equal(plainOpportunityText('<img src=x onerror=alert(1)>Text'), "Text");
+});
+
 test("drafts allow incomplete content; publication checks date, location and application handoffs", () => {
   assert.deepEqual(validateOpportunity("events", { title: "Draft" }, "draft").errors, {});
   assert.ok(validateOpportunity("events", { title: "Incomplete" }, "active").errors.startDate);

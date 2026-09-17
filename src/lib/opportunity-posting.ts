@@ -1,4 +1,5 @@
 import { provinceCode } from "@/lib/canadian-provinces";
+import { Parser } from "htmlparser2";
 
 export type OpportunityKind = "events" | "scholarships";
 export type OpportunityStatus = "draft" | "active" | "closed";
@@ -95,9 +96,25 @@ export function validateOpportunity(kind: OpportunityKind, raw: Record<string, u
   return { data, errors };
 }
 
-/** Render imported rich text as readable text; never execute organizer-provided HTML. */
+/** Extract plain text for React text children, not HTML injection sinks. */
 export function plainOpportunityText(value: unknown): string {
-  return String(value || "").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "").replace(/<\/?(?:p|div|br|li|h[1-6])\b[^>]*>/gi, "\n").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\n{3,}/g, "\n\n").trim();
+  const parts: string[] = [];
+  const blocks = new Set(["p", "div", "br", "li", "h1", "h2", "h3", "h4", "h5", "h6"]);
+  let hiddenDepth = 0;
+  const parser = new Parser({
+    onopentag(name) {
+      if (name === "script" || name === "style") hiddenDepth++;
+      if (!hiddenDepth && blocks.has(name)) parts.push("\n");
+    },
+    ontext(text) { if (!hiddenDepth) parts.push(text); },
+    onclosetag(name) {
+      if (name === "script" || name === "style") hiddenDepth = Math.max(0, hiddenDepth - 1);
+      else if (!hiddenDepth && blocks.has(name)) parts.push("\n");
+    },
+  }, { decodeEntities: true });
+  parser.end(String(value || ""));
+  // Entities are decoded once by the parser; decoded text is never reparsed.
+  return parts.join("").replace(/\u00a0/g, " ").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 /** Legacy categories describe subjects, so they must not become giant type-menu options. */
