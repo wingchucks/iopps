@@ -22,6 +22,7 @@ const accounts = {};
 const documents = [];
 let browser, currentPage;
 const checks = [];
+const runtimeErrors = [];
 async function seed(collection, id, data) {
   const ref = db.collection(collection).doc(id); documents.push(ref); await ref.set(data);
 }
@@ -63,7 +64,11 @@ try {
       });
       const page = await context.newPage(); currentPage = page;
       page.setDefaultTimeout(20000);
-      page.on('pageerror', error => errors.push(error.message));
+      page.on('pageerror', error => {
+        const detail = { role, width, url: page.url(), message: error.message, stack: error.stack };
+        errors.push(detail); runtimeErrors.push(detail);
+        console.error('Dashboard browser error:', JSON.stringify(detail));
+      });
       page.on('response', response => { if (response.status() === 404 && new URL(response.url()).pathname.startsWith('/api/')) missing.push(response.url()); });
       page.on('request', request => { if (new URL(request.url()).pathname.startsWith('/api/talent')) retired.push(request.url()); });
       await page.goto(base + '/login');
@@ -90,6 +95,7 @@ try {
         ['/profile', 'QA member'], ['/settings', 'Help & Support'], ['/applications', 'Applications'], ['/saved', 'Saved'],
       ];
       for (const [route, expected] of routes) {
+        console.log(`Checking ${role} at ${width}px: ${route}`);
         await page.goto(base + route, { waitUntil: 'domcontentloaded' });
         await page.getByText(expected, { exact: false }).first().waitFor();
         if (route.includes('tab=Jobs') && !route.includes('create=')) await page.getByText('QA post-only dashboard job', { exact: true }).waitFor();
@@ -138,7 +144,7 @@ try {
   }
   throw error;
 } finally {
-  await fs.writeFile(path.join(output, 'results.json'), JSON.stringify({ checks }, null, 2));
+  await fs.writeFile(path.join(output, 'results.json'), JSON.stringify({ checks, runtimeErrors }, null, 2));
   await browser?.close();
   for (const ref of documents) await ref.delete();
   for (const account of Object.values(accounts)) await auth.deleteUser(account.uid);
