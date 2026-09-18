@@ -23,6 +23,7 @@ const documents = [];
 let browser, currentPage;
 const checks = [];
 const runtimeErrors = [];
+const authChecks = [];
 async function seed(collection, id, data) {
   const ref = db.collection(collection).doc(id); documents.push(ref); await ref.set(data);
 }
@@ -83,6 +84,7 @@ try {
       await page.waitForURL(url => !['/login', '/verify-email'].includes(url.pathname), { timeout: 30000 });
       assert.equal(accountResolutions.length, 1, `${role} sign-in must resolve its destination once`);
       assert.equal(loginDocuments.filter(pathname => pathname !== '/login').length, 1, `${role} sign-in must navigate once`);
+      authChecks.push({ role, width, accountResolutions: accountResolutions.length, documents: [...loginDocuments] });
       const routes = role === 'owner' ? [
         ['/org/dashboard', 'QA Dashboard Organization'],
         ['/employer/dashboard?tab=Jobs', 'QA active dashboard job'],
@@ -104,7 +106,7 @@ try {
       for (const [route, expected] of routes) {
         console.log(`Checking ${role} at ${width}px: ${route}`);
         await page.goto(base + route, { waitUntil: 'domcontentloaded' });
-        await page.getByText(expected, { exact: false }).first().waitFor();
+        await page.getByText(expected, { exact: false }).filter({ visible: true }).first().waitFor();
         if (route.includes('tab=Jobs') && !route.includes('create=')) await page.getByText('QA post-only dashboard job', { exact: true }).waitFor();
         if (route.includes('create=')) {
           await page.getByRole('heading', { name: 'Post a New Job', exact: true }).waitFor();
@@ -143,7 +145,7 @@ try {
     const location = new URL(response.headers.get('location'), base);
     assert.equal(location.pathname, destination); assert.equal(location.searchParams.get('qa'), 'bookmark');
   }
-  console.log(JSON.stringify({ checks: checks.length, allPassed: true, emulatorsOnly: true }));
+  console.log(JSON.stringify({ checks: checks.length, authChecks: authChecks.length, allPassed: true, emulatorsOnly: true }));
 } catch (error) {
   if (currentPage && !currentPage.isClosed()) {
     await currentPage.screenshot({ path: path.join(output, 'failure.png'), fullPage: true }).catch(() => {});
@@ -151,7 +153,7 @@ try {
   }
   throw error;
 } finally {
-  await fs.writeFile(path.join(output, 'results.json'), JSON.stringify({ checks, runtimeErrors }, null, 2));
+  await fs.writeFile(path.join(output, 'results.json'), JSON.stringify({ checks, authChecks, runtimeErrors }, null, 2));
   await browser?.close();
   for (const ref of documents) await ref.delete();
   for (const account of Object.values(accounts)) await auth.deleteUser(account.uid);
