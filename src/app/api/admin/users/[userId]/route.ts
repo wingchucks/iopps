@@ -2,7 +2,8 @@ import { buildAdminUserSoftDeleteUpdate } from "@/lib/server/admin-soft-delete";
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyAdminToken, verifySuperAdminToken } from "@/lib/api-auth";
 import { adminDb, getAdminAuth } from "@/lib/firebase-admin";
-import { isSuperAdminEmail } from "@/lib/server/super-admin";
+import { isSuperAdminAccount } from "@/lib/server/super-admin";
+import { changeAdminUserRole } from "@/lib/server/admin-user-role";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +27,8 @@ export async function GET(
     }
 
     const userData = userDoc.data()!;
-    const targetIsSuperAdmin = isSuperAdminEmail(userData.email);
-    const viewerIsSuperAdmin = isSuperAdminEmail(
-      auth.viewerEmail ?? auth.decodedToken.email ?? null,
-    );
+    const targetIsSuperAdmin = await isSuperAdminAccount(userId, getAdminAuth());
+    const viewerIsSuperAdmin = auth.isSuperAdmin;
 
     // Fetch member profile
     const profileDoc = await adminDb.collection("memberProfiles").doc(userId).get();
@@ -68,6 +67,7 @@ export async function GET(
       applicationCount: applications.length,
       isSuperAdmin: targetIsSuperAdmin,
       capabilities: {
+        canChangeRole: viewerIsSuperAdmin && !targetIsSuperAdmin && userData.status !== "deleted",
         canDelete:
           viewerIsSuperAdmin &&
           !targetIsSuperAdmin &&
@@ -97,7 +97,10 @@ export async function PATCH(
   try {
     // Super admin protection
     const userDoc = await adminDb.collection("users").doc(userId).get();
-    if (userDoc.exists && isSuperAdminEmail(userDoc.data()?.email)) {
+    if (!userDoc.exists) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    if (await isSuperAdminAccount(userId, getAdminAuth())) {
       return NextResponse.json(
         { error: "Cannot modify super admin account" },
         { status: 403 }
@@ -106,8 +109,13 @@ export async function PATCH(
 
     const updates: Record<string, unknown> = {};
 
-    if (body.role) {
-      updates.role = body.role;
+    if (body.role !== undefined) {
+      if (!auth.isSuperAdmin) {
+        return NextResponse.json({ error: "Super admin access is required to change account roles" }, { status: 403 });
+      }
+      if (!["member", "community", "employer", "school", "organization", "moderator", "admin"].includes(body.role)) {
+        return NextResponse.json({ error: "Invalid user role" }, { status: 400 });
+      }
     }
 
     if (body.action === "suspend") {
@@ -120,9 +128,12 @@ export async function PATCH(
       updates.suspendedAt = null;
     }
 
-    await adminDb.collection("users").doc(userId).update(updates);
+    if (body.role !== undefined) {
+      await changeAdminUserRole(userId, body.role, { auth: getAdminAuth(), db: adminDb, isSuperAdmin: auth.isSuperAdmin });
+    }
+    if (Object.keys(updates).length) await adminDb.collection("users").doc(userId).update(updates);
 
-    return NextResponse.json({ success: true, updates });
+    return NextResponse.json({ success: true, updates: { ...updates, ...(body.role !== undefined ? { role: body.role } : {}) } });
   } catch (error) {
     console.error("Error updating user:", error);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
@@ -149,7 +160,7 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (isSuperAdminEmail(userDoc.data()?.email)) {
+    if (await isSuperAdminAccount(userId, getAdminAuth())) {
       return NextResponse.json(
         { error: "Cannot delete super admin account" },
         { status: 403 }

@@ -17,6 +17,13 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   "pow wow": "Pow Wow",
   "round dance": "Round Dance",
   sports: "Sports",
+  career_fair: "Career Fair",
+  round_dance: "Round Dance",
+  hockey: "Hockey Tournament",
+  workshop: "Workshop / Training",
+  networking: "Networking",
+  webinar: "Webinar",
+  fundraiser: "Fundraiser",
 };
 
 const HIDDEN_STATUSES = new Set([
@@ -29,6 +36,10 @@ const HIDDEN_STATUSES = new Set([
   "draft",
   "expired",
   "inactive",
+  "pending",
+  "rejected",
+  "suspended",
+  "removed",
 ]);
 
 function parseDateString(value: string, endOfDay = false): Date | null {
@@ -38,22 +49,26 @@ function parseDateString(value: string, endOfDay = false): Date | null {
   const isoDateOnly = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (isoDateOnly) {
     const [, year, month, day] = isoDateOnly;
+    const check = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    if (check.toISOString().slice(0, 10) !== trimmed) return null;
     return endOfDay
       ? new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999)
       : new Date(Number(year), Number(month) - 1, Number(day), 0, 0, 0, 0);
   }
 
   const parsed = new Date(trimmed);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  if (Number.isNaN(parsed.getTime())) return null;
+  if (endOfDay && !/T|\d:\d/.test(trimmed)) parsed.setHours(23, 59, 59, 999);
+  return parsed;
 }
 
 function parseDatesLabel(label?: string | null): { start: Date | null; end: Date | null } {
   if (!label) return { start: null, end: null };
 
-  const rangeMatch = label.trim().match(/^([A-Za-z]+)\s+(\d{1,2})(?:-(\d{1,2}))?,\s*(\d{4})$/);
+  const rangeMatch = label.trim().replace(/[–—]/g, "-").match(/^([A-Za-z]+)\s+(\d{1,2})(?:-(\d{1,2}))?,\s*(\d{4})$/);
   if (!rangeMatch) {
     const fallback = parseDateString(label);
-    return { start: fallback, end: fallback };
+    return { start: fallback, end: parseDateString(label, true) };
   }
 
   const [, month, startDay, endDay, year] = rangeMatch;

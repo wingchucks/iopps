@@ -58,7 +58,7 @@ async function checkUser(email) {
     console.log('\n✅ MEMBER PROFILE EXISTS');
     const memberData = memberSnap.data();
     console.log('Display Name:', memberData.displayName);
-    console.log('Profile URL: https://www.iopps.ca/member/' + userId);
+    console.log('Profile URL: https://www.iopps.ca/members/' + userId);
   } else {
     console.log('\n❌ No member profile');
   }

@@ -70,13 +70,13 @@ export default function FollowButton({
     return (
       <button
         disabled
-        className="font-semibold cursor-default opacity-50"
+        className="brand-button font-semibold cursor-default opacity-50"
         style={{
           padding: small ? "8px 16px" : "12px 24px",
           borderRadius: 12,
           border: "1.5px solid var(--border)",
-          background: "var(--card)",
-          color: "var(--text-muted)",
+          background: "var(--button-gradient-soft)",
+          color: "var(--button-gradient-soft-text)",
           fontSize: small ? 13 : 15,
         }}
       >
@@ -99,8 +99,8 @@ export default function FollowButton({
           border: isUnfollow
             ? "1.5px solid var(--red)"
             : "1.5px solid var(--teal)",
-          background: isUnfollow ? "rgba(220,38,38,.08)" : "rgba(13,148,136,.08)",
-          color: isUnfollow ? "var(--red)" : "var(--teal)",
+          background: isUnfollow ? "rgba(220,38,38,.08)" : "var(--button-gradient-soft)",
+          color: isUnfollow ? "var(--red)" : "var(--button-gradient-soft-text)",
           fontSize: small ? 13 : 15,
         }}
       >
@@ -112,12 +112,12 @@ export default function FollowButton({
   return (
     <button
       onClick={handleClick}
-      className="font-semibold cursor-pointer transition-all duration-150 hover:opacity-90"
+      className="brand-button font-semibold cursor-pointer transition-all duration-150 hover:opacity-90"
       style={{
         padding: small ? "8px 16px" : "12px 24px",
         borderRadius: 12,
         border: "none",
-        background: "var(--teal)",
+        background: "var(--button-gradient)",
         color: "#fff",
         fontSize: small ? 13 : 15,
       }}

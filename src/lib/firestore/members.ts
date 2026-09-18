@@ -1,19 +1,11 @@
 import {
-  collection,
   doc,
   getDoc,
-  getDocs,
   setDoc,
   updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  limit,
-  startAfter,
   serverTimestamp,
-  type QueryDocumentSnapshot,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 
 export type WorkPreference = "remote" | "in-person" | "hybrid" | "any";
 
@@ -62,6 +54,10 @@ export interface MemberProfile {
 export async function getMemberProfile(
   uid: string
 ): Promise<MemberProfile | null> {
+  if (auth.currentUser?.uid !== uid) {
+    const result = await memberRequest("?uid=" + encodeURIComponent(uid));
+    return result.member as MemberProfile | null;
+  }
   const snap = await getDoc(doc(db, "members", uid));
   if (!snap.exists()) return null;
   return { uid: snap.id, ...snap.data() } as MemberProfile;
@@ -122,34 +118,28 @@ export async function updateMemberProfile(
   await updateDoc(doc(db, "members", uid), updates);
 }
 
-export async function getAllMembers(): Promise<MemberProfile[]> {
-  const snap = await getDocs(
-    query(collection(db, "members"), orderBy("displayName"))
-  );
-  return snap.docs
-    .map((d) => ({ uid: d.id, ...d.data() }) as MemberProfile)
-    .filter((member) => Boolean(member.uid && member.displayName));
+async function memberRequest(query = "") {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sign in to view members");
+  const response = await fetch("/api/members" + query, { headers: { Authorization: `Bearer ${await user.getIdToken()}` }, cache: "no-store" });
+  if (!response.ok) throw new Error("Unable to load members");
+  return response.json();
 }
 
-const PAGE_SIZE = 30;
+export async function getAllMembers(): Promise<MemberProfile[]> {
+  const members: MemberProfile[] = [];
+  let cursor: string | null = null;
+  do {
+    const page = await getMembersPaginated(cursor);
+    members.push(...page.members);
+    cursor = page.lastDoc;
+  } while (cursor);
+  return members;
+}
 
-export async function getMembersPaginated(
-  cursor?: QueryDocumentSnapshot
-): Promise<{ members: MemberProfile[]; lastDoc: QueryDocumentSnapshot | null }> {
-  const constraints = [
-    orderBy("displayName"),
-    limit(PAGE_SIZE + 10), // fetch a few extra to account for hidden ones
-    ...(cursor ? [startAfter(cursor)] : []),
-  ];
-  const snap = await getDocs(query(collection(db, "members"), ...constraints));
-  // Filter out members hidden from directory client-side (avoids Firestore index requirement)
-  const allDocs = snap.docs.filter((d) => d.data().hideFromDirectory !== true);
-  const members = allDocs
-    .slice(0, PAGE_SIZE)
-    .map((d) => ({ uid: d.id, ...d.data() }) as MemberProfile)
-    .filter((member) => Boolean(member.uid && member.displayName));
-  const lastDoc = allDocs.length >= PAGE_SIZE ? allDocs[PAGE_SIZE - 1] : null;
-  return { members, lastDoc };
+export async function getMembersPaginated(cursor?: string | null): Promise<{ members: MemberProfile[]; lastDoc: string | null }> {
+  const data = await memberRequest(cursor ? "?cursor=" + encodeURIComponent(cursor) : "");
+  return { members: data.members, lastDoc: data.nextCursor };
 }
 
 export async function updateCareerPreferences(
@@ -169,6 +159,16 @@ export async function updateCareerPreferences(
   });
 }
 
-export async function deleteMemberProfile(uid: string): Promise<void> {
-  await deleteDoc(doc(db, "members", uid));
+export async function deleteOwnAccount(uid: string): Promise<void> {
+  const user = auth.currentUser;
+  if (!user || user.uid !== uid) throw new Error("Sign in to delete your account");
+  const response = await fetch("/api/account", {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${await user.getIdToken(true)}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ confirmDelete: true }),
+  });
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(result.error || "Unable to delete account");
+  }
 }

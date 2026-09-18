@@ -6,6 +6,7 @@ import { submitApplication } from "@/lib/server/application-submission";
 import { archiveApplicationResume } from "@/lib/server/application-document-archive";
 import { applicationReceiptRecord } from "@/lib/application-receipt";
 import { getStorage } from "firebase-admin/storage";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
@@ -54,9 +55,11 @@ export async function GET(request: NextRequest) {
   if (!auth.success) return auth.response;
   try {
     const postId = request.nextUrl.searchParams.get("postId");
-    if (postId) {
-      if (postId.includes("/") || postId.length > 300) return NextResponse.json({error:"Invalid job identifier"}, {status:400});
-      const snapshot = await getAdminDb().collection("applications").doc(`${auth.decodedToken.uid}_${postId}`).get();
+    const appId = request.nextUrl.searchParams.get("appId");
+    if (appId && (appId.includes("/") || appId.length > 500)) return NextResponse.json({error:"Invalid application identifier"}, {status:400});
+    if (postId || appId) {
+      if (postId && (postId.includes("/") || postId.length > 300)) return NextResponse.json({error:"Invalid job identifier"}, {status:400});
+      const snapshot = await getAdminDb().collection("applications").doc(appId || `${auth.decodedToken.uid}_${postId}`).get();
       const data = snapshot.data();
       if (!data || data.userId !== auth.decodedToken.uid) return NextResponse.json({application:null}, {headers:{"Cache-Control":"private, no-store"}});
       return NextResponse.json({application:serialize(applicationReceiptRecord({...data,id:snapshot.id}))}, {headers:{"Cache-Control":"private, no-store"}});
@@ -68,12 +71,37 @@ export async function GET(request: NextRequest) {
       const data = doc.data();
       return serialize({ id: doc.id, userId: data.userId, postId: data.postId,
         postTitle: data.postTitle, orgName: data.orgName, status: data.status,
-        statusHistory: data.statusHistory || [], appliedAt: data.appliedAt,
+        statusHistory: Array.isArray(data.statusHistory) ? data.statusHistory.map((entry: Record<string, unknown>) => ({ status: entry.status, timestamp: entry.timestamp })) : [], appliedAt: data.appliedAt,
         updatedAt: data.updatedAt });
     });
     return NextResponse.json({ applications }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("Unable to load applicant history:", error);
     return NextResponse.json({ error: "Unable to load applications" }, { status: 503 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const auth = await verifyAuthToken(request);
+  if (!auth.success) return auth.response;
+  try {
+    const body = await request.json();
+    if (body.action !== "withdraw" || typeof body.appId !== "string" || !body.appId || body.appId.includes("/") || body.appId.length > 500) {
+      return NextResponse.json({ error: "Invalid withdrawal" }, { status: 400 });
+    }
+    const db = getAdminDb();
+    const status = await db.runTransaction(async tx => {
+      const ref = db.collection("applications").doc(body.appId);
+      const snapshot = await tx.get(ref);
+      const data = snapshot.data();
+      if (!data || data.userId !== auth.decodedToken.uid) return 404;
+      if (data.status === "withdrawn") return 200;
+      if (!["submitted", "reviewing", "shortlisted", "interview"].includes(data.status)) return 409;
+      tx.update(ref, { status: "withdrawn", updatedAt: FieldValue.serverTimestamp(), statusHistory: [...(Array.isArray(data.statusHistory) ? data.statusHistory : []), { status: "withdrawn", timestamp: Timestamp.now() }] });
+      return 200;
+    });
+    return NextResponse.json(status === 200 ? { success: true } : { error: status === 404 ? "Application not found" : "This application cannot be withdrawn" }, { status, headers: { "Cache-Control": "private, no-store" } });
+  } catch {
+    return NextResponse.json({ error: "Unable to withdraw application" }, { status: 503 });
   }
 }

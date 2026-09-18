@@ -327,9 +327,9 @@ function NotificationContent() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-3 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+          className="brand-button px-6 py-3 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
           style={{
-            background: "var(--teal)",
+            background: "var(--button-gradient)",
             opacity: saving ? 0.7 : 1,
           }}
         >

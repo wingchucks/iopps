@@ -104,8 +104,8 @@ function PlanCard({
         ) : (
           <Link href={href} className="no-underline">
             <button
-              className="w-full py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
-              style={{ background: gold ? "var(--gold)" : "var(--navy)", color: "#fff" }}
+              className="brand-button w-full py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
+              style={{ background: gold ? "var(--button-gradient)" : "var(--button-gradient)", color: "#fff" }}
             >
               {cta}
             </button>
@@ -155,8 +155,8 @@ function FreeCard({
         </ul>
         <Link href={href} className="no-underline">
           <button
-            className="px-8 py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
-            style={{ background: "var(--teal)", color: "#fff" }}
+            className="brand-button px-8 py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
+            style={{ background: "var(--button-gradient)", color: "#fff" }}
           >
             {cta}
           </button>
@@ -195,9 +195,9 @@ export default function PricingTabs({
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="px-4 py-2 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all whitespace-nowrap"
+              className="brand-button px-4 py-2 rounded-xl border-none font-semibold text-sm cursor-pointer transition-all whitespace-nowrap"
               style={{
-                background: active ? "var(--navy)" : "var(--card)",
+                background: active ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                 color: active ? "#fff" : "var(--text-sec)",
                 border: active ? "none" : "1px solid var(--border)",
               }}
@@ -327,8 +327,8 @@ export default function PricingTabs({
             </p>
             <a href="mailto:partnership@iopps.ca" className="no-underline">
               <button
-                className="px-8 py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
-                style={{ background: "var(--teal)", color: "#fff" }}
+                className="brand-button px-8 py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
+                style={{ background: "var(--button-gradient)", color: "#fff" }}
               >
                 Contact Us
               </button>

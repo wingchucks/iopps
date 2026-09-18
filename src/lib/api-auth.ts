@@ -3,7 +3,7 @@ import { adminAuth } from "@/lib/firebase-admin";
 import type { Auth, DecodedIdToken } from "firebase-admin/auth";
 import type { AccountAccessDeps } from "@/lib/server/account-access";
 import { assertUserCanAccessApp, AccountAccessError } from "@/lib/server/account-access";
-import { isSuperAdminEmail } from "@/lib/server/super-admin";
+import { isSuperAdminIdentity } from "@/lib/server/super-admin";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -14,6 +14,7 @@ export interface AuthResult {
   decodedToken: DecodedIdToken;
   userData: Record<string, unknown>;
   viewerEmail: string | null;
+  isSuperAdmin: boolean;
 }
 
 export interface AuthError {
@@ -24,7 +25,7 @@ export interface AuthError {
 export interface VerifyAuthTokenDeps {
   adminAuth?: Pick<Auth, "verifyIdToken"> | null;
   accessDeps?: AccountAccessDeps;
-  superAdminEnvValue?: string | null;
+  checkRevoked?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -67,13 +68,14 @@ export async function verifyAuthToken(
 
   try {
     const token = authHeader.substring(7);
-    const decodedToken = await authService.verifyIdToken(token);
+    const decodedToken = await authService.verifyIdToken(token, deps.checkRevoked === true);
     const access = await assertUserCanAccessApp(decodedToken, deps.accessDeps);
     return {
       success: true,
       decodedToken,
       userData: access.userData,
       viewerEmail: access.email,
+      isSuperAdmin: isSuperAdminIdentity(decodedToken, access.authUser),
     };
   } catch (error) {
     if (error instanceof AccountAccessError) {
@@ -110,12 +112,13 @@ export async function verifyAdminToken(
   request: NextRequest,
   deps: VerifyAuthTokenDeps = {},
 ): Promise<AuthResult | AuthError> {
-  const result = await verifyAuthToken(request, deps);
+  const result = await verifyAuthToken(request, { ...deps, checkRevoked: true });
   if (!result.success) return result;
 
   const { decodedToken } = result;
   const isAdmin =
-    decodedToken.admin === true || decodedToken.role === "admin";
+    (decodedToken.admin === true || decodedToken.role === "admin") &&
+    (result.userData.claimsValidAfter === undefined || result.userData.role === "admin");
 
   if (!isAdmin) {
     return {
@@ -137,8 +140,7 @@ export async function verifySuperAdminToken(
   const result = await verifyAdminToken(request, deps);
   if (!result.success) return result;
 
-  const viewerEmail = result.viewerEmail ?? result.decodedToken.email ?? null;
-  if (!isSuperAdminEmail(viewerEmail, deps.superAdminEnvValue ?? undefined)) {
+  if (!result.isSuperAdmin) {
     return {
       success: false,
       response: NextResponse.json(

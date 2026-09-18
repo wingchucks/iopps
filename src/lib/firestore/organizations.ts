@@ -1,3 +1,4 @@
+import type { BusinessListingReview } from "@/lib/business-listing-review";
 import {
   doc,
   getDoc,
@@ -21,11 +22,13 @@ import { normalizeOrganizationRecord } from "@/lib/organization-profile";
 export type BusinessIdentity = "indigenous" | "non_indigenous" | "not_specified";
 
 export interface Organization {
+  directoryReview?: BusinessListingReview;
   id: string;
   name: string;
   slug?: string;
   type: "business" | "school" | "non-profit" | "government" | "employer" | "legal" | "professional";
   businessIdentity?: BusinessIdentity;
+  capabilities?: string[];
   contactName?: string;
   contactEmail?: string;
   logo?: string;
@@ -128,6 +131,15 @@ export async function getOrganization(
     id: snap.id,
     ...snap.data(),
   } as Organization);
+}
+
+/** Public pages must never read private organization documents directly. */
+export async function getPublicOrganization(orgId: string): Promise<Organization | null> {
+  const response = await fetch(`/api/org/${encodeURIComponent(orgId)}`);
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Unable to load organization.");
+  const data = await response.json();
+  return data.org ? normalizeOrganizationRecord(data.org as Organization) : null;
 }
 
 /**

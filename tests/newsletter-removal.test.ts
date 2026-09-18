@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { personalProfileUpdates } from "../src/lib/profile-fields.ts";
 
 const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
@@ -60,7 +61,7 @@ test("newsletter cron and admin navigation are removed", () => {
 test("profile API refuses to persist legacy newsletter consent fields", () => {
   const profileApi = source("src/app/api/profile/route.ts");
 
-  for (const field of ["newsletterOptIn", "newsletterOptInAt", "emailOptIn", "emailOptInAt"]) {
-    assert.match(profileApi, new RegExp(`delete data\\.${field}`));
-  }
+  assert.match(profileApi, /personalProfileUpdates\(input\)/);
+  const legacyFields = Object.fromEntries(["newsletterOptIn", "newsletterOptInAt", "emailOptIn", "emailOptInAt"].map(field => [field, "must not persist"]));
+  assert.deepEqual(personalProfileUpdates({ ...legacyFields, displayName: "Allowed name" }), { displayName: "Allowed name" });
 });

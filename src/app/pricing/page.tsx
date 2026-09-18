@@ -52,8 +52,8 @@ export default function PricingPage() {
             </Link>
             <Link
               href="/org/signup"
-              className="text-sm font-semibold no-underline px-5 py-2 rounded-xl"
-              style={{ background: "var(--teal)", color: "#fff" }}
+              className="brand-button text-sm font-semibold no-underline px-5 py-2 rounded-xl"
+              style={{ background: "var(--button-gradient)", color: "#fff" }}
             >
               Join Free
             </Link>

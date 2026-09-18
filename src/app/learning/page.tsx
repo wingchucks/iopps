@@ -213,8 +213,8 @@ function LearningContent() {
                       href={officialUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center rounded-xl px-3 py-2 text-xs font-bold text-white no-underline"
-                      style={{ background: "var(--teal)" }}
+                      className="brand-button inline-flex items-center rounded-xl px-3 py-2 text-xs font-bold text-white no-underline"
+                      style={{ background: "var(--button-gradient)" }}
                     >
                       Continue with {providerName} &#8599;
                     </a>
@@ -258,10 +258,10 @@ function LearningContent() {
                 Browse training programs to start learning.
               </p>
               <Link href="/training">
-                <Button
+                <Button className="brand-button"
                   primary
                   small
-                  style={{ background: "var(--teal)", borderRadius: 12 }}
+                  style={{ background: "var(--button-gradient)", borderRadius: 12 }}
                 >
                   Browse Training
                 </Button>
@@ -390,7 +390,7 @@ function LearningContent() {
                           showToast("Certificate not yet available", "info");
                         }
                       }}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border-none cursor-pointer transition-all"
+                      className="button-gradient-soft text-xs font-semibold px-3 py-1.5 rounded-lg border-none cursor-pointer transition-all"
                       style={{
                         background: "var(--gold-soft)",
                         color: "var(--gold)",
@@ -405,7 +405,7 @@ function LearningContent() {
                           showToast("Link copied!", "success");
                         });
                       }}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border-none cursor-pointer transition-all"
+                      className="button-gradient-soft text-xs font-semibold px-3 py-1.5 rounded-lg border-none cursor-pointer transition-all"
                       style={{
                         background: "var(--border)",
                         color: "var(--text-sec)",
@@ -434,10 +434,10 @@ function LearningContent() {
               Save programs you are interested in from the Training Hub.
             </p>
             <Link href="/training">
-              <Button
+              <Button className="brand-button"
                 primary
                 small
-                style={{ background: "var(--teal)", borderRadius: 12 }}
+                style={{ background: "var(--button-gradient)", borderRadius: 12 }}
               >
                 Browse Training &#8594;
               </Button>

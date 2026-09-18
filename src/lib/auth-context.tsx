@@ -26,7 +26,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   sendVerificationEmail: (nextPath?: string) => Promise<void>;
-  reloadUser: () => Promise<void>;
+  reloadUser: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -213,13 +213,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const reloadUser = async () => {
     if (auth.currentUser) {
       await auth.currentUser.reload();
-      setUser(auth.currentUser);
-      // Re-sync cookie after reload to update email_verified claim
+      await auth.currentUser.getIdToken(true);
+      // Refresh cached claims before syncing the verified session.
       const sessionReady = await ensureSessionCookie(auth.currentUser);
       if (!sessionReady) {
         throw new Error("Unable to refresh your secure session right now.");
       }
+      setUser(auth.currentUser);
+      return auth.currentUser.emailVerified;
     }
+    return false;
   };
 
   return (

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Narrow VM double for admin route database/auth boundary. */
 import test from 'node:test';
+import { isPublicJobRecordVisible } from '../src/lib/public-job-merge.ts';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -23,6 +24,7 @@ test('admin activate/deactivate synchronize both publication fields', async () =
       if (id === 'next/server') return { NextResponse: { json: Response.json } };
       if (id === '@/lib/firebase-admin') return { adminDb: { collection: () => ({ doc: () => ref }), runTransaction: async (callback: any) => callback({get: (ref: any) => ref.get(), update: (ref: any, data: any) => ref.update(data)}) } };
       if (id === '@/lib/server/admin-job-lifecycle') return { activateAdminJob };
+      if (id === '@/lib/public-job-merge') return { isPublicJobRecordVisible };
       if (id === 'firebase-admin/firestore') return { FieldValue: { serverTimestamp: () => 'fictional-time' } };
       if (id === '@/lib/api-auth') return { verifyAdminToken: async () => ({ success: true }) };
       throw new Error(id);

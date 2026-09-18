@@ -169,10 +169,10 @@ function PartnersContent() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className="px-5 py-2 rounded-full text-[13px] font-semibold cursor-pointer transition-colors"
+              className="brand-button px-5 py-2 rounded-full text-[13px] font-semibold cursor-pointer transition-colors"
               style={{
                 border: filter === f ? "none" : "1.5px solid var(--border)",
-                background: filter === f ? "var(--navy)" : "var(--card)",
+                background: filter === f ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                 color: filter === f ? "#fff" : "var(--text-sec)",
               }}
             >
@@ -290,10 +290,10 @@ function PartnersContent() {
             </div>
             <div className="flex justify-center gap-3">
               <Link href={partnerCta.href}>
-                <Button
+                <Button className="brand-button"
                   primary
                   style={{
-                    background: "var(--gold)",
+                    background: "var(--button-gradient)",
                     borderRadius: 12,
                     fontWeight: 700,
                     fontSize: 15,
@@ -304,10 +304,10 @@ function PartnersContent() {
                 </Button>
               </Link>
               <Link href="/pricing">
-                <Button
+                <Button className="brand-button"
                   style={{
-                    color: "#fff",
-                    background: "rgba(255,255,255,.1)",
+                    color: "var(--button-gradient-soft-text)",
+                    background: "var(--button-gradient-soft)",
                     borderColor: "rgba(255,255,255,.2)",
                     borderRadius: 12,
                     fontSize: 15,

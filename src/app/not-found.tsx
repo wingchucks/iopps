@@ -27,11 +27,11 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/feed"
-            className="inline-block font-bold no-underline transition-all duration-150 hover:opacity-90"
+            className="brand-button inline-block font-bold no-underline transition-all duration-150 hover:opacity-90"
             style={{
               padding: "13px 28px",
               borderRadius: 12,
-              background: "var(--teal)",
+              background: "var(--button-gradient)",
               color: "#fff",
               fontSize: 15,
             }}
@@ -40,13 +40,13 @@ export default function NotFound() {
           </Link>
           <Link
             href="/"
-            className="inline-block font-semibold no-underline transition-all duration-150 hover:opacity-80"
+            className="brand-button inline-block font-semibold no-underline transition-all duration-150 hover:opacity-80"
             style={{
               padding: "13px 28px",
               borderRadius: 12,
               border: "1.5px solid var(--border)",
-              background: "var(--card)",
-              color: "var(--text-sec)",
+              background: "var(--button-gradient-soft)",
+              color: "var(--button-gradient-soft-text)",
               fontSize: 15,
             }}
           >

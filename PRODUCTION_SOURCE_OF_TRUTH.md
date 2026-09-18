@@ -55,14 +55,9 @@ For normal website work:
 4. Create a fallback git tag after the current production state is committed:
    - example: `prod-stable-2026-03-20`
 
-## Safe production deploy command
+## Release cutover
 
-Run from:
-
-- `C:\Users\natha\OneDrive\Documents\iopps`
-
-Command:
-
-```powershell
-vercel deploy --prod -y
-```
+Use `operations/LAUNCH-RECOVERY.md` for the required exact-SHA checks,
+preview isolation, writer containment, paired rules and recovery evidence.
+A successful build or merge alone is not release approval. Do not use an
+unqualified `vercel --prod` command to bypass those gates.

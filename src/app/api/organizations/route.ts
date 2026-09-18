@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { toPublicOrganization } from "@/lib/public-organization";
 import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
 import { getLocalDevOrganizations } from "@/lib/local-dev-business-data";
 import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "@/lib/server/partner-promotion";
@@ -48,7 +49,7 @@ export async function GET(req: Request) {
         .filter((org) => !isSchoolOrganization(org) || isSchoolPubliclyVisible(org))
         .filter((org) => isPaidPartner(org))
         .sort(comparePartnerPromotion);
-      return NextResponse.json({ orgs });
+      return NextResponse.json({ orgs: orgs.map(toPublicOrganization) });
     }
 
     // Search / general: orgs that completed onboarding, are verified, or have been accepted
@@ -79,7 +80,7 @@ export async function GET(req: Request) {
       .filter((org) => !isSchoolOrganization(org) || isSchoolPubliclyVisible(org))
       .sort(comparePartnerPromotion);
 
-    return NextResponse.json({ orgs });
+    return NextResponse.json({ orgs: orgs.map(toPublicOrganization) });
   } catch (err) {
     console.error("[api/organizations] Error:", err);
     return NextResponse.json({ error: "Failed to load organizations" }, { status: 500 });

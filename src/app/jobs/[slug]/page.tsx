@@ -1,4 +1,5 @@
 "use client";
+import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
 
 import { Suspense, useState, useEffect } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -144,7 +145,7 @@ function JobDetailContent() {
 
   if (loading) {
     return (
-      <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
+      <div className="journey-job-detail max-w-[1120px] mx-auto px-4 py-6 md:px-10 md:py-8">
         <div className="skeleton h-4 w-24 rounded mb-4" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
@@ -195,8 +196,21 @@ function JobDetailContent() {
   const salaryLabel = displayAmount(job.salary);
   const locationLabel = displayLocation(job.location);
 
+  const applicationAction = destination.kind === "unavailable" ? (
+    <button className="journey-apply-button" disabled>Application link unavailable</button>
+  ) : normalizedApplicationHref && !shouldUseInternalApply ? (
+    <a href={normalizedApplicationHref} {...applicationLinkProps}
+      onClick={() => trackJobFunnelEvent("external_application_click", { jobId: job.id })}
+      className="journey-apply-button">{destination.label}</a>
+  ) : !user ? (
+    <Link href={loginRedirectHref} className="journey-apply-button">Sign In to Apply</Link>
+  ) : (
+    <button className="journey-apply-button" disabled={applied}
+      onClick={() => router.push(internalApplyPath)}>{applied ? "✓ Applied" : "Apply Now"}</button>
+  );
+
   return (
-    <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
+    <div className="journey-job-detail max-w-[1120px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Back link */}
       <Link
         href="/jobs"
@@ -209,7 +223,7 @@ function JobDetailContent() {
         {/* Main Content */}
         <div className="md:col-span-2">
           {/* Header */}
-          <div className="mb-6">
+          <div className="journey-role-heading mb-6">
             <div className="flex flex-wrap items-center gap-2 mb-3">
               {job.featured && (
                 <Badge text="Featured" color="var(--gold)" bg="var(--gold-soft)" small icon={<span>⭐</span>} />
@@ -248,20 +262,21 @@ function JobDetailContent() {
             </div>
           </div>
 
+          <div className="journey-mobile-apply">
+            <p>{destination.label}</p>
+            {applicationAction}
+            <button className="journey-save-button" onClick={handleSave} disabled={actionLoading === "save"} aria-pressed={saved}>
+              {actionLoading === "save" ? "Saving…" : saved ? "✓ Saved" : "Save job for later"}
+            </button>
+          </div>
+
           {/* Description */}
           {job.description ? (
             <>
               <h3 className="text-lg font-bold text-text mb-2">About This Role</h3>
-              {job.description.includes("<") ? (
-                <div
-                  className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: job.description }}
-                />
-              ) : (
-                <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                  {job.description}
-                </p>
-              )}
+              <p className="journey-role-description text-base text-text-sec leading-relaxed mb-6 whitespace-pre-line">
+                {job.description}
+              </p>
             </>
           ) : normalizedApplicationHref && !shouldUseInternalApply ? (
             <div className="mb-6 p-5 rounded-2xl border border-border bg-[var(--card)]">
@@ -276,11 +291,12 @@ function JobDetailContent() {
             </div>
           ) : null}
 
+          <HiringDetailsSummary value={job.hiringDetails} legacy={job} />
           {/* Requirements */}
           {job.requirements && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">Requirements</h3>
-              <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
+              <p className="text-base text-text-sec leading-relaxed mb-6 whitespace-pre-line">
                 {job.requirements}
               </p>
             </>
@@ -321,56 +337,21 @@ function JobDetailContent() {
 
         {/* Sidebar */}
         <div>
-          <Card className="mb-4" style={{ position: "sticky", top: 80 }}>
+          <Card className="journey-application-card mb-4" style={{ position: "sticky", top: 24 }}>
             <div style={{ padding: 20 }}>
               {/* M-4: show where the Apply action routes */}
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">
                 {destination.label}
               </p>
               {/* Apply button */}
-              {destination.kind === "unavailable" ? <Button full disabled>Application link unavailable</Button> : normalizedApplicationHref && !shouldUseInternalApply ? (
-                <a href={normalizedApplicationHref} {...applicationLinkProps} onClick={() => trackJobFunnelEvent("external_application_click", { jobId: job.id })} className="block no-underline mb-3">
-                  <Button
-                    primary
-                    full
-                    style={{ padding: "14px 24px", borderRadius: 14, fontSize: 16, fontWeight: 700 }}
-                  >
-                    {destination.label}
-                  </Button>
-                </a>
-              ) : !user ? (
-                <Link href={loginRedirectHref} className="block no-underline mb-3">
-                  <Button
-                    primary
-                    full
-                    style={{ padding: "14px 24px", borderRadius: 14, fontSize: 16, fontWeight: 700 }}
-                  >
-                    Sign In to Apply
-                  </Button>
-                </Link>
-              ) : (
-                <Button
-                  primary
-                  full
-                  onClick={() => { if (!applied) router.push(internalApplyPath); }}
-                  style={{
-                    background: applied ? "var(--green)" : "var(--teal)",
-                    padding: "14px 24px",
-                    borderRadius: 14,
-                    fontSize: 16,
-                    fontWeight: 700,
-                    marginBottom: 12,
-                    cursor: applied ? "default" : "pointer",
-                  }}
-                >
-                  {applied ? "✓ Applied" : "Apply Now"}
-                </Button>
-              )}
+              <div className="journey-desktop-apply">{applicationAction}</div>
 
               {/* Save button */}
               <Button
                 full
                 onClick={handleSave}
+                disabled={actionLoading === "save"}
+                aria-pressed={saved}
                 style={{
                   borderRadius: 14,
                   padding: "12px 24px",

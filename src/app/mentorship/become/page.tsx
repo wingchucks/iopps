@@ -161,8 +161,8 @@ export default function BecomeMentorPage() {
                   />
                   <button
                     onClick={addExpertise}
-                    className="px-4 py-2.5 rounded-xl text-sm font-bold text-white shrink-0"
-                    style={{ background: "var(--purple)" }}
+                    className="brand-button px-4 py-2.5 rounded-xl text-sm font-bold text-white shrink-0"
+                    style={{ background: "var(--button-gradient)" }}
                   >
                     Add
                   </button>
@@ -320,8 +320,8 @@ export default function BecomeMentorPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50"
-                style={{ background: "var(--purple)" }}
+                className="brand-button w-full py-3 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50"
+                style={{ background: "var(--button-gradient)" }}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.background = "#6D28D9")
                 }

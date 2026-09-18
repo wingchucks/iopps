@@ -13,9 +13,7 @@ import {
   onSnapshot,
   type QueryConstraint,
 } from "firebase/firestore";
-import { db } from "../firebase";
-import { queueEmail } from "./emailQueue";
-import { newMessageEmail } from "../email-templates";
+import { auth, db } from "../firebase";
 
 export interface Conversation {
   id: string;
@@ -109,23 +107,10 @@ export async function sendMessage(
 
   // Queue email notification for the recipient
   try {
-    const [recipientSnap, senderSnap] = await Promise.all([
-      getDoc(doc(db, "members", recipientId)),
-      getDoc(doc(db, "members", senderId)),
-    ]);
-    if (recipientSnap.exists()) {
-      const recipient = recipientSnap.data();
-      const recipientEmail = recipient.email as string | undefined;
-      const recipientName = (recipient.displayName || recipient.name || "Member") as string;
-      const senderName = senderSnap.exists()
-        ? ((senderSnap.data().displayName || senderSnap.data().name || "Someone") as string)
-        : "Someone";
-
-      // Only queue if recipient has an email on file
-      if (recipientEmail) {
-        const html = newMessageEmail(recipientName, senderName);
-        await queueEmail(recipientEmail, `New message from ${senderName}`, html);
-      }
+    const user = auth.currentUser;
+    if (user) {
+      const response = await fetch("/api/messages/notify", { method: "POST", headers: { Authorization: `Bearer ${await user.getIdToken()}`, "Content-Type": "application/json" }, body: JSON.stringify({ messageId: msgId }) });
+      if (!response.ok) throw new Error("Unable to queue message notification");
     }
   } catch (err) {
     console.error("Failed to queue message notification email:", err);
@@ -146,7 +131,7 @@ export async function getUnreadConversationCount(
   userId: string
 ): Promise<number> {
   const snap = await getDocs(
-    query(convCol, where("unreadBy", "==", userId))
+    query(convCol, where("unreadBy", "==", userId), where("participants", "array-contains", userId))
   );
   return snap.size;
 }
@@ -189,7 +174,7 @@ export function onUnreadCount(
   userId: string,
   callback: (count: number) => void
 ): () => void {
-  const q = query(convCol, where("unreadBy", "==", userId));
+  const q = query(convCol, where("unreadBy", "==", userId), where("participants", "array-contains", userId));
   return onSnapshot(q, (snap) => {
     callback(snap.size);
   });

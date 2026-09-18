@@ -211,10 +211,10 @@ function ResumeContent() {
                 rel="noopener noreferrer"
                 className="no-underline"
               >
-                <Button
+                <Button className="brand-button"
                   small
                   style={{
-                    background: "var(--teal)",
+                    background: "var(--button-gradient)",
                     color: "#fff",
                     border: "none",
                     borderRadius: 12,

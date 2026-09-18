@@ -1,3 +1,5 @@
+import { businessListingReviewAllowsPublic } from "./business-listing-review";
+
 type UnknownRecord = Record<string, unknown>;
 
 function text(value: unknown): string {
@@ -26,6 +28,7 @@ export function isSchoolOrganization(value: unknown): boolean {
 export function isSchoolPubliclyVisible(value: unknown): boolean {
   const record = recordFrom(value);
 
+  if (!businessListingReviewAllowsPublic(record)) return false;
   if (!isSchoolOrganization(record)) return true;
 
   const signals: boolean[] = [];
