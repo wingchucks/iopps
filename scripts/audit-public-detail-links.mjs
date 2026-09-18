@@ -22,7 +22,7 @@ function routePattern(route) {
 }
 export function auditRoutes(root = process.cwd()) {
   const app = path.join(root, 'src/app');
-  const routes = files(app).filter(name => /\/(?:page|route)\.tsx?$/.test(name)).map(name => {
+  const routes = files(app).filter(name => /^(?:page|route)\.tsx?$/.test(path.basename(name))).map(name => {
     const route = '/' + path.relative(app, path.dirname(name)).split(path.sep).filter(s => s && !s.startsWith('(') && !s.startsWith('@')).join('/');
     return { route, pattern: routePattern(route), kind: name.endsWith('page.tsx') ? 'page' : 'api' };
   });
