@@ -46,6 +46,16 @@ saves, and restore scrolling on close. Theme state uses the React external-store
 contract, including SSR snapshots, cross-tab updates and denied-storage fallback.
 Notification timestamps use a clock with interval cleanup.
 
+The first hosted browser run at `79ec28095db0ea57824a62840717b09299a62c4a`
+also exposed missing admin notifications: 23 admin pages use `react-hot-toast`,
+but its renderer was absent. The authenticated admin layout now mounts one
+themed renderer for those existing callers. Regression tests use the real toast
+store and layout to verify escaped success/error announcements and continued
+denial for signed-out/unauthorized sessions. Both announcement cases fail against
+79ec and pass with the fix. Browser checks retain the visible-error and preserved
+field assertions, and explicitly verify the simulated POST returns 503 and
+submission becomes enabled again.
+
 The older Playwright configuration no longer defaults to the production site or
 loads dotenv credentials. It requires explicit loopback and demo-emulator settings
 and rejects credential canaries. Existing browser tests must never be described as

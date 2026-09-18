@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { Toaster } from "react-hot-toast";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
 
@@ -527,6 +528,16 @@ export default function AdminLayout({
 
   return (
     <div data-admin className="flex h-screen bg-background">
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: "var(--card-bg)",
+            color: "var(--foreground)",
+            border: "1px solid var(--card-border)",
+          },
+        }}
+      />
       {/* ---- Desktop sidebar ---- */}
       <aside className="hidden w-64 shrink-0 border-r border-[var(--card-border)] bg-surface lg:block">
         <SidebarContent

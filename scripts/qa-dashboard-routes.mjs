@@ -147,9 +147,16 @@ async function checkAdminModal(page, kind, width) {
   await page.route(url, route => route.request().method() === 'POST'
     ? route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Fictional temporary save failure' }) })
     : route.fallback());
-  await dialog.locator('button[type="submit"]').click();
+  const failedSave = page.waitForResponse(response => response.url() === url && response.request().method() === 'POST');
+  const submit = dialog.locator('button[type="submit"]');
+  await submit.click();
+  assert.equal((await failedSave).status(), 503);
   await page.getByText(conference ? 'Failed to create conference' : 'Failed to create pow wow', { exact: true }).waitFor();
+  await page.waitForFunction(() => !document.querySelector('[role="dialog"] button[type="submit"]').disabled);
+  assert.equal(await dialog.isVisible(), true);
+  assert.equal(await submit.isEnabled(), true);
   assert.equal(await field.inputValue(), `Fictional retained ${title}`);
+  await page.screenshot({ path: path.join(output, `${kind}-${width}-failed-save.png`), fullPage: true });
   await page.unroute(url);
   await dialog.getByRole('button', { name: 'Close', exact: true }).click();
   assert.equal(await page.evaluate(() => document.body.style.overflow), beforeOverflow);
