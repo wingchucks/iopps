@@ -57,7 +57,7 @@ try {
   for (const width of [1440, 390]) {
     for (const role of ['owner', 'school', 'member', 'admin']) {
       const context = await browser.newContext({ viewport: { width, height: 1000 }, serviceWorkers: 'block' });
-      const errors = [], missing = [], retired = [];
+      const errors = [], missing = [], retired = [], accountResolutions = [], loginDocuments = [];
       await context.route('**/*', route => {
         const url = new URL(route.request().url());
         return url.hostname === '127.0.0.1' && [new URL(base).port, '8080', '9099', '9199'].includes(url.port) ? route.continue() : route.abort();
@@ -71,11 +71,18 @@ try {
       });
       page.on('response', response => { if (response.status() === 404 && new URL(response.url()).pathname.startsWith('/api/')) missing.push(response.url()); });
       page.on('request', request => { if (new URL(request.url()).pathname.startsWith('/api/talent')) retired.push(request.url()); });
+      page.on('request', request => {
+        const pathname = new URL(request.url()).pathname;
+        if (pathname === '/api/auth/account') accountResolutions.push(pathname);
+        if (request.isNavigationRequest() && request.frame() === page.mainFrame()) loginDocuments.push(pathname);
+      });
       await page.goto(base + '/login');
       await page.getByLabel('Email address', { exact: true }).fill(accounts[role].email);
       await page.getByLabel('Password', { exact: true }).fill(password);
       await page.locator('button[type="submit"]').click();
       await page.waitForURL(url => !['/login', '/verify-email'].includes(url.pathname), { timeout: 30000 });
+      assert.equal(accountResolutions.length, 1, `${role} sign-in must resolve its destination once`);
+      assert.equal(loginDocuments.filter(pathname => pathname !== '/login').length, 1, `${role} sign-in must navigate once`);
       const routes = role === 'owner' ? [
         ['/org/dashboard', 'QA Dashboard Organization'],
         ['/employer/dashboard?tab=Jobs', 'QA active dashboard job'],

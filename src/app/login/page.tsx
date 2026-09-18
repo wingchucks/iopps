@@ -30,6 +30,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [slowRedirect, setSlowRedirect] = useState(false);
+  const [redirectAttempt, setRedirectAttempt] = useState(0);
 
   const resolvePostAuthDestination = useCallback(async (currentUser: {getIdToken: () => Promise<string>}) => {
     const controller = new AbortController();
@@ -70,7 +71,7 @@ function LoginForm() {
     });
 
     return () => { cancelled = true; window.clearTimeout(timeout); };
-  }, [user, authLoading, resolvePostAuthDestination]);
+  }, [user, authLoading, resolvePostAuthDestination, redirectAttempt]);
 
   if (authLoading || (user && !slowRedirect)) {
     return (
@@ -88,9 +89,7 @@ function LoginForm() {
     setLoading(true);
     try {
       await reloadUser();
-      if (user) {
-        window.location.replace(await resolvePostAuthDestination(user));
-      }
+      setRedirectAttempt((attempt) => attempt + 1);
       setSlowRedirect(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unable to refresh your secure session.";
@@ -185,8 +184,9 @@ function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      const cred = await signIn(email, password);
-      window.location.assign(await resolvePostAuthDestination(cred.user));
+      // AuthProvider publishes the user only after the secure session is ready.
+      // The effect above owns navigation for both new and restored sessions.
+      await signIn(email, password);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (msg.includes("user-not-found") || msg.includes("wrong-password") || msg.includes("invalid-credential"))
@@ -203,8 +203,7 @@ function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      const cred = await signInWithGoogle();
-      window.location.assign(await resolvePostAuthDestination(cred.user));
+      await signInWithGoogle();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (!msg.includes("popup-closed")) setError(msg);
