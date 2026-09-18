@@ -3,7 +3,6 @@ import { Geist } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { ToastProvider } from "@/lib/toast-context";
-import { OnboardingProvider } from "@/lib/onboarding-context";
 import AuthErrorBoundary from "@/components/AuthErrorBoundary";
 import SessionManager from "@/components/SessionManager";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
@@ -97,14 +96,12 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider>
-              <OnboardingProvider>
                 <AuthErrorBoundary>
                   <SessionManager />
                   <AnalyticsTracker />
                   <GoogleAnalytics />
                   <main id="main-content">{children}</main>
                 </AuthErrorBoundary>
-              </OnboardingProvider>
             </ToastProvider>
           </AuthProvider>
         </ThemeProvider>

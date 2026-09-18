@@ -27,6 +27,8 @@ jobs:
 
       - name: Build root application
         run: npm run build
+      - name: Audit current UI links and API routes
+        run: npm run audit:public-links
 
   mobile-lint:
     name: Mobile - Lint

@@ -29,6 +29,7 @@ try {
     QA_BASE_URL: server.base,
     QA_OUTPUT: path.resolve('test-results/release-browser/jobs'),
   });
+  await run(['scripts/qa-dashboard-routes.mjs'], { QA_BASE_URL: server.base });
 } finally {
   await server.stop();
 }

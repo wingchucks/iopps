@@ -1,3 +1,4 @@
+import { loadEmployerJobRows } from '../src/lib/server/employer-job-list.ts';
 /* eslint-disable @typescript-eslint/no-explicit-any -- VM isolates credentials/email; actual route and Firestore transactions run. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -33,6 +34,7 @@ async function harness(t: any) {
     const exports: any = {};
     vm.runInNewContext(ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
       exports, Date, Error, console: { log() {}, error(...args: any[]) { console.error(...args.map(value => value instanceof Error ? { name: value.name, message: value.message, code: (value as any).code } : value)); } }, require: (id: string) => {
+        if (id === '@/lib/server/employer-job-list') return { loadEmployerJobRows };
         if (id === 'next/server') return { NextResponse: { json: Response.json } };
         if (id === 'firebase-admin/firestore') return { FieldValue };
         if (id === '@/lib/firebase-admin') return { getAdminDb: () => port };

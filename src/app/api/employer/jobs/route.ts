@@ -1,3 +1,4 @@
+import { loadEmployerJobRows } from "@/lib/server/employer-job-list";
 import { normalizeHiringDetails } from "@/lib/job-hiring-details";
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue, type Firestore, type Transaction } from "firebase-admin/firestore";
@@ -162,41 +163,19 @@ export async function GET(req: NextRequest) {
     const context = await requireEmployerContext(req);
     const db = getAdminDb();
 
-    // Query both employerId and orgId matches
-    const jobsByEmployer = await db
-      .collection("jobs")
-      .where("employerId", "==", context.employerId)
-      .orderBy("createdAt", "desc")
-      .get();
-
-    const jobIds = new Set(jobsByEmployer.docs.map((doc) => doc.id));
-    const allDocs = [...jobsByEmployer.docs];
-
-    if (context.orgId && context.orgId !== context.employerId) {
-      const jobsByOrg = await db
-        .collection("jobs")
-        .where("orgId", "==", context.orgId)
-        .orderBy("createdAt", "desc")
-        .get();
-      for (const doc of jobsByOrg.docs) {
-        if (!jobIds.has(doc.id)) {
-          allDocs.push(doc);
-          jobIds.add(doc.id);
-        }
-      }
-    }
+    const allDocs = await loadEmployerJobRows(db, context);
 
     // Sort combined by createdAt desc
     allDocs.sort((a, b) => {
-      const aTime = a.data().createdAt?.toMillis?.() ?? 0;
-      const bTime = b.data().createdAt?.toMillis?.() ?? 0;
+      const aTime = Date.parse(String(serialize(a.data.createdAt) || "")) || 0;
+      const bTime = Date.parse(String(serialize(b.data.createdAt) || "")) || 0;
       return bTime - aTime;
     });
 
     // Build response with application counts
     const jobs = await Promise.all(
-      allDocs.filter(doc => doc.data().status !== 'deleted' && !doc.data().deletedAt).map(async (doc) => {
-        const d = doc.data();
+      allDocs.map(async (doc) => {
+        const d = doc.data;
         let applicationCount = 0;
         try {
           const appsSnap = await db

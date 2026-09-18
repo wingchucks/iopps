@@ -13,12 +13,14 @@ import { formatDate } from "@/lib/format-date";
 type JobStatus = "active" | "inactive";
 type TabFilter = "all" | JobStatus;
 
-interface AdminJob {
+interface AdminJob extends Record<string, unknown> {
   id: string;
   title: string;
   employerName: string;
   location: string;
   status: JobStatus;
+  active?: boolean;
+  publiclyVisible: boolean;
   applications: number;
   postedAt: string;
 }
@@ -220,10 +222,8 @@ export default function AdminJobsPage() {
 
       if (!res.ok) throw new Error(`API returned ${res.status}`);
 
-      // Update local state
-      setJobs((prev) =>
-        prev.map((j) => (j.id === job.id ? { ...j, status: newStatus } : j)),
-      );
+      // Read back lifecycle/expiry fields before offering a public link.
+      await fetchJobs();
     } catch (err) {
       console.error("Failed to toggle job status:", err);
     }
@@ -421,15 +421,14 @@ export default function AdminJobsPage() {
                     <tbody>
                       {filteredJobs.map((job) => {
                         const badge = STATUS_BADGE[job.status] || { label: job.status || "Unknown", variant: "default" as const };
+                        const publiclyVisible = job.publiclyVisible === true;
                         return (
                           <tr
                             key={job.id}
                             className="group border-b border-[var(--card-border)]/50 transition-colors hover:bg-[var(--card-bg)]/50"
                           >
                             <td className="py-4 pr-4">
-                              <Link href={`/admin/jobs/${job.id}`} className="font-medium text-text-primary group-hover:text-accent transition-colors hover:text-accent">
-                                {job.title}
-                              </Link>
+                              <span className="font-medium text-text-primary">{job.title}</span>
                               <p className="mt-0.5 text-xs text-text-muted">
                                 {job.employerName}
                               </p>
@@ -451,8 +450,8 @@ export default function AdminJobsPage() {
                             <td className="py-4 text-right">
                               <div className="flex items-center justify-end gap-1">
                                 {/* View */}
-                                <Link
-                                  href={`/careers/${job.id}`}
+                                {publiclyVisible && <Link
+                                  href={`/jobs/${encodeURIComponent(job.id)}`}
                                   className="rounded-lg p-2 text-text-muted transition-colors hover:bg-surface hover:text-text-primary"
                                   title="View job"
                                   aria-label={`View ${job.title}`}
@@ -470,7 +469,7 @@ export default function AdminJobsPage() {
                                       d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
                                     />
                                   </svg>
-                                </Link>
+                                </Link>}
 
                                 {/* Toggle Status */}
                                 <button

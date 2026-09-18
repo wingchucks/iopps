@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import OpportunityManager from "@/components/opportunities/OpportunityManager";
+import { getDashboardHref, getStandaloneDashboardHref, getDashboardRedirect } from "@/lib/dashboard-navigation";
 import BusinessListingStatus from "@/components/business-review/BusinessListingStatus";
 import type { BusinessListingReview } from "@/lib/business-listing-review";
 import BusinessOverview from "@/components/employer/BusinessOverview";
@@ -79,11 +78,6 @@ interface HoursDay {
 type HoursMap = Record<string, HoursDay>;
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-const DAY_LABELS: Record<string, string> = {
-  monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday",
-  thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday",
-};
-
 function createDefaultHours(): HoursMap {
   const hours: HoursMap = {};
   DAYS.forEach((day) => {
@@ -98,7 +92,7 @@ function createDefaultHours(): HoursMap {
 
 const ORG_TABS = [
   "Overview", "Jobs", "Applications", "Events", "Scholarships",
-  "Talent Search", "Analytics", "Edit Profile", "Team", "Templates", "Billing",
+  "Talent Search", "Analytics", "Edit Profile", "Team", "Billing",
  ] as const;
 
 const SCHOOL_TABS = [
@@ -111,20 +105,9 @@ const ALL_TABS = [...new Set<DashboardTab>([...ORG_TABS, ...SCHOOL_TABS])];
 
 const PROFILE_SUBS = ["Identity", "Story", "Credibility", "Discoverability", "Contact", "Media"] as const;
 
-const SUGGESTED_TAGS = [
-  "Recruitment", "Training", "Hospitality", "Human Resources",
-  "First Nations", "Saskatchewan", "Career Development", "Gaming Industry",
-];
-
-const TREATY_OPTIONS = [
-  "", "Treaty 1", "Treaty 2", "Treaty 3", "Treaty 4",
-  "Treaty 5", "Treaty 6", "Treaty 7", "Treaty 8",
-  "Treaty 9", "Treaty 10", "Treaty 11",
-];
-
-/* ─── amber accent color ─── */
-const AMBER = "#0D9488";
-const AMBER_RGB = "13,148,136";
+/* ─── brand accent color ─── */
+const ACCENT = "#0D9488";
+const ACCENT_RGB = "13,148,136";
 
 
 
@@ -193,19 +176,16 @@ function OrgDashboardContent() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
 
-  // Redirect ?create=job
   useEffect(() => {
-    if (searchParams.get("create") === "job") {
-      router.push("/org/dashboard/jobs/new");
-    }
-  }, [searchParams, router]);
-
-  useEffect(() => {
+    const destination = getDashboardRedirect(searchParams);
+    if (destination) { router.replace(destination); return; }
     const requestedTab = searchParams.get("tab");
     const requestedSection = searchParams.get("section");
 
     if (requestedTab && ALL_TABS.includes(requestedTab as DashboardTab)) {
       setActiveTab(requestedTab as DashboardTab);
+    } else {
+      setActiveTab("Overview");
     }
     if (
       requestedSection &&
@@ -214,13 +194,14 @@ function OrgDashboardContent() {
       setActiveTab("Edit Profile");
       setProfileSub(requestedSection as (typeof PROFILE_SUBS)[number]);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
+
 
   useEffect(() => {
-    if (!availableTabs.some((tab) => tab === activeTab)) {
+    if (!loading && org && !availableTabs.some((tab) => tab === activeTab)) {
       setActiveTab("Overview");
     }
-  }, [activeTab, availableTabs]);
+  }, [activeTab, availableTabs, loading, org]);
 
   const getToken = useCallback(async () => {
     if (!user) return "";
@@ -505,7 +486,7 @@ function OrgDashboardContent() {
         <div className="employer-workspace min-h-screen relative" style={{ background: "var(--bg, #020617)" }}>
           {/* Ambient background */}
           <div className="fixed inset-0 pointer-events-none z-0" style={{
-            background: `radial-gradient(ellipse 120% 80% at 20% -30%, rgba(${AMBER_RGB},0.08), transparent 60%),
+            background: `radial-gradient(ellipse 120% 80% at 20% -30%, rgba(${ACCENT_RGB},0.08), transparent 60%),
                          radial-gradient(ellipse 80% 60% at 80% 20%, rgba(59,130,246,0.06), transparent 50%),
                          radial-gradient(ellipse 60% 80% at 50% 110%, rgba(167,139,250,0.04), transparent 50%)`,
           }} />
@@ -515,8 +496,8 @@ function OrgDashboardContent() {
               <>
                 {/* ─── HERO ─── */}
                 <div className="employer-hero relative rounded-[20px] p-8 md:p-10 mb-8 overflow-hidden" style={{
-                  background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.08), rgba(59,130,246,0.06), rgba(167,139,250,0.04))`,
-                  border: `1px solid rgba(${AMBER_RGB},0.15)`,
+                  background: `linear-gradient(135deg, rgba(${ACCENT_RGB},0.08), rgba(59,130,246,0.06), rgba(167,139,250,0.04))`,
+                  border: `1px solid rgba(${ACCENT_RGB},0.15)`,
                 }}>
                   <div className="flex items-center justify-between flex-wrap gap-4 relative z-[2]">
                     <div className="flex items-center gap-5">
@@ -525,12 +506,12 @@ function OrgDashboardContent() {
                           name={org?.shortName || org?.name || ""}
                           size={64}
                           src={org?.logoUrl || org?.logo}
-                          gradient={`linear-gradient(135deg, ${AMBER}, #F59E0B)`}
+                          gradient={`linear-gradient(135deg, ${ACCENT}, #F59E0B)`}
                         />
                       </div>
                       <div>
                         <h1 className="text-2xl md:text-3xl font-black tracking-tight" style={{
-                          background: `linear-gradient(135deg, #fff 30%, ${AMBER})`,
+                          background: `linear-gradient(135deg, #fff 30%, ${ACCENT})`,
                           WebkitBackgroundClip: "text",
                           WebkitTextFillColor: "transparent",
                         }}>
@@ -542,7 +523,7 @@ function OrgDashboardContent() {
                         <div className="flex flex-wrap items-center gap-2 mt-1">
                           {org?.plan && (
                             <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{
-                              background: `rgba(${AMBER_RGB},0.12)`, color: AMBER,
+                              background: `rgba(${ACCENT_RGB},0.12)`, color: ACCENT,
                             }}>
                               {org.plan} plan
                             </span>
@@ -627,14 +608,14 @@ function OrgDashboardContent() {
                   {availableTabs.map((tab) => (
                     <button
                       key={tab}
-                      onClick={() => tab === "Applications" ? router.push("/org/dashboard/applications") : router.push(`/org/dashboard?tab=${encodeURIComponent(tab)}`, { scroll: false })}
+                      onClick={() => router.push(getDashboardHref(tab), { scroll: false })}
                       aria-current={activeTab === tab ? "page" : undefined}
                       className="brand-button inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium cursor-pointer transition-all border-none hover:-translate-y-0.5"
                       style={activeTab === tab ? {
                         color: "var(--button-gradient-soft-text)",
                         background: "var(--button-gradient-soft)",
-                        border: `1px solid rgba(${AMBER_RGB},0.4)`,
-                        boxShadow: `0 0 20px rgba(${AMBER_RGB},0.1)`,
+                        border: `1px solid rgba(${ACCENT_RGB},0.4)`,
+                        boxShadow: `0 0 20px rgba(${ACCENT_RGB},0.1)`,
                       } : {
                         color: "var(--button-gradient-soft-text)",
                         background: "var(--button-gradient-soft)",
@@ -643,8 +624,8 @@ function OrgDashboardContent() {
                       }}
                     >
                       {tab}
-                      {tab === "Analytics" && <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`, boxShadow: `0 0 6px rgba(${AMBER_RGB},0.5)` }} />}
-                      {tab === "Edit Profile" && <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`, boxShadow: `0 0 6px rgba(${AMBER_RGB},0.5)` }} />}
+                      {tab === "Analytics" && <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: `linear-gradient(135deg, ${ACCENT}, #F59E0B)`, boxShadow: `0 0 6px rgba(${ACCENT_RGB},0.5)` }} />}
+                      {tab === "Edit Profile" && <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: `linear-gradient(135deg, ${ACCENT}, #F59E0B)`, boxShadow: `0 0 6px rgba(${ACCENT_RGB},0.5)` }} />}
                     </button>
                   ))}
                 </div>
@@ -665,7 +646,7 @@ function OrgDashboardContent() {
                       jobs={jobs}
                       schoolIsPublic={schoolIsPublic}
                       publicProfileHref={publicProfileHref}
-                      setActiveTab={setActiveTab}
+                      setActiveTab={tab => router.push(getDashboardHref(tab))}
                       timeAgo={timeAgo}
                     />
                   ) : (
@@ -703,14 +684,7 @@ function OrgDashboardContent() {
 
                 {activeTab === "Programs" && <ProgramsTab programs={schoolPrograms} formatTimestamp={formatTimestamp} />}
                 {activeTab === "Student Inquiries" && <StudentInquiriesTab inquiries={studentInquiries} timeAgo={timeAgo} />}
-                {activeTab === "Jobs" && <JobsTab jobs={jobs} formatTimestamp={formatTimestamp} />}
-                {activeTab === "Applications" && <ApplicationsTab />}
-                {activeTab === "Events" && <EventsTab getToken={getToken} />}
-                {activeTab === "Scholarships" && <ScholarshipsTab getToken={getToken} />}
-                {activeTab === "Talent Search" && <TalentSearchTab />}
-                {activeTab === "Team" && <TeamTab />}
-                {activeTab === "Templates" && <TemplatesTab />}
-                {activeTab === "Billing" && <BillingTab org={org} />}
+                {getStandaloneDashboardHref(activeTab) && <LoadingSkeleton />}
               </>
             )}
           </div>
@@ -750,7 +724,7 @@ function SchoolOverviewTab({
   }).length;
 
   const statCards = [
-    { label: "Programs", value: schoolPrograms.length, color: AMBER, rgb: AMBER_RGB, icon: "🎓" },
+    { label: "Programs", value: schoolPrograms.length, color: ACCENT, rgb: ACCENT_RGB, icon: "🎓" },
     { label: "New Inquiries", value: unreadInquiryCount, color: "#3B82F6", rgb: "59,130,246", icon: "✉️" },
     { label: "Profile Views", value: stats.profileViews, color: "#A78BFA", rgb: "167,139,250", icon: "👀" },
     { label: "Open Jobs", value: jobs.filter((job) => !job.status || job.status === "active").length, color: "#22C55E", rgb: "34,197,94", icon: "💼" },
@@ -760,8 +734,8 @@ function SchoolOverviewTab({
     {
       title: "Manage Programs",
       description: "Review your active school programs and the opportunities attached to them.",
-      accent: AMBER,
-      bg: `rgba(${AMBER_RGB},0.08)`,
+      accent: ACCENT,
+      bg: `rgba(${ACCENT_RGB},0.08)`,
       action: () => setActiveTab("Programs"),
       meta: `${schoolPrograms.length} program${schoolPrograms.length === 1 ? "" : "s"}`,
     },
@@ -817,7 +791,7 @@ function SchoolOverviewTab({
         <DashCard>
           <div className="flex items-center justify-between gap-3 flex-wrap mb-5">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: AMBER }}>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: ACCENT }}>
                 School Status
               </div>
               <h3 className="text-xl font-bold mt-2" style={{ color: "var(--text, #f8fafc)" }}>
@@ -869,7 +843,7 @@ function SchoolOverviewTab({
               type="button"
               onClick={() => setActiveTab("Student Inquiries")}
               className="button-gradient-soft px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none"
-              style={{ background: `rgba(${AMBER_RGB},0.08)`, color: AMBER }}
+              style={{ background: `rgba(${ACCENT_RGB},0.08)`, color: ACCENT }}
             >
               View all
             </button>
@@ -899,7 +873,7 @@ function SchoolOverviewTab({
                         {[inquiry.programName, inquiry.email].filter(Boolean).join(" · ") || "General inquiry"}
                       </div>
                     </div>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider shrink-0" style={{ color: AMBER }}>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider shrink-0" style={{ color: ACCENT }}>
                       {timeAgo(inquiry.createdAt)}
                     </span>
                   </div>
@@ -965,7 +939,7 @@ function ProgramsTab({ programs, formatTimestamp }: {
     <>
       <div className="flex items-center justify-between mb-5 gap-3">
         <h2 className="text-xl font-extrabold tracking-tight text-text">Programs</h2>
-        <span className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: `rgba(${AMBER_RGB},0.08)`, color: AMBER }}>
+        <span className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: `rgba(${ACCENT_RGB},0.08)`, color: ACCENT }}>
           {programs.length} total
         </span>
       </div>
@@ -984,7 +958,7 @@ function ProgramsTab({ programs, formatTimestamp }: {
           {programs.map((program) => (
             <DashCard key={program.id}>
               <div className="flex items-start gap-4">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: `rgba(${AMBER_RGB},0.08)` }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: `rgba(${ACCENT_RGB},0.08)` }}>
                   🎓
                 </div>
                 <div className="flex-1 min-w-0">
@@ -1021,7 +995,7 @@ function StudentInquiriesTab({ inquiries, timeAgo }: {
     <>
       <div className="flex items-center justify-between mb-5 gap-3">
         <h2 className="text-xl font-extrabold tracking-tight text-text">Student Inquiries</h2>
-        <span className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: `rgba(${AMBER_RGB},0.08)`, color: AMBER }}>
+        <span className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: `rgba(${ACCENT_RGB},0.08)`, color: ACCENT }}>
           {inquiries.length} total
         </span>
       </div>
@@ -1041,7 +1015,7 @@ function StudentInquiriesTab({ inquiries, timeAgo }: {
             const status = String(inquiry.status || "new").toLowerCase();
             const statusStyles = status === "replied"
               ? { bg: "rgba(34,197,94,0.1)", text: "#22C55E" }
-              : { bg: `rgba(${AMBER_RGB},0.1)`, text: AMBER };
+              : { bg: `rgba(${ACCENT_RGB},0.1)`, text: ACCENT };
 
             return (
               <DashCard key={inquiry.id}>
@@ -1088,633 +1062,6 @@ function AnalyticsTab({stats, statsAvailable, jobs, formatTimestamp}: {
     <p className="employer-note">These are recorded totals, not a date-filtered report. Visitor trends, referral sources, and time-to-hire reporting are not available yet.</p></>;
 }
 
-function EditProfileTab({
-  profileSub, setProfileSub, profileForm, setProfileForm,
-  hours, setHours, gallery, setGallery, tags, setTags,
-  tagInput, setTagInput, indigenousGroups, setIndigenousGroups,
-  nation, setNation, treatyTerritory, setTreatyTerritory,
-  saving, saveMsg, saveProfile, org,
-}: {
-  profileSub: string;
-  setProfileSub: (s: string) => void;
-  profileForm: { name: string; tagline: string; description: string; location: string; website: string; contactEmail: string; phone: string; instagram: string; facebook: string; tiktok: string };
-  setProfileForm: React.Dispatch<React.SetStateAction<typeof profileForm>>;
-  hours: HoursMap;
-  setHours: React.Dispatch<React.SetStateAction<HoursMap>>;
-  gallery: string[];
-  setGallery: React.Dispatch<React.SetStateAction<string[]>>;
-  tags: string[];
-  setTags: React.Dispatch<React.SetStateAction<string[]>>;
-  tagInput: string;
-  setTagInput: React.Dispatch<React.SetStateAction<string>>;
-  indigenousGroups: string[];
-  setIndigenousGroups: React.Dispatch<React.SetStateAction<string[]>>;
-  nation: string;
-  setNation: React.Dispatch<React.SetStateAction<string>>;
-  treatyTerritory: string;
-  setTreatyTerritory: React.Dispatch<React.SetStateAction<string>>;
-  saving: boolean;
-  saveMsg: string;
-  saveProfile: (fields: Record<string, unknown>) => Promise<void>;
-  org: Organization | null;
-}) {
-  const inputStyle: React.CSSProperties = {
-    width: "100%", padding: "12px 16px",
-    background: "rgba(2,6,23,0.6)", border: "1px solid var(--border, rgba(30,41,59,0.6))",
-    borderRadius: 10, color: "var(--text, #f8fafc)", fontSize: 14, fontFamily: "inherit",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-muted, #94a3b8)",
-    marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px",
-  };
-
-  return (
-    <>
-      <h2 className="text-xl font-extrabold tracking-tight mb-5" style={{
-        background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
-        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-      }}>Edit Profile</h2>
-
-      {/* Sub-tab pills */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {PROFILE_SUBS.map((sub) => (
-          <button
-            key={sub}
-            onClick={() => setProfileSub(sub)}
-            className="brand-button px-4 py-2 rounded-xl text-[13px] font-medium cursor-pointer transition-all border-none"
-            style={profileSub === sub ? {
-              color: "var(--button-gradient-soft-text)",
-              background: "var(--button-gradient-soft)",
-              border: `1px solid rgba(${AMBER_RGB},0.4)`,
-            } : {
-              color: "var(--button-gradient-soft-text)",
-              background: "var(--button-gradient-soft)",
-              border: "1px solid var(--border, rgba(30,41,59,0.6))",
-            }}
-          >
-            {sub}
-            {["Hours", "Photo Gallery", "Service Tags", "Indigenous Identity"].includes(sub) && (
-              <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style={{
-                background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`, color: "#fff",
-              }}>NEW</span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Save message */}
-      {saveMsg && (
-        <div className="mb-4 px-4 py-2 rounded-lg text-sm font-semibold" style={{
-          background: saveMsg === "Saved!" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-          color: saveMsg === "Saved!" ? "#22C55E" : "#EF4444",
-        }}>
-          {saveMsg}
-        </div>
-      )}
-
-      {/* ─── General ─── */}
-      {profileSub === "General" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <DashCard>
-            <h3 className="text-base font-bold mb-5" style={{ color: "var(--text, #f8fafc)" }}>Basic Info</h3>
-            <div className="mb-5">
-              <label style={labelStyle}>Organization Name</label>
-              <input style={inputStyle} value={profileForm.name} onChange={(e) => setProfileForm((p) => ({ ...p, name: e.target.value }))} />
-            </div>
-            <div className="mb-5">
-              <label style={labelStyle}>Tagline</label>
-              <input style={inputStyle} value={profileForm.tagline} onChange={(e) => setProfileForm((p) => ({ ...p, tagline: e.target.value }))} placeholder="A short description of your org" />
-            </div>
-            <div className="mb-5">
-              <label style={labelStyle}>Description</label>
-              <textarea style={{ ...inputStyle, minHeight: 100, resize: "vertical" }} value={profileForm.description} onChange={(e) => setProfileForm((p) => ({ ...p, description: e.target.value }))} />
-            </div>
-            <GlowButton disabled={saving} onClick={() => saveProfile({ name: profileForm.name, tagline: profileForm.tagline, description: profileForm.description })}>
-              {saving ? "Saving..." : "Save Changes"}
-            </GlowButton>
-          </DashCard>
-          <div className="flex flex-col gap-4">
-            <DashCard>
-              <h3 className="text-base font-bold mb-5" style={{ color: "var(--text, #f8fafc)" }}>Logo & Banner</h3>
-              <div className="flex items-center gap-4 mb-4">
-                <Avatar name={org?.shortName || org?.name || ""} size={64} src={org?.logoUrl || org?.logo} gradient={`linear-gradient(135deg, ${AMBER}, #F59E0B)`} />
-                <button className="brand-button px-4 py-2 rounded-lg text-sm font-semibold border-none cursor-pointer" style={{ background: "var(--button-gradient-soft)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--button-gradient-soft-text)" }}>
-                  Upload Logo
-                </button>
-              </div>
-              <div className="w-full h-[100px] rounded-xl flex items-center justify-center cursor-pointer transition-all" style={{
-                background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.06), rgba(59,130,246,0.04))`,
-                border: `1px dashed rgba(${AMBER_RGB},0.2)`, color: "var(--text-muted, #64748b)", fontSize: 13,
-              }}>
-                Click to upload banner
-              </div>
-            </DashCard>
-            <DashCard>
-              <h3 className="text-base font-bold mb-5" style={{ color: "var(--text, #f8fafc)" }}>Location</h3>
-              <div className="mb-4">
-                <label style={labelStyle}>City / Region</label>
-                <input style={inputStyle} value={profileForm.location} onChange={(e) => setProfileForm((p) => ({ ...p, location: e.target.value }))} />
-              </div>
-              <GlowButton disabled={saving} onClick={() => saveProfile({ location: profileForm.location })}>
-                {saving ? "Saving..." : "Save Location"}
-              </GlowButton>
-            </DashCard>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Hours ─── */}
-      {profileSub === "Hours" && (
-        <DashCard>
-          <h3 className="text-base font-bold mb-1" style={{ color: "var(--text, #f8fafc)" }}>Hours of Operation</h3>
-          <p className="text-[13px] mb-6" style={{ color: "var(--text-muted, #64748b)" }}>Set your business hours so visitors know when to reach you.</p>
-          <div className="flex flex-col gap-2">
-            {DAYS.map((day) => (
-              <div key={day} className="grid items-center gap-4 px-4 py-2.5 rounded-xl transition-all" style={{
-                gridTemplateColumns: "90px 1fr auto",
-                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(30,41,59,0.3)",
-              }}>
-                <span className="text-[13px] font-semibold" style={{ color: "var(--text-muted, #94a3b8)" }}>{DAY_LABELS[day]}</span>
-                {hours[day].isOpen ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      className="text-center text-[13px] font-medium" style={{ ...inputStyle, width: 100, padding: "8px 12px", borderRadius: 8 }}
-                      value={hours[day].open}
-                      onChange={(e) => setHours((prev) => ({ ...prev, [day]: { ...prev[day], open: e.target.value } }))}
-                    />
-                    <span className="text-xs" style={{ color: "var(--text-muted, #64748b)" }}>to</span>
-                    <input
-                      className="text-center text-[13px] font-medium" style={{ ...inputStyle, width: 100, padding: "8px 12px", borderRadius: 8 }}
-                      value={hours[day].close}
-                      onChange={(e) => setHours((prev) => ({ ...prev, [day]: { ...prev[day], close: e.target.value } }))}
-                    />
-                  </div>
-                ) : (
-                  <span className="text-[13px] italic" style={{ color: "var(--text-muted, #64748b)" }}>Closed</span>
-                )}
-                <button
-                  className="w-12 h-[26px] rounded-[13px] relative cursor-pointer transition-all border shrink-0"
-                  style={{
-                    background: hours[day].isOpen ? `linear-gradient(135deg, ${AMBER}, #F59E0B)` : "rgba(30,41,59,0.8)",
-                    borderColor: hours[day].isOpen ? AMBER : "var(--border, rgba(30,41,59,0.6))",
-                  }}
-                  onClick={() => setHours((prev) => ({ ...prev, [day]: { ...prev[day], isOpen: !prev[day].isOpen } }))}
-                >
-                  <div className="absolute top-[3px] w-[18px] h-[18px] bg-white rounded-full transition-all shadow" style={{ left: hours[day].isOpen ? 26 : 3 }} />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-3 mt-6">
-            <GlowButton disabled={saving} onClick={() => saveProfile({ hours })}>
-              {saving ? "Saving..." : "Save Hours"}
-            </GlowButton>
-            <button className="brand-button px-4 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer" style={{
-              background: "var(--button-gradient-soft)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--button-gradient-soft-text)",
-            }} onClick={() => {
-              const weekday = hours.monday;
-              setHours((prev) => {
-                const next = { ...prev };
-                ["monday", "tuesday", "wednesday", "thursday", "friday"].forEach((d) => {
-                  next[d] = { ...weekday };
-                });
-                return next;
-              });
-            }}>
-              Copy to All Weekdays
-            </button>
-          </div>
-        </DashCard>
-      )}
-
-      {/* ─── Photo Gallery ─── */}
-      {profileSub === "Photo Gallery" && (
-        <DashCard>
-          <h3 className="text-base font-bold mb-1" style={{ color: "var(--text, #f8fafc)" }}>Photo Gallery</h3>
-          <p className="text-[13px] mb-6" style={{ color: "var(--text-muted, #64748b)" }}>Showcase your organization. Up to 12 photos, 5MB max each.</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {gallery.map((url, i) => (
-              <div key={i} className="aspect-square rounded-[14px] relative overflow-hidden flex items-center justify-center group transition-all hover:-translate-y-1" style={{
-                background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.1), var(--card, #0D1224))`,
-                border: "1px solid var(--border, rgba(30,41,59,0.6))",
-              }}>
-                {url.startsWith("http") ? (
-                  <Image
-                    src={url}
-                    alt=""
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-cover"
-                  />
-                ) : (
-                  <span className="text-4xl opacity-20">📷</span>
-                )}
-                <button
-                  onClick={() => setGallery((prev) => prev.filter((_, j) => j !== i))}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity border-none"
-                  style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-            {gallery.length < 12 && (
-              <div className="aspect-square rounded-[14px] flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all hover:-translate-y-1" style={{
-                border: `1px dashed rgba(${AMBER_RGB},0.2)`, color: "var(--text-muted, #64748b)", fontSize: 12,
-              }}>
-                <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                Add Photo
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-3 mt-4">
-            <span className="text-xs" style={{ color: "var(--text-muted, #64748b)" }}>{gallery.length} of 12</span>
-            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(30,41,59,0.5)" }}>
-              <div className="h-full rounded-full" style={{ width: `${(gallery.length / 12) * 100}%`, background: `linear-gradient(90deg, ${AMBER}, #F59E0B)` }} />
-            </div>
-          </div>
-        </DashCard>
-      )}
-
-      {/* ─── Service Tags ─── */}
-      {profileSub === "Service Tags" && (
-        <DashCard>
-          <h3 className="text-base font-bold mb-1" style={{ color: "var(--text, #f8fafc)" }}>Service Tags</h3>
-          <p className="text-[13px] mb-6" style={{ color: "var(--text-muted, #64748b)" }}>Tags help people discover your organization in search.</p>
-          <div className="flex flex-wrap gap-2 p-3.5 rounded-xl mb-5 min-h-[52px] items-center transition-all" style={{
-            background: "rgba(2,6,23,0.6)", border: "1px solid var(--border, rgba(30,41,59,0.6))",
-          }}>
-            {tags.map((tag) => (
-              <span key={tag} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium" style={{
-                background: `rgba(${AMBER_RGB},0.1)`, color: AMBER, border: `1px solid rgba(${AMBER_RGB},0.2)`,
-              }}>
-                {tag}
-                <span className="cursor-pointer opacity-50 hover:opacity-100 text-sm" onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}>×</span>
-              </span>
-            ))}
-            <input
-              className="bg-transparent border-none text-sm outline-none flex-1 min-w-[120px]"
-              style={{ color: "var(--text, #f8fafc)", fontFamily: "inherit" }}
-              placeholder="Type a tag and press Enter..."
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && tagInput.trim()) {
-                  e.preventDefault();
-                  if (!tags.includes(tagInput.trim())) {
-                    setTags((prev) => [...prev, tagInput.trim()]);
-                  }
-                  setTagInput("");
-                }
-              }}
-            />
-          </div>
-          <div className="mb-5">
-            <div className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted, #94a3b8)" }}>Suggested Tags</div>
-            <div className="flex flex-wrap gap-2">
-              {SUGGESTED_TAGS.filter((t) => !tags.includes(t)).map((t) => (
-                <span key={t} className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{
-                  background: "rgba(255,255,255,0.03)", color: "var(--text-muted, #94a3b8)",
-                  border: "1px solid var(--border, rgba(30,41,59,0.6))",
-                }} onClick={() => setTags((prev) => [...prev, t])}>
-                  + {t}
-                </span>
-              ))}
-            </div>
-          </div>
-          <GlowButton disabled={saving} onClick={() => saveProfile({ tags, services: tags })}>
-            {saving ? "Saving..." : "Save Tags"}
-          </GlowButton>
-        </DashCard>
-      )}
-
-      {/* ─── Indigenous Identity ─── */}
-      {profileSub === "Indigenous Identity" && (
-        <div className="rounded-2xl p-7 relative overflow-hidden" style={{
-          background: `linear-gradient(135deg, rgba(${AMBER_RGB},0.06), rgba(59,130,246,0.04))`,
-          border: `1px solid rgba(${AMBER_RGB},0.15)`,
-        }}>
-          <h3 className="text-base font-bold mb-1 relative z-[2]" style={{ color: AMBER }}>Indigenous Identity</h3>
-          <p className="text-[13px] mb-5 relative z-[2]" style={{ color: "var(--text-muted, #94a3b8)" }}>Select the Indigenous group(s) your organization represents.</p>
-          <div className="flex gap-3 mb-5 relative z-[2]">
-            {["First Nations", "Métis", "Inuit"].map((group) => (
-              <button
-                key={group}
-                onClick={() => setIndigenousGroups((prev) => prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group])}
-                className="button-gradient-soft flex-1 py-4 rounded-xl text-center text-sm font-semibold cursor-pointer transition-all border relative overflow-hidden"
-                style={indigenousGroups.includes(group) ? {
-                  background: `rgba(${AMBER_RGB},0.08)`, borderColor: `rgba(${AMBER_RGB},0.4)`, color: AMBER,
-                  boxShadow: `0 0 24px rgba(${AMBER_RGB},0.08)`,
-                } : {
-                  background: "rgba(2,6,23,0.5)", borderColor: "var(--border, rgba(30,41,59,0.6))", color: "var(--text-muted, #94a3b8)",
-                }}
-              >
-                {indigenousGroups.includes(group) && <span className="mr-1">✓</span>}
-                {group}
-              </button>
-            ))}
-          </div>
-          <div className="relative z-[2]">
-            <div className="mb-5">
-              <label style={labelStyle}>Nation / Community <span style={{ color: "#EF4444" }}>*</span></label>
-              <input style={inputStyle} value={nation} onChange={(e) => setNation(e.target.value)} placeholder="e.g. Federation of Sovereign Indigenous Nations (FSIN)" />
-              <p className="text-[11px] mt-1.5" style={{ color: "var(--text-muted, #64748b)" }}>Required. Specify the Nation, community, or governing body.</p>
-            </div>
-            <div className="mb-5">
-              <label style={labelStyle}>Treaty Territory (optional)</label>
-              <select style={{ ...inputStyle, cursor: "pointer" }} value={treatyTerritory} onChange={(e) => setTreatyTerritory(e.target.value)}>
-                {TREATY_OPTIONS.map((t) => <option key={t} value={t}>{t || "Select treaty territory..."}</option>)}
-              </select>
-            </div>
-            <GlowButton disabled={saving} onClick={() => saveProfile({ indigenousGroups, nation, treatyTerritory })}>
-              {saving ? "Saving..." : "Save Identity"}
-            </GlowButton>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Contact & Social ─── */}
-      {profileSub === "Contact & Social" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <DashCard>
-            <h3 className="text-base font-bold mb-5" style={{ color: "var(--text, #f8fafc)" }}>Contact Information</h3>
-            <div className="mb-5">
-              <label style={labelStyle}>Email</label>
-              <input type="email" style={inputStyle} value={profileForm.contactEmail} onChange={(e) => setProfileForm((p) => ({ ...p, contactEmail: e.target.value }))} />
-            </div>
-            <div className="mb-5">
-              <label style={labelStyle}>Phone</label>
-              <input type="tel" style={inputStyle} value={profileForm.phone} onChange={(e) => setProfileForm((p) => ({ ...p, phone: e.target.value }))} />
-            </div>
-            <div className="mb-5">
-              <label style={labelStyle}>Website</label>
-              <input type="url" style={inputStyle} value={profileForm.website} onChange={(e) => setProfileForm((p) => ({ ...p, website: e.target.value }))} />
-            </div>
-            <GlowButton disabled={saving} onClick={() => saveProfile({ contactEmail: profileForm.contactEmail, phone: profileForm.phone, website: profileForm.website })}>
-              {saving ? "Saving..." : "Save Contact"}
-            </GlowButton>
-          </DashCard>
-          <DashCard>
-            <h3 className="text-base font-bold mb-5" style={{ color: "var(--text, #f8fafc)" }}>Social Media</h3>
-            <div className="mb-5">
-              <label style={labelStyle}>Instagram</label>
-              <input style={inputStyle} value={profileForm.instagram} onChange={(e) => setProfileForm((p) => ({ ...p, instagram: e.target.value }))} placeholder="@yourhandle" />
-            </div>
-            <div className="mb-5">
-              <label style={labelStyle}>Facebook</label>
-              <input style={inputStyle} value={profileForm.facebook} onChange={(e) => setProfileForm((p) => ({ ...p, facebook: e.target.value }))} placeholder="facebook.com/yourpage" />
-            </div>
-            <div className="mb-5">
-              <label style={labelStyle}>TikTok</label>
-              <input style={inputStyle} value={profileForm.tiktok} onChange={(e) => setProfileForm((p) => ({ ...p, tiktok: e.target.value }))} placeholder="@yourhandle" />
-            </div>
-            <GlowButton disabled={saving} onClick={() => saveProfile({
-              socialLinks: { instagram: profileForm.instagram, facebook: profileForm.facebook, twitter: profileForm.tiktok },
-            })}>
-              {saving ? "Saving..." : "Save Social"}
-            </GlowButton>
-          </DashCard>
-        </div>
-      )}
-    </>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   BILLING TAB
-   ═══════════════════════════════════════════════════════════ */
-function BillingTab({ org }: { org: Organization | null }) {
-  return (
-    <>
-      <h2 className="text-xl font-extrabold tracking-tight mb-5" style={{
-        background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
-        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-      }}>Billing & Subscription</h2>
-      <DashCard>
-        <div className="text-center py-8">
-          <div className="w-20 h-20 mx-auto mb-5 rounded-full flex items-center justify-center" style={{
-            background: `rgba(${AMBER_RGB},0.04)`, border: `2px dashed rgba(${AMBER_RGB},0.15)`,
-          }}>
-            <svg width="32" height="32" fill="none" stroke={AMBER} strokeWidth="1.5" viewBox="0 0 24 24" style={{ opacity: 0.4 }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-            </svg>
-          </div>
-          <div className="text-base font-semibold mb-2" style={{ color: "var(--text-sec, #cbd5e1)" }}>
-            Current Plan: <span className="font-bold uppercase" style={{ color: AMBER }}>{org?.plan || "Free"}</span>
-          </div>
-          <p className="text-sm mb-6" style={{ color: "var(--text-muted, #64748b)" }}>Manage your plan, payment methods, and invoices.</p>
-          <Link href="/org/plans" className="brand-button inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold no-underline transition-all hover:-translate-y-0.5" style={{
-            background: "var(--button-gradient)", color: "#fff",
-            boxShadow: "var(--button-gradient-shadow)",
-          }}>
-            Upgrade Plan
-          </Link>
-        </div>
-      </DashCard>
-    </>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   JOBS TAB
-   ═══════════════════════════════════════════════════════════ */
-function JobsTab({ jobs, formatTimestamp }: {
-  jobs: DashJob[]; formatTimestamp: (ts: unknown) => string;
-}) {
-  const [filter, setFilter] = useState<"all"|"active"|"draft"|"expired">("all");
-  const router = useRouter();
-
-  const filtered = filter === "all" ? jobs : jobs.filter((j) => {
-    if (filter === "active") return !j.status || j.status === "active";
-    if (filter === "draft") return j.status === "draft";
-    if (filter === "expired") return j.status === "expired" || j.status === "closed";
-    return true;
-  });
-
-  const statusColor = (s?: string) => {
-    if (!s || s === "active") return { bg: "rgba(34,197,94,0.1)", text: "#22C55E" };
-    if (s === "draft") return { bg: "rgba(245,158,11,0.1)", text: "#F59E0B" };
-    if (s === "expired" || s === "closed") return { bg: "rgba(239,68,68,0.1)", text: "#EF4444" };
-    return { bg: "rgba(148,163,184,0.1)", text: "#94A3B8" };
-  };
-
-  return (
-    <>
-      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-        <h2 className="text-xl font-extrabold tracking-tight" style={{
-          background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
-          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-        }}>Jobs ({jobs.length})</h2>
-        <div className="flex gap-2">
-          {(["all","active","draft","expired"] as const).map((f) => (
-            <button key={f} onClick={() => setFilter(f)}
-              className="brand-button px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all capitalize"
-              style={filter === f ? { background: `rgba(${AMBER_RGB},0.12)`, color: AMBER } : { background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)" }}
-            >{f === "all" ? `All (${jobs.length})` : f}</button>
-          ))}
-        </div>
-      </div>
-      {filtered.length === 0 ? (
-        <DashCard>
-          <div className="text-center py-12">
-            <p className="text-4xl mb-3 opacity-30">💼</p>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>No {filter === "all" ? "" : filter + " "}jobs found.</p>
-          </div>
-        </DashCard>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {filtered.map((job) => {
-            const sc = statusColor(job.status);
-            return (
-              <DashCard key={job.id}>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase" style={{ background: sc.bg, color: sc.text }}>
-                        {job.status || "Active"}
-                      </span>
-                    </div>
-                    <p className="text-sm font-bold truncate" style={{ color: "var(--text)" }}>{job.title}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                      {formatTimestamp(job.createdAt)}{job.location ? ` · ${job.location}` : ""} · {job.applicationCount} application{job.applicationCount !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <button onClick={() => router.push(`/org/dashboard/jobs/${job.id}/edit`)}
-                      className="brand-button px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
-                      style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                      Edit
-                    </button>
-                  </div>
-                </div>
-              </DashCard>
-            );
-          })}
-        </div>
-      )}
-    </>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   APPLICATIONS TAB
-   ═══════════════════════════════════════════════════════════ */
-function ApplicationsTab() {
-  return <section className="employer-panel"><h2>Applicant workspace</h2><p>Review candidates, update hiring stages, and save reviewer notes in one place.</p><Link className="employer-primary" href="/org/dashboard/applications">Open applicant workspace →</Link></section>;
-}
-
-function EventsTab({ getToken }: { getToken: () => Promise<string> }) {
-  return <OpportunityManager kind="events" getToken={getToken} />;
-}
-function ScholarshipsTab({ getToken }: { getToken: () => Promise<string> }) {
-  return <OpportunityManager kind="scholarships" getToken={getToken} />;
-}
-
-function TalentSearchTab() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Array<{id:string; name:string; title?:string; location?:string; skills?:string[]}>>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-
-  const handleSearch = async () => {
-    if (!query.trim()) return;
-    setLoading(true); setSearched(true);
-    try {
-      const res = await fetch(`/api/talent?q=${encodeURIComponent(query)}`);
-      if (res.ok) { const d = await res.json(); setResults(d.members || []); }
-    } catch { /* */ }
-    setLoading(false);
-  };
-
-  return (
-    <>
-      <h2 className="text-xl font-extrabold tracking-tight mb-5" style={{ background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Talent Search</h2>
-      <DashCard>
-        <div className="flex gap-3 mb-6">
-          <input className="flex-1 px-4 py-3 rounded-xl text-sm" style={{ background: "rgba(2,6,23,0.6)", border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit" }}
-            placeholder="Search by name, skills, or location..." value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} />
-          <GlowButton onClick={handleSearch}>Search</GlowButton>
-        </div>
-        {loading ? (
-          <div className="flex flex-col gap-3">{[1,2].map((i) => <div key={i} className="h-16 rounded-xl skeleton" />)}</div>
-        ) : !searched ? (
-          <div className="text-center py-8"><p className="text-4xl mb-3 opacity-30">🔍</p><p className="text-sm" style={{ color: "var(--text-muted)" }}>Search for candidates from the IOPPS community.</p></div>
-        ) : results.length === 0 ? (
-          <p className="text-center text-sm py-6" style={{ color: "var(--text-muted)" }}>No results found for &quot;{query}&quot;</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {results.map((m) => (
-              <div key={m.id} className="px-4 py-3.5 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
-                <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{m.name}</p>
-                {m.title && <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{m.title}</p>}
-                {m.location && <p className="text-xs" style={{ color: "var(--text-muted)" }}>📍 {m.location}</p>}
-                {m.skills && m.skills.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {m.skills.slice(0, 4).map((s) => <span key={s} className="px-2 py-0.5 rounded text-[10px] font-medium" style={{ background: `rgba(${AMBER_RGB},0.08)`, color: AMBER }}>{s}</span>)}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </DashCard>
-    </>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   TEAM TAB
-   ═══════════════════════════════════════════════════════════ */
-function TeamTab() {
-  return <section className="employer-panel"><h2>Team access</h2><p>Team invitations are not available yet. Continue managing your organization with your existing account.</p></section>;
-}
-
-function TemplatesTab() {
-  return <section className="employer-panel"><h2>Job templates</h2><p>Reusable templates are not available yet. You can create a job and save it as a draft to finish later.</p><Link href="/org/dashboard/jobs/new" className="employer-primary">Create a job draft →</Link></section>;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   PLACEHOLDER TAB
-   ═══════════════════════════════════════════════════════════ */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function PlaceholderTab({ title, desc, icon }: { title: string; desc: string; icon: string }) {
-  const iconMap: Record<string, React.ReactNode> = {
-    clipboard: <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />,
-    calendar: <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25" />,
-    graduation: <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />,
-    search: <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />,
-    team: <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />,
-    template: <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />,
-  };
-
-  return (
-    <>
-      <h2 className="text-xl font-extrabold tracking-tight mb-5" style={{
-        background: "linear-gradient(135deg, var(--text, #f8fafc), var(--text-sec, #cbd5e1))",
-        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-      }}>{title}</h2>
-      <DashCard>
-        <div className="text-center py-12">
-          <div className="w-20 h-20 mx-auto mb-5 rounded-full flex items-center justify-center" style={{
-            background: `rgba(${AMBER_RGB},0.04)`, border: `2px dashed rgba(${AMBER_RGB},0.15)`,
-          }}>
-            <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" style={{ color: "var(--text-muted, #64748b)", opacity: 0.4 }}>
-              {iconMap[icon]}
-            </svg>
-          </div>
-          <div className="text-[15px] mb-2" style={{ color: "var(--text-sec, #cbd5e1)" }}>No {title.toLowerCase()} yet</div>
-          <div className="text-[13px]" style={{ color: "var(--text-muted, #64748b)" }}>{desc}</div>
-        </div>
-      </DashCard>
-    </>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   SHARED COMPONENTS
-   ═══════════════════════════════════════════════════════════ */
-
 function DashCard({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative p-7 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg" style={{
@@ -1722,23 +1069,6 @@ function DashCard({ children }: { children: React.ReactNode }) {
     }}>
       {children}
     </div>
-  );
-}
-
-function GlowButton({ children, onClick, disabled }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className="brand-button inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:pointer-events-none"
-      style={{
-        background: "var(--button-gradient)",
-        color: "#fff",
-        boxShadow: "var(--button-gradient-shadow)",
-      }}
-    >
-      {children}
-    </button>
   );
 }
 
