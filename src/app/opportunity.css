@@ -936,3 +936,27 @@ a:focus-visible > .op-job-card {
 .hiring-summary dt { font-size: 12px; font-weight: 700; color: var(--text-muted); }
 .hiring-summary dd { margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
 @media(max-width:640px) { .hiring-fields-grid { grid-template-columns: 1fr; } .hiring-fields { padding: 16px; } }
+
+/* Homepage entrepreneurship: approved discovery, signup and funding choices. */
+.entrepreneurship { padding-block: 48px 64px; }
+.entrepreneurship-intro { max-width: 680px; margin-bottom: 28px; }
+.entrepreneurship h2 { font-size: clamp(28px, 3.4vw, 44px); line-height: 1.12; font-weight: 750; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.entrepreneurship-intro p { margin-top: 16px; color: var(--text-sec); font-size: 17px; line-height: 1.55; }
+.entrepreneurship-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.entrepreneurship-card { display: flex; flex-direction: column; align-items: flex-start; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: var(--text); text-decoration: none; }
+.entrepreneurship-icon { width: 40px; height: 40px; margin-bottom: 12px; color: var(--teal); flex-shrink: 0; }
+.entrepreneurship-card h3 { font-size: 21px; line-height: 1.25; font-weight: 750; letter-spacing: -.025em; }
+.entrepreneurship-card p { margin: 10px 0 18px; font-size: 16px; line-height: 1.45; color: var(--text-sec); }
+.entrepreneurship-action { display: block; margin-top: auto; padding-block: 6px; font-size: 16px; font-weight: 750; color: var(--teal); }
+.entrepreneurship-create { background: var(--navy); border-color: var(--navy); color: white; }
+.entrepreneurship-create .entrepreneurship-icon, .entrepreneurship-create p { color: white; }
+.entrepreneurship-create .entrepreneurship-action { width: 100%; border-radius: 10px; padding: 12px; text-align: center; color: white; background: #0F766E; }
+.entrepreneurship-funding .entrepreneurship-icon, .entrepreneurship-funding .entrepreneurship-action { color: #A65A05; }
+[data-theme="dark"] .entrepreneurship-funding .entrepreneurship-icon, [data-theme="dark"] .entrepreneurship-funding .entrepreneurship-action { color: #FBBF24; }
+.entrepreneurship-card:hover { border-color: var(--teal); }
+.entrepreneurship-card:focus-visible { outline: 3px solid var(--teal); outline-offset: 4px; }
+@media (max-width: 760px) {
+  .entrepreneurship { padding-block: 32px 44px; }
+  .entrepreneurship-options { grid-template-columns: 1fr; gap: 12px; }
+  .entrepreneurship-card { padding: 20px; }
+}

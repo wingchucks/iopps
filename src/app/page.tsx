@@ -116,17 +116,30 @@ export default async function Home() {
           <LandingLivePreview />
         </div>
       </section>
-      <section className="journey-business op-wrap" aria-labelledby="business-heading">
-        <div className="journey-business-intro">
-          <p className="op-eyebrow">Indigenous businesses & entrepreneurship</p>
-          <h2 id="business-heading">Built by you.<br /><span>Discovered by your community.</span></h2>
-          <p>Put your work in front of people looking for Indigenous businesses. Share your story, showcase your services, and make your next connection.</p>
-          <Link className="op-button" href="/signup?intent=indigenous-business">Add your business free</Link>
-          <Link className="journey-text-link" href="/businesses">Discover Indigenous businesses →</Link>
+      <section className="entrepreneurship op-wrap" aria-labelledby="business-heading">
+        <div className="entrepreneurship-intro">
+          <h2 id="business-heading">Indigenous Entrepreneurship</h2>
+          <p>Discover Indigenous businesses, showcase your own, and explore funding opportunities.</p>
         </div>
-        <div className="journey-paths">
-          <Link href="/businesses?type=Indigenous"><span className="journey-path-kicker">01 / Discover <span aria-hidden="true">↗</span></span><h3>Find your next collaborator.</h3><p>Explore Indigenous business profiles, services, and the people behind them.</p><strong>Browse businesses →</strong></Link>
-          <Link href="/businesses#business-support"><span className="journey-path-kicker">02 / Grow <span aria-hidden="true">↗</span></span><h3>Build with support.</h3><p>Explore our plans to connect entrepreneurs with funding and business support organizations.</p><strong>Funding & business support →</strong></Link>
+        <div className="entrepreneurship-options">
+          <Link className="entrepreneurship-card" href="/businesses?type=Indigenous">
+            <svg className="entrepreneurship-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 20v22h32V20M5 15l5-10h28l5 10v5a6 6 0 0 1-9 5 6 6 0 0 1-10 0 6 6 0 0 1-10 0 6 6 0 0 1-9-5zM5 15h38M18 42V30h12v12" /></svg>
+            <h3>Browse businesses</h3>
+            <p>Discover Indigenous products, services, and people.</p>
+            <span className="entrepreneurship-action">Explore businesses <span aria-hidden="true">→</span></span>
+          </Link>
+          <Link className="entrepreneurship-card entrepreneurship-create" href="/signup?intent=indigenous-business">
+            <svg className="entrepreneurship-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M27 42H7V5h25l7 7v13M15 30c0-7 14-7 14 0" /><circle cx="22" cy="17" r="4" /><circle cx="36" cy="36" r="9" /><path d="M32 36h8M36 32v8" /></svg>
+            <h3>Create your business page</h3>
+            <p>Sign up to share your story and showcase what you do.</p>
+            <span className="entrepreneurship-action">Sign up &amp; create your page</span>
+          </Link>
+          <Link className="entrepreneurship-card entrepreneurship-funding" href="/funding">
+            <svg className="entrepreneurship-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 5h20l9 9v29H10zM30 5v10h9M17 23h15M17 30h15M17 37h9" /></svg>
+            <h3>Find grants &amp; funding</h3>
+            <p>Explore funding opportunities and program details on IOPPS.</p>
+            <span className="entrepreneurship-action">Browse funding <span aria-hidden="true">→</span></span>
+          </Link>
         </div>
       </section>
       <PartnerShowcase partners={partners} />
