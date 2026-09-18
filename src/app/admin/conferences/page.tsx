@@ -172,16 +172,13 @@ function ConferenceFormModal({
   const [form, setForm] = useState<ConferenceFormData>(initialData);
 
   useEffect(() => {
-    if (isOpen) {
-      setForm(initialData);
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
     };
-  }, [isOpen, initialData]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -904,14 +901,15 @@ export default function AdminConferencesPage() {
       )}
 
       {/* ---- Form modal ---- */}
-      <ConferenceFormModal
+      {formModal.open && <ConferenceFormModal
+        key={formModal.editingId ?? "new"}
         isOpen={formModal.open}
         editingId={formModal.editingId}
         initialData={formModal.data}
         onClose={() => setFormModal({ open: false, editingId: null, data: EMPTY_FORM })}
         onSubmit={handleFormSubmit}
         loading={actionLoading !== null}
-      />
+      />}
     </div>
   );
 }

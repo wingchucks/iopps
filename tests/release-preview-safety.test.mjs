@@ -5,6 +5,7 @@ import fs from 'node:fs';
 test('release branch disables automatic Vercel deployment without disabling master or changing cron schedules', () => {
   const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
   assert.deepEqual(config.git?.deploymentEnabled, {
+    'codex/release-gates-20260918': false,
     'codex/security-remediation-20260917': false,
     'codex/ui-route-audit-20260918': false,
     'codex/job-flow-reliability-20260908': false,

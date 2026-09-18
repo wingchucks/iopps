@@ -32,7 +32,7 @@ jobs:
         with:
           output: codeql-results
       - name: Encrypt analysis evidence for the release reviewer
-        if: github.event_name == 'pull_request' && (github.head_ref == 'codex/security-remediation-20260917' || github.head_ref == 'codex/ui-route-audit-20260918')
+        if: github.event_name == 'pull_request' && (github.head_ref == 'codex/security-remediation-20260917' || github.head_ref == 'codex/ui-route-audit-20260918' || github.head_ref == 'codex/release-gates-20260918')
         shell: bash
         run: |
           for report in codeql-results/*.sarif; do
@@ -40,7 +40,7 @@ jobs:
               -out "$report.cms" -outform DER .github/security-review-recipient.crt
           done
       - name: Retain encrypted analysis results for independent triage
-        if: github.event_name == 'pull_request' && (github.head_ref == 'codex/security-remediation-20260917' || github.head_ref == 'codex/ui-route-audit-20260918')
+        if: github.event_name == 'pull_request' && (github.head_ref == 'codex/security-remediation-20260917' || github.head_ref == 'codex/ui-route-audit-20260918' || github.head_ref == 'codex/release-gates-20260918')
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: codeql-encrypted-${{ github.event.pull_request.head.sha || github.sha }}

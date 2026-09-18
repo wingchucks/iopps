@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
 
 // Regression coverage for the Week 1 audit fixes shipped in PR #131.
-// Tests are anonymous + read-only so they're safe to run against
-// production (no DB writes, no real signups).
+// Run only against isolated demo fixtures. Anonymous page reads can hydrate
+// and update job records, so these are not safe production read-only probes.
 //
 // Coverage gaps intentionally left for follow-up once authenticated
 // test fixtures exist:

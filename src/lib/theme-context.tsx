@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark";
 
@@ -14,22 +14,50 @@ const ThemeContext = createContext<ThemeContextType>({
   toggle: () => {},
 });
 
+let fallbackTheme: Theme = "light";
+let storageAvailable = true;
+const themeEvent = "iopps-theme-change";
+
+function getTheme(): Theme {
+  if (!storageAvailable) return fallbackTheme;
+  try {
+    return localStorage.getItem("iopps-theme") === "dark" ? "dark" : "light";
+  } catch {
+    return fallbackTheme;
+  }
+}
+
+function subscribeTheme(notify: () => void) {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === "iopps-theme" || event.key === null) notify();
+  };
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(themeEvent, notify);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(themeEvent, notify);
+  };
+}
+
+const getServerTheme = (): Theme => "light";
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const theme = useSyncExternalStore(subscribeTheme, getTheme, getServerTheme);
 
   useEffect(() => {
-    const stored = localStorage.getItem("iopps-theme") as Theme | null;
-    if (stored === "dark" || stored === "light") {
-      setTheme(stored);
-      document.documentElement.setAttribute("data-theme", stored);
-    }
-  }, []);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   const toggle = () => {
-    const next = theme === "light" ? "dark" : "light";
-    setTheme(next);
+    const next = getTheme() === "light" ? "dark" : "light";
+    fallbackTheme = next;
+    try {
+      localStorage.setItem("iopps-theme", next);
+    } catch {
+      storageAvailable = false;
+    }
     document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("iopps-theme", next);
+    window.dispatchEvent(new Event(themeEvent));
   };
 
   return (

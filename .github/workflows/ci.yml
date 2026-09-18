@@ -25,6 +25,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint root runtime, configuration, and release verification
+        run: npm run lint:release
+
+      - name: Audit root runtime and development dependencies
+        run: npm audit --audit-level=low
+
       - name: Build root application
         run: npm run build
       - name: Audit current UI links and API routes
@@ -59,11 +65,6 @@ jobs:
   mobile-typecheck:
     name: Mobile - Type Check
     runs-on: ubuntu-latest
-    # Pre-existing dependency drift (Sentry SDK API changes, missing Expo
-    # type packages, outdated nav typing) makes this red on master. Tracked
-    # separately so the lint signal isn't masked. Flip to required once the
-    # mobile dep upgrade lands.
-    continue-on-error: true
 
     steps:
       - name: Checkout code

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { useCurrentTime } from "@/lib/use-current-time";
 import {
   onNotifications,
   markAsRead,
@@ -39,6 +40,7 @@ const filterTabs = ["All", "Unread"] as const;
 
 function NotificationsContent() {
   const { user } = useAuth();
+  const now = useCurrentTime();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>("All");
@@ -74,7 +76,7 @@ function NotificationsContent() {
     const d = ts as { seconds?: number };
     if (!d.seconds) return "";
     const date = new Date(d.seconds * 1000);
-    const diff = Math.floor((Date.now() / 1000 - d.seconds) / 60);
+    const diff = Math.floor((now / 1000 - d.seconds) / 60);
     if (diff < 1) return "Just now";
     if (diff < 60) return `${diff} minutes ago`;
     if (diff < 1440) return `${Math.floor(diff / 60)} hours ago`;
