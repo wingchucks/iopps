@@ -629,18 +629,6 @@ function ProfileContent() {
                   </p>
                 )}
 
-                {/* Connections */}
-                <Card className="mb-5">
-                  <div style={{ padding: 16 }}>
-                    <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">
-                      CONNECTIONS
-                    </p>
-                    <div className="grid grid-cols-2 gap-3 text-center">
-
-                    </div>
-                  </div>
-                </Card>
-
                 {/* Quick Stats */}
                 <Card>
                   <div style={{ padding: 16 }}>

@@ -38,25 +38,34 @@ function MessagesContent() {
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ConversationPeer>>({});
-  const [newMessage, setNewMessage] = useState("");
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const draftKey = JSON.stringify([user?.uid, activeConvId]);
+  const newMessage = drafts[draftKey] || "";
+  const setNewMessage = (text: string) => setDrafts(previous => ({ ...previous, [draftKey]: text }));
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const consumedRecipients = useRef(new Set<string>());
+  const [inboxOwner, setInboxOwner] = useState<string | null>(null);
 
   // Legacy recipient links can open only a conversation already in this inbox.
   const toParam = searchParams?.get("to");
   useEffect(() => {
-    if (!user || !toParam) return;
+    if (!user || !toParam || inboxOwner !== user.uid) return;
+    const key = JSON.stringify([user.uid, toParam]);
+    if (consumedRecipients.current.has(key)) return;
+    consumedRecipients.current.add(key);
     const existing = conversations.find(c => c.participants.includes(toParam));
     if (existing) setActiveConvId(existing.id);
-  }, [user, toParam, conversations]);
+  }, [user, toParam, conversations, inboxOwner]);
 
   // Real-time conversations listener
   useEffect(() => {
     if (!user) return;
     const unsub = onConversations(user.uid, async (convs) => {
       setConversations(convs);
+      setInboxOwner(user.uid);
       setLoading(false);
 
       // Resolve only the minimal identity projection of existing participants.

@@ -5,6 +5,7 @@ import { getAuth as adminAuth } from 'firebase-admin/auth';
 import { getFirestore as adminFirestore } from 'firebase-admin/firestore';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithCustomToken } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator, doc, updateDoc } from 'firebase/firestore';
 
 test('retirement preserves authenticated applicant fallback, private peer identity and server-only email', { skip: process.env.IOPPS_TEST_MEMBER_RETIREMENT !== 'true' }, async t => {
   const projectId = 'demo-iopps-preview';
@@ -22,7 +23,10 @@ test('retirement preserves authenticated applicant fallback, private peer identi
     await signInWithCustomToken(client, await auth.createCustomToken(uid));
     await seed('users', uid, { role, status: 'active' });
     await seed('members', uid, { displayName: suffix, email: 'PROFILE_EMAIL_NOT_AUTH@example.invalid', resumeUrl: 'PRIVATE_RESUME', salaryRange: 'PRIVATE_SALARY', bio: 'Legacy bio', photoURL: '/avatar.png' });
-    return { uid, token: await client.currentUser.getIdToken() };
+    const store = getFirestore(app);
+    const [host, port] = process.env.FIRESTORE_EMULATOR_HOST.split(':');
+    connectFirestoreEmulator(store, host, Number(port));
+    return { uid, store, token: await client.currentUser.getIdToken() };
   }
   try {
     const employer = await actor('-employer', 'employer'), applicant = await actor('-applicant'), outsider = await actor('-outsider');
@@ -55,9 +59,25 @@ test('retirement preserves authenticated applicant fallback, private peer identi
     await t.test('actual ID tokens scope the minimal peer projection to existing participants', async () => {
       const response = await peer.GET(request(`/api/messages/peer?conversationId=${prefix}&uid=${outsider.uid}`, employer));
       assert.equal(response.status, 200);
-      assert.deepEqual(await response.json(), { peer: { uid: applicant.uid, displayName: '-applicant', photoURL: '/avatar.png' } });
+      assert.deepEqual(await response.json(), { peer: { uid: applicant.uid, displayName: 'IOPPS member' } });
       assert.equal((await peer.GET(request(`/api/messages/peer?conversationId=${prefix}`, outsider))).status, 404);
       assert.equal((await peer.GET(request(`/api/messages/peer?conversationId=${prefix}`))).status, 401);
+    });
+    await t.test('historically unilateral records and client-forged trust cannot expose a private identity', async () => {
+      const id = prefix + '-historical-unilateral';
+      await seed('members', outsider.uid, { profileVisibility: 'private', displayName: 'SECRET PRIVATE NAME', photoURL: '/secret-avatar.png' });
+      // Admin seeding reproduces persisted records accepted by the former unilateral-create rules.
+      await seed('conversations', id, { participants: [employer.uid, outsider.uid], createdBy: employer.uid });
+      const before = (await db.doc(`members/${outsider.uid}`).get()).data();
+      for (const forged of [null, { verified: true, trusted: true, acceptedBy: outsider.uid, provenance: 'server', identityProjection: { displayName: 'SECRET PRIVATE NAME', photoURL: '/secret-avatar.png' } }]) {
+        if (forged) await updateDoc(doc(employer.store, 'conversations', id), forged);
+        const response = await peer.GET(request(`/api/messages/peer?conversationId=${id}`, employer));
+        assert.equal(response.status, 200);
+        assert.deepEqual(await response.json(), { peer: { uid: outsider.uid, displayName: 'IOPPS member' } });
+      }
+      assert.deepEqual((await db.doc(`members/${outsider.uid}`).get()).data(), before);
+      assert.equal((await db.doc(`conversations/${id}`).get()).exists, true);
+      assert.equal((await db.doc(`messages/${prefix}`).get()).data().text, 'Private message fixture');
     });
     await t.test('notification recipient comes from conversation plus Auth, with one emulator-only mail receipt on retries', async () => {
       paths.add(`mail/message-${prefix}`);

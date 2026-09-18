@@ -100,7 +100,7 @@ test("messaging no longer contains a recipient directory or arbitrary relationsh
   for (const preserved of ["onConversations", "onMessages", "sendMessage", "markConversationRead"]) assert.ok(source.includes(preserved));
 });
 
-test("conversation peer API authorizes existing participation before projecting only name/avatar", async () => {
+test("conversation peer API returns generic identity without reading private profiles", async () => {
   let viewer: string | null = "self", reads: string[] = [];
   let participants = ["self", "peer"];
   const route = load("src/app/api/messages/peer/route.ts", {
@@ -119,9 +119,9 @@ test("conversation peer API authorizes existing participation before projecting 
   }
   const response = await call("?conversationId=existing&uid=forged");
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { peer: { uid: "peer", displayName: "Peer", photoURL: "avatar.png" } });
+  assert.deepEqual(await response.json(), { peer: { uid: "peer", displayName: "IOPPS member" } });
   assert.equal(response.headers.get("cache-control"), "private, no-store");
-  assert.deepEqual(reads, ["conversations/existing", "members/peer"]);
+  assert.deepEqual(reads, ["conversations/existing"]);
   reads = []; viewer = "outsider";
   assert.equal((await call("?conversationId=existing")).status, 404);
   assert.deepEqual(reads, ["conversations/existing"]);
@@ -151,6 +151,10 @@ test("chat client requests only the existing conversation projection", async () 
   assert.equal(typeof mod.getConversationPeer, "function");
   assert.equal((await mod.getConversationPeer("existing id")).displayName, "Peer");
   assert.equal(requestUrl, "/api/messages/peer?conversationId=existing%20id");
+});
+
+test("own profile has no empty retired Connections card", () => {
+  assert.doesNotMatch(readFileSync("src/app/profile/page.tsx", "utf8"), /CONNECTIONS/);
 });
 
 test("organization dashboard does not advertise the legacy talent tab", () => {

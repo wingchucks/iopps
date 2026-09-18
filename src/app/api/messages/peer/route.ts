@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store" };
 const validId = (value: unknown): value is string => typeof value === "string" && value.length > 0 && value.length <= 500 && !value.includes("/");
 
-// No arbitrary member lookup: the peer is derived from an existing conversation.
-// Client creation and participant changes are denied by the paired rules.
+// Historical conversations could be created unilaterally. Participation permits
+// existing messaging, not disclosure of current identity. Client-editable trust
+// or projection fields cannot establish provenance; never read a peer profile.
 export async function GET(request: NextRequest) {
   const viewer = await verifyAuthToken(request);
   if (!viewer.success) return viewer.response;
@@ -23,13 +24,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Conversation not available" }, { status: 404, headers });
     }
     const uid = participants.find(id => id !== viewer.decodedToken.uid)!;
-    const member = await db.doc(`members/${uid}`).get();
-    const data = member.data();
-    return NextResponse.json({ peer: {
-      uid,
-      displayName: typeof data?.displayName === "string" ? data.displayName : "IOPPS member",
-      ...(typeof data?.photoURL === "string" ? { photoURL: data.photoURL } : {}),
-    } }, { headers });
+    return NextResponse.json({ peer: { uid, displayName: "IOPPS member" } }, { headers });
   } catch {
     return NextResponse.json({ error: "Unable to load conversation" }, { status: 503, headers });
   }

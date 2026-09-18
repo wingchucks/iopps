@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { chromium } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
@@ -131,6 +131,48 @@ async function checkBlockedThemeStorage() {
   interactionChecks.push({ check: 'theme-denied-storage-still-toggles', width: 1440, passed: true });
   await context.close();
 }
+async function checkLegacyMessages(page, width) {
+  const self = accounts.member.uid, a = `${prefix}-chat-a-${width}`, b = `${prefix}-chat-b-${width}`;
+  for (const [id, peer, label] of [[a, accounts.owner.uid, 'Alpha'], [b, accounts.school.uid, 'Beta']]) {
+    await seed('conversations', id, { participants: [self, peer], lastMessage: `Thread ${label}`, lastMessageAt: Timestamp.now(), lastSenderId: peer, unreadBy: self });
+    await seed('messages', id + '-initial', { conversationId: id, senderId: peer, text: `History ${label}`, createdAt: Timestamp.now() });
+  }
+  await page.goto(base + '/messages?to=' + accounts.owner.uid);
+  await page.getByText('History Alpha', { exact: true }).waitFor();
+  const composer = page.getByPlaceholder('Type a message...');
+  await composer.fill('Draft for Alpha');
+  const back = async () => { if (width < 768) await page.getByRole('button', { name: '←', exact: true }).click(); };
+  await back(); await page.getByText('Thread Beta', { exact: true }).click();
+  await page.getByText('History Beta', { exact: true }).waitFor();
+  assert.equal(await composer.inputValue(), '');
+  await composer.fill('Draft for Beta');
+  await expect.poll(async () => (await db.doc(`conversations/${b}`).get()).data().unreadBy).toBe('');
+  // Metadata and incoming message are actual emulator changes, not route fixtures.
+  await seed('messages', b + '-incoming', { conversationId: b, senderId: accounts.school.uid, text: 'Incoming Beta', createdAt: Timestamp.now() });
+  await db.doc(`conversations/${b}`).update({ lastMessage: 'Incoming Beta', lastMessageAt: Timestamp.now(), unreadBy: self });
+  await page.getByText('Incoming Beta', { exact: true }).last().waitFor();
+  await expect(composer).toHaveValue('Draft for Beta');
+  const notified = page.waitForResponse(response => new URL(response.url()).pathname === '/api/messages/notify');
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  assert.equal((await notified).status(), 200);
+  await expect(composer).toHaveValue('');
+  const sent = await db.collection('messages').where('conversationId', '==', b).get();
+  const mine = sent.docs.filter(doc => doc.data().senderId === self);
+  assert.equal(mine.length, 1); assert.equal(mine[0].data().text, 'Draft for Beta');
+  documents.push(mine[0].ref, db.doc(`mail/message-${mine[0].id}`));
+  assert.equal((await db.doc(`conversations/${b}`).get()).data().unreadBy, accounts.school.uid);
+  assert.equal((await db.collection('messages').where('conversationId', '==', a).get()).size, 1);
+  await back(); await page.getByText('Thread Alpha', { exact: true }).click();
+  await expect(composer).toHaveValue('Draft for Alpha');
+  for (const [id, uid] of [[a, accounts.owner.uid], [b, accounts.school.uid]]) {
+    const response = await fetch(base + '/api/messages/peer?conversationId=' + id, { headers: { Authorization: `Bearer ${await fixtureToken('member')}` } });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { peer: { uid, displayName: 'IOPPS member' } });
+  }
+  interactionChecks.push({ check: 'legacy-query-two-thread-read-incoming-recipient-bound-drafts-send', width, passed: true });
+  // Keep the second viewport independent and remove only this owned fixture set.
+  for (const id of [a, b]) await db.doc(`conversations/${id}`).delete();
+}
 async function checkAdminModal(page, kind, width) {
   const conference = kind === 'conferences', title = conference ? 'Conference' : 'Pow Wow';
   const beforeOverflow = await page.evaluate(() => document.body.style.overflow);
@@ -202,6 +244,8 @@ try {
     });
     await seed(kind, `${prefix}-${kind}-foreign`, { title: `QA foreign ${kind}`, orgId: `${prefix}-foreign`, status: 'active', active: true });
   }
+  await seed('applications', prefix + '-owned-application', { userId: accounts.member.uid, employerId: accounts.owner.uid, jobId: prefix + '-active', status: 'submitted', profileSnapshot: { displayName: 'QA captured applicant', capturedAt: '2020-01-01T00:00:00.000Z' } });
+  await seed('applications', prefix + '-foreign-application', { userId: accounts.school.uid, employerId: 'other-org', status: 'submitted', profileSnapshot: { displayName: 'QA foreign applicant' } });
   browser = await chromium.launch({ headless: true });
   for (const width of [1440, 390]) {
     for (const role of ['owner', 'school', 'member', 'admin']) {
@@ -234,7 +278,8 @@ try {
       const routes = role === 'owner' ? [
         ['/org/dashboard', 'QA Dashboard Organization'],
         ['/employer/dashboard?tab=Jobs', 'QA active dashboard job'],
-        ['/org/dashboard?tab=Talent%20Search', 'Talent Search'],
+        ['/org/dashboard?tab=Talent%20Search', 'Applications'],
+        ['/org/dashboard/talent', 'Applications'],
         ['/org/dashboard?create=job&tab=Jobs', 'Post a New Job'],
         ['/org/dashboard?tab=Team', 'Team Members'],
         ['/org/dashboard?tab=Events', 'Events & gatherings'],
@@ -261,10 +306,20 @@ try {
           await page.getByRole('heading', { name: 'Post a New Job', exact: true }).waitFor();
           assert.equal(new URL(page.url()).pathname, '/org/dashboard/jobs/new');
         }
-        if (route.includes('Talent')) {
-          await page.getByPlaceholder('Search by name or skills...').fill('QA route testing');
-          await page.getByText('QA member', { exact: true }).first().waitFor();
-          assert.equal(new URL(page.url()).pathname, '/org/dashboard/talent');
+        if (route.includes('Talent') || route === '/org/dashboard/talent') {
+          assert.equal(new URL(page.url()).pathname, '/org/dashboard/applications');
+          await page.getByText('QA captured applicant', { exact: true }).first().waitFor();
+          assert.equal(await page.getByText('QA foreign applicant', { exact: true }).count(), 0);
+          assert.equal(await page.getByPlaceholder('Search by name or skills...').count(), 0);
+          assert.equal(await page.locator('a[href^="/members"]').count(), 0);
+          const response = await fetch(base + '/api/employer/applications', { headers: { Authorization: `Bearer ${await fixtureToken('owner')}` } });
+          assert.equal(response.status, 200);
+          const payload = await response.json();
+          assert.deepEqual(payload.applications.map(a => a.id), [prefix + '-owned-application']);
+          assert.equal(payload.applications[0].profileSnapshot.displayName, 'QA captured applicant');
+          assert.equal((await fetch(base + '/api/employer/applications')).status, 401);
+          assert.equal((await fetch(base + '/api/employer/applications', { headers: { Authorization: `Bearer ${await fixtureToken('member')}` } })).status, 403);
+          interactionChecks.push({ check: 'legacy-talent-redirect-owned-applications-permissions', route, width, passed: true });
         }
         if (route.includes('tab=Team')) {
           await page.getByLabel('Role for QA teammate', { exact: true }).waitFor();
@@ -314,6 +369,7 @@ try {
         await page.screenshot({ path: path.join(output, filename), fullPage: true });
         checks.push({ role, width, requested: route, reached: new URL(page.url()).pathname + new URL(page.url()).search, screenshot: filename });
       }
+      if (role === 'member') await checkLegacyMessages(page, width);
       assert.deepEqual(retired, []); assert.deepEqual(missing, []); assert.deepEqual(errors, []);
       await context.close();
     }
