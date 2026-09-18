@@ -11,6 +11,8 @@ export async function POST(req: Request) {
   try {
     const context = await requireEmployerContext(req);
 
+    if (!["owner", "admin"].includes(context.orgRole)) throw new EmployerApiError(403, "Only an owner or manager can finish organization setup.");
+
     if (!context.emailVerified) {
       return NextResponse.json(
         { error: "Verify your email before finishing organization setup." },
@@ -54,33 +56,22 @@ export async function POST(req: Request) {
     const userRef = db.collection("users").doc(context.uid);
     const memberRef = db.collection("members").doc(context.uid);
 
-    await Promise.all([
-      organizationRef.set({
-        onboardingComplete: true,
-        status: "approved",
-        approvedAt: now,
-        updatedAt: now,
-      }, { merge: true }),
-      employerRef.set({
-        onboardingComplete: true,
-        status: "approved",
-        approvedAt: now,
-        updatedAt: now,
-      }, { merge: true }),
-      userRef.set({
-        onboardingComplete: true,
-        updatedAt: now,
-      }, { merge: true }),
-      memberRef.set({
-        onboardingComplete: true,
-        updatedAt: now,
-      }, { merge: true }),
-      organizationRef.collection("activity").add({
-        type: "onboarding_complete",
-        message: "Organization setup completed and account accepted automatically.",
-        timestamp: now,
-      }),
-    ]);
+    await db.runTransaction(async tx => {
+      const records = await Promise.all([tx.get(organizationRef), tx.get(employerRef)]);
+      for (const record of records) {
+        if (!record.exists) throw new EmployerApiError(404, "Organization account not found.");
+        const status = record.data()?.status;
+        tx.update(record.ref, {
+          onboardingComplete: true, updatedAt: now,
+          ...(!status || status === "pending" ? { status: "approved", approvedAt: now } : {}),
+        });
+      }
+      tx.set(userRef, { onboardingComplete: true, updatedAt: now }, { merge: true });
+      tx.set(memberRef, { onboardingComplete: true, updatedAt: now }, { merge: true });
+      tx.set(organizationRef.collection("activity").doc(), {
+        type: "onboarding_complete", message: "Organization setup completed. Directory review is managed separately.", timestamp: now,
+      });
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

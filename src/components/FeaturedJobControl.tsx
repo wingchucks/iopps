@@ -169,7 +169,7 @@ export default function FeaturedJobControl({
               }}
             >
               {summary.plan !== "premium" && summary.plan !== "school" && (
-                <Link
+                <Link className="brand-button"
                   href="/org/plans"
                   style={{
                     textDecoration: "none",
@@ -178,8 +178,8 @@ export default function FeaturedJobControl({
                     justifyContent: "center",
                     padding: "9px 14px",
                     borderRadius: 10,
-                    background: "rgba(13,148,136,.14)",
-                    color: "var(--teal)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                     fontSize: 13,
                     fontWeight: 700,
                   }}

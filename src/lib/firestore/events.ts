@@ -1,19 +1,15 @@
 import {
   collection,
   getDocs,
-  getDoc,
   setDoc,
   updateDoc,
   deleteDoc,
   doc,
   query,
-  orderBy,
   where,
   serverTimestamp,
-  type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { isPublicEventVisible, normalizePublicEvent } from "../public-events";
 
 export interface Event {
   id: string;
@@ -56,40 +52,17 @@ export interface Event {
 const col = collection(db, "events");
 
 export async function getEvents(): Promise<Event[]> {
-  const constraints: QueryConstraint[] = [orderBy("order", "asc")];
-  const snap = await getDocs(query(col, ...constraints));
-  return snap.docs
-    .map((d) => normalizePublicEvent({ id: d.id, ...d.data() }) as Event)
-    .filter((event) => isPublicEventVisible(event));
+  const response = await fetch("/api/events", { cache: "no-store" });
+  if (!response.ok) throw new Error("Could not load events.");
+  return (await response.json()).events || [];
 }
-
 export async function getEvent(id: string): Promise<Event | null> {
-  const snap = await getDoc(doc(col, id));
-  if (!snap.exists()) return null;
-  const event = normalizePublicEvent({ id: snap.id, ...snap.data() }) as Event;
-  return isPublicEventVisible(event) ? event : null;
+  const response = await fetch(`/api/events/${encodeURIComponent(id)}`, { cache: "no-store" });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Could not load listing.");
+  return (await response.json()).event;
 }
-
-export async function getEventBySlug(slug: string): Promise<Event | null> {
-  const direct = await getDoc(doc(col, slug));
-  if (direct.exists()) {
-    const event = normalizePublicEvent({ id: direct.id, ...direct.data() }) as Event;
-    if (isPublicEventVisible(event)) {
-      return event;
-    }
-  }
-
-  const snap = await getDocs(query(col, where("slug", "==", slug)));
-  if (!snap.empty) {
-    const d = snap.docs[0];
-    const event = normalizePublicEvent({ id: d.id, ...d.data() }) as Event;
-    if (isPublicEventVisible(event)) {
-      return event;
-    }
-  }
-
-  return null;
-}
+export const getEventBySlug = getEvent;
 
 export async function getEventsByOrg(orgId: string): Promise<Event[]> {
   const snap = await getDocs(query(col, where("orgId", "==", orgId)));

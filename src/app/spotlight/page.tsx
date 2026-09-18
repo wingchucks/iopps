@@ -215,8 +215,8 @@ function SpotlightContent() {
               onClick={() => setActiveCategory(cat)}
               className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap cursor-pointer transition-colors ${
                 activeCategory === cat
-                  ? "bg-[var(--navy)] text-white"
-                  : "bg-card text-text-sec border border-border hover:bg-bg"
+                  ? "button-gradient text-white"
+                  : "button-gradient-soft text-text-sec border border-border hover:bg-bg"
               }`}
               style={{ border: activeCategory === cat ? "none" : undefined }}
             >

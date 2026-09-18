@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { getMemberProfile } from "@/lib/firestore/members";
 import {
@@ -23,24 +23,53 @@ export default function FollowButton({
   onCountChange,
 }: FollowButtonProps) {
   const { user } = useAuth();
+  if (!user || user.uid === targetUserId) return null;
+  return (
+    <FollowButtonForUser
+      key={`${user.uid}:${targetUserId}`}
+      userId={user.uid}
+      targetUserId={targetUserId}
+      targetUserName={targetUserName}
+      small={small}
+      onCountChange={onCountChange}
+    />
+  );
+}
+
+function FollowButtonForUser({ userId, targetUserId, targetUserName, small, onCountChange }:
+  FollowButtonProps & { userId: string }) {
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hovering, setHovering] = useState(false);
+  const [lookupError, setLookupError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const mounted = useRef(false);
+  const busy = useRef(false);
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    checkIsFollowing(user.uid, targetUserId)
-      .then(setFollowing)
-      .finally(() => setLoading(false));
-  }, [user, targetUserId]);
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
-  if (!user || user.uid === targetUserId) return null;
+  useEffect(() => {
+    let cancelled = false;
+    checkIsFollowing(userId, targetUserId)
+      .then(value => { if (!cancelled) setFollowing(value); })
+      .catch(() => { if (!cancelled) setLookupError(true); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [userId, targetUserId, attempt]);
 
   const handleClick = async () => {
-    if (loading) return;
+    if (loading || busy.current) return;
+    if (lookupError) {
+      setLookupError(false);
+      setLoading(true);
+      setAttempt(value => value + 1);
+      return;
+    }
+    busy.current = true;
+    setLoading(true);
     const wasFollowing = following;
     // Optimistic update
     setFollowing(!wasFollowing);
@@ -48,11 +77,12 @@ export default function FollowButton({
 
     try {
       if (wasFollowing) {
-        await unfollowUser(user.uid, targetUserId);
+        await unfollowUser(userId, targetUserId);
       } else {
-        const myProfile = await getMemberProfile(user.uid);
+        const myProfile = await getMemberProfile(userId);
+        if (!mounted.current) return;
         await followUser(
-          user.uid,
+          userId,
           targetUserId,
           myProfile?.displayName,
           targetUserName
@@ -61,8 +91,13 @@ export default function FollowButton({
     } catch (err) {
       console.error("Follow action failed:", err);
       // Revert optimistic update
-      setFollowing(wasFollowing);
-      onCountChange?.(wasFollowing ? 1 : -1);
+      if (mounted.current) {
+        setFollowing(wasFollowing);
+        onCountChange?.(wasFollowing ? 1 : -1);
+      }
+    } finally {
+      busy.current = false;
+      if (mounted.current) setLoading(false);
     }
   };
 
@@ -70,13 +105,13 @@ export default function FollowButton({
     return (
       <button
         disabled
-        className="font-semibold cursor-default opacity-50"
+        className="brand-button font-semibold cursor-default opacity-50"
         style={{
           padding: small ? "8px 16px" : "12px 24px",
           borderRadius: 12,
           border: "1.5px solid var(--border)",
-          background: "var(--card)",
-          color: "var(--text-muted)",
+          background: "var(--button-gradient-soft)",
+          color: "var(--button-gradient-soft-text)",
           fontSize: small ? 13 : 15,
         }}
       >
@@ -99,8 +134,8 @@ export default function FollowButton({
           border: isUnfollow
             ? "1.5px solid var(--red)"
             : "1.5px solid var(--teal)",
-          background: isUnfollow ? "rgba(220,38,38,.08)" : "rgba(13,148,136,.08)",
-          color: isUnfollow ? "var(--red)" : "var(--teal)",
+          background: isUnfollow ? "rgba(220,38,38,.08)" : "var(--button-gradient-soft)",
+          color: isUnfollow ? "var(--red)" : "var(--button-gradient-soft-text)",
           fontSize: small ? 13 : 15,
         }}
       >
@@ -112,17 +147,17 @@ export default function FollowButton({
   return (
     <button
       onClick={handleClick}
-      className="font-semibold cursor-pointer transition-all duration-150 hover:opacity-90"
+      className="brand-button font-semibold cursor-pointer transition-all duration-150 hover:opacity-90"
       style={{
         padding: small ? "8px 16px" : "12px 24px",
         borderRadius: 12,
         border: "none",
-        background: "var(--teal)",
+        background: "var(--button-gradient)",
         color: "#fff",
         fontSize: small ? 13 : 15,
       }}
     >
-      Follow
+      {lookupError ? "Retry follow status" : "Follow"}
     </button>
   );
 }

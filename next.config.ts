@@ -58,6 +58,15 @@ const nextConfig: NextConfig = {
       { source: "/log-in", destination: "/login", permanent: true },
       { source: "/register", destination: "/signup", permanent: true },
       { source: "/sign-up", destination: "/signup", permanent: true },
+      // Preserve bookmarks and links in previously delivered notifications.
+      { source: "/discover", destination: "/jobs", permanent: true },
+      { source: "/careers/:path*", destination: "/jobs/:path*", permanent: true },
+      { source: "/member", destination: "/profile", permanent: true },
+      { source: "/member/applications", destination: "/applications", permanent: true },
+      { source: "/member/messages", destination: "/messages", permanent: true },
+      { source: "/member/profile", destination: "/profile", permanent: true },
+      { source: "/member/settings/:path*", destination: "/settings/:path*", permanent: true },
+      { source: "/member/:uid", destination: "/members/:uid", permanent: true },
     ];
   },
   async headers() {

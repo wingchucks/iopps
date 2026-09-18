@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const source = readFileSync("src/app/page.tsx", "utf8");
-test("homepage hero offers all four task-first destinations", () => {
+test("homepage hero offers work, hiring, IOPPS Live and Indigenous business signup", () => {
  const hero=source.slice(source.indexOf('<section className="op-hero">'),source.indexOf('<section className="op-jobs">'));
- for(const [label,href] of [['Find work','/jobs'],['Hire talent','/for-employers'],['Learn','/training'],['Events & live','/events']]) {
+ for(const [label,href] of [['Find work','/jobs'],['Hire talent','/for-employers'],['Watch IOPPS Live','/livestreams'],['Promote your business','/signup?intent=indigenous-business']]) {
   assert.ok(hero.includes(`href="${href}"`),`missing ${href} in hero`);
   assert.ok(hero.includes(label),`missing ${label} in hero`);
  }

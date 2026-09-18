@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { safeAuthRedirect, authIntentHref, postSignupDestination } from "@/lib/auth-redirect";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
-import { getMemberProfile } from "@/lib/firestore/members";
 
 const REASON_MESSAGES: Record<string, string> = {
   timeout: "You were signed out due to inactivity.",
@@ -24,7 +23,6 @@ export default function LoginPage() {
 function LoginForm() {
   const { user, loading: authLoading, signIn, signInWithGoogle, reloadUser, signOut } = useAuth();
   const searchParams = useSearchParams();
-  const redirectTo = safeAuthRedirect(searchParams.get("redirect"));
   const reason = searchParams.get("reason");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,72 +30,28 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [slowRedirect, setSlowRedirect] = useState(false);
+  const [redirectAttempt, setRedirectAttempt] = useState(0);
 
-  const buildOnboardingRedirect = (missingFields?: unknown) => {
-    const params = new URLSearchParams({ reason: "incomplete-profile" });
-    if (Array.isArray(missingFields) && missingFields.length > 0) {
-      params.set(
-        "required",
-        missingFields
-          .filter((field): field is string => typeof field === "string" && field.trim().length > 0)
-          .join(",")
-      );
-    }
-    return authIntentHref(`/org/onboarding?${params.toString()}`, searchParams);
-  };
-
-  const resolvePostAuthDestination = async (
-    currentUser: {
-      uid: string;
-      getIdToken: () => Promise<string>;
-      getIdTokenResult?: () => Promise<{ claims: Record<string, unknown> }>;
-    },
-  ) => {
-    // C-4: Check admin via ID token custom claims BEFORE reading members doc.
-    // Admins may not have a members/{uid} profile; without this check they
-    // were falling into the community onboarding wizard at /setup.
+  const resolvePostAuthDestination = useCallback(async (currentUser: {getIdToken: () => Promise<string>}) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
     try {
-      if (typeof currentUser.getIdTokenResult === "function") {
-        const tokenResult = await currentUser.getIdTokenResult();
-        const claims = tokenResult?.claims ?? {};
-        if (claims.admin === true || claims.role === "admin" || claims.role === "moderator") {
-          return redirectTo || "/admin";
-        }
-      }
-    } catch {
-      /* fall through to profile-based resolution */
-    }
-
-    const profile = await getMemberProfile(currentUser.uid);
-
-    if (profile?.role === "admin" || profile?.role === "moderator") {
-      return redirectTo || "/admin";
-    }
-
-    if (!profile) return redirectTo || "/setup";
-
-    if (profile.orgId) {
-      const idToken = await currentUser.getIdToken();
-      if (idToken) {
-        const res = await fetch("/api/employer/check", {
-          headers: { Authorization: `Bearer ${idToken}` },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authorized) {
-            if (data.organizationType !== "school" && data.profileReady === false) {
-              return buildOnboardingRedirect(data.missingProfileFields);
-            }
-
-            return postSignupDestination(searchParams, "/org/dashboard");
-          }
-        }
-      }
-    }
-
-    return redirectTo || "/feed";
-  };
+      const token = await currentUser.getIdToken();
+      const response = await fetch("/api/auth/account", {
+        headers: {Authorization: `Bearer ${token}`}, cache: "no-store", signal: controller.signal,
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "We couldn’t load your account. Please retry.");
+      const destination = safeAuthRedirect(data.destination);
+      if (!destination) throw new Error("We couldn’t open your workspace. Please retry.");
+      if (destination.startsWith("/org/onboarding")) return authIntentHref(destination, searchParams);
+      if (destination === "/org/dashboard") return postSignupDestination(searchParams, destination);
+      return safeAuthRedirect(searchParams.get("redirect")) || destination;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") throw new Error("Your account took too long to load. Check your connection and retry.");
+      throw error;
+    } finally { window.clearTimeout(timeout); }
+  }, [searchParams]);
 
   useEffect(() => {
     if (authLoading || !user) {
@@ -106,12 +60,18 @@ function LoginForm() {
     }
 
     const timeout = window.setTimeout(() => setSlowRedirect(true), 3500);
+    let cancelled = false;
     void resolvePostAuthDestination(user).then((destination) => {
-      window.location.replace(destination);
+      if (!cancelled) window.location.replace(destination);
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        setError(error instanceof Error ? error.message : "We couldn’t load your account. Please retry.");
+        setSlowRedirect(true);
+      }
     });
 
-    return () => window.clearTimeout(timeout);
-  }, [user, authLoading, redirectTo]);
+    return () => { cancelled = true; window.clearTimeout(timeout); };
+  }, [user, authLoading, resolvePostAuthDestination, redirectAttempt]);
 
   if (authLoading || (user && !slowRedirect)) {
     return (
@@ -129,9 +89,7 @@ function LoginForm() {
     setLoading(true);
     try {
       await reloadUser();
-      if (user) {
-        window.location.replace(await resolvePostAuthDestination(user));
-      }
+      setRedirectAttempt((attempt) => attempt + 1);
       setSlowRedirect(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unable to refresh your secure session.";
@@ -187,37 +145,17 @@ function LoginForm() {
               type="button"
               onClick={handleSessionRecovery}
               disabled={loading}
-              className="w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
+              className="brand-button w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
               style={{
                 padding: "13px 18px",
                 borderRadius: 12,
                 border: "none",
-                background: "#0F766E",
+                background: "var(--button-gradient)",
                 color: "#fff",
                 fontSize: 15,
               }}
             >
               {loading ? "Refreshing session..." : "Retry secure redirect"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                void resolvePostAuthDestination(user).then((destination) => {
-                  window.location.replace(destination);
-                });
-              }}
-              disabled={loading}
-              className="w-full font-semibold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
-              style={{
-                padding: "13px 18px",
-                borderRadius: 12,
-                border: "1.5px solid var(--border)",
-                background: "var(--card)",
-                color: "var(--text)",
-                fontSize: 15,
-              }}
-            >
-              Continue anyway
             </button>
             <button
               type="button"
@@ -246,8 +184,9 @@ function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      const cred = await signIn(email, password);
-      window.location.assign(await resolvePostAuthDestination(cred.user));
+      // AuthProvider publishes the user only after the secure session is ready.
+      // The effect above owns navigation for both new and restored sessions.
+      await signIn(email, password);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (msg.includes("user-not-found") || msg.includes("wrong-password") || msg.includes("invalid-credential"))
@@ -264,8 +203,7 @@ function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      const cred = await signInWithGoogle();
-      window.location.assign(await resolvePostAuthDestination(cred.user));
+      await signInWithGoogle();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       if (!msg.includes("popup-closed")) setError(msg);
@@ -327,6 +265,7 @@ function LoginForm() {
           </Link>
 
           <h1 className="text-2xl font-extrabold text-text mb-1">Sign in to IOPPS</h1>
+          <p className="text-text-sec text-sm mb-4">One sign-in for job seekers, businesses and organizations. Use your existing account to return to your workspace.</p>
           <p className="text-text-sec text-[15px] mb-8">
             Don&apos;t have an account?{" "}
             <Link href={authIntentHref("/signup", searchParams)} className="text-teal font-semibold no-underline hover:underline">
@@ -457,12 +396,12 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
+              className="brand-button w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
               style={{
                 padding: "14px 24px",
                 borderRadius: 12,
                 border: "none",
-                background: "#0F766E",
+                background: "var(--button-gradient)",
                 color: "#fff",
                 fontSize: 16,
                 marginTop: 4,

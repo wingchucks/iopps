@@ -236,14 +236,14 @@ function AddFeedModal({
         <div className="mt-5 flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-muted"
+            className="rounded-lg border border-[var(--card-border)] button-gradient-soft px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-muted"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg button-gradient px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving && (
               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -366,7 +366,7 @@ export default function FeedSyncPage() {
         </div>
         <button
           onClick={() => setAddModalOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90"
+          className="inline-flex items-center gap-2 rounded-lg button-gradient px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90"
         >
           <PlusIcon className="h-4 w-4" />
           Add Feed

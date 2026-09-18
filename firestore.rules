@@ -6,7 +6,13 @@ service cloud.firestore {
     // ── Helper functions ──
 
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null && (
+        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) || (
+          !(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', 'active') in ['suspended', 'deleted', 'disabled']) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('deletedAt', null) == null &&
+          request.auth.token.get('auth_time', 0) > get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('claimsValidAfter', -1)
+        )
+      );
     }
 
     function isOwner(uid) {
@@ -17,35 +23,36 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/members/$(request.auth.uid)).data;
     }
 
-    // Profile edits must not mint privileges used by application/employer access.
+    // Personal edits cannot grant roles, relink organizations, or undo suspension.
+    function profileFields() {
+      return ['displayName', 'name', 'community', 'location', 'bio', 'interests',
+        'photoURL', 'nation', 'territory', 'languages', 'headline', 'skillsText',
+        'openToWork', 'targetRoles', 'salaryRange', 'workPreference', 'skills',
+        'education', 'resumeUrl', 'resumeURL', 'resumeFileName', 'resumeUploadedAt',
+        'hideFromDirectory', 'onboardingComplete', 'band', 'pronouns', 'title',
+        'experienceLevel', 'industry', 'preferredLocation', 'remoteOk', 'jobTypes',
+        'willingToRelocate', 'updatedAt'];
+    }
     function safeProfileCreate() {
       let data = request.resource.data;
-      return data.get('role', 'community') in ['community', 'employer', 'school', 'organization']
-        && data.get('orgId', null) in [null, '', request.auth.uid]
-        && data.get('employerId', null) in [null, '', request.auth.uid]
-        && data.get('orgRole', null) in [null, '', 'owner']
-        && data.get('admin', false) == false;
+      return data.keys().hasOnly(profileFields().concat(['uid', 'email', 'joinedAt', 'createdAt', 'role']))
+        && data.get('uid', request.auth.uid) == request.auth.uid
+        && data.get('role', 'community') in ['community', 'member'];
     }
-
     function safeProfileUpdate() {
-      return !request.resource.data.diff(resource.data).affectedKeys()
-        .hasAny(['role', 'admin', 'orgId', 'orgRole', 'employerId']);
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileFields());
     }
-
+    // Platform privileges come from signed claims, never an editable profile role.
+    function currentManagedRoleMatches(role) {
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('claimsValidAfter', null) == null ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == role;
+    }
     function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.admin == true ||
-        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-         memberData().role in ['admin'])
-      );
+      return isSignedIn() && currentManagedRoleMatches('admin') && (request.auth.token.get('admin', false) == true || request.auth.token.get('role', '') == 'admin');
     }
-
     function isAdminOrMod() {
-      return isSignedIn() && (
-        request.auth.token.admin == true ||
-        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-         memberData().role in ['admin', 'moderator'])
-      );
+      return isAdmin() || (isSignedIn() && currentManagedRoleMatches('moderator') && request.auth.token.get('role', '') == 'moderator');
     }
 
     function isOrgManager(orgId) {
@@ -60,62 +67,39 @@ service cloud.firestore {
     // Job drafts, edits and publishing use authenticated server routes, including
     // admin actions. Those routes enforce ownership and featured entitlements.
     match /jobs/{jobId} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if false; // Sanitized public and owner APIs only.
     }
 
-    // Explicit profile fields only. Billing, approval and ownership are server-owned.
-    function organizationProfileFields() {
-      return ['name', 'slug', 'type', 'businessIdentity', 'contactName', 'contactEmail',
-        'email', 'logo', 'logoUrl', 'bannerUrl', 'tagline', 'description', 'foundedYear',
-        'foundedYearVerified', 'communityAffiliation', 'industry', 'size', 'location',
-        'website', 'services', 'capabilities', 'hiringStatus', 'partnershipInterests',
-        'phone', 'address', 'socialLinks', 'indigenousGroups', 'institutionType',
-        'studentBodySize', 'accreditation', 'campusCount', 'enrollmentStatus',
-        'onboardingComplete', 'updatedAt', 'emailTemplates', 'shortName', 'employees',
-        'since', 'indigenousOwned', 'hours', 'gallery', 'videos', 'treatyTerritory',
-        'nation', 'tags', 'programs', 'keyStudyAreas'];
+    function isOrgMember(orgId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/members/$(request.auth.uid))
+        && orgId is string && orgId.size() > 0 && memberData().get('orgId', '') == orgId;
     }
 
-    function safeOrganizationCreate() {
-      let data = request.resource.data;
-      return data.keys().hasOnly(organizationProfileFields().concat(['createdAt', 'plan', 'uid', 'id', 'employerId']))
-        && data.get('plan', null) == null
-        && data.get('uid', request.auth.uid) == request.auth.uid
-        && data.get('id', request.auth.uid) == request.auth.uid
-        && data.get('employerId', request.auth.uid) == request.auth.uid;
-    }
-
-    function safeOrganizationUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(organizationProfileFields());
+    // Public organization data is served through a sanitized, visibility-checked API.
+    // All listing creation and public edits use server routes to preserve review state.
+    function safePrivateOrganizationUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailTemplates', 'updatedAt']);
     }
 
     match /employers/{employerId} {
-      allow read: if true;
-      allow create: if isOwner(employerId) && safeOrganizationCreate();
-      allow update: if isSignedIn() && safeOrganizationUpdate() && (
-        employerId == request.auth.uid ||
-        resource.data.get('uid', null) == request.auth.uid ||
-        resource.data.get('id', null) == request.auth.uid ||
-        isAdmin()
-      );
-      allow delete: if isAdmin();
+      allow read: if isOwner(employerId) || isOrgMember(employerId) || isAdmin();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false; // Destructive actions require the verified owner API.
     }
 
-    // Users: authenticated read (member directory), users write own, admin writes any
+    // Private account records: own reads/edits only; administration uses server APIs.
     match /users/{userId} {
-      allow read: if isSignedIn();
+      allow read: if isOwner(userId);
       allow create: if isOwner(userId) && safeProfileCreate();
-      allow update: if (isOwner(userId) && safeProfileUpdate()) || isAdmin();
-      allow delete: if isAdmin();
+      allow update: if isOwner(userId) && safeProfileUpdate();
+      allow delete: if false; // Destructive actions require the verified owner API.
     }
 
-    // Scholarships: public read, admin write, org owner/admin can create/update/delete their org's
+    // Scholarships: public API reads; organization edits use authenticated server routes.
     match /scholarships/{scholarshipId} {
-      allow read: if true;
+      allow read: if isAdmin() || isOwner(resource.data.get('orgId', '')) || isOrgMember(resource.data.get('orgId', ''));
       allow write: if isAdmin();
-      allow create: if isOrgManager(request.resource.data.orgId);
-      allow update, delete: if isOrgManager(resource.data.orgId);
     }
 
     // Conferences: public read, admin write, org owner/admin can create/update/delete their org's
@@ -123,15 +107,14 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
       allow create: if isOrgManager(request.resource.data.orgId);
-      allow update, delete: if isOrgManager(resource.data.orgId);
+      allow update: if isOrgManager(resource.data.orgId) && request.resource.data.orgId == resource.data.orgId;
+      allow delete: if isOrgManager(resource.data.orgId);
     }
 
-    // Events: public read, admin write, org owner/admin can create/update/delete their org's
+    // Events: public API reads; organization edits use authenticated server routes.
     match /events/{eventId} {
-      allow read: if true;
+      allow read: if isAdmin() || isOwner(resource.data.get('orgId', '')) || isOrgMember(resource.data.get('orgId', ''));
       allow write: if isAdmin();
-      allow create: if isOrgManager(request.resource.data.orgId);
-      allow update, delete: if isOrgManager(resource.data.orgId);
     }
 
     // RSS feeds collection: public read, admin write
@@ -152,48 +135,16 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
     }
 
-    // Applications: applicants can create/read their own applications; employers can manage applications for their org.
+    // Full applications contain private employer notes and delivery metadata.
+    // Applicant receipts and employer views are authorized and projected by APIs.
     match /applications/{applicationId} {
-      function isApplicantWithdrawal() {
-        let oldHistory = resource.data.get('statusHistory', []);
-        let history = request.resource.data.statusHistory;
-        let last = history[history.size() - 1];
-        return resource.data.userId == request.auth.uid
-          && resource.data.status in ['submitted', 'reviewing', 'shortlisted', 'interview']
-          && request.resource.data.status == 'withdrawn'
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusHistory', 'updatedAt'])
-          && history == oldHistory.concat([last])
-          && last.keys().hasOnly(['status', 'timestamp', 'note'])
-          && last.status == 'withdrawn'
-          && last.timestamp is timestamp
-          && request.resource.data.updatedAt == request.time;
-      }
-      allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid ||
-        isAdmin() ||
-        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-         memberData().orgId is string && memberData().orgId.size() > 0 &&
-           memberData().orgId in [resource.data.orgId, resource.data.employerId] &&
-         memberData().orgRole in ["owner", "admin"])
-      );
-      // Authenticated API validates the authoritative job in a transaction.
-      allow create: if false;
-      allow update: if isSignedIn() && (
-        isApplicantWithdrawal() ||
-        ((isAdmin() ||
-          (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
-           memberData().orgId is string && memberData().orgId.size() > 0 &&
-           memberData().orgId in [resource.data.orgId, resource.data.employerId] &&
-           memberData().orgRole in ["owner", "admin"])) &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusHistory', 'reviewerNote', 'updatedAt']))
-      );
-      allow delete: if false; // Withdraw instead; preserve the immutable receipt.
+      allow read, write: if false;
     }
 
     // Organization posts use server routes. The only client-create exception is
     // the existing community story/spotlight payload, without paid/org fields.
     match /posts/{postId} {
-      allow read: if true;
+      allow read: if false; // Public API excludes unpublished records.
       allow create: if isSignedIn()
         && request.resource.data.keys().hasOnly(['type', 'title', 'description',
           'authorUid', 'authorName', 'authorPhoto', 'featuredImage', 'status', 'createdAt', 'order'])
@@ -203,12 +154,11 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Organizations: public read, org owner/admin can update own org, admin can write any
     match /organizations/{orgId} {
-      allow read: if true;
-      allow create: if isOwner(orgId) && safeOrganizationCreate();
-      allow update: if (isOrgManager(orgId) || isAdmin()) && safeOrganizationUpdate();
-      allow delete: if isAdmin();
+      allow read: if isOwner(orgId) || isOrgMember(orgId) || isAdmin();
+      allow create: if false;
+      allow update: if (isOrgManager(orgId) || isAdmin()) && safePrivateOrganizationUpdate();
+      allow delete: if false; // Destructive actions require the verified owner API.
     }
 
     // Organization team invites: org owners/admins can manage their own invites.
@@ -234,17 +184,11 @@ service cloud.firestore {
       allow write: if isAdminOrMod();
     }
 
-    // Endorsements: public read, authenticated create (own endorserId, can't self-endorse),
-    // endorser or target can delete
-    match /endorsements/{endorsementId} {
-      allow read: if true;
-      allow create: if isSignedIn() &&
-        request.resource.data.endorserId == request.auth.uid &&
-        request.resource.data.endorserId != request.resource.data.targetUserId;
-      allow delete: if isSignedIn() && (
-        resource.data.endorserId == request.auth.uid ||
-        resource.data.targetUserId == request.auth.uid
-      );
+    // Retired endorsements: historical admin access only.
+    match /endorsements/{recordId} {
+      // Retired social graph: keep historical records; no client mutations.
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // Livestreams: public read, admin write
@@ -259,21 +203,21 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Mentor profiles: public read, users can create/update their own profile
-    match /mentor_profiles/{docId} {
-      allow read: if true;
-      allow create: if isOwner(docId);
-      allow update: if isOwner(docId);
+    // Retired mentor profiles: historical admin access only.
+    match /mentor_profiles/{recordId} {
+      // Retired social graph: keep historical records; no client mutations.
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // ── Authenticated collections ──
 
-    // Members: authenticated read (profile directory), users write own, admin writes any
+    // Private member records. Browsing is retired; own access stays unchanged.
     match /members/{userId} {
-      allow read: if isSignedIn();
+      allow read: if isOwner(userId);
       allow create: if isOwner(userId) && safeProfileCreate();
-      allow update: if (isOwner(userId) && safeProfileUpdate()) || isAdmin();
-      allow delete: if isAdmin();
+      allow update: if isOwner(userId) && safeProfileUpdate();
+      allow delete: if false; // Destructive actions require the verified owner API.
     }
 
     // Saved items: users can read/write their own saves
@@ -296,19 +240,21 @@ service cloud.firestore {
       allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
-    // Conversations: participants can read/create/update.
+    // Existing conversations: participants can read/update; creation is retired.
     // Allow get for non-existent docs (existence check before create).
     // Allow list when querying by unreadBy (used for unread count badge).
     match /conversations/{convId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn() && (
-        request.auth.uid in resource.data.participants ||
-        resource.data.unreadBy == request.auth.uid
+      allow get: if isSignedIn() && (
+        !exists(/databases/$(database)/documents/conversations/$(convId)) ||
+        request.auth.uid in resource.data.participants
       );
-      allow create: if isSignedIn() &&
-        request.auth.uid in request.resource.data.participants;
+      allow list: if isSignedIn() && (
+        request.auth.uid in resource.data.participants
+      );
+      allow create: if false; // Existing conversations only; no forged peer-lookup grants.
       allow update: if isSignedIn() &&
-        request.auth.uid in resource.data.participants;
+        request.auth.uid in resource.data.participants &&
+        request.resource.data.participants == resource.data.participants;
     }
 
     // Messages: only conversation participants can read,
@@ -317,7 +263,8 @@ service cloud.firestore {
       allow read: if isSignedIn() &&
         request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
       allow create: if isSignedIn() &&
-        request.resource.data.senderId == request.auth.uid;
+        request.resource.data.senderId == request.auth.uid &&
+        request.auth.uid in get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants;
     }
 
     // Member settings: users can read/write their own settings
@@ -357,17 +304,14 @@ service cloud.firestore {
     // only admin can read (view queue and stats)
     match /mail/{mailId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn();
+      allow create: if false;
     }
 
-    // Connections (follow system): authenticated users can read all,
-    // users can create/delete connections where followerId matches their uid
-    match /connections/{connectionId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() &&
-        request.resource.data.followerId == request.auth.uid;
-      allow delete: if isSignedIn() &&
-        resource.data.followerId == request.auth.uid;
+    // Retired follow graph: historical admin access only.
+    match /connections/{recordId} {
+      // Retired social graph: keep historical records; no client mutations.
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // Billing receipts are written only by authenticated server payment/admin paths.
@@ -394,15 +338,16 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // Mentorship requests: mentor and mentee can read their own,
-    // mentee can create, mentor can update (accept/decline)
-    match /mentorship_requests/{reqId} {
-      allow read: if isSignedIn() && (
-        resource.data.mentorId == request.auth.uid ||
-        resource.data.menteeId == request.auth.uid
-      );
-      allow create: if isSignedIn() && request.resource.data.menteeId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.mentorId == request.auth.uid;
+    // Retired private requests: Admin SDK archival access only.
+    match /mentorship_requests/{recordId} {
+      // Retired social graph: keep historical records; no client mutations.
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // Unpublished scholarship and event content is only accessible through owner APIs.
+    match /organizationOpportunityDrafts/{id} {
+      allow read, write: if false;
     }
 
     // Default: deny all

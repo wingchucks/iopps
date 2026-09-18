@@ -19,7 +19,7 @@ const STATIC_PAGES = [
   "", "/jobs", "/events", "/conference", "/scholarships",
   "/stories", "/partners", "/businesses",
   "/shop", "/livestreams", "/spotlight", "/featured-talent",
-  "/mentorship", "/for-employers", "/about", "/contact", "/pricing", "/privacy", "/terms",
+  "/for-employers", "/about", "/contact", "/pricing", "/privacy", "/terms",
 ] as const;
 
 type CollectionSpec = {

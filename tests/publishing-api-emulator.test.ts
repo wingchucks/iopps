@@ -1,3 +1,4 @@
+import { loadEmployerJobRows } from '../src/lib/server/employer-job-list.ts';
 /* eslint-disable @typescript-eslint/no-explicit-any -- VM isolates credentials/email; actual route and Firestore transactions run. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,6 +8,7 @@ import ts from 'typescript';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as entitlements from '../src/lib/server/featured-job-entitlements.ts';
+import * as hiringDetails from "../src/lib/job-hiring-details.ts";
 import * as school from '../src/lib/school-visibility.ts';
 
 const enabled = process.env.IOPPS_TEST_EMULATORS === 'true';
@@ -32,6 +34,7 @@ async function harness(t: any) {
     const exports: any = {};
     vm.runInNewContext(ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
       exports, Date, Error, console: { log() {}, error(...args: any[]) { console.error(...args.map(value => value instanceof Error ? { name: value.name, message: value.message, code: (value as any).code } : value)); } }, require: (id: string) => {
+        if (id === '@/lib/server/employer-job-list') return { loadEmployerJobRows };
         if (id === 'next/server') return { NextResponse: { json: Response.json } };
         if (id === 'firebase-admin/firestore') return { FieldValue };
         if (id === '@/lib/firebase-admin') return { getAdminDb: () => port };
@@ -41,6 +44,7 @@ async function harness(t: any) {
         }
         if (id === '@/lib/server/featured-job-entitlements') return entitlements;
         if (id === '@/lib/school-visibility') return school;
+        if (id === '@/lib/job-hiring-details') return hiringDetails;
         if (id === '@/lib/email') return { sendAdminContentPosted: async () => {} };
         throw new Error(id);
       },
@@ -82,6 +86,44 @@ test('server preserves legacy job-post draft editing and entitlement enforcement
   assert.equal((await h.edit(id, { status: 'active', featured: true })).status, 200);
   assert.equal((await h.db.doc(`posts/${id}`).get()).data()?.featuredCreditConsumed, true);
   assert.equal((await h.employer.get()).data()?.featuredPostCredits, 0);
+});
+
+test('job location and optional hiring details survive create, unrelated edits, and updates', { skip: !enabled }, async t => {
+  const h = await harness(t); const id = h.id('hiring-details');
+  const details = {
+    territory: 'Treaty 6', territoryName: 'Sample community',
+    criminalRecordCheck: 'Required after an offer', vulnerableSectorCheck: 'Not required',
+    driversLicense: true, licenceClass: 'Class 5', willTrain: true, trainingDetails: 'Paid orientation',
+    supports: ['Mentorship'], indigenousEncouraged: true,
+  };
+  assert.equal((await h.create({ title: 'Fictional coordinator', slug: id, status: 'draft', location: 'Saskatoon, Saskatchewan', hiringDetails: details })).status, 200);
+  let saved = (await h.db.doc(`jobs/${id}`).get()).data();
+  assert.equal(saved?.location, 'Saskatoon, Saskatchewan');
+  assert.equal(saved?.hiringDetails.criminalRecordCheck, 'Required after an offer');
+  assert.equal(saved?.hiringDetails.territory, 'Treaty 6');
+  assert.equal(saved?.willTrain, true);
+  assert.equal(saved?.driversLicense, true);
+  assert.equal((await h.edit(id, { title: 'Updated coordinator' })).status, 200);
+  assert.deepEqual((await h.db.doc(`jobs/${id}`).get()).data()?.hiringDetails, saved?.hiringDetails);
+  assert.equal((await h.edit(id, { hiringDetails: { ...details, driversLicense: false, willTrain: false } })).status, 200);
+  saved = (await h.db.doc(`jobs/${id}`).get()).data();
+  assert.equal(saved?.driversLicense, false);
+  assert.equal(saved?.willTrain, false);
+  assert.equal(saved?.hiringDetails.licenceClass, '');
+  assert.equal(saved?.hiringDetails.trainingDetails, '');
+});
+
+test('employers can revise required documents and return an external job to IOPPS applications', { skip: !enabled }, async t => {
+  const h = await harness(t); const id = h.id('application-settings');
+  assert.equal((await h.create({ title: 'Coordinator', slug: id, status: 'draft', requiresResume: true, requiresCoverLetter: true, requiresReferences: true, applicationUrl: 'https://example.invalid/apply', closingDate: '2099-12-31' })).status, 200);
+  assert.equal((await h.edit(id, { requiresReferences: false, applicationUrl: '', closingDate: '' })).status, 200);
+  const saved = (await h.db.doc(`jobs/${id}`).get()).data();
+  assert.equal(saved?.requiresReferences, false);
+  assert.equal(saved?.requiresResume, true);
+  assert.equal(saved?.requiresCoverLetter, true);
+  assert.equal(saved?.applicationUrl, '');
+  assert.equal(saved?.externalApplyUrl, '');
+  assert.equal(saved?.closingDate, '');
 });
 
 test('concurrent server publishing cannot spend the same featured credit twice', { skip: !enabled }, async t => {

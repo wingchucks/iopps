@@ -8,3 +8,12 @@ test('freshness external audit is manual-only until explicitly activated',()=>{c
 test('applicant-history verification owns its server rather than attaching to an unknown port',()=>{
  const history=readFileSync('tests/applicant-history-emulator.test.mjs','utf8');assert.match(history,/startIsolatedQaServer/);assert.doesNotMatch(history,/127\.0\.0\.1:3100/);
 });
+
+test('CI requires lint for the complete root runtime and maintained verification code',()=>{
+ const ci=readFileSync('.github/workflows/ci.yml','utf8');
+ const build=ci.slice(ci.indexOf('  root-build:'),ci.indexOf('  mobile-lint:'));
+ assert.match(build,/run: npm run lint:release/);assert.doesNotMatch(build,/continue-on-error/);
+ const pkg=JSON.parse(readFileSync('package.json','utf8'));
+ assert.equal(pkg.scripts.lint,'eslint');
+ assert.equal(pkg.scripts['lint:release'],'eslint src public packages tests e2e scripts/*.mjs next.config.ts postcss.config.mjs eslint.config.mjs playwright.config.ts');
+});

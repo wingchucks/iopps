@@ -140,7 +140,7 @@ function SchoolProfileContent() {
         <p className="text-5xl mb-4">🏫</p>
         <h2 className="text-2xl font-extrabold text-text mb-2">School Not Found</h2>
         <p className="text-text-sec mb-6">This school doesn&apos;t exist or hasn&apos;t been added yet.</p>
-        <Link href="/schools" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold text-white no-underline hover:opacity-90 transition-opacity" style={{ background: "#A78BFA" }}>
+        <Link href="/schools" className="brand-button inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold text-white no-underline hover:opacity-90 transition-opacity" style={{ background: "var(--button-gradient)" }}>
           Browse Schools
         </Link>
       </div>
@@ -230,8 +230,8 @@ function SchoolProfileContent() {
             <div className="flex gap-2 flex-wrap shrink-0">
               {applyUrl && (
                 <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none text-white transition-all hover:-translate-y-0.5"
-                    style={{ background: PURPLE, boxShadow: "0 0 16px rgba(167,139,250,0.3)" }}>
+                  <button className="brand-button inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none text-white transition-all hover:-translate-y-0.5"
+                    style={{ background: "var(--button-gradient)", boxShadow: "var(--button-gradient-shadow)" }}>
                     🎓 Apply Now
                   </button>
                 </a>
@@ -481,8 +481,8 @@ function SchoolProfileContent() {
               <h3 className="text-base font-bold text-text mb-1.5">Start Your Journey</h3>
               <p className="text-xs text-text-muted mb-3">Begin your path to an exciting career with {org.shortName || org.name}.</p>
               <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                <button className="w-full py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none text-white transition-all hover:-translate-y-0.5"
-                  style={{ background: PURPLE }}>
+                <button className="brand-button w-full py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none text-white transition-all hover:-translate-y-0.5"
+                  style={{ background: "var(--button-gradient)" }}>
                   Start Application →
                 </button>
               </a>

@@ -1,19 +1,4 @@
-import {
-  collection,
-  getDocs,
-  getDoc,
-
-  updateDoc,
-  doc,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-  Timestamp,
-} from "firebase/firestore";
-import { auth, db } from "../firebase";
-import { queueEmail } from "./emailQueue";
-import { applicationStatusEmail } from "../email-templates";
+import { auth } from "../firebase";
 
 export type ApplicationStatus =
   | "submitted"
@@ -44,124 +29,55 @@ export interface Application {
   updatedAt?: unknown;
 }
 
-const col = collection(db, "applications");
+async function requestApplications(path: string, method = "GET", body?: Record<string, unknown>) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sign in to view applications");
+  const response = await fetch(path, {
+    method, headers: { Authorization: `Bearer ${await user.getIdToken()}`, "Content-Type": "application/json" },
+    cache: "no-store", ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Unable to update applications");
+  return data;
+}
 
 export async function getApplications(userId: string): Promise<Application[]> {
-  const user = auth.currentUser;
-  if (!user || user.uid !== userId) throw new Error("Sign in to view your applications");
-  const token = await user.getIdToken();
-  const response = await fetch("/api/applications", {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!response.ok) throw new Error("Unable to load applications");
-  const data = await response.json();
-  return data.applications;
+  if (auth.currentUser?.uid !== userId) throw new Error("Sign in to view your applications");
+  return (await requestApplications("/api/applications")).applications;
 }
 
-export async function getApplicationById(
-  appId: string
-): Promise<Application | null> {
-  const snap = await getDoc(doc(db, "applications", appId));
-  if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as Application;
+export async function getApplicationById(appId: string): Promise<Application | null> {
+  return (await requestApplications("/api/applications?appId=" + encodeURIComponent(appId))).application;
 }
 
-export async function getApplicationsByPost(
-  postId: string
-): Promise<Application[]> {
-  const snap = await getDocs(
-    query(col, where("postId", "==", postId), orderBy("appliedAt", "desc"))
-  );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Application);
+export async function getApplicantReceipt(postId: string): Promise<Record<string, unknown> | null> {
+  return (await requestApplications("/api/applications?postId=" + encodeURIComponent(postId))).application;
 }
 
-export async function hasApplied(
-  userId: string,
-  postId: string
-): Promise<boolean> {
-  const docId = `${userId}_${postId}`;
-  try {
-    const snap = await getDoc(doc(db, "applications", docId));
-    return snap.exists();
-  } catch (error) {
-    // Some legacy application documents are missing org linkage required by rules.
-    // Treat permission misses as "not applied" so public job pages do not fail to load.
-    console.warn("[applications] Unable to check application state", error);
-    return false;
-  }
+export async function getApplicationsByPost(postId: string): Promise<Application[]> {
+  const result = await requestApplications("/api/employer/applications");
+  return result.applications.filter((item: Application) => item.postId === postId);
 }
 
-export async function applyToPost(
-  userId: string,
-  postId: string,
-  postTitle: string,
-  orgName: string
-): Promise<void> {
-  const user = auth.currentUser;
-  if (!user || user.uid !== userId) throw new Error("Sign in to apply");
-  const token = await user.getIdToken();
-  const response = await fetch("/api/applications", {
-    method: "POST", headers: {"Content-Type":"application/json",Authorization:`Bearer ${token}`},
-    body: JSON.stringify({postId, postTitle, orgName}),
-  });
-  if (!response.ok) {
-    const result = await response.json();
-    throw new Error(result.error || "Unable to submit application");
-  }
+export async function hasApplied(userId: string, postId: string): Promise<boolean> {
+  if (auth.currentUser?.uid !== userId) return false;
+  return Boolean(await getApplicantReceipt(postId));
 }
 
-export async function updateApplicationStatus(
-  appId: string,
-  status: ApplicationStatus,
-  note?: string
-): Promise<void> {
-  const appDoc = await getDoc(doc(db, "applications", appId));
-  if (!appDoc.exists()) throw new Error("Application not found");
+export async function applyToPost(userId: string, postId: string, postTitle: string, orgName: string): Promise<void> {
+  if (auth.currentUser?.uid !== userId) throw new Error("Sign in to apply");
+  await requestApplications("/api/applications", "POST", { postId, postTitle, orgName });
+}
 
-  const data = appDoc.data();
-  const history: StatusHistoryEntry[] = data.statusHistory || [];
-  const entry: StatusHistoryEntry = {
-    status,
-    timestamp: Timestamp.now(),
-  };
-  if (note) entry.note = note;
-  history.push(entry);
-
-  await updateDoc(doc(db, "applications", appId), {
-    status,
-    statusHistory: history,
-    updatedAt: serverTimestamp(),
-  });
-
-  // Queue email notification for application status change
-  try {
-    const memberSnap = await getDoc(doc(db, "members", data.userId));
-    if (memberSnap.exists()) {
-      const member = memberSnap.data();
-      const email = member.email as string | undefined;
-      const name = (member.displayName || member.name || "Applicant") as string;
-      if (email) {
-        const html = applicationStatusEmail(name, data.postTitle || "a position", status);
-        await queueEmail(email, `Application Update: ${status.charAt(0).toUpperCase() + status.slice(1)}`, html);
-      }
-    }
-  } catch (err) {
-    console.error("Failed to queue application status email:", err);
-  }
+export async function updateApplicationStatus(appId: string, status: ApplicationStatus, note?: string): Promise<void> {
+  if (status === "withdrawn") return withdrawApplication(appId);
+  await requestApplications("/api/employer/applications", "PUT", { appId, status, ...(note ? { reviewerNote: note } : {}) });
 }
 
 export async function withdrawApplication(appId: string): Promise<void> {
-  await updateApplicationStatus(appId, "withdrawn", "Withdrawn by applicant");
+  await requestApplications("/api/applications", "PATCH", { appId, action: "withdraw" });
 }
 
-export async function updateApplicationNote(
-  appId: string,
-  reviewerNote: string
-): Promise<void> {
-  await updateDoc(doc(db, "applications", appId), {
-    reviewerNote,
-    updatedAt: serverTimestamp(),
-  });
+export async function updateApplicationNote(appId: string, reviewerNote: string): Promise<void> {
+  await requestApplications("/api/employer/applications", "PUT", { appId, reviewerNote });
 }

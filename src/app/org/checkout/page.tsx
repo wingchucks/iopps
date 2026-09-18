@@ -162,8 +162,8 @@ function CheckoutContent({ planKey, redirect }: { planKey: string; redirect: str
             type="button"
             onClick={handleCheckout}
             disabled={submitting}
-            className="w-full py-3.5 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{ background: "var(--navy)", color: "#fff" }}
+            className="brand-button w-full py-3.5 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ background: "var(--button-gradient)", color: "#fff" }}
           >
             {submitting ? "Redirecting to payment..." : "Proceed to Payment"}
           </button>

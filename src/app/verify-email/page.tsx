@@ -22,6 +22,7 @@ function VerifyEmailContent() {
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [verificationError, setVerificationError] = useState("");
   const nextPath = searchParams.get("next");
   const redirectPath = safeAuthRedirect(nextPath) || "/setup";
 
@@ -38,20 +39,27 @@ function VerifyEmailContent() {
   // Poll for verification every 5 seconds
   useEffect(() => {
     if (!user || user.emailVerified) return;
+    let cancelled = false;
     const interval = setInterval(async () => {
-      await reloadUser();
+      try {
+        const verified = await reloadUser();
+        if (!cancelled && verified) router.replace(redirectPath);
+      } catch {
+        if (!cancelled) setVerificationError("We couldn’t check verification. Please retry below.");
+      }
     }, 5000);
-    return () => clearInterval(interval);
-  }, [user, reloadUser]);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [user, reloadUser, redirectPath, router]);
 
   const handleResend = async () => {
     setResending(true);
     setResent(false);
+    setVerificationError("");
     try {
       await sendVerificationEmail(redirectPath);
       setResent(true);
     } catch {
-      // Rate limited or other error — silently ignore
+      setVerificationError("The email couldn’t be sent. Please wait a moment and retry.");
     } finally {
       setResending(false);
     }
@@ -59,17 +67,18 @@ function VerifyEmailContent() {
 
   const handleCheckNow = useCallback(async () => {
     setChecking(true);
+    setVerificationError("");
     try {
-      await reloadUser();
+      if (await reloadUser()) router.replace(redirectPath);
+      else setVerificationError("Your email isn’t verified yet. Open the link in your email, then check again.");
+    } catch {
+      setVerificationError("We couldn’t refresh your session. Please check your connection and retry.");
     } finally {
       setChecking(false);
     }
-  }, [reloadUser]);
+  }, [reloadUser, redirectPath, router]);
 
   if (authLoading || !user) return null;
-
-  // Google users are pre-verified
-  if (user.emailVerified) return null;
 
   return (
     <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
@@ -118,15 +127,17 @@ function VerifyEmailContent() {
             Click the link in your email to verify your account. This page will automatically update once verified.
           </p>
 
+          {verificationError && <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">{verificationError}</p>}
+
           <button
             onClick={handleCheckNow}
             disabled={checking}
-            className="w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50 mb-3"
+            className="brand-button w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50 mb-3"
             style={{
               padding: "14px 24px",
               borderRadius: 12,
               border: "none",
-              background: "var(--teal)",
+              background: "var(--button-gradient)",
               color: "#fff",
               fontSize: 16,
             }}
@@ -137,13 +148,13 @@ function VerifyEmailContent() {
           <button
             onClick={handleResend}
             disabled={resending || resent}
-            className="w-full font-semibold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
+            className="brand-button w-full font-semibold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
             style={{
               padding: "12px 24px",
               borderRadius: 12,
               border: "1.5px solid var(--border)",
-              background: "var(--card)",
-              color: "var(--text-sec)",
+              background: "var(--button-gradient-soft)",
+              color: "var(--button-gradient-soft-text)",
               fontSize: 15,
             }}
           >

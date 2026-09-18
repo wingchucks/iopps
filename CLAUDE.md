@@ -16,40 +16,34 @@ Indigenous Opportunities & Partnerships Platform - A comprehensive web and mobil
 
 ```
 iopps/
-├── web/                    # Next.js web application
-│   ├── app/                # App Router pages and API routes
-│   │   ├── api/            # 40+ API endpoints
-│   │   ├── admin/          # Admin panel
-│   │   ├── organization/   # Employer routes
-│   │   ├── member/         # Member profile routes
-│   │   └── ...
-│   ├── components/         # React components by feature
-│   ├── lib/                # Utilities and services
-│   │   ├── firebase/       # Firebase client modules
-│   │   ├── firestore/      # Firestore data operations
-│   │   └── ...
-│   └── public/             # Static assets
-├── mobile/                 # React Native Expo app
-│   ├── src/
-│   │   ├── screens/        # Mobile screens
-│   │   ├── components/     # Mobile UI components
-│   │   ├── services/       # Business logic
-│   │   └── __tests__/      # Jest tests
-│   └── e2e/                # Detox E2E tests
-├── firestore.rules         # Firestore security rules
-├── storage.rules           # Cloud Storage rules
-└── firebase.json           # Firebase emulator config
+├── src/app/                # Canonical Next.js pages and API routes
+│   ├── admin/              # Admin dashboard
+│   ├── org/                # Organization dashboard and onboarding
+│   ├── profile/            # Member account
+│   └── settings/           # Account settings
+├── src/components/         # Shared and feature UI
+├── src/lib/                # Services, authentication and data operations
+├── public/                 # Web assets
+├── mobile/                 # Separate React Native Expo application
+├── operations/             # Release/recovery procedures
+├── firestore.rules
+├── storage.rules
+└── firebase.json
 ```
+
+`web/`, `web-legacy/`, `live14/`, and `live14deploy/` are excluded archival
+copies. Do not build, edit, or deploy them as the website. See
+`PRODUCTION_SOURCE_OF_TRUTH.md` and `operations/LAUNCH-RECOVERY.md`.
 
 ## Development Commands
 
-### Web (from `/web` directory)
+### Web (from repository root)
 ```bash
 npm run dev         # Start dev server (port 3000)
 npm run build       # Production build
 npm run lint        # ESLint check
 npx tsc --noEmit    # TypeScript type check
-npm run emulators   # Start Firebase emulators
+node scripts/run-isolated-qa.mjs --emulators npx --yes firebase-tools@14.17.0 emulators:start --project demo-iopps-preview --config firebase.ci.json
 ```
 
 ### Mobile (from `/mobile` directory)
@@ -65,8 +59,8 @@ npm run typecheck   # TypeScript check
 ## Testing
 
 ### Web
-- Type checking: `npx tsc --noEmit` in `/web`
-- Linting: `npm run lint` in `/web`
+- Type checking: `npx tsc --noEmit` at repository root
+- Linting: `npm run lint` at repository root
 - CI runs lint, typecheck, and build on PRs
 
 ### Mobile
@@ -80,14 +74,14 @@ npm run typecheck   # TypeScript check
 ### Emulators (Development)
 ```bash
 # From root directory
-firebase emulators:start
+node scripts/run-isolated-qa.mjs --emulators npx --yes firebase-tools@14.17.0 emulators:start --project demo-iopps-preview --config firebase.ci.json
 ```
 - Auth: localhost:9099
 - Firestore: localhost:8080
 - Storage: localhost:9199
 - UI: localhost:4000
 
-Set `NEXT_PUBLIC_USE_EMULATORS=true` in `.env.local` to use emulators.
+Use `scripts/run-isolated-qa.mjs --emulators` for credential-minimized test processes. It refuses dotenv files and supplies demo-only Firebase settings. Do not copy production credentials into QA.
 
 ### Security Rules
 - Firestore: `/firestore.rules` - Role-based access with helpers like `isSignedIn()`, `isAdmin()`, `isApprovedEmployer()`
@@ -96,7 +90,7 @@ Set `NEXT_PUBLIC_USE_EMULATORS=true` in `.env.local` to use emulators.
 ## Key Patterns
 
 ### API Routes
-Located in `/web/app/api/`. Common pattern:
+Located in `/src/app/api/`. Common pattern:
 1. Verify Firebase ID token from Authorization header
 2. Check user role/permissions
 3. Perform operation
@@ -109,7 +103,7 @@ Located in `/web/app/api/`. Common pattern:
 - `admin` - Full administrative access
 
 ### Path Aliases
-- Web: `@/*` maps to `./web/*`
+- Web: `@/*` maps to `./src/*`
 - Mobile: `@/*` maps to `./mobile/src/*`
 
 ## Environment Variables
@@ -128,66 +122,64 @@ Optional:
 ## Common Tasks
 
 ### Adding a new API route
-Create file in `/web/app/api/[route]/route.ts` with exported HTTP methods (GET, POST, etc.)
+Create file in `/src/app/api/[route]/route.ts` with exported HTTP methods (GET, POST, etc.)
 
 ### Adding Firestore operations
-Add functions to `/web/lib/firestore/[collection].ts`
+Add functions to `/src/lib/firestore/[collection].ts`
 
 ### Modifying security rules
-Edit `/firestore.rules`, deploy with `firebase deploy --only firestore:rules`
+Edit `/firestore.rules` and verify with isolated demo emulators. Deploy only under the release procedure in `operations/LAUNCH-RECOVERY.md`.
 
 ## CI/CD
 
-- **Web**: Vercel deployment on push to main
+- **Web**: canonical target is `master`; release branches disable automatic Vercel deployments. Follow `operations/LAUNCH-RECOVERY.md` before any cutover.
 - **Mobile**: EAS builds via GitHub Actions
 - **CI**: Lint, typecheck, build on all PRs (see `.github/workflows/ci.yml`)
 
 ## Cron Jobs (Vercel)
 
-Configured in `/web/vercel.json`:
-- Job alert emails (instant/daily/weekly)
-- Job expiration checks (daily)
-- RSS feed syncing (hourly/daily/weekly)
+Configured in root `vercel.json`:
+- Feed sync, subscription checks, and job/event expiry (daily); exact schedules are in root `vercel.json`.
 
 ## Design System (Post-Migration)
 
 ### Theme System
 - CSS variables in `:root` (light) + `[data-theme="dark"]` (dark). Toggle via `ThemeToggle.tsx`
 - Color classes: `bg-background`, `bg-surface`, `text-foreground`, `text-accent`, `border-[var(--card-border)]`
-- Admin panel uses amber accent: `[data-admin]` attribute overrides `--accent` to `#D97706`
+- Admin panel uses a separate dark navy shell and teal accent via `[data-admin]`.
 
 ### UI Components
-- Custom components: `Tag`, `Av`, `StatBox`, `EBtn`, `Progress`, `ProgressBar`, `ThemeToggle`
-- Button variants: `primary`, `secondary`, `outline`, `ghost`, `danger`, `navy`, `amber`
+- Shared components: `Button`, `Card`, `Avatar`, `ThemeToggle`; admin components live in `src/components/ui/`.
+- Use the existing shared button components and brand gradient variables; inspect the component props before adding a variant.
 - Toggle switch: `h-7 w-12 rounded-full` with `h-5 w-5` knob, accent when on, border when off
 
 ### Page Wrapper Pattern
 All member pages follow: `"use client"` + `ProtectedRoute` + `bg-background` + back link + title + component + `pb-24`
 
 ### Settings Pages
-Located at `web/app/member/settings/{feature}/page.tsx` with corresponding components in `web/components/settings/`
+Located at `src/app/settings/{feature}/page.tsx` with corresponding components in `src/components/settings/`
 
 ## Agent Team Guidelines
 
 When working as part of an agent team, follow these ownership boundaries to avoid file conflicts:
 
 ### Frontend Teammate
-- Owns: `web/app/`, `web/components/`, `web/public/`
-- Can read (not edit): `web/lib/`, `firestore.rules`
+- Owns: `src/app/`, `src/components/`, `public/`
+- Can read (not edit): `src/lib/`, `firestore.rules`
 
 ### Backend Teammate
-- Owns: `web/lib/firestore/`, `web/app/api/`, `firestore.rules`, `storage.rules`
-- Can read (not edit): `web/components/`, `web/app/` (non-API pages)
+- Owns: `src/lib/firestore/`, `src/app/api/`, `firestore.rules`, `storage.rules`
+- Can read (not edit): `src/components/`, `src/app/` (non-API pages)
 
 ### QA / Review Teammate
 - Read-only across all files
-- Runs: `npm run build`, `npm run lint`, `npx tsc --noEmit` in `/web`
+- Runs: `npm run build`, `npm run lint`, `npx tsc --noEmit` at repository root
 - Reports issues to the team lead
 
 ### General Rules for All Teammates
 - Never edit files outside your ownership boundary without coordinating via the task list
 - Use the design system variables — no hardcoded colors (`#hex` values)
 - Follow existing patterns: check a similar file before creating something new
-- Firestore operations go in `web/lib/firestore/` — don't inline database calls in components
+- Firestore operations go in `src/lib/firestore/` — don't inline database calls in components
 - All new pages need `ProtectedRoute` wrapper with appropriate role checks
 - Production URL: `https://www.iopps.ca` — Firebase project: `iopps-c2224`

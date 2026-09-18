@@ -267,14 +267,14 @@ export default function OnboardingPage() {
                   <Label>Job Types Interested In</Label>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
                     {JOB_TYPES.map((t) => (
-                      <button
+                      <button className="brand-button"
                         key={t}
                         onClick={() => toggleJobType(t)}
                         style={{
                           padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600,
                           border: `1px solid ${jobTypes.includes(t) ? CSS.teal : CSS.border}`,
-                          background: jobTypes.includes(t) ? CSS.tealSoft : "transparent",
-                          color: jobTypes.includes(t) ? CSS.teal : CSS.textSec,
+                          background: jobTypes.includes(t) ? "var(--button-gradient)" : "var(--button-gradient-soft)",
+                          color: jobTypes.includes(t) ? "#fff" : "var(--button-gradient-soft-text)",
                           cursor: "pointer",
                         }}
                       >
@@ -313,7 +313,7 @@ export default function OnboardingPage() {
                     style={{ display: "none" }}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file && user) uploadFile(file, `avatars/${user.uid}/profile`, setPhotoURL);
+                      if (file && user) uploadFile(file, `avatars/${user.uid}.${file.name.split(".").pop() || "jpg"}`, setPhotoURL);
                     }}
                   />
                   <button
@@ -358,12 +358,12 @@ export default function OnboardingPage() {
           {/* Navigation */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 20, gap: 12 }}>
             {step > 0 ? (
-              <button
+              <button className="brand-button"
                 onClick={() => setStep(step - 1)}
                 style={{
                   padding: "10px 20px", borderRadius: 10, fontSize: 14, fontWeight: 600,
-                  background: "transparent", border: `1px solid ${CSS.border}`,
-                  color: CSS.textSec, cursor: "pointer",
+                  background: "var(--button-gradient-soft)", border: `1px solid ${CSS.border}`,
+                  color: "var(--button-gradient-soft-text)", cursor: "pointer",
                 }}
               >
                 ← Back
@@ -372,34 +372,34 @@ export default function OnboardingPage() {
 
             <div style={{ display: "flex", gap: 10 }}>
               {step < 3 && (
-                <button
+                <button className="brand-button"
                   onClick={() => setStep(step + 1)}
                   style={{
                     padding: "10px 16px", borderRadius: 10, fontSize: 13,
-                    background: "transparent", border: "none",
-                    color: CSS.textSec, cursor: "pointer",
+                    background: "var(--button-gradient-soft)", border: "none",
+                    color: "var(--button-gradient-soft-text)", cursor: "pointer",
                   }}
                 >
                   Skip
                 </button>
               )}
               {step < 3 ? (
-                <button
+                <button className="brand-button"
                   onClick={() => setStep(step + 1)}
                   style={{
                     padding: "10px 24px", borderRadius: 10, fontSize: 14, fontWeight: 700,
-                    background: CSS.teal, border: "none", color: "#fff", cursor: "pointer",
+                    background: "var(--button-gradient)", border: "none", color: "#fff", cursor: "pointer",
                   }}
                 >
                   Continue →
                 </button>
               ) : (
-                <button
+                <button className="brand-button"
                   onClick={save}
                   disabled={saving}
                   style={{
                     padding: "12px 28px", borderRadius: 10, fontSize: 14, fontWeight: 700,
-                    background: saving ? CSS.textSec : CSS.teal,
+                    background: saving ? CSS.textSec : "var(--button-gradient)",
                     border: "none", color: "#fff", cursor: saving ? "default" : "pointer",
                   }}
                 >

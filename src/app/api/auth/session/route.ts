@@ -36,24 +36,23 @@ async function syncAcceptedEmployerState(uid: string, emailVerified: boolean) {
     return;
   }
 
-  const now = FieldValue.serverTimestamp();
-  updates.push(
-    memberRef.set({ emailVerified: true, updatedAt: now }, { merge: true }),
-    db.collection("organizations").doc(employerId).set({
-      emailVerified: true,
-      status: "approved",
-      approvedAt: now,
-      updatedAt: now,
-    }, { merge: true }),
-    db.collection("employers").doc(employerId).set({
-      emailVerified: true,
-      status: "approved",
-      approvedAt: now,
-      updatedAt: now,
-    }, { merge: true }),
-  );
-
+  updates.push(memberRef.set({ emailVerified: true, updatedAt: FieldValue.serverTimestamp() }, { merge: true }));
   await Promise.all(updates);
+  const orgId = typeof memberData.orgId === "string" && memberData.orgId ? memberData.orgId : employerId;
+  await db.runTransaction(async tx => {
+    const refs = [db.collection("organizations").doc(orgId), db.collection("employers").doc(employerId)];
+    const snapshots = await Promise.all(refs.map(ref => tx.get(ref)));
+    for (const snapshot of snapshots) {
+      if (!snapshot.exists) continue;
+      const status = snapshot.data()?.status;
+      // Email confirmation can accept a new account; it cannot undo moderation.
+      const accept = !status || status === "pending";
+      tx.update(snapshot.ref, {
+        emailVerified: true, updatedAt: FieldValue.serverTimestamp(),
+        ...(accept ? { status: "approved", approvedAt: FieldValue.serverTimestamp() } : {}),
+      });
+    }
+  });
 }
 
 export async function POST(req: NextRequest) {

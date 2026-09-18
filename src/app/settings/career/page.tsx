@@ -445,12 +445,12 @@ function CareerSettingsContent() {
       </Card>
 
       {/* Save */}
-      <Button
+      <Button className="brand-button"
         primary
         full
         onClick={handleSave}
         style={{
-          background: "var(--teal)",
+          background: "var(--button-gradient)",
           borderRadius: 14,
           opacity: saving ? 0.7 : 1,
         }}

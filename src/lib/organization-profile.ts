@@ -1,3 +1,5 @@
+import { businessListingReviewAllowsPublic } from "./business-listing-review";
+
 export interface OrganizationLocation {
   city: string;
   province: string;
@@ -259,16 +261,18 @@ export function hasOrganizationIndigenousIdentity(org: {
   treatyTerritory?: string;
   tags?: unknown;
 }): boolean {
-  if (org.indigenousOwned === true) return true;
-  if (org.businessIdentity === "indigenous") return true;
-  if (normalizeString(org.nation)) return true;
-  if (normalizeString(org.treatyTerritory)) return true;
-  if (normalizeStringArray(org.indigenousGroups).length > 0) return true;
+  return getOrganizationBusinessIdentity(org) === "indigenous";
+}
 
-  return normalizeStringArray(org.tags).some((tag) => {
-    const normalized = tag.toLowerCase();
-    return normalized.includes("indigenous");
-  });
+export type OrganizationBusinessIdentity = "indigenous" | "non_indigenous" | "not_specified";
+
+export function getOrganizationBusinessIdentity(org: { businessIdentity?: string; indigenousOwned?: boolean }): OrganizationBusinessIdentity {
+  if (["indigenous", "non_indigenous", "not_specified"].includes(org.businessIdentity ?? "")) {
+    return org.businessIdentity as OrganizationBusinessIdentity;
+  }
+  // An explicit legacy ownership flag is usable. Location, affiliations and
+  // services do not establish Indigenous ownership or leadership.
+  return org.indigenousOwned === true ? "indigenous" : org.indigenousOwned === false ? "non_indigenous" : "not_specified";
 }
 
 export function getBusinessProfileReadiness(org: {
@@ -313,6 +317,7 @@ export function getBusinessProfileReadiness(org: {
 }
 
 export function isOrganizationPubliclyVisible(org: {
+  directoryReview?: unknown;
   type?: unknown;
   ownerType?: unknown;
   partnerTier?: unknown;
@@ -350,6 +355,7 @@ export function isOrganizationPubliclyVisible(org: {
 }
 
 export function hasOrganizationVisibilityBlock(org: {
+  directoryReview?: unknown;
   disabled?: unknown;
   status?: unknown;
   publicVisibility?: unknown;
@@ -358,6 +364,7 @@ export function hasOrganizationVisibilityBlock(org: {
   directoryVisible?: unknown;
   isDirectoryVisible?: unknown;
 }): boolean {
+  if (!businessListingReviewAllowsPublic(org)) return true;
   if (org.disabled === true) return true;
 
   const status = normalizeString(org.status).toLowerCase();
@@ -479,6 +486,12 @@ export function normalizeOrganizationProfilePatch(body: Record<string, unknown>)
     updates[key] = normalizeString(body[key]);
     touchedFields.push(key);
   };
+
+  if (typeof body.businessIdentity === "string" && ["indigenous", "non_indigenous", "not_specified"].includes(body.businessIdentity)) {
+    updates.businessIdentity = body.businessIdentity;
+    updates.indigenousOwned = body.businessIdentity === "indigenous";
+    touchedFields.push("businessIdentity", "indigenousOwned");
+  }
 
   for (const key of [
     "name",

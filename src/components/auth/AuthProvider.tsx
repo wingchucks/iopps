@@ -8,62 +8,51 @@ import type { UserRole } from "@/lib/auth";
 
 export function useAuth() {
   const base = useBaseAuth();
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
+  const [resolved, setResolved] = useState<{
+    user: typeof base.user;
+    role: UserRole | null;
+  } | null>(null);
 
   useEffect(() => {
-    if (base.loading) {
-      setRoleLoading(true);
-      return;
-    }
-
-    if (!base.user) {
-      setRole(null);
-      setRoleLoading(false);
-      return;
-    }
-
-    setRoleLoading(true);
+    if (base.loading || !base.user) return;
+    const user = base.user;
+    let cancelled = false;
+    const finish = (role: UserRole | null) => {
+      if (!cancelled) setResolved({ user, role });
+    };
 
     // Check custom claims first, then Firestore
-    base.user
+    user
       .getIdTokenResult()
       .then((result) => {
+        if (cancelled) return;
         if (result.claims.admin === true || result.claims.role === "admin") {
-          setRole("admin");
-          setRoleLoading(false);
+          finish("admin");
         } else if (result.claims.role) {
-          setRole(result.claims.role as UserRole);
-          setRoleLoading(false);
+          finish(result.claims.role as UserRole);
         } else {
           // Fallback to Firestore
-          getDoc(doc(db, "users", base.user!.uid))
+          getDoc(doc(db, "users", user.uid))
             .then((snap) => {
-              setRole(
+              finish(
                 snap.exists()
                   ? (snap.data().role as UserRole) || "community"
                   : "community"
               );
             })
-            .catch(() => setRole("community"))
-            .finally(() => setRoleLoading(false));
+            .catch(() => finish("community"));
         }
       })
       .catch(() => {
-        setRole(null);
-        setRoleLoading(false);
+        finish(null);
       });
+    return () => { cancelled = true; };
   }, [base.user, base.loading]);
-
-  const handleSignOut = async () => {
-    setRole(null);
-    await base.signOut();
-  };
 
   return {
     user: base.user,
-    role,
-    loading: base.loading || roleLoading,
-    signOut: handleSignOut,
+    role: !base.loading && base.user && resolved?.user === base.user ? resolved.role : null,
+    loading: base.loading || Boolean(base.user && resolved?.user !== base.user),
+    signOut: base.signOut,
   };
 }

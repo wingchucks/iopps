@@ -1,539 +1,149 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
-import Badge from "@/components/Badge";
-import Card from "@/components/Card";
+import Footer from "@/components/Footer";
 import YouTubePlayer from "@/components/YouTubePlayer";
+import { useLivestreamFeed } from "@/hooks/useLivestreamFeed";
+import { LIVESTREAM_INQUIRY_URL, YOUTUBE_CHANNEL_URL, YOUTUBE_LIVE_URL, videoDate, videoExcerpt, videoUrl, videoViews, type LivestreamVideo } from "@/lib/livestreams";
+import styles from "./livestreams.module.css";
 
-interface YTVideo {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  publishedAt: string;
-  liveBroadcastContent: string;
-  viewCount?: string;
-  scheduledStart?: string;
-  actualStart?: string;
-  concurrentViewers?: string;
+function PlayIcon() {
+  return <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>;
 }
 
-interface YouTubeData {
-  live: YTVideo | null;
-  upcoming: YTVideo[];
-  recent: YTVideo[];
+function Thumbnail({ video, sizes }: { video: LivestreamVideo; sizes: string }) {
+  return <Image src={video.thumbnail} alt="" fill sizes={sizes} unoptimized className={styles.thumbnail} />;
 }
 
-const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@iopps";
-const YOUTUBE_SUBSCRIBE_URL = "https://www.youtube.com/@iopps?sub_confirmation=1";
-const LIVESTREAM_INQUIRY_URL = "mailto:partnership@iopps.ca?subject=Livestream%20Production%20Inquiry";
-const SERVICE_TYPES = [
-  "Pow wows and cultural events",
-  "Conferences and panels",
-  "Hockey and tournament coverage",
-  "Community and business broadcasts",
-];
+function LivestreamExperience() {
+  const params = useSearchParams();
+  const requestedId = params.get("video") ?? "";
+  const { data, loading, error, refresh } = useLivestreamFeed(requestedId);
+  const [query, setQuery] = useState("");
+  const [share, setShare] = useState<{ id: string; url: string; copied: boolean } | null>(null);
+  const playerRef = useRef<HTMLElement>(null);
+  const videos = data ? [data.live, data.selected, ...data.recent, ...data.upcoming].filter((video): video is LivestreamVideo => Boolean(video)) : [];
+  const featured = requestedId ? videos.find(video => video.id === requestedId) : data?.live ?? data?.recent[0] ?? data?.upcoming[0];
+  const isLive = featured?.liveBroadcastContent === "live";
+  const isUpcoming = featured?.liveBroadcastContent === "upcoming";
+  const replays = data?.recent.filter(video => `${video.title} ${video.description}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) ?? [];
+  const warning = error ?? data?.warning;
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-CA", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "America/Regina",
-  });
-}
-
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("en-CA", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "America/Regina",
-    timeZoneName: "short",
-  });
-}
-
-function formatViews(count?: string) {
-  if (!count) return "";
-  const parsed = parseInt(count, 10);
-  if (Number.isNaN(parsed)) return "";
-  if (parsed >= 1_000_000) return `${(parsed / 1_000_000).toFixed(1)}M views`;
-  if (parsed >= 1_000) return `${(parsed / 1_000).toFixed(1)}K views`;
-  return `${parsed} views`;
-}
-
-function getVideoUrl(videoId: string) {
-  return `https://www.youtube.com/watch?v=${videoId}`;
-}
-
-// M-8 — YouTube descriptions imported from the Data API often come in
-// ALL CAPS plus pasted URLs + hashtags + "subscribe and follow" boilerplate.
-// The featured replay card used to render them verbatim, which read as raw
-// and unedited. Normalize before rendering.
-function cleanYouTubeCaption(text: string): string {
-  let t = text.replace(/\s+/g, " ").trim();
-  // Drop URLs.
-  t = t.replace(/https?:\/\/\S+/g, "").trim();
-  // Drop lines of repeated hashtags / social handles.
-  t = t.replace(/(?:^|\s)#\S+/g, "").replace(/(?:^|\s)@\S+/g, "").trim();
-  // If the text is more than 70% uppercase letters, sentence-case it.
-  const letters = t.match(/[A-Za-z]/g) || [];
-  const upperLetters = t.match(/[A-Z]/g) || [];
-  if (letters.length > 0 && upperLetters.length / letters.length > 0.7) {
-    t = t.toLowerCase().replace(/(^\s*|(?<=[.!?]\s))([a-z])/g, (_m, lead, ch) => lead + ch.toUpperCase());
-  }
-  return t.replace(/\s+/g, " ").trim();
-}
-
-function snippet(text?: string, maxLength = 180) {
-  if (!text) return "";
-  const cleaned = cleanYouTubeCaption(text);
-  if (cleaned.length <= maxLength) return cleaned;
-  return `${cleaned.slice(0, maxLength).trimEnd()}...`;
-}
-
-export default function LivestreamsPage() {
-  const [data, setData] = useState<YouTubeData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [attempt, setAttempt] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedReplayId, setSelectedReplayId] = useState<string | null>(null);
-  const playerRef = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      setLoading(true);
-      try {
-        const response = await fetch("/api/livestreams/youtube");
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const nextData = (await response.json()) as YouTubeData;
-        if (cancelled) return;
-        setData(nextData);
-        setError(null);
-        setSelectedReplayId(nextData.live ? null : nextData.recent[0]?.id ?? null);
-      } catch (fetchError) {
-        if (cancelled) return;
-        console.error("Failed to load livestreams:", fetchError);
-        setError("We could not load the livestream feed right now.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [attempt]);
-
-  const selectedReplay =
-    data?.recent.find((video) => video.id === selectedReplayId) ??
-    data?.recent[0] ??
-    null;
-  const featuredVideo = data?.live ?? selectedReplay;
-  const nextUpcoming = data?.upcoming[0] ?? null;
-  const isLive = !!data?.live;
-
-  function chooseReplay(videoId: string) {
-    setSelectedReplayId(videoId);
+  function chooseVideo(id: string) {
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set("video", id); else url.searchParams.delete("video");
+    if (url.href !== window.location.href) window.history.pushState(null, "", `${url.pathname}${url.search}`);
+    setShare(null);
     window.requestAnimationFrame(() => {
-      playerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      playerRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+      playerRef.current?.focus({ preventScroll: true });
     });
   }
 
-  return (
-    <AppShell>
-      <div className="min-h-screen bg-bg">
-        <section
-          className="relative overflow-hidden border-b border-black/10"
-          style={{
-            background:
-              "linear-gradient(145deg, var(--navy-deep) 0%, var(--navy) 48%, var(--teal) 100%)",
-          }}
-        >
-          <div className="mx-auto max-w-[1280px] px-4 py-10 md:px-8 md:py-14">
-            <Badge
-              text={isLive ? "LIVE ON IOPPS" : "IOPPS LIVESTREAMS"}
-              color="#FFFFFF"
-              bg="rgba(255,255,255,.14)"
-            />
-            <h1 className="mt-5 max-w-[820px] text-3xl font-black tracking-tight text-white md:text-5xl">
-              Watch the livestream here. Hire IOPPS to stream your next event.
-            </h1>
-            <p className="mt-4 max-w-[700px] text-base leading-relaxed text-white/80 md:text-lg">
-              Pow wows, conferences, community gatherings — watch live or catch
-              the replay. IOPPS has been livestreaming Indigenous events across
-              North America since 2015.
-            </p>
+  async function shareVideo(id: string) {
+    const url = new URL("/livestreams", window.location.origin);
+    url.searchParams.set("video", id);
+    try {
+      await navigator.clipboard.writeText(url.href);
+      setShare({ id, url: url.href, copied: true });
+    } catch {
+      setShare({ id, url: url.href, copied: false });
+    }
+  }
+
+  return <article className={styles.page}>
+    <section className={styles.stage} aria-labelledby="live-heading">
+      <div className={styles.wrap}>
+        <header className={styles.intro}>
+          <div>
+            <p className={styles.wordmark}><span className={styles.signal} aria-hidden="true">◉</span> IOPPS <span>LIVE</span></p>
+            <h1 id="live-heading">Closer to <span>community.</span></h1>
+            <p className={styles.lead}>Powwows. Conversations. Moments that bring us together.<br className={styles.desktopBreak} /> Watch Indigenous stories unfold, wherever you are.</p>
           </div>
-        </section>
+          <a className={styles.outlineButton} href="#replays">Explore replays <span aria-hidden="true">↓</span></a>
+        </header>
 
-        <div className="mx-auto max-w-[1280px] px-4 py-8 md:px-8 md:py-10">
-          {loading ? (
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
-              <div className="h-[520px] rounded-[28px] bg-card animate-pulse" />
-              <div className="h-[420px] rounded-[28px] bg-card animate-pulse" />
+        {warning && <div className={styles.notice} role="status"><span>{warning}</span><a href={YOUTUBE_LIVE_URL} target="_blank" rel="noopener noreferrer">Check YouTube ↗</a></div>}
+
+        <div className={styles.watchGrid}>
+          <section ref={playerRef} tabIndex={-1} className={styles.watch} aria-label="Video player">
+            <div className={styles.playerBar}>
+              <span className={`${styles.pill} ${isLive && !error ? styles.livePill : ""}`}>{loading && !featured ? "LOADING BROADCASTS" : error && isLive ? "STATUS UNAVAILABLE" : isLive ? "LIVE NOW" : isUpcoming ? "COMING UP" : featured ? "WATCH REPLAY" : "IOPPS LIVE"}</span>
+              <button type="button" className={styles.refresh} disabled={loading} onClick={refresh} aria-label="Refresh broadcasts">{loading ? "Refreshing…" : "↻ Refresh"}</button>
             </div>
-          ) : (
-            <>
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
-                <section ref={playerRef}>
-                  <Card className="overflow-hidden" style={{ padding: 0 }}>
-                    <div className="border-b border-border px-5 py-5 md:px-6">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {isLive && <Badge text="LIVE NOW" color="#FFFFFF" bg="#DC2626" />}
-                        {!isLive && featuredVideo && (
-                          <Badge text="FEATURED REPLAY" color="var(--teal)" />
-                        )}
-                        {!isLive && !featuredVideo && nextUpcoming && (
-                          <Badge text="NEXT STREAM" color="#2563EB" />
-                        )}
-                        {isLive && data?.live?.concurrentViewers && (
-                          <span className="text-sm font-medium text-text-sec">
-                            {parseInt(data.live.concurrentViewers, 10).toLocaleString()} watching
-                          </span>
-                        )}
-                      </div>
-                      <h2 className="mt-4 text-2xl font-black tracking-tight text-text md:text-3xl">
-                        {isLive
-                          ? "Watch live on IOPPS"
-                          : featuredVideo
-                            ? "Recent replay"
-                            : nextUpcoming
-                              ? "Coming up next"
-                              : "IOPPS Live"}
-                      </h2>
-                      <p className="mt-2 text-sm leading-relaxed text-text-sec md:text-base">
-                        {isLive
-                          ? "Join the live broadcast right here, or open it on YouTube."
-                          : featuredVideo
-                            ? "Catch up on a recent Indigenous event streamed by IOPPS."
-                            : nextUpcoming
-                              ? "Save the date — this broadcast goes live soon."
-                              : "Follow us on YouTube to get notified when the next stream starts."}
-                      </p>
-                    </div>
-
-                    <div className="px-4 py-4 md:px-6 md:py-6">
-                      {featuredVideo ? (
-                        <YouTubePlayer
-                          videoId={featuredVideo.id}
-                          autoplay={isLive}
-                          live={isLive}
-                        />
-                      ) : nextUpcoming ? (
-                        <div className="overflow-hidden rounded-2xl border border-border bg-bg">
-                          {nextUpcoming.thumbnail ? (
-                            <img
-                              src={nextUpcoming.thumbnail}
-                              alt={nextUpcoming.title}
-                              className="aspect-video w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex aspect-video items-center justify-center bg-navy text-4xl text-white">
-                              ▶
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col aspect-video items-center justify-center rounded-2xl border border-dashed border-border bg-bg px-6 text-center">
-                          <p className="max-w-[420px] text-sm leading-relaxed text-text-sec">
-                            {error ||
-                              "Nothing is live right now — follow us on YouTube for alerts, or get in touch to have your next event streamed by IOPPS."}
-                          </p>
-                          {error && <button type="button" className="mt-4 rounded-xl bg-navy px-5 py-3 text-white" onClick={() => setAttempt(value => value + 1)}>Try again</button>}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="border-t border-border px-5 py-5 md:px-6">
-                      {featuredVideo ? (
-                        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                          <div className="max-w-[760px]">
-                            <h3 className="text-xl font-bold text-text">
-                              {featuredVideo.title}
-                            </h3>
-                            <p className="mt-2 text-sm leading-relaxed text-text-sec md:text-base">
-                              {snippet(featuredVideo.description, 220) ||
-                                (isLive
-                                  ? "IOPPS is live now."
-                                  : "Watch this IOPPS replay here, then explore more productions below.")}
-                            </p>
-                            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-text-muted">
-                              {isLive && data?.live?.actualStart && (
-                                <span>Started {formatDateTime(data.live.actualStart)}</span>
-                              )}
-                              {!isLive && featuredVideo.publishedAt && (
-                                <span>Published {formatDate(featuredVideo.publishedAt)}</span>
-                              )}
-                              {featuredVideo.viewCount && (
-                                <span>{formatViews(featuredVideo.viewCount)}</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-3">
-                            <a
-                              href={getVideoUrl(featuredVideo.id)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-bold text-white no-underline"
-                              style={{
-                                background: isLive ? "#DC2626" : "var(--teal)",
-                              }}
-                            >
-                              {isLive
-                                ? "Open live stream on YouTube"
-                                : "Open replay on YouTube"}
-                            </a>
-                            <a
-                              href={YOUTUBE_SUBSCRIBE_URL}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center rounded-xl border border-border bg-white px-5 py-3 text-sm font-bold no-underline"
-                              style={{ color: "var(--navy-deep)" }}
-                            >
-                              Subscribe for alerts
-                            </a>
-                          </div>
-                        </div>
-                      ) : nextUpcoming ? (
-                        <div className="flex flex-col gap-3">
-                          <h3 className="text-xl font-bold text-text">
-                            {nextUpcoming.title}
-                          </h3>
-                          {nextUpcoming.scheduledStart && (
-                            <p className="text-sm font-semibold text-text">
-                              Starts {formatDateTime(nextUpcoming.scheduledStart)}
-                            </p>
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
-                  </Card>
-                </section>
-
-                <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
-                  <Card
-                    className="overflow-hidden"
-                    style={{
-                      padding: 0,
-                      background:
-                        "linear-gradient(180deg, rgba(15,43,76,.98) 0%, rgba(9,30,54,1) 100%)",
-                      borderColor: "rgba(20,184,166,.18)",
-                    }}
-                  >
-                    <div className="p-6 md:p-7">
-                      <Badge
-                        text="HIRE IOPPS LIVE"
-                        color="#FFFFFF"
-                        bg="rgba(20,184,166,.18)"
-                      />
-                      <h2 className="mt-4 text-2xl font-black tracking-tight text-white">
-                        Need your event livestreamed?
-                      </h2>
-                      <p className="mt-3 text-sm leading-relaxed text-white/80 md:text-base">
-                        We bring pow wows, conferences, and community
-                        gatherings to audiences everywhere. Professional
-                        multi-camera production, reliable streams, and replays
-                        that live on so your moment keeps reaching people.
-                      </p>
-                      <div className="mt-6 space-y-3 text-sm text-white/90">
-                        {SERVICE_TYPES.map((service) => (
-                          <div key={service} className="flex items-start gap-3">
-                            <span className="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-teal-light" />
-                            <span>{service}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-7 flex flex-col gap-3">
-                        <a
-                          href={LIVESTREAM_INQUIRY_URL}
-                          className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-bold text-white no-underline"
-                          style={{ background: "var(--teal)" }}
-                        >
-                          Book IOPPS to livestream your event
-                        </a>
-                        <Link
-                          href="/contact"
-                          className="inline-flex items-center justify-center rounded-xl border px-5 py-3 text-sm font-bold text-white no-underline"
-                          style={{
-                            borderColor: "rgba(255,255,255,.18)",
-                            background: "rgba(255,255,255,.06)",
-                          }}
-                        >
-                          Contact the IOPPS team
-                        </Link>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card className="p-6">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-muted">
-                      Follow IOPPS
-                    </p>
-                    <p className="mt-3 text-sm leading-relaxed text-text-sec">
-                      Subscribe on YouTube to catch new livestreams, replays,
-                      and upcoming event coverage.
-                    </p>
-                    <div className="mt-4 space-y-3">
-                      <a
-                        href={YOUTUBE_CHANNEL_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block rounded-2xl border border-border px-4 py-4 text-left no-underline transition-colors hover:bg-bg"
-                      >
-                        <p className="font-bold text-text">YouTube channel</p>
-                        <p className="mt-1 text-sm text-text-sec">
-                          Full livestreams and replay coverage
-                        </p>
-                      </a>
-                      <a
-                        href={YOUTUBE_SUBSCRIBE_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex w-full items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-bold no-underline"
-                        style={{ color: "var(--navy-deep)" }}
-                      >
-                        Subscribe on YouTube
-                      </a>
-                    </div>
-                  </Card>
-                </aside>
+            {featured ? <>
+              {featured.embeddable && !isUpcoming ? <YouTubePlayer key={featured.id} videoId={featured.id} title={`Watch ${featured.title}`} /> :
+                <div className={styles.poster}>
+                  <Thumbnail video={featured} sizes="(max-width: 900px) 100vw, 850px" />
+                  <div className={styles.posterOverlay}>
+                    <p>{isUpcoming ? "The next gathering starts here." : "Watch this broadcast on YouTube."}</p>
+                    {isUpcoming && <p>{videoDate(featured.scheduledStart, true) || "Start time to be announced"}</p>}
+                    <a className={styles.primaryButton} href={videoUrl(featured.id)} target="_blank" rel="noopener noreferrer">{isUpcoming ? "Open YouTube watch page" : "Watch on YouTube"} ↗</a>
+                  </div>
+                </div>}
+              <div className={styles.videoInfo}>
+                <p className={styles.meta}>{isUpcoming ? videoDate(featured.scheduledStart, true) : videoDate(featured.actualStart ?? featured.publishedAt)}{!isUpcoming && videoViews(featured.viewCount) ? ` · ${videoViews(featured.viewCount)}` : ""}</p>
+                <h2>{featured.title}</h2>
+                {featured.description && <p className={styles.description}>{videoExcerpt(featured.description)}</p>}
+                <div className={styles.videoActions}>
+                  <button className={styles.outlineButton} type="button" onClick={() => void shareVideo(featured.id)}>{share?.id === featured.id && share.copied ? "Link copied ✓" : "Copy video link"}</button>
+                  <a href={videoUrl(featured.id)} target="_blank" rel="noopener noreferrer">{isLive ? "Watch & chat on YouTube" : "Watch on YouTube"} ↗</a>
+                </div>
+                {share?.id === featured.id && <div className={styles.shareResult} role="status">{share.copied ? "Ready to share — this link opens this video on IOPPS." : <label>Copy this video link<input readOnly value={share.url} onFocus={event => event.currentTarget.select()} /></label>}</div>}
+                <p className={styles.playbackHelp}>Player not loading? Use the YouTube link above.</p>
               </div>
+            </> : <div className={styles.emptyPlayer} role="status">
+              <span className={styles.emptyPlay}><PlayIcon /></span>
+              <h2>{loading ? "Finding your next watch…" : error ? "Let’s get you watching." : requestedId ? "This video isn’t available here." : "The next story is on its way."}</h2>
+              <p>{loading ? "Loading broadcasts and replays from IOPPS." : error ? "The feed is temporarily unavailable. Try refreshing or open our YouTube channel." : requestedId ? "It may be private, removed, or outside the IOPPS channel. Explore the available replays below." : "Explore the channel for more coverage, and check back for upcoming broadcasts."}</p>
+              {!loading && <div className={styles.videoActions}>{requestedId && <button className={styles.outlineButton} onClick={() => chooseVideo("")}>Back to IOPPS Live</button>}<a className={styles.primaryButton} href={YOUTUBE_CHANNEL_URL} target="_blank" rel="noopener noreferrer">Visit IOPPS on YouTube ↗</a></div>}
+            </div>}
+          </section>
 
-              {data?.upcoming && data.upcoming.length > 0 && (
-                <section className="mt-10">
-                  <h2 className="text-2xl font-black tracking-tight text-text">
-                    Upcoming streams
-                  </h2>
-                  <div className="mt-5 grid gap-4 lg:grid-cols-3">
-                    {data.upcoming.map((video) => (
-                      <Card key={video.id} style={{ padding: 0 }} className="overflow-hidden">
-                        {video.thumbnail ? (
-                          <img
-                            src={video.thumbnail}
-                            alt={video.title}
-                            className="aspect-video w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex aspect-video items-center justify-center bg-navy text-4xl text-white">
-                            ▶
-                          </div>
-                        )}
-                        <div className="p-5">
-                          <p className="text-lg font-bold leading-snug text-text">
-                            {video.title}
-                          </p>
-                          {video.scheduledStart && (
-                            <p className="mt-2 text-sm font-semibold text-text">
-                              {formatDateTime(video.scheduledStart)}
-                            </p>
-                          )}
-                          <a
-                            href={getVideoUrl(video.id)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-4 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold text-white no-underline"
-                            style={{ background: "var(--teal)" }}
-                          >
-                            Open watch page
-                          </a>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {data?.recent && data.recent.length > 0 && (
-                <section className="mt-10">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                    <h2 className="text-2xl font-black tracking-tight text-text">
-                      Recent productions
-                    </h2>
-                    {!isLive && (
-                      <p className="text-sm font-medium text-text-muted">
-                        Select a replay to load it in the player above.
-                      </p>
-                    )}
-                  </div>
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    {data.recent.map((video) => {
-                      const card = (
-                        <Card
-                          className="h-full overflow-hidden"
-                          style={{
-                            padding: 0,
-                            borderColor:
-                              !isLive && selectedReplayId === video.id
-                                ? "var(--teal)"
-                                : undefined,
-                          }}
-                        >
-                          {video.thumbnail ? (
-                            <img
-                              src={video.thumbnail}
-                              alt={video.title}
-                              className="aspect-video w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex aspect-video items-center justify-center bg-navy text-4xl text-white">
-                              ▶
-                            </div>
-                          )}
-                          <div className="p-4">
-                            <p className="line-clamp-2 text-base font-bold text-text">
-                              {video.title}
-                            </p>
-                            <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-text-sec">
-                              {snippet(video.description, 110) ||
-                                "Watch this replay on YouTube."}
-                            </p>
-                            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-muted">
-                              {video.viewCount && (
-                                <span>{formatViews(video.viewCount)}</span>
-                              )}
-                              <span>{formatDate(video.publishedAt)}</span>
-                            </div>
-                          </div>
-                        </Card>
-                      );
-
-                      return isLive ? (
-                        <a
-                          key={video.id}
-                          href={getVideoUrl(video.id)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="no-underline"
-                        >
-                          {card}
-                        </a>
-                      ) : (
-                        <button
-                          key={video.id}
-                          type="button"
-                          onClick={() => chooseReplay(video.id)}
-                          className="text-left"
-                        >
-                          {card}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-            </>
-          )}
+          <aside className={styles.comingUp} aria-label="Upcoming broadcasts">
+            {data?.live && featured?.id !== data.live.id && !error && <div className={styles.returnLive}><span className={`${styles.pill} ${styles.livePill}`}>LIVE NOW</span><h2>{data.live.title}</h2><button className={styles.primaryButton} onClick={() => chooseVideo(data.live!.id)}>Join the live broadcast <PlayIcon /></button></div>}
+            <p className={styles.eyebrow}>STAY CONNECTED</p>
+            <h2>Be there for<br />the next moment.</h2>
+            {data?.upcoming.length ? <div className={styles.upcomingList}>{data.upcoming.slice(0, 3).map(video => <button key={video.id} onClick={() => chooseVideo(video.id)} className={styles.upcomingItem}>
+              <span className={styles.upcomingImage}><Thumbnail video={video} sizes="80px" /></span>
+              <span><strong>{video.title}</strong><small>{videoDate(video.scheduledStart, true) || "Time to be announced"}</small></span>
+            </button>)}</div> : <p>{loading ? "Checking scheduled broadcasts…" : warning ? "Check YouTube for the latest broadcast schedule." : "No upcoming broadcasts are listed yet. Visit our YouTube channel and turn on notifications to hear what’s next."}</p>}
+            <a className={styles.primaryButton} href={YOUTUBE_CHANNEL_URL} target="_blank" rel="noopener noreferrer">Follow IOPPS on YouTube ↗</a>
+            <p className={styles.smallPrint}>Manage subscriptions and notifications on YouTube.</p>
+            <div className={styles.asideBottom}><span aria-hidden="true">↗</span><p>Have a gathering to share?<br /><a href="#book-iopps">Bring IOPPS to your event.</a></p></div>
+          </aside>
         </div>
       </div>
-    </AppShell>
-  );
+    </section>
+
+    <section id="replays" className={`${styles.wrap} ${styles.library}`} aria-labelledby="replays-heading">
+      <div className={styles.libraryHeader}>
+        <div><p className={styles.eyebrow}>THE REPLAY COLLECTION</p><h2 id="replays-heading">Good moments. Worth another watch.</h2><p>Catch up on recent coverage from the IOPPS community.</p></div>
+        <label className={styles.search}><span>Find a replay</span><input type="search" placeholder="Search events, communities…" value={query} onChange={event => setQuery(event.target.value)} /></label>
+      </div>
+      {loading && !data ? <p role="status">Loading replays…</p> : replays.length ? <>
+        <p className={styles.resultCount} aria-live="polite">{replays.length} {query.trim() ? "matching" : "recent"} {replays.length === 1 ? "replay" : "replays"}</p>
+        <div className={styles.replayGrid}>{replays.map(video => <button key={video.id} onClick={() => chooseVideo(video.id)} className={`${styles.replayCard} ${featured?.id === video.id ? styles.selected : ""}`} aria-pressed={featured?.id === video.id}>
+          <span className={styles.replayImage}><Thumbnail video={video} sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 33vw" /><span className={styles.playCircle}><PlayIcon /></span><span className={styles.imageLabel}>{featured?.id === video.id ? "IN THE PLAYER" : "REPLAY"}</span></span>
+          <span className={styles.replayInfo}><span className={styles.meta}>{videoDate(video.actualStart ?? video.publishedAt)}</span><strong>{video.title}</strong><span className={styles.cardBottom}><span>{videoViews(video.viewCount) || "IOPPS coverage"}</span><span aria-hidden="true">↗</span></span></span>
+        </button>)}</div>
+      </> : <div className={styles.noResults} role="status"><h3>{query.trim() ? "No replays match that search." : error ? "Replays couldn’t load right now." : "More stories are coming."}</h3><p>{query.trim() ? "Try an event or community name, or explore all recent replays." : "Visit IOPPS on YouTube to explore the full video library."}</p>{query.trim() ? <button onClick={() => setQuery("")} className={styles.lightButton}>Clear search</button> : error ? <button onClick={refresh} className={styles.lightButton} disabled={loading}>Try again</button> : null}</div>}
+      <a className={styles.archiveLink} href={`${YOUTUBE_CHANNEL_URL}/streams`} target="_blank" rel="noopener noreferrer">Explore the full archive on YouTube <span aria-hidden="true">↗</span></a>
+    </section>
+
+    <section id="book-iopps" className={styles.booking} aria-labelledby="booking-heading"><div className={`${styles.wrap} ${styles.bookingGrid}`}>
+      <div><p className={styles.eyebrow}>YOUR EVENT. A WIDER COMMUNITY.</p><h2 id="booking-heading">Bring your next<br />gathering to the screen.</h2><p>Planning a powwow, conference, tournament or community event? Let’s talk about sharing it with the people who can’t be there in person.</p><a href={LIVESTREAM_INQUIRY_URL} className={styles.primaryButton}>Plan a livestream with IOPPS <span aria-hidden="true">↗</span></a><p className={styles.smallPrint}>Opens an email draft. Tell us your date, location and event idea.</p></div>
+      <div className={styles.bookingSteps}><p><span>01</span><strong>Tell us about your event<small>Share the gathering, the place and the people.</small></strong></p><p><span>02</span><strong>Talk through the coverage<small>Discuss your broadcast needs with IOPPS.</small></strong></p><p><span>03</span><strong>Build a plan together<small>Confirm the scope and availability with our team.</small></strong></p></div>
+    </div></section>
+    <div className={`${styles.wrap} ${styles.communityLinks}`}><p>Keep the connection going.</p><Link href="/jobs">Find your next opportunity ↗</Link><Link href="/businesses">Meet Indigenous businesses ↗</Link></div>
+    <Footer />
+  </article>;
+}
+
+export default function LivestreamsPage() {
+  return <AppShell><Suspense fallback={<div className={styles.loading} role="status">Loading IOPPS Live…</div>}><LivestreamExperience /></Suspense></AppShell>;
 }
