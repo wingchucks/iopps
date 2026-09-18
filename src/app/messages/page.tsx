@@ -113,7 +113,10 @@ function MessagesContent() {
     setSending(true);
     try {
       await sendMessage(activeConvId, user.uid, newMessage.trim(), recipientId);
-      setNewMessage("");
+      // Clear only the submitted draft, never text typed while the send awaited.
+      setDrafts(previous => previous[draftKey] === newMessage
+        ? { ...previous, [draftKey]: "" }
+        : previous);
       // Real-time listeners will auto-update messages and conversations
     } catch (err) {
       console.error("Failed to send:", err);

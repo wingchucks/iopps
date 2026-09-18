@@ -162,6 +162,34 @@ async function checkLegacyMessages(page, width) {
   documents.push(mine[0].ref, db.doc(`mail/message-${mine[0].id}`));
   assert.equal((await db.doc(`conversations/${b}`).get()).data().unreadBy, accounts.school.uid);
   assert.equal((await db.collection('messages').where('conversationId', '==', a).get()).size, 1);
+  // Delay only the owned loopback notification request; real Firestore writes
+  // and the actual sendMessage/React handler still execute unchanged.
+  let releaseNotify, notifyStarted = false;
+  const held = new Promise(resolve => { releaseNotify = resolve; });
+  const notifyUrl = base + '/api/messages/notify';
+  const holdNotify = async route => { notifyStarted = true; await held; await route.continue(); };
+  await page.route(notifyUrl, holdNotify);
+  try {
+    await composer.fill('Delayed Beta send');
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    await expect.poll(() => notifyStarted).toBe(true);
+    await expect(page.getByRole('button', { name: '...', exact: true })).toBeDisabled();
+    await composer.fill('Newer unsent Beta draft');
+    const completed = page.waitForResponse(response => response.url() === notifyUrl);
+    releaseNotify();
+    assert.equal((await completed).status(), 200);
+    await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
+    await expect(composer).toHaveValue('Newer unsent Beta draft');
+    const after = await db.collection('messages').where('conversationId', '==', b).get();
+    const mineAfter = after.docs.filter(doc => doc.data().senderId === self);
+    for (const doc of mineAfter) documents.push(doc.ref, db.doc(`mail/message-${doc.id}`));
+    assert.deepEqual(mineAfter.map(doc => doc.data().text).sort(), ['Delayed Beta send', 'Draft for Beta']);
+    assert.equal((await db.collection('messages').where('conversationId', '==', a).get()).size, 1);
+    interactionChecks.push({ check: 'pending-send-preserves-newer-same-thread-draft', width, passed: true });
+  } finally {
+    releaseNotify();
+    await page.unroute(notifyUrl, holdNotify);
+  }
   await back(); await page.getByText('Thread Alpha', { exact: true }).click();
   await expect(composer).toHaveValue('Draft for Alpha');
   for (const [id, uid] of [[a, accounts.owner.uid], [b, accounts.school.uid]]) {
