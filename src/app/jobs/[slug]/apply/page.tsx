@@ -528,7 +528,7 @@ function ApplyWizard() {
                   <span>Using your IOPPS profile</span>
                 </div>
                 <Link
-                  href={`/members/${user.uid}`}
+                  href={"/profile"}
                   target="_blank"
                   rel="noopener"
                   className="text-xs font-semibold text-teal hover:underline"
@@ -638,7 +638,7 @@ function ApplyWizard() {
                   </span>
                   {user && (
                     <Link
-                      href={`/members/${user.uid}`}
+                      href={"/profile"}
                       target="_blank"
                       rel="noopener"
                       className="text-xs font-semibold text-teal hover:underline"

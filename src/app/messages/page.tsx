@@ -8,20 +8,16 @@ import {
   onMessages,
   sendMessage,
   markConversationRead,
-  getOrCreateConversation,
+  getConversationPeer,
+  type ConversationPeer,
   type Conversation,
   type Message,
 } from "@/lib/firestore/messages";
-import {
-  getMemberProfile,
-  getAllMembers,
-  type MemberProfile,
-} from "@/lib/firestore/members";
+
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Avatar from "@/components/Avatar";
-import Button from "@/components/Button";
 
 export default function MessagesPage() {
   return (
@@ -41,30 +37,20 @@ function MessagesContent() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, MemberProfile>>({});
+  const [profiles, setProfiles] = useState<Record<string, ConversationPeer>>({});
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showNewChat, setShowNewChat] = useState(false);
-  const [allMembers, setAllMembers] = useState<MemberProfile[]>([]);
-  const [memberSearch, setMemberSearch] = useState("");
-  const [loadingMembers, setLoadingMembers] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-open conversation from ?to= URL param
+  // Legacy recipient links can open only a conversation already in this inbox.
   const toParam = searchParams?.get("to");
   useEffect(() => {
-    if (!user || !toParam || loading) return;
-    // Create or open conversation with the target user
-    getOrCreateConversation(user.uid, toParam).then(async (convId) => {
-      if (!profiles[toParam]) {
-        const p = await getMemberProfile(toParam);
-        if (p) setProfiles((prev) => ({ ...prev, [toParam]: p }));
-      }
-      setActiveConvId(convId);
-    }).catch(console.error);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, toParam, loading]);
+    if (!user || !toParam) return;
+    const existing = conversations.find(c => c.participants.includes(toParam));
+    if (existing) setActiveConvId(existing.id);
+  }, [user, toParam, conversations]);
 
   // Real-time conversations listener
   useEffect(() => {
@@ -73,26 +59,13 @@ function MessagesContent() {
       setConversations(convs);
       setLoading(false);
 
-      // Load profiles for new participants
-      const uids = new Set<string>();
-      convs.forEach((c) => c.participants.forEach((p) => uids.add(p)));
-      uids.delete(user.uid);
-
-      setProfiles((prev) => {
-        const missing = [...uids].filter((uid) => !prev[uid]);
-        if (missing.length > 0) {
-          // Load missing profiles in the background
-          Promise.all(missing.map((uid) => getMemberProfile(uid))).then(
-            (results) => {
-              const newProfiles: Record<string, MemberProfile> = {};
-              results.forEach((p, i) => {
-                if (p) newProfiles[missing[i]] = p;
-              });
-              setProfiles((current) => ({ ...current, ...newProfiles }));
-            }
-          );
-        }
-        return prev;
+      // Resolve only the minimal identity projection of existing participants.
+      Promise.all(convs.map(async c => {
+        try { return await getConversationPeer(c.id); } catch { return null; }
+      })).then(peers => {
+        const next: Record<string, ConversationPeer> = {};
+        for (const peer of peers) if (peer) next[peer.uid] = peer;
+        setProfiles(next);
       });
     });
     return unsub;
@@ -140,49 +113,6 @@ function MessagesContent() {
     }
   };
 
-  const handleNewChat = async (targetUid: string) => {
-    if (!user) return;
-    try {
-      const convId = await getOrCreateConversation(user.uid, targetUid);
-      // Load the other user's profile if we don't have it
-      if (!profiles[targetUid]) {
-        const p = await getMemberProfile(targetUid);
-        if (p) setProfiles((prev) => ({ ...prev, [targetUid]: p }));
-      }
-      // Real-time listener will pick up the new conversation
-      setActiveConvId(convId);
-      setShowNewChat(false);
-      setMemberSearch("");
-    } catch (err) {
-      console.error("Failed to create conversation:", err);
-    }
-  };
-
-  const loadAllMembers = async () => {
-    setLoadingMembers(true);
-    try {
-      const members = await getAllMembers();
-      setAllMembers(members.filter((m) => m.uid !== user?.uid));
-    } catch (err) {
-      console.error("Failed to load members:", err);
-    } finally {
-      setLoadingMembers(false);
-    }
-  };
-
-  const openNewChat = () => {
-    setShowNewChat(true);
-    if (allMembers.length === 0) loadAllMembers();
-  };
-
-  const filteredMembers = memberSearch.trim()
-    ? allMembers.filter(
-        (m) =>
-          m.displayName?.toLowerCase().includes(memberSearch.toLowerCase()) ||
-          m.email?.toLowerCase().includes(memberSearch.toLowerCase())
-      )
-    : allMembers;
-
   const formatTime = (ts: unknown) => {
     if (!ts || typeof ts !== "object") return "";
     const d = ts as { seconds?: number };
@@ -218,57 +148,8 @@ function MessagesContent() {
         >
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-extrabold text-text">Messages</h2>
-            <Button className="brand-button" small onClick={openNewChat} style={{ background: "var(--button-gradient)", color: "#fff", border: "none" }}>
-              + New
-            </Button>
-          </div>
 
-          {/* New chat picker */}
-          {showNewChat && (
-            <Card className="mb-3">
-              <div style={{ padding: 12 }}>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold text-text-muted m-0">NEW MESSAGE</p>
-                  <button
-                    onClick={() => setShowNewChat(false)}
-                    className="text-text-muted text-sm border-none bg-transparent cursor-pointer"
-                  >
-                    &times;
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={memberSearch}
-                  onChange={(e) => setMemberSearch(e.target.value)}
-                  placeholder="Search members..."
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-card text-text text-sm outline-none focus:border-teal mb-2"
-                />
-                <div className="max-h-[200px] overflow-y-auto">
-                  {loadingMembers ? (
-                    <p className="text-xs text-text-muted py-2">Loading...</p>
-                  ) : filteredMembers.length === 0 ? (
-                    <p className="text-xs text-text-muted py-2">No members found.</p>
-                  ) : (
-                    filteredMembers.slice(0, 10).map((m) => (
-                      <div
-                        key={m.uid}
-                        onClick={() => handleNewChat(m.uid)}
-                        className="flex items-center gap-2.5 py-2 px-1 cursor-pointer hover:bg-bg rounded-lg transition-colors"
-                      >
-                        <Avatar name={m.displayName || m.email} size={32} src={m.photoURL} />
-                        <div>
-                          <p className="text-sm font-semibold text-text m-0">
-                            {m.displayName || "No name"}
-                          </p>
-                          <p className="text-[11px] text-text-muted m-0">{m.email}</p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </Card>
-          )}
+          </div>
 
           {/* Conversation list */}
           <div className="flex-1 overflow-y-auto">
@@ -285,11 +166,9 @@ function MessagesContent() {
                   No conversations yet
                 </p>
                 <p className="text-sm text-text-muted mb-4">
-                  Find someone and start the first message.
+                  Your existing private conversations will appear here.
                 </p>
-                <Button small variant="primary-teal" onClick={openNewChat}>
-                  Start a Message
-                </Button>
+
               </Card>
             ) : (
               <div className="space-y-1">
@@ -383,11 +262,7 @@ function MessagesContent() {
                   <p className="text-sm font-bold text-text m-0">
                     {activeOther?.displayName || "Unknown"}
                   </p>
-                  {activeOther?.community && (
-                    <p className="text-[11px] text-text-muted m-0">
-                      {activeOther.community}
-                    </p>
-                  )}
+
                 </div>
               </div>
 
@@ -482,11 +357,9 @@ function MessagesContent() {
                 <p className="text-4xl mb-3">&#128172;</p>
                 <p className="text-lg font-bold text-text mb-1">Your Messages</p>
                 <p className="text-sm text-text-muted mb-4">
-                  Select a conversation or start a new one.
+                  Select an existing private conversation.
                 </p>
-                <Button small variant="primary-teal" onClick={openNewChat}>
-                  + New Message
-                </Button>
+
               </div>
             </div>
           )}

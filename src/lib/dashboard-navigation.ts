@@ -4,7 +4,7 @@ const standaloneTabs: Record<string, string> = {
   Applications: "/org/dashboard/applications",
   Events: "/org/dashboard/events",
   Scholarships: "/org/dashboard/scholarships",
-  "Talent Search": "/org/dashboard/talent",
+  "Talent Search": "/org/dashboard/applications",
   Team: "/org/dashboard/team",
   Billing: "/org/dashboard/billing",
   // The unwired template editor is retired; existing bookmarks open job drafts.

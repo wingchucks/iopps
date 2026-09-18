@@ -54,10 +54,7 @@ export interface MemberProfile {
 export async function getMemberProfile(
   uid: string
 ): Promise<MemberProfile | null> {
-  if (auth.currentUser?.uid !== uid) {
-    const result = await memberRequest("?uid=" + encodeURIComponent(uid));
-    return result.member as MemberProfile | null;
-  }
+  if (auth.currentUser?.uid !== uid) return null;
   const snap = await getDoc(doc(db, "members", uid));
   if (!snap.exists()) return null;
   return { uid: snap.id, ...snap.data() } as MemberProfile;
@@ -118,28 +115,14 @@ export async function updateMemberProfile(
   await updateDoc(doc(db, "members", uid), updates);
 }
 
-async function memberRequest(query = "") {
-  const user = auth.currentUser;
-  if (!user) throw new Error("Sign in to view members");
-  const response = await fetch("/api/members" + query, { headers: { Authorization: `Bearer ${await user.getIdToken()}` }, cache: "no-store" });
-  if (!response.ok) throw new Error("Unable to load members");
-  return response.json();
-}
-
+// Compatibility exports for old callers: browsing is retired, with no requests.
 export async function getAllMembers(): Promise<MemberProfile[]> {
-  const members: MemberProfile[] = [];
-  let cursor: string | null = null;
-  do {
-    const page = await getMembersPaginated(cursor);
-    members.push(...page.members);
-    cursor = page.lastDoc;
-  } while (cursor);
-  return members;
+  return [];
 }
 
-export async function getMembersPaginated(cursor?: string | null): Promise<{ members: MemberProfile[]; lastDoc: string | null }> {
-  const data = await memberRequest(cursor ? "?cursor=" + encodeURIComponent(cursor) : "");
-  return { members: data.members, lastDoc: data.nextCursor };
+export async function getMembersPaginated(_cursor?: string | null): Promise<{ members: MemberProfile[]; lastDoc: string | null }> {
+  void _cursor; // Preserve the legacy signature without consuming a cursor.
+  return { members: [], lastDoc: null };
 }
 
 export async function updateCareerPreferences(

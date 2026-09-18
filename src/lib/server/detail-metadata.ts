@@ -1,4 +1,4 @@
-import { visibleMemberProfile } from "@/lib/server/member-privacy";
+
 import type { Metadata } from "next";
 import { cache } from "react";
 import { getPublicOpportunity } from "@/lib/server/public-opportunities";
@@ -363,39 +363,7 @@ export async function generateScholarshipJsonLd(slug: string): Promise<JsonLd | 
   };
 }
 
-export async function generateMemberMetadata(uid: string): Promise<Metadata> {
-  const db = getAdminDb();
-  if (!db) {
-    return fallbackMetadata(
-      "Member Profile",
-      "View this Indigenous professional's profile, experience, and endorsements on IOPPS.",
-    );
-  }
-  try {
-    const doc = await db.collection("members").doc(uid).get();
-    if (!doc.exists) {
-      return fallbackMetadata(
-        "Member Profile",
-        "View this Indigenous professional's profile on IOPPS.",
-      );
-    }
-    const [settings, account] = await db.getAll(db.doc(`member_settings/${uid}`), db.doc(`users/${uid}`));
-    const data = visibleMemberProfile(uid, doc.data() || {}, settings.data() || {}, account.data() || {}, false);
-    if (!data) return { ...fallbackMetadata("Member Profile", "IOPPS member profile."), robots: { index: false, follow: false } };
-    const name = clean(data.name) || clean(data.displayName) || "IOPPS Member";
-    const headline = clean(data.headline) || clean(data.title);
-    const nation = clean(data.nation);
-    const parts = [headline, nation].filter(Boolean).join(" · ");
-    return buildListingMetadata({
-      title: parts ? `${name} — ${parts}` : name,
-      description: truncate(stripHtml(clean(data.bio)) || `${name} on IOPPS — Canada's Indigenous professional platform.`),
-      path: `/members/${uid}`,
-      type: "article",
-    });
-  } catch {
-    return fallbackMetadata(
-      "Member Profile",
-      "View this Indigenous professional's profile on IOPPS.",
-    );
-  }
+export async function generateMemberMetadata(_uid: string): Promise<Metadata> {
+  void _uid; // Never resolve identity from a legacy profile URL.
+  return fallbackMetadata("Profile", "Manage your own IOPPS profile.", "/profile");
 }

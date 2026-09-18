@@ -19,7 +19,7 @@ import {
   type ApplicationStatus,
 } from "@/lib/firestore/applications";
 import { getUserRSVPs, type RSVP } from "@/lib/firestore/rsvps";
-import { getFollowerCount, getFollowingCount } from "@/lib/firestore/connections";
+
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Footer from "@/components/Footer";
@@ -90,8 +90,6 @@ function ProfileContent() {
   const [apps, setApps] = useState<Application[]>([]);
   const [savedCount, setSavedCount] = useState(0);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -114,19 +112,17 @@ function ProfileContent() {
         setSkillsText(data.skillsText || "");
         setEditInterests(data.interests || []);
       }
-      // Load activity stats, RSVPs, and connection counts
-      const [userApps, saved, userRsvps, followers, following] = await Promise.all([
+      // Load own activity stats and RSVPs
+      const [userApps, saved, userRsvps] = await Promise.all([
         getApplications(user.uid),
         getSavedItems(user.uid),
         getUserRSVPs(user.uid),
-        getFollowerCount(user.uid),
-        getFollowingCount(user.uid),
+
       ]);
       setApps(userApps);
       setSavedCount(saved.length);
       setRsvps(userRsvps);
-      setFollowerCount(followers);
-      setFollowingCount(following);
+
     } catch (err) {
       console.error("Failed to load profile:", err);
     } finally {
@@ -640,24 +636,7 @@ function ProfileContent() {
                       CONNECTIONS
                     </p>
                     <div className="grid grid-cols-2 gap-3 text-center">
-                      {user && (
-                        <>
-                          <Link
-                            href={`/members/${user.uid}/followers`}
-                            className="no-underline hover:opacity-80 transition-opacity"
-                          >
-                            <p className="text-xl font-extrabold text-text mb-0">{followerCount}</p>
-                            <p className="text-[11px] text-text-muted m-0">Followers</p>
-                          </Link>
-                          <Link
-                            href={`/members/${user.uid}/following`}
-                            className="no-underline hover:opacity-80 transition-opacity"
-                          >
-                            <p className="text-xl font-extrabold text-text mb-0">{followingCount}</p>
-                            <p className="text-[11px] text-text-muted m-0">Following</p>
-                          </Link>
-                        </>
-                      )}
+
                     </div>
                   </div>
                 </Card>

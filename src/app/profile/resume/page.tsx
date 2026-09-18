@@ -163,7 +163,7 @@ function ResumeContent() {
     <div className="max-w-[640px] mx-auto px-4 py-6 md:py-8 pb-24">
       {/* Back link */}
       <Link
-        href={user ? `/members/${user.uid}` : "/feed"}
+        href={user ? "/profile" : "/feed"}
         className="inline-flex items-center gap-1 text-sm text-text-muted no-underline hover:text-teal mb-4"
       >
         &#8592; Back to Profile

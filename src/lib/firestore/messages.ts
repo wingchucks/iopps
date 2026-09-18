@@ -24,6 +24,22 @@ export interface Conversation {
   unreadBy?: string; // uid of user who hasn't read the latest message
 }
 
+export interface ConversationPeer {
+  uid: string;
+  displayName: string;
+  photoURL?: string;
+}
+
+export async function getConversationPeer(conversationId: string): Promise<ConversationPeer | null> {
+  const user = auth.currentUser;
+  if (!user) return null;
+  const response = await fetch("/api/messages/peer?conversationId=" + encodeURIComponent(conversationId), {
+    headers: { Authorization: `Bearer ${await user.getIdToken()}` }, cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Unable to load conversation participant");
+  return (await response.json()).peer;
+}
+
 export interface Message {
   id: string;
   conversationId: string;

@@ -84,7 +84,7 @@ test('dashboard links use working canonical screens, without the retired talent 
   const source = fs.readFileSync(path.join(root, 'src/app/org/dashboard/page.tsx'), 'utf8');
   assert.doesNotMatch(source, /fetch\([`"']\/api\/talent/);
   const { getDashboardHref } = load('src/lib/dashboard-navigation.ts');
-  assert.equal(getDashboardHref('Talent Search'), '/org/dashboard/talent');
+  assert.equal(getDashboardHref('Talent Search'), '/org/dashboard/applications');
   assert.equal(getDashboardHref('Team'), '/org/dashboard/team');
   assert.equal(getDashboardHref('Jobs'), '/org/dashboard/jobs');
   assert.equal(getDashboardHref('Billing'), '/org/dashboard/billing');

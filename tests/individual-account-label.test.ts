@@ -33,13 +33,14 @@ test("signup presents the personal account type as Individual", () => {
   assert.match(signup, /selected=\{role === "community"\}/);
 });
 
-test("public profile role badges use Individual", () => {
+test("own profile role badges use Individual while peer profile browsing stays retired", () => {
   const labels = source("src/lib/account-labels.ts");
   const ownProfile = source("src/app/profile/page.tsx");
   const memberProfile = source("src/app/members/[uid]/page.tsx");
 
   assert.match(labels, /community: "Individual"/);
-  for (const file of [ownProfile, memberProfile]) {
+  assert.match(memberProfile, /redirect\("\/profile"\)/);
+  for (const file of [ownProfile]) {
     assert.match(file, /getPublicAccountTypeLabel/);
     assert.doesNotMatch(file, /"Community Member"/);
   }

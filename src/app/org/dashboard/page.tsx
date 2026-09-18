@@ -92,7 +92,7 @@ function createDefaultHours(): HoursMap {
 
 const ORG_TABS = [
   "Overview", "Jobs", "Applications", "Events", "Scholarships",
-  "Talent Search", "Analytics", "Edit Profile", "Team", "Billing",
+  "Analytics", "Edit Profile", "Team", "Billing",
  ] as const;
 
 const SCHOOL_TABS = [

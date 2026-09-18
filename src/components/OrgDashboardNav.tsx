@@ -112,7 +112,7 @@ export default function OrgDashboardNav({
         { href: "/org/dashboard/applications", label: "Applications", icon: icons.applications, badge: pendingApps || undefined },
         { href: "/org/dashboard/events", label: "Events", icon: icons.calendar },
         { href: "/org/dashboard/scholarships", label: "Scholarships", icon: icons.graduation },
-        { href: "/org/dashboard/talent", label: "Talent Search", icon: icons.talent },
+
         { href: "/org/dashboard?tab=Analytics", label: "Analytics", icon: icons.analytics },
         { href: "/org/dashboard?tab=Edit%20Profile&section=Identity", label: "Edit Profile", icon: icons.profile },
         { href: "/org/dashboard/team", label: "Team", icon: icons.team },

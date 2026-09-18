@@ -277,13 +277,12 @@ export default function OrgApplicationsPage() {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1 flex-wrap">
-              <Link
-                href={`/members/${app.userId}`}
-                className="text-sm font-bold no-underline hover:underline"
-                style={{ color: "var(--text)" }}
-              >
-                {displayName}
-              </Link>
+              <span
+                              className="text-sm font-bold no-underline hover:underline"
+                              style={{ color: "var(--text)" }}
+                            >
+                              {displayName}
+                            </span>
               <span
                 className="px-2 py-0.5 rounded-full text-xs font-semibold capitalize"
                 style={{ background: sc.bg, color: sc.color }}
@@ -349,16 +348,7 @@ export default function OrgApplicationsPage() {
                   </option>
                 ))}
               </select>
-              <Link
-                href={`/members/${app.userId}`}
-                className="brand-button px-3 py-1.5 rounded-lg text-xs font-semibold no-underline"
-                style={{
-                  background: "var(--button-gradient-soft)",
-                  color: "var(--button-gradient-soft-text)",
-                }}
-              >
-                View Profile
-              </Link>
+
               {/* Resume link */}
               {resumeUrl ? (
                 <a
@@ -799,13 +789,12 @@ export default function OrgApplicationsPage() {
                                       {displayName.charAt(0).toUpperCase()}
                                     </div>
                                   )}
-                                  <Link
-                                    href={`/members/${app.userId}`}
-                                    className="text-xs font-bold no-underline hover:underline truncate"
-                                    style={{ color: "var(--text)" }}
-                                  >
-                                    {displayName}
-                                  </Link>
+                                  <span
+                                                                      className="text-xs font-bold no-underline hover:underline truncate"
+                                                                      style={{ color: "var(--text)" }}
+                                                                    >
+                                                                      {displayName}
+                                                                    </span>
                                 </div>
 
                                 {app.postTitle && (

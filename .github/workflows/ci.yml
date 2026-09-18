@@ -160,6 +160,7 @@ jobs:
       contents: read
     env:
       IOPPS_TEST_EMULATORS: "true"
+      IOPPS_TEST_MEMBER_RETIREMENT: "true"
       NEXT_PUBLIC_USE_EMULATORS: "true"
       QA_BUILD_DIR: ${{ github.workspace }}
       NEXT_TELEMETRY_DISABLED: "1"
