@@ -8,13 +8,13 @@ import { deriveOwnerType, matchesOrgName, serialize, withPublicOwnership, type J
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 
 const publicFields = new Set<string>([...OPPORTUNITY_TEXT_FIELDS, ...OPPORTUNITY_ARRAY_FIELDS, "id", "slug", "dates", "date", "orgId", "orgName", "orgShort", "organization", "organizer", "organizerName", "status", "active", "isFree", "schedule", "badges", "featured", "createdAt", "updatedAt", "order"]);
-function aliases(record: JsonRecord, prefix: string): string[] {
+export function opportunityAliases(record: JsonRecord, prefix: string): string[] {
   return [record.id, record.slug].filter(Boolean).map(value => String(value).replace(new RegExp(`^${prefix}-`), ""));
 }
 export function mergeOpportunitySources(primary: JsonRecord[], legacy: JsonRecord[], kind: OpportunityKind) {
   const prefix = kind === "events" ? "event" : "scholarship";
-  const reserved = new Set(primary.flatMap(record => aliases(record, prefix)));
-  return [...primary, ...legacy.filter(record => !aliases(record, prefix).some(key => reserved.has(key)))];
+  const reserved = new Set(primary.flatMap(record => opportunityAliases(record, prefix)));
+  return [...primary, ...legacy.filter(record => !opportunityAliases(record, prefix).some(key => reserved.has(key)))];
 }
 export function publicOpportunityRecord(raw: JsonRecord, kind: OpportunityKind): JsonRecord | null {
   // Explicit publication states only. Missing status is supported for imported legacy records.

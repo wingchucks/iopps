@@ -35,6 +35,10 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
   and existing attendee/application history remains intact. Source links render on
   event details. Equivalent source/date/title duplicates combine only in the directory.
   Related scholarships exclude expired recommendations.
+  Management resolves both canonical and legacy owner IDs; a moved canonical listing
+  prevents a stale private copy from restoring the former owner's access.
+- Feed/story requests resolve only matching opportunity IDs and slugs. Story detail
+  requests avoid full post/opportunity scans while retaining uncached publication checks.
 - Job/organization metadata checks current public visibility with request-local
   memoization. Deleted linked organizations cannot reappear through legacy employer
   records. No persistent 15-minute identity cache remains for those details.

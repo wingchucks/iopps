@@ -83,6 +83,37 @@ test('remediation: real authentication, salary rules, opportunity deletion and u
         assert.deepEqual((await db.doc(targetPath).get()).data(), repaired, 'completed retries do not rewrite either mirror');
       }
     });
+    await t.test('distinct legacy employer and canonical organization IDs retain opportunity list, close and delete access', async () => {
+      const actor = await identity('-split-owner'), orgId = prefix + '-canonical-org', employerId = prefix + '-legacy-employer';
+      await seed(`users/${actor.uid}`, { status: 'active', role: 'employer', orgRole: 'owner', orgId, employerId });
+      await seed(`members/${actor.uid}`, { role: 'employer', orgRole: 'owner', orgId });
+      await seed(`organizations/${orgId}`, { status: 'approved', name: 'Fictional canonical org', onboardingComplete: true });
+      await seed(`employers/${employerId}`, { status: 'approved', name: 'Fictional legacy employer' });
+      for (const kind of ['events', 'scholarships']) {
+        const route = kind === 'events' ? await import('../src/app/api/employer/events/route.ts') : await import('../src/app/api/employer/scholarships/route.ts');
+        const endpoint = '/api/employer/' + kind;
+        const publicId = prefix + '-legacy-' + kind, privateId = prefix + '-legacy-private-' + kind, foreignId = prefix + '-foreign-' + kind;
+        await seed(`${kind}/${publicId}`, { id: publicId, employerId, title: 'Fictional legacy listing', status: 'active', active: true, revision: 4 });
+        await seed(`organizationOpportunityDrafts/${kind}-${privateId}`, { id: privateId, kind, employerId, title: 'Fictional private listing', status: 'draft', revision: 2 });
+        await seed(`${kind}/${foreignId}`, { id: foreignId, orgId: other.uid, employerId, title: 'Fictional foreign listing with a stale legacy link', status: 'closed', revision: 1 });
+        const movedId = prefix + '-moved-' + kind;
+        await seed(`${kind}/${movedId}`, { id: movedId, orgId: other.uid, employerId: other.uid, title: 'Fictional moved listing', status: 'closed', revision: 4 });
+        await seed(`organizationOpportunityDrafts/${kind}-${movedId}`, { id: movedId, kind, orgId, employerId, title: 'Fictional stale private copy', status: 'draft', revision: 2 });
+        paths.add(`organizationOpportunityDrafts/${kind}-${publicId}`);
+        const listed = await (await route.GET(request(endpoint, actor))).json();
+        assert.deepEqual(listed[kind].map(row => row.id).sort(), [publicId, privateId].sort());
+        assert.equal((await route.PATCH(request(endpoint, actor, 'PATCH', { id: foreignId, status: 'closed', revision: 1 }))).status, 404);
+        assert.equal((await route.DELETE(request(endpoint, actor, 'DELETE', { id: foreignId, confirmDelete: true, revision: 1 }))).status, 404);
+        assert.equal((await route.PATCH(request(endpoint, actor, 'PATCH', { id: movedId, status: 'closed', revision: 2 }))).status, 404);
+        assert.equal((await route.DELETE(request(endpoint, actor, 'DELETE', { id: movedId, confirmDelete: true, revision: 2 }))).status, 404);
+        assert.equal((await route.PATCH(request(endpoint, actor, 'PATCH', { id: publicId, status: 'closed', revision: 4 }))).status, 200);
+        const closed = (await db.doc(`${kind}/${publicId}`).get()).data();
+        assert.equal(closed.orgId, orgId); assert.equal(closed.employerId, employerId); assert.equal(closed.title, undefined);
+        assert.equal((await route.DELETE(request(endpoint, actor, 'DELETE', { id: publicId, confirmDelete: true, revision: 5 }))).status, 200);
+        assert.equal((await route.DELETE(request(endpoint, actor, 'DELETE', { id: privateId, confirmDelete: true, revision: 2 }))).status, 200);
+        assert.deepEqual((await (await route.GET(request(endpoint, actor))).json())[kind], []);
+      }
+    });
     await t.test('salary range is enforced by profile API and direct Firestore rules, preserving unrelated legacy edits', async () => {
       const profile = await import('../src/app/api/profile/route.ts');
       const ref = doc(member.store, 'members', member.uid);

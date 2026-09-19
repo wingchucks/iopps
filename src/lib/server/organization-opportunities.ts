@@ -10,6 +10,11 @@ const noStore = { "Cache-Control": "private, no-store" };
 // This collection is denied by the existing default-deny rules. Draft contents
 // never enter a publicly readable collection, even before updated rules deploy.
 const PRIVATE_COLLECTION = "organizationOpportunityDrafts";
+type Owner = { orgId: string; employerId: string };
+function belongsToOrganization(record: Record<string, unknown>, owner: Owner) {
+  // A canonical orgId takes precedence over a stale legacy employer link.
+  return [owner.orgId, owner.employerId].includes(String(record.orgId || record.employerId || ""));
+}
 function failure(error: unknown) {
   if (!(error instanceof EmployerApiError)) console.error("Organization opportunity API:", error);
   return NextResponse.json({ error: error instanceof EmployerApiError ? error.message : "Could not save your changes. Please try again." }, { status: error instanceof EmployerApiError ? error.status : 500, headers: noStore });
@@ -18,16 +23,24 @@ export async function listOrganizationOpportunities(req: Request, kind: Opportun
   try {
     const context = await requireEmployerContext(req);
     const db = getAdminDb();
-    const sources = await Promise.all([
-      db.collection(kind).where("orgId", "==", context.orgId).get(),
-      db.collection(kind).where("employerId", "==", context.orgId).get(),
-      db.collection(PRIVATE_COLLECTION).where("orgId", "==", context.orgId).get(),
-    ]);
+    const ownerIds = [...new Set([context.orgId, context.employerId])];
+    const sources = await Promise.all([kind, PRIVATE_COLLECTION].flatMap(collection =>
+      ["orgId", "employerId"].map(field => db.collection(collection).where(field, "in", ownerIds).get())));
+    const canonical = new Map<string, FirebaseFirestore.DocumentSnapshot>(sources.slice(0, 2).flatMap(snap => snap.docs.map(doc => [doc.id, doc] as const)));
+    const privateIds = [...new Set(sources.slice(2).flatMap(snap => snap.docs
+      .filter(doc => doc.data().kind === kind).map(doc => doc.data().id)))].filter((id): id is string => typeof id === "string" && /^[^/]{1,200}$/.test(id) && !canonical.has(id));
+    // A record moved to another organization may no longer match either query.
+    // Its stale private copy must not restore access for the former owner.
+    for (let offset = 0; offset < privateIds.length; offset += 200) {
+      for (const doc of await db.getAll(...privateIds.slice(offset, offset + 200).map(id => db.collection(kind).doc(id)))) canonical.set(doc.id, doc);
+    }
     const records = new Map<string, Record<string, unknown>>();
     sources.forEach((snap, index) => snap.docs.forEach(doc => {
       const data = serialize(doc.data()) as Record<string, unknown>;
-      if (index === 2 && data.kind !== kind) return;
-      const id = index === 2 ? String(data.id) : doc.id;
+      if (!belongsToOrganization(data, context) || (index >= 2 && data.kind !== kind)) return;
+      const id = index >= 2 ? String(data.id) : doc.id;
+      const authoritative = canonical.get(id);
+      if (authoritative?.exists && !belongsToOrganization(authoritative.data() || {}, context)) return;
       records.set(id, { ...data, id, revision: Number(data.revision) || 0 });
     }));
     const items = [...records.values()].filter(item => item.title).sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
@@ -56,18 +69,18 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
       const [publicDoc, privateDoc] = await Promise.all([tx.get(publicRef), tx.get(draftRef)]);
       const previous = (privateDoc.exists ? privateDoc.data() : publicDoc.data()) || {};
       const exists = privateDoc.exists || publicDoc.exists;
-      if (exists && (previous.orgId || previous.employerId) !== context.orgId) throw new EmployerApiError(404, "Listing not found.");
+      if ([publicDoc, privateDoc].some(doc => doc.exists && !belongsToOrganization(doc.data() || {}, context))) throw new EmployerApiError(404, "Listing not found.");
       if (!editing && exists) return { record: { ...previous, id }, duplicate: true };
       if (editing && !exists) throw new EmployerApiError(404, "Listing not found.");
       if (editing && (typeof body.revision !== "number" || body.revision !== (Number(previous.revision) || 0))) throw new EmployerApiError(409, "This listing changed in another window. Reload it before saving again.");
-      if (["deleted", "rejected", "suspended", "removed", "flagged"].includes(String(previous.status))) throw new EmployerApiError(403, "This listing needs an administrator’s review before it can be changed.");
+      if ([previous, publicDoc.data()].some(data => ["deleted", "rejected", "suspended", "removed", "flagged"].includes(String(data?.status)))) throw new EmployerApiError(403, "This listing needs an administrator’s review before it can be changed.");
       // Closing is always possible without repairing legacy content first.
       const validation = status === "closed" ? { data: previous, errors: {} } : validateOpportunity(kind, body, status, previous);
       if (Object.keys(validation.errors).length) return { errors: validation.errors };
       const orgName = String(context.organizationData.name || context.employerData.organizationName || context.employerData.name || "");
       const slug = String(previous.slug || `${String(validation.data.title || "listing").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 65)}-${id.slice(-8)}`);
       const now = new Date().toISOString();
-      const record = { ...validation.data, id, kind, slug, orgId: context.orgId, employerId: context.orgId, orgName,
+      const record = { ...validation.data, id, kind, slug, orgId: context.orgId, employerId: context.employerId, orgName,
         ...(kind === "events" ? { organizerName: orgName } : { organization: orgName }),
         status, active: status === "active", revision: (Number(previous.revision) || 0) + 1,
         createdAt: previous.createdAt || now, updatedAt: now, firstPublishedAt: previous.firstPublishedAt || (status === "active" ? now : null), order: previous.order || Date.now() };
@@ -79,7 +92,7 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
         // A tombstone prevents an old feed copy from resurfacing after unpublishing.
         // Only routing and ownership remain public; the draft itself is private.
         // A brand-new draft has no public record at all, including no title-derived slug.
-        if (publicDoc.exists) tx.set(publicRef, { id, slug, orgId: context.orgId, employerId: context.orgId, status, active: false, revision: record.revision, updatedAt: now });
+        if (publicDoc.exists) tx.set(publicRef, { id, slug, orgId: context.orgId, employerId: context.employerId, status, active: false, revision: record.revision, updatedAt: now });
       }
       return { record, firstPublication: status === "active" && !previous.firstPublishedAt && (!exists || previous.status === "draft") };
     });
@@ -111,11 +124,11 @@ export async function deleteOrganizationOpportunity(req: Request, kind: Opportun
     await db.runTransaction(async tx => {
       const [publicDoc, privateDoc] = await tx.getAll(publicRef, privateRef);
       const previous = (privateDoc.exists ? privateDoc.data() : publicDoc.data()) || {};
-      if ((!publicDoc.exists && !privateDoc.exists) || (previous.orgId || previous.employerId) !== context.orgId) throw new EmployerApiError(404, "Listing not found.");
+      if ((!publicDoc.exists && !privateDoc.exists) || [publicDoc, privateDoc].some(doc => doc.exists && !belongsToOrganization(doc.data() || {}, context))) throw new EmployerApiError(404, "Listing not found.");
       if (previous.status === "deleted") return;
       if (!["draft", "closed"].includes(String(previous.status))) throw new EmployerApiError(409, "Close the listing before deleting it.");
       if (body.revision !== (Number(previous.revision) || 0)) throw new EmployerApiError(409, "This listing changed. Reload it before deleting.");
-      const tombstone = { id: body.id, kind, orgId: context.orgId, employerId: context.orgId, status: "deleted", active: false, revision: (Number(previous.revision) || 0) + 1, deletedAt: new Date().toISOString() };
+      const tombstone = { id: body.id, kind, orgId: context.orgId, employerId: context.employerId, status: "deleted", active: false, revision: (Number(previous.revision) || 0) + 1, deletedAt: new Date().toISOString() };
       // Keep minimal identity so stale feed copies cannot resurrect the listing.
       // Existing attendee/application history is intentionally not erased.
       tx.set(privateRef, tombstone);
