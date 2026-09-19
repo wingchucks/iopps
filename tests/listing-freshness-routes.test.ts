@@ -16,6 +16,7 @@ import * as contentProjection from '../src/lib/server/public-content-record.ts';
 import * as publicEvents from '../src/lib/public-events.ts';
 import * as eventDedupe from '../src/lib/event-directory-dedupe.ts';
 import * as opportunityPosting from '../src/lib/opportunity-posting.ts';
+import * as opportunityLookups from '../src/lib/server/opportunity-lookups.ts';
 const nativeRequire = createRequire(import.meta.url);
 function loadRoute(path: string, mocks: Record<string, unknown>) {
   const exports: Record<string, any> = {};
@@ -29,6 +30,7 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
     '@/lib/public-events': publicEvents,
     '@/lib/event-directory-dedupe': eventDedupe,
     '@/lib/opportunity-posting': opportunityPosting,
+    './opportunity-lookups': opportunityLookups,
     ...mocks,
   };
   vm.runInNewContext(source, {exports, require:(id: string) => {
@@ -37,7 +39,7 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
     // provider doubles, rather than requiring an alias through a CJS fallback.
     if (id === '@/lib/server/public-opportunities') return loadRoute('src/lib/server/public-opportunities.ts', mocks);
     return nativeRequire(id);
-  }, Response, URL, console, process:{env:{CRON_SECRET:'test-only'}}, Date:class extends Date { constructor(value: any = '2026-09-08T12:00:00Z') { super(value); } } });
+  }, Response, URL, Buffer, console, process:{env:{CRON_SECRET:'test-only'}}, Date:class extends Date { constructor(value: any = '2026-09-08T12:00:00Z') { super(value); } } });
   return exports;
 }
 test('job detail rechecks fresh full data before hydration or any write', async () => {
@@ -63,7 +65,7 @@ test('scholarship API marks closed intakes without deleting recurring programs',
   const route = loadRoute('src/app/api/scholarships/route.ts', {
     'next/server':next,
     '@/lib/firebase-admin':{getAdminDb:()=>({collection:(name:string)=>{
-      const query={where:()=>query,get:async()=>({docs:name==='scholarships'?rows.map(row=>({id:row.id,data:()=>row})):[]})};return query;
+      const query={where:()=>query,select:()=>query,get:async()=>({docs:name==='scholarships'?rows.map(row=>({id:row.id,exists:true,data:()=>row})):[]})};return query;
     }})},
     '@/lib/server/public-ownership':ownership,
     '@/lib/server/partner-promotion':{withPartnerPromotion:(r:unknown)=>r},
