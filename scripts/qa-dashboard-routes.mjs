@@ -298,6 +298,7 @@ try {
     id: `${prefix}-${status}`, slug: `${prefix}-${status}`, title: `QA ${status} dashboard job`, employerId: accounts.owner.uid, orgId: accounts.owner.uid,
     employerName: org.name, location: 'Saskatoon, SK', description: 'Fictional QA job.', descriptionFormat: 'plain-text',
     salary: '$23.50 - $27.75', salaryRange: { min: 23.5, max: 27.75, period: 'Hourly', currency: 'CAD', disclosed: true },
+    ...(status === 'draft' ? { source: 'employer', authorId: accounts.owner.uid } : {}),
     employmentType: 'Full-time', active: status === 'active', status, createdAt: Timestamp.now(), expiresAt: Timestamp.fromMillis(Date.now() + 86400000 * 7),
   });
 
