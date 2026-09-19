@@ -27,7 +27,15 @@ export async function DELETE(request: NextRequest) {
     // the profile or regain database access during Auth cleanup.
     const closed = await db.runTransaction(async tx => {
       const [member, user, organization, employer] = await tx.getAll(db.doc(`members/${uid}`), db.doc(`users/${uid}`), db.doc(`organizations/${uid}`), db.doc(`employers/${uid}`));
-      if (organization.exists || employer.exists || [member.data(), user.data()].some(data => data?.orgId && data.orgRole === "owner")) return false;
+      const profiles = [member.data(), user.data()];
+      const linkedIds = [...new Set(profiles.flatMap(data => [data?.orgId, data?.employerId])
+        .filter((id): id is string => typeof id === "string" && id.length > 0))];
+      const linkedRecords = linkedIds.length
+        ? await tx.getAll(...linkedIds.flatMap(id => [db.doc(`organizations/${id}`), db.doc(`employers/${id}`)]))
+        : [];
+      const linkedOwner = linkedIds.length > 0 && profiles.some(data => data?.orgRole === "owner");
+      const recordedOwner = linkedRecords.some(record => record.data()?.ownerId === uid || record.data()?.uid === uid);
+      if (organization.exists || employer.exists || linkedOwner || recordedOwner) return false;
       tx.set(db.doc(`account_cleanup/${uid}`), { notBefore: new Date(Date.now() + 90 * 60 * 1000).toISOString(), createdAt: new Date().toISOString() });
       tx.set(db.doc(`users/${uid}`), { status: "deleted", deletedAt: new Date().toISOString() });
       for (const collection of ["members", "member_settings", "notification_preferences"]) tx.delete(db.doc(`${collection}/${uid}`));

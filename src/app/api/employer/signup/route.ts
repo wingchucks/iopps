@@ -57,12 +57,20 @@ function cleanLocation(value: unknown): { city: string; province: string } | und
 
 async function existingSignupResponse(uid: string) {
   if (!adminDb) return null;
-  const [organization, employer] = await Promise.all([
-    adminDb.collection("organizations").doc(uid).get(),
-    adminDb.collection("employers").doc(uid).get(),
-  ]);
-  if (!organization.exists && !employer.exists) return null;
-  const existing = organization.data() || employer.data() || {};
+  const organizationRef = adminDb.collection("organizations").doc(uid);
+  const employerRef = adminDb.collection("employers").doc(uid);
+  const existing = await adminDb.runTransaction(async tx => {
+    const [organization, employer] = await tx.getAll(organizationRef, employerRef);
+    if (!organization.exists && !employer.exists) return null;
+    const data = organization.data() || employer.data() || {};
+    // A legacy signup may have only one mirror. Repair only the missing one
+    // from trusted stored data, preserving its plan, credits and visibility.
+    // Transaction retries cannot overwrite a concurrently completed profile.
+    if (!organization.exists) tx.create(organizationRef, { ...data, updatedAt: FieldValue.serverTimestamp() });
+    if (!employer.exists) tx.create(employerRef, { ...data, id: uid, updatedAt: FieldValue.serverTimestamp() });
+    return data;
+  });
+  if (!existing) return null;
   return NextResponse.json({
     success: true, alreadyExists: true, orgId: uid,
     slug: typeof existing.slug === "string" ? existing.slug : "",

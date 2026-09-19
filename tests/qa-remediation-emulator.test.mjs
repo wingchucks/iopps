@@ -28,6 +28,61 @@ test('remediation: real authentication, salary rules, opportunity deletion and u
   const request = (path, actor, method = 'GET', body) => new NextRequest('http://127.0.0.1' + path, { method, headers: { ...(actor ? { authorization: `Bearer ${actor.token}` } : {}), 'content-type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   try {
     const member = await identity('-member'), owner = await identity('-owner', 'employer'), other = await identity('-other', 'employer'), recruiter = await identity('-recruiter', 'employer', 'recruiter');
+    await t.test('closure preserves legacy linked owners and allows unrelated organization members to leave', async () => {
+      const actor = await identity('-legacy-owner');
+      const orgId = prefix + '-linked-organization';
+      const closure = await import('../src/app/api/account/route.ts');
+      for (const [userLink, memberLink, organizationOwner, employerOwner] of [
+        [{ employerId: orgId, orgRole: 'owner' }, {}, {}, {}],
+        [{ orgId, orgRole: 'owner' }, {}, {}, {}],
+        [{}, { employerId: orgId, orgRole: 'owner' }, {}, {}],
+        [{}, { orgId, orgRole: 'owner' }, {}, {}],
+        [{ employerId: orgId }, { orgRole: 'owner' }, {}, {}],
+        [{ employerId: orgId }, {}, { ownerId: actor.uid }, {}],
+        [{ employerId: orgId }, {}, {}, { uid: actor.uid }],
+      ]) {
+        await seed(`users/${actor.uid}`, { role: 'employer', status: 'active', ...userLink });
+        await seed(`members/${actor.uid}`, { displayName: 'Fictional linked owner', ...memberLink });
+        await seed(`organizations/${orgId}`, { status: 'approved', ...organizationOwner });
+        await seed(`employers/${orgId}`, { status: 'approved', ...employerOwner });
+        assert.equal((await closure.DELETE(request('/api/account', actor, 'DELETE', { confirmDelete: true }))).status, 409);
+        assert.equal((await auth.getUser(actor.uid)).uid, actor.uid);
+        assert.equal((await db.doc(`users/${actor.uid}`).get()).data().status, 'active');
+        assert.equal((await db.doc(`account_cleanup/${actor.uid}`).get()).exists, false);
+      }
+      await seed(`users/${actor.uid}`, { role: 'employer', status: 'active', employerId: orgId, orgRole: 'member' });
+      await seed(`members/${actor.uid}`, { displayName: 'Fictional non-owner' });
+      await seed(`employers/${orgId}`, { status: 'approved', uid: other.uid });
+      paths.add(`account_cleanup/${actor.uid}`);
+      assert.equal((await closure.DELETE(request('/api/account', actor, 'DELETE', { confirmDelete: true }))).status, 200);
+      assert.equal((await db.doc(`organizations/${orgId}`).get()).exists, true);
+      assert.equal((await db.doc(`employers/${orgId}`).get()).data().uid, other.uid);
+    });
+    await t.test('signup retries repair either missing mirror without resetting stored entitlements or membership', async () => {
+      const signup = await import('../src/app/api/employer/signup/route.ts');
+      for (const sourceCollection of ['employers', 'organizations']) {
+        const actor = await identity('-partial-' + sourceCollection);
+        const counterpart = sourceCollection === 'employers' ? 'organizations' : 'employers';
+        const sourcePath = `${sourceCollection}/${actor.uid}`, targetPath = `${counterpart}/${actor.uid}`;
+        const data = { name: 'Fictional existing organization', slug: 'fictional-paid-profile', plan: 'tier2', jobCredits: 7, featuredCredits: 3, status: 'disabled', publicVisibility: 'hidden', directoryReview: { status: 'pending' }, createdAt: 'original', updatedAt: 'original' };
+        await seed(sourcePath, data); paths.add(targetPath);
+        const userBefore = (await db.doc(`users/${actor.uid}`).get()).data();
+        const claimsBefore = (await auth.getUser(actor.uid)).customClaims;
+        const call = () => signup.POST(request('/api/employer/signup', actor, 'POST', { name: 'Do not overwrite', plan: 'free' }));
+        for (const response of await Promise.all([call(), call()])) {
+          assert.equal(response.status, 200, await response.clone().text());
+          assert.equal((await response.json()).alreadyExists, true);
+        }
+        assert.deepEqual((await db.doc(sourcePath).get()).data(), data);
+        const repaired = (await db.doc(targetPath).get()).data();
+        for (const key of Object.keys(data).filter(key => key !== 'updatedAt')) assert.deepEqual(repaired[key], data[key]);
+        assert.ok(repaired.updatedAt.toMillis() > 0);
+        assert.deepEqual((await db.doc(`users/${actor.uid}`).get()).data(), userBefore);
+        assert.deepEqual((await auth.getUser(actor.uid)).customClaims, claimsBefore);
+        assert.equal((await call()).status, 200);
+        assert.deepEqual((await db.doc(targetPath).get()).data(), repaired, 'completed retries do not rewrite either mirror');
+      }
+    });
     await t.test('salary range is enforced by profile API and direct Firestore rules, preserving unrelated legacy edits', async () => {
       const profile = await import('../src/app/api/profile/route.ts');
       const ref = doc(member.store, 'members', member.uid);

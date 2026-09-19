@@ -21,6 +21,8 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
   navigation are corrected. Obsolete public-member-directory preferences are removed.
   Salary preferences reject inverted/invalid ranges in client, API and Firestore rules.
 - Organization signup uses the shared flow with preserved purchase/return intent.
+  Retries restore either missing organization/employer mirror transactionally from
+  stored data without resetting the existing profile, entitlements or membership.
   Privacy links and review wording are corrected. Billing explains free standard
   posting, distinguishes expired plans, and explains featured placement eligibility.
   Retired School, Program and standard-post purchases are rejected before Stripe;
@@ -37,8 +39,9 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
   memoization. Deleted linked organizations cannot reappear through legacy employer
   records. No persistent 15-minute identity cache remains for those details.
 - Account closure deletes unshared personal uploads and queues a later sweep for old
-  token uploads. Shared application files/archives remain retained. The daily cleanup
-  cron requires `CRON_SECRET` and retains failed work for retry.
+  token uploads. Current and legacy application references preserve shared files.
+  Both organization link fields and stored owner identifiers block owner self-deletion.
+  The daily cleanup cron requires `CRON_SECRET` and retains failed work for retry.
 - Password recovery uses an IOPPS-branded email through the existing Resend sender,
   with origin/App Check validation, email/IP limits and generic account-existence
   responses. Emulator recovery remains isolated from outbound mail.
@@ -52,11 +55,18 @@ metadata removal and password-recovery guards. Accessibility coverage is profile
 privacy, notification and career settings at 1440px/390px in light/dark themes; it is
 not a claim of complete WCAG conformance.
 
-Automatic Vercel deployment is disabled for this branch. This change has not modified
-production configuration or records. Follow `LAUNCH-RECOVERY.md` and preserve the
+Automatic Vercel deployment is disabled for this branch. Live domain promotion and
+rules publication remain separate release steps. Follow `LAUNCH-RECOVERY.md` and preserve the
 existing containment, paired-rules, exact-commit CI/security review and provider gates.
 Verify the new cleanup cron and branded recovery delivery on the approved artifact;
 local provider mocks do not prove production delivery or paid fulfillment.
+
+The independent PR review also flagged mobile clients that still query `jobs` and
+`applications` directly. Both read denials are already present in serving commit
+`7af0eb9d` and the read-back production rules; this candidate changes only salary
+validation. Mobile API migration remains a separate follow-up outside this website
+release. Preserve the existing privacy restrictions rather than reopening client
+reads. Review the remediation delta from the serving commit, not only older master.
 
 ## Editorial records still requiring resolution
 
