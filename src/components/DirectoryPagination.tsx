@@ -1,44 +1,41 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+
+function replaceDirectoryQuery(params: URLSearchParams) {
+  const query = params.toString();
+  // These filters are entirely client-side. Read the current URL at event time so
+  // rapid changes cannot restore stale filters while a router request is pending.
+  window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+}
 
 export function useDirectoryFilter(key: string, defaultValue: string) {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const value = searchParams.get(key) ?? defaultValue;
   const setValue = useCallback((nextValue: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     if (!nextValue || nextValue === defaultValue) params.delete(key);
     else params.set(key, nextValue);
     params.delete("page");
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [defaultValue, key, pathname, router, searchParams]);
+    replaceDirectoryQuery(params);
+  }, [defaultValue, key]);
   return [value, setValue] as const;
 }
 
 export function useDirectoryFilterActions() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
   return useCallback((updates: Record<string, string | null | undefined>) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     for (const [key, value] of Object.entries(updates)) {
       if (!value) params.delete(key);
       else params.set(key, value);
     }
     params.delete("page");
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [pathname, router, searchParams]);
+    replaceDirectoryQuery(params);
+  }, []);
 }
 
 export function useDirectoryPagination<T>(items: readonly T[], pageSize = 24) {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const requestedPage = Number.parseInt(searchParams.get("page") || "1", 10);
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
@@ -48,17 +45,16 @@ export function useDirectoryPagination<T>(items: readonly T[], pageSize = 24) {
     [items, page, pageSize],
   );
   const setPage = useCallback((nextPage: number) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     if (nextPage <= 1) params.delete("page");
     else params.set("page", String(Math.min(nextPage, totalPages)));
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    replaceDirectoryQuery(params);
     requestAnimationFrame(() => {
       const results = document.getElementById("directory-results");
       results?.scrollIntoView({ behavior: "smooth", block: "start" });
       results?.focus({ preventScroll: true });
     });
-  }, [pathname, router, searchParams, totalPages]);
+  }, [totalPages]);
   return { page, pageItems, totalPages, setPage };
 }
 

@@ -12,7 +12,8 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
   status. Existing application access and immutable archives remain authoritative.
 - Province names and abbreviations match whole location tokens. Explicit remote and
   compensation statements enrich discovery without guessing a pay period. The job
-  editor preserves cents and exposes pay period; cards include known units.
+  editor preserves cents and exposes pay period; cards include known units. Rapid
+  filter changes preserve the latest URL state instead of restoring stale filters.
 - Organization, partner and profile job counts share published, unexpired jobs and
   authoritative mirror suppression. Partner cards and counts use one unique list.
   Legacy province-only locations normalize correctly; card descriptions are shorter.

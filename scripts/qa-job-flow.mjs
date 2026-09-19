@@ -18,6 +18,7 @@ const fixtures = [
   { id: 'qa-vernon', slug: 'qa-vernon', title: 'QA Vernon Advisor', employerName: 'QA Second Organization', location: 'Vernon, BC', active: true, status: 'active' },
 ];
 const findings = [];
+let currentPage;
 try {
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
     const context = await browser.newContext({ viewport, serviceWorkers: 'block' });
@@ -26,7 +27,7 @@ try {
       window.gtag = (...args) => window.qaFunnelEvents.push(args);
     });
     const errors = [];
-    const page = await context.newPage();
+    const page = await context.newPage(); currentPage = page;
     page.on('pageerror', error => errors.push(error.message));
     await context.route('**/*', async route => {
       const url = new URL(route.request().url());
@@ -57,6 +58,11 @@ try {
     await page.getByRole('button', { name: 'Remote only', exact: true }).click();
     await search.fill('Community Coordinator');
     await page.getByText(fixtures[0].title, { exact: true }).waitFor();
+    assert.equal(new URL(page.url()).searchParams.has('remote'), false, 'typing must not restore the just-cleared Remote filter');
+    assert.equal(new URL(page.url()).searchParams.has('location'), false);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByText(fixtures[0].title, { exact: true }).waitFor();
+    assert.equal(await search.inputValue(), 'Community Coordinator', 'search state survives reload');
     await page.waitForFunction(() => !document.body.innerText.includes('QA Program Assistant'));
     await page.waitForFunction(() => window.qaFunnelEvents.some(e => e[1] === 'job_search_results' && e[2].result_count === 1));
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), false, 'jobs must not overflow horizontally');
@@ -82,4 +88,10 @@ try {
   }
   await fs.writeFile(path.join(output, 'results.json'), JSON.stringify({ localFixtures: true, base, findings }, null, 2));
   console.log(JSON.stringify({ localFixtures: true, output, findings }, null, 2));
+} catch (error) {
+  if (currentPage && !currentPage.isClosed()) {
+    await currentPage.screenshot({ path: path.join(output, 'failure.png'), fullPage: true });
+    await fs.writeFile(path.join(output, 'failure.json'), JSON.stringify({ url: currentPage.url(), text: await currentPage.locator('body').innerText(), error: error.message }, null, 2));
+  }
+  throw error;
 } finally { await browser.close(); }
