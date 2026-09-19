@@ -206,6 +206,7 @@ interface NavItem {
   href: string;
   /** Unicode icon displayed beside the label */
   icon: string;
+  adminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -226,7 +227,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Users", href: "/admin/users", icon: "\u2603" },
       { label: "Businesses & Schools", href: "/admin/employers", icon: "\u2616" },
-      { label: "Business listing reviews", href: "/admin/business-reviews", icon: "✓" },
+      { label: "Business listing reviews", href: "/admin/business-reviews", icon: "✓", adminOnly: true },
       { label: "Verification", href: "/admin/verification", icon: "\u2713" },
     ],
   },
@@ -363,6 +364,7 @@ function SidebarContent({
             </p>
             <ul className="space-y-0.5">
               {group.items.map((item) => {
+                if (item.adminOnly && role !== "admin") return null;
                 const active = isActive(item.href);
                 return (
                   <li key={item.href}>
