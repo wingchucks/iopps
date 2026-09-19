@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { toPublicOrganization } from "@/lib/public-organization";
 import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
 import { getLocalDevOrganizationPayload } from "@/lib/local-dev-business-data";
-import { buildPublicJobRouteSlugMap } from "@/lib/public-jobs";
+import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 import { resolvePublicOrganization } from "@/lib/server/public-organization-resolver";
+import { loadPublicOrganizationJobDocuments } from "@/lib/server/public-organization-jobs";
 import { mergePublicJobRecords, jobMatchesOrganization } from "@/lib/public-job-merge";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
@@ -99,7 +100,7 @@ function serializeDoc(
   return serialize({ id: doc.id, ...(doc.data() || {}) }) as JsonRecord;
 }
 
-function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "jobs" | "posts"): JsonRecord {
+function normalizeJob(doc: FirebaseFirestore.DocumentSnapshot, source: "jobs" | "posts"): JsonRecord {
   const serialized = serializeDoc(doc);
   if (serialized.salary && typeof serialized.salary === "object") {
     const salary = serialized.salary as JsonRecord;
@@ -134,22 +135,16 @@ function normalizeProgram(item: JsonRecord): JsonRecord {
 }
 
 async function loadJobs(db: FirebaseFirestore.Firestore, organization: JsonRecord): Promise<JsonRecord[]> {
-  // Closed canonical records suppress their older feed mirrors on every surface.
-  const [jobsSnapshot, postsSnapshot] = await Promise.all([
-    db.collection("jobs").get(),
-    db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
-  ]);
+  const { jobs, posts } = await loadPublicOrganizationJobDocuments(db, organization);
   const publicJobs = mergePublicJobRecords(
-    jobsSnapshot.docs.map(doc => ({ ...normalizeJob(doc, "jobs"), id: doc.id } as JsonRecord & { id: string })),
-    postsSnapshot.docs.map(doc => ({ ...normalizeJob(doc, "posts"), id: doc.id } as JsonRecord & { id: string })),
+    jobs.map(doc => ({ ...normalizeJob(doc, "jobs"), id: doc.id } as JsonRecord & { id: string })),
+    posts.map(doc => ({ ...normalizeJob(doc, "posts"), id: doc.id } as JsonRecord & { id: string })),
   );
-  const slugMap = buildPublicJobRouteSlugMap(publicJobs.map(job => ({
-    id: job.id, slug: typeof job.slug === "string" ? job.slug : undefined,
-    title: typeof job.title === "string" ? job.title : undefined,
-  })));
-  return sortFeatured(publicJobs.filter(job => jobMatchesOrganization(job, organization)).map(job => ({
-    ...job, href: `/jobs/${slugMap.get(job.id) || job.id}`,
-  })));
+  return sortFeatured(publicJobs.filter(job => jobMatchesOrganization(job, organization)).map(job => {
+    const slug = buildJobRouteSlug({ id: job.id, slug: typeof job.slug === "string" ? job.slug : undefined, title: typeof job.title === "string" ? job.title : undefined });
+    // Scoped results cannot detect another organization's matching display slug.
+    return { ...job, href: `/jobs/${slug}--${job.id}` };
+  }));
 }
 
 async function loadEvents(

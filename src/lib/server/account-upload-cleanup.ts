@@ -23,9 +23,12 @@ export async function cleanClosedAccountUploads(db: Firestore, bucket: Bucket, a
   try { await auth.deleteUser(uid); } catch (error) {
     if ((error as { code?: string }).code !== "auth/user-not-found") throw error;
   }
-  const applications = await db.collection("applications").where("userId", "==", uid).get();
+  const applicationSnapshots = await Promise.all(["userId", "memberId"].map(field =>
+    db.collection("applications").where(field, "==", uid).get()
+  ));
+  const applications = new Map(applicationSnapshots.flatMap(snapshot => snapshot.docs.map(doc => [doc.id, doc] as const)));
   const shared = new Set<string>();
-  for (const application of applications.docs) {
+  for (const application of applications.values()) {
     const data = application.data();
     for (const value of [data.resumeUrl, data.profileSnapshot?.resumeUrl, data.profileSnapshot?.photoURL]) {
       const path = storagePath(value, bucket.name);

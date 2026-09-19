@@ -10,6 +10,8 @@ import * as organization from '../src/lib/organization-profile.ts';
 import * as subscription from '../src/lib/server/subscription-state.ts';
 import * as seo from '../src/lib/server/seo.ts';
 import * as jobs from '../src/lib/public-job-merge.ts';
+import * as jobSlugs from '../src/lib/server/job-slugs.ts';
+import * as publicJobs from '../src/lib/public-jobs.ts';
 
 const requireNative = createRequire(import.meta.url);
 function load(file, dependencies, globals = {}) {
@@ -42,7 +44,7 @@ test('closed-account upload cleanup preserves shared files, rejects live account
   const deletions = [], authDeletes = [];
   const uid = 'qa-owner', bucketName = 'fictional.example';
   const shared = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(`resumes/${uid}/shared.pdf`)}?token=fictional`;
-  const db = { doc: () => ({ get: async () => ({ data: () => closed ? { status: 'deleted', deletedAt: 'now' } : { status: 'active' } }) }), collection: () => ({ where: () => ({ get: async () => ({ docs: [{ data: () => ({ resumeUrl: shared }) }] }) }) }) };
+  const db = { doc: () => ({ get: async () => ({ data: () => closed ? { status: 'deleted', deletedAt: 'now' } : { status: 'active' } }) }), collection: () => ({ where: () => ({ get: async () => ({ docs: [{ id: 'current', data: () => ({ resumeUrl: shared }) }] }) }) }) };
   const auth = { deleteUser: async id => { authDeletes.push(id); throw Object.assign(Error('absent'), { code: 'auth/user-not-found' }); } };
   const bucket = { name: bucketName, getFiles: async ({ prefix }) => [[prefix.startsWith('avatars/') ? `avatars/${uid}.png` : `resumes/${uid}/private.pdf`, `resumes/${uid}/shared.pdf`, 'resumes/foreign/file.pdf', `application-documents/${uid}/archive.pdf`].map(name => ({ name, metadata: { generation: '123' }, delete: async options => deletions.push({ name, options }) }))] };
   await assert.rejects(cleanClosedAccountUploads(db, bucket, auth, uid), /closed/);
@@ -53,6 +55,30 @@ test('closed-account upload cleanup preserves shared files, rejects live account
   assert.deepEqual(deletions.map(d => d.name), [`avatars/${uid}.png`, `resumes/${uid}/private.pdf`]);
   assert.ok(deletions.every(d => d.options.ifGenerationMatch === 123));
   await assert.rejects(cleanClosedAccountUploads(db, bucket, auth, '../foreign'), /identity/);
+});
+
+test('cleanup retains resumes and profile images referenced by legacy memberId applications', async () => {
+  const uid = 'qa-legacy', bucketName = 'fictional.example', deletions = [];
+  const url = name => `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(name)}?token=fictional`;
+  const records = [
+    { id: 'current', userId: uid, resumeUrl: url(`resumes/${uid}/current.pdf`) },
+    { id: 'legacy', memberId: uid, resumeUrl: url(`resumes/${uid}/legacy.pdf`), profileSnapshot: { photoURL: url(`avatars/${uid}.png`) } },
+    { id: 'both', userId: uid, memberId: uid, profileSnapshot: { resumeUrl: url(`resumes/${uid}/snapshot.pdf`) } },
+  ];
+  const db = { doc: () => ({ get: async () => ({ data: () => ({ status: 'deleted', deletedAt: 'now' }) }) }), collection: () => ({ where: (field, _op, value) => ({ get: async () => ({ docs: records.filter(row => row[field] === value).map(row => ({ id: row.id, data: () => row })) }) }) }) };
+  const paths = [`resumes/${uid}/current.pdf`, `resumes/${uid}/legacy.pdf`, `resumes/${uid}/snapshot.pdf`, `avatars/${uid}.png`, `resumes/${uid}/unshared.pdf`];
+  const bucket = { name: bucketName, getFiles: async ({ prefix }) => [paths.filter(name => name.startsWith(prefix)).map(name => ({ name, metadata: { generation: '123' }, delete: async () => deletions.push(name) }))] };
+  const result = await cleanClosedAccountUploads(db, bucket, { deleteUser: async () => {} }, uid);
+  assert.deepEqual(deletions, [`resumes/${uid}/unshared.pdf`]);
+  assert.equal(result.retainedShared, 4);
+});
+
+test('cleanup deletes no uploads if the legacy ownership query fails', async () => {
+  let listed = false;
+  const db = { doc: () => ({ get: async () => ({ data: () => ({ status: 'deleted', deletedAt: 'now' }) }) }), collection: () => ({ where: field => ({ get: async () => { if (field === 'memberId') throw Error('Legacy query unavailable'); return { docs: [] }; } }) }) };
+  const bucket = { getFiles: async () => { listed = true; return [[]]; } };
+  await assert.rejects(cleanClosedAccountUploads(db, bucket, { deleteUser: async () => {} }, 'qa-legacy'), /Legacy query unavailable/);
+  assert.equal(listed, false);
 });
 
 test('password-reset rate reservations enforce independent email/IP windows without storing raw identities', async () => {
@@ -126,6 +152,33 @@ test('organization metadata resolves the canonical record and immediately drops 
   const deletedAlias = await metadata.generateOrgMetadata('legacy');
   assert.equal(deletedAlias.robots.index, false);
   assert.ok(!JSON.stringify(deletedAlias).includes('Stale public name'));
+});
+
+test('scoped organization job links resolve the exact listing when another organization reuses its slug', async () => {
+  const org = { id: 'qa-org', name: 'Fictional Organization' };
+  const owned = { id: 'owned-id', orgId: org.id, title: 'Shared job title', slug: 'shared-job', active: true };
+  const foreign = { ...owned, id: 'foreign-id', orgId: 'other-org', createdAt: '2099-01-01' };
+  const doc = row => ({ id: row.id, data: () => row });
+  const empty = { where() { return this; }, limit() { return this; }, get: async () => ({ docs: [] }) };
+  const route = load('src/app/api/org/[slug]/route.ts', {
+    'next/server': { NextResponse: Response },
+    '@/lib/public-organization': { toPublicOrganization: value => value },
+    '@/lib/firebase-admin': { getAdminDb: () => ({ collection: () => empty }), hasAdminRuntimeSupport: () => true },
+    '@/lib/local-dev-business-data': {}, '@/lib/server/job-slugs': jobSlugs,
+    '@/lib/server/public-organization-resolver': { resolvePublicOrganization: async () => org },
+    '@/lib/server/public-organization-jobs': { loadPublicOrganizationJobDocuments: async () => ({ jobs: [doc(owned)], posts: [] }) },
+    '@/lib/public-job-merge': jobs, '@/lib/server/partner-promotion': { withPartnerPromotion: value => value },
+    '@/lib/organization-profile': { isOrganizationPubliclyVisible: () => true, normalizeOrganizationRecord: value => value },
+    '@/lib/school-visibility': { isSchoolOrganization: () => false },
+  }, { process: { env: { NODE_ENV: 'production' } } });
+  const response = await route.GET(new Request('https://example.invalid/api/org/qa'), { params: Promise.resolve({ slug: 'qa' }) });
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.jobs[0].href, '/jobs/shared-job--owned-id');
+  const resolver = load('src/lib/server/public-job-routing.ts', { '@/lib/server/job-slugs': jobSlugs, '@/lib/public-jobs': publicJobs });
+  const db = { collection: name => name === 'jobs' ? { get: async () => ({ docs: [doc(foreign), doc(owned)] }) } : empty };
+  const resolved = await resolver.findPublicJobDocument(db, payload.jobs[0].href.slice('/jobs/'.length));
+  assert.equal(resolved.id, 'owned-id');
 });
 
 test('account cleanup cron requires its secret and retains failed jobs with a later retry', async () => {
