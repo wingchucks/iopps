@@ -12,6 +12,7 @@ import * as seo from '../src/lib/server/seo.ts';
 import * as jobs from '../src/lib/public-job-merge.ts';
 import * as jobSlugs from '../src/lib/server/job-slugs.ts';
 import * as publicJobs from '../src/lib/public-jobs.ts';
+import * as publicOpportunities from '../src/lib/server/public-opportunities.ts';
 
 const requireNative = createRequire(import.meta.url);
 function load(file, dependencies, globals = {}) {
@@ -167,6 +168,7 @@ test('scoped organization job links resolve the exact listing when another organ
     '@/lib/local-dev-business-data': {}, '@/lib/server/job-slugs': jobSlugs,
     '@/lib/server/public-organization-resolver': { resolvePublicOrganization: async () => org },
     '@/lib/server/public-organization-jobs': { loadPublicOrganizationJobDocuments: async () => ({ jobs: [doc(owned)], posts: [] }) },
+    '@/lib/server/public-opportunities': publicOpportunities,
     '@/lib/public-job-merge': jobs, '@/lib/server/partner-promotion': { withPartnerPromotion: value => value },
     '@/lib/organization-profile': { isOrganizationPubliclyVisible: () => true, normalizeOrganizationRecord: value => value },
     '@/lib/school-visibility': { isSchoolOrganization: () => false },
@@ -179,6 +181,45 @@ test('scoped organization job links resolve the exact listing when another organ
   const db = { collection: name => name === 'jobs' ? { get: async () => ({ docs: [doc(foreign), doc(owned)] }) } : empty };
   const resolved = await resolver.findPublicJobDocument(db, payload.jobs[0].href.slice('/jobs/'.length));
   assert.equal(resolved.id, 'owned-id');
+});
+
+test('organization profiles omit opportunity tombstones, stale mirrors and hidden legacy matches', async () => {
+  for (const fallback of [false, true]) {
+    const org = { id: 'qa-org', name: 'Fictional Organization' };
+    const rows = { events: [], scholarships: [], posts: [], training_programs: [] };
+    for (const kind of ['events', 'scholarships']) {
+      const prefix = kind === 'events' ? 'event' : 'scholarship';
+      const ownership = fallback ? { orgName: org.name } : { orgId: org.id, employerId: org.id };
+      rows[kind].push({ id: `${prefix}-live`, ...ownership, title: `Live ${kind}`, status: 'active', active: true, startDate: '2099-09-19', endDate: '2099-09-20', deadline: '2099-09-20' });
+      for (const status of ['draft', 'closed', 'deleted', 'rejected']) {
+        rows[kind].push({ id: `${prefix}-${status}`, ...ownership, slug: `hidden-${prefix}-${status}`, status, active: false });
+        if (!fallback) rows.posts.push({ id: `${prefix}-${prefix}-${status}`, orgId: org.id, type: prefix, title: 'STALE HIDDEN COPY', slug: `hidden-${prefix}-${status}`, status: 'active', active: true, startDate: '2099-09-19', endDate: '2099-09-20' });
+      }
+      rows[kind].push({ id: `${prefix}-untitled`, ...ownership, status: 'active', active: true });
+    }
+    const query = (collection, filters = []) => ({
+      where: (field, _op, value) => query(collection, [...filters, [field, value]]),
+      limit: () => query(collection, filters),
+      get: async () => ({ docs: rows[collection].filter(row => filters.every(([field, value]) => row[field] === value)).map(row => ({ id: row.id, data: () => row })) }),
+    });
+    const route = load('src/app/api/org/[slug]/route.ts', {
+      'next/server': { NextResponse: Response }, '@/lib/public-organization': { toPublicOrganization: value => value },
+      '@/lib/firebase-admin': { getAdminDb: () => ({ collection: name => query(name) }), hasAdminRuntimeSupport: () => true },
+      '@/lib/local-dev-business-data': {}, '@/lib/server/job-slugs': jobSlugs,
+      '@/lib/server/public-organization-resolver': { resolvePublicOrganization: async () => org },
+      '@/lib/server/public-organization-jobs': { loadPublicOrganizationJobDocuments: async () => ({ jobs: [], posts: [] }) },
+      '@/lib/server/public-opportunities': publicOpportunities,
+      '@/lib/public-job-merge': jobs, '@/lib/server/partner-promotion': { withPartnerPromotion: value => value },
+      '@/lib/organization-profile': { isOrganizationPubliclyVisible: () => true, normalizeOrganizationRecord: value => value },
+      '@/lib/school-visibility': { isSchoolOrganization: () => false },
+    }, { process: { env: { NODE_ENV: 'production' } } });
+    const response = await route.GET(new Request('https://example.invalid/api/org/qa'), { params: Promise.resolve({ slug: 'qa' }) });
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.deepEqual(payload.events.map(item => item.title), ['Live events']);
+    assert.deepEqual(payload.scholarships.map(item => item.title), ['Live scholarships']);
+    assert.ok(!JSON.stringify(payload).includes('HIDDEN COPY'));
+  }
 });
 
 test('account cleanup cron requires its secret and retains failed jobs with a later retry', async () => {

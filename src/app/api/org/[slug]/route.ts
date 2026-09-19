@@ -5,6 +5,7 @@ import { getLocalDevOrganizationPayload } from "@/lib/local-dev-business-data";
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 import { resolvePublicOrganization } from "@/lib/server/public-organization-resolver";
 import { loadPublicOrganizationJobDocuments } from "@/lib/server/public-organization-jobs";
+import { mergeOpportunitySources, publicOpportunityRecord } from "@/lib/server/public-opportunities";
 import { mergePublicJobRecords, jobMatchesOrganization } from "@/lib/public-job-merge";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
@@ -158,16 +159,13 @@ async function loadEvents(
     db.collection("posts").where("orgId", "==", orgId).get(),
   ]);
 
-  const exactMatches = [
-    ...eventsByEmployerSnap.docs.map((doc) => normalizeEvent(serializeDoc(doc))),
-    ...eventsByOrgSnap.docs.map((doc) => normalizeEvent(serializeDoc(doc))),
-    ...postsByOrgSnap.docs
-      .filter((doc) => {
-        const data = doc.data();
-        return data.type === "event" && data.status !== "closed";
-      })
-      .map((doc) => normalizeEvent(serializeDoc(doc))),
-  ];
+  const exactMatches = mergeOpportunitySources(
+    [...eventsByEmployerSnap.docs, ...eventsByOrgSnap.docs].map(serializeDoc),
+    postsByOrgSnap.docs.filter(doc => doc.data().type === "event").map(serializeDoc),
+    "events",
+  ).map(record => publicOpportunityRecord(record, "events"))
+    .filter((record): record is JsonRecord => record !== null)
+    .map(normalizeEvent);
 
   if (exactMatches.length > 0) {
     return sortRecent(dedupeByHref(exactMatches));
@@ -181,6 +179,8 @@ async function loadEvents(
       matchesOrgName(item.orgName, orgName) ||
       matchesOrgName(item.organizer, orgName),
     )
+    .map(record => publicOpportunityRecord(record, "events"))
+    .filter((record): record is JsonRecord => record !== null)
     .map(normalizeEvent);
 
   return sortRecent(dedupeByHref(fallbackMatches));
@@ -197,20 +197,13 @@ async function loadScholarships(
     db.collection("posts").where("orgId", "==", orgId).get(),
   ]);
 
-  const exactMatches = [
-    ...scholarshipsByEmployerSnap.docs
-      .filter((doc) => doc.data().status !== "closed")
-      .map((doc) => normalizeScholarship(serializeDoc(doc))),
-    ...scholarshipsByOrgSnap.docs
-      .filter((doc) => doc.data().status !== "closed")
-      .map((doc) => normalizeScholarship(serializeDoc(doc))),
-    ...postsByOrgSnap.docs
-      .filter((doc) => {
-        const data = doc.data();
-        return data.type === "scholarship" && data.status !== "closed";
-      })
-      .map((doc) => normalizeScholarship(serializeDoc(doc))),
-  ];
+  const exactMatches = mergeOpportunitySources(
+    [...scholarshipsByEmployerSnap.docs, ...scholarshipsByOrgSnap.docs].map(serializeDoc),
+    postsByOrgSnap.docs.filter(doc => doc.data().type === "scholarship").map(serializeDoc),
+    "scholarships",
+  ).map(record => publicOpportunityRecord(record, "scholarships"))
+    .filter((record): record is JsonRecord => record !== null)
+    .map(normalizeScholarship);
 
   if (exactMatches.length > 0) {
     return sortRecent(dedupeByHref(exactMatches));
@@ -223,6 +216,8 @@ async function loadScholarships(
       matchesOrgName(item.organization, orgName) ||
       matchesOrgName(item.orgName, orgName),
     )
+    .map(record => publicOpportunityRecord(record, "scholarships"))
+    .filter((record): record is JsonRecord => record !== null)
     .map(normalizeScholarship);
 
   return sortRecent(dedupeByHref(fallbackMatches));
