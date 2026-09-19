@@ -34,9 +34,15 @@ try {
       if (url.origin !== parsed.origin) return route.abort();
       if (url.pathname === '/api/jobs') return route.fulfill({ json: { jobs: fixtures, count: fixtures.length } });
       if (url.pathname.startsWith('/api/jobs/')) {
-        const job = fixtures.find(item => item.id === decodeURIComponent(url.pathname.split('/')[3]));
+        const requested = decodeURIComponent(url.pathname.split('/')[3]);
+        const job = fixtures.find(item => item.id === requested || requested.endsWith(`--${item.id}`));
         return route.fulfill({ status: job ? 200 : 404, json: job ? { job } : { error: 'Not found' } });
       }
+      if (url.pathname === '/api/org/qa-org') return route.fulfill({ json: {
+        org: { id: 'qa-org', name: 'QA Community Organization', type: 'business', location: 'Saskatoon, SK' },
+        jobs: [{ ...fixtures[0], slug: 'shared-display-name', href: '/jobs/shared-display-name--qa-explicit-hourly' }],
+        events: [], scholarships: [], training: [], programs: [],
+      } });
       if (url.pathname === '/api/organizations') return route.fulfill({ json: { orgs: [] } });
       if (url.pathname.startsWith('/api/')) return route.fulfill({ json: {} });
       return route.continue();
@@ -82,7 +88,18 @@ try {
     await page.goto(`${base}/jobs/qa-internal`, { waitUntil: 'domcontentloaded' });
     await page.getByText('<img src="/qa-inert-image" onerror="void 0">', { exact: false }).waitFor();
     assert.equal(await page.locator('img[src="/qa-inert-image"]').count(), 0, 'description must render as escaped text');
-    findings.push({ viewport, search: 'pass', provinceNamesAndCodes: 'pass', remoteFilter: 'pass', salaryUnits: 'pass', destination: 'pass', funnelEvents: 'pass', escapedDescription: 'pass', externalClickIsNotSubmission: true, horizontalOverflow: false, pageErrors: errors });
+    await page.goto(`${base}/org/qa-org`, { waitUntil: 'domcontentloaded' });
+    const profileJob = page.getByRole('link', { name: /QA Community Coordinator/ });
+    await profileJob.waitFor();
+    assert.equal(await profileJob.getAttribute('href'), '/jobs/shared-display-name--qa-explicit-hourly', 'Organization job cards must use the exact destination returned by the API');
+    assert.equal(await page.getByRole('button', { name: /Training/ }).count(), 0);
+    assert.equal(await page.locator('a[href^="/training/"]').count(), 0);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), false, 'organization profile must not overflow horizontally');
+    await page.screenshot({ path: path.join(output, `organization-${viewport.width}.png`), fullPage: true });
+    await profileJob.click();
+    await page.waitForURL(url => url.pathname === '/jobs/shared-display-name--qa-explicit-hourly');
+    await page.getByRole('link', { name: 'Apply on employer site', exact: true }).first().waitFor();
+    findings.push({ viewport, search: 'pass', provinceNamesAndCodes: 'pass', remoteFilter: 'pass', salaryUnits: 'pass', destination: 'pass', funnelEvents: 'pass', escapedDescription: 'pass', organizationExactJobLink: 'pass', pausedTrainingAbsent: true, externalClickIsNotSubmission: true, horizontalOverflow: false, pageErrors: errors });
     assert.deepEqual(errors, [], 'no client runtime errors');
     await context.close();
   }

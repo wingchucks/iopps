@@ -15,12 +15,13 @@ import { displayAmount, displayLocation } from "@/lib/utils";
 
 // ── Types for opportunities ──
 interface LinkedItem { href?: string; }
+type OrgJob = Job & LinkedItem;
 interface OrgEvent extends LinkedItem { id: string; title: string; eventType?: string; date?: string; dates?: string; location?: string; employerId?: string; organizerName?: string; }
 interface OrgScholarship extends LinkedItem { id: string; title: string; amount?: unknown; deadline?: string; description?: string; employerId?: string; organization?: string; }
 interface OrgTraining extends LinkedItem { id: string; title?: string; programName?: string; duration?: string; credential?: string; campus?: string; location?: string; schoolId?: string; institutionName?: string; provider?: string; _source?: string; ownerName?: string; }
 interface OrgContentResponse {
   org: Organization | null;
-  jobs?: Job[];
+  jobs?: OrgJob[];
   events?: OrgEvent[];
   scholarships?: OrgScholarship[];
   training?: OrgTraining[];
@@ -81,7 +82,7 @@ function OrgProfileContent() {
   const slug = params.slug as string;
   const { user } = useAuth();
   const [org, setOrg] = useState<Organization | null>(null);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<OrgJob[]>([]);
   const [events, setEvents] = useState<OrgEvent[]>([]);
   const [scholarships, setScholarships] = useState<OrgScholarship[]>([]);
   const [training, setTraining] = useState<OrgTraining[]>([]);
@@ -447,7 +448,7 @@ function OrgProfileContent() {
                 {activeOppTab === "jobs" && (
                   <div className="flex flex-col gap-2.5">
                     {visibleJobs.map((j, i) => (
-                      <Link key={j.id} href={`/jobs/${j.slug || j.id}`} className="no-underline block">
+                      <Link key={j.id} href={j.href || `/jobs/${j.slug || j.id}`} className="no-underline block">
                         <div className="flex items-center justify-between px-4 py-3.5 rounded-xl cursor-pointer transition-all hover:-translate-y-0.5"
                           style={{
                             background: i === 0 && j.featured ? "rgba(20,184,166,0.06)" : "rgba(30,41,59,0.4)",

@@ -21,6 +21,8 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
   identities; larger directories share one active-job query to avoid query fanout.
   Public job lists, homepage and routing read active candidates plus only canonical
   shadows needed to suppress stale posts, instead of the complete job history.
+  Organization job cards use the API's exact destination, including its ID suffix,
+  so shared display slugs cannot send a visitor to another organization's job.
 - Profile/settings text contrast, switch names/states, focus visibility and skip
   navigation are corrected. Obsolete public-member-directory preferences are removed.
   Salary preferences reject inverted/invalid ranges in client, API and Firestore rules.
