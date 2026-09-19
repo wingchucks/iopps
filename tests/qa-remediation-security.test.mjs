@@ -240,10 +240,13 @@ test('scoped organization job links resolve the exact listing when another organ
   assert.equal(resolved.id, 'owned-id');
 });
 
-test('organization profiles omit opportunity tombstones, stale mirrors and hidden legacy matches', async () => {
+test('organization profiles omit opportunity tombstones, stale mirrors, hidden legacy matches and paused training', async () => {
   for (const fallback of [false, true]) {
     const org = { id: 'qa-org', name: 'Fictional Organization' };
-    const rows = { events: [], scholarships: [], posts: [], training_programs: [] };
+    const rows = { events: [], scholarships: [], posts: [], training_programs: [
+      { id: 'active-training', orgId: org.id, title: 'Paused training listing', slug: 'paused-training', active: true },
+      { id: 'legacy-training', provider: org.name, title: 'Paused legacy training listing', active: true },
+    ] };
     for (const kind of ['events', 'scholarships']) {
       const prefix = kind === 'events' ? 'event' : 'scholarship';
       const ownership = fallback ? { orgName: org.name } : { orgId: org.id, employerId: org.id };
@@ -259,23 +262,33 @@ test('organization profiles omit opportunity tombstones, stale mirrors and hidde
       limit: () => query(collection, filters),
       get: async () => ({ docs: rows[collection].filter(row => filters.every(([field, value]) => row[field] === value)).map(row => ({ id: row.id, data: () => row })) }),
     });
-    const route = load('src/app/api/org/[slug]/route.ts', {
+    const mocks = {
       'next/server': { NextResponse: Response }, '@/lib/public-organization': { toPublicOrganization: value => value },
-      '@/lib/firebase-admin': { getAdminDb: () => ({ collection: name => query(name) }), hasAdminRuntimeSupport: () => true },
-      '@/lib/local-dev-business-data': {}, '@/lib/server/job-slugs': jobSlugs,
+      '@/lib/firebase-admin': { getAdminDb: () => ({ collection: name => { assert.notEqual(name, 'training_programs', 'Paused listings should not be loaded'); return query(name); } }), hasAdminRuntimeSupport: () => true },
+      '@/lib/local-dev-business-data': { getLocalDevOrganizationPayload: () => ({ org, jobs: [], events: [], scholarships: [], training: rows.training_programs }) }, '@/lib/server/job-slugs': jobSlugs,
       '@/lib/server/public-organization-resolver': { resolvePublicOrganization: async () => org },
       '@/lib/server/public-organization-jobs': { loadPublicOrganizationJobDocuments: async () => ({ jobs: [], posts: [] }) },
       '@/lib/server/public-opportunities': publicOpportunities,
       '@/lib/public-job-merge': jobs, '@/lib/server/partner-promotion': { withPartnerPromotion: value => value },
       '@/lib/organization-profile': { isOrganizationPubliclyVisible: () => true, normalizeOrganizationRecord: value => value },
       '@/lib/school-visibility': { isSchoolOrganization: () => false },
-    }, { process: { env: { NODE_ENV: 'production' } } });
+    };
+    const route = load('src/app/api/org/[slug]/route.ts', mocks, { process: { env: { NODE_ENV: 'production' } } });
     const response = await route.GET(new Request('https://example.invalid/api/org/qa'), { params: Promise.resolve({ slug: 'qa' }) });
     assert.equal(response.status, 200);
     const payload = await response.json();
     assert.deepEqual(payload.events.map(item => item.title), ['Live events']);
     assert.deepEqual(payload.scholarships.map(item => item.title), ['Live scholarships']);
     assert.ok(!JSON.stringify(payload).includes('HIDDEN COPY'));
+    assert.deepEqual(payload.training, []);
+    assert.deepEqual(payload.programs, []);
+    assert.ok(!JSON.stringify(payload).includes('/training/'));
+    const localRoute = load('src/app/api/org/[slug]/route.ts', {
+      ...mocks, '@/lib/firebase-admin': { hasAdminRuntimeSupport: () => false },
+    }, { process: { env: { NODE_ENV: 'development' } } });
+    const localPayload = await (await localRoute.GET(new Request('https://example.invalid/api/org/qa'), { params: Promise.resolve({ slug: 'qa' }) })).json();
+    assert.deepEqual(localPayload.training, []);
+    assert.deepEqual(localPayload.programs, []);
   }
 });
 

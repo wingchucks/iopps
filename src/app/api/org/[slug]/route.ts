@@ -129,13 +129,6 @@ function normalizeScholarship(item: JsonRecord): JsonRecord {
   };
 }
 
-function normalizeProgram(item: JsonRecord): JsonRecord {
-  return {
-    ...item,
-    href: `/training/${String(item.slug || item.id)}`,
-  };
-}
-
 async function loadJobs(db: FirebaseFirestore.Firestore, organization: JsonRecord): Promise<JsonRecord[]> {
   const { jobs, posts } = await loadPublicOrganizationJobDocuments(db, organization);
   const publicJobs = mergePublicJobRecords(
@@ -224,35 +217,6 @@ async function loadScholarships(
   return sortRecent(dedupeByHref(fallbackMatches));
 }
 
-async function loadTraining(
-  db: FirebaseFirestore.Firestore,
-  orgId: string,
-  orgName: string,
-): Promise<JsonRecord[]> {
-  const trainingByOrgSnap = await db.collection("training_programs").where("orgId", "==", orgId).get();
-
-  const exactMatches = trainingByOrgSnap.docs
-    .filter((doc) => doc.data().active !== false)
-    .map((doc) => normalizeProgram({ ...serializeDoc(doc), _source: "training" }));
-
-  if (exactMatches.length > 0) {
-    return sortRecent(dedupeByHref(exactMatches));
-  }
-
-  const allTrainingSnap = await db.collection("training_programs").limit(500).get();
-  const fallbackMatches = allTrainingSnap.docs
-    .map((doc) => ({ ...serializeDoc(doc), _source: "training" } as JsonRecord))
-    .filter((item) => item.active !== false)
-    .filter((item) =>
-      matchesOrgName(item.orgName, orgName) ||
-      matchesOrgName(item.provider, orgName) ||
-      matchesOrgName(item.institutionName, orgName),
-    )
-    .map(normalizeProgram);
-
-  return sortRecent(dedupeByHref(fallbackMatches));
-}
-
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ slug: string }> },
@@ -264,7 +228,8 @@ export async function GET(
     if (payload) {
       return NextResponse.json({
         ...payload,
-        programs: payload.training,
+        training: [],
+        programs: [],
       });
     }
 
@@ -292,11 +257,10 @@ export async function GET(
     const orgId = String(org.id || "");
     const orgName = String(org.name || "");
 
-    const [jobs, events, scholarships, training] = await Promise.all([
+    const [jobs, events, scholarships] = await Promise.all([
       loadJobs(db, org),
       loadEvents(db, orgId, orgName),
       loadScholarships(db, orgId, orgName),
-      loadTraining(db, orgId, orgName),
     ]);
 
     return NextResponse.json({
@@ -304,8 +268,9 @@ export async function GET(
       jobs,
       events,
       scholarships,
-      training,
-      programs: training,
+      // Training is paused; retain the response fields without advertising retired links.
+      training: [],
+      programs: [],
     });
   } catch (err) {
     console.error("[api/org] Error:", err);

@@ -37,6 +37,8 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
 - School/education/training public entry points show a service update. Legacy account
   records remain manageable. Shop routes lead to Businesses and Spotlight to Live.
   Active sales copy no longer promises retired talent search or unsupported metrics.
+  Organization profiles omit training records while the service is paused, including
+  local previews, so active-looking cards cannot link to retired detail routes.
 - Owners/admins can delete draft or closed events/scholarships after confirmation.
   Revision checks prevent overwrites, private tombstones prevent stale resurrection,
   and existing attendee/application history remains intact. Source links render on
