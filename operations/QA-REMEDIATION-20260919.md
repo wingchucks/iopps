@@ -60,6 +60,10 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
 - Password recovery uses an IOPPS-branded email through the existing Resend sender,
   with origin/App Check validation, email/IP limits and generic account-existence
   responses. Emulator recovery remains isolated from outbound mail.
+- Administrator-assignment reviews derive a separate signing key from configured
+  Firebase Admin credentials when the optional dedicated key is absent. Explicit
+  keys remain compatible; invalid/missing key material fails closed. Super-admin
+  authorization, reviewed state binding and exact confirmation remain required.
 
 ## Verification and release
 
