@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { mergePublicJobRecords, withAuthoritativeJobCounts } from "@/lib/public-job-merge";
-import { buildPartnersPayload } from "@/lib/server/partners-payload";
+import { buildPartnersPayload, selectPublicPartnerRecords } from "@/lib/server/partners-payload";
+import { loadPublicOrganizationsJobDocuments } from "@/lib/server/public-organization-jobs";
 import { toPublicOrganization } from "@/lib/public-organization";
 import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
 import { getLocalDevOrganizations } from "@/lib/local-dev-business-data";
@@ -39,11 +40,12 @@ export async function GET(req: Request) {
   try {
     const db = getAdminDb();
 
-    const [jobs, posts] = await Promise.all([db.collection("jobs").get(), db.collection("posts").where("type", "==", "job").where("status", "==", "active").get()]);
-    const publicJobs = mergePublicJobRecords(jobs.docs.map(doc => ({ ...doc.data(), id: doc.id })), posts.docs.map(doc => ({ ...doc.data(), id: doc.id })));
     if (partnersOnly) {
       const snapshot = await db.collection("organizations").get();
-      const { partners } = buildPartnersPayload(withAuthoritativeJobCounts(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })), publicJobs));
+      const records = selectPublicPartnerRecords(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+      const { jobs, posts } = await loadPublicOrganizationsJobDocuments(db, records);
+      const publicJobs = mergePublicJobRecords(jobs.map(doc => ({ ...doc.data(), id: doc.id, active: doc.data()!.active === true })), posts.map(doc => ({ ...doc.data(), id: doc.id })));
+      const { partners } = buildPartnersPayload(withAuthoritativeJobCounts(records, publicJobs));
       return NextResponse.json({ orgs: partners });
     }
 
@@ -74,6 +76,8 @@ export async function GET(req: Request) {
       .filter((org) => !isSchoolOrganization(org) && isOrganizationPubliclyVisible(org))
       .sort(comparePartnerPromotion);
 
+    const { jobs, posts } = await loadPublicOrganizationsJobDocuments(db, orgs);
+    const publicJobs = mergePublicJobRecords(jobs.map(doc => ({ ...doc.data(), id: doc.id, active: doc.data()!.active === true })), posts.map(doc => ({ ...doc.data(), id: doc.id })));
     return NextResponse.json({ orgs: withAuthoritativeJobCounts(orgs, publicJobs).map(toPublicOrganization) });
   } catch (err) {
     console.error("[api/organizations] Error:", err);

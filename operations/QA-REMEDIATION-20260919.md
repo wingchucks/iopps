@@ -17,6 +17,10 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
 - Organization, partner and profile job counts share published, unexpired jobs and
   authoritative mirror suppression. Partner cards and counts use one unique list.
   Legacy province-only locations normalize correctly; card descriptions are shorter.
+  Counts select visible organizations before reading jobs. Small groups use indexed
+  identities; larger directories share one active-job query to avoid query fanout.
+  Public job lists, homepage and routing read active candidates plus only canonical
+  shadows needed to suppress stale posts, instead of the complete job history.
 - Profile/settings text contrast, switch names/states, focus visibility and skip
   navigation are corrected. Obsolete public-member-directory preferences are removed.
   Salary preferences reject inverted/invalid ranges in client, API and Firestore rules.

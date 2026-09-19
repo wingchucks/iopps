@@ -111,6 +111,7 @@ function normalizeJob(doc: FirebaseFirestore.DocumentSnapshot, source: "jobs" | 
     serialized.employerName = serialized.orgName || serialized.companyName || "";
   }
   serialized._source = source;
+  if (source === "jobs") serialized.active = doc.data()?.active === true;
   return serialized;
 }
 

@@ -1,4 +1,5 @@
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
+import { loadPublicJobDocuments } from "./public-job-documents";
 import {
   buildPublicJobRouteSlugMap,
   isPublicJobVisible,
@@ -27,17 +28,13 @@ type PublicJobMatch = {
 };
 
 async function loadPublicJobCandidates(db: FirebaseFirestore.Firestore): Promise<PublicJobCandidate[]> {
-  // Full records are needed for prose deadlines and closed authoritative mirrors.
-  const [jobsSnap, postsSnap] = await Promise.all([
-    db.collection("jobs").get(),
-    db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
-  ]);
-  const authoritativeIds = new Set(jobsSnap.docs.map(doc => doc.id));
+  const { jobs, posts } = await loadPublicJobDocuments(db);
+  const authoritativeIds = new Set(jobs.map(doc => doc.id));
   return [
-    ...jobsSnap.docs.map((doc): PublicJobCandidate => ({
+    ...jobs.map((doc): PublicJobCandidate => ({
       ...(doc.data() as Omit<PublicJobCandidate, "id" | "source">), id: doc.id, source: "jobs",
     })),
-    ...postsSnap.docs.filter(doc => !authoritativeIds.has(doc.id)).map((doc): PublicJobCandidate => ({
+    ...posts.filter(doc => !authoritativeIds.has(doc.id)).map((doc): PublicJobCandidate => ({
       ...(doc.data() as Omit<PublicJobCandidate, "id" | "source">), id: doc.id, source: "posts",
     })),
   ].filter(candidate => (candidate.source !== "jobs" || candidate.active === true) && isPublicJobVisible(candidate));

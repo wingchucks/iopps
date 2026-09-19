@@ -13,6 +13,12 @@ import * as jobs from '../src/lib/public-job-merge.ts';
 import * as jobSlugs from '../src/lib/server/job-slugs.ts';
 import * as publicJobs from '../src/lib/public-jobs.ts';
 import * as publicOpportunities from '../src/lib/server/public-opportunities.ts';
+import * as jobDocuments from '../src/lib/server/public-job-documents.ts';
+import * as organizationJobs from '../src/lib/server/public-organization-jobs.ts';
+import * as partnerPayload from '../src/lib/server/partners-payload.ts';
+import * as partnerPromotion from '../src/lib/server/partner-promotion.ts';
+import * as publicOrganization from '../src/lib/public-organization.ts';
+import * as schoolVisibility from '../src/lib/school-visibility.ts';
 
 const requireNative = createRequire(import.meta.url);
 function load(file, dependencies, globals = {}) {
@@ -26,6 +32,57 @@ function load(file, dependencies, globals = {}) {
   } });
   return exports;
 }
+
+test('directory routes count only displayed organizations while retaining private legacy identity matching', async () => {
+  const partner = {
+    id: 'public-org', employerId: 'legacy-owner', name: 'Fictional Partner', type: 'business', status: 'approved', onboardingComplete: true,
+    publicVisibility: 'public', logoUrl: 'https://fixture.invalid/logo.png', description: 'Fictional profile', contactEmail: 'qa@example.invalid',
+    subscription: { tier: 'premium', status: 'active', billingStartAt: '2026-01-01', subscriptionEnd: '2099-12-31', paymentId: 'pi_fictional', amountPaid: 2500 },
+  };
+  const records = {
+    organizations: [partner, { ...partner, id: 'hidden-org', employerId: 'hidden-owner', name: 'Hidden Partner', publicVisibility: 'private' }],
+    jobs: [{ id: 'legacy-job', employerId: 'legacy-owner', active: true, status: 'active' }, { id: 'closed', orgId: 'former-owner', active: false, status: 'closed' }, { id: 'foreign', orgId: 'hidden-org', active: true, status: 'active' }],
+    posts: [{ id: 'closed', orgId: 'public-org', type: 'job', status: 'active' }],
+  };
+  const queriedIdentities = [];
+  const doc = row => ({ id: row.id, exists: true, data: () => row });
+  const query = (name, filters = []) => ({
+    where: (field, operator, value) => {
+      if (name !== 'organizations' && operator === 'in') queriedIdentities.push(...value);
+      return query(name, [...filters, [field, operator, value]]);
+    },
+    get: async () => {
+      assert.ok(name === 'organizations' || filters.length, 'Unscoped directory job read');
+      return { docs: records[name].filter(row => filters.every(([field, operator, value]) => operator === 'in' ? value.includes(row[field]) : row[field] === value)).map(doc) };
+    },
+    doc: id => ({ name, id }),
+  });
+  const db = { collection: name => query(name), getAll: async (...refs) => refs.map(ref => {
+    const row = records[ref.name].find(value => value.id === ref.id);
+    return row ? doc(row) : { id: ref.id, exists: false };
+  }) };
+  const dependencies = {
+    'next/server': { NextResponse: { json: Response.json } },
+    '@/lib/firebase-admin': { getAdminDb: () => db, hasAdminRuntimeSupport: () => true },
+    '@/lib/local-dev-business-data': {}, '@/lib/public-job-merge': jobs, '@/lib/organization-profile': organization,
+    '@/lib/server/partners-payload': partnerPayload, '@/lib/server/partner-promotion': partnerPromotion,
+    '@/lib/public-organization': publicOrganization, '@/lib/school-visibility': schoolVisibility,
+    '@/lib/server/public-organization-jobs': organizationJobs,
+  };
+  for (const [path, suffix] of [['organizations', ''], ['organizations', '?partners=true'], ['partners', '']]) {
+    const route = load(`src/app/api/${path}/route.ts`, dependencies, { process: { env: { NODE_ENV: 'production' } } });
+    const response = await route.GET(new Request('https://fixture.invalid/api/' + path + suffix));
+    assert.equal(response.status, 200);
+    const body = await response.json(), rows = body.orgs || body.partners;
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].openJobs, 1);
+    assert.equal(rows[0].employerId, undefined);
+    assert.equal(rows[0].subscription, undefined);
+  }
+  assert.ok(queriedIdentities.includes('legacy-owner'));
+  assert.equal(queriedIdentities.includes('hidden-org'), false);
+  assert.equal(queriedIdentities.includes('hidden-owner'), false);
+});
 
 test('application details render the submitted snapshot and escape untrusted cover letters', () => {
   const component = load('src/components/ApplicationDetails.tsx', { '@/lib/utils': { displayLocation: String } }).default;
@@ -177,8 +234,8 @@ test('scoped organization job links resolve the exact listing when another organ
   assert.equal(response.status, 200);
   const payload = await response.json();
   assert.equal(payload.jobs[0].href, '/jobs/shared-job--owned-id');
-  const resolver = load('src/lib/server/public-job-routing.ts', { '@/lib/server/job-slugs': jobSlugs, '@/lib/public-jobs': publicJobs });
-  const db = { collection: name => name === 'jobs' ? { get: async () => ({ docs: [doc(foreign), doc(owned)] }) } : empty };
+  const resolver = load('src/lib/server/public-job-routing.ts', { '@/lib/server/job-slugs': jobSlugs, '@/lib/public-jobs': publicJobs, './public-job-documents': jobDocuments });
+  const db = { collection: name => { const query = { where: () => query, get: async () => ({ docs: name === 'jobs' ? [doc(foreign), doc(owned)] : [] }) }; return query; } };
   const resolved = await resolver.findPublicJobDocument(db, payload.jobs[0].href.slice('/jobs/'.length));
   assert.equal(resolved.id, 'owned-id');
 });

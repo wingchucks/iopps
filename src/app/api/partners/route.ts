@@ -1,7 +1,8 @@
-import { buildPartnersPayload, type JsonRecord } from "@/lib/server/partners-payload";
+import { buildPartnersPayload, selectPublicPartnerRecords } from "@/lib/server/partners-payload";
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mergePublicJobRecords, withAuthoritativeJobCounts } from "@/lib/public-job-merge";
+import { loadPublicOrganizationsJobDocuments } from "@/lib/server/public-organization-jobs";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
@@ -10,17 +11,15 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const db = getAdminDb();
-    const [snapshot, jobsSnapshot, postsSnapshot] = await Promise.all([
-      db.collection("organizations").get(),
-      db.collection("jobs").get(),
-      db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
-    ]);
+    const snapshot = await db.collection("organizations").get();
+    const records = selectPublicPartnerRecords(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+    const { jobs, posts } = await loadPublicOrganizationsJobDocuments(db, records);
     const publicJobs = mergePublicJobRecords(
-      jobsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
-      postsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      jobs.map((doc) => ({ ...doc.data(), id: doc.id, active: doc.data()!.active === true })),
+      posts.map((doc) => ({ ...doc.data(), id: doc.id })),
     );
     const organizations = withAuthoritativeJobCounts(
-      snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as JsonRecord),
+      records,
       publicJobs,
     );
 

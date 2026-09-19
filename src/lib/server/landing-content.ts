@@ -1,6 +1,7 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildPublicJobRouteSlugMap, selectHomepageJobs } from "@/lib/public-jobs";
 import { mergePublicJobRecords } from "@/lib/public-job-merge";
+import { loadPublicJobDocuments } from "./public-job-documents";
 import {
   getEventDisplayDates,
   getEventStartDate,
@@ -97,7 +98,7 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
-function normalizeJobDocument(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "jobs" | "posts"): JsonRecord {
+function normalizeJobDocument(doc: FirebaseFirestore.DocumentSnapshot, source: "jobs" | "posts"): JsonRecord {
   const data = serialize({ id: doc.id, ...doc.data() }) as JsonRecord;
   data._source = source;
   if (!text(data.employerName)) {
@@ -128,18 +129,17 @@ function getClosingSoonLabel(job: JsonRecord): string | undefined {
 async function getStats(): Promise<LandingStats> {
   try {
     const db = getAdminDb();
-    const [usersSnap, jobsSnap, postsSnap, employersSnap, eventsSnap, schools] = await Promise.all([
+    const [usersSnap, jobDocuments, employersSnap, eventsSnap, schools] = await Promise.all([
       db.collection("users").count().get(),
-      db.collection("jobs").get(),
-      db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
+      loadPublicJobDocuments(db),
       db.collection("employers").where("status", "==", "approved").count().get(),
       db.collection("events").count().get(),
       getPublicSchoolRecords(db),
     ]);
 
     const publicJobs = mergePublicJobRecords(
-      jobsSnap.docs.map((doc) => ({ ...doc.data(), id: doc.id, active: doc.data().active === true })),
-      postsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      jobDocuments.jobs.map((doc) => ({ ...doc.data(), id: doc.id, active: doc.data()!.active === true })),
+      jobDocuments.posts.map((doc) => ({ ...doc.data(), id: doc.id })),
     );
 
     return {
@@ -189,14 +189,11 @@ export async function getPartners(): Promise<LandingPartner[]> {
 export async function getLatestJobs(): Promise<LandingJob[]> {
   try {
     const db = getAdminDb();
-    const [jobsSnap, postsSnap] = await Promise.all([
-      db.collection("jobs").get(), // Keep closed source identities for mirror suppression.
-      db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
-    ]);
+    const { jobs, posts } = await loadPublicJobDocuments(db);
 
     const publicJobs = mergePublicJobRecords<JsonRecord & { id: string }, JsonRecord & { id: string }>(
-      jobsSnap.docs.map((doc) => ({ ...normalizeJobDocument(doc, "jobs"), id: doc.id, active: doc.data().active === true })),
-      postsSnap.docs.map((doc) => ({ ...normalizeJobDocument(doc, "posts"), id: doc.id })),
+      jobs.map((doc) => ({ ...normalizeJobDocument(doc, "jobs"), id: doc.id, active: doc.data()!.active === true })),
+      posts.map((doc) => ({ ...normalizeJobDocument(doc, "posts"), id: doc.id })),
     );
 
     const slugMap = buildPublicJobRouteSlugMap(
