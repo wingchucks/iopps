@@ -27,6 +27,9 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
 - Organization signup uses the shared flow with preserved purchase/return intent.
   Retries restore either missing organization/employer mirror transactionally from
   stored data without resetting the existing profile, entitlements or membership.
+  Employer-only repairs map stored organizationName/companyName aliases into the
+  canonical name field. A source without any organization name returns an explicit
+  setup error instead of creating a blank canonical profile.
   Privacy links and review wording are corrected. Billing explains free standard
   posting, distinguishes expired plans, and explains featured placement eligibility.
   Retired School, Program and standard-post purchases are rejected before Stripe;
@@ -74,7 +77,8 @@ Verify the new cleanup cron and branded recovery delivery on the approved artifa
 local provider mocks do not prove production delivery or paid fulfillment.
 
 The independent PR review also flagged mobile direct reads of jobs, applications
-and scholarships, plus profile/push fields outside the existing write allowlist.
+and scholarships, profile/push fields outside the existing write allowlist, and
+the native signup client's incompatible `user` role.
 These restrictions already exist in serving commit `7af0eb9d` and the read-back
 production rules; this candidate changes only salary validation. Mobile API migration
 remains a separate follow-up outside this website

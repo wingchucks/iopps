@@ -62,18 +62,31 @@ async function existingSignupResponse(uid: string) {
   const existing = await adminDb.runTransaction(async tx => {
     const [organization, employer] = await tx.getAll(organizationRef, employerRef);
     if (!organization.exists && !employer.exists) return null;
-    const data = organization.data() || employer.data() || {};
+    const data: Record<string, unknown> = organization.data() || employer.data() || {};
     // A legacy signup may have only one mirror. Repair only the missing one
     // from trusted stored data, preserving its plan, credits and visibility.
     // Transaction retries cannot overwrite a concurrently completed profile.
-    if (!organization.exists) tx.create(organizationRef, { ...data, updatedAt: FieldValue.serverTimestamp() });
+    if (!organization.exists) {
+      // Legacy employers store the display name under either of these aliases.
+      // Copy only the known name alias into the canonical field; billing,
+      // visibility and all existing source fields remain unchanged.
+      const name = [data.name, data.organizationName, data.companyName]
+        .find((value): value is string => typeof value === "string" && value.trim().length > 0);
+      if (!name) return { data, needsOrganizationName: true };
+      const canonical: Record<string, unknown> = { ...data, name: typeof data.name === "string" && data.name.trim() ? data.name : name.trim() };
+      tx.create(organizationRef, { ...canonical, updatedAt: FieldValue.serverTimestamp() });
+      return { data: canonical, needsOrganizationName: false };
+    }
     if (!employer.exists) tx.create(employerRef, { ...data, id: uid, updatedAt: FieldValue.serverTimestamp() });
-    return data;
+    return { data, needsOrganizationName: false };
   });
   if (!existing) return null;
+  if (existing.needsOrganizationName) return NextResponse.json({
+    error: "Your existing employer profile is missing an organization name. Please contact IOPPS to complete account setup.",
+  }, { status: 409 });
   return NextResponse.json({
     success: true, alreadyExists: true, orgId: uid,
-    slug: typeof existing.slug === "string" ? existing.slug : "",
+    slug: typeof existing.data.slug === "string" ? existing.data.slug : "",
     confirmationEmailSent: false,
   });
 }

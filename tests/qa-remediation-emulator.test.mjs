@@ -83,6 +83,39 @@ test('remediation: real authentication, salary rules, opportunity deletion and u
         assert.deepEqual((await db.doc(targetPath).get()).data(), repaired, 'completed retries do not rewrite either mirror');
       }
     });
+    await t.test('legacy employer mirror repair translates stored name aliases and rejects a nameless source', async () => {
+      const signup = await import('../src/app/api/employer/signup/route.ts');
+      for (const field of ['organizationName', 'companyName', 'missing']) {
+        const actor = await identity('-legacy-name-' + field);
+        const sourcePath = `employers/${actor.uid}`, targetPath = `organizations/${actor.uid}`;
+        const data = { name: ' ', ...(field === 'missing' ? {} : { [field]: '  Fictional Legacy Organization  ' }), slug: 'fictional-legacy-' + field,
+          plan: 'tier2', jobCredits: 9, status: 'disabled', publicVisibility: 'hidden', directoryReview: { status: 'pending' }, createdAt: 'original' };
+        await seed(sourcePath, data); paths.add(targetPath);
+        const userBefore = (await db.doc(`users/${actor.uid}`).get()).data();
+        const claimsBefore = (await auth.getUser(actor.uid)).customClaims;
+        const call = () => signup.POST(request('/api/employer/signup', actor, 'POST', { name: 'Do not replace the stored name', plan: 'free' }));
+        for (const response of await Promise.all([call(), call()])) {
+          assert.equal(response.status, field === 'missing' ? 409 : 200, await response.clone().text());
+          const result = await response.json();
+          if (field !== 'missing') {
+            assert.equal(result.alreadyExists, true);
+            assert.equal(result.slug, data.slug);
+            assert.equal(result.confirmationEmailSent, false);
+          }
+        }
+        assert.deepEqual((await db.doc(sourcePath).get()).data(), data);
+        assert.deepEqual((await db.doc(`users/${actor.uid}`).get()).data(), userBefore);
+        assert.deepEqual((await auth.getUser(actor.uid)).customClaims, claimsBefore);
+        const repaired = await db.doc(targetPath).get();
+        if (field === 'missing') assert.equal(repaired.exists, false, 'Do not create a blank canonical profile');
+        else {
+          assert.equal(repaired.data().name, 'Fictional Legacy Organization');
+          for (const key of Object.keys(data).filter(key => key !== 'name')) assert.deepEqual(repaired.data()[key], data[key]);
+          assert.equal((await call()).status, 200);
+          assert.deepEqual((await db.doc(targetPath).get()).data(), repaired.data(), 'Completed retries are read-only');
+        }
+      }
+    });
     await t.test('distinct legacy employer and canonical organization IDs retain opportunity list, close and delete access', async () => {
       const actor = await identity('-split-owner'), orgId = prefix + '-canonical-org', employerId = prefix + '-legacy-employer';
       await seed(`users/${actor.uid}`, { status: 'active', role: 'employer', orgRole: 'owner', orgId, employerId });
