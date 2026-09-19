@@ -39,6 +39,10 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
   prevents a stale private copy from restoring the former owner's access.
 - Feed/story requests resolve only matching opportunity IDs and slugs. Story detail
   requests avoid full post/opportunity scans while retaining uncached publication checks.
+  Event/scholarship details also use scoped lookups. Directories query published
+  records and reuse one-minute indexes for legacy IDs and organization names; all
+  listing content, visibility and organization entitlements are read fresh. Newly
+  imported status-less listings/name aliases may take up to a minute to appear.
 - Job/organization metadata checks current public visibility with request-local
   memoization. Deleted linked organizations cannot reappear through legacy employer
   records. No persistent 15-minute identity cache remains for those details.
@@ -65,10 +69,11 @@ existing containment, paired-rules, exact-commit CI/security review and provider
 Verify the new cleanup cron and branded recovery delivery on the approved artifact;
 local provider mocks do not prove production delivery or paid fulfillment.
 
-The independent PR review also flagged mobile clients that still query `jobs` and
-`applications` directly. Both read denials are already present in serving commit
-`7af0eb9d` and the read-back production rules; this candidate changes only salary
-validation. Mobile API migration remains a separate follow-up outside this website
+The independent PR review also flagged mobile direct reads of jobs, applications
+and scholarships, plus profile/push fields outside the existing write allowlist.
+These restrictions already exist in serving commit `7af0eb9d` and the read-back
+production rules; this candidate changes only salary validation. Mobile API migration
+remains a separate follow-up outside this website
 release. Preserve the existing privacy restrictions rather than reopening client
 reads. Review the remediation delta from the serving commit, not only older master.
 

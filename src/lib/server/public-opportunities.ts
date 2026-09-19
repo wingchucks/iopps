@@ -6,11 +6,12 @@ import { OPPORTUNITY_TEXT_FIELDS, OPPORTUNITY_ARRAY_FIELDS, normalizeOpportunity
 import { displayAmount } from "@/lib/utils";
 import { deriveOwnerType, matchesOrgName, serialize, withPublicOwnership, type JsonRecord } from "@/lib/server/public-ownership";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
+import { opportunityAliases, loadOpportunityMatches, loadPublicOpportunityCandidates, loadRelatedOpportunityOrganizations } from "./opportunity-lookups";
+import type { Firestore } from "firebase-admin/firestore";
+
+export { opportunityAliases } from "./opportunity-lookups";
 
 const publicFields = new Set<string>([...OPPORTUNITY_TEXT_FIELDS, ...OPPORTUNITY_ARRAY_FIELDS, "id", "slug", "dates", "date", "orgId", "orgName", "orgShort", "organization", "organizer", "organizerName", "status", "active", "isFree", "schedule", "badges", "featured", "createdAt", "updatedAt", "order"]);
-export function opportunityAliases(record: JsonRecord, prefix: string): string[] {
-  return [record.id, record.slug].filter(Boolean).map(value => String(value).replace(new RegExp(`^${prefix}-`), ""));
-}
 export function mergeOpportunitySources(primary: JsonRecord[], legacy: JsonRecord[], kind: OpportunityKind) {
   const prefix = kind === "events" ? "event" : "scholarship";
   const reserved = new Set(primary.flatMap(record => opportunityAliases(record, prefix)));
@@ -42,28 +43,42 @@ export function publicOpportunityRecord(raw: JsonRecord, kind: OpportunityKind):
   if (record.amount != null) record.amount = displayAmount(record.amount);
   return { ...record, intakeClosed: isJobRecordExpired(record) };
 }
-export async function getPublicOpportunities(kind: OpportunityKind, combineDuplicates = true): Promise<JsonRecord[]> {
-  const db = getAdminDb();
-  const [main, posts, orgs] = await Promise.all([
-    db.collection(kind).get(),
+function publicItems(primary: JsonRecord[], posts: JsonRecord[], kind: OpportunityKind) {
+  return mergeOpportunitySources(primary, posts, kind).map(record => publicOpportunityRecord(record, kind))
+    .filter((record): record is JsonRecord => record !== null);
+}
+function scholarshipOwner(record: JsonRecord, organizations: JsonRecord[]): JsonRecord {
+  const linked = organizations.find(org => org.id === record.orgId || matchesOrgName(record.orgName, String(org.name || "")));
+  const promoted = linked ? withPartnerPromotion(linked) : null;
+  return { ...withPublicOwnership(record, { contentType: "scholarship", ownerType: deriveOwnerType(linked), ownerId: String(record.orgId || linked?.id || ""), ownerName: String(record.orgName || ""), ownerSlug: String(linked?.slug || record.orgId || "") }),
+    isPartner: !!promoted?.isPartner, partnerTier: promoted?.partnerTier || null, partnerBadgeLabel: promoted?.partnerBadgeLabel || null };
+}
+export async function getPublicOpportunities(kind: OpportunityKind, combineDuplicates = true, db: Firestore = getAdminDb()): Promise<JsonRecord[]> {
+  const [main, posts] = await Promise.all([
+    loadPublicOpportunityCandidates(db, kind),
     db.collection("posts").where("type", "==", kind === "events" ? "event" : "scholarship").get(),
-    kind === "scholarships" ? db.collection("organizations").get() : Promise.resolve(null),
   ]);
-  const records = (snap: FirebaseFirestore.QuerySnapshot) => snap.docs.map(doc => serialize({ ...doc.data(), id: doc.id }) as JsonRecord);
-  const organizations = orgs ? records(orgs) : [];
-  const items = mergeOpportunitySources(records(main), records(posts), kind)
-    .map(record => publicOpportunityRecord(record, kind))
-    .filter((record): record is JsonRecord => record !== null)
-    .map(record => {
-      if (kind !== "scholarships") return record;
-      const linked = organizations.find(org => org.id === record.orgId || matchesOrgName(record.orgName, String(org.name || "")));
-      const promoted = linked ? withPartnerPromotion(linked) : null;
-      return { ...withPublicOwnership(record, { contentType: "scholarship", ownerType: deriveOwnerType(linked), ownerId: String(record.orgId || linked?.id || ""), ownerName: String(record.orgName || ""), ownerSlug: String(linked?.slug || record.orgId || "") }),
-        isPartner: !!promoted?.isPartner, partnerTier: promoted?.partnerTier || null, partnerBadgeLabel: promoted?.partnerBadgeLabel || null };
-    });
+  const mirrors = posts.docs.map(doc => serialize({ ...doc.data(), id: doc.id }) as JsonRecord);
+  const shadows = await loadOpportunityMatches(db, kind, kind, mirrors.filter(record => publicOpportunityRecord(record, kind)));
+  const canonical = [...new Map([...main, ...shadows].map(record => [String(record.id), record])).values()]
+    .sort((a, b) => Buffer.compare(Buffer.from(String(a.id)), Buffer.from(String(b.id))));
+  let items = publicItems(canonical, mirrors, kind);
+  if (kind === "scholarships") {
+    const organizations = await loadRelatedOpportunityOrganizations(db, items);
+    items = items.map(record => scholarshipOwner(record, organizations));
+  }
   return kind === "events" && combineDuplicates ? dedupeEventDirectory(items) : items;
 }
-export async function getPublicOpportunity(kind: OpportunityKind, id: string) {
-  const items = await getPublicOpportunities(kind, false);
-  return items.find(item => item.id === id || item.slug === id) || null;
+export async function getPublicOpportunity(kind: OpportunityKind, id: string, db: Firestore = getAdminDb()): Promise<JsonRecord | null> {
+  const [main, posts] = await Promise.all([
+    loadOpportunityMatches(db, kind, kind, [{ id }]),
+    loadOpportunityMatches(db, "posts", kind, [{ id }]),
+  ]);
+  const mirrors = posts.filter(record => record.type === (kind === "events" ? "event" : "scholarship"));
+  const shadows = await loadOpportunityMatches(db, kind, kind, mirrors);
+  const canonical = [...new Map([...main, ...shadows].map(record => [String(record.id), record])).values()]
+    .sort((a, b) => Buffer.compare(Buffer.from(String(a.id)), Buffer.from(String(b.id))));
+  const item = publicItems(canonical, mirrors, kind).find(item => item.id === id || item.slug === id);
+  if (!item) return null;
+  return kind === "scholarships" ? scholarshipOwner(item, await loadRelatedOpportunityOrganizations(db, [item])) : item;
 }

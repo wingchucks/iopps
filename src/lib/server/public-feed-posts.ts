@@ -1,6 +1,7 @@
 import { isPublicPostVisible } from "@/lib/access-state";
-import { mergeOpportunitySources, opportunityAliases, publicOpportunityRecord } from "./public-opportunities";
-import { serialize, type JsonRecord } from "./public-ownership";
+import { mergeOpportunitySources, publicOpportunityRecord } from "./public-opportunities";
+import { loadOpportunityMatches } from "./opportunity-lookups";
+import type { JsonRecord } from "./public-ownership";
 import type { OpportunityKind } from "@/lib/opportunity-posting";
 import type { Firestore } from "firebase-admin/firestore";
 
@@ -9,22 +10,7 @@ export async function loadFeedOpportunityCanonical(db: Firestore, posts: JsonRec
   const canonical: Partial<Record<OpportunityKind, JsonRecord[]>> = {};
   await Promise.all((["events", "scholarships"] as const).map(async kind => {
     const prefix = kind === "events" ? "event" : "scholarship";
-    const aliases = [...new Set(posts.filter(post => post.type === prefix && isPublicPostVisible(post))
-      .flatMap(post => opportunityAliases(post, prefix)).flatMap(alias => [alias, `${prefix}-${alias}`]))];
-    const records = new Map<string, JsonRecord>();
-    const remember = (docs: FirebaseFirestore.DocumentSnapshot[]) => {
-      for (const doc of docs) if (doc.exists) records.set(doc.id, serialize({ ...doc.data(), id: doc.id }) as JsonRecord);
-    };
-    const ids = aliases.filter(id => id && !id.includes("/") && ![".", ".."].includes(id) && Buffer.byteLength(id) <= 1500);
-    for (let offset = 0; offset < ids.length; offset += 200) {
-      remember(await db.getAll(...ids.slice(offset, offset + 200).map(id => db.collection(kind).doc(id))));
-    }
-    // Canonical IDs may differ from their old feed slugs. Keep both alias forms
-    // and the directory's matching policy, including private/closed tombstones.
-    for (let offset = 0; offset < aliases.length; offset += 10) {
-      remember((await db.collection(kind).where("slug", "in", aliases.slice(offset, offset + 10)).get()).docs);
-    }
-    canonical[kind] = [...records.values()];
+    canonical[kind] = await loadOpportunityMatches(db, kind, kind, posts.filter(post => post.type === prefix && isPublicPostVisible(post)));
   }));
   return canonical;
 }

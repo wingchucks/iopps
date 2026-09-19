@@ -6,6 +6,8 @@ import vm from "node:vm";
 import ts from "typescript";
 import { loadFeedOpportunityCanonical, publicFeedPosts } from "../src/lib/server/public-feed-posts.ts";
 import { publicContentRecord } from "../src/lib/server/public-content-record.ts";
+import { getPublicOpportunities, getPublicOpportunity } from "../src/lib/server/public-opportunities.ts";
+import type { Firestore } from "firebase-admin/firestore";
 
 test("active feed copies cannot revive private, closed, deleted or rejected canonical opportunities", () => {
   for (const type of ["event", "scholarship"]) {
@@ -95,4 +97,72 @@ test("GET /api/posts scopes detail reads and canonical aliases while preserving 
     assert.equal(returned.some(id => id.startsWith('unrelated-')), false);
     if (suffix.includes('story-') || suffix.includes('missing')) assert.deepEqual(canonicalReads, []);
   }
+});
+
+function opportunityStore() {
+  const data: Record<string, any[]> = {
+    events: [
+      { id: 'current', slug: 'current-route', title: 'Current event', status: 'active', startDate: '2099-06-12' },
+      { id: 'hidden', slug: 'hidden-route', title: 'PRIVATE CANARY', status: 'draft', startDate: '2099-06-12' },
+      { id: 'legacy', title: 'Legacy event', startDate: '2099-06-12' },
+      { id: 'caps', title: 'Legacy capitals', status: 'ACTIVE', startDate: '2099-06-12' },
+    ],
+    scholarships: [{ id: 'grant', slug: 'grant-route', title: 'Current grant', status: 'active', orgId: 'owner', orgName: 'Fictional Organization' }],
+    posts: [
+      { id: 'event-hidden-route', slug: 'hidden-route', title: 'PRIVATE CANARY', type: 'event', status: 'active', startDate: '2099-06-12' },
+      { id: 'event-post-only', slug: 'post-only', title: 'Independent event', type: 'event', status: 'active', startDate: '2099-06-12' },
+    ],
+    organizations: [{ id: 'owner', name: 'Fictional Organization', slug: 'original-owner', type: 'employer' }, ...Array.from({ length: 300 }, (_, i) => ({ id: `foreign-${i}`, name: `Unrelated ${i}`, type: 'employer' }))],
+  };
+  const indexes: string[] = [], fetched: string[] = [];
+  const snapshot = (name: string, id: string, fields?: string[]) => {
+    const row = data[name].find(row => row.id === id);
+    return { id, exists: !!row, data: () => row && (fields ? Object.fromEntries(fields.filter(field => field in row).map(field => [field, row[field]])) : row) };
+  };
+  const db = {
+    collection: (name: string) => ({
+      doc: (id: string) => ({ name, id }),
+      where: (field: string, op: string, value: any) => ({ get: async () => ({ docs: data[name].filter(row => op === 'in' ? value.includes(row[field]) : row[field] === value).map(row => snapshot(name, row.id)) }) }),
+      select: (...fields: string[]) => ({ get: async () => {
+        assert.deepEqual(fields, [name === 'organizations' ? 'name' : 'status']); indexes.push(name);
+        return { docs: data[name].map(row => snapshot(name, row.id, fields)) };
+      } }),
+      get: () => { throw Error('Unscoped content collection scan'); },
+    }),
+    getAll: async (...refs: { name: string; id: string }[]) => {
+      assert.ok(refs.length <= 200); fetched.push(...refs.map(ref => `${ref.name}/${ref.id}`));
+      return refs.map(ref => snapshot(ref.name, ref.id));
+    },
+  };
+  return { data, indexes, fetched, db: db as unknown as Firestore };
+}
+
+test('opportunity details use bounded ID/slug reads and retain canonical tombstone precedence', async () => {
+  const h = opportunityStore();
+  for (const id of ['current', 'current-route']) assert.equal((await getPublicOpportunity('events', id, h.db))?.title, 'Current event');
+  for (const id of ['hidden', 'hidden-route', 'event-hidden-route']) assert.equal(await getPublicOpportunity('events', id, h.db), null);
+  assert.equal((await getPublicOpportunity('events', 'post-only', h.db))?.title, 'Independent event');
+  assert.deepEqual(h.indexes, [], 'event details never scan a directory or lookup index');
+  assert.equal((await getPublicOpportunity('scholarships', 'grant-route', h.db))?.ownerSlug, 'original-owner');
+  assert.deepEqual(h.indexes, ['organizations']);
+  h.data.organizations[0].slug = 'updated-owner';
+  assert.equal((await getPublicOpportunity('scholarships', 'grant', h.db))?.ownerSlug, 'updated-owner');
+  assert.deepEqual(h.indexes, ['organizations'], 'name index is reused but the organization record is fresh');
+  assert.equal(h.fetched.some(path => path.includes('foreign-')), false);
+});
+
+test('cached opportunity lookup identities never retain unpublished content or delay explicit publication', async () => {
+  const h = opportunityStore();
+  const first = await getPublicOpportunities('events', false, h.db);
+  assert.deepEqual(first.map(item => item.id).sort(), ['caps', 'current', 'event-post-only', 'legacy']);
+  assert.ok(!JSON.stringify(first).includes('CANARY'));
+  assert.deepEqual(h.indexes, ['events']);
+  h.data.events.find(row => row.id === 'current').status = 'draft';
+  h.data.events.find(row => row.id === 'legacy').status = 'private';
+  h.data.events.push({ id: 'new', title: 'New public event', status: 'active', startDate: '2099-06-12' });
+  const second = await getPublicOpportunities('events', false, h.db);
+  assert.deepEqual(second.map(item => item.id).sort(), ['caps', 'event-post-only', 'new']);
+  assert.deepEqual(h.indexes, ['events'], 'warm requests reuse only the legacy ID index');
+  assert.equal(await getPublicOpportunity('events', 'current-route', h.db), null);
+  assert.equal(await getPublicOpportunity('events', 'legacy', h.db), null);
 });
