@@ -84,7 +84,7 @@ function ScholarshipDetailContent() {
       try {
         const [data, all] = await Promise.all([getScholarshipBySlug(slug), getScholarships().catch(() => [])]);
         const [organization, savedItem] = await Promise.all([data?.orgId ? getPublicOrganization(data.orgId).catch(() => null) : null, data && user ? isPostSaved(user.uid, data.id).catch(() => false) : false]);
-        if (live) { setScholarship(data); setOwnerMeta(data as ScholarshipOwnerMeta); setOrg(organization); setSaved(savedItem); setRelated(all.filter(item => item.id !== data?.id).slice(0, 3)); }
+        if (live) { setScholarship(data); setOwnerMeta(data as ScholarshipOwnerMeta); setOrg(organization); setSaved(savedItem); setRelated(all.filter(item => item.id !== data?.id && !isJobRecordExpired({ ...item })).slice(0, 3)); }
       } catch (error) { if (live) setLoadError(error instanceof Error ? error.message : "This opportunity could not load."); }
       finally { if (live) setLoading(false); }
     }

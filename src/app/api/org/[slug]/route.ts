@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { toPublicOrganization } from "@/lib/public-organization";
 import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
 import { getLocalDevOrganizationPayload } from "@/lib/local-dev-business-data";
-import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
-import { applyNormalizedSubscriptionState } from "@/lib/server/subscription-state";
+import { buildPublicJobRouteSlugMap } from "@/lib/public-jobs";
+import { resolvePublicOrganization } from "@/lib/server/public-organization-resolver";
+import { mergePublicJobRecords, jobMatchesOrganization } from "@/lib/public-job-merge";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
 import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
@@ -98,63 +99,6 @@ function serializeDoc(
   return serialize({ id: doc.id, ...(doc.data() || {}) }) as JsonRecord;
 }
 
-async function resolveOrganization(
-  db: FirebaseFirestore.Firestore,
-  slug: string,
-): Promise<JsonRecord | null> {
-  const directDoc = await db.collection("organizations").doc(slug).get();
-  if (directDoc.exists) {
-    return normalizeOrganizationRecord(
-      applyNormalizedSubscriptionState(serializeDoc(directDoc))
-    );
-  }
-
-  const slugQuery = await db
-    .collection("organizations")
-    .where("slug", "==", slug)
-    .limit(1)
-    .get();
-
-  if (!slugQuery.empty) {
-    return normalizeOrganizationRecord(
-      applyNormalizedSubscriptionState(serializeDoc(slugQuery.docs[0]))
-    );
-  }
-
-  const employerQuery = await db
-    .collection("employers")
-    .where("slug", "==", slug)
-    .limit(1)
-    .get();
-
-  if (!employerQuery.empty) {
-    const employer = employerQuery.docs[0];
-    const linkedId = employer.data().orgId || employer.id;
-    const canonical = typeof linkedId === "string" && !linkedId.includes("/")
-      ? await db.collection("organizations").doc(linkedId).get() : null;
-    return normalizeOrganizationRecord(
-      applyNormalizedSubscriptionState(serializeDoc(canonical?.exists ? canonical : employer))
-    );
-  }
-
-  // H-2: when scripts/dedup-organizations.cjs merges a duplicate org, it
-  // writes a redirect entry so old links keep resolving. Honor it here.
-  const redirectDoc = await db.collection("org-slug-redirects").doc(slug).get();
-  if (redirectDoc.exists) {
-    const target = String(redirectDoc.data()?.to || "");
-    if (target) {
-      const targetDoc = await db.collection("organizations").doc(target).get();
-      if (targetDoc.exists) {
-        return normalizeOrganizationRecord(
-          applyNormalizedSubscriptionState(serializeDoc(targetDoc))
-        );
-      }
-    }
-  }
-
-  return null;
-}
-
 function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "jobs" | "posts"): JsonRecord {
   const serialized = serializeDoc(doc);
   if (serialized.salary && typeof serialized.salary === "object") {
@@ -189,44 +133,23 @@ function normalizeProgram(item: JsonRecord): JsonRecord {
   };
 }
 
-async function loadJobs(
-  db: FirebaseFirestore.Firestore,
-  orgId: string,
-  orgName: string,
-): Promise<JsonRecord[]> {
-  const [jobsByIdSnap, jobsByNameSnap, postsByOrgSnap] = await Promise.all([
-    db.collection("jobs").where("employerId", "==", orgId).get(),
-    db.collection("jobs").where("employerName", "==", orgName).get(),
-    db.collection("posts").where("orgId", "==", orgId).get(),
+async function loadJobs(db: FirebaseFirestore.Firestore, organization: JsonRecord): Promise<JsonRecord[]> {
+  // Closed canonical records suppress their older feed mirrors on every surface.
+  const [jobsSnapshot, postsSnapshot] = await Promise.all([
+    db.collection("jobs").get(),
+    db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
   ]);
-
-  const jobs = [
-    ...jobsByIdSnap.docs
-      .filter((doc) => isPublicJobVisible(doc.data()))
-      .map((doc) => normalizeJob(doc, "jobs")),
-    ...jobsByNameSnap.docs
-      .filter((doc) => isPublicJobVisible(doc.data()))
-      .map((doc) => normalizeJob(doc, "jobs")),
-    ...postsByOrgSnap.docs
-      .filter((doc) => {
-        const data = doc.data();
-        return data.type === "job" && isPublicJobVisible(data);
-      })
-      .map((doc) => normalizeJob(doc, "posts")),
-  ];
-
-  const publicJobs = dedupeByHref(jobs);
-  const slugMap = buildPublicJobRouteSlugMap(publicJobs.map((job) => ({
-    id: String(job.id),
-    slug: typeof job.slug === "string" ? job.slug : undefined,
+  const publicJobs = mergePublicJobRecords(
+    jobsSnapshot.docs.map(doc => ({ ...normalizeJob(doc, "jobs"), id: doc.id } as JsonRecord & { id: string })),
+    postsSnapshot.docs.map(doc => ({ ...normalizeJob(doc, "posts"), id: doc.id } as JsonRecord & { id: string })),
+  );
+  const slugMap = buildPublicJobRouteSlugMap(publicJobs.map(job => ({
+    id: job.id, slug: typeof job.slug === "string" ? job.slug : undefined,
     title: typeof job.title === "string" ? job.title : undefined,
   })));
-
-  publicJobs.forEach((job) => {
-    job.href = `/jobs/${slugMap.get(String(job.id)) || String(job.slug || job.id)}`;
-  });
-
-  return sortFeatured(publicJobs);
+  return sortFeatured(publicJobs.filter(job => jobMatchesOrganization(job, organization)).map(job => ({
+    ...job, href: `/jobs/${slugMap.get(job.id) || job.id}`,
+  })));
 }
 
 async function loadEvents(
@@ -359,7 +282,7 @@ export async function GET(
 
   try {
     const db = getAdminDb();
-    const orgRecord = await resolveOrganization(db, slug);
+    const orgRecord = await resolvePublicOrganization(db, slug);
 
     if (!orgRecord) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
@@ -379,7 +302,7 @@ export async function GET(
     const orgName = String(org.name || "");
 
     const [jobs, events, scholarships, training] = await Promise.all([
-      loadJobs(db, orgId, orgName),
+      loadJobs(db, org),
       loadEvents(db, orgId, orgName),
       loadScholarships(db, orgId, orgName),
       loadTraining(db, orgId, orgName),

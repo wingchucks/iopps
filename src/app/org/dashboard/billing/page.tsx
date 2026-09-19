@@ -48,8 +48,8 @@ const PLAN_FEATURES: Record<string, { label: string; features: string[]; color: 
   free: {
     label: "Free",
     color: "var(--text-muted)",
-    jobLimit: "No job postings",
-    features: ["Organization profile", "Community access"],
+    jobLimit: "Standard job listings included",
+    features: ["Organization profile with directory review", "Standard job listings", "Application management", "Events and scholarships"],
   },
 };
 
@@ -99,7 +99,8 @@ function BillingContent() {
     : null;
   const hasBonusAccess = Boolean(employer?.bonusAccessGrantedAt && billingStart && new Date(billingStart).getTime() > Date.now());
 
-  const isActive = employer?.subscriptionStatus === "active" || ["standard", "premium", "school"].includes(currentPlan);
+  const hasExpired = Boolean(employer?.subscriptionEnd && Date.parse(employer.subscriptionEnd) <= Date.now());
+  const isActive = currentPlan === "free" || (!hasExpired && (employer?.subscriptionStatus === "active" || hasBonusAccess));
 
   if (loading) {
     return (
@@ -119,7 +120,7 @@ function BillingContent() {
       </Link>
 
       <h1 className="text-2xl font-extrabold text-text mb-1">Billing & Plan</h1>
-      <p className="text-sm text-text-muted mb-8">Manage your subscription and plan details.</p>
+      <p className="text-sm text-text-muted mb-8">Standard job listings are free. Paid options add promotion and featured placement.</p>
 
       {/* Current Plan Card */}
       <Card className="mb-6">
@@ -195,11 +196,10 @@ function BillingContent() {
 
       {/* Plan Pricing Overview */}
       <h2 className="text-lg font-bold text-text mb-4">Available Plans</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         {[
           { key: "tier1", name: SUBSCRIPTION_PLANS.tier1.title, price: `${SUBSCRIPTION_PLANS.tier1.priceLabel}${SUBSCRIPTION_PLANS.tier1.periodLabel}`, desc: SUBSCRIPTION_PLANS.tier1.shortDescription, highlight: false },
           { key: "tier2", name: SUBSCRIPTION_PLANS.tier2.title, price: `${SUBSCRIPTION_PLANS.tier2.priceLabel}${SUBSCRIPTION_PLANS.tier2.periodLabel}`, desc: SUBSCRIPTION_PLANS.tier2.shortDescription, highlight: true },
-          { key: "tier3", name: SUBSCRIPTION_PLANS.tier3.title, price: `${SUBSCRIPTION_PLANS.tier3.priceLabel}${SUBSCRIPTION_PLANS.tier3.periodLabel}`, desc: SUBSCRIPTION_PLANS.tier3.shortDescription, highlight: false },
         ].map((p) => (
           <Card key={p.key} className={p.highlight ? "ring-2 ring-teal" : ""}>
             <div className="p-4 text-center">
@@ -218,14 +218,12 @@ function BillingContent() {
       </div>
 
       {/* One-Time Purchases */}
-      <h2 className="text-lg font-bold text-text mb-4">One-Time Job Posts</h2>
+      <h2 className="text-lg font-bold text-text mb-4">Featured Job Promotion</h2>
       <Card className="mb-8">
         <div className="p-5">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { key: "standard-post", name: ONE_TIME_PLANS["standard-post"].title, price: ONE_TIME_PLANS["standard-post"].priceLabel, desc: ONE_TIME_PLANS["standard-post"].shortDescription },
               { key: "featured-post", name: ONE_TIME_PLANS["featured-post"].title, price: ONE_TIME_PLANS["featured-post"].priceLabel, desc: ONE_TIME_PLANS["featured-post"].shortDescription },
-              { key: "program-post", name: ONE_TIME_PLANS["program-post"].title, price: ONE_TIME_PLANS["program-post"].priceLabel, desc: ONE_TIME_PLANS["program-post"].shortDescription },
             ].map((p) => (
               <div key={p.key} className="flex flex-col gap-1">
                 <p className="font-bold text-text text-sm">{p.name}</p>

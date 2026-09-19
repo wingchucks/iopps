@@ -11,7 +11,7 @@ import DirectoryPagination, { useDirectoryFilter, useDirectoryFilterActions, use
 import { type Organization } from "@/lib/firestore/organizations";
 import { hasOrganizationIndigenousIdentity } from "@/lib/organization-profile";
 import ProvinceSelect from "@/components/ProvinceSelect";
-import { provinceCode } from "@/lib/canadian-provinces";
+import { matchesCanadianLocation } from "@/lib/canadian-provinces";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 
 export default function BusinessesPage() {
@@ -69,7 +69,7 @@ function BusinessesPageContent() {
         if (filter === "Partners" && !org.isPartner) return false;
         if (filter === "Verified" && !org.verified) return false;
         if (filter === "Indigenous" && !hasOrganizationIndigenousIdentity(org)) return false;
-        if (province && provinceCode(org.location?.province) !== (provinceCode(province) || province)) return false;
+        if (province && !matchesCanadianLocation(org.location, province)) return false;
         if (industry && org.industry?.trim() !== industry) return false;
         if (!normalizedQuery) return true;
 
@@ -304,10 +304,10 @@ function BusinessCard({ org }: { org: Organization }) {
 
           {summary && (
             <p
-              className="m-0 mb-3 text-sm leading-relaxed text-text-sec"
+              className="m-0 mb-3 line-clamp-3 text-sm leading-relaxed text-text-sec"
               style={{
                 display: "-webkit-box",
-                WebkitLineClamp: 2,
+                WebkitLineClamp: 3,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
               }}

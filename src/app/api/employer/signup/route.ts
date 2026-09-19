@@ -146,6 +146,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields: name, type, contactName, contactEmail" }, { status: 400 });
   }
 
+  if (type === "school") return NextResponse.json({ error: "School listings are no longer offered. Contact IOPPS for help with an existing account." }, { status: 400 });
   const normalizedContactEmail = contactEmail.trim().toLowerCase();
   const confirmationEmail = (accountEmail || normalizedContactEmail).trim().toLowerCase();
   const website = cleanHttpUrl(body.website);

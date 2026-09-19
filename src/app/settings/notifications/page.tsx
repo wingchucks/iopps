@@ -207,6 +207,9 @@ function NotificationContent() {
                         </span>
                         <button
                           type="button"
+                          role="switch"
+                          aria-label={`${info.title}: ${channelLabels[channel]}`}
+                          aria-checked={channels[channel]}
                           onClick={() =>
                             toggleChannel(
                               category,
@@ -253,6 +256,9 @@ function NotificationContent() {
             </div>
             <button
               type="button"
+              role="switch"
+              aria-label="Quiet hours"
+              aria-checked={prefs.quietHours.enabled}
               onClick={() =>
                 setPrefs({
                   ...prefs,

@@ -35,7 +35,7 @@ test("compensation enrichment never overrides undisclosed pay or guesses from un
  const description = "Expected Compensation: The expected hourly hiring range is $23.00 to $27.75 based on a 21-hour work week.";
  assert.equal(salaryInfo({ id: "j", title: "Worker", salaryRange: { disclosed: false }, description }), null);
  assert.equal(salaryInfo({ id: "j", title: "Worker", description: "Benefits include a $500 to $1000 training allowance. A 21-hour work week is available." }), null);
- assert.equal(salaryInfo({ id: "j", title: "Worker", description: "Expected Compensation: The expected hiring range is $43,000 to $53,000 based on a 37.5-hour work week." }), null);
+ assert.deepEqual(salaryInfo({ id: "j", title: "Worker", description: "Expected Compensation: The expected hiring range is $43,000 to $53,000 based on a 37.5-hour work week." }), { min: 43000, max: 53000, period: "unknown", display: "$43,000–$53,000" });
  assert.equal(salaryInfo({ id: "j", title: "Worker", salary: "$40 / hour", description })?.min, 40);
 });
 

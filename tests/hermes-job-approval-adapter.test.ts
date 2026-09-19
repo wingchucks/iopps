@@ -415,7 +415,7 @@ test("featured review rejects a draft with no included slot or purchased credit"
   assert.deepEqual(await reviewHermesJobApproval({ jobId: "job-123" }, deps), {
     ok: false,
     status: 400,
-    error: "Featured jobs require a Premium or School plan, or an available featured post credit.",
+    error: "Featured jobs require an eligible plan or an available featured post credit.",
   });
   assert.equal(memory.targetWrites(), 0);
 });

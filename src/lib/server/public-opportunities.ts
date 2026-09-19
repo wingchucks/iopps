@@ -1,3 +1,4 @@
+import { dedupeEventDirectory } from "@/lib/event-directory-dedupe";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { isJobRecordExpired } from "@/lib/listing-freshness";
 import { isPublicEventVisible, normalizePublicEvent } from "@/lib/public-events";
@@ -32,7 +33,7 @@ export function publicOpportunityRecord(raw: JsonRecord, kind: OpportunityKind):
   record.location = raw.delivery === "online" ? "Online" : locationParts.join(", ");
   for (const key of ["description", "eligibility", "applicationInstructions"]) if (record[key]) record[key] = plainOpportunityText(record[key]);
   record.orgName = raw.orgName || raw.organizerName || raw.organization || "";
-  for (const key of ["applicationUrl", "rsvpLink", "imageUrl"]) record[key] = safeOpportunityUrl(record[key]);
+  for (const key of ["applicationUrl", "rsvpLink", "imageUrl", "sourceUrl"]) record[key] = safeOpportunityUrl(record[key]);
   if (kind === "events") {
     if (raw.isFree === true && !record.price) record.price = "Free";
     record.eventType = raw.eventType || raw.category || (raw.type !== "event" ? raw.type : "") || "Other";
@@ -41,7 +42,7 @@ export function publicOpportunityRecord(raw: JsonRecord, kind: OpportunityKind):
   if (record.amount != null) record.amount = displayAmount(record.amount);
   return { ...record, intakeClosed: isJobRecordExpired(record) };
 }
-export async function getPublicOpportunities(kind: OpportunityKind): Promise<JsonRecord[]> {
+export async function getPublicOpportunities(kind: OpportunityKind, combineDuplicates = true): Promise<JsonRecord[]> {
   const db = getAdminDb();
   const [main, posts, orgs] = await Promise.all([
     db.collection(kind).get(),
@@ -50,7 +51,7 @@ export async function getPublicOpportunities(kind: OpportunityKind): Promise<Jso
   ]);
   const records = (snap: FirebaseFirestore.QuerySnapshot) => snap.docs.map(doc => serialize({ ...doc.data(), id: doc.id }) as JsonRecord);
   const organizations = orgs ? records(orgs) : [];
-  return mergeOpportunitySources(records(main), records(posts), kind)
+  const items = mergeOpportunitySources(records(main), records(posts), kind)
     .map(record => publicOpportunityRecord(record, kind))
     .filter((record): record is JsonRecord => record !== null)
     .map(record => {
@@ -60,8 +61,9 @@ export async function getPublicOpportunities(kind: OpportunityKind): Promise<Jso
       return { ...withPublicOwnership(record, { contentType: "scholarship", ownerType: deriveOwnerType(linked), ownerId: String(record.orgId || linked?.id || ""), ownerName: String(record.orgName || ""), ownerSlug: String(linked?.slug || record.orgId || "") }),
         isPartner: !!promoted?.isPartner, partnerTier: promoted?.partnerTier || null, partnerBadgeLabel: promoted?.partnerBadgeLabel || null };
     });
+  return kind === "events" && combineDuplicates ? dedupeEventDirectory(items) : items;
 }
 export async function getPublicOpportunity(kind: OpportunityKind, id: string) {
-  const items = await getPublicOpportunities(kind);
+  const items = await getPublicOpportunities(kind, false);
   return items.find(item => item.id === id || item.slug === id) || null;
 }

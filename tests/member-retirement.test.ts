@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
+import * as salaryRange from "../src/lib/salary-range.ts";
 
 function load(file: string, imports: Record<string, unknown> = {}, globals: Record<string, unknown> = {}) {
   // VM exports are callable modules from the actual candidate source.
@@ -57,6 +58,8 @@ test("retired member metadata never resolves a member identity", async () => {
     "@/lib/firebase-admin": { getAdminDb: () => { throw new Error("Member metadata touched database"); } },
     "@/lib/server/public-opportunities": {}, "@/lib/server/public-detail-cache": {},
     "@/lib/server/member-privacy": {},
+    "@/lib/public-job-merge": {}, "@/lib/organization-profile": {},
+    "@/lib/server/public-job-routing": {}, "@/lib/server/public-organization-resolver": {},
     "@/lib/server/seo": { buildListingMetadata: (data: unknown) => data },
   });
   const metadata = await mod.generateMemberMetadata("PRIVATE_UID");
@@ -85,6 +88,7 @@ test("member client keeps own profile but never queries a directory or another a
   const mod = load("src/lib/firestore/members.ts", {
     "firebase/firestore": { doc: (...args: unknown[]) => args, getDoc: async () => { reads++; return { id: "self", exists: () => true, data: () => ({ displayName: "Own", resumeUrl: "PRIVATE_RESUME" }) }; } },
     "../firebase": { auth: { currentUser: { uid: "self" } }, db: {} },
+    "../salary-range": salaryRange,
   });
   assert.equal((await mod.getMemberProfile("self")).resumeUrl, "PRIVATE_RESUME");
   assert.equal(await mod.getMemberProfile("peer"), null);

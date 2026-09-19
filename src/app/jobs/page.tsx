@@ -1,4 +1,5 @@
 "use client";
+import { matchesCanadianLocation } from "@/lib/canadian-provinces";
 import {
   FormEvent,
   Suspense,
@@ -159,7 +160,7 @@ function JobsPageContent() {
     if (locationFilter.trim()) {
       const location = locationFilter.toLowerCase().trim();
       result = result.filter((job) =>
-        job.location?.toLowerCase().includes(location),
+        matchesCanadianLocation(job.location, location),
       );
     }
     if (typeFilter !== "All") {

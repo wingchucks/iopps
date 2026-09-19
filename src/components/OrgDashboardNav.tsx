@@ -88,7 +88,7 @@ export default function OrgDashboardNav({
   onPostJob,
 }: OrgDashboardNavProps) {
   const isSchool = isSchoolOrganization({ type: orgType, plan: orgPlan, tier: orgTier });
-  const publicHref = orgSlug
+  const publicHref = !isSchool && orgSlug
     ? getOrganizationPublicHref({ slug: orgSlug, type: orgType, plan: orgPlan, tier: orgTier })
     : undefined;
 

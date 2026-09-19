@@ -12,7 +12,7 @@ export async function GET() {
     const db = getAdminDb();
     const [snapshot, jobsSnapshot, postsSnapshot] = await Promise.all([
       db.collection("organizations").get(),
-      db.collection("jobs").where("active", "==", true).get(),
+      db.collection("jobs").get(),
       db.collection("posts").where("type", "==", "job").where("status", "==", "active").get(),
     ]);
     const publicJobs = mergePublicJobRecords(

@@ -53,8 +53,8 @@ const employmentTypes = [
 function normalizeSalaryParts(job: EditableJob): { min: string; max: string } {
   const salaryValue = job.salaryRange || job.salary;
   if (salaryValue && typeof salaryValue === "object") {
-    const min = salaryValue.min == null ? "" : String(salaryValue.min).replace(/[^\d]/g, "");
-    const max = salaryValue.max == null ? "" : String(salaryValue.max).replace(/[^\d]/g, "");
+    const min = salaryValue.min == null ? "" : String(salaryValue.min).replace(/[^\d.]/g, "");
+    const max = salaryValue.max == null ? "" : String(salaryValue.max).replace(/[^\d.]/g, "");
     if (min || max) return { min, max };
     if (salaryValue.display) return parseSalaryString(String(salaryValue.display));
   }
@@ -62,7 +62,7 @@ function normalizeSalaryParts(job: EditableJob): { min: string; max: string } {
 }
 
 function parseSalaryString(value: string): { min: string; max: string } {
-  const numbers = value.match(/\d[\d,]*/g) || [];
+  const numbers = value.match(/\d[\d,]*(?:\.\d+)?/g) || [];
   return {
     min: numbers[0]?.replace(/,/g, "") || "",
     max: numbers[1]?.replace(/,/g, "") || "",
@@ -100,6 +100,7 @@ export default function JobEditPage() {
   const [employmentType, setEmploymentType] = useState("Full-time");
   const [salaryMin, setSalaryMin] = useState("");
   const [salaryMax, setSalaryMax] = useState("");
+  const [salaryPeriod, setSalaryPeriod] = useState("");
   const [requirements, setRequirements] = useState<string[]>([]);
   const [requirementInput, setRequirementInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
@@ -142,6 +143,7 @@ export default function JobEditPage() {
         const salaryParts = normalizeSalaryParts(p);
         setSalaryMin(salaryParts.min);
         setSalaryMax(salaryParts.max);
+        setSalaryPeriod(p.salaryRange?.period || (typeof p.salary === "object" ? p.salary.period : "") || "");
         setRequirements(p.qualifications || []);
         setSkills(p.badges || []);
         setClosingDate(p.closingDate || "");
@@ -170,12 +172,13 @@ export default function JobEditPage() {
       const location = [locationCity, locationProvince]
         .filter(Boolean)
         .join(", ");
-      const salary =
+      const salaryAmount =
         salaryMin && salaryMax
           ? `$${Number(salaryMin).toLocaleString()} - $${Number(salaryMax).toLocaleString()}`
           : salaryMin
             ? `$${Number(salaryMin).toLocaleString()}`
             : "";
+      const salary = salaryAmount ? `${salaryAmount}${salaryPeriod ? ` / ${salaryPeriod.toLowerCase()}` : ""}` : "";
       const idToken = await user.getIdToken();
       const response = await fetch(`/api/employer/jobs/${postId}`, {
         method: "PUT",
@@ -194,6 +197,7 @@ export default function JobEditPage() {
             max: salaryMax ? Number(salaryMax) : undefined,
             display: salary,
             currency: "CAD",
+            period: salaryPeriod,
           } : undefined,
           hiringDetails,
           qualifications: requirements.filter((r) => r.trim()),
@@ -464,6 +468,9 @@ export default function JobEditPage() {
                       </label>
                       <input
                         type="number"
+                        aria-label="Salary minimum"
+                        min="0"
+                        step="0.01"
                         value={salaryMin}
                         onChange={(e) => setSalaryMin(e.target.value)}
                         placeholder="e.g. 60000"
@@ -480,13 +487,16 @@ export default function JobEditPage() {
                       </label>
                       <input
                         type="number"
+                        aria-label="Salary maximum"
+                        min="0"
+                        step="0.01"
                         value={salaryMax}
                         onChange={(e) => setSalaryMax(e.target.value)}
                         placeholder="e.g. 90000"
                         className="w-full px-4 py-3 rounded-xl text-sm"
                         style={inputStyle}
                       />
-                    </div>
+                    </div><label className="block text-sm font-semibold mt-3">Pay period<select aria-label="Salary pay period" value={salaryPeriod} onChange={event => setSalaryPeriod(event.target.value)} className="block w-full rounded-lg border border-border bg-card p-3 text-text"><option value="">Not specified</option>{["Hourly", "Annual", "Monthly", "Weekly"].map(period => <option key={period} value={period}>{period}</option>)}</select></label>
                   </div>
 
                   {/* Requirements */}

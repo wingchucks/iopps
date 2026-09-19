@@ -198,10 +198,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    await sendPasswordResetEmail(auth, email, {
-      url: "https://iopps.ca/login",
-      handleCodeInApp: false,
-    });
+    if (process.env.NEXT_PUBLIC_USE_EMULATORS === "true") { await sendPasswordResetEmail(auth, email); return; }
+    const appCheck = await getAppCheckTokenValue();
+    const response = await fetch("/api/auth/password-reset", { method: "POST", headers: { "Content-Type": "application/json", ...(appCheck ? { "X-Firebase-AppCheck": appCheck } : {}) }, body: JSON.stringify({ email }) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Password recovery is temporarily unavailable.");
   };
 
   const resendVerificationEmail = async (nextPath?: string) => {

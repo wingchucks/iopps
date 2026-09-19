@@ -25,6 +25,49 @@ const checks = [];
 const runtimeErrors = [];
 const authChecks = [];
 const interactionChecks = [];
+const accessibilityChecks = [];
+async function checkRemediationSettings(page, width) {
+  for (const route of ['/profile', '/settings/privacy', '/settings/notifications', '/settings/career']) {
+    await page.goto(base + route, { waitUntil: 'domcontentloaded' });
+    await page.locator('[data-main-content]').waitFor();
+    if (route !== '/profile') await page.getByRole('button', { name: /Save Changes|Save Preferences|Save Career Preferences/ }).waitFor();
+    else await page.getByText('QA member', { exact: true }).first().waitFor();
+    await page.getByRole('link', { name: 'Skip to content', exact: true }).focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.evaluate(() => document.activeElement?.hasAttribute('data-main-content')), true, 'Skip link passes navigation');
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.querySelector('[data-main-content]').contains(document.activeElement)), true);
+    assert.ok(await page.evaluate(() => parseFloat(getComputedStyle(document.activeElement).outlineWidth) > 0), 'Keyboard target has visible focus');
+    const switches = page.getByRole('switch');
+    if (await switches.count()) {
+      const first = switches.first(), original = await first.getAttribute('aria-checked');
+      assert.ok(await first.getAttribute('aria-label'));
+      await first.focus(); await page.keyboard.press('Space');
+      assert.notEqual(await first.getAttribute('aria-checked'), original);
+      await page.keyboard.press('Space'); assert.equal(await first.getAttribute('aria-checked'), original);
+    }
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(value => document.documentElement.setAttribute('data-theme', value), theme);
+      // Measure the final palette, after the documented 200ms theme transition.
+      await page.waitForTimeout(350);
+      await page.addScriptTag({ path: path.resolve('node_modules/axe-core/axe.min.js') });
+      const result = await page.evaluate(async () => (await window.axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] } })).violations.map(v => ({ id: v.id, impact: v.impact, nodes: v.nodes.map(n => ({ target: n.target, summary: n.failureSummary })) })));
+      accessibilityChecks.push({ route, width, theme, violations: result });
+      await fs.writeFile(path.join(output, 'accessibility.json'), JSON.stringify(accessibilityChecks, null, 2));
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, `${route} ${theme} overflows`);
+      await page.screenshot({ path: path.join(output, `remediation-${route.replaceAll('/', '-')}-${width}-${theme}.png`), fullPage: true });
+    }
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
+    if (route === '/settings/career') {
+      const before = (await db.doc(`members/${accounts.member.uid}`).get()).data().salaryRange;
+      await page.getByLabel('Minimum salary', { exact: true }).fill('90000');
+      await page.getByLabel('Maximum salary', { exact: true }).fill('50000');
+      await page.getByRole('button', { name: 'Save Career Preferences', exact: true }).click();
+      await page.getByText('Minimum salary cannot exceed maximum salary.', { exact: true }).waitFor();
+      assert.deepEqual((await db.doc(`members/${accounts.member.uid}`).get()).data().salaryRange, before);
+    }
+  }
+}
 async function seed(collection, id, data) {
   const ref = db.collection(collection).doc(id); documents.push(ref); await ref.set(data);
 }
@@ -254,6 +297,7 @@ try {
   for (const status of ['active', 'draft']) await seed('jobs', `${prefix}-${status}`, {
     id: `${prefix}-${status}`, slug: `${prefix}-${status}`, title: `QA ${status} dashboard job`, employerId: accounts.owner.uid, orgId: accounts.owner.uid,
     employerName: org.name, location: 'Saskatoon, SK', description: 'Fictional QA job.', descriptionFormat: 'plain-text',
+    salary: '$23.50 - $27.75', salaryRange: { min: 23.5, max: 27.75, period: 'Hourly', currency: 'CAD', disclosed: true },
     employmentType: 'Full-time', active: status === 'active', status, createdAt: Timestamp.now(), expiresAt: Timestamp.fromMillis(Date.now() + 86400000 * 7),
   });
 
@@ -272,7 +316,7 @@ try {
     });
     await seed(kind, `${prefix}-${kind}-foreign`, { title: `QA foreign ${kind}`, orgId: `${prefix}-foreign`, status: 'active', active: true });
   }
-  await seed('applications', prefix + '-owned-application', { userId: accounts.member.uid, employerId: accounts.owner.uid, jobId: prefix + '-active', status: 'submitted', profileSnapshot: { displayName: 'QA captured applicant', capturedAt: '2020-01-01T00:00:00.000Z' } });
+  await seed('applications', prefix + '-owned-application', { userId: accounts.member.uid, employerId: accounts.owner.uid, jobId: prefix + '-active', status: 'withdrawn', coverLetter: 'Fictional submitted cover letter', references: 'Fictional submitted reference', profileSnapshot: { displayName: 'QA captured applicant', email: 'applicant@example.invalid', capturedAt: '2020-01-01T00:00:00.000Z' } });
   await seed('applications', prefix + '-foreign-application', { userId: accounts.school.uid, employerId: 'other-org', status: 'submitted', profileSnapshot: { displayName: 'QA foreign applicant' } });
   browser = await chromium.launch({ headless: true });
   for (const width of [1440, 390]) {
@@ -306,6 +350,7 @@ try {
       const routes = role === 'owner' ? [
         ['/org/dashboard', 'QA Dashboard Organization'],
         ['/employer/dashboard?tab=Jobs', 'QA active dashboard job'],
+        [`/org/dashboard/jobs/${prefix}-draft/edit`, 'Edit Job Posting'],
         ['/org/dashboard?tab=Talent%20Search', 'Applications'],
         ['/org/dashboard/talent', 'Applications'],
         ['/org/dashboard?create=job&tab=Jobs', 'Post a New Job'],
@@ -334,12 +379,47 @@ try {
           await page.getByRole('heading', { name: 'Post a New Job', exact: true }).waitFor();
           assert.equal(new URL(page.url()).pathname, '/org/dashboard/jobs/new');
         }
+        if (route.endsWith('-draft/edit')) {
+          const min = page.getByLabel('Salary minimum', { exact: true });
+          const max = page.getByLabel('Salary maximum', { exact: true });
+          assert.equal(await min.inputValue(), '23.5'); assert.equal(await max.inputValue(), '27.75');
+          assert.equal(await page.getByLabel('Salary pay period', { exact: true }).inputValue(), 'Hourly');
+          await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
+          await page.getByText('Job updated successfully', { exact: true }).waitFor();
+          const saved = (await db.doc(`jobs/${prefix}-draft`).get()).data();
+          assert.equal(saved.salaryRange.min, 23.5); assert.equal(saved.salaryRange.max, 27.75); assert.equal(saved.salaryRange.period, 'Hourly');
+          interactionChecks.push({ check: 'job-editor-preserves-hourly-pay-and-cents', width, passed: true });
+        }
+        if (route.includes('tab=Billing')) {
+          await page.getByText('✓ Active', { exact: true }).waitFor();
+          const endpoint = '**/api/employer/dashboard';
+          await page.route(endpoint, async request => {
+            const response = await request.fetch(); const payload = await response.json();
+            payload.employer = { ...payload.employer, plan: 'premium', subscriptionTier: 'premium', subscriptionStatus: 'active', subscriptionEnd: '2000-01-01T00:00:00.000Z' };
+            await request.fulfill({ response, json: payload });
+          });
+          await page.reload({ waitUntil: 'domcontentloaded' });
+          await page.getByText('Inactive', { exact: true }).waitFor();
+          await page.unroute(endpoint);
+          await page.reload({ waitUntil: 'domcontentloaded' });
+          await page.getByText('✓ Active', { exact: true }).waitFor();
+          interactionChecks.push({ check: 'free-plan-active-expired-paid-plan-inactive', width, passed: true });
+        }
         if (route.includes('Talent') || route === '/org/dashboard/talent') {
           assert.equal(new URL(page.url()).pathname, '/org/dashboard/applications');
           await page.getByText('QA captured applicant', { exact: true }).first().waitFor();
           assert.equal(await page.getByText('QA foreign applicant', { exact: true }).count(), 0);
           assert.equal(await page.getByPlaceholder('Search by name or skills...').count(), 0);
           assert.equal(await page.locator('a[href^="/members"]').count(), 0);
+          for (const mode of ['List', 'Board']) {
+            await page.getByRole('button', { name: mode, exact: true }).click();
+            await page.getByText('View application details', { exact: true }).click();
+            await page.getByText('Fictional submitted cover letter', { exact: true }).waitFor();
+            await page.getByText('Fictional submitted reference', { exact: true }).waitFor();
+            assert.equal(await page.getByLabel('Application status for QA captured applicant', { exact: true }).isDisabled(), true);
+            await page.screenshot({ path: path.join(output, `application-details-${mode}-${width}.png`), fullPage: true });
+          }
+          await page.getByRole('button', { name: 'List', exact: true }).click();
           const response = await fetch(base + '/api/employer/applications', { headers: { Authorization: `Bearer ${await fixtureToken('owner')}` } });
           assert.equal(response.status, 200);
           const payload = await response.json();
@@ -384,6 +464,17 @@ try {
           assert.equal((await db.doc(`${kind}/${record.id}`).get()).exists, false);
           await page.getByText('Private draft saved. It is not listed publicly.', { exact: true }).waitFor();
           interactionChecks.push({ check: `${kind}-owned-list-private-draft`, width, passed: true });
+          const newDraft = page.getByRole('article').filter({ hasText: title });
+          page.once('dialog', dialog => dialog.dismiss());
+          await newDraft.getByRole('button', { name: /Delete listing/ }).click();
+          assert.equal((await privateRef.get()).data().status, 'draft');
+          page.once('dialog', dialog => dialog.accept());
+          const deleted = page.waitForResponse(r => new URL(r.url()).pathname === `/api/employer/${kind}` && r.request().method() === 'DELETE');
+          await newDraft.getByRole('button', { name: /Delete listing/ }).click();
+          assert.equal((await deleted).status(), 200);
+          await newDraft.waitFor({ state: 'detached' });
+          assert.equal((await privateRef.get()).data().status, 'deleted');
+          interactionChecks.push({ check: `${kind}-delete-cancel-confirm`, width, passed: true });
         }
         if (route === '/admin/jobs') {
           const active = page.getByRole('row').filter({ hasText: 'QA active dashboard job' });
@@ -397,7 +488,7 @@ try {
         await page.screenshot({ path: path.join(output, filename), fullPage: true });
         checks.push({ role, width, requested: route, reached: new URL(page.url()).pathname + new URL(page.url()).search, screenshot: filename });
       }
-      if (role === 'member') await checkLegacyMessages(page, width);
+      if (role === 'member') { await checkLegacyMessages(page, width); await checkRemediationSettings(page, width); }
       assert.deepEqual(retired, []); assert.deepEqual(missing, []); assert.deepEqual(errors, []);
       await context.close();
     }
@@ -410,6 +501,7 @@ try {
     assert.equal(location.pathname, destination); assert.equal(location.searchParams.get('qa'), 'bookmark');
   }
   assert.deepEqual(runtimeErrors, []);
+  assert.deepEqual(accessibilityChecks.filter(check => check.violations.length), [], 'Profile and settings meet sampled WCAG checks in both themes');
   console.log(JSON.stringify({ checks: checks.length, authChecks: authChecks.length, interactionChecks: interactionChecks.length, allPassed: true, emulatorsOnly: true }));
 } catch (error) {
   if (currentPage && !currentPage.isClosed()) {

@@ -1,3 +1,4 @@
+import SkipToContent from "@/components/SkipToContent";
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
@@ -19,11 +20,11 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: {
-    default: "IOPPS — Empowering Indigenous Success",
+    default: "IOPPS â€” Empowering Indigenous Success",
     template: "%s | IOPPS",
   },
   description:
-    "Jobs, events, scholarships, businesses, and livestreams — all in one place for Indigenous people across North America.",
+    "Jobs, events, scholarships, businesses, and livestreams â€” all in one place for Indigenous people across North America.",
   metadataBase: new URL("https://www.iopps.ca"),
   alternates: { canonical: "/" },
   manifest: "/manifest.json",
@@ -36,9 +37,9 @@ export const metadata: Metadata = {
     title: "IOPPS",
   },
   openGraph: {
-    title: "IOPPS.CA — Empowering Indigenous Success",
+    title: "IOPPS.CA â€” Empowering Indigenous Success",
     description:
-      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, and livestreams — built for Indigenous communities across North America.",
+      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, and livestreams â€” built for Indigenous communities across North America.",
     siteName: "IOPPS.CA",
     url: "https://www.iopps.ca",
     type: "website",
@@ -47,15 +48,15 @@ export const metadata: Metadata = {
         url: "https://www.iopps.ca/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "IOPPS.CA — Empowering Indigenous Success",
+        alt: "IOPPS.CA â€” Empowering Indigenous Success",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "IOPPS.CA — Empowering Indigenous Success",
+    title: "IOPPS.CA â€” Empowering Indigenous Success",
     description:
-      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, and livestreams — built for Indigenous communities across North America.",
+      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, and livestreams â€” built for Indigenous communities across North America.",
     images: ["https://www.iopps.ca/og-image.jpg"],
   },
 };
@@ -87,12 +88,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: swScript }} />
       </head>
       <body className={`${geistSans.variable} antialiased`}>
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-navy"
-        >
-          Skip to content
-        </a>
+        <SkipToContent />
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider>

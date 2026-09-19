@@ -56,9 +56,9 @@ function UnifiedSignupContent() {
 
   const [step, setStep] = useState(1);
   const formStartedAtRef = useRef(Date.now());
-  const [role, setRole] = useState<Role>(searchParams.get("resume") === "organization" ? "organization" : entrepreneurIntent ? "organization" : "");
+  const [role, setRole] = useState<Role>(searchParams.get("resume") === "organization" ? "organization" : (entrepreneurIntent || searchParams.get("type") === "employer") ? "organization" : "");
   const [websiteTrap, setWebsiteTrap] = useState("");
-  const [orgType, setOrgType] = useState<OrgType>(searchParams.get("resume") === "organization" ? (searchParams.get("type") === "school" ? "school" : "employer") : entrepreneurIntent ? "employer" : "");
+  const [orgType, setOrgType] = useState<OrgType>(searchParams.get("resume") === "organization" ? "employer" : (entrepreneurIntent || searchParams.get("type") === "employer") ? "employer" : "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   // C-5: field-level validation errors keyed by input id (name, email, password, confirmPassword)
@@ -87,7 +87,7 @@ function UnifiedSignupContent() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [admissionsEmail, setAdmissionsEmail] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState(["tier3", "standard-post", "featured-post", "program-post"].includes(searchParams.get("plan") || "") ? searchParams.get("plan")! : "");
+  const [selectedPlan, setSelectedPlan] = useState(["tier1", "tier2", "featured-post"].includes(searchParams.get("plan") || "") ? searchParams.get("plan")! : "");
 
   // Employer
   const [orgName, setOrgName] = useState("");
@@ -657,8 +657,8 @@ function UnifiedSignupContent() {
             <ReviewRow label="Location" value={[empCity, empProvince].filter(Boolean).join(", ") || "Not set"} />
             <ReviewRow label="Capabilities" value={<div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-end" }}>{capabilities.map(id => { const c = EMPLOYER_CAPABILITIES.find(x => x.id === id); return <span key={id} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: CSS.accentLight, color: CSS.accent, fontWeight: 500 }}>{c?.label || id}</span>; })}</div>} />
           </ReviewSection>
-          <InfoBanner icon="✅"><strong style={{ color: CSS.text }}>Auto-approved!</strong> Your profile goes live immediately after verification. Paid plans are only needed for extra promotion.</InfoBanner>
-          <div style={{ display: "flex", gap: 12, marginTop: 32, justifyContent: "center" }}><BtnGhost onClick={() => goTo(11)}>← Back</BtnGhost><BtnPrimary onClick={handleEmployerSubmit} disabled={submitting} style={{ flex: 1, justifyContent: "center" }}>{submitting ? "Creating..." : "Publish & Go Live 🚀"}</BtnPrimary></div>
+          <InfoBanner icon="✅"><strong style={{ color: CSS.text }}>Ready to create your profile.</strong> Verify your email to use your dashboard and post jobs. Submit your business listing for review when it is ready; it appears in the directory after approval.</InfoBanner>
+          <div style={{ display: "flex", gap: 12, marginTop: 32, justifyContent: "center" }}><BtnGhost onClick={() => goTo(11)}>← Back</BtnGhost><BtnPrimary onClick={handleEmployerSubmit} disabled={submitting} style={{ flex: 1, justifyContent: "center" }}>{submitting ? "Creating..." : "Create organization profile"}</BtnPrimary></div>
         </div>)}
 
         {/* STEP 13: Post-launch success + email verify reminder (stays in wizard UI) */}

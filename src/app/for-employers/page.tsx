@@ -9,41 +9,27 @@ const valueProps = [
   {
     icon: "\u{1F4CB}",
     title: "Post Jobs & Events",
-    desc: "Reach thousands of Indigenous professionals with targeted job postings and event listings.",
+    desc: "Share job postings and community events with people exploring opportunities on IOPPS.",
   },
   {
     icon: "\u{1F4E3}",
     title: "Build Brand Visibility",
-    desc: "Showcase your organization to 84,000+ community members and demonstrate your commitment to reconciliation.",
+    desc: "Showcase your organization, services, and opportunities in the IOPPS community.",
   },
   {
     icon: "\u{1F465}",
-    title: "Access Talent Pool",
-    desc: "Connect directly with Indigenous professionals, graduates, and skilled tradespeople across North America.",
+    title: "Review Applications",
+    desc: "Review submitted profiles, résumés, cover letters, and references, then track your hiring decisions.",
   },
   {
     icon: "\u{1F4CA}",
     title: "Analytics Dashboard",
-    desc: "Track engagement, measure reach, and optimize your recruitment and outreach strategies.",
+    desc: "Review recorded job and application activity in your organization dashboard.",
   },
 ];
 
-const standardFeatures = [
-  "15 job postings per year",
-  "Business profile promotion",
-  "Basic analytics",
-  "Community feed access",
-  "Standard directory visibility",
-];
-
-const premiumFeatures = [
-  "Unlimited job postings",
-  "4 featured job slots",
-  "Talent search access",
-  "Advanced analytics dashboard",
-  "Priority support",
-  "Premium Partner badge",
-];
+const standardFeatures = SUBSCRIPTION_PLANS.tier1.features;
+const premiumFeatures = SUBSCRIPTION_PLANS.tier2.features;
 
 export default function ForEmployersPage() {
   return (

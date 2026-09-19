@@ -286,32 +286,6 @@ function OrgDashboardContent() {
     })();
   }, [user]);
 
-  // Gate: schools must have an active plan before accessing dashboard
-  if (!loading && org && isSchoolOrganization(org) && !org.plan) {
-    return (
-      <AppShell>
-        <div className="max-w-lg mx-auto px-4 py-20 text-center">
-          <p className="text-5xl mb-4">🎓</p>
-          <h2 className="text-2xl font-extrabold text-text mb-3">Choose Your School Plan</h2>
-          <p className="text-text-sec mb-2">
-            To activate your school profile and start posting programs, please select a plan.
-          </p>
-          <p className="text-sm text-text-muted mb-8">
-            Post a single program for <strong>$50</strong>, or get the full School Plan at <strong>$5,500/year</strong> with unlimited programs, jobs, and featured listings.
-          </p>
-          <Link href="/org/plans" className="no-underline">
-            <button
-              className="brand-button px-8 py-3.5 rounded-xl border-none font-bold text-base cursor-pointer"
-              style={{ background: "var(--button-gradient)", color: "#fff" }}
-            >
-              View Plans &amp; Pricing →
-            </button>
-          </Link>
-        </div>
-      </AppShell>
-    );
-  }
-
   const showSaveMessage = (message: string) => {
     setSaveMsg(message);
     setTimeout(() => setSaveMsg(""), 2500);
@@ -461,23 +435,17 @@ function OrgDashboardContent() {
   };
 
   const businessIsPublic = org ? isOrganizationPubliclyVisible(org) : false;
-  const publicProfileHref = !isSchoolOrg && !businessIsPublic ? "/org/dashboard?tab=Edit%20Profile" : getOrganizationPublicHref(org);
+  const publicProfileHref = isSchoolOrg ? "/opportunities-update" : !businessIsPublic ? "/org/dashboard?tab=Edit%20Profile" : getOrganizationPublicHref(org);
   const heroDescription = isSchoolOrg
-    ? "Manage your school profile, programs, scholarships, and student recruitment."
+    ? "Manage your existing account records, jobs, events, and scholarships."
     : businessFirst ? "Promote your business, share your services, and help people find you." : "Manage your organization, jobs, and applications";
-  const primaryActionLabel = isSchoolOrg ? "Manage Programs" : businessFirst ? "Edit Business Profile" : "Post a Job";
+  const primaryActionLabel = businessFirst ? "Edit Business Profile" : "Post a Job";
   const primaryAction = () => {
     if (businessFirst) { router.push("/org/dashboard?tab=Edit%20Profile"); return; }
-    if (isSchoolOrg) {
-      setActiveTab("Programs");
-      return;
-    }
 
     router.push("/org/dashboard/jobs/new");
   };
-  const schoolStatusSummary = schoolIsPublic
-    ? "Your school profile is live on the public schools directory."
-    : "Your school profile is hidden from public view until you publish it again.";
+  const schoolStatusSummary = "Public school and program promotion has ended. Existing records remain available here. Contact IOPPS for help with a previous subscription.";
 
   /* ─── render ─── */
   return (
@@ -533,7 +501,7 @@ function OrgDashboardContent() {
                               background: schoolIsPublic ? "rgba(34,197,94,0.12)" : "rgba(251,191,36,0.12)",
                               color: schoolIsPublic ? "#4ADE80" : "#FBBF24",
                             }}>
-                              {schoolIsPublic ? "Profile Live" : "Profile Hidden"}
+                              School promotion retired
                             </span>
                           )}
                         </div>
@@ -548,7 +516,7 @@ function OrgDashboardContent() {
                           color: "var(--button-gradient-soft-text)",
                         }}>
                           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-                          {isSchoolOrg || businessIsPublic ? "View Profile" : "Review listing"}
+                          {isSchoolOrg ? "Service update" : businessIsPublic ? "View Profile" : "Review listing"}
                         </Link>
                       )}
                       <button
@@ -567,7 +535,7 @@ function OrgDashboardContent() {
                   </div>
                 </div>
 
-                {isSchoolOrg && !schoolIsPublic && (
+                {isSchoolOrg && (
                   <div className="mb-6 rounded-2xl p-5" style={{
                     background: "rgba(251,191,36,0.08)",
                     border: "1px solid rgba(251,191,36,0.24)",
@@ -578,7 +546,7 @@ function OrgDashboardContent() {
                           School Visibility
                         </div>
                         <h3 className="text-lg font-bold mt-2" style={{ color: "var(--text, #f8fafc)" }}>
-                          Your school profile is hidden
+                          School promotion has ended
                         </h3>
                         <p className="text-sm mt-2" style={{ color: "var(--text-muted, #94a3b8)" }}>
                           {schoolStatusSummary}
@@ -604,6 +572,7 @@ function OrgDashboardContent() {
                 )}
 
                 {/* ─── TAB PILLS ─── */}
+                <label className="mb-4 block text-sm font-semibold md:hidden">Dashboard section<select className="mt-2 w-full rounded-xl border border-border bg-card p-3 text-text" value={activeTab} onChange={event => router.push(getDashboardHref(event.target.value as DashboardTab), { scroll: false })}>{availableTabs.map(tab => <option key={tab} value={tab}>{tab}</option>)}</select></label>
                 <div className="employer-tabs flex flex-wrap gap-2 mb-8">
                   {availableTabs.map((tab) => (
                     <button
@@ -756,12 +725,12 @@ function SchoolOverviewTab({
       meta: "Manage scholarship posts",
     },
     {
-      title: "View Public Profile",
-      description: "Check how your school appears in the public schools directory and profile.",
+      title: "Service update",
+      description: "Read about school and program promotion changes.",
       accent: "#22C55E",
       bg: "rgba(34,197,94,0.08)",
       href: publicProfileHref,
-      meta: schoolIsPublic ? "Live on /schools" : "Currently hidden",
+      meta: "Existing records retained",
     },
   ] as const;
 
@@ -798,16 +767,14 @@ function SchoolOverviewTab({
                 {org?.name || "School Dashboard"}
               </h3>
               <p className="text-sm mt-2" style={{ color: "var(--text-muted, #94a3b8)" }}>
-                {schoolIsPublic
-                  ? "Your school profile is visible in the public directory and ready for student discovery."
-                  : "Your school profile is hidden. Publish it when you are ready for students to see it."}
+                School promotion has ended. Existing account records remain available.
               </p>
             </div>
             <span className="px-3 py-1 rounded-lg text-[11px] font-semibold uppercase tracking-wider" style={{
               background: schoolIsPublic ? "rgba(34,197,94,0.1)" : "rgba(251,191,36,0.12)",
               color: schoolIsPublic ? "#4ADE80" : "#FBBF24",
             }}>
-              {schoolIsPublic ? "Published" : "Hidden"}
+              Promotion retired
             </span>
           </div>
 
@@ -820,7 +787,7 @@ function SchoolOverviewTab({
             >
               <div className="text-sm font-bold" style={{ color: "var(--text, #f8fafc)" }}>Edit School Profile</div>
               <div className="text-xs mt-1" style={{ color: "var(--text-muted, #94a3b8)" }}>
-                Update the story, contact details, visibility, and media that students see.
+                Update the contact details and media in your account records.
               </div>
             </button>
             <Link

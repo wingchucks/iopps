@@ -183,8 +183,6 @@ export default function CanonicalEditProfileTab({
   getToken,
   persistSingleMedia,
   isSchool,
-  schoolIsPublished,
-  toggleSchoolPublished,
 }: CanonicalEditProfileTabProps) {
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -208,9 +206,7 @@ export default function CanonicalEditProfileTab({
   };
 
   const nextMissing = profileChecks.checks.find((check) => !check.done)?.label;
-  const schoolStatusMessage = schoolIsPublished
-    ? "Your school profile is public on the schools directory."
-    : "Your school profile is hidden from public view until you publish it again.";
+
 
   const addUniqueItem = (
     value: string,
@@ -366,37 +362,8 @@ export default function CanonicalEditProfileTab({
 
           {isSchool && (
             <SectionCard>
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: TEAL }}>
-                    School Visibility
-                  </div>
-                  <h3 className="text-lg font-bold mt-2" style={{ color: "var(--text, #f8fafc)" }}>
-                    {schoolIsPublished ? "School profile is public" : "School profile is hidden"}
-                  </h3>
-                  <p className="text-sm mt-2" style={{ color: "var(--text-sec)" }}>
-                    {schoolStatusMessage}
-                  </p>
-                </div>
-                <span
-                  className="px-3 py-1 rounded-lg text-[11px] font-semibold uppercase tracking-wider"
-                  style={{
-                    background: schoolIsPublished ? "rgba(34,197,94,0.1)" : "rgba(251,191,36,0.12)",
-                    color: schoolIsPublished ? "#4ADE80" : "#FBBF24",
-                  }}
-                >
-                  {schoolIsPublished ? "Live" : "Hidden"}
-                </span>
-              </div>
-              <ActionButton
-                disabled={saving}
-                variant={schoolIsPublished ? "secondary" : "primary"}
-                onClick={() => {
-                  void toggleSchoolPublished(!schoolIsPublished);
-                }}
-              >
-                {saving ? "Saving..." : schoolIsPublished ? "Hide School Profile" : "Publish School Profile"}
-              </ActionButton>
+              <h3 className="text-lg font-bold">School promotion has ended</h3>
+              <p className="mt-2 text-sm text-text-sec">Existing account records remain available. Public school and program promotion is no longer offered. Contact IOPPS for help with a previous subscription.</p>
             </SectionCard>
           )}
         </div>

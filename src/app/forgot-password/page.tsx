@@ -29,8 +29,7 @@ export default function ForgotPasswordPage() {
       setSent(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
-      if (msg.includes("user-not-found")) setError("No account found with this email.");
-      else if (msg.includes("invalid-email")) setError("Please enter a valid email address.");
+      if (msg.includes("invalid-email")) setError("Please enter a valid email address.");
       else if (msg.includes("too-many-requests")) setError("Too many attempts. Please try again later.");
       else setError(msg);
     } finally {
@@ -96,7 +95,7 @@ export default function ForgotPasswordPage() {
               </div>
               <h1 className="text-2xl font-extrabold text-text mb-2">Check your email</h1>
               <p className="text-text-sec text-[15px] mb-2 leading-relaxed">
-                We sent a password reset link to
+                If an account matches this address, a password reset link will be sent to
               </p>
               <p className="text-text font-semibold text-[15px] mb-6">{email}</p>
               <p className="text-text-muted text-sm mb-8 leading-relaxed">

@@ -39,6 +39,7 @@ type EventData = {
   endTime?: string;
   timeZone?: string;
   imageUrl?: string;
+  sourceUrl?: string;
   delivery?: string;
   location?: string | { city?: string; venue?: string; province?: string; remote?: boolean };
   eventType?: string;
@@ -287,6 +288,8 @@ function EventDetailContent() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="min-w-0 md:col-span-2">
+          {event.sourceUrl && <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" className="mb-5 mr-4 inline-flex min-h-11 items-center font-bold text-teal underline">Organizer information ↗</a>}
+          {!event.sourceUrl && !event.imageUrl && !event.rsvpLink && !event.contactEmail && !event.contactPhone && <p className="mb-5 rounded-xl border border-border p-4 text-sm text-text-sec">Organizer contact details have not been supplied. Confirm arrangements before travelling.</p>}
           {event.imageUrl && <a href={event.imageUrl} target="_blank" rel="noopener noreferrer" className="mb-5 inline-flex min-h-11 items-center font-bold text-teal underline">View event poster ↗</a>}
           {/* Description */}
           {event.description && (

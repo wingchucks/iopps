@@ -17,10 +17,10 @@ test("public detail cache policy is bounded and CDN-safe", () => {
   );
 });
 
-test("server-side metadata lookups use the shared Next data cache", () => {
+test("server metadata deduplicates within a request without retaining withdrawn identities", () => {
   const source = read("../src/lib/server/detail-metadata.ts");
-  assert.match(source, /unstable_cache/);
-  assert.match(source, /PUBLIC_DETAIL_CACHE_SECONDS/);
+  assert.doesNotMatch(source, /unstable_cache|PUBLIC_DETAIL_CACHE_SECONDS/);
+  assert.match(source, /import \{ cache \} from "react"/);
   assert.match(source, /cachedFindFirst/);
 });
 

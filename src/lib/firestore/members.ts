@@ -5,6 +5,7 @@ import {
   updateDoc,
   serverTimestamp,
 } from "firebase/firestore";
+import { salaryRangeError } from "../salary-range";
 import { auth, db } from "../firebase";
 
 export type WorkPreference = "remote" | "in-person" | "hybrid" | "any";
@@ -136,6 +137,8 @@ export async function updateCareerPreferences(
     education?: Education[];
   }
 ): Promise<void> {
+  const error = salaryRangeError(data.salaryRange);
+  if (error) throw new Error(error);
   await updateDoc(doc(db, "members", uid), {
     ...data,
     updatedAt: serverTimestamp(),

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import * as salaryRange from '../src/lib/salary-range.ts';
 import { personalProfileUpdates } from '../src/lib/profile-fields.ts';
 test('profile API cannot bypass rules to forge organization ownership or admin flags',async()=>{
  let authorized = true;
@@ -12,6 +13,7 @@ test('profile API cannot bypass rules to forge organization ownership or admin f
  '@/lib/account-labels':{ANONYMOUS_MEMBER_NAME:'Member'},
  '@/lib/api-auth':{verifyAuthToken:async()=>authorized?{success:true,decodedToken:{uid:'candidate'}}:{success:false,response:Response.json({error:'Unauthorized'},{status:401})}},
  '@/lib/profile-fields':{personalProfileUpdates},
+ '@/lib/salary-range':salaryRange,
  '@/lib/firebase-admin':{getAdminDb:()=>({collection:()=>({doc:()=>({get:async()=>({data:()=>({})}),set:async(data:unknown)=>writes.push(data)})})})},
  'firebase-admin/auth':{getAuth:()=>({verifyIdToken:async()=>({uid:'candidate'})})},
  'firebase-admin/app':{getApps:()=>[{}]},'@/lib/email':{sendAdminNewSignup:async()=>{throw Error('No email expected')}}};

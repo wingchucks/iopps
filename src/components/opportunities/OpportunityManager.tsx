@@ -56,6 +56,21 @@ export default function OpportunityManager({ kind, getToken, demo = false, initi
     catch (error) { setLoadError(error instanceof Error ? error.message : "The listing could not close."); }
     finally { setBusy(""); }
   }
+  async function remove(item: OpportunityRecord) {
+    if (!window.confirm(`Delete “${item.title}”? This removes the listing from your dashboard. Existing attendee or application history may be retained.`)) return;
+    setBusy(item.id); setLoadError(""); setMessage("");
+    try {
+      if (!demo) {
+        if (!getToken) throw new Error("Sign in to delete this listing.");
+        const response = await fetch(`/api/employer/${kind}`, { method: "DELETE", headers: { "Content-Type": "application/json", Authorization: `Bearer ${await getToken()}` }, body: JSON.stringify({ id: item.id, revision: item.revision || 0, confirmDelete: true }) });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "The listing could not be deleted.");
+      }
+      setItems(previous => previous.filter(record => record.id !== item.id));
+      setMessage("Listing deleted.");
+    } catch (error) { setLoadError(error instanceof Error ? error.message : "The listing could not be deleted."); }
+    finally { setBusy(""); }
+  }
   const filtered = items.filter(item => filter === "all" || item.status === filter);
   return <div className="min-w-0 rounded-2xl bg-slate-50 p-4 text-slate-900 sm:p-6">
     {editing ? <OpportunityEditor key={editing === "new" ? "new" : editing.id} kind={kind} initial={editing === "new" ? undefined : editing} demo={demo} getToken={getToken} onSave={save} onCancel={() => { setEditing(null); setRequestId(""); }} /> : <>
@@ -68,7 +83,7 @@ export default function OpportunityManager({ kind, getToken, demo = false, initi
       <div className="my-6 flex flex-wrap gap-2" aria-label="Listing status">{[["all", "All"], ["draft", "Drafts"], ["active", "Published"], ["closed", "Closed"]].map(([value, label]) => <button key={value} aria-pressed={filter === value} className={filter === value ? opportunityPrimary : opportunityButton} onClick={() => setFilter(value)}>{label} <span className="ml-2 opacity-80">{items.filter(item => value === "all" || item.status === value).length}</span></button>)}</div>
       {loading ? <p role="status" className="py-8 text-sm">Loading your listings…</p> : !loadError && !filtered.length ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-7 text-center"><h2 className="text-lg font-bold">{filter === "all" ? "Your next opportunity starts here." : "No listings in this view."}</h2><p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600">Save a draft while you gather the details. Publish when you are ready for people to find it.</p></div> : <div className="space-y-3">{filtered.map(item => <article key={item.id} className="flex min-w-0 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0"><span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${item.status === "active" ? "bg-teal-50 text-teal-800" : "bg-slate-100 text-slate-600"}`}>{item.status === "active" ? "Published" : item.status === "closed" ? "Closed" : "Private draft"}</span><h2 className="mt-2 break-words text-lg font-bold">{item.title}</h2><p className="mt-1 text-sm text-slate-600">{event ? getEventDisplayDates(item) || "Date to be confirmed" : isJobRecordExpired(item) ? "Intake closed — update the deadline for the next intake" : item.deadline ? `Deadline: ${item.deadline}` : "Confirm deadline with provider"}</p></div>
-        <div className="flex shrink-0 flex-wrap gap-2"><button className={opportunityButton} onClick={() => { setEditing(item); setMessage(""); }}>Edit<span className="sr-only"> {item.title}</span></button>{item.status === "active" && <>{!demo && <Link className={opportunityButton} href={`/${kind}/${item.slug || item.id}`}>View public listing</Link>}<button disabled={!!busy} className={opportunityButton} onClick={() => void close(item)}>{busy === item.id ? "Closing…" : "Close listing"}</button></>}</div>
+        <div className="flex shrink-0 flex-wrap gap-2"><button className={opportunityButton} onClick={() => { setEditing(item); setMessage(""); }}>Edit<span className="sr-only"> {item.title}</span></button>{["draft", "closed"].includes(item.status || "") && <button disabled={!!busy} className={opportunityButton} onClick={() => void remove(item)}>{busy === item.id ? "Deleting…" : "Delete listing"}<span className="sr-only"> {item.title}</span></button>}{item.status === "active" && <>{!demo && <Link className={opportunityButton} href={`/${kind}/${item.slug || item.id}`}>View public listing</Link>}<button disabled={!!busy} className={opportunityButton} onClick={() => void close(item)}>{busy === item.id ? "Closing…" : "Close listing"}</button></>}</div>
       </article>)}</div>}
     </>}
   </div>;

@@ -6,7 +6,7 @@ export type OpportunityStatus = "draft" | "active" | "closed";
 export type OpportunityRecord = Record<string, unknown> & { id: string; title: string; slug?: string; status?: string; revision?: number };
 export const EVENT_CATEGORIES = ["Pow Wow", "Conference", "Career Fair", "Round Dance", "Workshop / Training", "Networking", "Webinar", "Sports", "Fundraiser", "Other"];
 export const FUNDING_CATEGORIES = ["Scholarship", "Bursary", "Business Grant", "Community Grant", "Other Funding"];
-export const OPPORTUNITY_TEXT_FIELDS = ["title", "description", "category", "eventType", "startDate", "endDate", "startTime", "endTime", "timeZone", "city", "province", "venue", "location", "delivery", "price", "rsvpLink", "contactName", "contactEmail", "contactPhone", "imageUrl", "amount", "deadline", "deadlineType", "eligibility", "applicationUrl", "applicationInstructions", "educationLevel", "gpaRequired", "numberOfAwards", "renewable", "indigenousSpecific", "financialNeed", "businessStage", "matchingFunds", "indigenousOwnership", "businessPlanRequired", "maxFundingPerApplicant", "communitySize", "projectDuration", "reportingRequired", "applyMethod"] as const;
+export const OPPORTUNITY_TEXT_FIELDS = ["title", "description", "category", "eventType", "startDate", "endDate", "startTime", "endTime", "timeZone", "city", "province", "venue", "location", "delivery", "price", "rsvpLink", "contactName", "contactEmail", "contactPhone", "imageUrl", "sourceUrl", "amount", "deadline", "deadlineType", "eligibility", "applicationUrl", "applicationInstructions", "educationLevel", "gpaRequired", "numberOfAwards", "renewable", "indigenousSpecific", "financialNeed", "businessStage", "matchingFunds", "indigenousOwnership", "businessPlanRequired", "maxFundingPerApplicant", "communitySize", "projectDuration", "reportingRequired", "applyMethod"] as const;
 export const OPPORTUNITY_ARRAY_FIELDS = ["requirements", "fieldOfStudy", "priorityGroups", "industrySector", "fundingUse", "projectType", "applicantType", "highlights"] as const;
 
 export function isCalendarDate(value: string): boolean {
@@ -25,7 +25,7 @@ export function scholarshipDeadlineType(record: Record<string, unknown>): "date"
 }
 export function normalizeOpportunityInput(input: Record<string, unknown>): Record<string, unknown> {
   const result = { ...input };
-  const aliases: Record<string, string[]> = { startDate: ["date"], category: ["opportunityType"], imageUrl: ["posterUrl"], rsvpLink: ["externalUrl"], applicationUrl: ["externalUrl", "url"], applicationInstructions: ["howToApply"], gpaRequired: ["minimumGPA"] };
+  const aliases: Record<string, string[]> = { startDate: ["date"], category: ["opportunityType"], imageUrl: ["posterUrl"], sourceUrl: ["sourceURL", "website", "url"], rsvpLink: ["externalUrl"], applicationUrl: ["externalUrl", "url"], applicationInstructions: ["howToApply"], gpaRequired: ["minimumGPA"] };
   for (const [key, alternatives] of Object.entries(aliases)) if (!(key in result)) {
     const alias = alternatives.find(name => name in input);
     if (alias) result[key] = input[alias];
@@ -57,7 +57,7 @@ export function validateOpportunity(kind: OpportunityKind, raw: Record<string, u
   }
   if ("isFree" in input) data.isFree = input.isFree === true;
   if (!String(data.title || "").trim()) errors.title = "Give this listing a title.";
-  for (const field of ["applicationUrl", "rsvpLink", "imageUrl"]) if (data[field] && !safeOpportunityUrl(data[field])) errors[field] = "Use a complete https:// or http:// link.";
+  for (const field of ["applicationUrl", "rsvpLink", "imageUrl", "sourceUrl"]) if (data[field] && !safeOpportunityUrl(data[field])) errors[field] = "Use a complete https:// or http:// link.";
   if (data.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(data.contactEmail))) errors.contactEmail = "Enter a valid contact email.";
   if (data.province) {
     const province = provinceCode(data.province);
@@ -72,6 +72,7 @@ export function validateOpportunity(kind: OpportunityKind, raw: Record<string, u
   if (kind === "events") {
     data.eventType = data.eventType || data.category || "Other";
     if (status === "active") {
+      if (/\b(?:check|see|refer to)\b.{0,35}\b(?:poster|host source)\b/i.test(String(data.description || "")) && !data.sourceUrl && !data.imageUrl && !data.rsvpLink && !data.contactEmail && !data.contactPhone) errors.sourceUrl = "Add the organizer link, poster or contact details referenced in the description.";
       if (!data.startDate) errors.startDate = "Choose the event start date.";
       if (data.delivery !== "online" && !data.location && !(data.city && data.province)) errors.city = "Add the city and province, or choose online.";
       if (data.delivery === "online" && !data.rsvpLink && !data.contactEmail) errors.rsvpLink = "Add a registration link or contact email for joining online.";

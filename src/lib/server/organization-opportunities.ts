@@ -60,7 +60,7 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
       if (!editing && exists) return { record: { ...previous, id }, duplicate: true };
       if (editing && !exists) throw new EmployerApiError(404, "Listing not found.");
       if (editing && (typeof body.revision !== "number" || body.revision !== (Number(previous.revision) || 0))) throw new EmployerApiError(409, "This listing changed in another window. Reload it before saving again.");
-      if (["rejected", "suspended", "removed", "flagged"].includes(String(previous.status))) throw new EmployerApiError(403, "This listing needs an administrator’s review before it can be changed.");
+      if (["deleted", "rejected", "suspended", "removed", "flagged"].includes(String(previous.status))) throw new EmployerApiError(403, "This listing needs an administrator’s review before it can be changed.");
       // Closing is always possible without repairing legacy content first.
       const validation = status === "closed" ? { data: previous, errors: {} } : validateOpportunity(kind, body, status, previous);
       if (Object.keys(validation.errors).length) return { errors: validation.errors };
@@ -97,5 +97,30 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
       }).catch(error => console.error("Opportunity publication notification:", error));
     }
     return NextResponse.json(serialize(result.record), { status: editing || result.duplicate ? 200 : 201, headers: noStore });
+  } catch (error) { return failure(error); }
+}
+
+export async function deleteOrganizationOpportunity(req: Request, kind: OpportunityKind) {
+  try {
+    const context = await requireEmployerContext(req);
+    if (!["owner", "admin"].includes(context.orgRole)) throw new EmployerApiError(403, "An organization owner or admin can delete listings.");
+    const body = await req.json().catch(() => null);
+    if (!body || body.confirmDelete !== true || typeof body.id !== "string" || !/^[^/]{1,200}$/.test(body.id)) throw new EmployerApiError(400, "Confirm the listing to delete.");
+    const db = getAdminDb();
+    const publicRef = db.collection(kind).doc(body.id), privateRef = db.collection(PRIVATE_COLLECTION).doc(`${kind}-${body.id}`);
+    await db.runTransaction(async tx => {
+      const [publicDoc, privateDoc] = await tx.getAll(publicRef, privateRef);
+      const previous = (privateDoc.exists ? privateDoc.data() : publicDoc.data()) || {};
+      if ((!publicDoc.exists && !privateDoc.exists) || (previous.orgId || previous.employerId) !== context.orgId) throw new EmployerApiError(404, "Listing not found.");
+      if (previous.status === "deleted") return;
+      if (!["draft", "closed"].includes(String(previous.status))) throw new EmployerApiError(409, "Close the listing before deleting it.");
+      if (body.revision !== (Number(previous.revision) || 0)) throw new EmployerApiError(409, "This listing changed. Reload it before deleting.");
+      const tombstone = { id: body.id, kind, orgId: context.orgId, employerId: context.orgId, status: "deleted", active: false, revision: (Number(previous.revision) || 0) + 1, deletedAt: new Date().toISOString() };
+      // Keep minimal identity so stale feed copies cannot resurrect the listing.
+      // Existing attendee/application history is intentionally not erased.
+      tx.set(privateRef, tombstone);
+      if (publicDoc.exists) tx.set(publicRef, { ...tombstone, ...(previous.slug ? { slug: previous.slug } : {}) });
+    });
+    return NextResponse.json({ success: true }, { headers: noStore });
   } catch (error) { return failure(error); }
 }

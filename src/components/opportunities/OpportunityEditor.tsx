@@ -109,6 +109,7 @@ export default function OpportunityEditor({ kind, initial, onSave, onCancel, dem
         <h3 className="text-lg font-bold">03 / {event ? "Registration and contact" : "How to apply"}</h3>
         {event ? <>
           {field("price", "Admission or ticket price", { help: "For example: Free; $20; Donations welcome. Leave blank if not confirmed." })}
+          {field("sourceUrl", "Official event information", { type: "url", help: "Link to the organizer’s event page so visitors can confirm the details." })}
           {field("rsvpLink", "Registration or event website", { type: "url", help: "Use the full https:// link. Visitors will open the organizer’s website." })}
         </> : <>
           {field("applicationUrl", "Application website", { type: "url", help: "Use the full https:// link to the provider’s application page." })}

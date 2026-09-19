@@ -15,12 +15,14 @@
   --navy: #0F2B4C;
   --navy-light: #1A3A5C;
   --navy-deep: #091E36;
-  --teal: #0D9488;
+  --teal: #0F766E;
   --teal-light: #14B8A6;
   --teal-soft: #CCFBF1;
   --gold: #D97706;
   --gold-soft: #FEF3C7;
   --red: #DC2626;
+  --danger-text: #B91C1C;
+  --success-text: #047857;
   --red-soft: #FEE2E2;
   --green: #059669;
   --green-soft: #D1FAE5;
@@ -33,7 +35,7 @@
   --border: #E2E8F0;
   --text: #0F172A;
   --text-sec: #475569;
-  --text-muted: #94A3B8;
+  --text-muted: #526178;
   --hero-stat: var(--navy);
   --spotlight-bg: #FFFBEB;
   --background: var(--bg);
@@ -100,12 +102,15 @@
 }
 
 [data-theme="dark"] {
+  --danger-text: #FCA5A5;
+  --success-text: #6EE7B7;
+  --teal: #2DD4BF;
   --bg: #0B1120;
   --card: #1A2332;
   --border: #2A3544;
   --text: #F1F5F9;
   --text-sec: #94A3B8;
-  --text-muted: #64748B;
+  --text-muted: #A4B3C8;
   --teal-soft: rgba(13, 148, 136, 0.15);
   --gold-soft: rgba(217, 119, 6, 0.15);
   --red-soft: rgba(220, 38, 38, 0.15);
@@ -278,3 +283,6 @@ input, textarea, select {
 .business-profile-checklist>summary:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
 .business-profile-save{padding:12px 16px;margin:0 0 20px;border:1px solid var(--border);border-radius:12px;background:var(--teal-soft);color:var(--text);font-size:14px;font-weight:600}
 .business-profile-save[data-error=true]{background:rgba(239,68,68,.1)}
+
+/* Keep keyboard focus visible, including controls with outline-none utilities. */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid var(--input-focus); outline-offset: 3px; }

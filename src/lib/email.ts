@@ -419,3 +419,11 @@ export async function sendSubscriptionConfirmation(opts: {
     return { success: false, error: String(err) };
   }
 }
+
+export async function sendAccountPasswordResetEmail(email: string, resetLink: string) {
+  const safeLink = escapeHtml(resetLink);
+  return sendCheckedEmail({ from: FROM_EMAIL, to: email, subject: "Reset your IOPPS password",
+    html: emailWrapper(`<h2 style="${STYLES.h2}">Reset your IOPPS password</h2><p style="${STYLES.text}">Use this secure link to choose a new password for your IOPPS account.</p><p><a style="${STYLES.button}" href="${safeLink}">Reset password</a></p><p style="${STYLES.text}">If you did not request this email, you can ignore it. Your password will stay the same.</p>`),
+    text: `Reset your IOPPS password\n\nUse this secure link to choose a new password: ${resetLink}\n\nIf you did not request this email, ignore it. Your password will stay the same.\n\nIOPPS — Empowering Indigenous Success`,
+  });
+}

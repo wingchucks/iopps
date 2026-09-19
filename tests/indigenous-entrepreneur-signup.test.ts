@@ -21,8 +21,8 @@ test("guided signup preselects the entrepreneur path without misclassifying gene
 
   assert.match(signup, /useSearchParams/);
   assert.match(signup, /intent\) === "indigenous-business"/);
-  assert.match(signup, /entrepreneurIntent \? "organization" : ""/);
-  assert.match(signup, /entrepreneurIntent \? "employer" : ""/);
+  assert.match(signup, /(?:entrepreneurIntent \|\| searchParams\.get\("type"\) === "employer")\) \? "organization" : ""/);
+  assert.match(signup, /(?:entrepreneurIntent \|\| searchParams\.get\("type"\) === "employer")\) \? "employer" : ""/);
   assert.match(signup, /useState<BusinessIdentity>\("not_specified"\)/);
   assert.match(signup, /Indigenous Entrepreneur Signup/);
   assert.match(signup, /Your free business profile and directory listing/);

@@ -15,6 +15,8 @@ export function authIntentHref(path: string, query: IntentQuery): string {
   if (redirect) params.set('redirect', redirect);
   if (intent === "indigenous-business" || intent === "hiring") params.set("intent", intent);
   if (plan && PLAN_IDS.includes(plan)) params.set('plan', plan);
+  if (query.get('type') === 'employer' && !path.includes('type=')) params.set('type', 'employer');
+  if (query.get('resume') === 'organization' && !path.includes('resume=')) params.set('resume', 'organization');
   return path + (params.size ? `${path.includes('?') ? '&' : '?'}${params}` : '');
 }
 

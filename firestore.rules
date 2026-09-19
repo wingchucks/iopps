@@ -33,14 +33,20 @@ service cloud.firestore {
         'experienceLevel', 'industry', 'preferredLocation', 'remoteOk', 'jobTypes',
         'willingToRelocate', 'updatedAt'];
     }
+    function validSalaryRange() {
+      let salary = request.resource.data.get('salaryRange', null);
+      return salary == null || (salary is map && salary.get('min', null) is number && salary.get('max', null) is number
+        && salary.min >= 0 && salary.max >= salary.min && salary.max <= 1000000000);
+    }
     function safeProfileCreate() {
       let data = request.resource.data;
-      return data.keys().hasOnly(profileFields().concat(['uid', 'email', 'joinedAt', 'createdAt', 'role']))
+      return validSalaryRange() && data.keys().hasOnly(profileFields().concat(['uid', 'email', 'joinedAt', 'createdAt', 'role']))
         && data.get('uid', request.auth.uid) == request.auth.uid
         && data.get('role', 'community') in ['community', 'member'];
     }
     function safeProfileUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileFields());
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileFields())
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['salaryRange']) || validSalaryRange());
     }
     // Platform privileges come from signed claims, never an editable profile role.
     function currentManagedRoleMatches(role) {

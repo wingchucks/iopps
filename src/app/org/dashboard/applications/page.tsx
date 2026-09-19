@@ -3,6 +3,7 @@ import { updateApplicationBatch } from "@/lib/employer-application-updates";
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import ApplicationDetails from "@/components/ApplicationDetails";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
@@ -126,7 +127,10 @@ export default function OrgApplicationsPage() {
         method:"PUT", headers:{Authorization:`Bearer ${idToken}`,"Content-Type":"application/json"},
         body:JSON.stringify({appId,status:newStatus}),
       });
-      if (!response.ok) throw new Error("Application status wasn’t saved. Please retry.");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Application status wasn’t saved. Please retry.");
+      }
       setGroups(prev=>prev.map(g=>g.post.id!==postId?g:{...g,applications:g.applications.map(a=>a.id===appId?{...a,status:newStatus}:a)}));
       setActionNotice("Application status saved.");
     } catch (error) { setActionError(error instanceof Error ? error.message : "Application status wasn’t saved. Please retry."); }
@@ -195,10 +199,10 @@ export default function OrgApplicationsPage() {
 
   const selectAll = () => {
     if (bulkUpdating) return;
-    if (selected.size === allApps.length) {
+    if (selected.size === allApps.filter(a => a.status !== "withdrawn").length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(allApps.map((a) => a.id)));
+      setSelected(new Set(allApps.filter(a => a.status !== "withdrawn").map((a) => a.id)));
     }
   };
 
@@ -249,6 +253,8 @@ export default function OrgApplicationsPage() {
           <label className="flex items-center shrink-0 mt-1 cursor-pointer">
             <input
               type="checkbox"
+              aria-label={`Select application from ${displayName}`}
+              disabled={bulkUpdating || app.status === "withdrawn"}
               checked={selected.has(app.id)}
               onChange={() => toggleSelect(app.id)}
               className="w-4 h-4 rounded"
@@ -321,11 +327,12 @@ export default function OrgApplicationsPage() {
               Applied: {formatDate(app.appliedAt)}
             </p>
 
+            <ApplicationDetails application={app} profile={profile} />
             {/* Actions row */}
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <select
                 aria-label={`Application status for ${displayName}`}
-                disabled={bulkUpdating || updatingStatus[app.id]}
+                disabled={app.status === "withdrawn" || bulkUpdating || updatingStatus[app.id]}
                 value={app.status}
                 onChange={(e) =>
                   handleStatusChange(
@@ -497,6 +504,7 @@ export default function OrgApplicationsPage() {
               {/* Filter by posting */}
               {groups.length > 1 && (
                 <select
+                  aria-label="Filter applications by posting"
                   value={filterPostId}
                   onChange={(e) => setFilterPostId(e.target.value)}
                   className="px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer"
@@ -629,7 +637,7 @@ export default function OrgApplicationsPage() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={selected.size === allApps.length && allApps.length > 0}
+                    checked={selected.size === allApps.filter(a => a.status !== "withdrawn").length && selected.size > 0}
                     onChange={selectAll}
                     className="w-4 h-4 rounded"
                   />
@@ -686,7 +694,7 @@ export default function OrgApplicationsPage() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={selected.size === allApps.length && allApps.length > 0}
+                    checked={selected.size === allApps.filter(a => a.status !== "withdrawn").length && selected.size > 0}
                     onChange={selectAll}
                     className="w-4 h-4 rounded"
                   />
@@ -700,7 +708,7 @@ export default function OrgApplicationsPage() {
               </div>
 
               <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 400 }}>
-                {(["submitted", "reviewing", "shortlisted", "interview", "offered", "rejected"] as ApplicationStatus[]).map((status) => {
+                {(["submitted", "reviewing", "shortlisted", "interview", "offered", "rejected", "withdrawn"] as ApplicationStatus[]).map((status) => {
                   const sc = statusColors[status];
                   const apps = boardColumns[status] || [];
                   return (
@@ -769,7 +777,9 @@ export default function OrgApplicationsPage() {
                                 <div className="flex items-center gap-2 mb-2">
                                   <input
                                     type="checkbox"
-                                    checked={selected.has(app.id)}
+                                    aria-label={`Select application from ${displayName}`}
+              disabled={bulkUpdating || app.status === "withdrawn"}
+              checked={selected.has(app.id)}
                                     onChange={() => toggleSelect(app.id)}
                                     className="w-3.5 h-3.5 rounded"
                                   />
@@ -836,10 +846,11 @@ export default function OrgApplicationsPage() {
                                   )}
                                 </div>
 
+                                <ApplicationDetails application={app} profile={profile} />
                                 {/* Move to dropdown */}
                                 <select
                                   aria-label={`Application status for ${displayName}`}
-                                  disabled={bulkUpdating || updatingStatus[app.id]}
+                                  disabled={app.status === "withdrawn" || bulkUpdating || updatingStatus[app.id]}
                                   value={app.status}
                                   onChange={(e) =>
                                     handleStatusChange(

@@ -29,6 +29,11 @@ export interface PurchasePlanDefinition {
   highlight?: boolean;
 }
 
+// Legacy definitions remain available for receipts and webhook fulfillment.
+export function isPlanAvailableForPurchase(value: unknown): value is "tier1" | "tier2" | "featured-post" {
+  return value === "tier1" || value === "tier2" || value === "featured-post";
+}
+
 export const SUBSCRIPTION_PLAN_IDS: SubscriptionPlanId[] = ["tier1", "tier2", "tier3"];
 
 export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanId, SubscriptionPlanDefinition> = {
@@ -39,10 +44,10 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanId, SubscriptionPlanDefi
     amount: 1250,
     priceLabel: "$1,250",
     periodLabel: "/year",
-    shortDescription: "15 job postings, profile promotion, and basic analytics.",
-    jobLimit: "15 job postings/year",
+    shortDescription: "Business profile promotion and application analytics.",
+    jobLimit: "Standard job listings included",
     features: [
-      "15 job postings per year",
+      "Standard job listings included",
       "Business profile promotion",
       "Basic analytics",
       "Community feed access",
@@ -55,15 +60,15 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanId, SubscriptionPlanDefi
     amount: 2500,
     priceLabel: "$2,500",
     periodLabel: "/year",
-    shortDescription: "Unlimited jobs, featured visibility, and talent search.",
+    shortDescription: "Job listings, featured visibility, and application management.",
     jobLimit: "Unlimited job postings",
     badge: "Most Popular",
     highlight: true,
     features: [
       "Unlimited job postings",
       "4 featured job slots",
-      "Talent search access",
-      "Advanced analytics dashboard",
+      "Manage received applications",
+      "Recorded job and application analytics",
       "Priority support",
       "Premium Partner badge",
     ],

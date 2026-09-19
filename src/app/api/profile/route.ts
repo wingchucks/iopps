@@ -4,6 +4,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
 import { getApps } from "firebase-admin/app";
 import { verifyAuthToken } from "@/lib/api-auth";
+import { salaryRangeError } from "@/lib/salary-range";
 import { personalProfileUpdates } from "@/lib/profile-fields";
 import { sendAdminNewSignup } from "@/lib/email";
 
@@ -33,6 +34,8 @@ export async function PATCH(req: NextRequest) {
   try {
     const input = await req.json();
     if (!input || typeof input !== "object" || Array.isArray(input)) return NextResponse.json({ error: "Invalid profile" }, { status: 400 });
+    const salaryError = salaryRangeError(input.salaryRange);
+    if (salaryError) return NextResponse.json({ error: salaryError }, { status: 400 });
     const signupRole = input.signupRole;
     const data = personalProfileUpdates(input);
 

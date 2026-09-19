@@ -285,7 +285,7 @@ function ProfileContent() {
               {profile?.openToWork && (
                 <Badge
                   text="Open to Work"
-                  color="var(--green)"
+                  color="#6EE7B7"
                   bg="rgba(34,197,94,.15)"
                   small
                 />
@@ -311,7 +311,7 @@ function ProfileContent() {
             <Button
               small
               onClick={async () => { await signOut(); router.push("/"); }}
-              style={{ color: "#DC2626", borderColor: "rgba(220,38,38,.3)", background: "rgba(220,38,38,.1)" }}
+              style={{ color: "#FECACA", borderColor: "rgba(220,38,38,.3)", background: "rgba(220,38,38,.1)" }}
             >
               Sign Out
             </Button>
@@ -671,11 +671,11 @@ function ProfileContent() {
                     <span className="text-lg">&#9989;</span>
                   </span>
                   <div>
-                    <p className="text-sm font-bold m-0" style={{ color: "var(--green)" }}>
+                    <p className="text-sm font-bold m-0" style={{ color: "var(--success-text)" }}>
                       Open to Work
                     </p>
                     <p className="text-xs text-text-muted m-0">
-                      Employers can see you&apos;re looking for opportunities
+                      Your career preferences are saved for your job search
                     </p>
                   </div>
                 </div>

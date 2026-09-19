@@ -21,10 +21,10 @@ function load(context: any = {uid:'org',orgId:'org',orgRole:'owner'}, authStatus
  return {calls,post:(body:unknown,authorized=true)=>exports.POST(new Request('https://www.iopps.ca/api/stripe/checkout',{method:'POST',headers:{origin:'https://attacker.example',...(authorized?{authorization:'Bearer fictional'}:{})},body:JSON.stringify(body)}))};
 }
 test('checkout validates exact plans and constructs trusted safe continuation URLs',async()=>{
- for(const planId of [undefined,'constructor','toString','__proto__',[],123,'invalid']) {
+ for(const planId of [undefined,'constructor','toString','__proto__',[],123,'invalid','tier3','standard-post','program-post']) {
   const a=load();assert.equal((await a.post({planId})).status,400);assert.equal(a.calls.length,0);
  }
- const a=load();assert.equal((await a.post({planId:'standard-post',redirect:'/org/dashboard/jobs/new'})).status,200);
+ const a=load();assert.equal((await a.post({planId:'featured-post',redirect:'/org/dashboard/jobs/new'})).status,200);
  assert.equal(a.calls[0].metadata.orgId,'org');
  const success=new URL(a.calls[0].success_url);assert.equal(success.origin,'https://www.iopps.ca');assert.equal(success.searchParams.get('redirect'),'/org/dashboard/jobs/new');
  assert.equal(new URL(a.calls[0].cancel_url).searchParams.get('redirect'),'/org/dashboard/jobs/new');

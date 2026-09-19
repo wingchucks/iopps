@@ -72,7 +72,7 @@ function getFeaturedRejectionReason(summary: FeaturedJobSummary): string {
     return "All featured slots are currently in use. Unfeature an active job or buy a featured post credit to add another.";
   }
 
-  return "Featured jobs require a Premium or School plan, or an available featured post credit.";
+  return "Featured jobs require an eligible plan or an available featured post credit.";
 }
 
 export function evaluateFeaturedActivation({

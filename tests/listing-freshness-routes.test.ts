@@ -14,6 +14,7 @@ import * as jobSlugs from '../src/lib/server/job-slugs.ts';
 import * as metadata from '../src/lib/job-metadata.ts';
 import * as contentProjection from '../src/lib/server/public-content-record.ts';
 import * as publicEvents from '../src/lib/public-events.ts';
+import * as eventDedupe from '../src/lib/event-directory-dedupe.ts';
 import * as opportunityPosting from '../src/lib/opportunity-posting.ts';
 const nativeRequire = createRequire(import.meta.url);
 function loadRoute(path: string, mocks: Record<string, unknown>) {
@@ -26,6 +27,7 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
     '@/lib/job-metadata': metadata,
     '@/lib/server/public-content-record': contentProjection,
     '@/lib/public-events': publicEvents,
+    '@/lib/event-directory-dedupe': eventDedupe,
     '@/lib/opportunity-posting': opportunityPosting,
     ...mocks,
   };

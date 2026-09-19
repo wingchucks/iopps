@@ -20,18 +20,18 @@ test("homepage section now supports Indigenous businesses", () => {
   const home = read("src/app/page.tsx");
   const jobsIndex = home.indexOf('<section className="op-jobs"');
   const liveIndex = home.indexOf('<section className="journey-live"');
-  const spotlightIndex = home.indexOf('<section className="journey-business');
+  const spotlightIndex = home.indexOf('<section className="entrepreneurship');
   const partnerIndex = home.indexOf("<PartnerShowcase");
 
   assert.ok(jobsIndex > -1 && liveIndex > jobsIndex && spotlightIndex > liveIndex, "homepage must prioritize jobs, then IOPPS Live, then Indigenous businesses");
   assert.ok(partnerIndex > -1, "homepage should keep the partner section");
   assert.ok(partnerIndex > spotlightIndex, "partner showcase follows the three primary journeys");
-  assert.match(home, /Indigenous businesses & entrepreneurship/);
-  assert.match(home, /Add your business free/);
+  assert.match(home, /Indigenous Entrepreneurship/);
+  assert.match(home, /Create your business page/);
   assert.match(home, /href="\/signup\?intent=indigenous-business"/);
   assert.match(home, /Discover Indigenous businesses/);
   assert.match(home, /href="\/businesses\?type=Indigenous"/);
-  assert.match(home, /href="\/businesses#business-support"/);
+  assert.match(home, /href="\/funding"/);
 });
 
 test("Indigenous Business Spotlight gives the real signup path and precise free offer", () => {

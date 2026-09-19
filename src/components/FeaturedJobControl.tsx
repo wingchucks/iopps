@@ -42,7 +42,9 @@ export default function FeaturedJobControl({
       ? "You already have more featured jobs than your current allowance. Existing featured jobs stay live, but you need to unfeature one before adding another."
       : hasCapacity
         ? "Featured jobs appear in the premium featured strip and receive stronger placement in discovery."
-        : "You’ve used your current featured capacity. Upgrade your plan or buy a featured job credit to add another featured listing.";
+        : summary.featuredSlotsTotal === 0 && summary.featuredSlotsUsed === 0
+          ? "Featured placement requires an eligible plan or a featured job credit. Standard job listings are free."
+          : "Your featured capacity is in use. Unfeature an active job or buy a featured job credit to add another.";
 
   return (
     <div

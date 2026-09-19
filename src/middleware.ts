@@ -52,6 +52,13 @@ export function middleware(req: NextRequest) {
   const maintenance = maintenanceResponse(req.nextUrl.pathname, process.env.IOPPS_MAINTENANCE_MODE, req.method);
   if (maintenance) return maintenance;
   const { pathname } = req.nextUrl;
+  const retired = ["/schools", "/programs", "/education", "/training"];
+  if (retired.some(prefix => pathname === prefix || pathname.startsWith(prefix + "/"))) {
+    const target = req.nextUrl.clone(); target.pathname = "/opportunities-update"; target.search = "";
+    return NextResponse.redirect(target, 307);
+  }
+  if (pathname === "/shop" || pathname.startsWith("/shop/")) return NextResponse.redirect(new URL("/businesses", req.url), 307);
+  if (pathname === "/spotlight") return NextResponse.redirect(new URL("/livestreams", req.url), 307);
   const cookie = req.cookies.get(COOKIE_NAME)?.value;
 
   interface SessionPayload {

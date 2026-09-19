@@ -1,5 +1,6 @@
 "use client";
 
+import { salaryRangeError } from "@/lib/salary-range";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -131,6 +132,10 @@ function CareerSettingsContent() {
 
   const handleSave = async () => {
     if (!user) return;
+    const validationError = (Boolean(salaryMin) !== Boolean(salaryMax))
+      ? "Enter both a minimum and maximum salary, or leave both blank."
+      : salaryRangeError(salaryMin && salaryMax ? { min: Number(salaryMin), max: Number(salaryMax) } : null);
+    if (validationError) { showToast(validationError, "error"); return; }
     setSaving(true);
     try {
       const salaryRange: SalaryRange | null =
@@ -190,6 +195,7 @@ function CareerSettingsContent() {
           <button
             type="button"
             role="switch"
+            aria-label="Open to work"
             aria-checked={openToWork}
             onClick={() => setOpenToWork(!openToWork)}
             className="relative h-7 w-12 rounded-full transition-colors duration-200 cursor-pointer flex-shrink-0"
@@ -274,6 +280,7 @@ function CareerSettingsContent() {
               <input
                 type="number"
                 value={salaryMin}
+                aria-label="Minimum salary"
                 onChange={(e) => setSalaryMin(e.target.value)}
                 className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                 placeholder="Min"
@@ -286,6 +293,7 @@ function CareerSettingsContent() {
               <input
                 type="number"
                 value={salaryMax}
+                aria-label="Maximum salary"
                 onChange={(e) => setSalaryMax(e.target.value)}
                 className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                 placeholder="Max"

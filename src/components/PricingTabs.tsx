@@ -6,7 +6,7 @@ import Link from "next/link";
 import Card from "@/components/Card";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 
-const tabs = ["Promotion Plans", "Pay Per Post", "Conferences", "Businesses"] as const;
+const tabs = ["Promotion Plans", "Featured Jobs", "Conferences", "Businesses"] as const;
 type Tab = (typeof tabs)[number];
 
 function Check() {
@@ -182,11 +182,12 @@ export default function PricingTabs({
   const postHref = (plan: string) =>
     variant === "org" ? `/org/checkout?plan=${plan}` : authIntentHref("/org/signup", new URLSearchParams({ plan }));
   const postCta = variant === "org" ? "Post Now" : "Get Started";
-  const freeHref = variant === "org" ? "/org/dashboard" : "/org/signup";
+  const freeHref = variant === "org" ? "/org/dashboard" : "/signup?type=employer";
   const freeSuffix = variant === "org" ? "" : " \u2014 It's Free";
 
   return (
     <>
+      <p className="mb-5 text-sm text-text-sec">Standard job listings and application management are free. Paid plans support promoted profiles and eligible featured placements. Business directory listings require review.</p>
       {/* Tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {tabs.map((tab) => {
@@ -234,16 +235,9 @@ export default function PricingTabs({
         </div>
       )}
 
-      {activeTab === "Pay Per Post" && (
+      {activeTab === "Featured Jobs" && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <PlanCard
-            title={ONE_TIME_PLANS["standard-post"].title}
-            price={ONE_TIME_PLANS["standard-post"].priceLabel}
-            period={ONE_TIME_PLANS["standard-post"].periodLabel}
-            features={ONE_TIME_PLANS["standard-post"].features}
-            cta={postCta}
-            href={postHref("standard-post")}
-          />
+
           <PlanCard
             title={ONE_TIME_PLANS["featured-post"].title}
             price={ONE_TIME_PLANS["featured-post"].priceLabel}
@@ -254,14 +248,7 @@ export default function PricingTabs({
             cta={postCta}
             href={postHref("featured-post")}
           />
-          <PlanCard
-            title={ONE_TIME_PLANS["program-post"].title}
-            price={ONE_TIME_PLANS["program-post"].priceLabel}
-            period={ONE_TIME_PLANS["program-post"].periodLabel}
-            features={ONE_TIME_PLANS["program-post"].features}
-            cta={postCta}
-            href={postHref("program-post")}
-          />
+
         </div>
       )}
 
@@ -353,7 +340,7 @@ export default function PricingTabs({
               },
               {
                 q: "What happens when my subscription expires?",
-                a: "When your subscription ends, your active job and program listings are archived. They won't appear in search results, but all your data is preserved and listings are restored when you renew.",
+                a: "When your subscription ends, the listings covered by that subscription are archived. Your data is preserved. Contact IOPPS if you need help reviewing or restoring a listing.",
               },
               {
                 q: "Are events free?",

@@ -14,6 +14,8 @@ const browser = await chromium.launch({ headless: true, ...(process.env.QA_CHROM
 const fixtures = [
   { id: 'qa-explicit-hourly', slug: 'qa-explicit-hourly', title: 'QA Community Coordinator', employerName: 'QA Community Organization', employerId: 'qa-org', location: 'Saskatoon, SK', employmentType: 'Full-time', status: 'active', active: true, description: 'Expected Compensation: The expected hourly hiring range is $23.00 to $27.75 based on a 21-hour work week.', externalUrl: 'https://employer.example/jobs/qa-role', createdAt: new Date().toISOString() },
   { id: 'qa-internal', slug: 'qa-internal', title: 'QA Program Assistant', employerName: 'QA Second Organization', employerId: 'qa-second', orgId: 'qa-second', location: 'Regina, SK', employmentType: 'Part-time', active: true, status: 'active', description: 'Fictional internal application QA fixture.\n<img src="/qa-inert-image" onerror="void 0">', descriptionFormat: 'plain-text', requiresResume: true, requiresCoverLetter: true, requiresReferences: true },
+  { id: 'qa-ontario', slug: 'qa-ontario', title: 'QA Ontario Insurance Advisor', employerName: 'QA Second Organization', location: 'ON, CA', active: true, status: 'active', remoteFlag: true, workLocation: 'Remote', salary: '$51,000 - $54,000', salaryRange: { min: 51000, max: 54000, period: 'Annual', disclosed: true } },
+  { id: 'qa-vernon', slug: 'qa-vernon', title: 'QA Vernon Advisor', employerName: 'QA Second Organization', location: 'Vernon, BC', active: true, status: 'active' },
 ];
 const findings = [];
 try {
@@ -41,6 +43,18 @@ try {
     await page.goto(`${base}/jobs`, { waitUntil: 'domcontentloaded' });
     await page.getByText(fixtures[0].title, { exact: true }).waitFor();
     const search = page.getByRole('searchbox', { name: 'Search jobs', exact: true });
+    const location = page.getByRole('searchbox', { name: 'Filter jobs by city or province', exact: true });
+    for (const province of ['Ontario', 'ON']) {
+      await location.fill(province);
+      await page.getByText('QA Ontario Insurance Advisor', { exact: true }).waitFor();
+      await page.waitForFunction(() => !document.body.innerText.includes('QA Vernon Advisor') && !document.body.innerText.includes('QA Community Coordinator'));
+    }
+    await location.fill('');
+    await page.getByRole('button', { name: 'Remote only', exact: true }).click();
+    await page.waitForFunction(() => document.body.innerText.includes('QA Ontario Insurance Advisor') && !document.body.innerText.includes('QA Vernon Advisor'));
+    await page.getByText('$51,000 - $54,000 / year', { exact: true }).waitFor();
+    await page.screenshot({ path: path.join(output, `discovery-${viewport.width}.png`), fullPage: true });
+    await page.getByRole('button', { name: 'Remote only', exact: true }).click();
     await search.fill('Community Coordinator');
     await page.getByText(fixtures[0].title, { exact: true }).waitFor();
     await page.waitForFunction(() => !document.body.innerText.includes('QA Program Assistant'));
@@ -62,7 +76,7 @@ try {
     await page.goto(`${base}/jobs/qa-internal`, { waitUntil: 'domcontentloaded' });
     await page.getByText('<img src="/qa-inert-image" onerror="void 0">', { exact: false }).waitFor();
     assert.equal(await page.locator('img[src="/qa-inert-image"]').count(), 0, 'description must render as escaped text');
-    findings.push({ viewport, search: 'pass', destination: 'pass', funnelEvents: 'pass', escapedDescription: 'pass', externalClickIsNotSubmission: true, horizontalOverflow: false, pageErrors: errors });
+    findings.push({ viewport, search: 'pass', provinceNamesAndCodes: 'pass', remoteFilter: 'pass', salaryUnits: 'pass', destination: 'pass', funnelEvents: 'pass', escapedDescription: 'pass', externalClickIsNotSubmission: true, horizontalOverflow: false, pageErrors: errors });
     assert.deepEqual(errors, [], 'no client runtime errors');
     await context.close();
   }

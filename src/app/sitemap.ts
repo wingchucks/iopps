@@ -18,7 +18,7 @@ const BASE_URL = "https://www.iopps.ca";
 const STATIC_PAGES = [
   "", "/jobs", "/events", "/conference", "/scholarships",
   "/stories", "/partners", "/businesses",
-  "/shop", "/livestreams", "/spotlight", "/featured-talent",
+  "/livestreams",
   "/for-employers", "/about", "/contact", "/pricing", "/privacy", "/terms",
 ] as const;
 
@@ -34,7 +34,6 @@ const COLLECTIONS: CollectionSpec[] = [
   { name: "events", prefix: "/events", priority: 0.8, changeFrequency: "daily" },
   { name: "scholarships", prefix: "/scholarships", priority: 0.8, changeFrequency: "weekly" },
   { name: "organizations", priority: 0.6, changeFrequency: "weekly" },
-  { name: "shop_vendors", prefix: "/shop", priority: 0.5, changeFrequency: "weekly" },
 ];
 
 function entryForRecord(

@@ -12,8 +12,8 @@ import { displayLocation, ensureTagsArray } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useAccountContext } from "@/lib/useAccountContext";
 
-type TierFilter = "All Partners" | "Premium" | "Employers" | "Schools";
-const tierFilters: TierFilter[] = ["All Partners", "Premium", "Employers", "Schools"];
+type TierFilter = "All Partners" | "Premium" | "Employers";
+const tierFilters: TierFilter[] = ["All Partners", "Premium", "Employers"];
 
 export default function PartnersPage() {
   return (
@@ -67,25 +67,14 @@ function PartnersContent() {
     load();
   }, []);
 
-  // M-7 — "Employers" and "Schools" tabs previously filtered on
-  // partnerTier (admin-set), so partners tagged only as "premium" never
-  // surfaced in the Employers tab even when they clearly were employers.
-  // Use the structural org.type field so every partner shows up in the
-  // tab that matches what they actually are. Premium remains a real tier.
-  const isSchoolPartner = (o: typeof orgs[number]) =>
-    o.type === "school";
-  const isEmployerPartner = (o: typeof orgs[number]) =>
-    o.type === "business" || o.type === "employer" || o.type === "non-profit";
-
   const filtered = useMemo(() => {
     let list = orgs.filter((o) => o.isPartner);
 
     if (filter === "Premium") {
       list = list.filter((o) => o.partnerTier === "premium");
-    } else if (filter === "Schools") {
-      list = list.filter(isSchoolPartner);
+
     } else if (filter === "Employers") {
-      list = list.filter(isEmployerPartner);
+      list = list.filter(o => (o.openJobs || 0) > 0);
     }
 
     if (search.trim()) {
@@ -103,16 +92,8 @@ function PartnersContent() {
 
   const partnerOrgs = useMemo(() => orgs.filter((o) => o.isPartner), [orgs]);
   const premiumOrgs = useMemo(() => partnerOrgs.filter((o) => o.partnerTier === "premium"), [partnerOrgs]);
-  const schoolOrgs = useMemo(() => partnerOrgs.filter(isSchoolPartner), [partnerOrgs]);
-  const employerOrgs = useMemo(() => partnerOrgs.filter(isEmployerPartner), [partnerOrgs]);
-  const showSections = filter === "All Partners" && !search && orgs.length > 0;
-
-  const filterCounts: Record<TierFilter, number> = useMemo(() => ({
-    "All Partners": partnerOrgs.length,
-    "Premium": premiumOrgs.length,
-    "Employers": employerOrgs.length,
-    "Schools": schoolOrgs.length,
-  }), [employerOrgs.length, partnerOrgs.length, premiumOrgs.length, schoolOrgs.length]);
+  const employerOrgs = useMemo(() => partnerOrgs.filter(o => (o.openJobs || 0) > 0), [partnerOrgs]);
+  const filterCounts: Record<TierFilter, number> = { "All Partners": partnerOrgs.length, Premium: premiumOrgs.length, Employers: employerOrgs.length };
 
   return (
     <>
@@ -135,7 +116,7 @@ function PartnersContent() {
           <span style={{ color: "var(--gold)" }}>Indigenous Talent</span>
         </h1>
         <p className="text-base text-white/65 mb-0 max-w-[520px] mx-auto">
-          Employers, schools, and organizations partnering with IOPPS to create opportunities for Indigenous communities across Canada.
+          Employers, businesses, and organizations partnering with IOPPS to create opportunities for Indigenous communities across Canada.
         </p>
       </section>
 
@@ -201,41 +182,7 @@ function PartnersContent() {
               </p>
             )}
 
-            {showSections ? (
-              <div className="flex flex-col gap-6">
-                <PartnerSection
-                  title="Premium Partners"
-                  description="Leading organizations championing Indigenous opportunity across Canada."
-                  icon="&#11088;"
-                  count={premiumOrgs.length}
-                  color="var(--gold)"
-                  bg="var(--spotlight-bg)"
-                  border="1.5px solid var(--gold-soft)"
-                  items={premiumOrgs}
-                  spotlight
-                />
-                <PartnerSection
-                  title="Schools"
-                  description="Universities, colleges, and training providers investing in Indigenous learners."
-                  icon="&#127891;"
-                  count={schoolOrgs.length}
-                  color="var(--blue)"
-                  bg="var(--card)"
-                  border="1.5px solid var(--blue-soft)"
-                  items={schoolOrgs}
-                />
-                <PartnerSection
-                  title="Employers"
-                  description="Companies and organizations actively hiring Indigenous talent."
-                  icon="&#128188;"
-                  count={employerOrgs.length}
-                  color="var(--teal)"
-                  bg="var(--card)"
-                  border="1.5px solid var(--teal-soft)"
-                  items={employerOrgs}
-                />
-              </div>
-            ) : filtered.length === 0 ? (
+            {filtered.length === 0 ? (
               <Card style={{ padding: 40, textAlign: "center" }}>
                 <p className="text-text-muted text-sm mb-2">
                   {search
@@ -285,7 +232,7 @@ function PartnersContent() {
             <div className="flex flex-wrap justify-center gap-3 text-[13px] text-white/50 mb-6 max-w-[500px] mx-auto">
               <span className="flex items-center gap-1.5">&#10003; Unlimited job postings</span>
               <span className="flex items-center gap-1.5">&#10003; Featured profile</span>
-              <span className="flex items-center gap-1.5">&#10003; Talent access</span>
+              <span className="flex items-center gap-1.5">&#10003; Application management</span>
               <span className="flex items-center gap-1.5">&#10003; Analytics dashboard</span>
             </div>
             <div className="flex justify-center gap-3">
@@ -322,102 +269,6 @@ function PartnersContent() {
         )}
       </div>
     </>
-  );
-}
-
-function PartnerSection({
-  title,
-  description,
-  icon,
-  count,
-  color,
-  bg,
-  border,
-  items,
-  spotlight = false,
-}: {
-  title: string;
-  description: string;
-  icon: string;
-  count: number;
-  color: string;
-  bg: string;
-  border: string;
-  items: Organization[];
-  spotlight?: boolean;
-}) {
-  if (items.length === 0) return null;
-
-  return (
-    <div className="rounded-2xl p-5" style={{ background: bg, border }}>
-      <div className="mb-4 flex items-center gap-2">
-        <span className="text-lg">{icon}</span>
-        <h3 className="m-0 text-base font-extrabold text-text">{title}</h3>
-        <Badge text={`${count}`} color={color} bg={`${color}20`} small />
-      </div>
-      <p className="mb-4 text-sm text-text-sec">{description}</p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {items.map((org) => (
-          spotlight ? <PremiumSpotlightCard key={org.id} org={org} /> : <OrgCard key={org.id} org={org} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PremiumSpotlightCard({ org }: { org: Organization }) {
-  const href = org.ownerType === "school" ? `/schools/${org.slug || org.id}` : `/org/${org.slug || org.id}`;
-  return (
-    <Link href={href} className="no-underline">
-      <Card gold className="h-full hover:shadow-md">
-        <div style={{ padding: 20 }}>
-          <div className="flex gap-4 items-start mb-3">
-            <Avatar
-              name={org.shortName || org.name}
-              size={56}
-              src={org.logoUrl}
-              gradient="linear-gradient(135deg, var(--gold), var(--navy))"
-            />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-[15px] font-bold text-text mb-1 truncate">{org.name}</h3>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Badge text={org.partnerBadgeLabel || "Premium Partner"} color="var(--gold)" bg="var(--gold-soft)" small />
-                {org.verified && (
-                  <Badge text="&#10003; Verified" color="var(--green)" bg="var(--green-soft)" small />
-                )}
-              </div>
-            </div>
-          </div>
-          <p className="text-[13px] text-text-sec mb-3 leading-relaxed line-clamp-2">
-            {org.description}
-          </p>
-          <div className="flex flex-wrap gap-3 text-xs text-text-muted mb-2">
-            {displayLocation(org.location) && (
-              <span>&#128205; {displayLocation(org.location)}</span>
-            )}
-            {org.openJobs > 0 && (
-              <span style={{ color: "var(--teal)", fontWeight: 600 }}>
-                &#128188; {org.openJobs} open position{org.openJobs !== 1 ? "s" : ""}
-              </span>
-            )}
-            {org.since && <span>Since {org.since}</span>}
-          </div>
-          {ensureTagsArray(org.tags).length > 0 && (
-            <div className="flex gap-1.5 flex-wrap">
-              {ensureTagsArray(org.tags).slice(0, 3).map((t) => (
-                <span
-                  key={t}
-                  className="rounded-full text-[11px] font-semibold text-teal"
-                  style={{ padding: "3px 10px", background: "var(--teal-soft)" }}
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </Card>
-    </Link>
   );
 }
 

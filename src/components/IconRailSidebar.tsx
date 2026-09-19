@@ -453,7 +453,7 @@ export default function IconRailSidebar() {
                   style={{
                     padding: "3px 8px",
                     background: "color-mix(in srgb, var(--red) 10%, transparent)",
-                    color: "var(--red)",
+                    color: "var(--danger-text)",
                   }}
                 >
                   Sign out

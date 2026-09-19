@@ -56,7 +56,7 @@ export function salaryInfo(input: Job) {
   if (!values.length) return null;
   const min = Math.min(...values), max = Math.max(...values);
   const suffix = period === "unknown" ? "" : ` / ${period}`;
-  const display = text || `${range?.currency || "CAD"} $${min.toLocaleString()}${max !== min ? `–$${max.toLocaleString()}` : ""}${suffix}`;
+  const display = (text ? text + (period !== "unknown" && !/hour|\bhr\b|annual|year|annum|month|week/i.test(text) ? suffix : "") : "") || `${range?.currency || "CAD"} $${min.toLocaleString()}${max !== min ? `–$${max.toLocaleString()}` : ""}${suffix}`;
   return { min, max, period, display };
 }
 export type DiscoveryFilters = { employer: string; area: string; added: string; closing: string; disclosed: string; training: string; salaryPeriod: string; salaryMin: string; salaryMax: string };

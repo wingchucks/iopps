@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { authIntentHref } from "@/lib/auth-redirect";
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
-import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS, type BillingPlanId } from "@/lib/pricing";
+import { isPlanAvailableForPurchase, ONE_TIME_PLANS, SUBSCRIPTION_PLANS, type BillingPlanId } from "@/lib/pricing";
 
 export const runtime = "nodejs";
 
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
   if (context.uid !== context.orgId || (body.orgId !== undefined && body.orgId !== context.orgId) || context.orgRole !== "owner") {
     return NextResponse.json({ error: "Organization owner access required" }, { status: 403 });
   }
+  if (!isPlanAvailableForPurchase(body.planId)) return NextResponse.json({ error: "This product is no longer available. Standard job listings are free; view the current promotion options." }, { status: 400 });
   const orgId = context.orgId;
   const stripe = getStripe();
   if (!stripe) {

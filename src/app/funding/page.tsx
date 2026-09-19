@@ -13,7 +13,7 @@ export default function FundingPage() {
   return (
     <div className="op-site min-h-screen bg-bg">
       <OpportunityHeader />
-      <main className="op-wrap py-12 md:py-16">
+      <div className="op-wrap py-12 md:py-16" data-main-content tabIndex={-1}>
         <Link href="/businesses" className="text-teal font-semibold">← Indigenous businesses</Link>
         <p className="op-eyebrow mt-8">Indigenous Entrepreneurship</p>
         <h1 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight">Grants &amp; funding</h1>
@@ -27,7 +27,7 @@ export default function FundingPage() {
             <Link href="/contact" className="inline-flex items-center py-3 font-semibold text-teal">Share a funding opportunity →</Link>
           </div>
         </section>
-      </main>
+      </div>
       <Footer />
     </div>
   );

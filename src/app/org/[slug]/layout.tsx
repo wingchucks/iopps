@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import { generateOrgMetadata } from "@/lib/server/detail-metadata";
 

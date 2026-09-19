@@ -8,7 +8,6 @@ import { getAppCheckTokenValue } from "@/lib/firebase";
 
 const ORG_TYPES = [
   { value: "employer", label: "Employer / Business", desc: "Post jobs and find Indigenous talent" },
-  { value: "school", label: "School / Training", desc: "List programs, courses, and scholarships" },
   { value: "business", label: "Indigenous Business", desc: "Showcase your products and services" },
   { value: "nonprofit", label: "Non-Profit / Organization", desc: "Share events, scholarships, and opportunities" },
   { value: "legal", label: "Legal Services", desc: "Law firms and legal service providers" },

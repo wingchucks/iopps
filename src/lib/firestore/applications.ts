@@ -16,6 +16,9 @@ export interface StatusHistoryEntry {
 }
 
 export interface Application {
+  coverLetter?: string;
+  references?: string;
+  resumeUrl?: string;
   profileSnapshot?: Partial<import("./members").MemberProfile> & { capturedAt?: string };
   id: string;
   userId: string;

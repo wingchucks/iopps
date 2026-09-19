@@ -7,7 +7,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
-import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS, getPlanById, type BillingPlanId } from "@/lib/pricing";
+import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS, isPlanAvailableForPurchase, type BillingPlanId } from "@/lib/pricing";
 
 /* ── Plan configuration ── */
 interface PlanConfig {
@@ -49,7 +49,7 @@ export default function CheckoutPage({
 function CheckoutContent({ planKey, redirect }: { planKey: string; redirect: string | null }) {
   const { user } = useAuth();
 
-  const plan = getPlanById(planKey)
+  const plan = isPlanAvailableForPurchase(planKey)
     ? plans[planKey as BillingPlanId]
     : null;
   const gst = (plan?.price || 0) * GST_RATE;

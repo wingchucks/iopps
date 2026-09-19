@@ -1,3 +1,4 @@
+import { locationProvinceCodes, provinceCode } from "./canadian-provinces";
 import { businessListingReviewAllowsPublic } from "./business-listing-review";
 
 export interface OrganizationLocation {
@@ -120,6 +121,8 @@ export function normalizeOrganizationLocation(value: unknown): OrganizationLocat
       .filter(Boolean);
 
     if (parts.length === 0) return undefined;
+    const codes = locationProvinceCodes(trimmed);
+    if (codes.length === 1) return { city: parts.filter(part => !provinceCode(part) && !/^(canada|ca)$/i.test(part)).join(", "), province: parts.find(part => provinceCode(part) === codes[0]) || codes[0] };
     if (parts.length === 1) return { city: parts[0], province: "" };
 
     return {

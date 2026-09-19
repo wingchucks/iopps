@@ -11,12 +11,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/events/") ||
     pathname.startsWith("/scholarships/") ||
     (/^\/org\/[^/]+$/.test(pathname) && !["/org/dashboard", "/org/signup", "/org/onboarding", "/org/plans", "/org/upgrade", "/org/checkout"].includes(pathname)) ||
-    ["/applications", "/saved", "/profile/resume", "/businesses", "/livestreams", "/events", "/scholarships"].includes(pathname);
+    ["/applications", "/saved", "/profile/resume", "/businesses", "/partners", "/livestreams", "/events", "/scholarships"].includes(pathname);
   if (opportunityFlow)
     return (
       <>
         <OpportunityHeader />
-        <div className="op-account-surface">{children}</div>
+        <div data-main-content tabIndex={-1} className="op-account-surface">{children}</div>
       </>
     );
   return (
@@ -30,7 +30,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <IconRailSidebar />
       </Suspense>
       {/* Content area — offset for the fixed sidebar on desktop */}
-      <div className="lg:pl-[240px] min-w-0 overflow-x-hidden">{children}</div>
+      <div data-main-content tabIndex={-1} className="lg:pl-[240px] min-w-0 overflow-x-hidden">{children}</div>
     </>
   );
 }
