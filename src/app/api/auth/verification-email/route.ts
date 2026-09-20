@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { validateOrigin } from "@/lib/csrf";
-import { buildEmailVerificationContinueUrl } from "@/lib/auth-verification-email";
+import { buildBrandedVerificationActionLink, buildEmailVerificationContinueUrl } from "@/lib/auth-verification-email";
 import { sendAccountVerificationEmail } from "@/lib/email";
 import { verifyAppCheckFromRequest } from "@/lib/server/app-check";
 import { reserveVerificationEmail } from "@/lib/server/verification-email-limit";
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     const result = await sendAccountVerificationEmail({
       email,
       displayName: typeof decoded.name === "string" ? decoded.name : null,
-      verificationLink,
+      verificationLink: buildBrandedVerificationActionLink(getSiteUrl(req), verificationLink),
     });
 
     if (!result.success) {

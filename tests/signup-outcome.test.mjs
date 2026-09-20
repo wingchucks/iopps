@@ -17,12 +17,12 @@ function load(file, mocks = {}) {
   });
   return exports;
 }
-function provider({ createError, profileError, emailError, currentUser, response } = {}) {
+function provider({ createError, profileError, emailError, currentUser, response, fetcher } = {}) {
   const calls = [];
   const created = { uid: 'created-by-this-attempt', email: 'fictional@example.invalid', emailVerified: false, getIdToken: async () => 'fictional-token' };
   const auth = { currentUser: currentUser ?? created };
   const context = load('src/lib/auth-context.tsx', {
-    ...(response ? { fetch: async () => response } : {}),
+    ...(fetcher ? { fetch: fetcher } : response ? { fetch: async () => response } : {}),
     react: { createContext: () => ({ Provider: 'provider' }), useState: () => [null, () => {}], useEffect: () => {} },
     'react/jsx-runtime': { jsx: (type, props) => props },
     './firebase': { auth, getAppCheckTokenValue: async () => { if (emailError) throw emailError; return ''; } },
@@ -35,15 +35,16 @@ function provider({ createError, profileError, emailError, currentUser, response
   }).AuthProvider({ children: null }).value;
   return { context, calls, created, auth };
 }
-function signupPage({ user = null, outcome, signupError } = {}) {
-  const state = []; let cursor = 0; const calls = [];
+function signupPage({ user = null, outcome, signupError, query = new URLSearchParams() } = {}) {
+  const state = []; let cursor = 0; const calls = []; const destinations = [];
   const react = { useState(initial) { const i = cursor++; if (!(i in state)) state[i] = typeof initial === 'function' ? initial() : initial; return [state[i], value => { state[i] = typeof value === 'function' ? value(state[i]) : value; }]; }, useCallback: f => f, useRef: value => ({ current: value }), Suspense: 'Suspense' };
   const jsx = (type, props) => ({ type, props });
   const page = load('src/app/signup/page.tsx', {
     react: { ...react, default: react }, 'react/jsx-runtime': { jsx, jsxs: jsx },
-    'next/navigation': { useRouter: () => ({ push: path => calls.push(['push', path]) }), useSearchParams: () => new URLSearchParams() },
-    '@/lib/auth-context': { useAuth: () => ({ user, sendVerificationEmail: async () => true, signUp: async () => { calls.push('create'); if (signupError) throw signupError; return outcome; }, signInWithGoogle: async () => { calls.push('google'); throw Error('No provider access in tests'); } }) },
+    'next/navigation': { useRouter: () => ({ push: path => calls.push(['push', path]) }), useSearchParams: () => query },
+    '@/lib/auth-context': { useAuth: () => ({ user, sendVerificationEmail: async () => true, signUp: async (_name, _email, _password, destination) => { destinations.push(destination); calls.push('create'); if (signupError) throw signupError; return outcome; }, signInWithGoogle: async () => { calls.push('google'); throw Error('No provider access in tests'); } }) },
     'firebase/storage': {}, '@/lib/firebase': {}, '@/lib/pricing': {},
+    './StepHeader': { StepHeader: 'StepHeader' },
     '@/components/signup/ui': new Proxy({}, { get: (_, name) => name }),
     '@/components/signup/constants': { CSS: {}, EMPLOYER_CAPABILITIES: [] },
   }).default;
@@ -52,8 +53,37 @@ function signupPage({ user = null, outcome, signupError } = {}) {
   function by(type, value) { const item = find(n => n.type === type && (!value || n.props.id === value || n.props.label === value)); assert.ok(item, `Missing ${type} ${value}`); return item; }
   by('RoleCard', 'Individual').props.onClick(); by('BtnPrimary').props.onClick();
   for (const [id, value] of Object.entries({ name: 'Fictional', email: 'fictional@example.invalid', password: 'Fictional1!', confirmPassword: 'Fictional1!' })) by('FormInput', id).props.onChange({ target: { value } });
-  return { calls, render, find, by, setUser: value => { user = value; } };
+  return { calls, destinations, render, find, by, setUser: value => { user = value; } };
 }
+test('creation outcome waits for UID-bound secure-session reconciliation (existing behavior)', async () => {
+  let release;
+  const held = new Promise(resolve => { release = resolve; });
+  let sessionStarted;
+  const started = new Promise(resolve => { sessionStarted = resolve; });
+  const { context, created } = provider({ fetcher: async url => {
+    if (url === '/api/auth/session') { sessionStarted(); return held; }
+    return { ok: false, status: 429 };
+  } });
+  let settled = false;
+  const pending = context.signUp('Fictional', created.email, 'Fictional1!').then(value => { settled = true; return value; });
+  await started;
+  assert.equal(settled, false, 'no failure or success outcome before session reconciliation');
+  release({ ok: true });
+  const result = await pending;
+  assert.equal(result.user.uid, created.uid);
+  assert.equal(result.sessionReady, true);
+  assert.equal(result.verificationEmailSent, false);
+  assert.match(result.verificationError, /account was created/);
+});
+
+test('member signup goes through setup and retains the logged-out save intent', async () => {
+  const query = new URLSearchParams({ redirect: '/jobs/fictional?save=1', plan: 'tier2' });
+  const page = signupPage({ query, outcome: { user: { uid: 'created' }, verificationEmailSent: false, sessionReady: false } });
+  page.by('input', 'signup-consent').props.onChange({ target: { checked: true } });
+  await page.by('BtnPrimary').props.onClick();
+  assert.equal(page.destinations[0], '/setup?redirect=%2Fjobs%2Ffictional%3Fsave%3D1');
+});
+
 test('reload rejects identity switches at every asynchronous boundary', async () => {
   for (const stage of ['reload', 'token', 'session']) {
     const { context, created, auth } = provider();

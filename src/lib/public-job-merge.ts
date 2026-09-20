@@ -1,4 +1,5 @@
-import { isJobRecordExpired } from "./listing-freshness";
+import { descriptionApplicationDeadline, isJobRecordExpired } from "./listing-freshness";
+import { normalizePartnerDescription } from "./server/import-content-quality";
 
 export interface PublicJobMergeRecord {
   id: string;
@@ -43,8 +44,8 @@ export function mergePublicJobRecords<
   importedJobs: TImported[],
   employerPosts: TPost[],
 ): Array<TImported | TPost> {
-  // Display slugs are not identity: even one employer can reuse a title slug.
-  // Only matching document IDs prove a mirror of an authoritative job.
+  // Display slugs are not identity. Same-ID jobs remain authoritative over posts;
+  // content duplicates with different IDs are resolved below, before visibility/counts.
   const importedIdentities = new Set(importedJobs.map((job) => job.id));
   const merged: Array<TImported | TPost> = [...importedJobs];
 
@@ -54,7 +55,40 @@ export function mergePublicJobRecords<
     }
   }
 
-  return merged.filter(job => isPublicJobRecordVisible(job));
+  const seen = new Set<string>();
+  const now = new Date();
+  const visibility = new Map(merged.map(job => [job, isPublicJobRecordVisible(job, now)]));
+  const compareId = (a: PublicJobMergeRecord, b: PublicJobMergeRecord) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  return merged.sort((a, b) =>
+    Number(!importedIdentities.has(a.id)) - Number(!importedIdentities.has(b.id)) ||
+    Number(visibility.get(a)) - Number(visibility.get(b)) || compareId(a, b)
+  ).filter(job => {
+    const exact = (value: unknown): string => {
+      if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.toISOString() : "invalid-date";
+      if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") return exact(value.toDate());
+      return typeof value === "string" ? value.normalize("NFC").replace(/\s+/gu, " ").trim() : typeof value === "number" ? String(value) : "";
+    };
+    const normalize = (value: unknown) => exact(value).toLowerCase();
+    const parts = [job.employerName || job.orgName || job.companyName || job.employerId || job.orgId, job.title, job.location].map(normalize);
+    // Missing identity or content is not evidence of a duplicate.
+    const closing = exact(job.closingDate || job.deadline || job.applicationDeadline);
+    const closingIdentity = !closing.includes("T") ? descriptionApplicationDeadline(`Closing date: ${closing}`) || normalize(closing) : closing;
+    // Every supplied destination is evidence; a shared landing URL cannot mask
+    // a distinct application URL. Paths and query values remain case-sensitive.
+    const destinations = [job.externalUrl, job.applicationUrl, job.applyUrl, job.externalApplyUrl, job.applicationLink].map(exact);
+    const intakeEvidence = closingIdentity || exact(job.publishedAt || job.postedAt || job.externalId || job.requisitionId) || destinations.find(Boolean);
+    // Normalize only the comparison projection, exactly as the jobs API does.
+    // Keep source/display bodies intact, including case-sensitive embedded links.
+    const description = typeof job.description === "string"
+      ? exact(normalizePartnerDescription(job.description, job.descriptionFormat)) : "";
+    const key = parts.every(Boolean) && description && intakeEvidence
+      ? JSON.stringify([...parts, closingIdentity, description,
+        ...[job.employerId || job.orgId, job.requisitionId || job.requisitionNumber || job.jobRequisitionId,
+          job.externalId, job.publishedAt || job.postedAt].map(exact), ...destinations]) : `id:${job.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return visibility.get(job);
+  });
 }
 
 export function jobMatchesOrganization(job: Record<string, unknown>, organization: Record<string, unknown>): boolean {

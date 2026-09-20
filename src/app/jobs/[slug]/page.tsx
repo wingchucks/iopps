@@ -1,5 +1,6 @@
 "use client";
 import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
+import JobDescription from "@/components/jobs/JobDescription";
 
 import { Suspense, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -232,12 +233,12 @@ function JobDetailContent() {
 
           {/* Description */}
           {job.description ? (
-            <>
-              <h3 className="text-lg font-bold text-text mb-2">About This Role</h3>
-              <p className="journey-role-description text-base text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                {job.description}
-              </p>
-            </>
+            <JobDescription
+              description={job.description}
+              externalUrl={job.externalUrl}
+              externalApplyUrl={job.externalApplyUrl}
+              applicationUrl={job.applicationUrl}
+            />
           ) : normalizedApplicationHref && !shouldUseInternalApply ? (
             <div className="mb-6 p-5 rounded-2xl border border-border bg-[var(--card)]">
               <p className="text-sm text-text-sec mb-4">

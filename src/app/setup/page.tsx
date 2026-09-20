@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useRef, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { setupDestination, setupCompletionDestination } from "./destination";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
 import { storage } from "@/lib/firebase";
@@ -24,12 +25,51 @@ const stepInfo = [
 export default function SetupPage() {
   return (
     <ProtectedRoute>
-      <SetupWizard />
+      <Suspense fallback={<p role="status">Loading your account...</p>}><SetupAccess /></Suspense>
     </ProtectedRoute>
   );
 }
 
+function SetupAccess() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [readyUid, setReadyUid] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    setError("");
+    void (async () => {
+      try {
+        const token = await user.getIdToken();
+        if (cancelled) return;
+        const response = await fetch("/api/auth/account", {
+          headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("Account unavailable");
+        const data = await response.json();
+        const destination = setupDestination(data.destination, searchParams);
+        if (cancelled) return;
+        if (destination) router.replace(destination);
+        else setReadyUid(user.uid);
+      } catch {
+        if (!cancelled) setError("We couldn’t load your account. Please retry.");
+      } finally { clearTimeout(timer); }
+    })();
+    return () => { cancelled = true; controller.abort(); clearTimeout(timer); };
+  }, [user, router, searchParams, attempt]);
+  if (!user || readyUid !== user.uid) return <div className="p-8">
+    {error ? <><p role="alert">{error}</p><button onClick={() => setAttempt(value => value + 1)}>Try again</button></> : <p role="status">Loading your account...</p>}
+  </div>;
+  return <SetupWizard key={user.uid} />;
+}
+
 function SetupWizard() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [community, setCommunity] = useState("");
   const [location, setLocation] = useState("");
@@ -126,7 +166,7 @@ function SetupWizard() {
           skills: parsedSkills,
         });
       }
-      router.push("/feed");
+      router.push(setupCompletionDestination(searchParams));
     } catch (err) {
       console.error("Failed to save profile:", err);
       setSaveError("Your profile could not be saved. Your draft is still here. Please try again.");
