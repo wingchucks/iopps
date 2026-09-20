@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { loadYouTubeFeed, DISCOVERY_CACHE_SECONDS, VIDEO_CACHE_SECONDS } from "../src/lib/youtube-feed.ts";
+import { loadYouTubeFeed, DISCOVERY_CACHE_SECONDS, VIDEO_CACHE_SECONDS, type SharedVideoLookup } from "../src/lib/youtube-feed.ts";
 import { videoExcerpt } from "../src/lib/livestreams.ts";
 
 const channelId = "UCtestChannel";
@@ -23,8 +23,25 @@ function setup({ live = [], upcoming = [], recent = [], videos = [], failures = 
     const items = endpoint === "live" ? live.map(videoId => ({ id: { videoId } })) : endpoint === "upcoming" ? upcoming.map(videoId => ({ id: { videoId } })) : endpoint === "playlistItems" ? recent.map(videoId => ({ contentDetails: { videoId } })) : videos.filter(video => requestedIds.includes(video.id));
     return Response.json({ items });
   };
-  return { calls, load: (options: { manualIds?: string[]; requestedId?: string } = {}) => loadYouTubeFeed({ apiKey: "test-key", channelId, request, ...options }) };
+  return { calls, load: (options: { manualIds?: string[]; requestedId?: string; lookupSharedVideo?: SharedVideoLookup } = {}) => loadYouTubeFeed({ apiKey: "test-key", channelId, request, lookupSharedVideo: async (_id, lookup) => ({ video: await lookup() }), ...options }) };
 }
+
+test("unknown shared IDs cannot spend upstream quota without a shared reservation", async () => {
+  for (const lookupSharedVideo of [undefined, async () => ({ video: null, unavailable: true })]) {
+    const { load, calls } = setup({ recent: [ids.live], videos: [resource(ids.live), resource(ids.old)] });
+    const feed = await load({ requestedId: ids.old, lookupSharedVideo });
+    assert.equal(feed.selected, null);
+    assert.equal(feed.recent[0].id, ids.live, "The ordinary feed remains available");
+    assert.ok(feed.warning);
+    assert.deepEqual(calls.filter(call => call.endpoint === "videos").map(call => call.ids), [[ids.live]]);
+  }
+});
+
+test("known feed videos do not consume the shared-video lookup budget", async () => {
+  const { load } = setup({ recent: [ids.live], videos: [resource(ids.live)] });
+  const feed = await load({ requestedId: ids.live, lookupSharedVideo: async () => { assert.fail("No extra lookup expected"); } });
+  assert.equal(feed.selected?.id, ids.live);
+});
 
 test("the current channel broadcast wins over an ended manual override", async () => {
   const { load } = setup({ live: [ids.live], videos: [resource(ids.live, "live"), resource(ids.old)] });

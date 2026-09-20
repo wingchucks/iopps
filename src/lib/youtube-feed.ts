@@ -8,6 +8,7 @@ export const DISCOVERY_CACHE_SECONDS = 3600;
 export const VIDEO_CACHE_SECONDS = 60;
 
 type YouTubeRequest = (url: string, init: RequestInit & { next?: { revalidate: number } }) => Promise<Response>;
+export type SharedVideoLookup = (id: string, lookup: () => Promise<LivestreamVideo | null>) => Promise<{ video: LivestreamVideo | null; unavailable?: boolean }>;
 interface VideoResource {
   id: string;
   snippet: {
@@ -24,8 +25,8 @@ interface VideoResource {
 
 export class YouTubeFeedError extends Error {}
 
-export async function loadYouTubeFeed({ apiKey, channelId, manualIds = [], requestedId = "", request = fetch }: {
-  apiKey: string; channelId: string; manualIds?: string[]; requestedId?: string; request?: YouTubeRequest;
+export async function loadYouTubeFeed({ apiKey, channelId, manualIds = [], requestedId = "", request = fetch, lookupSharedVideo }: {
+  apiKey: string; channelId: string; manualIds?: string[]; requestedId?: string; request?: YouTubeRequest; lookupSharedVideo?: SharedVideoLookup;
 }): Promise<LivestreamFeed> {
   if (!apiKey || !/^UC[A-Za-z0-9_-]+$/.test(channelId)) throw new YouTubeFeedError("YouTube feed is not configured");
 
@@ -78,10 +79,16 @@ export async function loadYouTubeFeed({ apiKey, channelId, manualIds = [], reque
   const enriched = await videos(ids);
   if (partial && !enriched.length) throw new YouTubeFeedError("YouTube feed is unavailable");
   let selected = enriched.find(video => video.id === requestedId) ?? null;
+  let sharedLookupUnavailable = false;
   if (!selected && VIDEO_ID.test(requestedId) && !ids.includes(requestedId)) {
     // Older shared replays still work after leaving the recent uploads list.
-    // Verify channel ownership before displaying any requested video.
-    selected = (await videos([requestedId]))[0] ?? null;
+    // Only a shared reservation may authorize extra calls; normalization still
+    // verifies channel ownership before anything enters the shared cache.
+    const result = lookupSharedVideo
+      ? await lookupSharedVideo(requestedId, async () => (await videos([requestedId]))[0] ?? null)
+      : { video: null, unavailable: true };
+    selected = result.video;
+    sharedLookupUnavailable = Boolean(result.unavailable);
   }
   const currentVideos = selected && !enriched.some(video => video.id === selected.id) ? [...enriched, selected] : enriched;
   return {
@@ -91,6 +98,6 @@ export async function loadYouTubeFeed({ apiKey, channelId, manualIds = [], reque
     recent: enriched.filter(video => video.liveBroadcastContent === "none")
       .sort((a, b) => (Date.parse(b.actualStart ?? b.publishedAt) || 0) - (Date.parse(a.actualStart ?? a.publishedAt) || 0)),
     selected,
-    ...(partial ? { warning: "Some broadcasts could not be checked. Visit IOPPS on YouTube for the latest coverage." } : {}),
+    ...(partial || sharedLookupUnavailable ? { warning: "Some broadcasts could not be checked. Visit IOPPS on YouTube for the latest coverage." } : {}),
   };
 }

@@ -853,6 +853,8 @@ a:focus-visible > .op-job-card {
 .journey-apply-button:focus-visible, .journey-profile-button:focus-visible, .journey-contact-button:focus-visible, .journey-save-button:focus-visible { outline: 3px solid var(--teal); outline-offset: 4px; }
 .journey-mobile-apply { display: none; }
 .journey-business-heading { border-top: 3px solid var(--teal); box-shadow: 0 14px 38px color-mix(in srgb, var(--journey-ink) 7%, transparent); }
+.journey-org-profile { --org-opportunity-accent: #92400e; }
+[data-theme="dark"] .journey-org-profile { --org-opportunity-accent: #fbbf24; }
 .journey-business-heading h1 { letter-spacing: -.035em; overflow-wrap: anywhere; }
 .journey-business-actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; flex-shrink: 0; }
 .journey-contact-button, .journey-profile-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 650; text-decoration: none; }

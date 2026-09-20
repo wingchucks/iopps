@@ -218,7 +218,7 @@ function OrgProfileContent() {
     : org.type === "professional" ? "Professional Services"
     : "Business";
 
-  const oppColors = { jobs: "#14B8A6", events: "#F59E0B", scholarships: "#FBBF24", training: "#A78BFA" };
+  const oppColors = { jobs: "var(--teal)", events: "var(--org-opportunity-accent)", scholarships: "var(--org-opportunity-accent)", training: "var(--text-sec)" };
   const oppLabels = { jobs: "💼 Open Jobs", events: "📅 Events", scholarships: "🎓 Scholarships", training: "📚 Training" };
   const oppCounts = { jobs: relatedJobCount, events: events.length, scholarships: scholarships.length, training: training.length };
   const visibleJobs = expandedOppTab === "jobs" ? jobs : jobs.slice(0, 4);
@@ -237,7 +237,7 @@ function OrgProfileContent() {
   ].filter((item): item is string => Boolean(item));
 
   return (
-    <div className="journey-profile max-w-[1120px] mx-auto pb-16">
+    <div className="journey-profile journey-org-profile max-w-[1120px] mx-auto pb-16">
       {/* Back Link */}
       <div className="px-4 pt-4">
         <Link href="/businesses" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal">
@@ -425,6 +425,7 @@ function OrgProfileContent() {
                   return (
                     <button
                       key={tab}
+                      aria-pressed={activeOppTab === tab}
                       onClick={() => {
                         setActiveOppTab(tab);
                         setExpandedOppTab((current) => (current === tab ? current : null));
@@ -451,8 +452,8 @@ function OrgProfileContent() {
                       <Link key={j.id} href={j.href || `/jobs/${j.slug || j.id}`} className="no-underline block">
                         <div className="flex items-center justify-between px-4 py-3.5 rounded-xl cursor-pointer transition-all hover:-translate-y-0.5"
                           style={{
-                            background: i === 0 && j.featured ? "rgba(20,184,166,0.06)" : "rgba(30,41,59,0.4)",
-                            border: i === 0 && j.featured ? "1px solid rgba(20,184,166,0.15)" : "1px solid rgba(255,255,255,0.04)",
+                            background: i === 0 && j.featured ? "rgba(20,184,166,0.06)" : "var(--bg)",
+                            border: i === 0 && j.featured ? "1px solid rgba(20,184,166,0.15)" : "1px solid var(--border)",
                           }}>
                           <div>
                             <p className="text-sm font-bold text-text">{j.title}</p>
@@ -487,18 +488,18 @@ function OrgProfileContent() {
                           <>
                             <div className="w-12 h-12 rounded-[10px] flex flex-col items-center justify-center shrink-0"
                               style={{ background: i === 0 ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.08)" }}>
-                              <div className="text-[10px] font-bold leading-none" style={{ color: i === 0 ? "#F59E0B" : "var(--text-muted)" }}>{getEventMonth(ev)}</div>
-                              <div className="text-lg font-black leading-none" style={{ color: i === 0 ? "#F59E0B" : "var(--text-sec)" }}>{getEventDay(ev)}</div>
+                              <div className="text-[10px] font-bold leading-none" style={{ color: i === 0 ? "var(--org-opportunity-accent)" : "var(--text-muted)" }}>{getEventMonth(ev)}</div>
+                              <div className="text-lg font-black leading-none" style={{ color: i === 0 ? "var(--org-opportunity-accent)" : "var(--text-sec)" }}>{getEventDay(ev)}</div>
                             </div>
                             <div>
                               <p className="text-sm font-bold text-text">{ev.title}</p>
                               <p className="text-xs text-text-muted mt-0.5">{formatEventDate(ev)}{ev.location ? ` · ${ev.location}` : ""}</p>
-                              {ev.eventType && <p className="text-[11px] mt-0.5" style={{ color: "#F59E0B" }}>🎪 {ev.eventType}</p>}
+                              {ev.eventType && <p className="text-[11px] mt-0.5" style={{ color: "var(--org-opportunity-accent)" }}>🎪 {ev.eventType}</p>}
                             </div>
                           </>,
                           {
-                            background: i === 0 ? "rgba(245,158,11,0.06)" : "rgba(30,41,59,0.4)",
-                            border: i === 0 ? "1px solid rgba(245,158,11,0.15)" : "1px solid rgba(255,255,255,0.04)",
+                            background: i === 0 ? "rgba(245,158,11,0.06)" : "var(--bg)",
+                            border: i === 0 ? "1px solid rgba(245,158,11,0.15)" : "1px solid var(--border)",
                           },
                         )}
                       </div>
@@ -508,7 +509,7 @@ function OrgProfileContent() {
                         type="button"
                         onClick={() => setExpandedOppTab((current) => (current === "events" ? null : "events"))}
                         className="button-gradient-soft flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
-                        style={{ color: "#F59E0B", border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.04)" }}
+                        style={{ color: "var(--org-opportunity-accent)", border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.04)" }}
                       >
                         {expandedOppTab === "events" ? "Show fewer events" : `Show all ${events.length} events`}
                       </button>
@@ -530,13 +531,13 @@ function OrgProfileContent() {
                           <>
                             <p className="text-sm font-bold text-text">{s.title}</p>
                             {s.description && <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{s.description}</p>}
-                            <p className="text-[11px] mt-1" style={{ color: i === 0 ? "#FBBF24" : "var(--text-muted)" }}>
+                            <p className="text-[11px] mt-1" style={{ color: i === 0 ? "var(--org-opportunity-accent)" : "var(--text-muted)" }}>
                               {scholarshipAmount ? `💰 ${scholarshipAmount}` : ""}{s.deadline ? ` · Deadline: ${s.deadline}` : ""}
                             </p>
                           </>,
                           {
-                            background: i === 0 ? "rgba(251,191,36,0.06)" : "rgba(30,41,59,0.4)",
-                            border: i === 0 ? "1px solid rgba(251,191,36,0.15)" : "1px solid rgba(255,255,255,0.04)",
+                            background: i === 0 ? "rgba(251,191,36,0.06)" : "var(--bg)",
+                            border: i === 0 ? "1px solid rgba(251,191,36,0.15)" : "1px solid var(--border)",
                           },
                         )}
                       </div>
@@ -547,7 +548,7 @@ function OrgProfileContent() {
                         type="button"
                         onClick={() => setExpandedOppTab((current) => (current === "scholarships" ? null : "scholarships"))}
                         className="button-gradient-soft flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
-                        style={{ color: "#FBBF24", border: "1px solid rgba(251,191,36,0.2)", background: "rgba(251,191,36,0.04)" }}
+                        style={{ color: "var(--org-opportunity-accent)", border: "1px solid rgba(251,191,36,0.2)", background: "rgba(251,191,36,0.04)" }}
                       >
                         {expandedOppTab === "scholarships" ? "Show fewer scholarships" : `Show all ${scholarships.length} scholarships`}
                       </button>
@@ -652,15 +653,11 @@ function OrgProfileContent() {
                 Create a free account to apply for positions and connect with Indigenous employers.
               </p>
               <div className="flex gap-2 justify-center mt-3.5">
-                <Link href="/signup" className="no-underline">
-                  <button className="px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none button-gradient text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)]">
+                <Link href="/signup" className="no-underline inline-flex px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none button-gradient text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)]">
                     Join Free
-                  </button>
                 </Link>
-                <Link href="/login" className="no-underline">
-                  <button className="px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:border-teal hover:text-teal">
+                <Link href="/login" className="no-underline inline-flex px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:border-teal hover:text-teal">
                     Sign In
-                  </button>
                 </Link>
               </div>
             </div>
@@ -733,7 +730,7 @@ function OrgProfileContent() {
             <div className="bg-card rounded-2xl border border-border p-5">
               <h3 className="text-[13px] font-bold uppercase tracking-wider text-text-muted mb-3.5">Location</h3>
               <div className="h-[140px] rounded-xl flex items-center justify-center text-sm text-text-muted border border-border"
-                style={{ background: "linear-gradient(135deg, #1e293b, #0f172a)" }}>
+                style={{ background: "var(--bg)" }}>
                 🗺️ {displayLocation(org.location) || org.address}
               </div>
               <p className="mt-2 text-xs text-text-muted">

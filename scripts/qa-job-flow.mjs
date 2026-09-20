@@ -18,6 +18,7 @@ const fixtures = [
   { id: 'qa-vernon', slug: 'qa-vernon', title: 'QA Vernon Advisor', employerName: 'QA Second Organization', location: 'Vernon, BC', active: true, status: 'active' },
 ];
 const findings = [];
+const organizationAccessibility = [];
 let currentPage;
 try {
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
@@ -40,8 +41,10 @@ try {
       }
       if (url.pathname === '/api/org/qa-org') return route.fulfill({ json: {
         org: { id: 'qa-org', name: 'QA Community Organization', type: 'business', location: 'Saskatoon, SK' },
-        jobs: [{ ...fixtures[0], slug: 'shared-display-name', href: '/jobs/shared-display-name--qa-explicit-hourly' }],
-        events: [], scholarships: [], training: [], programs: [],
+        jobs: [{ ...fixtures[0], featured: true, slug: 'shared-display-name', href: '/jobs/shared-display-name--qa-explicit-hourly' }, { ...fixtures[1], href: '/jobs/qa-internal' }],
+        events: [1, 2].map(id => ({ id: `qa-event-${id}`, title: `QA community gathering ${id}`, date: '2099-09-19', eventType: 'Community', location: 'Saskatoon, SK', href: `/events/qa-event-${id}` })),
+        scholarships: [1, 2].map(id => ({ id: `qa-award-${id}`, title: `QA student award ${id}`, amount: '$5,000', deadline: '2099-09-30', description: 'Fictional award description', href: `/scholarships/qa-award-${id}` })),
+        training: [], programs: [],
       } });
       if (url.pathname === '/api/organizations') return route.fulfill({ json: { orgs: [] } });
       if (url.pathname.startsWith('/api/')) return route.fulfill({ json: {} });
@@ -95,7 +98,22 @@ try {
     assert.equal(await page.getByRole('button', { name: /Training/ }).count(), 0);
     assert.equal(await page.locator('a[href^="/training/"]').count(), 0);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), false, 'organization profile must not overflow horizontally');
-    await page.screenshot({ path: path.join(output, `organization-${viewport.width}.png`), fullPage: true });
+    await page.addScriptTag({ path: path.resolve('node_modules/axe-core/axe.min.js') });
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(value => document.documentElement.setAttribute('data-theme', value), theme);
+      await page.waitForTimeout(350); // Let the existing theme transition finish before measuring contrast.
+      for (const panel of ['Open Jobs', 'Events', 'Scholarships']) {
+        const tab = page.getByRole('button', { name: new RegExp(panel) });
+        await tab.click();
+        assert.equal(await tab.getAttribute('aria-pressed'), 'true');
+        const violations = await page.evaluate(async () => (await window.axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] } })).violations.map(item => ({ id: item.id, impact: item.impact, nodes: item.nodes.map(node => ({ target: node.target, summary: node.failureSummary })) })));
+        organizationAccessibility.push({ width: viewport.width, theme, panel, violations });
+        await fs.writeFile(path.join(output, 'organization-accessibility.json'), JSON.stringify(organizationAccessibility, null, 2));
+        await page.screenshot({ path: path.join(output, `organization-${viewport.width}-${theme}-${panel.replaceAll(' ', '-')}.png`), fullPage: true });
+      }
+    }
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
+    await page.getByRole('button', { name: /Open Jobs/ }).click();
     await profileJob.click();
     await page.waitForURL(url => url.pathname === '/jobs/shared-display-name--qa-explicit-hourly');
     await page.getByRole('link', { name: 'Apply on employer site', exact: true }).first().waitFor();
@@ -110,5 +128,6 @@ try {
     await currentPage.screenshot({ path: path.join(output, 'failure.png'), fullPage: true });
     await fs.writeFile(path.join(output, 'failure.json'), JSON.stringify({ url: currentPage.url(), text: await currentPage.locator('body').innerText(), error: error.message }, null, 2));
   }
+  assert.deepEqual(organizationAccessibility.filter(item => item.violations.length), [], 'Organization opportunity panels must pass the sampled accessibility checks in both themes');
   throw error;
 } finally { await browser.close(); }

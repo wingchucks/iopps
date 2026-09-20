@@ -41,6 +41,14 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
   Active sales copy no longer promises retired talent search or unsupported metrics.
   Organization profiles omit training records while the service is paused, including
   local previews, so active-looking cards cannot link to retired detail routes.
+  Public opportunity cards and location panels use readable colors in both themes;
+  panel buttons expose their selected state and signup links avoid nested buttons.
+- Extra shared-video lookups use a Firestore transaction budget of ten calls per
+  minute and 500 per day per channel. Verified missing/private/foreign videos are
+  cached for five minutes; verified video data and provider failures for one minute.
+  Current feed videos need no extra reservation, and unavailable shared lookups do
+  not fail the ordinary feed. Cache and limit records remain server-only under the
+  existing default-deny rules; no provider configuration or quota was changed.
 - Owners/admins can delete draft or closed events/scholarships after confirmation.
   Revision checks prevent overwrites, private tombstones prevent stale resurrection,
   and existing attendee/application history remains intact. Source links render on
