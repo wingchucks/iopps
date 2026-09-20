@@ -31,12 +31,20 @@ interface OrgContentResponse {
 // ── Helpers ──
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
+function eventDate(ev: OrgEvent): Date | null {
+  const raw = ev.date || ev.dates || "";
+  if (!raw) return null;
+  // A date-only listing names a calendar day, not midnight UTC.
+  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T12:00:00` : raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function formatEventDate(ev: OrgEvent): string {
   const raw = ev.date || ev.dates || "";
   if (!raw) return "";
   try {
-    const d = new Date(raw);
-    if (!isNaN(d.getTime())) {
+    const d = eventDate(ev);
+    if (d) {
       return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     }
   } catch { /* ignore */ }
@@ -44,14 +52,12 @@ function formatEventDate(ev: OrgEvent): string {
 }
 
 function getEventMonth(ev: OrgEvent): string {
-  const raw = ev.date || ev.dates || "";
-  try { const d = new Date(raw); if (!isNaN(d.getTime())) return d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(); } catch { /* */ }
+  try { const d = eventDate(ev); if (d) return d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(); } catch { /* */ }
   return "";
 }
 
 function getEventDay(ev: OrgEvent): string {
-  const raw = ev.date || ev.dates || "";
-  try { const d = new Date(raw); if (!isNaN(d.getTime())) return String(d.getDate()); } catch { /* */ }
+  try { const d = eventDate(ev); if (d) return String(d.getDate()); } catch { /* */ }
   return "";
 }
 

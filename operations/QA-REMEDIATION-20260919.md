@@ -43,6 +43,7 @@ or merging this candidate. The remediation delta starts at `7af0eb9d`.
   local previews, so active-looking cards cannot link to retired detail routes.
   Public opportunity cards and location panels use readable colors in both themes;
   panel buttons expose their selected state and signup links avoid nested buttons.
+  Date-only event cards retain the listed calendar day in Canadian time zones.
 - Extra shared-video lookups use a Firestore transaction budget of ten calls per
   minute and 500 per day per channel. Verified missing/private/foreign videos are
   cached for five minutes; verified video data and provider failures for one minute.

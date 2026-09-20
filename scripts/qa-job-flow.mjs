@@ -22,7 +22,7 @@ const organizationAccessibility = [];
 let currentPage;
 try {
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
-    const context = await browser.newContext({ viewport, serviceWorkers: 'block' });
+    const context = await browser.newContext({ viewport, serviceWorkers: 'block', timezoneId: 'America/Regina' });
     await context.addInitScript(() => {
       window.qaFunnelEvents = [];
       window.gtag = (...args) => window.qaFunnelEvents.push(args);
@@ -106,6 +106,7 @@ try {
         const tab = page.getByRole('button', { name: new RegExp(panel) });
         await tab.click();
         assert.equal(await tab.getAttribute('aria-pressed'), 'true');
+        if (panel === 'Events') assert.equal(await page.getByText('Sep 19, 2099 · Saskatoon, SK', { exact: true }).count(), 2, 'Date-only events must retain their calendar day west of UTC');
         const violations = await page.evaluate(async () => (await window.axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] } })).violations.map(item => ({ id: item.id, impact: item.impact, nodes: item.nodes.map(node => ({ target: node.target, summary: node.failureSummary })) })));
         organizationAccessibility.push({ width: viewport.width, theme, panel, violations });
         await fs.writeFile(path.join(output, 'organization-accessibility.json'), JSON.stringify(organizationAccessibility, null, 2));
