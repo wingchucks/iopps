@@ -74,6 +74,7 @@ function JobsPageContent() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [searchReady, setSearchReady] = useState(false);
   const [search] = useDirectoryFilter("q", "");
   const [locationFilter] = useDirectoryFilter(
     "location",
@@ -215,6 +216,11 @@ function JobsPageContent() {
   );
   const { page, pageItems, totalPages, setPage } =
     useDirectoryPagination(mixedJobs);
+  useEffect(() => {
+    // SSR inputs must not accept text before the draft initialization effects run.
+    // Readiness is independent of the jobs request, so loading never blocks typing.
+    setSearchReady(true);
+  }, []);
   const inputSurfaceStyle = {
     border: "1px solid var(--border)",
     background: "var(--card)",
@@ -251,6 +257,7 @@ function JobsPageContent() {
               inputMode="search"
               enterKeyHint="search"
               value={drafts.q}
+              disabled={!searchReady}
               onChange={(e) => edit("q", e.target.value)}
               placeholder="Search job titles, employers, locations..."
               className="min-w-0 flex-1 border-none bg-transparent text-base text-text outline-none placeholder:text-text-muted"
@@ -268,12 +275,14 @@ function JobsPageContent() {
             )}
             <button
               type="submit"
+              disabled={!searchReady}
               className="brand-button shrink-0 cursor-pointer rounded-full border-none px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
               style={{ background: "var(--button-gradient)" }}
             >
               Search
             </button>
           </form>
+          {!searchReady && <p role="status" className="mb-3 text-sm text-text-sec">Preparing search…</p>}
           <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <input
               type="search"
@@ -281,6 +290,7 @@ function JobsPageContent() {
               enterKeyHint="search"
               aria-label="Filter jobs by city or province"
               value={drafts.location}
+              disabled={!searchReady}
               onChange={(e) => edit("location", e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
