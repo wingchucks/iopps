@@ -1,4 +1,4 @@
-import { prepareImportedDescription } from "@/lib/server/import-content-quality";
+import { prepareImportedDescription, withImportedLabelQuality } from "@/lib/server/import-content-quality";
 import { missingSourceJobIds, expirationPatch, sourceLifecyclePatch } from "@/lib/server/job-expiration";
 import { loadFeedItems, feedJobKey, stripCdata } from "@/lib/server/feed-source";
 import { NextRequest, NextResponse } from "next/server";
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
             seen.add(key);
             const title = item.title;
             const feedDescription = item.description || item.summary || item.content || "";
-            const feedContent = prepareImportedDescription(stripCdata(feedDescription));
+            const feedContent = prepareImportedDescription(stripCdata(feedDescription), undefined, { title: item.title, location: item.location, employerName: feed.employerName });
             const normalizedFeedDescription = feedContent.description;
             const descriptionPatch = await fetchImportedDescriptionPatch({
               description: normalizedFeedDescription,
@@ -79,6 +79,7 @@ export async function GET(request: NextRequest) {
               externalId,
               feedUrl,
             });
+            if (descriptionPatch) descriptionPatch.importContentQuality = withImportedLabelQuality(descriptionPatch.importContentQuality || feedContent.importContentQuality, { title: item.title, location: item.location, employerName: feed.employerName });
             const resolvedDescription = descriptionPatch?.description ?? normalizedFeedDescription;
 
             if (!externalId && !externalUrl) continue;

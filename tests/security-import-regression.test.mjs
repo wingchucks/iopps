@@ -19,6 +19,7 @@ function renderJob(description) {
     'next/navigation': { useParams: () => ({ slug: 'fixture' }), useRouter: () => ({}), usePathname: () => '/jobs/fixture', useSearchParams: () => new URLSearchParams() },
     'next/link': { default: ({ children, href }) => React.createElement('a', { href }, children), __esModule: true },
     ...Object.fromEntries(['employer/HiringDetailsSummary', 'AppShell', 'EmployerLogo', 'Badge', 'Button', 'Card', 'ShareButton'].map(name => [`@/components/${name}`, { default: wrapper, __esModule: true }])),
+    '@/components/jobs/JobDescription': sourceModule('src/components/jobs/JobDescription.tsx'),
     '@/lib/job-discovery': {}, '@/lib/auth-context': { useAuth: () => ({ user: null }) },
     '@/lib/firestore/savedItems': {}, '@/lib/firestore/applications': {}, '@/lib/job-funnel-analytics': {},
   } });

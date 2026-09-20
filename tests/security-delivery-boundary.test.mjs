@@ -53,7 +53,7 @@ function verification(options = {}) {
   const route = load('src/app/api/auth/verification-email/route.ts', {
     '@/lib/firebase-admin': { getAdminApp: () => ({}), getAdminDb: () => store.db, getAdminAuth: () => ({
       verifyIdToken: async () => { if (options.invalidAuth) throw Error('invalid'); return token; },
-      generateEmailVerificationLink: async () => { calls.generate++; return 'fictional-link'; },
+      generateEmailVerificationLink: async () => { calls.generate++; return 'https://firebase.invalid/__/auth/action?mode=verifyEmail&oobCode=fictional-code'; },
     }) },
     'firebase-admin/app-check': { getAppCheck: () => ({ verifyToken: async value => { calls.attest++; if (value !== 'valid') throw Error('invalid'); } }) },
     '@/lib/email': { sendAccountVerificationEmail: async () => { calls.send++; return { success: !options.deliveryFailure }; } },
@@ -219,7 +219,7 @@ test('real demo Auth and Firestore enforce application verification and atomic d
     // Real token verification and real atomic Firestore reservation; provider send/link calls are no-send adapters.
     let generated = 0, sent = 0;
     const verificationRoute = load('src/app/api/auth/verification-email/route.ts', {
-      '@/lib/firebase-admin': { ...admin, getAdminAuth: () => ({ verifyIdToken: token => auth.verifyIdToken(token), generateEmailVerificationLink: async () => { generated++; return 'fictional-no-send-link'; } }) },
+      '@/lib/firebase-admin': { ...admin, getAdminAuth: () => ({ verifyIdToken: token => auth.verifyIdToken(token), generateEmailVerificationLink: async () => { generated++; return 'https://firebase.invalid/__/auth/action?mode=verifyEmail&oobCode=fictional-no-send-code'; } }) },
       '@/lib/email': { sendAccountVerificationEmail: async () => { sent++; return { success: true }; } },
     }, { ...process.env, NEXT_PUBLIC_FIREBASE_APP_CHECK_ENABLED: 'false' });
     const ip = `${uid}-uid-race`;

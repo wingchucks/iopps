@@ -1,3 +1,5 @@
+import { normalizeImportedLabel } from "./import-content-quality";
+
 export type FeedItem = Record<string, string>;
 type Json = Record<string, unknown>;
 type Fetcher = typeof fetch;
@@ -38,7 +40,7 @@ export function parseDayforcePage(value: unknown, context: ReturnType<typeof day
     const locations = Array.isArray(job.postingLocations) ? job.postingLocations.map(record).map(l => [text(l.cityName), text(l.stateCode), text(l.isoCountryCode)].filter(Boolean).join(", ")).filter(Boolean) : [];
     return {
       guid: id,
-      title: text(job.jobTitle),
+      title: normalizeImportedLabel(text(job.jobTitle)),
       description: text(job.jobDescription),
       location: locations.join("; ") || "Canada",
       pubDate: text(job.postingStartTimestampUTC),
@@ -113,7 +115,7 @@ export async function fetchOracleItems(feedUrl: string, fetcher: Fetcher = fetch
       const id = text(job.Id);
       if (!id || !text(job.Title) || ids.has(id)) throw new Error("Invalid or repeated Oracle job identity");
       ids.add(id);
-      items.push({ guid: id, title: text(job.Title), description: text(job.ShortDescriptionStr), pubDate: text(job.PostedDate), closingDate: text(job.PostingEndDate), location: text(job.PrimaryLocation) || "Canada", link: `${url.origin}/hcmUI/CandidateExperience/en/sites/${encodeURIComponent(text(result.SiteNumber) || "SIGA")}/job/${encodeURIComponent(id)}` });
+      items.push({ guid: id, title: normalizeImportedLabel(text(job.Title)), description: text(job.ShortDescriptionStr), pubDate: text(job.PostedDate), closingDate: text(job.PostingEndDate), location: normalizeImportedLabel(text(job.PrimaryLocation)) || "Canada", link: `${url.origin}/hcmUI/CandidateExperience/en/sites/${encodeURIComponent(text(result.SiteNumber) || "SIGA")}/job/${encodeURIComponent(id)}` });
     }
     if (items.length === result.TotalJobsCount) return items;
     if (!result.requisitionList.length || items.length > Number(result.TotalJobsCount)) throw new Error("Incomplete Oracle source results");
@@ -187,6 +189,10 @@ export function parseSimpleXml(xml: string): Array<Record<string, string>> {
         .trim();
     }
 
+    for (const field of ["title", "location", "city", "state", "country", "company", "employername"]) {
+      if (item[field]) item[field] = normalizeImportedLabel(item[field]);
+    }
+
     // Normalize SmartJobBoard field names to RSS standard
     if (!item.link && item.url) item.link = item.url;
     if (!item.guid && item.referencenumber) item.guid = item.referencenumber;
@@ -232,7 +238,7 @@ export function parseAdp(text: string, feedUrl?: string): Array<Record<string, s
       const itemID = String(req.itemID || "");
       const cid = feedCid || String((req as Record<string, unknown>).cid || "");
       return {
-        title: String(req.requisitionTitle || ""),
+        title: normalizeImportedLabel(String(req.requisitionTitle || "")),
         guid: itemID,
         link: cid
           ? `https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=${cid}&jobId=${itemID}&lang=en_CA&source=CC2`

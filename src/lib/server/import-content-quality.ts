@@ -43,9 +43,17 @@ function importedHtmlText(value: string): string {
   return parts.join("");
 }
 
+export function normalizeImportedLabel(value: string): string {
+  // Escape literal markup before the single parser pass; only entities are decoded.
+  return importedHtmlText(value.replace(/</g, "&lt;").replace(/>/g, "&gt;"))
+    .replace(encodingPattern, match => knownEncoding.get(match)!)
+    .normalize("NFC").replace(/\s+/gu, " ").trim();
+}
+
 export interface ImportContentQuality {
   version: 1;
   rawDescription: string;
+  rawLabels?: Record<string, string>;
   needsReview: boolean;
   issues: string[];
 }
@@ -53,14 +61,23 @@ export interface ImportContentQuality {
 /** Internal job metadata, excluded by publicContentRecord's positive projection.
  * Preserve source text, not purported original bytes; U+FFFD cannot be reversed.
  */
-export function prepareImportedDescription(rawDescription: string, format?: unknown) {
+export function prepareImportedDescription(rawDescription: string, format?: unknown, labels: Record<string, unknown> = {}) {
   const description = normalizePartnerDescription(rawDescription, format);
+  const rawLabels = Object.fromEntries(Object.entries(labels).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
+  const reviewText = [description, ...Object.values(rawLabels).map(normalizeImportedLabel)].join("\n");
   const issues: string[] = [];
-  if (rawDescription.includes("\ufffd") || description.includes("\ufffd")) issues.push("replacement-character");
-  if (/\bpossiblilties\b/.test(description)) issues.push("suspect-copy:possiblilties");
-  if (/(?:Ã|Â|â€|â\u0080)/.test(description)) issues.push("suspect-encoding");
-  const importContentQuality: ImportContentQuality = { version: 1, rawDescription, needsReview: issues.length > 0, issues };
+  if (rawDescription.includes("\ufffd") || reviewText.includes("\ufffd")) issues.push("replacement-character");
+  if (/Circle Camp& National Day|FNC&FS&JPS Mental Health Worker|ChildYouth Support Worker/i.test(reviewText)) issues.push("suspect-copy:source-verification");
+  if (/\bpossiblilties\b/.test(reviewText)) issues.push("suspect-copy:possiblilties");
+  if (/(?:Ã|Â|â€|â\u0080)/.test(reviewText)) issues.push("suspect-encoding");
+  const importContentQuality: ImportContentQuality = { version: 1, rawDescription, ...(Object.keys(rawLabels).length ? {rawLabels} : {}), needsReview: issues.length > 0, issues };
   return { description, descriptionFormat: "plain-text" as const, importContentQuality };
+}
+
+export function withImportedLabelQuality(quality: ImportContentQuality, labels: Record<string, unknown>): ImportContentQuality {
+  const labelQuality = prepareImportedDescription("", "plain-text", labels).importContentQuality;
+  const issues = [...new Set([...quality.issues, ...labelQuality.issues])];
+  return { ...quality, ...(labelQuality.rawLabels ? {rawLabels: labelQuality.rawLabels} : {}), issues, needsReview: quality.needsReview || issues.length > 0 };
 }
 
 export function normalizePartnerDescription(value: string, format?: unknown): string {

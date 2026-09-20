@@ -49,7 +49,8 @@ function harness(page, initial = null, count = 0) {
   const jsx = (type, props) => ({ type, props });
   const dependencies = {
     react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx },
-    'next/navigation': { useRouter: () => ({ push: value => routes.push(value), replace() {} }) },
+    'next/navigation': { useRouter: () => ({ push: value => routes.push(value), replace() {} }), useSearchParams: () => new URLSearchParams() },
+    './destination': load('src/app/setup/destination.ts', { '@/lib/auth-redirect': load('src/lib/auth-redirect.ts', {}) }),
     'next/link': { default: 'a' }, 'firebase/storage': {}, 'firebase/auth': {},
     'firebase/firestore': firestore, '@/lib/firebase': firebase,
     '@/lib/auth-context': { useAuth: () => ({ user }) },

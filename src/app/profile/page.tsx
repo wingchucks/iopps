@@ -31,6 +31,32 @@ import { getPublicAccountTypeLabel } from "@/lib/account-labels";
 
 import { interestOptions, interestLabels } from "@/lib/constants/interests";
 
+type ProfileSaveError = { message: string; field?: string };
+
+// Never render SDK messages: they can contain document paths and field values.
+function profileSaveError(error: unknown): ProfileSaveError {
+  const details = error && typeof error === "object" ? error as { code?: string; message?: string } : {};
+  const labels: Record<string, string> = {
+    community: "Community / First Nation", location: "Location", bio: "Bio",
+    nation: "Nation / People", territory: "Territory / Homeland", languages: "Languages Spoken",
+    headline: "Professional Headline", skillsText: "Skills", skills: "Skills", interests: "Interests",
+  };
+  const field = details.code === "invalid-argument" && typeof details.message === "string"
+    ? details.message.match(/found in field ([A-Za-z]+)(?:[.\s])/i)?.[1] : undefined;
+  if (field && Object.hasOwn(labels, field)) {
+    return { field: field === "skills" ? "skillsText" : field, message: `${labels[field]} could not be saved. Check this field and try again. Your edits are still here.` };
+  }
+  const recovery: Record<string, string> = {
+    "permission-denied": "This profile update is not permitted. Copy your edits before signing in again; contact support if it continues.",
+    unauthenticated: "Sign in again to save your profile. Copy your edits before leaving this page.",
+    unavailable: "The profile service is unavailable. Check your connection and try again.",
+    "not-found": "Your member profile was not found. Copy your edits before completing profile setup at /setup.",
+  };
+  const message = typeof details.code === "string" && Object.hasOwn(recovery, details.code)
+    ? recovery[details.code] : "Your profile could not be saved. Please try again.";
+  return { message: `${message} Your edits are still here.` };
+}
+
 const appStatusConfig: Record<
   ApplicationStatus,
   { label: string; color: string; bg: string }
@@ -79,6 +105,7 @@ function ProfileContent() {
   const [skillsText, setSkillsText] = useState("");
   const [editInterests, setEditInterests] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<ProfileSaveError | null>(null);
 
   const toggleInterest = (id: string) => {
     setEditInterests((prev) =>
@@ -102,9 +129,11 @@ function ProfileContent() {
       }
       setProfile(data);
       if (data) {
-        setCommunity(data.community);
-        setLocation(data.location);
-        setBio(data.bio);
+        // Older/partially completed members can omit these optional fields.
+        // Never copy undefined into the form and then into a Firestore update.
+        setCommunity(data.community ?? "");
+        setLocation(data.location ?? "");
+        setBio(data.bio ?? "");
         setNation(data.nation || "");
         setTerritory(data.territory || "");
         setLanguages(data.languages || "");
@@ -140,6 +169,7 @@ function ProfileContent() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await updateMemberProfile(user.uid, {
         community,
@@ -154,15 +184,16 @@ function ProfileContent() {
       });
       setProfile((prev) =>
         prev
-          ? { ...prev, community, location, bio, nation, territory, languages, headline, skillsText, interests: editInterests }
+          ? { ...prev, community, location, bio, nation, territory, languages, headline, skillsText, skills: skillsText.split(",").map((skill) => skill.trim()).filter(Boolean), interests: editInterests }
           : prev
       );
       setEditing(false);
       setEditSection(null);
       showToast("Profile updated");
     } catch (err) {
-      console.error("Failed to update profile:", err);
-      showToast("Failed to update profile. Please try again.", "error");
+      const failure = profileSaveError(err);
+      setSaveError(failure);
+      showToast(failure.message, "error");
     } finally {
       setSaving(false);
     }
@@ -330,6 +361,7 @@ function ProfileContent() {
           /* -- Edit Mode (Accordion Sections) -- */
           <div>
             <h3 className="text-lg font-bold text-text mb-4">Edit Profile</h3>
+            {saveError && <p id="profile-save-error" role="alert" className="text-sm text-text mb-4">{saveError.message}</p>}
 
             <div className="flex flex-col gap-3 mb-6">
               {/* Section: Identity & Heritage */}
@@ -346,6 +378,8 @@ function ProfileContent() {
                   <input
                     type="text"
                     value={nation}
+                    aria-invalid={saveError?.field === "nation"}
+                    aria-describedby={saveError?.field === "nation" ? "profile-save-error" : undefined}
                     onChange={(e) => setNation(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                     placeholder="e.g. Cree, Anishinaabe, Metis"
@@ -358,6 +392,8 @@ function ProfileContent() {
                   <input
                     type="text"
                     value={community}
+                    aria-invalid={saveError?.field === "community"}
+                    aria-describedby={saveError?.field === "community" ? "profile-save-error" : undefined}
                     onChange={(e) => setCommunity(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                     placeholder="e.g. Muskoday First Nation"
@@ -370,6 +406,8 @@ function ProfileContent() {
                   <input
                     type="text"
                     value={territory}
+                    aria-invalid={saveError?.field === "territory"}
+                    aria-describedby={saveError?.field === "territory" ? "profile-save-error" : undefined}
                     onChange={(e) => setTerritory(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                     placeholder="e.g. Treaty 6, Metis Nation Region 3"
@@ -382,6 +420,8 @@ function ProfileContent() {
                   <input
                     type="text"
                     value={location}
+                    aria-invalid={saveError?.field === "location"}
+                    aria-describedby={saveError?.field === "location" ? "profile-save-error" : undefined}
                     onChange={(e) => setLocation(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                     placeholder="e.g. Saskatoon, SK"
@@ -394,6 +434,8 @@ function ProfileContent() {
                   <input
                     type="text"
                     value={languages}
+                    aria-invalid={saveError?.field === "languages"}
+                    aria-describedby={saveError?.field === "languages" ? "profile-save-error" : undefined}
                     onChange={(e) => setLanguages(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                     placeholder="e.g. Cree, Michif, English, French"
@@ -415,6 +457,8 @@ function ProfileContent() {
                   <input
                     type="text"
                     value={headline}
+                    aria-invalid={saveError?.field === "headline"}
+                    aria-describedby={saveError?.field === "headline" ? "profile-save-error" : undefined}
                     onChange={(e) => {
                       if (e.target.value.length <= 80) setHeadline(e.target.value);
                     }}
@@ -430,7 +474,8 @@ function ProfileContent() {
                   <textarea
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    aria-describedby="profile-bio-count"
+                    aria-invalid={saveError?.field === "bio"}
+                    aria-describedby={saveError?.field === "bio" ? "profile-bio-count profile-save-error" : "profile-bio-count"}
                     rows={4}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal resize-none"
                     placeholder="A few words about yourself..."
@@ -446,6 +491,8 @@ function ProfileContent() {
                   <input
                     type="text"
                     value={skillsText}
+                    aria-invalid={saveError?.field === "skillsText"}
+                    aria-describedby={saveError?.field === "skillsText" ? "profile-save-error" : undefined}
                     onChange={(e) => setSkillsText(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                     placeholder="e.g. Project Management, Web Development"
@@ -464,7 +511,9 @@ function ProfileContent() {
                 <p className="text-sm text-text-muted mb-4">
                   Select categories to personalize your feed.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div role="group" aria-label="Interests"
+                  aria-describedby={saveError?.field === "interests" ? "profile-save-error" : undefined}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {interestOptions.map((opt) => {
                     const selected = editInterests.includes(opt.id);
                     return (
@@ -520,6 +569,7 @@ function ProfileContent() {
               <Button className="brand-button"
                 primary
                 onClick={handleSave}
+                disabled={saving}
                 style={{
                   background: "var(--button-gradient)",
                   borderRadius: 14,

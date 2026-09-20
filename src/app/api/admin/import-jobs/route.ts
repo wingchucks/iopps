@@ -1,4 +1,4 @@
-import { prepareImportedDescription } from "@/lib/server/import-content-quality";
+import { prepareImportedDescription, normalizeImportedLabel } from "@/lib/server/import-content-quality";
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
@@ -53,11 +53,11 @@ export async function POST(request: NextRequest) {
       const now = new Date().toISOString();
 
       batch.set(doc, {
-        title: job.title,
+        title: normalizeImportedLabel(String(job.title)),
         company: job.company || "Unknown",
         organization: job.company || "Unknown",
         location: job.location || "",
-        ...prepareImportedDescription(typeof job.description === "string" ? job.description : "", job.descriptionFormat),
+        ...prepareImportedDescription(typeof job.description === "string" ? job.description : "", job.descriptionFormat, { title: job.title, location: job.location, company: job.company }),
         employmentType: job.employmentType || "",
         salary: job.salary || "",
         externalUrl: job.externalUrl,

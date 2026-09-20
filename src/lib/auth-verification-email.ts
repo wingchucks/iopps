@@ -27,6 +27,30 @@ export function buildEmailVerificationContinueUrl(siteUrl: string, nextPath?: st
   return url.toString();
 }
 
+/** Reuse only the Admin-issued verification code, never generate or log one here.
+ * Our mailer controls the destination independently of Firebase's shared template URL.
+ */
+export function buildBrandedVerificationActionLink(siteUrl: string, generatedLink: string): string {
+  let source: URL;
+  let target: URL;
+  try {
+    source = new URL(generatedLink);
+    target = new URL("/auth/action", siteUrl);
+  } catch {
+    // URL errors can carry an input property containing the single-use code.
+    throw new Error("Verification link unavailable");
+  }
+  const code = source.searchParams.get("oobCode");
+  if (source.searchParams.get("mode") !== "verifyEmail" || !code || /\s/.test(code)) {
+    throw new Error("Verification link unavailable");
+  }
+  target.searchParams.set("mode", "verifyEmail");
+  target.searchParams.set("oobCode", code);
+  const continueUrl = source.searchParams.get("continueUrl");
+  if (continueUrl) target.searchParams.set("continueUrl", continueUrl);
+  return target.toString();
+}
+
 export function buildAccountVerificationEmailContent(opts: {
   displayName?: string | null;
   verificationLink: string;

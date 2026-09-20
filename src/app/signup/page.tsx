@@ -9,7 +9,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAppCheckTokenValue, storage } from "@/lib/firebase";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 import {
-  BackgroundMesh, TopBar, ProgressBar, StepDots, StepHeader,
+  BackgroundMesh, TopBar, ProgressBar, StepDots,
   FormInput, FormSelect, FormTextarea, CheckboxItem, UploadZone,
   RoleCard, BtnPrimary, BtnSecondary, BtnGhost,
   InfoBanner, ReviewSection, ReviewRow, GoogleButton, PasswordStrength,
@@ -18,6 +18,8 @@ import {
   CSS, INSTITUTION_TYPES, PROVINCES, INDIGENOUS_SERVICES,
   EMPLOYER_CAPABILITIES,
 } from "@/components/signup/constants";
+
+import { StepHeader } from "./StepHeader";
 
 type Role = "" | "community" | "organization";
 type OrgType = "" | "employer" | "school";
@@ -49,7 +51,7 @@ const BUSINESS_IDENTITY_OPTIONS: Array<{
 function UnifiedSignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const memberDestination = postSignupDestination(new URLSearchParams({ redirect: searchParams.get("redirect") || "" }), "/setup");
+  const memberDestination = authIntentHref("/setup", new URLSearchParams({ redirect: searchParams.get("redirect") || "" }));
   const orgDestination = postSignupDestination(searchParams, "/org/dashboard");
   const intent = "intent";
   const entrepreneurIntent = searchParams.get(intent) === "indigenous-business";
