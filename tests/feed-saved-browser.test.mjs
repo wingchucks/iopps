@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import http from 'node:http';
 import { createRequire } from 'node:module';
 import { chromium } from '@playwright/test';
@@ -9,7 +10,7 @@ import { chromium } from '@playwright/test';
 // Desktop component/hook fixtures, not production Firebase or full Next routing.
 test('desktop feed uniqueness and authenticated save intent retries/account isolation', { timeout: 60000 }, async t => {
   const require = createRequire(import.meta.url), root = process.cwd();
-  const dir = fs.mkdtempSync(path.join(process.env.TMPDIR, 'feed-saved-browser-'));
+  const dir = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), 'feed-saved-browser-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const put = (name, text) => { const file = path.join(dir, name); fs.writeFileSync(file, text); return file; };
   const navigation = put('navigation.js', `const React=require('react');const listeners=new Set();let snapshot=location.search;

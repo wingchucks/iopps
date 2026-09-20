@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import http from 'node:http';
 import { createRequire } from 'node:module';
 import { chromium } from '@playwright/test';
@@ -9,7 +10,7 @@ import { chromium } from '@playwright/test';
 // Actual desktop signup TSX + React handlers; fictional auth seam, not Firebase/Next E2E.
 test('desktop signup consent, safe errors, confirmed creation and verification retry', async t => {
   const require = createRequire(import.meta.url), root = process.cwd();
-  const dir = fs.mkdtempSync(path.join(process.env.TMPDIR, 'signup-browser-'));
+  const dir = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), 'signup-browser-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const put = (name, text) => { const file = path.join(dir, name); fs.writeFileSync(file, text); return file; };
   const navigation = put('navigation.js', `exports.useRouter=()=>({push:url=>window.destination=url});exports.useSearchParams=()=>new URLSearchParams(location.search);`);
