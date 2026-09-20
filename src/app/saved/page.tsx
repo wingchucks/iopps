@@ -190,7 +190,7 @@ function SavedContent() {
             Saved Items
           </h1>
           <p className="text-sm text-text-muted m-0">
-            {items.length} {items.length === 1 ? "item" : "items"} saved
+            {`${items.length} ${items.length === 1 ? "item" : "items"} saved`}
           </p>
         </div>
         <span className="text-3xl">&#128278;</span>

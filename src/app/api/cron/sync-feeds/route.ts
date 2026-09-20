@@ -1,12 +1,11 @@
+import { prepareImportedDescription } from "@/lib/server/import-content-quality";
 import { missingSourceJobIds, expirationPatch, sourceLifecyclePatch } from "@/lib/server/job-expiration";
 import { loadFeedItems, feedJobKey, stripCdata } from "@/lib/server/feed-source";
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import {
-  fetchImportedDescriptionPatch,
-  normalizeImportedDescription,
-} from "@/lib/server/imported-job-descriptions";
+import { fetchImportedDescriptionPatch, normalizeImportedDescription } from "@/lib/server/imported-job-descriptions";
+import { updateImportedJobWithEditorialGuard } from "@/lib/server/editorial-import-guard";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -72,7 +71,8 @@ export async function GET(request: NextRequest) {
             seen.add(key);
             const title = item.title;
             const feedDescription = item.description || item.summary || item.content || "";
-            const normalizedFeedDescription = normalizeImportedDescription(stripCdata(feedDescription));
+            const feedContent = prepareImportedDescription(stripCdata(feedDescription));
+            const normalizedFeedDescription = feedContent.description;
             const descriptionPatch = await fetchImportedDescriptionPatch({
               description: normalizedFeedDescription,
               externalUrl,
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
               const lifecycle = sourceLifecyclePatch(item, existingDoc.data());
               const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
               if (feed.updateExistingJobs || (feedType === "dayforce" && feed.updateExistingJobs !== false)) {
-                await existingDoc.ref.update({ ...identity, title, location: item.location || "Canada", description: resolvedDescription, descriptionFormat: "plain-text", ...(descriptionPatch || {}), ...lifecycle, updatedAt: FieldValue.serverTimestamp() });
+                await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, { ...identity, title, location: item.location || "Canada", ...feedContent, description: resolvedDescription, descriptionFormat: "plain-text", ...(descriptionPatch || {}), ...lifecycle, updatedAt: FieldValue.serverTimestamp() }, normalizeImportedDescription);
                 jobsUpdated++;
               } else if (Object.keys(lifecycle).length || (feedType === "dayforce" && existingDoc.get("feedId") !== feed.id)) {
                 await existingDoc.ref.update({...identity,...lifecycle});
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
 
             const jobData: Record<string, unknown> = {
               title,
-              description: resolvedDescription, descriptionFormat: "plain-text",
+              ...feedContent, description: resolvedDescription, descriptionFormat: "plain-text",
               status: "active",
               active: true,
               source: "feed",

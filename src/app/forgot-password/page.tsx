@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export default function ForgotPasswordPage() {
   const { user, loading: authLoading, resetPassword } = useAuth();
@@ -28,10 +29,7 @@ export default function ForgotPasswordPage() {
       await resetPassword(email);
       setSent(true);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong.";
-      if (msg.includes("invalid-email")) setError("Please enter a valid email address.");
-      else if (msg.includes("too-many-requests")) setError("Too many attempts. Please try again later.");
-      else setError(msg);
+      setError(authErrorMessage(err, "Password recovery is temporarily unavailable. Please try again later."));
     } finally {
       setLoading(false);
     }

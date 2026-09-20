@@ -10,6 +10,7 @@ import {
   reauthenticateWithCredential,
 } from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { useToast } from "@/lib/toast-context";
 import { updateMemberProfile, deleteOwnAccount } from "@/lib/firestore/members";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -62,7 +63,7 @@ function AccountContent() {
       showToast("Display name updated");
     } catch (err) {
       console.error("Failed to update display name:", err);
-      showToast("Failed to update name. Please try again.", "error");
+      showToast(authErrorMessage(err, "Failed to update name. Please try again."), "error");
     } finally {
       setSavingName(false);
     }
@@ -94,13 +95,7 @@ function AccountContent() {
       setConfirmPassword("");
       showToast("Password changed successfully");
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to change password.";
-      if (message.includes("wrong-password") || message.includes("invalid-credential")) {
-        setPasswordError("Current password is incorrect.");
-      } else {
-        setPasswordError(message);
-      }
+      setPasswordError(authErrorMessage(err, "Unable to change your password. Please try again."));
     } finally {
       setSavingPassword(false);
     }
@@ -120,13 +115,7 @@ function AccountContent() {
       await signOut();
       router.push("/");
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to delete account.";
-      if (message.includes("wrong-password") || message.includes("invalid-credential")) {
-        setDeleteError("Password is incorrect.");
-      } else {
-        setDeleteError(message);
-      }
+      setDeleteError(authErrorMessage(err, "Unable to delete your account. If you manage an organization, transfer its ownership or contact support before trying again."));
     } finally {
       setDeleting(false);
     }

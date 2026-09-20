@@ -504,12 +504,14 @@ export default function FeedDetailPage() {
             <label className="relative inline-flex cursor-pointer items-center">
               <input
                 type="checkbox"
+                aria-labelledby="feed-active-label"
                 checked={editActive}
                 onChange={(e) => setEditActive(e.target.checked)}
                 className="peer sr-only"
               />
               <div className="h-6 w-11 rounded-full bg-[var(--input-border)] peer-checked:bg-[#D97706] peer-focus:ring-2 peer-focus:ring-[#D97706]/20 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full" />
             </label>
+            <span id="feed-active-label" className="text-sm text-[var(--text-secondary)]">Feed active</span>
             <span className="text-sm text-[var(--text-secondary)]">
               {editActive ? "Active" : "Paused"}
             </span>

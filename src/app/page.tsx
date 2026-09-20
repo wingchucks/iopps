@@ -43,7 +43,7 @@ export default async function Home() {
           </div>
           <figure className="journey-hero-portrait">
             <Image src="/redesign/community.jpg" alt="IOPPS hosts connecting with the community at an event" fill priority sizes="(max-width: 760px) 100vw, 45vw" />
-            <figcaption><span>Connected through community</span><Link href="/livestreams">This is IOPPS <span aria-hidden="true">↗</span></Link></figcaption>
+            <figcaption><span>Connected through community</span><a href="https://ioppslive.com" target="_blank" rel="noopener noreferrer">This is IOPPS · ioppslive.com <span aria-hidden="true">↗</span><span className="sr-only"> (opens in a new tab)</span></a></figcaption>
           </figure>
           </div>
           <div className="journey-search-heading"><span>YOUR NEXT OPPORTUNITY</span><Link href="/for-employers">Looking to hire? →</Link></div>

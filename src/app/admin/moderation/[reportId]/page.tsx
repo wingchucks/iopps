@@ -501,6 +501,10 @@ export default function ModerationDetailPage() {
             )}
             <label className="flex items-center gap-3 cursor-pointer">
               <button
+                type="button"
+                role="switch"
+                aria-checked={elderToggle}
+                aria-labelledby="elder-review-label"
                 onClick={() => setElderToggle(!elderToggle)}
                 className={cn(
                   "relative h-6 w-11 shrink-0 rounded-full transition-colors",
@@ -512,7 +516,7 @@ export default function ModerationDetailPage() {
                   elderToggle && "translate-x-5"
                 )} />
               </button>
-              <span className="text-sm text-foreground">Request Elder review</span>
+              <span id="elder-review-label" className="text-sm text-foreground">Request Elder review</span>
             </label>
             {elderToggle && (
               <textarea

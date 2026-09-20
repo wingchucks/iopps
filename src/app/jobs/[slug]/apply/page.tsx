@@ -303,11 +303,26 @@ function ApplyWizard() {
     finally { setNotifying(false); }
   };
 
-  const canAdvance = () => {
-    if (step === 0) return !uploading && (resumeUrl !== "" || (useProfile && !!profile && (!(post as unknown as Record<string, unknown>)?.requiresResume || !!profile.resumeUrl)));
-    if (step === 1) return !validateApplicationDocuments(post || {}, {resumeUrl: useProfile ? profile?.resumeUrl : resumeUrl,coverLetter,references});
-    return true;
-  };
+  // Keep the explanation and the disabled state on the same validation path.
+  // A profile alone is supported unless the employer explicitly requires a file.
+  const nextRequirement = (() => {
+    if (uploading) return "Please wait for your resume upload to finish.";
+    if (step === 0) {
+      if (useProfile) {
+        if (!profile) return "Your IOPPS profile is unavailable. Reload this page or turn off the profile option and upload a resume.";
+        if ((post as unknown as Record<string, unknown>)?.requiresResume && !profile.resumeUrl?.trim()) {
+          return "This employer requires a resume file. Your profile has no saved resume. Turn off the profile option and upload a resume, or add one to your profile and reload this page.";
+        }
+        return null;
+      }
+      if (!resumeUrl.trim()) return profile
+        ? "Upload a resume or choose your IOPPS profile to continue."
+        : "Your IOPPS profile is unavailable. Upload a resume to continue, or complete your profile and reload this page.";
+    }
+    if (step === 1) return validateApplicationDocuments(post || {}, {resumeUrl: useProfile ? profile?.resumeUrl : resumeUrl, coverLetter, references});
+    return null;
+  })();
+  const canAdvance = () => !nextRequirement;
 
   if (loading) {
     return (
@@ -403,7 +418,9 @@ function ApplyWizard() {
           <div className="p-5 sm:p-6">
             <h2 className="text-lg font-bold text-text mb-1">Resume</h2>
             <p className="text-sm text-text-sec mb-5">
-              Upload your resume or use your IOPPS profile.
+              {(post as unknown as Record<string, unknown>).requiresResume
+                ? "This employer requires a resume file. Upload one or use a profile with a saved resume."
+                : "Upload your resume or use your IOPPS profile. No resume upload is needed when using your profile."}
             </p>
 
             {/* File upload area */}
@@ -489,6 +506,7 @@ function ApplyWizard() {
                 disabled={!profile || uploading}
                 aria-checked={useProfile}
                 aria-label="Use my IOPPS Profile as my application"
+                aria-describedby="application-profile-description"
                 onClick={() => {
                   const next = !useProfile;
                   setUseProfile(next);
@@ -514,8 +532,8 @@ function ApplyWizard() {
               </button>
               <div>
                 <p className="text-sm font-semibold text-text m-0">Use my IOPPS Profile</p>
-                <p className="text-xs text-text-muted m-0">
-                  A copy of your profile and saved resume will be shared
+                <p id="application-profile-description" className="text-xs text-text-muted m-0">
+                  {profile?.resumeUrl ? "A copy of your profile and saved resume will be shared." : "A copy of your profile will be shared. No saved resume is attached."}
                 </p>
               </div>
             </div>
@@ -699,6 +717,9 @@ function ApplyWizard() {
       )}
 
       {/* Navigation buttons */}
+      {step < 2 && <p id="application-next-requirement" role="status" className="text-sm text-text-sec mt-4">
+        {nextRequirement}
+      </p>}
       <div className="flex items-center justify-between mt-6">
         {step > 0 ? (
           <Button onClick={() => setStep(step - 1)} style={{ borderRadius: 14 }}>
@@ -711,6 +732,7 @@ function ApplyWizard() {
           <Button className="brand-button"
             primary
             disabled={!canAdvance()}
+            aria-describedby={nextRequirement ? "application-next-requirement" : undefined}
             onClick={() => { if (canAdvance()) setStep(step + 1); }}
             style={{
               background: canAdvance() ? "var(--button-gradient)" : "var(--border)",

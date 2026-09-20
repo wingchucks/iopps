@@ -12,6 +12,7 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   const auth = await verifyAuthToken(request);
   if (!auth.success) return auth.response;
+  const emailVerificationRequired = new Error("Please verify your email address before applying.");
   try {
     if (Number(request.headers.get("content-length") || 0) > 100000) return NextResponse.json({ error: "Application too large" }, { status: 413 });
     const input = await request.json();
@@ -19,6 +20,11 @@ export async function POST(request: NextRequest) {
     let archive: Promise<string> | undefined;
     const originalResumeUrl = input.resumeUrl;
     const verifyDocuments = async () => {
+    // This callback runs only for a new submission, before archive/transaction writes.
+    // Keep authenticated immutable retries and receipt/withdrawal access available.
+    if (auth.decodedToken.firebase?.sign_in_provider === "password" && auth.decodedToken.email_verified !== true) {
+      throw emailVerificationRequired;
+    }
     if (input.resumeUrl) {
       const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
       if (!bucketName) throw new Error("Storage is not configured");
@@ -33,6 +39,9 @@ export async function POST(request: NextRequest) {
     if (!persisted.exists) throw new Error("Application receipt is not available");
     return NextResponse.json({created:result.created, application:serialize(applicationReceiptRecord({...persisted.data(),id:persisted.id}))}, {status:result.created ? 201 : 200, headers:{"Cache-Control":"private, no-store"}});
   } catch (error) {
+    if (error === emailVerificationRequired) {
+      return NextResponse.json({ error: emailVerificationRequired.message, code: "auth/email-not-verified" }, { status: 403 });
+    }
     const message = error instanceof Error ? error.message : "Unable to submit application.";
     const safe = /^(A resume|A cover letter|References are|This job|Apply using|Invalid (job|resume)|Application ownership)/.test(message);
     return NextResponse.json({error: safe ? message : "Unable to submit application. Please try again."}, {status:safe ? 422 : 503});

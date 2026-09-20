@@ -1,3 +1,4 @@
+import { updateImportedJobWithEditorialGuard } from "@/lib/server/editorial-import-guard";
 import { publicContentRecord } from "@/lib/server/public-content-record";
 import { NextResponse } from "next/server";
 import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
@@ -71,8 +72,7 @@ export async function GET(
       });
 
       if (hydratedPatch) {
-        const firestorePatch: Record<string, unknown> = { ...hydratedPatch };
-        await docRef.ref.update(firestorePatch);
+        const firestorePatch = await updateImportedJobWithEditorialGuard(db, docRef.ref, { ...hydratedPatch }, normalizeImportedDescription);
         Object.assign(data, firestorePatch);
 
         if (!isPublicJobRecordVisible(data, new Date())) {

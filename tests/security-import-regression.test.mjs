@@ -173,7 +173,7 @@ test('actual GET hydration stores the text contract and detail/list projections 
   const net = offlineNetwork({ response: () => ({ body: JSON.stringify({ requisitionDescription: '<p>Fictional role &lt;img src=x onerror="fixture()"&gt; &amp; community</p>' }) }) });
   const record = { title: 'Fictional role', active: true, status: 'active', externalUrl: adpJob, feedId: 'fixture-feed' };
   const writes = [];
-  const snapshot = { id: 'fixture', exists: true, data: () => ({ ...record }), ref: { update: async patch => { writes.push(patch); Object.assign(record, patch); } } };
+  const snapshot = { id: 'fixture', exists: true, data: () => ({ ...record }), ref: { id: 'fixture', parent: { id: 'jobs' }, update: async patch => { writes.push(patch); Object.assign(record, patch); } } };
   const db = { collection(name) {
     const query = { where: () => query, get: async () => ({ docs: name === 'jobs' ? [snapshot] : [] }), doc: () => ({ get: async () => name === 'rssFeeds' ? { data: () => ({ feedUrl: 'https://workforcenow.adp.com/feed?cid=fixture-tenant' }) } : snapshot }) };
     return query;

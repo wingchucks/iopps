@@ -1,5 +1,5 @@
 import { Parser } from "htmlparser2";
-import { descriptionText } from "@/lib/description-text";
+import { normalizePartnerDescription, prepareImportedDescription, type ImportContentQuality } from "@/lib/server/import-content-quality";
 import { OutboundFetchError, safeOutboundFetch } from "@/lib/server/safe-outbound-fetch";
 
 const IMPORT_FETCH_TIMEOUT_MS = 15_000;
@@ -11,7 +11,7 @@ const BROKEN_DESCRIPTION_PATTERNS = [
   /powered by/i,
 ];
 
-const MOJIBAKE_MARKERS = /(â€™|â€œ|â€|â€¢|â€“|â€”|Â\xa0|Â |â)/;
+
 
 type MaybeString = string | null | undefined;
 
@@ -26,6 +26,7 @@ export interface ImportedJobDescriptionInput {
 }
 
 export interface ImportedJobDescriptionPatch {
+  importContentQuality?: ImportContentQuality;
   description?: string;
   descriptionFormat: "plain-text";
   descriptionFetchedAt: Date;
@@ -51,19 +52,11 @@ interface AdpDetailResponse {
   };
 }
 
-function repairMojibake(value: string): string {
-  if (!MOJIBAKE_MARKERS.test(value)) return value;
 
-  const repaired = Buffer.from(value, "latin1").toString("utf8");
-  const repairedScore = (repaired.match(/(â€™|â€œ|â€|â€¢|â€“|â€”|Â |â)/g) || []).length;
-  const originalScore = (value.match(/(â€™|â€œ|â€|â€¢|â€“|â€”|Â |â)/g) || []).length;
-
-  return repairedScore < originalScore ? repaired : value;
-}
 
 export function normalizeImportedDescription(value: MaybeString, format?: unknown): string {
   if (!value) return "";
-  return descriptionText(repairMojibake(value), format);
+  return normalizePartnerDescription(value, format);
 }
 
 function looksLikeBrokenImportedDescription(value: string): boolean {
@@ -174,7 +167,8 @@ async function fetchAdpDescription(
     };
   }
 
-  const description = normalizeImportedDescription(payload.requisitionDescription || "");
+  const content = prepareImportedDescription(payload.requisitionDescription || "");
+  const description = content.description;
 
   if (!description || looksLikeBrokenImportedDescription(description)) {
     return null;
@@ -185,8 +179,7 @@ async function fetchAdpDescription(
   const department = extractAdpDepartment(payload);
 
   return {
-    description,
-    descriptionFormat: "plain-text",
+    ...content,
     descriptionFetchedAt: new Date(),
     descriptionSource: "adp-detail",
     ...(location ? { location } : {}),
@@ -202,7 +195,7 @@ function extractMetaContent(html: string, property: string): string {
       if (!content && name === "meta" && (attributes.property || attributes.name) === property) {
         // Attribute entities have already been decoded by the parser. Treat the
         // result as text; never parse decoded markup a second time.
-        content = normalizeImportedDescription(attributes.content || "", "plain-text");
+        content = attributes.content || "";
       }
     },
   }, { decodeEntities: true });
@@ -212,15 +205,15 @@ function extractMetaContent(html: string, property: string): string {
 
 async function fetchOracleDescription(externalUrl: string): Promise<ImportedJobDescriptionPatch | null> {
   const html = await fetchText(externalUrl);
-  const description = extractMetaContent(html, "og:description");
+  const content = prepareImportedDescription(extractMetaContent(html, "og:description"), "decoded-text");
+  const description = content.description;
 
   if (!description || looksLikeBrokenImportedDescription(description)) {
     return null;
   }
 
   return {
-    description,
-    descriptionFormat: "plain-text",
+    ...content,
     descriptionFetchedAt: new Date(),
     descriptionSource: "oracle-meta",
   };

@@ -97,19 +97,54 @@ test('application details render the submitted snapshot and escape untrusted cov
   assert.match(source, /disabled=\{app.status === "withdrawn" \|\|/);
 });
 
+// Model immutable, bounded Firestore queries rather than accepting no-op paging.
+function cleanupApplications(records, reads = [], failField) {
+  const query = (field, value, order, count, after) => ({
+    orderBy: name => { assert.equal(name, '__name__'); return query(field, value, name, count, after); },
+    limit: size => { assert.equal(size, 250); return query(field, value, order, size, after); },
+    startAfter: snapshot => { assert.ok(snapshot.id); return query(field, value, order, count, snapshot.id); },
+    get: async () => {
+      assert.equal(order, '__name__'); assert.equal(count, 250);
+      reads.push({ field, after });
+      if (field === failField) throw Error('Legacy query unavailable');
+      return { docs: records.filter(row => row[field] === value && (!after || row.id > after))
+        .sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0).slice(0, count)
+        .map(row => ({ id: row.id, data: () => row })) };
+    },
+  });
+  return { where: (field, op, value) => { assert.equal(op, '=='); return query(field, value); } };
+}
+
+function cleanupFiles(paths, onDelete, onList = () => {}) {
+  return async options => {
+    const { prefix, autoPaginate, maxResults, pageToken } = options;
+    assert.equal(autoPaginate, false); assert.ok(maxResults > 0 && maxResults <= 100);
+    onList(options);
+    const matches = paths.filter(name => name.startsWith(prefix));
+    const offset = Number(pageToken || 0), page = matches.slice(offset, offset + maxResults);
+    return [page.map(name => ({ name, metadata: { generation: '123' }, delete: async options => onDelete(name, options) })),
+      offset + page.length < matches.length ? { pageToken: String(offset + page.length) } : null];
+  };
+}
+
 test('closed-account upload cleanup preserves shared files, rejects live accounts and pins generations', async () => {
   let closed = false;
   const deletions = [], authDeletes = [];
   const uid = 'qa-owner', bucketName = 'fictional.example';
   const shared = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(`resumes/${uid}/shared.pdf`)}?token=fictional`;
-  const db = { doc: () => ({ get: async () => ({ data: () => closed ? { status: 'deleted', deletedAt: 'now' } : { status: 'active' } }) }), collection: () => ({ where: () => ({ get: async () => ({ docs: [{ id: 'current', data: () => ({ resumeUrl: shared }) }] }) }) }) };
+  const db = { doc: () => ({ get: async () => ({ data: () => closed ? { status: 'deleted', deletedAt: 'now' } : { status: 'active' } }) }), collection: () => cleanupApplications([{ id: 'current', userId: uid, resumeUrl: shared }]) };
   const auth = { deleteUser: async id => { authDeletes.push(id); throw Object.assign(Error('absent'), { code: 'auth/user-not-found' }); } };
-  const bucket = { name: bucketName, getFiles: async ({ prefix }) => [[prefix.startsWith('avatars/') ? `avatars/${uid}.png` : `resumes/${uid}/private.pdf`, `resumes/${uid}/shared.pdf`, 'resumes/foreign/file.pdf', `application-documents/${uid}/archive.pdf`].map(name => ({ name, metadata: { generation: '123' }, delete: async options => deletions.push({ name, options }) }))] };
+  const bucket = { name: bucketName, getFiles: async options => {
+    // Keep the original adversarial listing: foreign/archive rows must be skipped.
+    assert.equal(options.autoPaginate, false); assert.ok(options.maxResults <= 100);
+    return [[options.prefix.startsWith('avatars/') ? `avatars/${uid}.png` : `resumes/${uid}/private.pdf`, `resumes/${uid}/shared.pdf`, 'resumes/foreign/file.pdf', `application-documents/${uid}/archive.pdf`].map(name => ({ name, metadata: { generation: '123' }, delete: async options => deletions.push({ name, options }) })), null];
+  } };
   await assert.rejects(cleanClosedAccountUploads(db, bucket, auth, uid), /closed/);
   assert.equal(authDeletes.length, 0);
   closed = true;
   const result = await cleanClosedAccountUploads(db, bucket, auth, uid);
   assert.equal(result.deleted, 2);
+  assert.equal(result.cursor, null);
   assert.deepEqual(deletions.map(d => d.name), [`avatars/${uid}.png`, `resumes/${uid}/private.pdf`]);
   assert.ok(deletions.every(d => d.options.ifGenerationMatch === 123));
   await assert.rejects(cleanClosedAccountUploads(db, bucket, auth, '../foreign'), /identity/);
@@ -123,20 +158,29 @@ test('cleanup retains resumes and profile images referenced by legacy memberId a
     { id: 'legacy', memberId: uid, resumeUrl: url(`resumes/${uid}/legacy.pdf`), profileSnapshot: { photoURL: url(`avatars/${uid}.png`) } },
     { id: 'both', userId: uid, memberId: uid, profileSnapshot: { resumeUrl: url(`resumes/${uid}/snapshot.pdf`) } },
   ];
-  const db = { doc: () => ({ get: async () => ({ data: () => ({ status: 'deleted', deletedAt: 'now' }) }) }), collection: () => ({ where: (field, _op, value) => ({ get: async () => ({ docs: records.filter(row => row[field] === value).map(row => ({ id: row.id, data: () => row })) }) }) }) };
+  // Force both reference scans past their first page without changing retention.
+  records.push(...Array.from({ length: 250 }, (_, i) => ({ id: `a-${String(i).padStart(3, '0')}`, userId: uid, memberId: uid })));
+  const reads = [];
+  const db = { doc: () => ({ get: async () => ({ data: () => ({ status: 'deleted', deletedAt: 'now' }) }) }), collection: () => cleanupApplications(records, reads) };
   const paths = [`resumes/${uid}/current.pdf`, `resumes/${uid}/legacy.pdf`, `resumes/${uid}/snapshot.pdf`, `avatars/${uid}.png`, `resumes/${uid}/unshared.pdf`];
-  const bucket = { name: bucketName, getFiles: async ({ prefix }) => [paths.filter(name => name.startsWith(prefix)).map(name => ({ name, metadata: { generation: '123' }, delete: async () => deletions.push(name) }))] };
+  const bucket = { name: bucketName, getFiles: cleanupFiles(paths, name => deletions.push(name), () => {
+    assert.deepEqual(reads.map(read => read.field), ['userId', 'userId', 'memberId', 'memberId']);
+    assert.equal(reads[1].after, 'a-249'); assert.equal(reads[3].after, 'a-249');
+  }) };
   const result = await cleanClosedAccountUploads(db, bucket, { deleteUser: async () => {} }, uid);
   assert.deepEqual(deletions, [`resumes/${uid}/unshared.pdf`]);
   assert.equal(result.retainedShared, 4);
+  assert.equal(result.cursor, null);
 });
 
 test('cleanup deletes no uploads if the legacy ownership query fails', async () => {
   let listed = false;
-  const db = { doc: () => ({ get: async () => ({ data: () => ({ status: 'deleted', deletedAt: 'now' }) }) }), collection: () => ({ where: field => ({ get: async () => { if (field === 'memberId') throw Error('Legacy query unavailable'); return { docs: [] }; } }) }) };
+  const reads = [];
+  const db = { doc: () => ({ get: async () => ({ data: () => ({ status: 'deleted', deletedAt: 'now' }) }) }), collection: () => cleanupApplications([], reads, 'memberId') };
   const bucket = { getFiles: async () => { listed = true; return [[]]; } };
   await assert.rejects(cleanClosedAccountUploads(db, bucket, { deleteUser: async () => {} }, 'qa-legacy'), /Legacy query unavailable/);
   assert.equal(listed, false);
+  assert.deepEqual(reads.map(read => read.field), ['userId', 'memberId']);
 });
 
 test('password-reset rate reservations enforce independent email/IP windows without storing raw identities', async () => {
@@ -293,14 +337,49 @@ test('organization profiles omit opportunity tombstones, stale mirrors, hidden l
 });
 
 test('account cleanup cron requires its secret and retains failed jobs with a later retry', async () => {
-  let scanned = 0; const deleted = [], updated = [];
-  const jobs = ['complete', 'retry'].map(id => ({ id, ref: { delete: async () => deleted.push(id), update: async data => updated.push({ id, data }) } }));
+  let scanned = 0; const deleted = [], updated = [], claims = [], ownershipReads = [], authDeletes = [], uploadDeletes = [], listings = [];
+  // These jobs are eligible final sweeps; unknown-history grace is covered separately.
+  const stored = new Map(['complete', 'retry', 'progress'].map(id => [id, { notBefore: '2020-01-01T00:00:00.000Z', authRemovedAt: '2020-01-01T00:00:00.000Z' }]));
+  const snapshot = id => ({ data: () => stored.has(id) ? structuredClone(stored.get(id)) : undefined });
+  const job = id => ({ id, ref: { id, get: async () => { ownershipReads.push(id); return snapshot(id); } } });
+  const db = {
+    doc: path => ({ get: async () => { assert.match(path, /^users\//); return { data: () => ({ status: 'deleted', deletedAt: 'fixture' }) }; } }),
+    collection: name => {
+      if (name === 'applications') return cleanupApplications([]);
+      assert.equal(name, 'account_cleanup');
+      return { where: (field, op, due) => {
+        assert.equal(field, 'notBefore'); assert.equal(op, '<=');
+        return { limit: count => { assert.equal(count, 50); return { get: async () => {
+          scanned++; return { docs: [...stored].filter(([, data]) => data.notBefore <= due).slice(0, count).map(([id]) => job(id)) };
+        } }; } };
+      } };
+    },
+    runTransaction: async action => {
+      const writes = [];
+      const result = await action({
+        get: async ref => snapshot(ref.id),
+        update: (ref, data) => writes.push(() => {
+          assert.ok(stored.has(ref.id), 'transactions must not resurrect removed jobs');
+          stored.set(ref.id, { ...stored.get(ref.id), ...structuredClone(data) });
+          (data.leaseOwner ? claims : updated).push({ id: ref.id, data });
+        }),
+        delete: ref => writes.push(() => { stored.delete(ref.id); deleted.push(ref.id); }),
+      });
+      for (const write of writes) write();
+      return result;
+    },
+  };
+  const paths = ['avatars/complete.png', ...Array.from({ length: 101 }, (_, i) => `resumes/progress/${String(i).padStart(3, '0')}.pdf`)];
+  const bucket = { name: 'fictional.example', getFiles: cleanupFiles(paths, (name, options) => {
+    assert.equal(options.ifGenerationMatch, 123); uploadDeletes.push(name);
+  }, options => listings.push(options)) };
+  const auth = { deleteUser: async uid => { authDeletes.push(uid); if (uid === 'retry') throw Error('Transient provider failure'); } };
   const route = load('src/app/api/cron/account-cleanup/route.ts', {
-    'next/server': { NextResponse: Response }, 'firebase-admin/storage': { getStorage: () => ({ bucket: () => ({}) }) },
-    '@/lib/firebase-admin': { getAdminApp: () => ({}), getAdminAuth: () => ({}), getAdminDb: () => ({ collection: name => {
-      assert.equal(name, 'account_cleanup'); return { where: (field, op) => { assert.equal(field, 'notBefore'); assert.equal(op, '<='); return { limit: count => { assert.equal(count, 50); return { get: async () => { scanned++; return { docs: jobs }; } }; } }; } };
-    } }) },
-    '@/lib/server/account-upload-cleanup': { cleanClosedAccountUploads: async (_db, _bucket, _auth, uid) => { if (uid === 'retry') throw Error('Transient provider failure'); } },
+    'node:crypto': requireNative('node:crypto'),
+    'next/server': { NextResponse: Response }, 'firebase-admin/storage': { getStorage: () => ({ bucket: () => bucket }) },
+    '@/lib/firebase-admin': { getAdminApp: () => ({}), getAdminAuth: () => auth, getAdminDb: () => db },
+    // Execute the actual helper and its ownership callback; no synthetic cursor result.
+    '@/lib/server/account-upload-cleanup': { cleanClosedAccountUploads },
   }, { process: { env: { CRON_SECRET: 'fictional-unit-secret' } } });
   assert.equal((await route.GET(new Request('https://example.invalid/cron'))).status, 401);
   assert.equal(scanned, 0);
@@ -309,4 +388,29 @@ test('account cleanup cron requires its secret and retains failed jobs with a la
   assert.equal(response.status, 503); assert.deepEqual(await response.json(), { completed: 1, failed: 1 });
   assert.deepEqual(deleted, ['complete']); assert.equal(updated[0].id, 'retry');
   assert.ok(Date.parse(updated[0].data.notBefore) >= before + 86400000);
+  assert.deepEqual(authDeletes, ['complete', 'retry', 'progress']);
+  assert.deepEqual(claims.map(write => write.id), ['complete', 'retry', 'progress']);
+  assert.equal(new Set(claims.map(write => write.data.leaseOwner)).size, 3);
+  for (const claim of claims) {
+    assert.equal(claim.data.notBefore, claim.data.leaseUntil);
+    assert.ok(Date.parse(claim.data.leaseUntil) >= before + 360000);
+    assert.ok(ownershipReads.includes(claim.id), 'real helper invoked the route ownership callback');
+  }
+  assert.equal(stored.has('complete'), false);
+  assert.equal(stored.get('retry').lastError, 'Cleanup needs retry');
+  assert.equal(stored.get('retry').leaseOwner, null);
+  assert.deepEqual(stored.get('progress').cursor, { prefixIndex: 1, pageToken: '100' });
+  assert.equal(stored.get('progress').leaseOwner, null);
+  assert.ok(Date.parse(stored.get('progress').notBefore) >= before + 60000);
+  assert.equal(uploadDeletes.filter(name => name.startsWith('resumes/progress/')).length, 100);
+  // Advance only the fictional job's due time, then resume its durable cursor.
+  stored.get('progress').notBefore = '2020-01-01T00:00:00.000Z';
+  const resumed = await route.GET(new Request('https://example.invalid/cron', { headers: { authorization: 'Bearer fictional-unit-secret' } }));
+  assert.equal(resumed.status, 200); assert.deepEqual(await resumed.json(), { completed: 1, failed: 0 });
+  assert.deepEqual(deleted, ['complete', 'progress']);
+  assert.deepEqual([...stored.keys()], ['retry']);
+  assert.equal(listings.at(-1).pageToken, '100');
+  assert.equal(uploadDeletes.length, 102);
+  assert.equal(new Set(uploadDeletes).size, 102, 'continuation does not restart or repeat deletions');
+  assert.equal(authDeletes.filter(id => id === 'retry').length, 1, 'backoff excludes the failed job from the second scan');
 });

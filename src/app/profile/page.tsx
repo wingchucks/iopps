@@ -430,10 +430,14 @@ function ProfileContent() {
                   <textarea
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
+                    aria-describedby="profile-bio-count"
                     rows={4}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal resize-none"
                     placeholder="A few words about yourself..."
                   />
+                  <span id="profile-bio-count" aria-live="polite" className="text-xs text-text-muted mt-1 block text-right">
+                    {`${bio.length} characters`}
+                  </span>
                 </label>
                 <label className="block">
                   <span className="text-sm font-semibold text-text-sec mb-1.5 block">

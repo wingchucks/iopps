@@ -391,6 +391,9 @@ export default function VerificationDetailPage() {
         <label className="flex items-center gap-3 cursor-pointer mb-4">
           <button
             type="button"
+            role="switch"
+            aria-checked={elderConsultation}
+            aria-labelledby="elder-completed-label"
             onClick={() => isPending && setElderConsultation(!elderConsultation)}
             className={cn(
               "relative h-6 w-11 shrink-0 rounded-full transition-colors",
@@ -404,8 +407,8 @@ export default function VerificationDetailPage() {
               elderConsultation && "translate-x-5"
             )} />
           </button>
-          <span className="text-sm">
-            {elderConsultation ? "Elder consultation completed" : "Mark elder consultation as completed"}
+          <span id="elder-completed-label" className="text-sm">
+            Elder consultation completed
           </span>
         </label>
         <div>

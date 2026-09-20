@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
@@ -34,10 +34,12 @@ function SetupWizard() {
   const [community, setCommunity] = useState("");
   const [location, setLocation] = useState("");
   const [bio, setBio] = useState("");
+  const bioEdited = useRef(false);
   const [interests, setInterests] = useState<string[]>([]);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [nation, setNation] = useState("");
   const [territory, setTerritory] = useState("");
   const [languages, setLanguages] = useState("");
@@ -47,6 +49,15 @@ function SetupWizard() {
   const { user } = useAuth();
   const router = useRouter();
   const displayName = user?.displayName || "there";
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    getMemberProfile(user.uid).then((existing) => {
+      if (!cancelled && !bioEdited.current) setBio(existing?.bio || "");
+    }).catch((err) => console.error("Failed to load existing bio:", err));
+    return () => { cancelled = true; };
+  }, [user]);
 
   const toggleInterest = (id: string) => {
     setInterests((prev) =>
@@ -68,6 +79,7 @@ function SetupWizard() {
   const handleFinish = async () => {
     if (!user) return;
     setSaving(true);
+    setSaveError("");
     try {
       let photoURL: string | undefined;
       if (photoFile) {
@@ -86,7 +98,8 @@ function SetupWizard() {
         await updateDoc(firestoreDoc(db, "members", user.uid), {
           community,
           location,
-          bio,
+          // An untouched field must not erase a stored bio if prefill is pending.
+          ...(bioEdited.current ? { bio } : {}),
           interests,
           nation,
           territory,
@@ -113,16 +126,21 @@ function SetupWizard() {
           skills: parsedSkills,
         });
       }
+      router.push("/feed");
     } catch (err) {
       console.error("Failed to save profile:", err);
+      setSaveError("Your profile could not be saved. Your draft is still here. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    router.push("/feed");
   };
 
   const currentStepInfo = stepInfo[step - 1];
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
+      {saveError && <p role="alert" className="p-4">{saveError}</p>}
+
       {/* Brand panel */}
       <div
         className="relative overflow-hidden flex-shrink-0"
@@ -446,11 +464,15 @@ function SetupWizard() {
                 </span>
                 <textarea
                   value={bio}
-                  onChange={(e) => setBio(e.target.value)}
+                  onChange={(e) => { bioEdited.current = true; setBio(e.target.value); }}
+                  aria-describedby="setup-bio-count"
                   rows={3}
                   className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10 resize-none"
                   placeholder="A few words about yourself..."
                 />
+                <span id="setup-bio-count" aria-live="polite" className="text-xs text-text-muted mt-1 block text-right">
+                  {`${bio.length} characters`}
+                </span>
               </label>
 
               <label className="block mb-8">

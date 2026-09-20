@@ -22,6 +22,8 @@ import { resolveApplicationDestination } from "@/lib/application-destination";
 import { trackJobFunnelEvent } from "@/lib/job-funnel-analytics";
 import type { Job } from "@/lib/firestore/jobs";
 import { mixJobsForBrowse } from "@/lib/public-featured";
+import { useJobSearchDrafts } from "./useJobSearchDrafts";
+import { canonicalEmployerName, matchesEmployerFilter, projectEmployerFilters } from "./employerFilters";
 const employmentTypes = [
   "All",
   "Full-time",
@@ -72,8 +74,8 @@ function JobsPageContent() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
-  const [search, setSearch] = useDirectoryFilter("q", "");
-  const [locationFilter, setLocationFilter] = useDirectoryFilter(
+  const [search] = useDirectoryFilter("q", "");
+  const [locationFilter] = useDirectoryFilter(
     "location",
     "",
   );
@@ -90,14 +92,19 @@ function JobsPageContent() {
   const [salaryPeriod, setSalaryPeriod] = useDirectoryFilter("salaryPeriod", "year");
   const [sort, setSort] = useDirectoryFilter("sort", "recommended");
   const updateFilters = useDirectoryFilterActions();
-  const clearFilters = () => updateFilters(Object.fromEntries(["q","location","type","salaryMin","salaryMax","salaryPeriod","remote","employer","area","added","closing","disclosed","training","sort"].map(key => [key, null])));
-  const employers = useMemo(() => [...new Set(jobs.map(getEmployerName))].sort(), [jobs]);
+  const { drafts, edit, flush, reset } = useJobSearchDrafts();
+  const clearFilters = () => {
+    reset();
+    updateFilters(Object.fromEntries(["q","location","type","salaryMin","salaryMax","salaryPeriod","remote","employer","area","added","closing","disclosed","training","sort"].map(key => [key, null])));
+  };
+  const employers = useMemo(() => projectEmployerFilters(jobs), [jobs]);
   const areas = useMemo(() => [...new Set(jobs.map(jobArea).filter(Boolean))].sort(), [jobs]);
   const remoteOnly = remoteParam === "1";
   const setRemoteOnly = (next: boolean) => setRemoteParam(next ? "1" : "");
   const resultsRef = useRef<HTMLDivElement>(null);
   const submitSearch = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
+    flush();
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -179,10 +186,11 @@ function JobsPageContent() {
           job.remoteFlag,
       );
     }
-    result = result.filter(job => matchesDiscoveryFilters(job, { employer, area, added, closing, disclosed, training, salaryPeriod, salaryMin, salaryMax }));
+    result = result.filter(job => matchesEmployerFilter(job, employer, employers) && matchesDiscoveryFilters(job, { employer: "", area, added, closing, disclosed, training, salaryPeriod, salaryMin, salaryMax }));
     return result;
   }, [
     jobs,
+    employers,
     locationFilter,
     remoteOnly,
     salaryMax,
@@ -242,16 +250,16 @@ function JobsPageContent() {
               type="search"
               inputMode="search"
               enterKeyHint="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={drafts.q}
+              onChange={(e) => edit("q", e.target.value)}
               placeholder="Search job titles, employers, locations..."
               className="min-w-0 flex-1 border-none bg-transparent text-base text-text outline-none placeholder:text-text-muted"
               aria-label="Search jobs"
             />
-            {search && (
+            {drafts.q && (
               <button
                 type="button"
-                onClick={() => setSearch("")}
+                onClick={() => { edit("q", ""); flush(); }}
                 className="cursor-pointer border-none bg-transparent px-1 text-lg text-text-muted"
                 aria-label="Clear job search"
               >
@@ -272,8 +280,8 @@ function JobsPageContent() {
               inputMode="search"
               enterKeyHint="search"
               aria-label="Filter jobs by city or province"
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
+              value={drafts.location}
+              onChange={(e) => edit("location", e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -350,7 +358,7 @@ function JobsPageContent() {
               />
             </div></div>
             <div className="grid gap-3 p-4 sm:grid-cols-3">
-              <label>Employer<select aria-label="Employer" value={employer} onChange={e => setEmployer(e.target.value)}><option value="">All employers</option>{employers.map(name => <option key={name}>{name}</option>)}</select></label>
+              <label>Employer<select aria-label="Employer" value={canonicalEmployerName(employer)} onChange={e => setEmployer(e.target.value)}><option value="">All employers</option>{employers.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
               <label>Job area<select aria-label="Job area" value={area} onChange={e => setArea(e.target.value)}><option value="">All job areas</option>{areas.map(name => <option key={name}>{name}</option>)}</select></label>
               <label>Added to IOPPS<select aria-label="Added to IOPPS" value={added} onChange={e => setAdded(e.target.value)}><option value="">Any time</option><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select></label>
             </div>
@@ -361,7 +369,7 @@ function JobsPageContent() {
             </div>
             <p className="px-4 pb-4 text-sm text-text-sec">Filters use details supplied in each listing. Pay ranges compare only the selected pay period.</p>
           </details>
-          {hasActiveFilters && <button className="job-clear mb-5" onClick={clearFilters}>Clear all filters</button>}
+          {(hasActiveFilters || drafts.q || drafts.location) && <button className="job-clear mb-5" onClick={clearFilters}>Clear all filters</button>}
           <div
             ref={resultsRef}
             className="mb-4 scroll-mt-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between"
@@ -379,7 +387,7 @@ function JobsPageContent() {
             <label className="job-sort">Sort by<select aria-label="Sort by" value={sort} onChange={e => setSort(e.target.value)}><option value="recommended">Recommended</option><option value="newest">Recently added</option><option value="closing">Closing soon</option></select></label>
             {!loading && (
               <p className="text-sm text-text-muted" aria-live="polite">
-                {mixedJobs.length} job{mixedJobs.length !== 1 ? "s" : ""} found
+                {`${mixedJobs.length} job${mixedJobs.length !== 1 ? "s" : ""} found`}
               </p>
             )}
           </div>
@@ -433,7 +441,7 @@ function JobsPageContent() {
                       <p className="job-summary">{summary || "Explore this opportunity and review the employer’s application details."}</p>
                       <div className="job-facts job-benefits">{job.willTrain && <span className="job-chip">Training provided</span>}{job.indigenousPreference && <span className="job-chip">Indigenous preference stated</span>}{job.benefits?.slice(0,2).map(benefit => <span className="job-chip" key={benefit}>{benefit}</span>)}</div>
                       <div className="job-card-bottom"><div><strong>{pay?.display || "Pay not listed"}</strong><span>{closingDate ? `Closes ${new Date(closingDate).toLocaleDateString("en-CA", {month:"short",day:"numeric",timeZone:"UTC"})}` : "See listing for closing details"}</span></div><span className="job-view">View opportunity <span aria-hidden="true">↗</span></span></div>
-                      <div className="job-footnote"><span>{getApplyLabel(job)}</span>{posted && <span>Added to IOPPS {posted.toLowerCase()}</span>}</div>
+                      <div className="job-footnote"><span>{getApplyLabel(job)}</span>{posted && <span>{`Added to IOPPS ${posted.toLowerCase()}`}</span>}</div>
                     </div>
                   </Link>
                 );

@@ -2,7 +2,7 @@
 import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
 
 import { Suspense, useState, useEffect } from "react";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import EmployerLogo from "@/components/EmployerLogo";
@@ -15,7 +15,7 @@ import { buildLoginRedirectHref, displayAmount, displayLocation } from "@/lib/ut
 import { resolveApplicationDestination } from "@/lib/application-destination";
 import { trackJobFunnelEvent } from "@/lib/job-funnel-analytics";
 import { jobDetailDates } from "@/lib/job-detail-dates";
-import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
+import { useJobSave } from "@/hooks/useJobSave";
 import { hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
 import type { Job } from "@/lib/firestore/jobs";
@@ -43,15 +43,14 @@ function JobDetailContent() {
   const slug = params.slug as string;
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saved, setSaved] = useState(false);
+  const { saved, saving, saveError, handleSave } = useJobSave(job);
   const [applied, setApplied] = useState(false);
-  const [actionLoading, setActionLoading] = useState("");
+
   const [employerJobs, setEmployerJobs] = useState<RelatedJob[]>([]);
   const [similarJobs, setSimilarJobs] = useState<RelatedJob[]>([]);
   const { user } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+
 
   useEffect(() => {
     async function load() {
@@ -97,51 +96,12 @@ function JobDetailContent() {
           const alreadyApplied = await hasApplied(user.uid, jobId);
           setApplied(alreadyApplied);
         } catch { /* ignore — user just won't see applied state */ }
-        try {
-          const alreadySaved = await isPostSaved(user.uid, jobId);
-          setSaved(alreadySaved);
-        } catch { /* ignore — user just won't see saved state */ }
+
       }
     }
     load();
   }, [slug, user]);
 
-  const handleSave = async () => {
-    if (!job) return;
-    // C-3: anonymous save -> route to login, preserve save intent via ?save=1
-    if (!user) {
-      const target = `${pathname || `/jobs/${slug}`}?save=1`;
-      router.push(buildLoginRedirectHref(target));
-      return;
-    }
-    const jobId = job.id || slug;
-    setActionLoading("save");
-    try {
-      if (saved) {
-        await unsavePost(user.uid, jobId);
-        setSaved(false);
-      } else {
-        await savePost(user.uid, jobId, job.title, "job", job.employerName || job.orgName || "");
-        setSaved(true);
-      }
-    } catch (err) {
-      console.error("Save failed:", err);
-    } finally {
-      setActionLoading("");
-    }
-  };
-
-  // C-3: when returning from login with ?save=1 intent, auto-fire save once
-  useEffect(() => {
-    if (!user || !job || saved) return;
-    if (searchParams?.get("save") !== "1") return;
-    const cleanQs = new URLSearchParams(searchParams.toString());
-    cleanQs.delete("save");
-    const qs = cleanQs.toString();
-    router.replace(qs ? `${pathname}?${qs}` : (pathname || `/jobs/${slug}`));
-    void handleSave();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, job, saved]);
 
   if (loading) {
     return (
@@ -265,8 +225,8 @@ function JobDetailContent() {
           <div className="journey-mobile-apply">
             <p>{destination.label}</p>
             {applicationAction}
-            <button className="journey-save-button" onClick={handleSave} disabled={actionLoading === "save"} aria-pressed={saved}>
-              {actionLoading === "save" ? "Saving…" : saved ? "✓ Saved" : "Save job for later"}
+            <button className="journey-save-button" onClick={handleSave} disabled={saving} aria-pressed={saved}>
+              {saving ? "Saving…" : saved ? "✓ Saved" : "Save job for later"}
             </button>
           </div>
 
@@ -346,18 +306,19 @@ function JobDetailContent() {
               {/* Apply button */}
               <div className="journey-desktop-apply">{applicationAction}</div>
 
+              {saveError && <p role="alert" className="text-sm text-red mb-3">{saveError}</p>}
               {/* Save button */}
               <Button
                 full
                 onClick={handleSave}
-                disabled={actionLoading === "save"}
+                disabled={saving}
                 aria-pressed={saved}
                 style={{
                   borderRadius: 14,
                   padding: "12px 24px",
                   fontSize: 14,
                   marginBottom: 16,
-                  opacity: actionLoading === "save" ? 0.7 : 1,
+                  opacity: saving ? 0.7 : 1,
                 }}
               >
                 {saved ? "✓ Saved" : "🔖 Save Job"}

@@ -6,6 +6,7 @@ import { safeAuthRedirect } from "@/lib/auth-redirect";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export default function VerifyEmailPage() {
   return (
@@ -42,10 +43,10 @@ function VerifyEmailContent() {
     let cancelled = false;
     const interval = setInterval(async () => {
       try {
-        const verified = await reloadUser();
+        const verified = await reloadUser(user?.uid);
         if (!cancelled && verified) router.replace(redirectPath);
-      } catch {
-        if (!cancelled) setVerificationError("We couldn’t check verification. Please retry below.");
+      } catch (error) {
+        if (!cancelled) setVerificationError(authErrorMessage(error, "We couldn’t check verification. Please retry below."));
       }
     }, 5000);
     return () => { cancelled = true; clearInterval(interval); };
@@ -56,10 +57,11 @@ function VerifyEmailContent() {
     setResent(false);
     setVerificationError("");
     try {
-      await sendVerificationEmail(redirectPath);
-      setResent(true);
-    } catch {
-      setVerificationError("The email couldn’t be sent. Please wait a moment and retry.");
+      const sent = await sendVerificationEmail(redirectPath, user?.uid);
+      setResent(sent);
+      if (!sent) await reloadUser(user?.uid);
+    } catch (error) {
+          setVerificationError(authErrorMessage(error, "The email couldn’t be sent. Please wait a moment and retry."));
     } finally {
       setResending(false);
     }
@@ -69,14 +71,14 @@ function VerifyEmailContent() {
     setChecking(true);
     setVerificationError("");
     try {
-      if (await reloadUser()) router.replace(redirectPath);
+      if (await reloadUser(user?.uid)) router.replace(redirectPath);
       else setVerificationError("Your email isn’t verified yet. Open the link in your email, then check again.");
-    } catch {
-      setVerificationError("We couldn’t refresh your session. Please check your connection and retry.");
+    } catch (error) {
+          setVerificationError(authErrorMessage(error, "We couldn’t refresh your session. Please check your connection and retry."));
     } finally {
       setChecking(false);
     }
-  }, [reloadUser, redirectPath, router]);
+  }, [reloadUser, redirectPath, router, user?.uid]);
 
   if (authLoading || !user) return null;
 
@@ -119,7 +121,7 @@ function VerifyEmailContent() {
           <div className="text-5xl mb-4">&#9993;&#65039;</div>
           <h1 className="text-2xl font-extrabold text-text mb-2">Check your email</h1>
           <p className="text-text-sec text-[15px] mb-2 leading-relaxed">
-            We sent a verification link to
+            {resent ? "We sent a verification link to" : "Verify the email address"}
           </p>
           <p className="text-teal font-semibold text-[15px] mb-6">{user.email}</p>
 
@@ -163,7 +165,7 @@ function VerifyEmailContent() {
 
           <div className="mt-8">
             <button
-              onClick={signOut}
+              onClick={() => { void signOut().catch(error => setVerificationError(authErrorMessage(error, "We couldn’t sign you out. Please try again."))); }}
               className="text-text-muted text-sm font-medium cursor-pointer hover:underline"
               style={{ background: "none", border: "none" }}
             >

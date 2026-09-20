@@ -9,6 +9,7 @@ import {
   sortByRecencyWithFeaturedBoost,
 } from "@/lib/public-featured";
 import { displayAmount, displayLocation } from "@/lib/utils";
+import { uniqueFeedItems, freshFeedItems } from "@/lib/feed-card-identity";
 
 type FeedItemType = "job" | "event" | "scholarship";
 
@@ -306,7 +307,7 @@ export default function FeedPage() {
         ]);
 
         const merged = sortByRecencyWithFeaturedBoost(
-          [...jobs, ...events, ...scholarships],
+          uniqueFeedItems([...jobs, ...events, ...scholarships]),
           {
             recencyKeys: ["createdAt"],
             featuredKeys: ["featuredAt", "updatedAt", "createdAt"],
@@ -334,6 +335,8 @@ export default function FeedPage() {
       featuredKeys: ["featuredAt", "updatedAt", "createdAt"],
     })
   ), [allItems]);
+
+  const freshItems = useMemo(() => freshFeedItems(allItems, featuredItems), [allItems, featuredItems]);
 
   const quickCards = useMemo(() => {
     const firstByType = (type: FeedItemType) => allItems.find((item) => item.type === type);
@@ -462,7 +465,7 @@ export default function FeedPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {allItems.map((item) => (
+              {freshItems.map((item) => (
                 <FeedCard key={`${item.type}-${item.id}`} item={item} />
               ))}
             </div>

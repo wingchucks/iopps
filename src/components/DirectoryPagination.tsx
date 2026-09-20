@@ -80,7 +80,7 @@ export default function DirectoryPagination({
         Previous
       </button>
       <span className="text-sm text-text-muted" aria-live="polite">
-        Page {page} of {totalPages}
+        {`Page ${page} of ${totalPages}`}
       </span>
       <button
         type="button"

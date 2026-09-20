@@ -6,6 +6,7 @@ import Link from "next/link";
 import { safeAuthRedirect, authIntentHref, postSignupDestination } from "@/lib/auth-redirect";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 const REASON_MESSAGES: Record<string, string> = {
   timeout: "You were signed out due to inactivity.",
@@ -65,7 +66,7 @@ function LoginForm() {
       if (!cancelled) window.location.replace(destination);
     }).catch((error: unknown) => {
       if (!cancelled) {
-        setError(error instanceof Error ? error.message : "We couldn’t load your account. Please retry.");
+        setError(authErrorMessage(error, "We couldn’t load your account. Please retry."));
         setSlowRedirect(true);
       }
     });
@@ -92,7 +93,7 @@ function LoginForm() {
       setRedirectAttempt((attempt) => attempt + 1);
       setSlowRedirect(false);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Unable to refresh your secure session.";
+      const msg = authErrorMessage(err, "Unable to refresh your secure session. Please sign in again.");
       setError(msg);
     } finally {
       setLoading(false);
@@ -104,6 +105,8 @@ function LoginForm() {
     try {
       await signOut();
       setSlowRedirect(false);
+    } catch (error) {
+      setError(authErrorMessage(error, "We couldn’t sign you out. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -188,12 +191,7 @@ function LoginForm() {
       // The effect above owns navigation for both new and restored sessions.
       await signIn(email, password);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong.";
-      if (msg.includes("user-not-found") || msg.includes("wrong-password") || msg.includes("invalid-credential"))
-        setError("Invalid email or password.");
-      else if (msg.includes("too-many-requests"))
-        setError("Too many attempts. Please try again later.");
-      else setError(msg);
+      setError(authErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -205,8 +203,7 @@ function LoginForm() {
     try {
       await signInWithGoogle();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong.";
-      if (!msg.includes("popup-closed")) setError(msg);
+      setError(authErrorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -41,7 +41,7 @@ async function checkRemediationSettings(page, width) {
     const switches = page.getByRole('switch');
     if (await switches.count()) {
       const first = switches.first(), original = await first.getAttribute('aria-checked');
-      assert.ok(await first.getAttribute('aria-label'));
+      await expect(first).toHaveAccessibleName(/\S/);
       await first.focus(); await page.keyboard.press('Space');
       assert.notEqual(await first.getAttribute('aria-checked'), original);
       await page.keyboard.press('Space'); assert.equal(await first.getAttribute('aria-checked'), original);

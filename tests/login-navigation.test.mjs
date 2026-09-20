@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import ts from 'typescript';
 import * as authIntent from '../src/lib/auth-redirect.ts';
+import * as authErrors from '../src/lib/auth-errors.ts';
 
 // Execute the real form handlers and effects with a deterministic hook scheduler.
 // Firebase, navigation and transport stay offline; destination validation is real.
@@ -60,6 +61,7 @@ function loginHarness({ query = '', resolveAccount } = {}) {
       if (id === 'next/link' || id === 'next/image') return { default: id };
       if (id === '@/lib/auth-context') return { useAuth: () => auth };
       if (id === '@/lib/auth-redirect') return authIntent;
+      if (id === '@/lib/auth-errors') return authErrors;
       throw new Error(`Unexpected form dependency: ${id}`);
     },
   });

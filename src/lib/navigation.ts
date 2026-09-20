@@ -91,7 +91,7 @@ const NAV_ITEM_DEFINITIONS = {
   },
   businesses: {
     key: "businesses",
-    label: "Businesses",
+    label: "Indigenous Businesses",
     href: "/businesses",
     icon: "store",
     priority: 80,
