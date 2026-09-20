@@ -4,9 +4,9 @@ import { Suspense, useState, useEffect, useRef } from "react";
 import { authIntentHref, postSignupDestination } from "@/lib/auth-redirect";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { getOrganization } from "@/lib/firestore/organizations";
 import { getBusinessProfileReadiness } from "@/lib/organization-profile";
 import {
+  loadOrganizationOnboardingProfile,
   saveOrganizationOnboardingProgress,
   uploadOrganizationOnboardingLogo,
 } from "@/lib/organization-onboarding-client";
@@ -119,6 +119,8 @@ function OrgOnboardingContent() {
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [loadingData, setLoadingData] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [orgType, setOrgType] = useState("");
 
@@ -167,8 +169,12 @@ function OrgOnboardingContent() {
       return;
     }
 
+    let cancelled = false;
+    setLoadingData(true);
+    setLoadError("");
     (async () => {
-      const org = await getOrganization(user.uid);
+      const org = await loadOrganizationOnboardingProfile(await user.getIdToken());
+      if (cancelled) return;
       if (!org) {
         router.replace(authIntentHref("/org/signup", searchParams));
         return;
@@ -207,8 +213,13 @@ function OrgOnboardingContent() {
       if (org.campusCount) setCampusCount(String(org.campusCount));
       if (org.enrollmentStatus) setEnrollmentStatus(org.enrollmentStatus);
       setLoadingData(false);
-    })();
-  }, [user, authLoading, router, searchParams]);
+    })().catch((error: unknown) => {
+      if (cancelled) return;
+      setLoadError(error instanceof Error ? error.message : "Unable to load your organization. Please try again.");
+      setLoadingData(false);
+    });
+    return () => { cancelled = true; };
+  }, [user, authLoading, router, searchParams, loadAttempt]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -240,6 +251,15 @@ function OrgOnboardingContent() {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="text-text-sec text-sm">Loading...</div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-4 px-6">
+        <p role="alert" className="text-text-sec">{loadError}</p>
+        <Button onClick={() => setLoadAttempt(attempt => attempt + 1)}>Try again</Button>
       </div>
     );
   }

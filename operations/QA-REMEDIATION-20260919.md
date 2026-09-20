@@ -93,6 +93,12 @@ existing containment, paired-rules, exact-commit CI/security review and provider
 Verify the new cleanup cron and branded recovery delivery on the approved artifact;
 local provider mocks do not prove production delivery or paid fulfillment.
 
+Assigned organization administrators now load onboarding through the authenticated
+dashboard context instead of assuming their account UID is the organization ID.
+Failed loads show a retry action without redirecting to signup. The existing
+browser suite checks resume/save at both widths, including that no UID-keyed
+organization is created and an unrelated organization remains unchanged.
+
 The independent PR review also flagged mobile direct reads of jobs, applications
 and scholarships, profile/push fields outside the existing write allowlist, and
 the native signup client's incompatible `user` role.

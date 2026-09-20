@@ -276,13 +276,14 @@ async function checkAdminModal(page, kind, width) {
   interactionChecks.push({ check: `${kind}-modal-cancel-reset-failed-save-preserves`, width, passed: true });
 }
 try {
-  for (const role of ['member', 'owner', 'school', 'admin', 'teammate', 'removal-1440', 'removal-390']) {
+  for (const role of ['member', 'owner', 'school', 'admin', 'assigned-admin', 'teammate', 'removal-1440', 'removal-390']) {
     const uid = `${prefix}-${role}`, email = `${uid}@example.invalid`;
     accounts[role] = { uid, email };
     await auth.createUser({ uid, email, emailVerified: true, password, displayName: `QA ${role}` });
     const data = { uid, email, displayName: `QA ${role}`, role: role === 'admin' ? 'admin' : 'community', onboardingComplete: true, createdAt: Timestamp.now() };
     if (role === 'owner' || role === 'school' || role === 'teammate' || role.startsWith('removal-')) Object.assign(data, { orgId: role === 'school' ? uid : `${prefix}-owner`, employerId: role === 'school' ? uid : `${prefix}-owner`, orgRole: role === 'teammate' || role.startsWith('removal-') ? 'member' : 'owner' });
     if (role === 'member') Object.assign(data, { skills: ['QA route testing'], openToWork: true, location: 'Saskatoon, SK' });
+    if (role === 'assigned-admin') Object.assign(data, { orgId: `${prefix}-assigned-organization`, employerId: `${prefix}-assigned-organization`, orgRole: 'admin' });
     await seed('users', uid, data); await seed('members', uid, data);
     if (role === 'admin') await auth.setCustomUserClaims(uid, { admin: true, role: 'admin' });
     if (role.startsWith('removal-')) await auth.setCustomUserClaims(uid, { orgId: `${prefix}-owner`, employerId: `${prefix}-owner`, orgRole: 'member', role: 'organization', employer: true, qaUnrelatedClaim: true });
@@ -292,6 +293,9 @@ try {
     description: 'Fictional local organization used to verify dashboard navigation.', contactName: 'QA Owner',
     contactEmail: accounts.owner.email, logoUrl: '/icon-192.png', location: { city: 'Saskatoon', province: 'Saskatchewan' }, capabilities: ['post_jobs', 'list_business'] };
   await seed('employers', accounts.owner.uid, org); await seed('organizations', accounts.owner.uid, org);
+  const assignedId = `${prefix}-assigned-organization`;
+  const assignedOrganization = { ...org, id: assignedId, uid: assignedId, ownerId: 'original-owner', slug: assignedId, name: 'QA Assigned Organization', onboardingComplete: false, contactEmail: '', description: 'Assigned profile draft' };
+  await seed('employers', assignedId, assignedOrganization); await seed('organizations', assignedId, assignedOrganization);
   const school = { ...org, id: accounts.school.uid, uid: accounts.school.uid, ownerId: accounts.school.uid, slug: accounts.school.uid, name: 'QA Dashboard School', type: 'school', contactEmail: accounts.school.email };
   await seed('employers', accounts.school.uid, school); await seed('organizations', accounts.school.uid, school);
   for (const status of ['active', 'draft']) await seed('jobs', `${prefix}-${status}`, {
@@ -321,6 +325,25 @@ try {
   await seed('applications', prefix + '-foreign-application', { userId: accounts.school.uid, employerId: 'other-org', status: 'submitted', profileSnapshot: { displayName: 'QA foreign applicant' } });
   browser = await chromium.launch({ headless: true });
   for (const width of [1440, 390]) {
+    const assignedContext = await isolatedContext(width);
+    try {
+      const assignedPage = await assignedContext.newPage(); currentPage = assignedPage;
+      const assignedErrors = []; assignedPage.on('pageerror', error => assignedErrors.push(error.message));
+      await login(assignedPage, 'assigned-admin');
+      await assignedPage.goto(base + '/org/onboarding', { waitUntil: 'domcontentloaded' });
+      await expect(assignedPage.getByLabel('Description', { exact: true })).toHaveValue(width === 1440 ? 'Assigned profile draft' : 'Assigned profile saved at 1440', { timeout: 30000 });
+      await assignedPage.getByLabel('Description', { exact: true }).fill(`Assigned profile saved at ${width}`);
+      const saved = assignedPage.waitForResponse(response => new URL(response.url()).pathname === '/api/employer/profile' && response.request().method() === 'PUT');
+      await assignedPage.getByRole('button', { name: 'Next', exact: true }).click();
+      assert.equal((await saved).status(), 200);
+      assert.equal((await db.doc(`organizations/${assignedId}`).get()).data().description, `Assigned profile saved at ${width}`);
+      assert.equal((await db.doc(`organizations/${accounts['assigned-admin'].uid}`).get()).exists, false);
+      assert.equal((await db.doc(`organizations/${accounts.owner.uid}`).get()).data().description, org.description);
+      assert.deepEqual(assignedErrors, []);
+      assert.equal(await assignedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+      await assignedPage.screenshot({ path: path.join(output, `assigned-onboarding-${width}.png`), fullPage: true });
+      interactionChecks.push({ check: 'Assigned administrator resumes and saves the correct organization', width, passed: true });
+    } finally { await assignedContext.close(); }
     for (const role of ['owner', 'school', 'member', 'admin']) {
       const context = await isolatedContext(width);
       if (role === 'owner' && width === 1440) await context.addInitScript(() => {
