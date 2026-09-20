@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
+import { mergePublicJobRecords, withAuthoritativeJobCounts } from "@/lib/public-job-merge";
+import { buildPartnersPayload, selectPublicPartnerRecords } from "@/lib/server/partners-payload";
+import { loadPublicOrganizationsJobDocuments } from "@/lib/server/public-organization-jobs";
+import { toPublicOrganization } from "@/lib/public-organization";
 import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
 import { getLocalDevOrganizations } from "@/lib/local-dev-business-data";
-import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "@/lib/server/partner-promotion";
+import { comparePartnerPromotion, withPartnerPromotion } from "@/lib/server/partner-promotion";
 import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
-import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
+import { isSchoolOrganization } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
 export const revalidate = 60;
@@ -38,17 +42,11 @@ export async function GET(req: Request) {
 
     if (partnersOnly) {
       const snapshot = await db.collection("organizations").get();
-      const orgs = snapshot.docs
-        .map((doc) =>
-          normalizeOrganizationRecord(
-            withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
-          )
-        )
-        .filter((org) => isSchoolOrganization(org) || isOrganizationPubliclyVisible(org))
-        .filter((org) => !isSchoolOrganization(org) || isSchoolPubliclyVisible(org))
-        .filter((org) => isPaidPartner(org))
-        .sort(comparePartnerPromotion);
-      return NextResponse.json({ orgs });
+      const records = selectPublicPartnerRecords(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+      const { jobs, posts } = await loadPublicOrganizationsJobDocuments(db, records);
+      const publicJobs = mergePublicJobRecords(jobs.map(doc => ({ ...doc.data(), id: doc.id, active: doc.data()!.active === true })), posts.map(doc => ({ ...doc.data(), id: doc.id })));
+      const { partners } = buildPartnersPayload(withAuthoritativeJobCounts(records, publicJobs));
+      return NextResponse.json({ orgs: partners });
     }
 
     // Search / general: orgs that completed onboarding, are verified, or have been accepted
@@ -75,11 +73,12 @@ export async function GET(req: Request) {
           withPartnerPromotion(serialize({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
         )
       )
-      .filter((org) => isSchoolOrganization(org) || isOrganizationPubliclyVisible(org))
-      .filter((org) => !isSchoolOrganization(org) || isSchoolPubliclyVisible(org))
+      .filter((org) => !isSchoolOrganization(org) && isOrganizationPubliclyVisible(org))
       .sort(comparePartnerPromotion);
 
-    return NextResponse.json({ orgs });
+    const { jobs, posts } = await loadPublicOrganizationsJobDocuments(db, orgs);
+    const publicJobs = mergePublicJobRecords(jobs.map(doc => ({ ...doc.data(), id: doc.id, active: doc.data()!.active === true })), posts.map(doc => ({ ...doc.data(), id: doc.id })));
+    return NextResponse.json({ orgs: withAuthoritativeJobCounts(orgs, publicJobs).map(toPublicOrganization) });
   } catch (err) {
     console.error("[api/organizations] Error:", err);
     return NextResponse.json({ error: "Failed to load organizations" }, { status: 500 });

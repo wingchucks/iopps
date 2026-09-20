@@ -20,21 +20,21 @@ const sizeClasses: Record<ButtonSize, string> = {
 
 const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
   "primary-teal": {
-    background: "var(--teal)",
-    border: "1px solid var(--teal)",
+    background: "var(--button-gradient)",
+    border: "1px solid transparent",
     color: "#FFFFFF",
-    boxShadow: "0 18px 34px -24px color-mix(in srgb, var(--teal) 85%, transparent)",
+    boxShadow: "var(--button-gradient-shadow)",
   },
   "secondary-navy": {
-    background: "var(--navy)",
-    border: "1px solid var(--navy)",
+    background: "var(--button-gradient)",
+    border: "1px solid transparent",
     color: "#FFFFFF",
-    boxShadow: "0 18px 34px -24px color-mix(in srgb, var(--navy) 80%, transparent)",
+    boxShadow: "var(--button-gradient-shadow)",
   },
   outline: {
-    background: "transparent",
-    border: "1px solid var(--border)",
-    color: "var(--text)",
+    background: "var(--button-gradient-soft)",
+    border: "1px solid var(--button-gradient-border)",
+    color: "var(--button-gradient-soft-text)",
   },
   ghost: {
     background: "transparent",
@@ -63,11 +63,11 @@ export default function Button({
       {...rest}
       disabled={disabled}
       className={cn(
-        "inline-flex items-center justify-center gap-2 border font-semibold transition-all duration-200",
+        "brand-button inline-flex items-center justify-center gap-2 border font-semibold transition-all duration-200",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--teal)] focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-55",
         full ? "w-full" : "w-auto",
-        !disabled && "cursor-pointer hover:-translate-y-0.5 hover:opacity-95",
+        !disabled && "cursor-pointer",
         sizeClasses[resolvedSize],
         className,
       )}

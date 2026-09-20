@@ -307,12 +307,12 @@ export function BtnPrimary({ children, onClick, disabled, style: s }: {
   children: React.ReactNode; onClick?: () => void; disabled?: boolean; style?: React.CSSProperties;
 }) {
   return (
-    <button onClick={onClick} disabled={disabled} style={{
+    <button className="brand-button" onClick={onClick} disabled={disabled} style={{
       padding: "14px 28px", borderRadius: 10, fontSize: 15, fontWeight: 600, fontFamily: "inherit",
       cursor: disabled ? "not-allowed" : "pointer", border: "none",
-      background: `linear-gradient(135deg,${CSS.accent},${CSS.blue})`, color: "#fff",
+      background: "var(--button-gradient)", color: "#fff",
       opacity: disabled ? 0.4 : 1,
-      boxShadow: `0 4px 20px rgba(20,184,166,0.25),inset 0 1px 0 rgba(255,255,255,0.12)`,
+      boxShadow: "var(--button-gradient-shadow)",
       transition: "all 0.3s", display: "inline-flex", alignItems: "center", gap: 8,
       ...s,
     }}>{children}</button>
@@ -323,9 +323,9 @@ export function BtnSecondary({ children, onClick, style: s }: {
   children: React.ReactNode; onClick?: () => void; style?: React.CSSProperties;
 }) {
   return (
-    <button onClick={onClick} style={{
+    <button className="brand-button" onClick={onClick} style={{
       padding: "14px 28px", borderRadius: 10, fontSize: 15, fontWeight: 600, fontFamily: "inherit",
-      cursor: "pointer", background: "rgba(30,41,59,0.8)", color: CSS.text,
+      cursor: "pointer", background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)",
       border: `1px solid ${CSS.border}`, transition: "all 0.3s",
       display: "inline-flex", alignItems: "center", gap: 8, ...s,
     }}>{children}</button>
@@ -334,9 +334,9 @@ export function BtnSecondary({ children, onClick, style: s }: {
 
 export function BtnGhost({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
   return (
-    <button onClick={onClick} style={{
+    <button className="brand-button" onClick={onClick} style={{
       padding: "14px 16px", borderRadius: 10, fontSize: 15, fontWeight: 600, fontFamily: "inherit",
-      cursor: "pointer", background: "transparent", color: CSS.textMuted,
+      cursor: "pointer", background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)",
       border: "none", transition: "all 0.3s",
     }}>{children}</button>
   );

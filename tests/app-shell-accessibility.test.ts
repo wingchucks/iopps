@@ -15,10 +15,14 @@ function tsxFiles(directory: string): string[] {
 
 test("the app exposes exactly one global main-content landmark", () => {
   const rootLayout = readFileSync(path.join(root, "src", "app", "layout.tsx"), "utf8");
-  assert.match(rootLayout, /href=["']#main-content["']/);
+  assert.match(rootLayout, /<SkipToContent/);
+  const skip = readFileSync("src/components/SkipToContent.tsx", "utf8");
+  assert.match(skip, /href=["']#main-content["']/);
+  assert.match(skip, /data-main-content/);
+  assert.match(skip, /target\.focus\(\)/);
   assert.match(rootLayout, /<main\b[^>]*id=["']main-content["']/);
 
-  const nestedMainFiles = tsxFiles(path.join(root, "src", "app"))
+  const nestedMainFiles = [...tsxFiles(path.join(root, "src", "app")), ...tsxFiles(path.join(root, "src", "components"))]
     .filter((file) => file !== path.join(root, "src", "app", "layout.tsx"))
     .filter((file) => /<main\b/.test(readFileSync(file, "utf8")));
   assert.deepEqual(nestedMainFiles, [], `nested main landmarks: ${nestedMainFiles.join(", ")}`);

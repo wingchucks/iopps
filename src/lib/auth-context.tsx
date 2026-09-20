@@ -16,17 +16,26 @@ import {
 } from "firebase/auth";
 import { buildEmailVerificationContinueUrl } from "@/lib/auth-verification-email";
 import { auth, getAppCheckTokenValue } from "./firebase";
+import { authErrorMessage } from "@/lib/auth-errors";
+
+export interface SignupOutcome {
+  user: User;
+  verificationEmailSent: boolean;
+  verificationError: string;
+  profileError: string;
+  sessionReady: boolean;
+}
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<UserCredential>;
-  signUp: (name: string, email: string, password: string, nextPath?: string) => Promise<void>;
+  signUp: (name: string, email: string, password: string, nextPath?: string) => Promise<SignupOutcome>;
   signInWithGoogle: () => Promise<UserCredential>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  sendVerificationEmail: (nextPath?: string) => Promise<void>;
-  reloadUser: () => Promise<void>;
+  sendVerificationEmail: (nextPath?: string, expectedUid?: string) => Promise<boolean>;
+  reloadUser: (expectedUid?: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -59,6 +68,7 @@ async function syncSessionCookie(
   if (user) {
     try {
       const idToken = await user.getIdToken(options?.forceRefresh === true);
+      if (auth.currentUser?.uid !== user.uid) return false;
       const response = await fetchWithTimeout("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,6 +80,7 @@ async function syncSessionCookie(
     }
   } else {
     try {
+      if (auth.currentUser) return false;
       const response = await fetchWithTimeout("/api/auth/session", { method: "DELETE" });
       return response.ok;
     } catch {
@@ -97,19 +108,17 @@ function getClientSiteUrl(): string {
   return "https://www.iopps.ca";
 }
 
-async function sendFirebaseVerificationEmail(user: User, nextPath?: string): Promise<void> {
-  try {
+async function requestAccountVerificationEmail(user: User, nextPath?: string): Promise<boolean> {
+  if (user.emailVerified) return false;
+  // Never invoke real email delivery in demo emulator runs.
+  if (process.env.NEXT_PUBLIC_USE_EMULATORS === "true") {
     await sendEmailVerification(user, {
       url: buildEmailVerificationContinueUrl(getClientSiteUrl(), nextPath),
       handleCodeInApp: false,
     });
-  } catch {
-    await sendEmailVerification(user);
+    return true;
   }
-}
-
-async function requestAccountVerificationEmail(user: User, nextPath?: string): Promise<void> {
-  try {
+  {
     const [idToken, appCheckToken] = await Promise.all([
       user.getIdToken(),
       getAppCheckTokenValue(),
@@ -125,11 +134,16 @@ async function requestAccountVerificationEmail(user: User, nextPath?: string): P
       body: JSON.stringify({ nextPath }),
     });
 
+    // Never bypass an authentication, attestation or rate-limit denial.
     if (!response.ok) {
-      throw new Error("Server verification email failed");
+      throw Object.assign(new Error("Verification email unavailable"), {
+        code: response.status === 429 ? "auth/too-many-requests" : "auth/verification-email-unavailable",
+      });
     }
-  } catch {
-    await sendFirebaseVerificationEmail(user, nextPath);
+    const result = await response.json();
+    if (result.sent === true) return true;
+    if (result.alreadyVerified === true) return false;
+    throw new Error("Verification email delivery was not confirmed");
   }
 }
 
@@ -146,6 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // protected route (prevents the black-screen race condition).
       const sessionReady = await ensureSessionCookie(firebaseUser);
 
+      if (auth.currentUser?.uid !== firebaseUser?.uid) return;
       if (firebaseUser && !sessionReady) {
         await firebaseSignOut(auth).catch(() => {});
         setUser(null);
@@ -170,14 +185,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (name: string, email: string, password: string, nextPath?: string) => {
+    // Only the credential returned by this creation proves this attempt succeeded.
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(cred.user, { displayName: name });
-    await requestAccountVerificationEmail(cred.user, nextPath);
-    const sessionReady = await ensureSessionCookie(cred.user);
-    if (!sessionReady) {
-      await firebaseSignOut(auth).catch(() => {});
-      throw new Error("Your account was created, but we could not start a secure session. Please sign in again.");
-    }
+    let profileError = "";
+    let verificationError = "";
+    let verificationEmailSent = false;
+    try { await updateProfile(cred.user, { displayName: name }); }
+    catch (error) { profileError = `Your account was created, but your name could not be saved. ${authErrorMessage(error, "You can update it in settings.")}`; }
+    try { verificationEmailSent = await requestAccountVerificationEmail(cred.user, nextPath); }
+    catch (error) { verificationError = `Your account was created, but the verification email couldn’t be sent. ${authErrorMessage(error, "Please retry below.")}`; }
+    const sessionReady = auth.currentUser?.uid === cred.user.uid && await ensureSessionCookie(cred.user);
+    return { user: cred.user, verificationEmailSent, verificationError, profileError, sessionReady };
   };
 
   const signInWithGoogle = async () => {
@@ -198,28 +216,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    await sendPasswordResetEmail(auth, email, {
-      url: "https://iopps.ca/login",
-      handleCodeInApp: false,
-    });
+    if (process.env.NEXT_PUBLIC_USE_EMULATORS === "true") { await sendPasswordResetEmail(auth, email); return; }
+    const appCheck = await getAppCheckTokenValue();
+    const response = await fetch("/api/auth/password-reset", { method: "POST", headers: { "Content-Type": "application/json", ...(appCheck ? { "X-Firebase-AppCheck": appCheck } : {}) }, body: JSON.stringify({ email }) });
+    if (!response.ok) throw Object.assign(new Error("Password recovery is temporarily unavailable."), { code: response.status === 429 ? "auth/too-many-requests" : "auth/recovery-unavailable" });
   };
 
-  const resendVerificationEmail = async (nextPath?: string) => {
-    if (auth.currentUser && !auth.currentUser.emailVerified) {
-      await requestAccountVerificationEmail(auth.currentUser, nextPath);
+  const resendVerificationEmail = async (nextPath?: string, expectedUid?: string) => {
+    const current = auth.currentUser;
+    if (!current || (expectedUid && current.uid !== expectedUid)) {
+      throw Object.assign(new Error("Sign in again"), { code: "auth/user-token-expired" });
     }
+    return requestAccountVerificationEmail(current, nextPath);
   };
 
-  const reloadUser = async () => {
-    if (auth.currentUser) {
-      await auth.currentUser.reload();
-      setUser(auth.currentUser);
-      // Re-sync cookie after reload to update email_verified claim
-      const sessionReady = await ensureSessionCookie(auth.currentUser);
-      if (!sessionReady) {
-        throw new Error("Unable to refresh your secure session right now.");
+  const reloadUser = async (expectedUid?: string) => {
+    const current = auth.currentUser;
+    const assertIdentity = () => {
+      if (!current || auth.currentUser?.uid !== current.uid || (expectedUid && current.uid !== expectedUid)) {
+        throw Object.assign(new Error("Sign in again"), { code: "auth/user-token-expired" });
       }
-    }
+    };
+    assertIdentity();
+    await current!.reload();
+    assertIdentity();
+    await current!.getIdToken(true);
+    assertIdentity();
+    const sessionReady = await ensureSessionCookie(current);
+    assertIdentity();
+    if (!sessionReady) throw new Error("Unable to refresh your secure session right now.");
+    setUser(current);
+    return current!.emailVerified;
   };
 
   return (

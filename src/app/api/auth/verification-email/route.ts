@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminAuth } from "@/lib/firebase-admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { validateOrigin } from "@/lib/csrf";
 import { buildEmailVerificationContinueUrl } from "@/lib/auth-verification-email";
 import { sendAccountVerificationEmail } from "@/lib/email";
+import { verifyAppCheckFromRequest } from "@/lib/server/app-check";
+import { reserveVerificationEmail } from "@/lib/server/verification-email-limit";
 
 export const runtime = "nodejs";
 
@@ -29,6 +31,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   }
 
+  if (!await verifyAppCheckFromRequest(req)) {
+    return NextResponse.json({ error: "Please refresh the page and try again." }, { status: 403 });
+  }
+
   const idToken = getBearerToken(req);
   if (!idToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -52,6 +58,11 @@ export async function POST(req: NextRequest) {
 
     if (decoded.email_verified === true) {
       return NextResponse.json({ sent: false, alreadyVerified: true });
+    }
+
+    const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
+    if (!await reserveVerificationEmail(getAdminDb(), decoded.uid, ip)) {
+      return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
     }
 
     const continueUrl = buildEmailVerificationContinueUrl(getSiteUrl(req), body.nextPath);

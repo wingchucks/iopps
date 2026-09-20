@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { useCurrentTime } from "@/lib/use-current-time";
 import {
   onNotifications,
   markAsRead,
@@ -21,6 +22,7 @@ const typeIcons: Record<string, string> = {
 
 export default function NotificationBell() {
   const { user } = useAuth();
+  const now = useCurrentTime();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -64,7 +66,7 @@ export default function NotificationBell() {
     if (!ts || typeof ts !== "object") return "";
     const d = ts as { seconds?: number };
     if (!d.seconds) return "";
-    const diff = Math.floor((Date.now() / 1000 - d.seconds) / 60);
+    const diff = Math.floor((now / 1000 - d.seconds) / 60);
     if (diff < 1) return "Just now";
     if (diff < 60) return `${diff}m ago`;
     if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;

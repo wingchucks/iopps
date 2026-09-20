@@ -86,12 +86,12 @@ export default class AuthErrorBoundary extends Component<Props, State> {
             {errorType === "network" ? (
               <button
                 onClick={this.handleRetry}
-                className="w-full font-bold cursor-pointer transition-opacity hover:opacity-90"
+                className="brand-button w-full font-bold cursor-pointer transition-opacity hover:opacity-90"
                 style={{
                   padding: "14px 24px",
                   borderRadius: 12,
                   border: "none",
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   color: "#fff",
                   fontSize: 15,
                 }}
@@ -101,12 +101,12 @@ export default class AuthErrorBoundary extends Component<Props, State> {
             ) : (
               <button
                 onClick={this.handleSignIn}
-                className="w-full font-bold cursor-pointer transition-opacity hover:opacity-90"
+                className="brand-button w-full font-bold cursor-pointer transition-opacity hover:opacity-90"
                 style={{
                   padding: "14px 24px",
                   borderRadius: 12,
                   border: "none",
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   color: "#fff",
                   fontSize: 15,
                 }}
@@ -117,13 +117,13 @@ export default class AuthErrorBoundary extends Component<Props, State> {
             {errorType !== "network" && (
               <button
                 onClick={this.handleRetry}
-                className="w-full font-semibold cursor-pointer"
+                className="brand-button w-full font-semibold cursor-pointer"
                 style={{
                   padding: "12px 24px",
                   borderRadius: 12,
                   border: "1.5px solid var(--border)",
-                  background: "var(--card)",
-                  color: "var(--text-sec)",
+                  background: "var(--button-gradient-soft)",
+                  color: "var(--button-gradient-soft-text)",
                   fontSize: 15,
                 }}
               >

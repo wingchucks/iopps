@@ -363,8 +363,8 @@ export default function VerificationDetailPage() {
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors hover:opacity-80"
-                      style={{ background: "var(--card-bg)", color: "#D97706" }}
+                      className="brand-button flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors hover:opacity-80"
+                      style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)" }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                       View
@@ -391,6 +391,9 @@ export default function VerificationDetailPage() {
         <label className="flex items-center gap-3 cursor-pointer mb-4">
           <button
             type="button"
+            role="switch"
+            aria-checked={elderConsultation}
+            aria-labelledby="elder-completed-label"
             onClick={() => isPending && setElderConsultation(!elderConsultation)}
             className={cn(
               "relative h-6 w-11 shrink-0 rounded-full transition-colors",
@@ -404,8 +407,8 @@ export default function VerificationDetailPage() {
               elderConsultation && "translate-x-5"
             )} />
           </button>
-          <span className="text-sm">
-            {elderConsultation ? "Elder consultation completed" : "Mark elder consultation as completed"}
+          <span id="elder-completed-label" className="text-sm">
+            Elder consultation completed
           </span>
         </label>
         <div>

@@ -112,18 +112,18 @@ test("normalizeOrganizationProfilePatch preserves organization onboarding fields
   ]);
 });
 
-test("hasOrganizationIndigenousIdentity detects multiple signal shapes", () => {
+test("Indigenous identity requires an explicit profile identity or legacy ownership declaration", () => {
   assert.equal(
     hasOrganizationIndigenousIdentity({
       tags: ["Indigenous-Owned Business"],
     }),
-    true,
+    false,
   );
   assert.equal(
     hasOrganizationIndigenousIdentity({
       nation: "Cree Nation",
     }),
-    true,
+    false,
   );
   assert.equal(
     hasOrganizationIndigenousIdentity({
@@ -132,6 +132,19 @@ test("hasOrganizationIndigenousIdentity detects multiple signal shapes", () => {
     }),
     false,
   );
+  assert.equal(hasOrganizationIndigenousIdentity({ businessIdentity: "indigenous" }), true);
+  assert.equal(hasOrganizationIndigenousIdentity({ indigenousOwned: true }), true);
+  assert.equal(hasOrganizationIndigenousIdentity({ treatyTerritory: "Treaty 6" }), false);
+  assert.equal(hasOrganizationIndigenousIdentity({ indigenousGroups: ["First Nations"] }), false);
+  assert.equal(hasOrganizationIndigenousIdentity({ tags: ["Indigenous Partnerships"] }), false);
+  assert.equal(hasOrganizationIndigenousIdentity({ businessIdentity: "non_indigenous", indigenousOwned: true, nation: "Cree Nation" }), false);
+  assert.equal(hasOrganizationIndigenousIdentity({ businessIdentity: "not_specified", indigenousOwned: true }), false);
+});
+
+test("owners can correct or clear Indigenous identity without altering verification or account entitlements", () => {
+  const { updates } = normalizeOrganizationProfilePatch({ businessIdentity: "not_specified", verified: true, plan: "premium", capabilities: ["post_jobs"] });
+  assert.deepEqual(updates, { businessIdentity: "not_specified", indigenousOwned: false });
+  assert.deepEqual(normalizeOrganizationProfilePatch({ businessIdentity: "unknown" }).updates, {});
 });
 
 test("isOrganizationPubliclyVisible only allows public-ready business organizations", () => {

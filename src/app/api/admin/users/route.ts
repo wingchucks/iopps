@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
+import { adminDb, getAdminAuth } from "@/lib/firebase-admin";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { normalizeAdminUserRow } from "@/lib/admin/users";
+import { isSuperAdminAccount } from "@/lib/server/super-admin";
+import { changeAdminUserRole } from "@/lib/server/admin-user-role";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
       normalizeAdminUserRow({ id: doc.id, ...doc.data() }, doc.id),
     );
 
-    return NextResponse.json({ users });
+    return NextResponse.json({ users, capabilities: { canChangeRoles: auth.isSuperAdmin } });
   } catch (error) {
     console.error("[GET /api/admin/users] Error:", error);
     return NextResponse.json(
@@ -98,6 +99,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const auth = await verifyAdminToken(request);
   if (!auth.success) return auth.response;
+  if (!auth.isSuperAdmin) {
+    return NextResponse.json({ error: "Super admin access is required to change account roles" }, { status: 403 });
+  }
 
   if (!adminDb) {
     return NextResponse.json(
@@ -133,10 +137,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await userRef.update({
-      role: body.role,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
+    if (await isSuperAdminAccount(body.userId, getAdminAuth())) {
+      return NextResponse.json(
+        { error: "Cannot modify super admin account" },
+        { status: 403 },
+      );
+    }
+
+    await changeAdminUserRole(body.userId, body.role, { auth: getAdminAuth(), db: adminDb, isSuperAdmin: auth.isSuperAdmin });
 
     return NextResponse.json({
       success: true,

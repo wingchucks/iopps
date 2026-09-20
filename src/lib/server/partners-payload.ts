@@ -1,3 +1,7 @@
+import { normalizeOrganizationRecord } from "../organization-profile";
+import { isSchoolOrganization } from "../school-visibility";
+import { businessListingReviewAllowsPublic } from "../business-listing-review";
+import { toPublicOrganization } from "../public-organization";
 import { comparePartnerPromotion, isPaidPartner, withPartnerPromotion } from "./partner-promotion";
 
 export type JsonRecord = Record<string, unknown>;
@@ -131,13 +135,17 @@ function dedupePartners(records: JsonRecord[]): JsonRecord[] {
   return unique;
 }
 
-export function buildPartnersPayload(records: JsonRecord[]) {
+export function selectPublicPartnerRecords(records: JsonRecord[]): JsonRecord[] {
   const promotedRecords = dedupePartners(
-    records.map((record) => withPartnerPromotion(serialize(record) as JsonRecord)),
+    records.filter(record => !isSchoolOrganization(record) && businessListingReviewAllowsPublic(record)).map((record) => normalizeOrganizationRecord(withPartnerPromotion(serialize(record) as JsonRecord))),
   );
-  const partners = promotedRecords
+  return promotedRecords
     .filter((org) => isPaidPartner(org))
     .sort(comparePartnerPromotion);
+}
+
+export function buildPartnersPayload(records: JsonRecord[]) {
+  const partners = selectPublicPartnerRecords(records).map(toPublicOrganization);
 
   return {
     partners,
@@ -148,4 +156,3 @@ export function buildPartnersPayload(records: JsonRecord[]) {
     },
   };
 }
-

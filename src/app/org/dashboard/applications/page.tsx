@@ -1,7 +1,9 @@
 "use client";
+import { updateApplicationBatch } from "@/lib/employer-application-updates";
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import ApplicationDetails from "@/components/ApplicationDetails";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
@@ -40,6 +42,10 @@ export default function OrgApplicationsPage() {
   const { user } = useAuth();
   const [groups, setGroups] = useState<GroupedApplications[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState("");
+  const [actionNotice, setActionNotice] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
+  const [loadError, setLoadError] = useState("");
   // Applicant profiles cache: userId -> MemberProfile
   const [profiles, setProfiles] = useState<Record<string, MemberProfile>>({});
   // Reviewer notes editing state
@@ -89,6 +95,7 @@ export default function OrgApplicationsPage() {
         setProfiles((data.profiles || {}) as Record<string, MemberProfile>);
       } catch (err) {
         console.error("Failed to load employer applications:", err);
+        setLoadError("Applications couldn’t be loaded. Please reload and try again.");
       } finally {
         setLoading(false);
       }
@@ -111,30 +118,29 @@ export default function OrgApplicationsPage() {
     postId: string,
     newStatus: ApplicationStatus
   ) => {
-    if (!user) return;
-    const idToken = await user.getIdToken();
-    const response = await fetch("/api/employer/applications", {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ appId, status: newStatus }),
-    });
-    if (!response.ok) throw new Error("Failed to update application status");
-    setGroups((prev) =>
-      prev.map((g) => {
-        if (g.post.id !== postId) return g;
-        return {
-          ...g,
-          applications: g.applications.map((a) =>
-            a.id === appId ? { ...a, status: newStatus } : a
-          ),
-        };
-      })
-    );
+    if (!user || updatingStatus[appId] || bulkUpdating) return;
+    setActionError(""); setActionNotice("");
+    setUpdatingStatus(prev => ({...prev,[appId]:true}));
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/employer/applications", {
+        method:"PUT", headers:{Authorization:`Bearer ${idToken}`,"Content-Type":"application/json"},
+        body:JSON.stringify({appId,status:newStatus}),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Application status wasn’t saved. Please retry.");
+      }
+      setGroups(prev=>prev.map(g=>g.post.id!==postId?g:{...g,applications:g.applications.map(a=>a.id===appId?{...a,status:newStatus}:a)}));
+      setActionNotice("Application status saved.");
+    } catch (error) { setActionError(error instanceof Error ? error.message : "Application status wasn’t saved. Please retry."); }
+    finally { setUpdatingStatus(prev=>({...prev,[appId]:false})); }
   };
 
   const handleSaveNote = async (appId: string) => {
     const note = editingNote[appId];
     if (note === undefined) return;
+    setActionError(""); setActionNotice("");
     setSavingNote((prev) => ({ ...prev, [appId]: true }));
     try {
       if (!user) return;
@@ -154,7 +160,9 @@ export default function OrgApplicationsPage() {
           ),
         }))
       );
+      setActionNotice("Reviewer note saved.");
     } catch (err) {
+      setActionError("Reviewer note wasn’t saved. Your text is still here—please retry.");
       console.error("Failed to save note:", err);
     } finally {
       setSavingNote((prev) => ({ ...prev, [appId]: false }));
@@ -162,39 +170,25 @@ export default function OrgApplicationsPage() {
   };
 
   const handleBulkStatusChange = async () => {
-    if (selected.size === 0) return;
-    setBulkUpdating(true);
+    if (!user || !selected.size || bulkUpdating || Object.values(updatingStatus).some(Boolean)) return;
+    setBulkUpdating(true); setActionError(""); setActionNotice("");
     try {
-      await Promise.all(
-        Array.from(selected).map(async (appId) => {
-          if (!user) return;
-          const idToken = await user.getIdToken();
-          const response = await fetch("/api/employer/applications", {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ appId, status: bulkStatus }),
-          });
-          if (!response.ok) throw new Error("Failed to update application status");
-        })
-      );
-      // Update local state
-      setGroups((prev) =>
-        prev.map((g) => ({
-          ...g,
-          applications: g.applications.map((a) =>
-            selected.has(a.id) ? { ...a, status: bulkStatus } : a
-          ),
-        }))
-      );
-      setSelected(new Set());
-    } catch (err) {
-      console.error("Bulk update failed:", err);
-    } finally {
-      setBulkUpdating(false);
-    }
+      const idToken = await user.getIdToken();
+      const result = await updateApplicationBatch([...selected], async appId => {
+        const response = await fetch("/api/employer/applications", {method:"PUT",headers:{Authorization:`Bearer ${idToken}`,"Content-Type":"application/json"},body:JSON.stringify({appId,status:bulkStatus})});
+        if (!response.ok) throw new Error("Status update failed");
+      });
+      const saved = new Set(result.saved);
+      setGroups(prev=>prev.map(g=>({...g,applications:g.applications.map(a=>saved.has(a.id)?{...a,status:bulkStatus}:a)})));
+      setSelected(new Set(result.failed));
+      if (result.failed.length) setActionError(`${result.saved.length} saved; ${result.failed.length} couldn’t be updated. Failed applications remain selected for retry.`);
+      else setActionNotice(`${result.saved.length} application statuses saved.`);
+    } catch { setActionError("Application statuses couldn’t be saved. Please retry."); }
+    finally { setBulkUpdating(false); }
   };
 
   const toggleSelect = (appId: string) => {
+    if (bulkUpdating) return;
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(appId)) next.delete(appId);
@@ -204,10 +198,11 @@ export default function OrgApplicationsPage() {
   };
 
   const selectAll = () => {
-    if (selected.size === allApps.length) {
+    if (bulkUpdating) return;
+    if (selected.size === allApps.filter(a => a.status !== "withdrawn").length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(allApps.map((a) => a.id)));
+      setSelected(new Set(allApps.filter(a => a.status !== "withdrawn").map((a) => a.id)));
     }
   };
 
@@ -258,6 +253,8 @@ export default function OrgApplicationsPage() {
           <label className="flex items-center shrink-0 mt-1 cursor-pointer">
             <input
               type="checkbox"
+              aria-label={`Select application from ${displayName}`}
+              disabled={bulkUpdating || app.status === "withdrawn"}
               checked={selected.has(app.id)}
               onChange={() => toggleSelect(app.id)}
               className="w-4 h-4 rounded"
@@ -286,13 +283,12 @@ export default function OrgApplicationsPage() {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1 flex-wrap">
-              <Link
-                href={`/members/${app.userId}`}
-                className="text-sm font-bold no-underline hover:underline"
-                style={{ color: "var(--text)" }}
-              >
-                {displayName}
-              </Link>
+              <span
+                              className="text-sm font-bold no-underline hover:underline"
+                              style={{ color: "var(--text)" }}
+                            >
+                              {displayName}
+                            </span>
               <span
                 className="px-2 py-0.5 rounded-full text-xs font-semibold capitalize"
                 style={{ background: sc.bg, color: sc.color }}
@@ -331,10 +327,12 @@ export default function OrgApplicationsPage() {
               Applied: {formatDate(app.appliedAt)}
             </p>
 
+            <ApplicationDetails application={app} profile={profile} />
             {/* Actions row */}
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <select
                 aria-label={`Application status for ${displayName}`}
+                disabled={app.status === "withdrawn" || bulkUpdating || updatingStatus[app.id]}
                 value={app.status}
                 onChange={(e) =>
                   handleStatusChange(
@@ -357,26 +355,17 @@ export default function OrgApplicationsPage() {
                   </option>
                 ))}
               </select>
-              <Link
-                href={`/members/${app.userId}`}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline"
-                style={{
-                  background: "rgba(13,148,136,.1)",
-                  color: "var(--teal)",
-                }}
-              >
-                View Profile
-              </Link>
+
               {/* Resume link */}
               {resumeUrl ? (
                 <a
                   href={resumeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline"
+                  className="brand-button px-3 py-1.5 rounded-lg text-xs font-semibold no-underline"
                   style={{
-                    background: "rgba(30,64,175,.1)",
-                    color: "var(--navy)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                   }}
                 >
                   View Resume
@@ -409,13 +398,13 @@ export default function OrgApplicationsPage() {
                     }));
                   }
                 }}
-                className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                className="brand-button px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                 style={{
                   background: noteOpen
                     ? "rgba(139,92,246,.1)"
                     : app.reviewerNote
                       ? "rgba(245,158,11,.1)"
-                      : "var(--bg)",
+                      : "var(--button-gradient-soft)",
                   color: noteOpen
                     ? "#8B5CF6"
                     : app.reviewerNote
@@ -452,9 +441,9 @@ export default function OrgApplicationsPage() {
                   <button
                     onClick={() => handleSaveNote(app.id)}
                     disabled={savingNote[app.id]}
-                    className="px-3 py-1 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                    className="brand-button px-3 py-1 rounded-lg border-none cursor-pointer text-xs font-semibold"
                     style={{
-                      background: "var(--teal)",
+                      background: "var(--button-gradient)",
                       color: "#fff",
                       opacity: savingNote[app.id] ? 0.5 : 1,
                     }}
@@ -469,8 +458,8 @@ export default function OrgApplicationsPage() {
                         return next;
                       })
                     }
-                    className="px-3 py-1 rounded-lg border-none cursor-pointer text-xs font-semibold"
-                    style={{ background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                    className="brand-button px-3 py-1 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                    style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", border: "1px solid var(--border)" }}
                   >
                     Cancel
                   </button>
@@ -515,6 +504,7 @@ export default function OrgApplicationsPage() {
               {/* Filter by posting */}
               {groups.length > 1 && (
                 <select
+                  aria-label="Filter applications by posting"
                   value={filterPostId}
                   onChange={(e) => setFilterPostId(e.target.value)}
                   className="px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer"
@@ -542,7 +532,7 @@ export default function OrgApplicationsPage() {
                   onClick={() => setViewMode("list")}
                   className="px-3 py-1.5 text-xs font-semibold border-none cursor-pointer"
                   style={{
-                    background: viewMode === "list" ? "var(--teal)" : "var(--bg)",
+                    background: viewMode === "list" ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                     color: viewMode === "list" ? "#fff" : "var(--text-muted)",
                   }}
                 >
@@ -552,7 +542,7 @@ export default function OrgApplicationsPage() {
                   onClick={() => setViewMode("board")}
                   className="px-3 py-1.5 text-xs font-semibold border-none cursor-pointer"
                   style={{
-                    background: viewMode === "board" ? "var(--teal)" : "var(--bg)",
+                    background: viewMode === "board" ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                     color: viewMode === "board" ? "#fff" : "var(--text-muted)",
                   }}
                 >
@@ -562,6 +552,8 @@ export default function OrgApplicationsPage() {
             </div>
           </div>
 
+          {actionError && <p role="alert" className="p-4 mb-4 rounded-xl bg-red-50 text-red-800">{actionError}</p>}
+          {actionNotice && <p role="status" className="p-4 mb-4 rounded-xl bg-teal-50 text-teal-900">{actionNotice}</p>}
           {/* Bulk action bar */}
           {selected.size > 0 && (
             <div
@@ -578,6 +570,8 @@ export default function OrgApplicationsPage() {
                 {selected.size} selected
               </span>
               <select
+                aria-label="Bulk application status"
+                disabled={bulkUpdating}
                 value={bulkStatus}
                 onChange={(e) => setBulkStatus(e.target.value as ApplicationStatus)}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer"
@@ -595,10 +589,10 @@ export default function OrgApplicationsPage() {
               </select>
               <button
                 onClick={handleBulkStatusChange}
-                disabled={bulkUpdating}
-                className="px-4 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                disabled={bulkUpdating || Object.values(updatingStatus).some(Boolean)}
+                className="brand-button px-4 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                 style={{
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   color: "#fff",
                   opacity: bulkUpdating ? 0.5 : 1,
                 }}
@@ -607,10 +601,11 @@ export default function OrgApplicationsPage() {
               </button>
               <button
                 onClick={() => setSelected(new Set())}
-                className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
+                disabled={bulkUpdating}
+                className="brand-button px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold"
                 style={{
-                  background: "var(--bg)",
-                  color: "var(--text-muted)",
+                  background: "var(--button-gradient-soft)",
+                  color: "var(--button-gradient-soft-text)",
                   border: "1px solid var(--border)",
                 }}
               >
@@ -625,6 +620,8 @@ export default function OrgApplicationsPage() {
                 <div key={i} className="h-40 rounded-2xl skeleton" />
               ))}
             </div>
+          ) : loadError ? (
+            <Card className="p-8"><div role="alert"><h2 className="text-lg font-bold mb-2">Applications unavailable</h2><p>{loadError}</p><button className="employer-primary mt-4" onClick={() => window.location.reload()}>Reload applications</button></div></Card>
           ) : groups.length === 0 ? (
             <Card className="p-8 text-center">
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>
@@ -640,7 +637,7 @@ export default function OrgApplicationsPage() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={selected.size === allApps.length && allApps.length > 0}
+                    checked={selected.size === allApps.filter(a => a.status !== "withdrawn").length && selected.size > 0}
                     onChange={selectAll}
                     className="w-4 h-4 rounded"
                   />
@@ -697,7 +694,7 @@ export default function OrgApplicationsPage() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={selected.size === allApps.length && allApps.length > 0}
+                    checked={selected.size === allApps.filter(a => a.status !== "withdrawn").length && selected.size > 0}
                     onChange={selectAll}
                     className="w-4 h-4 rounded"
                   />
@@ -711,7 +708,7 @@ export default function OrgApplicationsPage() {
               </div>
 
               <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 400 }}>
-                {(["submitted", "reviewing", "shortlisted", "interview", "offered", "rejected"] as ApplicationStatus[]).map((status) => {
+                {(["submitted", "reviewing", "shortlisted", "interview", "offered", "rejected", "withdrawn"] as ApplicationStatus[]).map((status) => {
                   const sc = statusColors[status];
                   const apps = boardColumns[status] || [];
                   return (
@@ -780,7 +777,9 @@ export default function OrgApplicationsPage() {
                                 <div className="flex items-center gap-2 mb-2">
                                   <input
                                     type="checkbox"
-                                    checked={selected.has(app.id)}
+                                    aria-label={`Select application from ${displayName}`}
+              disabled={bulkUpdating || app.status === "withdrawn"}
+              checked={selected.has(app.id)}
                                     onChange={() => toggleSelect(app.id)}
                                     className="w-3.5 h-3.5 rounded"
                                   />
@@ -800,13 +799,12 @@ export default function OrgApplicationsPage() {
                                       {displayName.charAt(0).toUpperCase()}
                                     </div>
                                   )}
-                                  <Link
-                                    href={`/members/${app.userId}`}
-                                    className="text-xs font-bold no-underline hover:underline truncate"
-                                    style={{ color: "var(--text)" }}
-                                  >
-                                    {displayName}
-                                  </Link>
+                                  <span
+                                                                      className="text-xs font-bold no-underline hover:underline truncate"
+                                                                      style={{ color: "var(--text)" }}
+                                                                    >
+                                                                      {displayName}
+                                                                    </span>
                                 </div>
 
                                 {app.postTitle && (
@@ -825,10 +823,10 @@ export default function OrgApplicationsPage() {
                                       href={resumeUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-[10px] font-semibold no-underline px-1.5 py-0.5 rounded"
+                                      className="brand-button text-[10px] font-semibold no-underline px-1.5 py-0.5 rounded"
                                       style={{
-                                        background: "rgba(30,64,175,.1)",
-                                        color: "var(--navy)",
+                                        background: "var(--button-gradient-soft)",
+                                        color: "var(--button-gradient-soft-text)",
                                       }}
                                     >
                                       Resume
@@ -848,10 +846,12 @@ export default function OrgApplicationsPage() {
                                   )}
                                 </div>
 
+                                <ApplicationDetails application={app} profile={profile} />
                                 {/* Move to dropdown */}
                                 <select
                                   aria-label={`Application status for ${displayName}`}
-                value={app.status}
+                                  disabled={app.status === "withdrawn" || bulkUpdating || updatingStatus[app.id]}
+                                  value={app.status}
                                   onChange={(e) =>
                                     handleStatusChange(
                                       app.id,

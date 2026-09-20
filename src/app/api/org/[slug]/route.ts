@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
+import { toPublicOrganization } from "@/lib/public-organization";
 import { getAdminDb, hasAdminRuntimeSupport } from "@/lib/firebase-admin";
 import { getLocalDevOrganizationPayload } from "@/lib/local-dev-business-data";
-import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
-import { applyNormalizedSubscriptionState } from "@/lib/server/subscription-state";
+import { buildJobRouteSlug } from "@/lib/server/job-slugs";
+import { resolvePublicOrganization } from "@/lib/server/public-organization-resolver";
+import { loadPublicOrganizationJobDocuments } from "@/lib/server/public-organization-jobs";
+import { mergeOpportunitySources, publicOpportunityRecord } from "@/lib/server/public-opportunities";
+import { mergePublicJobRecords, jobMatchesOrganization } from "@/lib/public-job-merge";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
 import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
 export const runtime = "nodejs";
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -97,60 +101,7 @@ function serializeDoc(
   return serialize({ id: doc.id, ...(doc.data() || {}) }) as JsonRecord;
 }
 
-async function resolveOrganization(
-  db: FirebaseFirestore.Firestore,
-  slug: string,
-): Promise<JsonRecord | null> {
-  const directDoc = await db.collection("organizations").doc(slug).get();
-  if (directDoc.exists) {
-    return normalizeOrganizationRecord(
-      applyNormalizedSubscriptionState(serializeDoc(directDoc))
-    );
-  }
-
-  const slugQuery = await db
-    .collection("organizations")
-    .where("slug", "==", slug)
-    .limit(1)
-    .get();
-
-  if (!slugQuery.empty) {
-    return normalizeOrganizationRecord(
-      applyNormalizedSubscriptionState(serializeDoc(slugQuery.docs[0]))
-    );
-  }
-
-  const employerQuery = await db
-    .collection("employers")
-    .where("slug", "==", slug)
-    .limit(1)
-    .get();
-
-  if (!employerQuery.empty) {
-    return normalizeOrganizationRecord(
-      applyNormalizedSubscriptionState(serializeDoc(employerQuery.docs[0]))
-    );
-  }
-
-  // H-2: when scripts/dedup-organizations.cjs merges a duplicate org, it
-  // writes a redirect entry so old links keep resolving. Honor it here.
-  const redirectDoc = await db.collection("org-slug-redirects").doc(slug).get();
-  if (redirectDoc.exists) {
-    const target = String(redirectDoc.data()?.to || "");
-    if (target) {
-      const targetDoc = await db.collection("organizations").doc(target).get();
-      if (targetDoc.exists) {
-        return normalizeOrganizationRecord(
-          applyNormalizedSubscriptionState(serializeDoc(targetDoc))
-        );
-      }
-    }
-  }
-
-  return null;
-}
-
-function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "jobs" | "posts"): JsonRecord {
+function normalizeJob(doc: FirebaseFirestore.DocumentSnapshot, source: "jobs" | "posts"): JsonRecord {
   const serialized = serializeDoc(doc);
   if (serialized.salary && typeof serialized.salary === "object") {
     const salary = serialized.salary as JsonRecord;
@@ -160,6 +111,7 @@ function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "job
     serialized.employerName = serialized.orgName || serialized.companyName || "";
   }
   serialized._source = source;
+  if (source === "jobs") serialized.active = doc.data()?.active === true;
   return serialized;
 }
 
@@ -177,51 +129,17 @@ function normalizeScholarship(item: JsonRecord): JsonRecord {
   };
 }
 
-function normalizeProgram(item: JsonRecord): JsonRecord {
-  return {
-    ...item,
-    href: `/training/${String(item.slug || item.id)}`,
-  };
-}
-
-async function loadJobs(
-  db: FirebaseFirestore.Firestore,
-  orgId: string,
-  orgName: string,
-): Promise<JsonRecord[]> {
-  const [jobsByIdSnap, jobsByNameSnap, postsByOrgSnap] = await Promise.all([
-    db.collection("jobs").where("employerId", "==", orgId).get(),
-    db.collection("jobs").where("employerName", "==", orgName).get(),
-    db.collection("posts").where("orgId", "==", orgId).get(),
-  ]);
-
-  const jobs = [
-    ...jobsByIdSnap.docs
-      .filter((doc) => isPublicJobVisible(doc.data()))
-      .map((doc) => normalizeJob(doc, "jobs")),
-    ...jobsByNameSnap.docs
-      .filter((doc) => isPublicJobVisible(doc.data()))
-      .map((doc) => normalizeJob(doc, "jobs")),
-    ...postsByOrgSnap.docs
-      .filter((doc) => {
-        const data = doc.data();
-        return data.type === "job" && isPublicJobVisible(data);
-      })
-      .map((doc) => normalizeJob(doc, "posts")),
-  ];
-
-  const publicJobs = dedupeByHref(jobs);
-  const slugMap = buildPublicJobRouteSlugMap(publicJobs.map((job) => ({
-    id: String(job.id),
-    slug: typeof job.slug === "string" ? job.slug : undefined,
-    title: typeof job.title === "string" ? job.title : undefined,
-  })));
-
-  publicJobs.forEach((job) => {
-    job.href = `/jobs/${slugMap.get(String(job.id)) || String(job.slug || job.id)}`;
-  });
-
-  return sortFeatured(publicJobs);
+async function loadJobs(db: FirebaseFirestore.Firestore, organization: JsonRecord): Promise<JsonRecord[]> {
+  const { jobs, posts } = await loadPublicOrganizationJobDocuments(db, organization);
+  const publicJobs = mergePublicJobRecords(
+    jobs.map(doc => ({ ...normalizeJob(doc, "jobs"), id: doc.id } as JsonRecord & { id: string })),
+    posts.map(doc => ({ ...normalizeJob(doc, "posts"), id: doc.id } as JsonRecord & { id: string })),
+  );
+  return sortFeatured(publicJobs.filter(job => jobMatchesOrganization(job, organization)).map(job => {
+    const slug = buildJobRouteSlug({ id: job.id, slug: typeof job.slug === "string" ? job.slug : undefined, title: typeof job.title === "string" ? job.title : undefined });
+    // Scoped results cannot detect another organization's matching display slug.
+    return { ...job, href: `/jobs/${slug}--${job.id}` };
+  }));
 }
 
 async function loadEvents(
@@ -235,16 +153,13 @@ async function loadEvents(
     db.collection("posts").where("orgId", "==", orgId).get(),
   ]);
 
-  const exactMatches = [
-    ...eventsByEmployerSnap.docs.map((doc) => normalizeEvent(serializeDoc(doc))),
-    ...eventsByOrgSnap.docs.map((doc) => normalizeEvent(serializeDoc(doc))),
-    ...postsByOrgSnap.docs
-      .filter((doc) => {
-        const data = doc.data();
-        return data.type === "event" && data.status !== "closed";
-      })
-      .map((doc) => normalizeEvent(serializeDoc(doc))),
-  ];
+  const exactMatches = mergeOpportunitySources(
+    [...eventsByEmployerSnap.docs, ...eventsByOrgSnap.docs].map(serializeDoc),
+    postsByOrgSnap.docs.filter(doc => doc.data().type === "event").map(serializeDoc),
+    "events",
+  ).map(record => publicOpportunityRecord(record, "events"))
+    .filter((record): record is JsonRecord => record !== null)
+    .map(normalizeEvent);
 
   if (exactMatches.length > 0) {
     return sortRecent(dedupeByHref(exactMatches));
@@ -258,6 +173,8 @@ async function loadEvents(
       matchesOrgName(item.orgName, orgName) ||
       matchesOrgName(item.organizer, orgName),
     )
+    .map(record => publicOpportunityRecord(record, "events"))
+    .filter((record): record is JsonRecord => record !== null)
     .map(normalizeEvent);
 
   return sortRecent(dedupeByHref(fallbackMatches));
@@ -274,20 +191,13 @@ async function loadScholarships(
     db.collection("posts").where("orgId", "==", orgId).get(),
   ]);
 
-  const exactMatches = [
-    ...scholarshipsByEmployerSnap.docs
-      .filter((doc) => doc.data().status !== "closed")
-      .map((doc) => normalizeScholarship(serializeDoc(doc))),
-    ...scholarshipsByOrgSnap.docs
-      .filter((doc) => doc.data().status !== "closed")
-      .map((doc) => normalizeScholarship(serializeDoc(doc))),
-    ...postsByOrgSnap.docs
-      .filter((doc) => {
-        const data = doc.data();
-        return data.type === "scholarship" && data.status !== "closed";
-      })
-      .map((doc) => normalizeScholarship(serializeDoc(doc))),
-  ];
+  const exactMatches = mergeOpportunitySources(
+    [...scholarshipsByEmployerSnap.docs, ...scholarshipsByOrgSnap.docs].map(serializeDoc),
+    postsByOrgSnap.docs.filter(doc => doc.data().type === "scholarship").map(serializeDoc),
+    "scholarships",
+  ).map(record => publicOpportunityRecord(record, "scholarships"))
+    .filter((record): record is JsonRecord => record !== null)
+    .map(normalizeScholarship);
 
   if (exactMatches.length > 0) {
     return sortRecent(dedupeByHref(exactMatches));
@@ -300,36 +210,9 @@ async function loadScholarships(
       matchesOrgName(item.organization, orgName) ||
       matchesOrgName(item.orgName, orgName),
     )
+    .map(record => publicOpportunityRecord(record, "scholarships"))
+    .filter((record): record is JsonRecord => record !== null)
     .map(normalizeScholarship);
-
-  return sortRecent(dedupeByHref(fallbackMatches));
-}
-
-async function loadTraining(
-  db: FirebaseFirestore.Firestore,
-  orgId: string,
-  orgName: string,
-): Promise<JsonRecord[]> {
-  const trainingByOrgSnap = await db.collection("training_programs").where("orgId", "==", orgId).get();
-
-  const exactMatches = trainingByOrgSnap.docs
-    .filter((doc) => doc.data().active !== false)
-    .map((doc) => normalizeProgram({ ...serializeDoc(doc), _source: "training" }));
-
-  if (exactMatches.length > 0) {
-    return sortRecent(dedupeByHref(exactMatches));
-  }
-
-  const allTrainingSnap = await db.collection("training_programs").limit(500).get();
-  const fallbackMatches = allTrainingSnap.docs
-    .map((doc) => ({ ...serializeDoc(doc), _source: "training" } as JsonRecord))
-    .filter((item) => item.active !== false)
-    .filter((item) =>
-      matchesOrgName(item.orgName, orgName) ||
-      matchesOrgName(item.provider, orgName) ||
-      matchesOrgName(item.institutionName, orgName),
-    )
-    .map(normalizeProgram);
 
   return sortRecent(dedupeByHref(fallbackMatches));
 }
@@ -345,7 +228,8 @@ export async function GET(
     if (payload) {
       return NextResponse.json({
         ...payload,
-        programs: payload.training,
+        training: [],
+        programs: [],
       });
     }
 
@@ -354,7 +238,7 @@ export async function GET(
 
   try {
     const db = getAdminDb();
-    const orgRecord = await resolveOrganization(db, slug);
+    const orgRecord = await resolvePublicOrganization(db, slug);
 
     if (!orgRecord) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
@@ -373,20 +257,20 @@ export async function GET(
     const orgId = String(org.id || "");
     const orgName = String(org.name || "");
 
-    const [jobs, events, scholarships, training] = await Promise.all([
-      loadJobs(db, orgId, orgName),
+    const [jobs, events, scholarships] = await Promise.all([
+      loadJobs(db, org),
       loadEvents(db, orgId, orgName),
       loadScholarships(db, orgId, orgName),
-      loadTraining(db, orgId, orgName),
     ]);
 
     return NextResponse.json({
-      org,
+      org: toPublicOrganization(org),
       jobs,
       events,
       scholarships,
-      training,
-      programs: training,
+      // Training is paused; retain the response fields without advertising retired links.
+      training: [],
+      programs: [],
     });
   } catch (err) {
     console.error("[api/org] Error:", err);

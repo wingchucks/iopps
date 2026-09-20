@@ -1,0 +1,13 @@
+[
+  {"name":"replacement character is not reconstructed","raw":"SIGA �s employees","expected":"SIGA �s employees","review":true},
+  {"name":"known punctuation beside intact languages","raw":"Métis ᐃ 💚 â€™ â€“ â€”","expected":"Métis ᐃ 💚 ’ – —","review":false},
+  {"name":"plain prose whitespace","raw":"  First\r\n\r\n\r\nSecond line  \rThird  ","expected":"First\n\nSecond line\nThird","review":false},
+  {"name":"ordered list preserves order","raw":"1. **First**\n2. Second\n\nAfter","expected":"1. First\n2. Second\n\nAfter","review":false},
+  {"name":"unsafe HTML link loses destination","raw":"<a href=\"javascript:fixture()\">Apply</a><script>fixture()</script>","expected":"Apply","review":false},
+  {"name":"unsafe Markdown link is text only","raw":"[Apply](javascript:fixture)","expected":"Apply","review":false},
+  {"name":"encoded markup remains literal","raw":"&lt;img src=x onerror=fixture()&gt;","expected":"<img src=x onerror=fixture()>","review":false},
+  {"name":"double encoded markup is decoded once","raw":"&amp;lt;svg/onload=fixture()&amp;gt;","expected":"&lt;svg/onload=fixture()&gt;","review":false},
+  {"name":"unknown encoding is flagged not guessed","raw":"Ã unknown","expected":"Ã unknown","review":true},
+  {"name":"typo is flagged not globally rewritten","raw":"More possiblilties","expected":"More possiblilties","review":true},
+  {"name":"unmatched Markdown remains literal","raw":"2 ** 3 and a_b identifier","expected":"2 ** 3 and a_b identifier","review":false}
+]

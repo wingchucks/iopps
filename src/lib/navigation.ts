@@ -91,7 +91,7 @@ const NAV_ITEM_DEFINITIONS = {
   },
   businesses: {
     key: "businesses",
-    label: "Businesses",
+    label: "Indigenous Businesses",
     href: "/businesses",
     icon: "store",
     priority: 80,
@@ -110,20 +110,7 @@ const NAV_ITEM_DEFINITIONS = {
     icon: "search",
     priority: 100,
   },
-  members: {
-    key: "members",
-    label: "Members",
-    href: "/members",
-    icon: "users",
-    priority: 110,
-  },
-  mentorship: {
-    key: "mentorship",
-    label: "Mentorship",
-    href: "/mentorship",
-    icon: "handshake",
-    priority: 120,
-  },
+
   pricing: {
     key: "pricing",
     label: "Pricing",
@@ -211,8 +198,7 @@ const MEMBER_EXPLORE_KEYS: NavigationKey[] = [
   "events",
   "search",
   "partners",
-  "members",
-  "mentorship",
+
   "businesses",
 ];
 

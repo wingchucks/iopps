@@ -34,8 +34,8 @@ export function AdminFilterTabs({
           className={cn(
             "rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent/25",
             value === option.value
-              ? "border-accent bg-accent text-white"
-              : "border-[var(--card-border)] bg-[var(--input-bg)] text-[var(--text-secondary)] hover:border-[var(--card-border-hover)] hover:text-foreground",
+              ? "border-accent button-gradient text-white"
+              : "border-[var(--card-border)] button-gradient-soft text-[var(--text-secondary)] hover:border-[var(--card-border-hover)] hover:text-foreground",
           )}
         >
           {option.label}

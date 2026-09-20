@@ -1,3 +1,5 @@
+import { updateImportedJobWithEditorialGuard } from "@/lib/server/editorial-import-guard";
+import { publicContentRecord } from "@/lib/server/public-content-record";
 import { NextResponse } from "next/server";
 import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
 import { getAdminDb } from "@/lib/firebase-admin";
@@ -70,8 +72,7 @@ export async function GET(
       });
 
       if (hydratedPatch) {
-        const firestorePatch: Record<string, unknown> = { ...hydratedPatch };
-        await docRef.ref.update(firestorePatch);
+        const firestorePatch = await updateImportedJobWithEditorialGuard(db, docRef.ref, { ...hydratedPatch }, normalizeImportedDescription);
         Object.assign(data, firestorePatch);
 
         if (!isPublicJobRecordVisible(data, new Date())) {
@@ -96,10 +97,11 @@ export async function GET(
       job.employerName = job.orgName || job.companyName || "";
     }
     if (typeof job.description === "string") {
-      job.description = normalizeImportedDescription(job.description);
+      job.description = normalizeImportedDescription(job.description, job.descriptionFormat);
+      job.descriptionFormat = "plain-text";
     }
 
-    return NextResponse.json({ job: normalizeJobDiscoveryMetadata(job) }, {headers:{"Cache-Control":"no-store"}});
+    return NextResponse.json({ job: publicContentRecord(normalizeJobDiscoveryMetadata(job)) }, {headers:{"Cache-Control":"no-store"}});
   } catch (err) {
     console.error("Job detail API error:", err);
     return NextResponse.json({ error: "Failed to load job" }, { status: 500 });

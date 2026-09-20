@@ -12,11 +12,58 @@ import * as freshness from '../src/lib/listing-freshness.ts';
 import * as publicJobs from '../src/lib/public-jobs.ts';
 import * as jobSlugs from '../src/lib/server/job-slugs.ts';
 import * as metadata from '../src/lib/job-metadata.ts';
+import * as contentProjection from '../src/lib/server/public-content-record.ts';
+import * as publicEvents from '../src/lib/public-events.ts';
+import * as eventDedupe from '../src/lib/event-directory-dedupe.ts';
+import * as opportunityPosting from '../src/lib/opportunity-posting.ts';
+import * as opportunityLookups from '../src/lib/server/opportunity-lookups.ts';
+import * as jobDocuments from '../src/lib/server/public-job-documents.ts';
+import * as editorialImportGuard from '../src/lib/server/editorial-import-guard.ts';
 const nativeRequire = createRequire(import.meta.url);
+function jobFixture(jobs: Array<Record<string, any>>, posts: Array<Record<string, any>> = []) {
+  const records: Record<string, Array<Record<string, any>>> = { jobs, posts };
+  const snapshot = (row: Record<string, any>) => ({ id: row.id, exists: true, data: () => row });
+  const query = (collection: string, filters: Array<[string, unknown]> = []) => ({
+    where: (field: string, _operator: string, value: unknown) => query(collection, [...filters, [field, value]]),
+    get: async () => {
+      assert.ok(filters.length, 'Public job reads must be scoped');
+      return { docs: records[collection].filter(row => filters.every(([field, value]) => row[field] === value)).map(snapshot) };
+    },
+    doc: (id: string) => ({ collection, id }),
+  });
+  return {
+    collection: (collection: string) => query(collection),
+    getAll: async (...refs: Array<{collection: string; id: string}>) => refs.map(ref => {
+      const row = records[ref.collection].find(item => item.id === ref.id);
+      return row ? snapshot(row) : { id: ref.id, exists: false, data: () => undefined };
+    }),
+  };
+}
 function loadRoute(path: string, mocks: Record<string, unknown>) {
   const exports: Record<string, any> = {};
   const source = ts.transpileModule(readFileSync(path, 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-  vm.runInNewContext(source, {exports, require:(id: string) => mocks[id] || (id === '@/lib/server/job-expiration' ? expiration : id === '@/lib/public-job-merge' ? visibility : id === '@/lib/listing-freshness' ? freshness : id === '@/lib/job-metadata' ? metadata : nativeRequire(id)), Response, URL, console, process:{env:{CRON_SECRET:'test-only'}}, Date:class extends Date { constructor(value: any = '2026-09-08T12:00:00Z') { super(value); } } });
+  const dependencies: Record<string, unknown> = {
+    '@/lib/server/job-expiration': expiration,
+    '@/lib/server/editorial-import-guard': editorialImportGuard,
+    '@/lib/public-job-merge': visibility,
+    '@/lib/listing-freshness': freshness,
+    '@/lib/job-metadata': metadata,
+    '@/lib/server/public-content-record': contentProjection,
+    '@/lib/public-events': publicEvents,
+    '@/lib/event-directory-dedupe': eventDedupe,
+    '@/lib/opportunity-posting': opportunityPosting,
+    './opportunity-lookups': opportunityLookups,
+    './public-job-documents': jobDocuments,
+    '@/lib/server/public-job-documents': jobDocuments,
+    ...mocks,
+  };
+  vm.runInNewContext(source, {exports, require:(id: string) => {
+    if (Object.hasOwn(dependencies, id)) return dependencies[id];
+    // Run the actual delegated implementation against the same isolated DB and
+    // provider doubles, rather than requiring an alias through a CJS fallback.
+    if (id === '@/lib/server/public-opportunities') return loadRoute('src/lib/server/public-opportunities.ts', mocks);
+    return nativeRequire(id);
+  }, Response, URL, Buffer, console, process:{env:{CRON_SECRET:'test-only'}}, Date:class extends Date { constructor(value: any = '2026-09-08T12:00:00Z') { super(value); } } });
   return exports;
 }
 test('job detail rechecks fresh full data before hydration or any write', async () => {
@@ -38,15 +85,18 @@ test('job detail rechecks fresh full data before hydration or any write', async 
 });
 
 test('scholarship API marks closed intakes without deleting recurring programs', async () => {
-  const rows = [{id:'annual',status:'active',deadline:'August 31, 2026'}, {id:'rolling',status:'active',deadline:'Rolling'}];
+  const rows = [{id:'annual',title:'Fictional annual scholarship',status:'active',deadline:'August 31, 2026'}, {id:'rolling',title:'Fictional rolling scholarship',status:'active',deadline:'Rolling'}];
   const route = loadRoute('src/app/api/scholarships/route.ts', {
     'next/server':next,
-    '@/lib/firebase-admin':{getAdminDb:()=>({collection:()=>({where:()=>({get:async()=>({docs:rows.map(row=>({id:row.id,data:()=>row}))})}),get:async()=>({docs:[]})})})},
+    '@/lib/firebase-admin':{getAdminDb:()=>({collection:(name:string)=>{
+      const query={where:()=>query,select:()=>query,get:async()=>({docs:name==='scholarships'?rows.map(row=>({id:row.id,exists:true,data:()=>row})):[]})};return query;
+    }})},
     '@/lib/server/public-ownership':ownership,
     '@/lib/server/partner-promotion':{withPartnerPromotion:(r:unknown)=>r},
     '@/lib/utils':{displayAmount:(v:unknown)=>String(v)},
   });
   const response = await route.GET(new Request('https://example.test/api/scholarships'));
+  assert.equal(response.status,200);
   const body = await response.json();
   assert.equal(body.scholarships.length,2,'recurring program remains discoverable');
   assert.equal(body.scholarships.find((s:any)=>s.id==='annual').intakeClosed,true);
@@ -73,7 +123,7 @@ test('detail checks newly hydrated deadlines and enriches eligible metadata with
   for(const description of ['Deadline is August 28, 2026','Salary: hourly range $25.00 - $30.00']) {
     const route=loadRoute('src/app/api/jobs/[id]/route.ts',{
       'next/server':next,
-      '@/lib/firebase-admin':{getAdminDb:()=>({collection:()=>({doc:()=>({get:async()=>({exists:true,id:'one',data:()=>({active:true,status:'active',slug:'one'}),ref:{update:async()=>{}}})})})})},
+      '@/lib/firebase-admin':{getAdminDb:()=>({collection:()=>({doc:()=>({get:async()=>({exists:true,id:'one',data:()=>({active:true,status:'active',slug:'one'}),ref:{id:'one',parent:{id:'jobs'},update:async()=>{}}})})})})},
       '@/lib/server/public-job-routing':{findPublicJobDocument:async()=>({id:'one',source:'jobs',routeSlug:'one'})},
       '@/lib/server/imported-job-descriptions':{fetchImportedDescriptionPatch:async()=>({description}),normalizeImportedDescription:(s:string)=>s},
       '@/lib/server/public-detail-cache':{withPublicDetailCache:(r:Response)=>r},
@@ -90,7 +140,7 @@ test('detail checks newly hydrated deadlines and enriches eligible metadata with
 
 test('slug resolver uses full deadline data and never falls back from an exact expired collision',async()=>{
  const rows=[{id:'expired',slug:'same',active:true,description:'Deadline is August 28, 2026'},{id:'open',slug:'same',active:true}];
- const db={collection:(c:string)=>{let fields:string[]=[];const q={where:()=>q,select:(...f:string[])=>{fields=f;return q},get:async()=>({docs:c==='jobs'?rows.map(row=>({id:row.id,data:()=>fields.length?Object.fromEntries(Object.entries(row).filter(([k])=>fields.includes(k))):row})):[]})};return q;}};
+ const db=jobFixture(rows);
  const route=loadRoute('src/lib/server/public-job-routing.ts',{'@/lib/server/job-slugs':jobSlugs,'@/lib/public-jobs':publicJobs});
  assert.equal(await route.findPublicJobDocument(db,'expired'),null);
  assert.equal(await route.findPublicJobDocument(db,'same--expired'),null);
@@ -98,7 +148,7 @@ test('slug resolver uses full deadline data and never falls back from an exact e
 });
 
 test('routing does not resurrect a closed authoritative job through a posts mirror',async()=>{
- const db={collection:(c:string)=>{let activeOnly=false;const q={where:(field:string)=>{if(field==='active')activeOnly=true;return q},get:async()=>({docs:c==='jobs'?(activeOnly?[]:[{id:'same',data:()=>({active:false,status:'closed',slug:'same'})}]):[{id:'same',data:()=>({active:true,status:'active',slug:'same'})}]})};return q;}};
+ const db=jobFixture([{id:'same',active:false,status:'closed',slug:'same'}],[{id:'same',active:true,type:'job',status:'active',slug:'same'}]);
  const route=loadRoute('src/lib/server/public-job-routing.ts',{'@/lib/server/job-slugs':jobSlugs,'@/lib/public-jobs':publicJobs});
  assert.equal(await route.findPublicJobDocument(db,'same'),null);
 });
@@ -114,7 +164,7 @@ test('collision slugs remain stable after legacy suffix persistence and detail r
  assert.equal(writes,0);
 });
 test('job list retains closed source identities to suppress active mirrors',async()=>{
- const db={collection:(c:string)=>{let activeOnly=false;const q={where:(field:string)=>{if(field==='active')activeOnly=true;return q},get:async()=>({docs:c==='jobs'?(activeOnly?[]:[{id:'same',data:()=>({active:false,status:'closed',slug:'same'})}]):[{id:'same',data:()=>({active:true,status:'active',slug:'same'})}]})};return q;}};
+ const db=jobFixture([{id:'same',active:false,status:'closed',slug:'same'}],[{id:'same',active:true,type:'job',status:'active',slug:'same'}]);
  const route=loadRoute('src/app/api/jobs/route.ts',{'next/server':next,'@/lib/firebase-admin':{getAdminDb:()=>db},'@/lib/server/job-slugs':jobSlugs,'@/lib/public-jobs':publicJobs,'@/lib/server/imported-job-descriptions':{normalizeImportedDescription:(s:string)=>s}});
  assert.equal((await (await route.GET(new Request('http://localhost/api/jobs'))).json()).count,0);
  const landing=readFileSync('src/lib/server/landing-content.ts','utf8');
@@ -123,7 +173,7 @@ test('job list retains closed source identities to suppress active mirrors',asyn
 test('employer filters run after authoritative merge and homepage stats retain closed identities',async()=>{
  const route=loadRoute('src/app/api/jobs/route.ts',{
   'next/server':next,
-  '@/lib/firebase-admin':{getAdminDb:()=>({collection:(c:string)=>{let filtered=false;const q={where:(field:string)=>{if(field==='employerId')filtered=true;return q},get:async()=>({docs:filtered?[]:[{id:'same',data:()=>c==='jobs'?{active:false,orgId:'org-1',title:'Closed'}:{status:'active',type:'job',orgId:'org-1',title:'Closed'}}]})};return q}})},
+  '@/lib/firebase-admin':{getAdminDb:()=>jobFixture([{id:'same',active:false,orgId:'org-1',title:'Closed'}],[{id:'same',status:'active',type:'job',orgId:'org-1',title:'Closed'}])},
   '@/lib/server/imported-job-descriptions':{normalizeImportedDescription:(s:string)=>s},
   '@/lib/server/job-slugs':jobSlugs,'@/lib/public-jobs':publicJobs,
  });

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { Toaster } from "react-hot-toast";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
 
@@ -205,6 +206,7 @@ interface NavItem {
   href: string;
   /** Unicode icon displayed beside the label */
   icon: string;
+  adminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -225,6 +227,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Users", href: "/admin/users", icon: "\u2603" },
       { label: "Businesses & Schools", href: "/admin/employers", icon: "\u2616" },
+      { label: "Business listing reviews", href: "/admin/business-reviews", icon: "✓", adminOnly: true },
       { label: "Verification", href: "/admin/verification", icon: "\u2713" },
     ],
   },
@@ -361,6 +364,7 @@ function SidebarContent({
             </p>
             <ul className="space-y-0.5">
               {group.items.map((item) => {
+                if (item.adminOnly && role !== "admin") return null;
                 const active = isActive(item.href);
                 return (
                   <li key={item.href}>
@@ -526,6 +530,16 @@ export default function AdminLayout({
 
   return (
     <div data-admin className="flex h-screen bg-background">
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: "var(--card-bg)",
+            color: "var(--foreground)",
+            border: "1px solid var(--card-border)",
+          },
+        }}
+      />
       {/* ---- Desktop sidebar ---- */}
       <aside className="hidden w-64 shrink-0 border-r border-[var(--card-border)] bg-surface lg:block">
         <SidebarContent

@@ -24,8 +24,8 @@ const PROTECTED_PREFIXES = [
   "/verify-email",
 ];
 
-// Routes that authed users should be redirected away from
-const AUTH_PAGES = ["/login", "/signup", "/forgot-password"];
+// Login resolves the correct workspace for an existing session client-side.
+const AUTH_PAGES = ["/signup", "/forgot-password"];
 
 // Pages allowed for unverified email users
 const UNVERIFIED_ALLOWED = ["/verify-email", "/settings", "/api"];
@@ -52,6 +52,13 @@ export function middleware(req: NextRequest) {
   const maintenance = maintenanceResponse(req.nextUrl.pathname, process.env.IOPPS_MAINTENANCE_MODE, req.method);
   if (maintenance) return maintenance;
   const { pathname } = req.nextUrl;
+  const retired = ["/schools", "/programs", "/education", "/training"];
+  if (retired.some(prefix => pathname === prefix || pathname.startsWith(prefix + "/"))) {
+    const target = req.nextUrl.clone(); target.pathname = "/opportunities-update"; target.search = "";
+    return NextResponse.redirect(target, 307);
+  }
+  if (pathname === "/shop" || pathname.startsWith("/shop/")) return NextResponse.redirect(new URL("/businesses", req.url), 307);
+  if (pathname === "/spotlight") return NextResponse.redirect(new URL("/livestreams", req.url), 307);
   const cookie = req.cookies.get(COOKIE_NAME)?.value;
 
   interface SessionPayload {
@@ -82,16 +89,16 @@ export function middleware(req: NextRequest) {
   if (isProtected(pathname) && !isValid) {
     const loginUrl = req.nextUrl.clone();
     loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("redirect", pathname);
+    loginUrl.searchParams.set("redirect", pathname + req.nextUrl.search);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Authed user on auth page → redirect to feed
-  if (isAuthPage(pathname) && isValid) {
-    const feedUrl = req.nextUrl.clone();
-    feedUrl.pathname = "/feed";
-    feedUrl.search = "";
-    return NextResponse.redirect(feedUrl);
+  // A verified account may still need to finish organization signup.
+  const resumingOrganization = pathname === "/signup" && req.nextUrl.searchParams.get("resume") === "organization";
+  if (isAuthPage(pathname) && isValid && !resumingOrganization) {
+    const accountUrl = req.nextUrl.clone();
+    accountUrl.pathname = "/login";
+    return NextResponse.redirect(accountUrl);
   }
 
   // Email verification enforcement for password users
@@ -106,7 +113,7 @@ export function middleware(req: NextRequest) {
     const verifyUrl = req.nextUrl.clone();
     verifyUrl.pathname = "/verify-email";
     verifyUrl.search = "";
-    verifyUrl.searchParams.set("next", pathname);
+    verifyUrl.searchParams.set("next", pathname + req.nextUrl.search);
     return NextResponse.redirect(verifyUrl);
   }
 

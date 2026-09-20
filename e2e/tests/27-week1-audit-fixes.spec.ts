@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
 
 // Regression coverage for the Week 1 audit fixes shipped in PR #131.
-// Tests are anonymous + read-only so they're safe to run against
-// production (no DB writes, no real signups).
+// Run only against isolated demo fixtures. Anonymous page reads can hydrate
+// and update job records, so these are not safe production read-only probes.
 //
 // Coverage gaps intentionally left for follow-up once authenticated
 // test fixtures exist:
@@ -12,10 +12,17 @@ import { test, expect } from "@playwright/test";
 
 
 test.describe("C-5 — signup validation surfaces per-field errors", () => {
+  test.beforeEach(async ({ page }) => {
+    const appPort = new URL(process.env.TEST_BASE_URL!).port;
+    await page.route("**/*", route => {
+      const url = new URL(route.request().url());
+      return url.hostname === "127.0.0.1" && [appPort, "8080", "9099", "9199"].includes(url.port) ? route.continue() : route.abort();
+    });
+  });
   test("invalid email shows alert under the email field", async ({ page }) => {
     await page.goto("/signup");
-    // RoleCard is a clickable <div>, not a <button> — match by text.
-    await page.locator("text=/community member/i").first().click();
+    // Use the current semantic role selector.
+    await page.getByRole("button", { name: /Individual/ }).click();
     await page.getByRole("button", { name: /continue/i }).click();
 
     await page.locator("#name").fill("Test User");
@@ -23,6 +30,7 @@ test.describe("C-5 — signup validation surfaces per-field errors", () => {
     await page.locator("#password").fill("password1234");
     await page.locator("#confirmPassword").fill("password1234");
 
+    await page.locator("#signup-consent").check();
     await page.getByRole("button", { name: /create account/i }).click();
 
     // The fix renders an error in role="alert" with id="<field>-error".
@@ -34,8 +42,8 @@ test.describe("C-5 — signup validation surfaces per-field errors", () => {
 
   test("mismatched passwords show alert under confirm field", async ({ page }) => {
     await page.goto("/signup");
-    // RoleCard is a clickable <div>, not a <button> — match by text.
-    await page.locator("text=/community member/i").first().click();
+    // Use the current semantic role selector.
+    await page.getByRole("button", { name: /Individual/ }).click();
     await page.getByRole("button", { name: /continue/i }).click();
 
     await page.locator("#name").fill("Test User");
@@ -43,6 +51,7 @@ test.describe("C-5 — signup validation surfaces per-field errors", () => {
     await page.locator("#password").fill("password1234");
     await page.locator("#confirmPassword").fill("different-password");
 
+    await page.locator("#signup-consent").check();
     await page.getByRole("button", { name: /create account/i }).click();
 
     const confirmError = page.locator("#confirmPassword-error");
@@ -56,8 +65,8 @@ test.describe("C-5 — signup validation surfaces per-field errors", () => {
 
   test("required fields use HTML5 constraints as a backstop", async ({ page }) => {
     await page.goto("/signup");
-    // RoleCard is a clickable <div>, not a <button> — match by text.
-    await page.locator("text=/community member/i").first().click();
+    // Use the current semantic role selector.
+    await page.getByRole("button", { name: /Individual/ }).click();
     await page.getByRole("button", { name: /continue/i }).click();
 
     await expect(page.locator("#email")).toHaveAttribute("type", "email");

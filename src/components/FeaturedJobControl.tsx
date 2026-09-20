@@ -42,7 +42,9 @@ export default function FeaturedJobControl({
       ? "You already have more featured jobs than your current allowance. Existing featured jobs stay live, but you need to unfeature one before adding another."
       : hasCapacity
         ? "Featured jobs appear in the premium featured strip and receive stronger placement in discovery."
-        : "You’ve used your current featured capacity. Upgrade your plan or buy a featured job credit to add another featured listing.";
+        : summary.featuredSlotsTotal === 0 && summary.featuredSlotsUsed === 0
+          ? "Featured placement requires an eligible plan or a featured job credit. Standard job listings are free."
+          : "Your featured capacity is in use. Unfeature an active job or buy a featured job credit to add another.";
 
   return (
     <div
@@ -169,7 +171,7 @@ export default function FeaturedJobControl({
               }}
             >
               {summary.plan !== "premium" && summary.plan !== "school" && (
-                <Link
+                <Link className="brand-button"
                   href="/org/plans"
                   style={{
                     textDecoration: "none",
@@ -178,8 +180,8 @@ export default function FeaturedJobControl({
                     justifyContent: "center",
                     padding: "9px 14px",
                     borderRadius: 10,
-                    background: "rgba(13,148,136,.14)",
-                    color: "var(--teal)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                     fontSize: 13,
                     fontWeight: 700,
                   }}

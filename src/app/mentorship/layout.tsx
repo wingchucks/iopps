@@ -1,3 +1,3 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Mentorship", description: "Find Indigenous mentors or become one. Connect with experienced professionals for career guidance and personal growth on IOPPS.", alternates: { canonical: "/mentorship" } };
+export const metadata: Metadata = { title: "Profile", description: "Manage your own IOPPS profile.", robots: { index: false, follow: false } };
 export default function Layout({ children }: { children: React.ReactNode }) { return children; }

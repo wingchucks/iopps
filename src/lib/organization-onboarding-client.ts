@@ -1,3 +1,6 @@
+import { normalizeOrganizationRecord } from "./organization-profile";
+import type { Organization } from "./firestore/organizations";
+
 type FetchLike = typeof fetch;
 
 interface RequestOptions {
@@ -31,12 +34,28 @@ async function requestWithTimeout(
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("The save took too long. Please check your connection and try again.");
+      throw new Error("The request took too long. Please check your connection and try again.");
     }
     throw error;
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export async function loadOrganizationOnboardingProfile(
+  idToken: string,
+  options: RequestOptions = {},
+): Promise<Organization | null> {
+  // The authenticated dashboard resolves the assigned organization, including
+  // administrators whose account UID differs from the organization's ID.
+  const response = await requestWithTimeout("/api/employer/dashboard", {
+    method: "GET",
+    headers: { Authorization: `Bearer ${idToken}` },
+    cache: "no-store",
+  }, options);
+  if (!response.ok) throw new Error(await parseError(response, "Unable to load your organization. Please try again."));
+  const payload = await response.json() as { org?: Organization | null };
+  return payload.org ? normalizeOrganizationRecord(payload.org) as Organization : null;
 }
 
 export async function uploadOrganizationOnboardingLogo(

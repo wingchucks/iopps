@@ -189,11 +189,11 @@ export default function VendorProfilePage() {
                 {vendor.phone && (
                   <a
                     href={`tel:${vendor.phone}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold no-underline rounded-lg"
+                    className="brand-button inline-flex items-center gap-1.5 text-xs font-semibold no-underline rounded-lg"
                     style={{
                       padding: "6px 12px",
-                      background: "var(--teal-soft)",
-                      color: "var(--teal)",
+                      background: "var(--button-gradient-soft)",
+                      color: "var(--button-gradient-soft-text)",
                     }}
                   >
                     {"\uD83D\uDCDE"} {vendor.phone}
@@ -202,11 +202,11 @@ export default function VendorProfilePage() {
                 {vendor.email && (
                   <a
                     href={`mailto:${vendor.email}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold no-underline rounded-lg"
+                    className="brand-button inline-flex items-center gap-1.5 text-xs font-semibold no-underline rounded-lg"
                     style={{
                       padding: "6px 12px",
-                      background: "var(--blue-soft)",
-                      color: "var(--blue)",
+                      background: "var(--button-gradient-soft)",
+                      color: "var(--button-gradient-soft-text)",
                     }}
                   >
                     {"\u2709\uFE0F"} Email
@@ -256,10 +256,10 @@ export default function VendorProfilePage() {
                   href={vendor.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border-none font-bold text-sm text-white no-underline cursor-pointer transition-opacity hover:opacity-90"
+                  className="brand-button inline-flex items-center gap-2 rounded-xl border-none font-bold text-sm text-white no-underline cursor-pointer transition-opacity hover:opacity-90"
                   style={{
                     padding: "12px 24px",
-                    background: "var(--gold)",
+                    background: "var(--button-gradient)",
                   }}
                 >
                   Visit Website {"\u2192"}

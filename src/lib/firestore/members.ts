@@ -1,19 +1,12 @@
 import {
-  collection,
   doc,
   getDoc,
-  getDocs,
   setDoc,
   updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  limit,
-  startAfter,
   serverTimestamp,
-  type QueryDocumentSnapshot,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { salaryRangeError } from "../salary-range";
+import { auth, db } from "../firebase";
 
 export type WorkPreference = "remote" | "in-person" | "hybrid" | "any";
 
@@ -62,6 +55,7 @@ export interface MemberProfile {
 export async function getMemberProfile(
   uid: string
 ): Promise<MemberProfile | null> {
+  if (auth.currentUser?.uid !== uid) return null;
   const snap = await getDoc(doc(db, "members", uid));
   if (!snap.exists()) return null;
   return { uid: snap.id, ...snap.data() } as MemberProfile;
@@ -122,34 +116,14 @@ export async function updateMemberProfile(
   await updateDoc(doc(db, "members", uid), updates);
 }
 
+// Compatibility exports for old callers: browsing is retired, with no requests.
 export async function getAllMembers(): Promise<MemberProfile[]> {
-  const snap = await getDocs(
-    query(collection(db, "members"), orderBy("displayName"))
-  );
-  return snap.docs
-    .map((d) => ({ uid: d.id, ...d.data() }) as MemberProfile)
-    .filter((member) => Boolean(member.uid && member.displayName));
+  return [];
 }
 
-const PAGE_SIZE = 30;
-
-export async function getMembersPaginated(
-  cursor?: QueryDocumentSnapshot
-): Promise<{ members: MemberProfile[]; lastDoc: QueryDocumentSnapshot | null }> {
-  const constraints = [
-    orderBy("displayName"),
-    limit(PAGE_SIZE + 10), // fetch a few extra to account for hidden ones
-    ...(cursor ? [startAfter(cursor)] : []),
-  ];
-  const snap = await getDocs(query(collection(db, "members"), ...constraints));
-  // Filter out members hidden from directory client-side (avoids Firestore index requirement)
-  const allDocs = snap.docs.filter((d) => d.data().hideFromDirectory !== true);
-  const members = allDocs
-    .slice(0, PAGE_SIZE)
-    .map((d) => ({ uid: d.id, ...d.data() }) as MemberProfile)
-    .filter((member) => Boolean(member.uid && member.displayName));
-  const lastDoc = allDocs.length >= PAGE_SIZE ? allDocs[PAGE_SIZE - 1] : null;
-  return { members, lastDoc };
+export async function getMembersPaginated(_cursor?: string | null): Promise<{ members: MemberProfile[]; lastDoc: string | null }> {
+  void _cursor; // Preserve the legacy signature without consuming a cursor.
+  return { members: [], lastDoc: null };
 }
 
 export async function updateCareerPreferences(
@@ -163,12 +137,24 @@ export async function updateCareerPreferences(
     education?: Education[];
   }
 ): Promise<void> {
+  const error = salaryRangeError(data.salaryRange);
+  if (error) throw new Error(error);
   await updateDoc(doc(db, "members", uid), {
     ...data,
     updatedAt: serverTimestamp(),
   });
 }
 
-export async function deleteMemberProfile(uid: string): Promise<void> {
-  await deleteDoc(doc(db, "members", uid));
+export async function deleteOwnAccount(uid: string): Promise<void> {
+  const user = auth.currentUser;
+  if (!user || user.uid !== uid) throw new Error("Sign in to delete your account");
+  const response = await fetch("/api/account", {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${await user.getIdToken(true)}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ confirmDelete: true }),
+  });
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(result.error || "Unable to delete account");
+  }
 }

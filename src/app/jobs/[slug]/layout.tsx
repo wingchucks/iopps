@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import { generateJobJsonLd, generateJobMetadata } from "@/lib/server/detail-metadata";
 import { serializeJsonLd } from "@/lib/server/seo";

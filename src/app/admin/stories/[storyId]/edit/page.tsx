@@ -142,7 +142,7 @@ export default function EditStoryPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowPreview(!showPreview)}
-            className="rounded-lg border px-4 py-2 text-sm font-medium"
+            className="button-gradient-soft rounded-lg border px-4 py-2 text-sm font-medium"
             style={{ borderColor: "var(--card-border)" }}
           >
             {showPreview ? "Edit" : "Preview"}

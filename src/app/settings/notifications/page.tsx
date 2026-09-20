@@ -184,7 +184,7 @@ function NotificationContent() {
                   <div className="flex items-start gap-3 mb-4">
                     <span className="text-xl">{info.icon}</span>
                     <div>
-                      <h3 className="text-[15px] font-bold text-text m-0">
+                      <h3 id={`notification-${category}-title`} className="text-[15px] font-bold text-text m-0">
                         {info.title}
                       </h3>
                       <p className="text-xs text-text-muted m-0">
@@ -202,11 +202,14 @@ function NotificationContent() {
                         key={channel}
                         className="flex items-center justify-between"
                       >
-                        <span className="text-sm text-text-sec">
+                        <span id={`notification-${category}-${channel}-label`} className="text-sm text-text-sec">
                           {channelLabels[channel]}
                         </span>
                         <button
                           type="button"
+                          role="switch"
+                          aria-labelledby={`notification-${category}-title notification-${category}-${channel}-label`}
+                          aria-checked={channels[channel]}
                           onClick={() =>
                             toggleChannel(
                               category,
@@ -244,7 +247,7 @@ function NotificationContent() {
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-[15px] font-bold text-text m-0">
+              <h3 id="quiet-hours-label" className="text-[15px] font-bold text-text m-0">
                 Quiet Hours
               </h3>
               <p className="text-xs text-text-muted m-0">
@@ -253,6 +256,9 @@ function NotificationContent() {
             </div>
             <button
               type="button"
+              role="switch"
+              aria-labelledby="quiet-hours-label"
+              aria-checked={prefs.quietHours.enabled}
               onClick={() =>
                 setPrefs({
                   ...prefs,
@@ -327,9 +333,9 @@ function NotificationContent() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-3 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+          className="brand-button px-6 py-3 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
           style={{
-            background: "var(--teal)",
+            background: "var(--button-gradient)",
             opacity: saving ? 0.7 : 1,
           }}
         >

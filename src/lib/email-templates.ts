@@ -60,7 +60,7 @@ export function welcomeEmail(name: string): string {
   <li>Browse opportunities from partner organizations</li>
   <li>Connect with community members</li>
 </ul>
-${btn("Explore Opportunities", "https://www.iopps.ca/discover")}
+${btn("Explore Opportunities", "https://www.iopps.ca/jobs")}
 <p style="margin:0;color:#6b7280;font-size:13px;">If you have any questions, feel free to reach out to our team.</p>`
   );
 }
@@ -89,7 +89,7 @@ export function applicationStatusEmail(
   <span style="font-size:13px;color:#0D9488;font-weight:600;">Status: ${status.charAt(0).toUpperCase() + status.slice(1)}</span>
 </td></tr>
 </table>
-${btn("View Application", "https://www.iopps.ca/member/applications")}
+${btn("View Application", "https://www.iopps.ca/applications")}
 <p style="margin:0;color:#6b7280;font-size:13px;">Good luck with your application!</p>`
   );
 }
@@ -100,7 +100,7 @@ export function newMessageEmail(name: string, senderName: string): string {
     `<h2 style="margin:0 0 16px;font-size:20px;color:#0F2B4C;">New Message</h2>
 <p style="margin:0 0 12px;">Hi ${name},</p>
 <p style="margin:0 0 12px;">You have received a new message from <strong>${senderName}</strong> on IOPPS.</p>
-${btn("Read Message", "https://www.iopps.ca/member/messages")}
+${btn("Read Message", "https://www.iopps.ca/messages")}
 <p style="margin:0;color:#6b7280;font-size:13px;">You are receiving this because you have message notifications enabled.</p>`
   );
 }
@@ -121,7 +121,7 @@ export function eventReminderEmail(
   <span style="font-size:13px;color:#6b7280;">${eventDate}</span>
 </td></tr>
 </table>
-${btn("View Event", "https://www.iopps.ca/discover")}
+${btn("View Event", "https://www.iopps.ca/events")}
 <p style="margin:0;color:#6b7280;font-size:13px;">We look forward to seeing you there!</p>`
   );
 }
@@ -142,7 +142,7 @@ export function jobMatchEmail(
   <span style="font-size:13px;color:#6b7280;">at ${orgName}</span>
 </td></tr>
 </table>
-${btn("View Opportunity", "https://www.iopps.ca/discover")}
+${btn("View Opportunity", "https://www.iopps.ca/jobs")}
 <p style="margin:0;color:#6b7280;font-size:13px;">Keep your profile updated to get the best matches.</p>`
   );
 }

@@ -396,7 +396,7 @@ export default function FeedDetailPage() {
           <button
             onClick={handleTestFeed}
             disabled={testing}
-            className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] button-gradient-soft px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] disabled:opacity-50"
           >
             <ZapIcon className="h-4 w-4" />
             {testing ? "Testing..." : "Test Feed"}
@@ -404,7 +404,7 @@ export default function FeedDetailPage() {
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#D97706] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#B45309] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg button-gradient px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#B45309] disabled:opacity-50"
           >
             <RefreshIcon className={cn("h-4 w-4", syncing && "animate-spin")} />
             {syncing ? "Syncing..." : "Re-Sync Now"}
@@ -504,12 +504,14 @@ export default function FeedDetailPage() {
             <label className="relative inline-flex cursor-pointer items-center">
               <input
                 type="checkbox"
+                aria-labelledby="feed-active-label"
                 checked={editActive}
                 onChange={(e) => setEditActive(e.target.checked)}
                 className="peer sr-only"
               />
               <div className="h-6 w-11 rounded-full bg-[var(--input-border)] peer-checked:bg-[#D97706] peer-focus:ring-2 peer-focus:ring-[#D97706]/20 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full" />
             </label>
+            <span id="feed-active-label" className="text-sm text-[var(--text-secondary)]">Feed active</span>
             <span className="text-sm text-[var(--text-secondary)]">
               {editActive ? "Active" : "Paused"}
             </span>
@@ -527,7 +529,7 @@ export default function FeedDetailPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#D97706] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#B45309] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg button-gradient px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#B45309] disabled:opacity-50"
           >
             <SaveIcon className="h-4 w-4" />
             {saving ? "Saving..." : "Save Changes"}

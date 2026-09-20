@@ -50,7 +50,7 @@ async function getAuthUserOrNull(
 }
 
 export async function assertUserCanAccessApp(
-  decodedToken: Pick<DecodedIdToken, "uid" | "email">,
+  decodedToken: Pick<DecodedIdToken, "uid" | "email"> & Partial<Pick<DecodedIdToken, "auth_time">>,
   deps: AccountAccessDeps = {},
 ): Promise<ActiveUserAccessContext> {
   const auth = deps.auth ?? getAdminAuth();
@@ -69,6 +69,13 @@ export async function assertUserCanAccessApp(
 
   if (blockReason) {
     throw new AccountAccessError(blockReason);
+  }
+
+  const claimsValidAfter = userData.claimsValidAfter;
+  if (typeof claimsValidAfter === "number" && (
+    !Number.isFinite(decodedToken.auth_time) || decodedToken.auth_time! <= claimsValidAfter
+  )) {
+    throw new AccountAccessError("Please sign in again after your account permissions changed.", 401, "session_revoked");
   }
 
   return {

@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { name, type, website, location, description } = body;
+  if (type === "school") return NextResponse.json({ error: "School promotion is no longer available. Choose a business or organization account for jobs and community opportunities." }, { status: 400 });
   if (!name || !type) {
     return NextResponse.json({ error: "Missing required fields: name, type" }, { status: 400 });
   }

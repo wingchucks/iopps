@@ -1,3 +1,4 @@
+import { publicContentRecord } from "@/lib/server/public-content-record";
 import { NextResponse } from "next/server";
 import { normalizeJobDiscoveryMetadata } from "@/lib/job-metadata";
 import { getAdminDb } from "@/lib/firebase-admin";
@@ -8,6 +9,7 @@ import {
   sortJobsByRecency,
 } from "@/lib/public-jobs";
 import { mergePublicJobRecords } from "@/lib/public-job-merge";
+import { loadPublicJobDocuments } from "@/lib/server/public-job-documents";
 
 export const runtime = "nodejs";
 export const revalidate = 0; // Evaluate public eligibility on every read.
@@ -55,8 +57,8 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
-function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "jobs" | "posts"): NormalizedJob {
-  const data = doc.data();
+function normalizeJob(doc: FirebaseFirestore.DocumentSnapshot, source: "jobs" | "posts"): NormalizedJob {
+  const data = doc.data()!;
   const serialized = serialize({ id: doc.id, ...data }) as Record<string, unknown>;
   serialized.slug = buildJobRouteSlug({
     id: doc.id,
@@ -73,7 +75,8 @@ function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot, source: "job
     serialized.employerName = serialized.orgName || serialized.companyName || "";
   }
   if (typeof serialized.description === "string") {
-    serialized.description = normalizeImportedDescription(serialized.description);
+    serialized.description = normalizeImportedDescription(serialized.description, serialized.descriptionFormat);
+    serialized.descriptionFormat = "plain-text";
   }
   // Tag source
   serialized._source = source;
@@ -88,19 +91,11 @@ export async function GET(request: Request) {
     const employerName = searchParams.get("employerName");
     const employerId = searchParams.get("employerId");
 
-    // Query 1: jobs collection (imported/synced jobs)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const jobsQuery: any = db.collection("jobs"); // Closed identities suppress stale posts mirrors.
-
-    // Query 2: posts collection (employer-posted jobs from dashboard)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const postsQuery: any = db.collection("posts").where("type", "==", "job").where("status", "==", "active");
-
-    const [jobsSnap, postsSnap] = await Promise.all([jobsQuery.get(), postsQuery.get()]);
+    const { jobs, posts } = await loadPublicJobDocuments(db);
 
     const publicJobs = mergePublicJobRecords<NormalizedJob, NormalizedJob>(
-      jobsSnap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => normalizeJob(doc, "jobs")),
-      postsSnap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => normalizeJob(doc, "posts")),
+      jobs.map(doc => normalizeJob(doc, "jobs")),
+      posts.map(doc => normalizeJob(doc, "posts")),
     );
 
     const publicSlugMap = buildPublicJobRouteSlugMap(publicJobs.map((job) => ({
@@ -119,7 +114,7 @@ export async function GET(request: Request) {
     ));
 
     return NextResponse.json(
-      { jobs: sortedJobs, count: sortedJobs.length },
+      { jobs: sortedJobs.map(publicContentRecord), count: sortedJobs.length },
       { headers: PUBLIC_LIST_CACHE_HEADERS },
     );
   } catch (err) {

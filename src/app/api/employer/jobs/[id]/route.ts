@@ -1,3 +1,4 @@
+import { normalizeHiringDetails } from "@/lib/job-hiring-details";
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
@@ -16,6 +17,7 @@ export const runtime = "nodejs";
 type JobStatus = "active" | "draft" | "closed";
 
 interface EmployerJobInput {
+  hiringDetails?: unknown;
   title?: string;
   department?: string;
   category?: string;
@@ -34,6 +36,9 @@ interface EmployerJobInput {
   badges?: string[];
   status?: JobStatus;
   featured?: boolean;
+  requiresResume?: boolean;
+  requiresCoverLetter?: boolean;
+  requiresReferences?: boolean;
 }
 
 function serialize(value: unknown): unknown {
@@ -56,6 +61,11 @@ function normalizeString(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
   return trimmed ? trimmed : undefined;
+}
+
+// An explicit empty value clears optional fields; omitted fields stay unchanged.
+function normalizeOptionalString(value: unknown): string | undefined {
+  return typeof value === "string" ? value.trim() : undefined;
 }
 
 function normalizeStringArray(value: unknown): string[] | undefined {
@@ -248,7 +258,11 @@ export async function PUT(
         }, { merge: true });
       }
 
+      const hiringDetails = body.hiringDetails === undefined ? undefined : normalizeHiringDetails(body.hiringDetails, current.data);
       const updates = stripUndefined({
+        hiringDetails,
+        willTrain: hiringDetails?.willTrain,
+        driversLicense: hiringDetails?.driversLicense,
         title: normalizeString(body.title),
         department: normalizeString(body.department),
         category: normalizeString(body.category),
@@ -258,9 +272,12 @@ export async function PUT(
         location: normalizeString(body.location),
         salary: normalizeString(body.salary),
         salaryRange: body.salaryRange,
-        closingDate: normalizeString(body.closingDate),
-        externalApplyUrl: normalizeString(body.externalApplyUrl ?? body.applicationUrl),
-        applicationUrl: normalizeString(body.applicationUrl ?? body.externalApplyUrl),
+        closingDate: normalizeOptionalString(body.closingDate),
+        externalApplyUrl: normalizeOptionalString(body.externalApplyUrl ?? body.applicationUrl),
+        applicationUrl: normalizeOptionalString(body.applicationUrl ?? body.externalApplyUrl),
+        requiresResume: typeof body.requiresResume === "boolean" ? body.requiresResume : undefined,
+        requiresCoverLetter: typeof body.requiresCoverLetter === "boolean" ? body.requiresCoverLetter : undefined,
+        requiresReferences: typeof body.requiresReferences === "boolean" ? body.requiresReferences : undefined,
         description: normalizeString(body.description),
         qualifications: normalizeStringArray(body.qualifications),
         responsibilities: normalizeStringArray(body.responsibilities),

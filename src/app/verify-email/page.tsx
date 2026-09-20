@@ -6,6 +6,7 @@ import { safeAuthRedirect } from "@/lib/auth-redirect";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export default function VerifyEmailPage() {
   return (
@@ -22,6 +23,7 @@ function VerifyEmailContent() {
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [verificationError, setVerificationError] = useState("");
   const nextPath = searchParams.get("next");
   const redirectPath = safeAuthRedirect(nextPath) || "/setup";
 
@@ -38,20 +40,28 @@ function VerifyEmailContent() {
   // Poll for verification every 5 seconds
   useEffect(() => {
     if (!user || user.emailVerified) return;
+    let cancelled = false;
     const interval = setInterval(async () => {
-      await reloadUser();
+      try {
+        const verified = await reloadUser(user?.uid);
+        if (!cancelled && verified) router.replace(redirectPath);
+      } catch (error) {
+        if (!cancelled) setVerificationError(authErrorMessage(error, "We couldn’t check verification. Please retry below."));
+      }
     }, 5000);
-    return () => clearInterval(interval);
-  }, [user, reloadUser]);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [user, reloadUser, redirectPath, router]);
 
   const handleResend = async () => {
     setResending(true);
     setResent(false);
+    setVerificationError("");
     try {
-      await sendVerificationEmail(redirectPath);
-      setResent(true);
-    } catch {
-      // Rate limited or other error — silently ignore
+      const sent = await sendVerificationEmail(redirectPath, user?.uid);
+      setResent(sent);
+      if (!sent) await reloadUser(user?.uid);
+    } catch (error) {
+          setVerificationError(authErrorMessage(error, "The email couldn’t be sent. Please wait a moment and retry."));
     } finally {
       setResending(false);
     }
@@ -59,17 +69,18 @@ function VerifyEmailContent() {
 
   const handleCheckNow = useCallback(async () => {
     setChecking(true);
+    setVerificationError("");
     try {
-      await reloadUser();
+      if (await reloadUser(user?.uid)) router.replace(redirectPath);
+      else setVerificationError("Your email isn’t verified yet. Open the link in your email, then check again.");
+    } catch (error) {
+          setVerificationError(authErrorMessage(error, "We couldn’t refresh your session. Please check your connection and retry."));
     } finally {
       setChecking(false);
     }
-  }, [reloadUser]);
+  }, [reloadUser, redirectPath, router, user?.uid]);
 
   if (authLoading || !user) return null;
-
-  // Google users are pre-verified
-  if (user.emailVerified) return null;
 
   return (
     <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
@@ -110,7 +121,7 @@ function VerifyEmailContent() {
           <div className="text-5xl mb-4">&#9993;&#65039;</div>
           <h1 className="text-2xl font-extrabold text-text mb-2">Check your email</h1>
           <p className="text-text-sec text-[15px] mb-2 leading-relaxed">
-            We sent a verification link to
+            {resent ? "We sent a verification link to" : "Verify the email address"}
           </p>
           <p className="text-teal font-semibold text-[15px] mb-6">{user.email}</p>
 
@@ -118,15 +129,17 @@ function VerifyEmailContent() {
             Click the link in your email to verify your account. This page will automatically update once verified.
           </p>
 
+          {verificationError && <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">{verificationError}</p>}
+
           <button
             onClick={handleCheckNow}
             disabled={checking}
-            className="w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50 mb-3"
+            className="brand-button w-full font-bold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50 mb-3"
             style={{
               padding: "14px 24px",
               borderRadius: 12,
               border: "none",
-              background: "var(--teal)",
+              background: "var(--button-gradient)",
               color: "#fff",
               fontSize: 16,
             }}
@@ -137,13 +150,13 @@ function VerifyEmailContent() {
           <button
             onClick={handleResend}
             disabled={resending || resent}
-            className="w-full font-semibold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
+            className="brand-button w-full font-semibold cursor-pointer transition-all duration-150 hover:opacity-90 disabled:opacity-50"
             style={{
               padding: "12px 24px",
               borderRadius: 12,
               border: "1.5px solid var(--border)",
-              background: "var(--card)",
-              color: "var(--text-sec)",
+              background: "var(--button-gradient-soft)",
+              color: "var(--button-gradient-soft-text)",
               fontSize: 15,
             }}
           >
@@ -152,7 +165,7 @@ function VerifyEmailContent() {
 
           <div className="mt-8">
             <button
-              onClick={signOut}
+              onClick={() => { void signOut().catch(error => setVerificationError(authErrorMessage(error, "We couldn’t sign you out. Please try again."))); }}
               className="text-text-muted text-sm font-medium cursor-pointer hover:underline"
               style={{ background: "none", border: "none" }}
             >

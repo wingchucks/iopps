@@ -4,9 +4,9 @@ import { Suspense, useState, useEffect, useRef } from "react";
 import { authIntentHref, postSignupDestination } from "@/lib/auth-redirect";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { getOrganization } from "@/lib/firestore/organizations";
 import { getBusinessProfileReadiness } from "@/lib/organization-profile";
 import {
+  loadOrganizationOnboardingProfile,
   saveOrganizationOnboardingProgress,
   uploadOrganizationOnboardingLogo,
 } from "@/lib/organization-onboarding-client";
@@ -119,6 +119,8 @@ function OrgOnboardingContent() {
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [loadingData, setLoadingData] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [orgType, setOrgType] = useState("");
 
@@ -167,8 +169,12 @@ function OrgOnboardingContent() {
       return;
     }
 
+    let cancelled = false;
+    setLoadingData(true);
+    setLoadError("");
     (async () => {
-      const org = await getOrganization(user.uid);
+      const org = await loadOrganizationOnboardingProfile(await user.getIdToken());
+      if (cancelled) return;
       if (!org) {
         router.replace(authIntentHref("/org/signup", searchParams));
         return;
@@ -207,8 +213,13 @@ function OrgOnboardingContent() {
       if (org.campusCount) setCampusCount(String(org.campusCount));
       if (org.enrollmentStatus) setEnrollmentStatus(org.enrollmentStatus);
       setLoadingData(false);
-    })();
-  }, [user, authLoading, router, searchParams]);
+    })().catch((error: unknown) => {
+      if (cancelled) return;
+      setLoadError(error instanceof Error ? error.message : "Unable to load your organization. Please try again.");
+      setLoadingData(false);
+    });
+    return () => { cancelled = true; };
+  }, [user, authLoading, router, searchParams, loadAttempt]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -240,6 +251,15 @@ function OrgOnboardingContent() {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="text-text-sec text-sm">Loading...</div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-4 px-6">
+        <p role="alert" className="text-text-sec">{loadError}</p>
+        <Button onClick={() => setLoadAttempt(attempt => attempt + 1)}>Try again</Button>
       </div>
     );
   }
@@ -453,7 +473,7 @@ function OrgOnboardingContent() {
 
           {profileIncomplete ? (
             <div className="mb-6 rounded-xl border border-[rgba(20,184,166,0.2)] bg-[rgba(20,184,166,0.08)] px-4 py-3 text-sm font-medium text-text">
-              Before you can continue to your dashboard or show on the business directory, please {requiredFieldMessage}.
+              Before you finish setup, please {requiredFieldMessage}. Your business listing is submitted for review separately from your dashboard.
             </div>
           ) : null}
 
@@ -494,9 +514,10 @@ function OrgOnboardingContent() {
                 </div>
               </div>
 
-              <label className="block">
-                <span className="text-sm font-semibold text-text-sec mb-1.5 block">Description</span>
+              <div>
+                <label htmlFor="organization-description" className="text-sm font-semibold text-text-sec mb-1.5 block">Description</label>
                 <textarea
+                  id="organization-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
@@ -504,7 +525,7 @@ function OrgOnboardingContent() {
                   style={{ resize: "vertical" }}
                   placeholder="Tell the community about your organization..."
                 />
-              </label>
+              </div>
 
               <label className="block">
                 <span className="text-sm font-semibold text-text-sec mb-1.5 block">Founded Year</span>
@@ -577,9 +598,9 @@ function OrgOnboardingContent() {
                           key={opt}
                           type="button"
                           onClick={() => setStudentBodySize(opt)}
-                          className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                          className="brand-button px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
                           style={{
-                            background: studentBodySize === opt ? "var(--teal)" : "var(--card)",
+                            background: studentBodySize === opt ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                             color: studentBodySize === opt ? "#fff" : "var(--text)",
                             borderColor: studentBodySize === opt ? "var(--teal)" : "var(--border)",
                           }}
@@ -622,9 +643,9 @@ function OrgOnboardingContent() {
                         key={opt}
                         type="button"
                         onClick={() => setSize(opt)}
-                        className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                        className="brand-button px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
                         style={{
-                          background: size === opt ? "var(--teal)" : "var(--card)",
+                          background: size === opt ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                           color: size === opt ? "#fff" : "var(--text)",
                           borderColor: size === opt ? "var(--teal)" : "var(--border)",
                         }}
@@ -690,9 +711,9 @@ function OrgOnboardingContent() {
                       key={svc}
                       type="button"
                       onClick={() => toggleList(services, svc, setServices)}
-                      className="px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all border text-left"
+                      className="brand-button px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all border text-left"
                       style={{
-                        background: services.includes(svc) ? "var(--teal)" : "var(--card)",
+                        background: services.includes(svc) ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                         color: services.includes(svc) ? "#fff" : "var(--text)",
                         borderColor: services.includes(svc) ? "var(--teal)" : "var(--border)",
                       }}
@@ -712,9 +733,9 @@ function OrgOnboardingContent() {
                         key={opt}
                         type="button"
                         onClick={() => setEnrollmentStatus(opt)}
-                        className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                        className="brand-button px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
                         style={{
-                          background: enrollmentStatus === opt ? "var(--teal)" : "var(--card)",
+                          background: enrollmentStatus === opt ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                           color: enrollmentStatus === opt ? "#fff" : "var(--text)",
                           borderColor: enrollmentStatus === opt ? "var(--teal)" : "var(--border)",
                         }}
@@ -733,9 +754,9 @@ function OrgOnboardingContent() {
                         key={opt}
                         type="button"
                         onClick={() => setHiringStatus(opt)}
-                        className="px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
+                        className="brand-button px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all border"
                         style={{
-                          background: hiringStatus === opt ? "var(--teal)" : "var(--card)",
+                          background: hiringStatus === opt ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                           color: hiringStatus === opt ? "#fff" : "var(--text)",
                           borderColor: hiringStatus === opt ? "var(--teal)" : "var(--border)",
                         }}
@@ -755,9 +776,9 @@ function OrgOnboardingContent() {
                       key={opt}
                       type="button"
                       onClick={() => toggleList(partnershipInterests, opt, setPartnershipInterests)}
-                      className="px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all border text-left"
+                      className="brand-button px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all border text-left"
                       style={{
-                        background: partnershipInterests.includes(opt) ? "var(--teal)" : "var(--card)",
+                        background: partnershipInterests.includes(opt) ? "var(--button-gradient)" : "var(--button-gradient-soft)",
                         color: partnershipInterests.includes(opt) ? "#fff" : "var(--text)",
                         borderColor: partnershipInterests.includes(opt) ? "var(--teal)" : "var(--border)",
                       }}
@@ -874,11 +895,11 @@ function OrgOnboardingContent() {
             )}
 
             {step < STEPS.length - 1 ? (
-              <Button
+              <Button className="brand-button"
                 primary
                 onClick={handleNext}
                 style={{
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   padding: "14px 24px",
                   borderRadius: 14,
                   fontSize: 15,
@@ -891,11 +912,11 @@ function OrgOnboardingContent() {
                 {saving ? "Saving..." : "Next"}
               </Button>
             ) : (
-              <Button
+              <Button className="brand-button"
                 primary
                 onClick={handleComplete}
                 style={{
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   padding: "14px 24px",
                   borderRadius: 14,
                   fontSize: 15,

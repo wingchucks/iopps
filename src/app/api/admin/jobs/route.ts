@@ -3,6 +3,7 @@ import { activateAdminJob } from "@/lib/server/admin-job-lifecycle";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
+import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,7 @@ export async function GET(request: NextRequest) {
     const jobs = snapshot.docs.filter(doc => doc.data().status !== 'deleted' && !doc.data().deletedAt).map((doc) => ({
       id: doc.id,
       ...doc.data(),
+      publiclyVisible: isPublicJobRecordVisible(doc.data()),
     }));
 
     return NextResponse.json({ jobs });

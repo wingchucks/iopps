@@ -1,4 +1,5 @@
 "use client";
+import { matchesCanadianLocation } from "@/lib/canadian-provinces";
 import {
   FormEvent,
   Suspense,
@@ -21,6 +22,8 @@ import { resolveApplicationDestination } from "@/lib/application-destination";
 import { trackJobFunnelEvent } from "@/lib/job-funnel-analytics";
 import type { Job } from "@/lib/firestore/jobs";
 import { mixJobsForBrowse } from "@/lib/public-featured";
+import { useJobSearchDrafts } from "./useJobSearchDrafts";
+import { canonicalEmployerName, matchesEmployerFilter, projectEmployerFilters } from "./employerFilters";
 const employmentTypes = [
   "All",
   "Full-time",
@@ -71,8 +74,8 @@ function JobsPageContent() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
-  const [search, setSearch] = useDirectoryFilter("q", "");
-  const [locationFilter, setLocationFilter] = useDirectoryFilter(
+  const [search] = useDirectoryFilter("q", "");
+  const [locationFilter] = useDirectoryFilter(
     "location",
     "",
   );
@@ -89,14 +92,19 @@ function JobsPageContent() {
   const [salaryPeriod, setSalaryPeriod] = useDirectoryFilter("salaryPeriod", "year");
   const [sort, setSort] = useDirectoryFilter("sort", "recommended");
   const updateFilters = useDirectoryFilterActions();
-  const clearFilters = () => updateFilters(Object.fromEntries(["q","location","type","salaryMin","salaryMax","salaryPeriod","remote","employer","area","added","closing","disclosed","training","sort"].map(key => [key, null])));
-  const employers = useMemo(() => [...new Set(jobs.map(getEmployerName))].sort(), [jobs]);
+  const { drafts, edit, flush, reset } = useJobSearchDrafts();
+  const clearFilters = () => {
+    reset();
+    updateFilters(Object.fromEntries(["q","location","type","salaryMin","salaryMax","salaryPeriod","remote","employer","area","added","closing","disclosed","training","sort"].map(key => [key, null])));
+  };
+  const employers = useMemo(() => projectEmployerFilters(jobs), [jobs]);
   const areas = useMemo(() => [...new Set(jobs.map(jobArea).filter(Boolean))].sort(), [jobs]);
   const remoteOnly = remoteParam === "1";
   const setRemoteOnly = (next: boolean) => setRemoteParam(next ? "1" : "");
   const resultsRef = useRef<HTMLDivElement>(null);
   const submitSearch = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
+    flush();
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -159,7 +167,7 @@ function JobsPageContent() {
     if (locationFilter.trim()) {
       const location = locationFilter.toLowerCase().trim();
       result = result.filter((job) =>
-        job.location?.toLowerCase().includes(location),
+        matchesCanadianLocation(job.location, location),
       );
     }
     if (typeFilter !== "All") {
@@ -178,10 +186,11 @@ function JobsPageContent() {
           job.remoteFlag,
       );
     }
-    result = result.filter(job => matchesDiscoveryFilters(job, { employer, area, added, closing, disclosed, training, salaryPeriod, salaryMin, salaryMax }));
+    result = result.filter(job => matchesEmployerFilter(job, employer, employers) && matchesDiscoveryFilters(job, { employer: "", area, added, closing, disclosed, training, salaryPeriod, salaryMin, salaryMax }));
     return result;
   }, [
     jobs,
+    employers,
     locationFilter,
     remoteOnly,
     salaryMax,
@@ -214,22 +223,18 @@ function JobsPageContent() {
   return (
     <>
       <OpportunityHeader />
-      <div className="op-jobs min-h-screen text-text transition-colors">
-        <section
-          className="text-center text-white"
-          style={{
-            background: "linear-gradient(135deg, #061329 0%, #103d4a 100%)",
-            padding: "clamp(32px, 5vw, 60px) clamp(20px, 6vw, 80px)",
-          }}
-        >
+      <div className="op-jobs journey-jobs min-h-screen text-text transition-colors">
+        <section className="journey-jobs-hero">
+          <p className="op-eyebrow">Careers / Your next chapter</p>
           <h1 className="mb-2 text-3xl font-extrabold md:text-4xl">
-            Find your next opportunity.
+            Find work. <span>Move forward.</span>
           </h1>
           <p className="mx-auto mb-0 max-w-[560px] text-base text-white/78">
-            Discover Indigenous and allied employers hiring across Canada.
+            Connecting First Nations, Métis and Inuit talent with Indigenous and allied employers across Canada. Everyone is welcome to explore and apply.
           </p>
+          <Link href="/for-employers" className="mt-4 inline-block text-sm font-semibold text-white underline underline-offset-4">Hiring? Post a job on IOPPS →</Link>
         </section>
-        <div className="mx-auto max-w-[1100px] px-4 py-6 md:px-8">
+        <div className="journey-jobs-body mx-auto max-w-[1100px] px-4 py-6 md:px-8">
           <form
             onSubmit={submitSearch}
             className="mb-4 flex items-center gap-3 rounded-[20px] px-4 py-3 shadow-sm transition-colors sm:px-5 sm:py-4"
@@ -245,16 +250,16 @@ function JobsPageContent() {
               type="search"
               inputMode="search"
               enterKeyHint="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={drafts.q}
+              onChange={(e) => edit("q", e.target.value)}
               placeholder="Search job titles, employers, locations..."
               className="min-w-0 flex-1 border-none bg-transparent text-base text-text outline-none placeholder:text-text-muted"
               aria-label="Search jobs"
             />
-            {search && (
+            {drafts.q && (
               <button
                 type="button"
-                onClick={() => setSearch("")}
+                onClick={() => { edit("q", ""); flush(); }}
                 className="cursor-pointer border-none bg-transparent px-1 text-lg text-text-muted"
                 aria-label="Clear job search"
               >
@@ -263,20 +268,20 @@ function JobsPageContent() {
             )}
             <button
               type="submit"
-              className="shrink-0 cursor-pointer rounded-full border-none px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
-              style={{ background: "var(--teal)" }}
+              className="brand-button shrink-0 cursor-pointer rounded-full border-none px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+              style={{ background: "var(--button-gradient)" }}
             >
               Search
             </button>
           </form>
-          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <input
               type="search"
               inputMode="search"
               enterKeyHint="search"
               aria-label="Filter jobs by city or province"
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
+              value={drafts.location}
+              onChange={(e) => edit("location", e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -300,7 +305,38 @@ function JobsPageContent() {
                 </option>
               ))}
             </select>
-            <div className="flex min-w-0 flex-wrap gap-2">
+
+            <button
+              type="button"
+              aria-pressed={remoteOnly}
+              onClick={() => setRemoteOnly(!remoteOnly)}
+              className="brand-button flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors"
+              style={{
+                border: remoteOnly
+                  ? "1px solid color-mix(in srgb, var(--teal) 70%, var(--border))"
+                  : "1px solid var(--border)",
+                background: remoteOnly
+                  ? "var(--button-gradient)"
+                  : "var(--button-gradient-soft)",
+                color: remoteOnly ? "#fff" : "var(--button-gradient-soft-text)",
+              }}
+            >
+              <span
+                className="inline-block rounded-full"
+                style={{
+                  width: 8,
+                  height: 8,
+                  background: remoteOnly
+                    ? "var(--teal)"
+                    : "color-mix(in srgb, var(--text-muted) 55%, var(--border))",
+                }}
+              />
+              Remote only
+            </button>
+          </div>
+          <details className="job-more-filters mb-6" open={Boolean(employer || area || added || closing || disclosed || training || salaryMin || salaryMax || salaryPeriod !== "year") || undefined}>
+            <summary>More filters <span>Pay, employer, job area &amp; more</span></summary>
+            <div className="border-b border-border p-4"><p className="mb-2 text-sm font-semibold">Pay range</p>            <div className="flex min-w-0 flex-wrap gap-2">
               <select aria-label="Pay period" value={salaryPeriod} onChange={e => setSalaryPeriod(e.target.value)} className="w-full rounded-xl px-3 py-2 text-sm" style={inputSurfaceStyle}><option value="year">Annual pay</option><option value="hour">Hourly pay</option><option value="month">Monthly pay</option><option value="week">Weekly pay</option></select>
               <input
                 type="number"
@@ -320,39 +356,9 @@ function JobsPageContent() {
                 className="min-w-0 w-[calc(50%-4px)] rounded-xl px-3 py-2 text-sm text-text outline-none placeholder:text-text-muted transition-colors"
                 style={inputSurfaceStyle}
               />
-            </div>
-            <button
-              type="button"
-              aria-pressed={remoteOnly}
-              onClick={() => setRemoteOnly(!remoteOnly)}
-              className="flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors"
-              style={{
-                border: remoteOnly
-                  ? "1px solid color-mix(in srgb, var(--teal) 70%, var(--border))"
-                  : "1px solid var(--border)",
-                background: remoteOnly
-                  ? "color-mix(in srgb, var(--teal) 12%, var(--card))"
-                  : "var(--card)",
-                color: remoteOnly ? "var(--teal)" : "var(--text-sec)",
-              }}
-            >
-              <span
-                className="inline-block rounded-full"
-                style={{
-                  width: 8,
-                  height: 8,
-                  background: remoteOnly
-                    ? "var(--teal)"
-                    : "color-mix(in srgb, var(--text-muted) 55%, var(--border))",
-                }}
-              />
-              Remote only
-            </button>
-          </div>
-          <details className="job-more-filters mb-6" open={Boolean(employer || area || added || closing || disclosed || training) || undefined}>
-            <summary>More filters <span>Employer, job area &amp; more</span></summary>
+            </div></div>
             <div className="grid gap-3 p-4 sm:grid-cols-3">
-              <label>Employer<select aria-label="Employer" value={employer} onChange={e => setEmployer(e.target.value)}><option value="">All employers</option>{employers.map(name => <option key={name}>{name}</option>)}</select></label>
+              <label>Employer<select aria-label="Employer" value={canonicalEmployerName(employer)} onChange={e => setEmployer(e.target.value)}><option value="">All employers</option>{employers.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
               <label>Job area<select aria-label="Job area" value={area} onChange={e => setArea(e.target.value)}><option value="">All job areas</option>{areas.map(name => <option key={name}>{name}</option>)}</select></label>
               <label>Added to IOPPS<select aria-label="Added to IOPPS" value={added} onChange={e => setAdded(e.target.value)}><option value="">Any time</option><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select></label>
             </div>
@@ -363,7 +369,7 @@ function JobsPageContent() {
             </div>
             <p className="px-4 pb-4 text-sm text-text-sec">Filters use details supplied in each listing. Pay ranges compare only the selected pay period.</p>
           </details>
-          {hasActiveFilters && <button className="job-clear mb-5" onClick={clearFilters}>Clear all filters</button>}
+          {(hasActiveFilters || drafts.q || drafts.location) && <button className="job-clear mb-5" onClick={clearFilters}>Clear all filters</button>}
           <div
             ref={resultsRef}
             className="mb-4 scroll-mt-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between"
@@ -381,7 +387,7 @@ function JobsPageContent() {
             <label className="job-sort">Sort by<select aria-label="Sort by" value={sort} onChange={e => setSort(e.target.value)}><option value="recommended">Recommended</option><option value="newest">Recently added</option><option value="closing">Closing soon</option></select></label>
             {!loading && (
               <p className="text-sm text-text-muted" aria-live="polite">
-                {mixedJobs.length} job{mixedJobs.length !== 1 ? "s" : ""} found
+                {`${mixedJobs.length} job${mixedJobs.length !== 1 ? "s" : ""} found`}
               </p>
             )}
           </div>
@@ -409,16 +415,9 @@ function JobsPageContent() {
                 No jobs found
               </h3>
               <p className="mx-auto max-w-[420px] text-sm text-text-muted">
-                Try adjusting your filters or browse all public opportunities in{" "}
-                <Link
-                  href="/feed"
-                  className="font-semibold no-underline"
-                  style={{ color: "#08766e" }}
-                >
-                  the feed
-                </Link>
-                .
+                Try a different keyword or location, or clear your filters to see all jobs.
               </p>
+              {hasActiveFilters && <button className="op-button mt-5" onClick={clearFilters}>Show all jobs</button>}
             </Card>
           ) : (
             <div
@@ -442,7 +441,7 @@ function JobsPageContent() {
                       <p className="job-summary">{summary || "Explore this opportunity and review the employer’s application details."}</p>
                       <div className="job-facts job-benefits">{job.willTrain && <span className="job-chip">Training provided</span>}{job.indigenousPreference && <span className="job-chip">Indigenous preference stated</span>}{job.benefits?.slice(0,2).map(benefit => <span className="job-chip" key={benefit}>{benefit}</span>)}</div>
                       <div className="job-card-bottom"><div><strong>{pay?.display || "Pay not listed"}</strong><span>{closingDate ? `Closes ${new Date(closingDate).toLocaleDateString("en-CA", {month:"short",day:"numeric",timeZone:"UTC"})}` : "See listing for closing details"}</span></div><span className="job-view">View opportunity <span aria-hidden="true">↗</span></span></div>
-                      <div className="job-footnote"><span>{getApplyLabel(job)}</span>{posted && <span>Added to IOPPS {posted.toLowerCase()}</span>}</div>
+                      <div className="job-footnote"><span>{getApplyLabel(job)}</span>{posted && <span>{`Added to IOPPS ${posted.toLowerCase()}`}</span>}</div>
                     </div>
                   </Link>
                 );

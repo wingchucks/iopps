@@ -72,7 +72,7 @@ export default function PrivacyPage() {
             with:
           </p>
           <ul className="list-disc pl-6 space-y-2 text-text-sec leading-relaxed">
-            <li>Partner organizations when you apply for jobs or programs</li>
+            <li>Hiring organizations when you submit a job application</li>
             <li>Service providers who help us operate the platform (hosting, analytics)</li>
             <li>Law enforcement when required by law</li>
           </ul>
@@ -96,7 +96,7 @@ export default function PrivacyPage() {
           <ul className="list-disc pl-6 space-y-2 text-text-sec leading-relaxed">
             <li>Access and download your personal data</li>
             <li>Correct inaccurate information in your profile</li>
-            <li>Delete your account and associated data</li>
+            <li>Close your account and delete personal profile data. Unshared profile uploads are removed, with failed cleanup retried. Application records and documents already shared with employers may be retained. Provider backups and recovery copies follow their retention schedules.</li>
             <li>Opt out of non-essential communications</li>
             <li>Control your privacy settings through your account</li>
           </ul>

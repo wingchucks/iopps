@@ -1,0 +1,83 @@
+/* Shared action palette. Keep these separate from solid brand/status colours:
+   gradients belong on buttons, not on text, borders, icons or status badges. */
+:root {
+  --button-gradient: linear-gradient(110deg, #0f766e 0%, #087b9c 48%, #2563eb 100%);
+  --button-gradient-hover: linear-gradient(110deg, #115e59 0%, #086784 48%, #1d4ed8 100%);
+  --button-gradient-soft: linear-gradient(110deg, #e4f6f2 0%, #e8f0ff 100%);
+  --button-gradient-soft-hover: linear-gradient(110deg, #d1eee7 0%, #d9e7ff 100%);
+  --button-gradient-soft-text: #163e52;
+  --button-gradient-border: #9fbfcd;
+  --button-gradient-shadow: 0 5px 14px -7px #087b9c80, inset 0 1px 0 #ffffff24;
+}
+
+[data-theme="dark"], [data-admin] {
+  --button-gradient-soft: linear-gradient(110deg, #153c40 0%, #203858 100%);
+  --button-gradient-soft-hover: linear-gradient(110deg, #1d5054 0%, #28466d 100%);
+  --button-gradient-soft-text: #e1f5ff;
+  --button-gradient-border: #477889;
+}
+
+.button-gradient-soft {
+  background: var(--button-gradient-soft);
+  color: var(--button-gradient-soft-text);
+  border-color: var(--button-gradient-border);
+}
+
+.button-gradient {
+  background: var(--button-gradient);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--button-gradient-shadow);
+}
+
+:is(.brand-button, .button-gradient, .button-gradient-soft, .op-button,
+    .employer-primary, .journey-apply-button, .journey-contact-button,
+    .journey-profile-button, .journey-save-button) {
+  transition: box-shadow 180ms ease, opacity 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:is(.brand-button, .button-gradient, .button-gradient-soft, .op-button,
+    .employer-primary, .journey-apply-button, .journey-contact-button,
+    .journey-profile-button, .journey-save-button):focus-visible {
+  outline: 3px solid #0891b2;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 2px var(--card, #fff);
+}
+
+@media (hover: hover) {
+  :is(.brand-button, .button-gradient, .button-gradient-soft, .op-button,
+      .employer-primary, .journey-apply-button, .journey-contact-button,
+      .journey-profile-button, .journey-save-button):hover:not(:disabled):not([aria-disabled="true"]) {
+    --button-gradient: var(--button-gradient-hover);
+    --button-gradient-soft: var(--button-gradient-soft-hover);
+  }
+}
+
+:is(.brand-button, .button-gradient, .button-gradient-soft, .op-button,
+    .employer-primary, .journey-apply-button, .journey-contact-button,
+    .journey-profile-button, .journey-save-button):is(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: .55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.brand-button, .button-gradient, .button-gradient-soft, .op-button,
+      .employer-primary, .journey-apply-button, .journey-contact-button,
+      .journey-profile-button, .journey-save-button) {
+    transition: none;
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  :is(.brand-button, .button-gradient, .button-gradient-soft, .op-button,
+      .employer-primary, .journey-apply-button, .journey-contact-button,
+      .journey-profile-button, .journey-save-button) {
+    background: ButtonFace !important;
+    color: ButtonText !important;
+    border: 1px solid ButtonText !important;
+    box-shadow: none;
+  }
+}

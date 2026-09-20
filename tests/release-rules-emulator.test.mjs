@@ -31,12 +31,13 @@ test('release rules preserve organization management while isolating private app
     await db.doc(`organizations/${orgId}`).set({ name: 'Before' });
     await db.doc('applications/release-other-org').set({ userId: 'other-person', orgId: 'other-org', employerId: 'other-org', status: 'submitted' });
     await signInWithEmailAndPassword(auth, 'release-rules@example.test', 'LocalRules123!');
-    await updateDoc(doc(clientDb, 'organizations', orgId), { name: 'After' });
+    await assert.rejects(updateDoc(doc(clientDb, 'organizations', orgId), { name: 'After' }), e => e.code === 'permission-denied');
+    await updateDoc(doc(clientDb, 'organizations', orgId), { emailTemplates: { interview: 'Private template' } });
     const invite = doc(clientDb, 'organizations', orgId, 'teamInvites', 'test-invite');
     await setDoc(invite, { email: 'invite@example.test' });
     assert.equal((await getDoc(invite)).data().email, 'invite@example.test');
     await deleteDoc(invite);
-    for (const collection of ['events', 'conferences', 'scholarships']) {
+    for (const collection of ['conferences']) {
       const item = doc(clientDb, collection, 'release-owned-item');
       await setDoc(item, { orgId, title: 'Fictional' });
       await updateDoc(item, { title: 'Updated' });
@@ -44,6 +45,8 @@ test('release rules preserve organization management while isolating private app
     }
     await assert.rejects(getDoc(doc(clientDb, 'applications', 'release-other-org')), e => e.code === 'permission-denied');
     await assert.rejects(updateDoc(doc(clientDb, 'applications', 'release-other-org'), { status: 'offered' }), e => e.code === 'permission-denied');
+    await getAdminAuth(server).setCustomUserClaims(uid, { admin: true });
+    await auth.currentUser.getIdToken(true);
     await uploadBytes(ref(storage, `livestream-promos/${uid}/test.png`), new Uint8Array([137,80,78,71]), { contentType: 'image/png' });
     await assert.rejects(uploadBytes(ref(storage, 'livestream-promos/other-user/test.png'), new Uint8Array([1]), { contentType: 'image/png' }), e => e.code === 'storage/unauthorized');
   } finally {

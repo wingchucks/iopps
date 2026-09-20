@@ -66,8 +66,8 @@ interface GalleryUploaderProps extends BaseProps {
 type ProfileMediaUploaderProps = SingleUploaderProps | GalleryUploaderProps;
 
 const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
-const AMBER = "#D97706";
-const AMBER_RGB = "217,119,6";
+const TEAL = "var(--teal)";
+const TEAL_RGB = "13,148,136";
 
 function createClientId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -721,9 +721,9 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
     minHeight: 42,
     padding: "0 14px",
     borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.1)",
-    background: "rgba(255,255,255,0.04)",
-    color: "var(--text-sec, #cbd5e1)",
+    border: "1px solid var(--border)",
+    background: "var(--button-gradient-soft)",
+    color: "var(--button-gradient-soft-text)",
     fontSize: 13,
     fontWeight: 700,
     cursor: props.disabled ? "not-allowed" : "pointer",
@@ -735,16 +735,16 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
     minHeight: props.mode === "single" ? (props.slot === "banner" ? 180 : 220) : 168,
     padding: props.mode === "single" ? 18 : 24,
     borderRadius: 18,
-    border: dragActive ? `1px solid rgba(${AMBER_RGB},0.6)` : "1px dashed rgba(255,255,255,0.15)",
+    border: dragActive ? `1px solid rgba(${TEAL_RGB},0.6)` : "1px dashed var(--border)",
     background: dragActive
-      ? `linear-gradient(135deg, rgba(${AMBER_RGB},0.14), rgba(20,184,166,0.08))`
-      : "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(15,23,42,0.72))",
+      ? `linear-gradient(135deg, rgba(${TEAL_RGB},0.14), rgba(20,184,166,0.08))`
+      : "var(--bg)",
     overflow: "hidden",
     transition: "all 0.2s ease",
   };
 
   return (
-    <div className="rounded-2xl p-5 border" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}>
+    <div className="rounded-2xl p-5 border" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
       <input
         ref={inputRef}
         type="file"
@@ -760,13 +760,13 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
           <h3 className="text-base font-bold" style={{ color: "var(--text, #f8fafc)" }}>
             {props.title}
           </h3>
-          <p className="text-[13px] mt-1" style={{ color: "var(--text-muted, #94a3b8)" }}>
+          <p className="text-[13px] mt-1" style={{ color: "var(--text-sec)" }}>
             {props.description}
           </p>
         </div>
         {props.mode === "gallery" && (
           <div className="text-right">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: AMBER }}>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: TEAL }}>
               Gallery Limit
             </div>
             <div className="text-sm font-bold mt-1" style={{ color: "var(--text, #f8fafc)" }}>
@@ -818,7 +818,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
               <div className="text-sm font-bold" style={{ color: "var(--text, #f8fafc)" }}>
                 Drag and drop a {props.slot}
               </div>
-              <p className="text-[13px] mt-2 max-w-[320px]" style={{ color: "var(--text-muted, #94a3b8)" }}>
+              <p className="text-[13px] mt-2 max-w-[320px]" style={{ color: "var(--text-sec)" }}>
                 Use local files, Google Drive, or a public cloud share link. Files are copied into IOPPS storage.
               </p>
             </div>
@@ -829,7 +829,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
             <div className="text-sm font-bold" style={{ color: "var(--text, #f8fafc)" }}>
               Drag images here for the public gallery
             </div>
-            <p className="text-[13px] mt-2 max-w-[340px]" style={{ color: "var(--text-muted, #94a3b8)" }}>
+            <p className="text-[13px] mt-2 max-w-[340px]" style={{ color: "var(--text-sec)" }}>
               Add workplace, team, community, or space photos. The gallery supports up to {maxGalleryItems} images.
             </p>
           </div>
@@ -837,12 +837,12 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
       </div>
 
       <div className="flex flex-wrap gap-2 mt-4">
-        <button type="button" style={actionButtonStyle} onClick={triggerBrowse} disabled={props.disabled}>
+        <button type="button" className="brand-button" style={actionButtonStyle} onClick={triggerBrowse} disabled={props.disabled}>
           Browse Files
         </button>
         <button
           type="button"
-          style={actionButtonStyle}
+          className="brand-button" style={actionButtonStyle}
           onClick={openGoogleDrivePicker}
           disabled={props.disabled || googleLoading || !googleConfigured}
         >
@@ -850,7 +850,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
         </button>
         <button
           type="button"
-          style={actionButtonStyle}
+          className="brand-button" style={actionButtonStyle}
           onClick={() => setShowLinkInput((prev) => !prev)}
           disabled={props.disabled}
         >
@@ -858,7 +858,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
         </button>
       </div>
 
-      <div className="text-[11px] mt-3" style={{ color: "var(--text-muted, #64748b)" }}>
+      <div className="text-[11px] mt-3" style={{ color: "var(--text-sec)" }}>
         Supported: JPEG, PNG, WebP, GIF. Max size {describeMaxSize()} each.
       </div>
 
@@ -866,17 +866,18 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
         <div
           className="mt-4 rounded-xl px-4 py-3 text-sm"
           style={{
-            background: "rgba(217,119,6,0.12)",
-            color: "#FCD34D",
+            background: "var(--teal-soft)",
+            color: "var(--text-sec)",
           }}
         >
-          Native Google Drive picking needs project setup. Public Google Drive share links still work through Import Link.
+          Google Drive picking is unavailable here. You can paste a public Google Drive share link using Import Link.
         </div>
       )}
 
       {showLinkInput && (
         <div className="mt-4 flex flex-col md:flex-row gap-2">
           <input
+            aria-label={`Import ${props.title.toLowerCase()} image link`}
             value={linkInput}
             onChange={(event) => setLinkInput(event.target.value)}
             onKeyDown={(event) => {
@@ -888,8 +889,8 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
             placeholder="Paste a Google Drive, Dropbox, OneDrive, SharePoint, or direct image link"
             className="flex-1 rounded-xl px-4 py-3 text-sm outline-none"
             style={{
-              background: "rgba(2,6,23,0.6)",
-              border: "1px solid rgba(30,41,59,0.6)",
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
               color: "var(--text, #f8fafc)",
             }}
           />
@@ -897,9 +898,9 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
             type="button"
             onClick={() => void handleImportLink()}
             disabled={props.disabled || !linkInput.trim()}
-            className="px-4 py-3 rounded-xl text-sm font-semibold"
+            className="brand-button px-4 py-3 rounded-xl text-sm font-semibold"
             style={{
-              background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`,
+              background: "var(--button-gradient)",
               color: "#fff",
               border: "none",
               opacity: props.disabled || !linkInput.trim() ? 0.6 : 1,
@@ -916,7 +917,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
           className="mt-4 rounded-xl px-4 py-3 text-sm"
           style={{
             background: "rgba(239,68,68,0.12)",
-            color: "#FCA5A5",
+            color: "var(--text)",
           }}
         >
           {surfaceError || singleError}
@@ -928,11 +929,11 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
           <button
             type="button"
             onClick={retrySingleUpload}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold"
+            className="brand-button px-4 py-2.5 rounded-xl text-sm font-semibold"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              color: "var(--text-sec, #cbd5e1)",
+              background: "var(--button-gradient-soft)",
+              border: "1px solid var(--border)",
+              color: "var(--button-gradient-soft-text)",
             }}
           >
             Retry Upload
@@ -943,7 +944,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
       {props.mode === "gallery" && (
         <>
           {galleryItems.length === 0 ? (
-            <div className="mt-5 rounded-xl border border-dashed px-4 py-8 text-center text-sm" style={{ color: "var(--text-muted, #94a3b8)", borderColor: "rgba(255,255,255,0.12)" }}>
+            <div className="mt-5 rounded-xl border border-dashed px-4 py-8 text-center text-sm" style={{ color: "var(--text-sec)", borderColor: "var(--border)" }}>
               Add at least one image to show your organization, team, or space.
             </div>
           ) : (
@@ -953,8 +954,8 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
                   key={item.id}
                   className="rounded-[16px] overflow-hidden border"
                   style={{
-                    background: "rgba(2,6,23,0.55)",
-                    borderColor: item.status === "error" ? "rgba(239,68,68,0.32)" : "rgba(255,255,255,0.08)",
+                    background: "var(--bg)",
+                    borderColor: item.status === "error" ? "rgba(239,68,68,0.32)" : "var(--border)",
                   }}
                 >
                   <div className="aspect-square relative overflow-hidden">
@@ -981,7 +982,7 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
                         {item.error}
                       </div>
                     ) : (
-                      <div className="text-[12px]" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                      <div className="text-[12px]" style={{ color: "var(--text-sec)" }}>
                         {item.status === "uploading" ? "Copying into IOPPS storage..." : "Ready for your public gallery"}
                       </div>
                     )}
@@ -991,9 +992,9 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
                         <button
                           type="button"
                           onClick={() => retryGalleryUpload(item.id)}
-                          className="flex-1 rounded-lg px-3 py-2 text-xs font-semibold"
+                          className="brand-button flex-1 rounded-lg px-3 py-2 text-xs font-semibold"
                           style={{
-                            background: `linear-gradient(135deg, ${AMBER}, #F59E0B)`,
+                            background: "var(--button-gradient)",
                             color: "#fff",
                             border: "none",
                           }}
@@ -1004,11 +1005,11 @@ export default function ProfileMediaUploader(props: ProfileMediaUploaderProps) {
                       <button
                         type="button"
                         onClick={() => removeGalleryItem(item.id)}
-                        className="flex-1 rounded-lg px-3 py-2 text-xs font-semibold"
+                        className="brand-button flex-1 rounded-lg px-3 py-2 text-xs font-semibold"
                         style={{
-                          background: "rgba(255,255,255,0.04)",
-                          color: "var(--text-sec, #cbd5e1)",
-                          border: "1px solid rgba(255,255,255,0.08)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
+                          border: "1px solid var(--border)",
                         }}
                       >
                         Remove

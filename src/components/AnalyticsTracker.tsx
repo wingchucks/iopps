@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import type { AnalyticsEventName } from "@/lib/analytics/types";
+import { navigationEvent } from "@/lib/analytics/navigation";
 
 function classifyClick(element: HTMLElement, href?: string): AnalyticsEventName {
   const explicit = element.closest<HTMLElement>("[data-analytics-event]")?.dataset.analyticsEvent;
@@ -11,20 +12,7 @@ function classifyClick(element: HTMLElement, href?: string): AnalyticsEventName 
 
   const text = `${element.textContent ?? ""} ${href ?? ""}`.toLowerCase();
   if (text.includes("apply")) return "job_apply_click";
-  if (href?.includes("/jobs/")) return "job_detail_click";
-  if (href?.includes("/events/") || href?.includes("/powwows/")) return "event_detail_click";
-  if (href?.includes("/scholarships/")) return "scholarship_detail_click";
-  if (href?.includes("/training/")) return "training_detail_click";
-  if (href?.includes("/organizations/") || href?.includes("/employers/")) return "employer_profile_click";
-
-  if (href) {
-    try {
-      const url = new URL(href, window.location.href);
-      return url.origin === window.location.origin ? "internal_link_click" : "outbound_link_click";
-    } catch {
-      return "internal_link_click";
-    }
-  }
+  if (href) return navigationEvent(href, window.location.href);
 
   return "cta_click";
 }

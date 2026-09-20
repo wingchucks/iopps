@@ -1,4 +1,7 @@
 "use client";
+import JobLocationFields from "@/components/employer/JobLocationFields";
+import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
+import { normalizeHiringDetails } from "@/lib/job-hiring-details";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -31,6 +34,12 @@ interface EditableJob {
   externalApplyUrl?: string;
   status?: PostStatus;
   featured?: boolean;
+  hiringDetails?: unknown;
+  willTrain?: boolean;
+  driversLicense?: boolean;
+  requiresResume?: boolean;
+  requiresCoverLetter?: boolean;
+  requiresReferences?: boolean;
 }
 
 const employmentTypes = [
@@ -44,8 +53,8 @@ const employmentTypes = [
 function normalizeSalaryParts(job: EditableJob): { min: string; max: string } {
   const salaryValue = job.salaryRange || job.salary;
   if (salaryValue && typeof salaryValue === "object") {
-    const min = salaryValue.min == null ? "" : String(salaryValue.min).replace(/[^\d]/g, "");
-    const max = salaryValue.max == null ? "" : String(salaryValue.max).replace(/[^\d]/g, "");
+    const min = salaryValue.min == null ? "" : String(salaryValue.min).replace(/[^\d.]/g, "");
+    const max = salaryValue.max == null ? "" : String(salaryValue.max).replace(/[^\d.]/g, "");
     if (min || max) return { min, max };
     if (salaryValue.display) return parseSalaryString(String(salaryValue.display));
   }
@@ -53,7 +62,7 @@ function normalizeSalaryParts(job: EditableJob): { min: string; max: string } {
 }
 
 function parseSalaryString(value: string): { min: string; max: string } {
-  const numbers = value.match(/\d[\d,]*/g) || [];
+  const numbers = value.match(/\d[\d,]*(?:\.\d+)?/g) || [];
   return {
     min: numbers[0]?.replace(/,/g, "") || "",
     max: numbers[1]?.replace(/,/g, "") || "",
@@ -91,12 +100,15 @@ export default function JobEditPage() {
   const [employmentType, setEmploymentType] = useState("Full-time");
   const [salaryMin, setSalaryMin] = useState("");
   const [salaryMax, setSalaryMax] = useState("");
+  const [salaryPeriod, setSalaryPeriod] = useState("");
   const [requirements, setRequirements] = useState<string[]>([]);
   const [requirementInput, setRequirementInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
+  const [hiringDetails, setHiringDetails] = useState(() => normalizeHiringDetails({}));
   const [closingDate, setClosingDate] = useState("");
   const [applicationUrl, setApplicationUrl] = useState("");
+  const [documents, setDocuments] = useState({ requiresResume: true, requiresCoverLetter: false, requiresReferences: false });
   const [status, setStatus] = useState<PostStatus>("draft");
   const [featured, setFeatured] = useState(false);
   const [featuredSummary, setFeaturedSummary] = useState<FeaturedJobSummary | null>(null);
@@ -131,10 +143,13 @@ export default function JobEditPage() {
         const salaryParts = normalizeSalaryParts(p);
         setSalaryMin(salaryParts.min);
         setSalaryMax(salaryParts.max);
+        setSalaryPeriod(p.salaryRange?.period || (typeof p.salary === "object" ? p.salary.period : "") || "");
         setRequirements(p.qualifications || []);
         setSkills(p.badges || []);
         setClosingDate(p.closingDate || "");
         setApplicationUrl(p.applicationUrl || p.externalApplyUrl || "");
+        setDocuments({ requiresResume: p.requiresResume === true, requiresCoverLetter: p.requiresCoverLetter === true, requiresReferences: p.requiresReferences === true });
+        setHiringDetails(normalizeHiringDetails(p.hiringDetails, p));
         setStatus(p.status || "active");
         setFeatured(Boolean(p.featured));
       } catch (err) {
@@ -157,12 +172,13 @@ export default function JobEditPage() {
       const location = [locationCity, locationProvince]
         .filter(Boolean)
         .join(", ");
-      const salary =
+      const salaryAmount =
         salaryMin && salaryMax
           ? `$${Number(salaryMin).toLocaleString()} - $${Number(salaryMax).toLocaleString()}`
           : salaryMin
             ? `$${Number(salaryMin).toLocaleString()}`
             : "";
+      const salary = salaryAmount ? `${salaryAmount}${salaryPeriod ? ` / ${salaryPeriod.toLowerCase()}` : ""}` : "";
       const idToken = await user.getIdToken();
       const response = await fetch(`/api/employer/jobs/${postId}`, {
         method: "PUT",
@@ -181,11 +197,14 @@ export default function JobEditPage() {
             max: salaryMax ? Number(salaryMax) : undefined,
             display: salary,
             currency: "CAD",
+            period: salaryPeriod,
           } : undefined,
+          hiringDetails,
           qualifications: requirements.filter((r) => r.trim()),
           badges: skills,
           closingDate,
           applicationUrl,
+          ...documents,
           status,
           featured,
         }),
@@ -414,41 +433,7 @@ export default function JobEditPage() {
                     />
                   </div>
 
-                  {/* Location */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        className="block text-sm font-semibold mb-1.5"
-                        style={{ color: "var(--text)" }}
-                      >
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        value={locationCity}
-                        onChange={(e) => setLocationCity(e.target.value)}
-                        placeholder="e.g. Toronto"
-                        className="w-full px-4 py-3 rounded-xl text-sm"
-                        style={inputStyle}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className="block text-sm font-semibold mb-1.5"
-                        style={{ color: "var(--text)" }}
-                      >
-                        Province
-                      </label>
-                      <input
-                        type="text"
-                        value={locationProvince}
-                        onChange={(e) => setLocationProvince(e.target.value)}
-                        placeholder="e.g. ON"
-                        className="w-full px-4 py-3 rounded-xl text-sm"
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
+                  <JobLocationFields city={locationCity} province={locationProvince} onChange={(city,province)=>{setLocationCity(city);setLocationProvince(province);}} />
 
                   {/* Employment Type */}
                   <div>
@@ -483,6 +468,9 @@ export default function JobEditPage() {
                       </label>
                       <input
                         type="number"
+                        aria-label="Salary minimum"
+                        min="0"
+                        step="0.01"
                         value={salaryMin}
                         onChange={(e) => setSalaryMin(e.target.value)}
                         placeholder="e.g. 60000"
@@ -499,13 +487,16 @@ export default function JobEditPage() {
                       </label>
                       <input
                         type="number"
+                        aria-label="Salary maximum"
+                        min="0"
+                        step="0.01"
                         value={salaryMax}
                         onChange={(e) => setSalaryMax(e.target.value)}
                         placeholder="e.g. 90000"
                         className="w-full px-4 py-3 rounded-xl text-sm"
                         style={inputStyle}
                       />
-                    </div>
+                    </div><label className="block text-sm font-semibold mt-3">Pay period<select aria-label="Salary pay period" value={salaryPeriod} onChange={event => setSalaryPeriod(event.target.value)} className="block w-full rounded-lg border border-border bg-card p-3 text-text"><option value="">Not specified</option>{["Hourly", "Annual", "Monthly", "Weekly"].map(period => <option key={period} value={period}>{period}</option>)}</select></label>
                   </div>
 
                   {/* Requirements */}
@@ -533,10 +524,10 @@ export default function JobEditPage() {
                       />
                       <button
                         onClick={addRequirement}
-                        className="px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
+                        className="brand-button px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
                         style={{
-                          background: "rgba(13,148,136,.1)",
-                          color: "var(--teal)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                         }}
                       >
                         Add
@@ -597,10 +588,10 @@ export default function JobEditPage() {
                       />
                       <button
                         onClick={addSkill}
-                        className="px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
+                        className="brand-button px-4 py-2.5 rounded-xl border-none cursor-pointer text-sm font-semibold"
                         style={{
-                          background: "rgba(13,148,136,.1)",
-                          color: "var(--teal)",
+                          background: "var(--button-gradient-soft)",
+                          color: "var(--button-gradient-soft-text)",
                         }}
                       >
                         Add
@@ -648,15 +639,18 @@ export default function JobEditPage() {
                     />
                   </div>
 
+                  <HiringDetailsFields value={hiringDetails} onChange={setHiringDetails} />
                   {/* Application URL */}
                   <div>
                     <label
+                      htmlFor="job-application-url"
                       className="block text-sm font-semibold mb-1.5"
                       style={{ color: "var(--text)" }}
                     >
                       Application URL (external)
                     </label>
                     <input
+                      id="job-application-url"
                       type="url"
                       value={applicationUrl}
                       onChange={(e) => setApplicationUrl(e.target.value)}
@@ -664,7 +658,22 @@ export default function JobEditPage() {
                       className="w-full px-4 py-3 rounded-xl text-sm"
                       style={inputStyle}
                     />
+                    <p className="text-sm mt-2" style={{ color: "var(--text-sec)" }}>Leave blank to accept applications on IOPPS.</p>
                   </div>
+
+                  <fieldset className="space-y-2" disabled={isImported}>
+                    <legend className="text-sm font-semibold mb-2">Required application documents</legend>
+                    <p className="text-sm" style={{ color: "var(--text-sec)" }}>Choose what applicants must include when applying on IOPPS.</p>
+                    {([
+                      ["requiresResume", "Resume / CV"],
+                      ["requiresCoverLetter", "Cover letter"],
+                      ["requiresReferences", "References"],
+                    ] as const).map(([key, label]) => <label key={key} className="flex min-h-11 items-center gap-3 text-sm cursor-pointer">
+                      <input type="checkbox" checked={documents[key]} className="h-4 w-4 accent-teal-600"
+                        onChange={event => setDocuments(current => ({ ...current, [key]: event.target.checked }))} />
+                      {label}
+                    </label>)}
+                  </fieldset>
 
                   <FeaturedJobControl
                     summary={featuredSummary}

@@ -2,7 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import AppShell from "@/components/AppShell";
@@ -15,12 +15,13 @@ import { displayAmount, displayLocation } from "@/lib/utils";
 
 // ── Types for opportunities ──
 interface LinkedItem { href?: string; }
+type OrgJob = Job & LinkedItem;
 interface OrgEvent extends LinkedItem { id: string; title: string; eventType?: string; date?: string; dates?: string; location?: string; employerId?: string; organizerName?: string; }
 interface OrgScholarship extends LinkedItem { id: string; title: string; amount?: unknown; deadline?: string; description?: string; employerId?: string; organization?: string; }
 interface OrgTraining extends LinkedItem { id: string; title?: string; programName?: string; duration?: string; credential?: string; campus?: string; location?: string; schoolId?: string; institutionName?: string; provider?: string; _source?: string; ownerName?: string; }
 interface OrgContentResponse {
   org: Organization | null;
-  jobs?: Job[];
+  jobs?: OrgJob[];
   events?: OrgEvent[];
   scholarships?: OrgScholarship[];
   training?: OrgTraining[];
@@ -30,12 +31,20 @@ interface OrgContentResponse {
 // ── Helpers ──
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
+function eventDate(ev: OrgEvent): Date | null {
+  const raw = ev.date || ev.dates || "";
+  if (!raw) return null;
+  // A date-only listing names a calendar day, not midnight UTC.
+  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T12:00:00` : raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function formatEventDate(ev: OrgEvent): string {
   const raw = ev.date || ev.dates || "";
   if (!raw) return "";
   try {
-    const d = new Date(raw);
-    if (!isNaN(d.getTime())) {
+    const d = eventDate(ev);
+    if (d) {
       return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     }
   } catch { /* ignore */ }
@@ -43,14 +52,12 @@ function formatEventDate(ev: OrgEvent): string {
 }
 
 function getEventMonth(ev: OrgEvent): string {
-  const raw = ev.date || ev.dates || "";
-  try { const d = new Date(raw); if (!isNaN(d.getTime())) return d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(); } catch { /* */ }
+  try { const d = eventDate(ev); if (d) return d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(); } catch { /* */ }
   return "";
 }
 
 function getEventDay(ev: OrgEvent): string {
-  const raw = ev.date || ev.dates || "";
-  try { const d = new Date(raw); if (!isNaN(d.getTime())) return String(d.getDate()); } catch { /* */ }
+  try { const d = eventDate(ev); if (d) return String(d.getDate()); } catch { /* */ }
   return "";
 }
 
@@ -78,41 +85,46 @@ export default function OrgProfilePage() {
 
 function OrgProfileContent() {
   const params = useParams();
-  const router = useRouter();
   const slug = params.slug as string;
   const { user } = useAuth();
   const [org, setOrg] = useState<Organization | null>(null);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<OrgJob[]>([]);
   const [events, setEvents] = useState<OrgEvent[]>([]);
   const [scholarships, setScholarships] = useState<OrgScholarship[]>([]);
   const [training, setTraining] = useState<OrgTraining[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [activeOppTab, setActiveOppTab] = useState<"jobs"|"events"|"scholarships"|"training">("jobs");
   const [expandedOppTab, setExpandedOppTab] = useState<"jobs"|"events"|"scholarships"|"training"|null>(null);
   const [shareMsg, setShareMsg] = useState("");
-
-  const handleMessage = () => {
-    if (!user) { router.push("/login"); return; }
-    router.push(`/messages?to=${org?.id || slug}`);
-  };
 
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
       try { await navigator.share({ title: org?.name || "IOPPS", url }); } catch { /* cancelled */ }
     } else {
-      await navigator.clipboard.writeText(url);
-      setShareMsg("Link copied!");
-      setTimeout(() => setShareMsg(""), 2000);
+      try {
+        await navigator.clipboard.writeText(url);
+        setShareMsg("Link copied!");
+        setTimeout(() => setShareMsg(""), 2000);
+      } catch {
+        setShareMsg("Copy the address from your browser to share this profile.");
+      }
     }
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     async function load() {
+      setLoading(true);
+      setLoadError(false);
       try {
-        const orgRes = await fetch(`/api/org/${encodeURIComponent(slug)}`);
-        if (!orgRes.ok) { setOrg(null); setLoading(false); return; }
+        const orgRes = await fetch(`/api/org/${encodeURIComponent(slug)}`, { signal: controller.signal });
+        if (orgRes.status === 404) { setOrg(null); return; }
+        if (!orgRes.ok) throw new Error("Profile could not be loaded");
         const orgJson = await orgRes.json() as OrgContentResponse;
+        if (controller.signal.aborted) return;
         const orgData = orgJson.org;
         setOrg(orgData);
         if (orgData) {
@@ -141,13 +153,17 @@ function OrgProfileContent() {
           else if (nextTraining.length > 0) setActiveOppTab("training");
         }
       } catch (err) {
-        console.error("Failed to load organization:", err);
+        if (!controller.signal.aborted) {
+          console.error("Failed to load organization:", err);
+          setLoadError(true);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
-    load();
-  }, [slug]);
+    void load();
+    return () => controller.abort();
+  }, [slug, loadAttempt]);
 
   if (loading) {
     return (
@@ -163,13 +179,17 @@ function OrgProfileContent() {
     );
   }
 
+  if (loadError) {
+    return <div className="max-w-[600px] mx-auto px-4 py-20 text-center"><h2 className="text-2xl font-extrabold mb-3">We couldn’t load this profile.</h2><p role="alert" className="text-text-sec mb-6">Please try again in a moment.</p><button type="button" className="employer-primary" onClick={() => setLoadAttempt(value => value + 1)}>Try again</button></div>;
+  }
+
   if (!org) {
     return (
       <div className="max-w-[600px] mx-auto px-4 py-20 text-center">
         <p className="text-5xl mb-4">&#127970;</p>
         <h2 className="text-2xl font-extrabold text-text mb-2">Organization Not Found</h2>
         <p className="text-text-sec mb-6">This organization doesn&apos;t exist or hasn&apos;t been added yet.</p>
-        <Link href="/businesses" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold bg-teal text-white no-underline hover:opacity-90 transition-opacity">
+        <Link href="/businesses" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full text-sm font-bold button-gradient text-white no-underline hover:opacity-90 transition-opacity">
           Browse Businesses
         </Link>
       </div>
@@ -177,7 +197,6 @@ function OrgProfileContent() {
   }
 
   const websiteUrl = org.website ? (org.website.startsWith("http") ? org.website : `https://${org.website}`) : null;
-  const location = displayLocation(org.location);
   const profileJobCount = jobs.length || org.openJobs || 0;
   const relatedJobCount = jobs.length;
   // H-3 — only show foundedYear if admin-verified or owner-set. Scraper-set
@@ -197,7 +216,7 @@ function OrgProfileContent() {
   const hasGallery = org.gallery && Array.isArray(org.gallery) && org.gallery.length > 0;
 
   const typeLabel =
-    org.type === "employer" ? "Employer"
+    org.type === "employer" ? "Organization"
     : org.type === "school" ? "Education"
     : org.type === "non-profit" ? "Non-Profit"
     : org.type === "government" ? "Government"
@@ -205,7 +224,7 @@ function OrgProfileContent() {
     : org.type === "professional" ? "Professional Services"
     : "Business";
 
-  const oppColors = { jobs: "#14B8A6", events: "#F59E0B", scholarships: "#FBBF24", training: "#A78BFA" };
+  const oppColors = { jobs: "var(--teal)", events: "var(--org-opportunity-accent)", scholarships: "var(--org-opportunity-accent)", training: "var(--text-sec)" };
   const oppLabels = { jobs: "💼 Open Jobs", events: "📅 Events", scholarships: "🎓 Scholarships", training: "📚 Training" };
   const oppCounts = { jobs: relatedJobCount, events: events.length, scholarships: scholarships.length, training: training.length };
   const visibleJobs = expandedOppTab === "jobs" ? jobs : jobs.slice(0, 4);
@@ -220,11 +239,11 @@ function OrgProfileContent() {
   const proofItems = [
     org.nation ? `Nation — ${org.nation}` : "",
     org.treatyTerritory ? `Treaty Territory — ${org.treatyTerritory}` : "",
-    isIndigenousOwned ? "🪶 Indigenous-led organization" : "",
+    isIndigenousOwned ? "Indigenous-owned or led organization" : "",
   ].filter((item): item is string => Boolean(item));
 
   return (
-    <div className="max-w-[960px] mx-auto pb-16">
+    <div className="journey-profile journey-org-profile max-w-[1120px] mx-auto pb-16">
       {/* Back Link */}
       <div className="px-4 pt-4">
         <Link href="/businesses" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal">
@@ -239,14 +258,14 @@ function OrgProfileContent() {
           style={{
             background: org.bannerUrl
               ? `url(${org.bannerUrl}) center/cover no-repeat`
-              : "linear-gradient(135deg, #2d1b4e, #1e293b, #0f172a)",
+              : "linear-gradient(135deg, var(--navy-deep), var(--navy), var(--teal))",
           }}
         >
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(2,6,23,0.95) 0%, rgba(2,6,23,0.3) 40%, transparent 70%)" }} />
           {isIndigenousOwned && (
             <div className="absolute top-4 right-4 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold"
               style={{ background: "rgba(245,158,11,0.2)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.4)", backdropFilter: "blur(12px)" }}>
-              🪶 Indigenous-Owned Business
+              Indigenous-owned or led
             </div>
           )}
         </div>
@@ -254,7 +273,7 @@ function OrgProfileContent() {
 
       {/* Header Card */}
       <div className="px-4 -mt-[60px] relative z-[5]">
-        <div className="bg-card rounded-2xl border border-border p-6">
+        <div className="journey-business-heading bg-card rounded-2xl border border-border p-6">
           <div className="flex flex-col sm:flex-row gap-5 items-start">
             <div className="-mt-10" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
               <Avatar name={org.shortName || org.name} size={80} src={org.logoUrl || org.logo} />
@@ -278,7 +297,7 @@ function OrgProfileContent() {
                 )}
               </div>
               {org.tagline && (
-                <p className="mt-2 max-w-[560px] text-sm font-medium text-white/80">
+                <p className="mt-2 max-w-[560px] text-base font-medium text-text-sec">
                   {org.tagline}
                 </p>
               )}
@@ -288,25 +307,10 @@ function OrgProfileContent() {
               </p>
             </div>
             {/* Action Buttons */}
-            <div className="flex gap-2 flex-wrap shrink-0">
-              {hasOpportunities && (
-                <a href="#opportunities" className="no-underline">
-                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-white text-[#0f172a] transition-all hover:-translate-y-0.5">
-                    ✨ Explore Opportunities
-                  </button>
-                </a>
-              )}
-              {websiteUrl && (
-                <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                  <button className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-teal text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)] hover:-translate-y-0.5">
-                    🌐 Visit Website
-                  </button>
-                </a>
-              )}
-              <button onClick={handleMessage}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:border-teal hover:text-teal">
-                💬 Message
-              </button>
+            <div className="journey-business-actions">
+              {hasContact && <a href="#business-contact" className="journey-contact-button">Contact business</a>}
+              {websiteUrl && <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="journey-profile-button">Visit website ↗</a>}
+              {hasOpportunities && <a href="#opportunities" className="journey-profile-button">View opportunities</a>}
               <button onClick={handleShare} className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:border-teal hover:text-teal relative">
                 📤 Share
                 {shareMsg && (
@@ -323,25 +327,25 @@ function OrgProfileContent() {
             <div className="flex gap-2 flex-wrap mt-4">
               {org.socialLinks!.instagram && (
                 <a href={org.socialLinks!.instagram} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted button-gradient-soft hover:border-teal hover:text-teal hover:-translate-y-px">
                   📸 Instagram
                 </a>
               )}
               {org.socialLinks!.facebook && (
                 <a href={org.socialLinks!.facebook} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted button-gradient-soft hover:border-teal hover:text-teal hover:-translate-y-px">
                   📘 Facebook
                 </a>
               )}
               {org.socialLinks!.linkedin && (
                 <a href={org.socialLinks!.linkedin} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted button-gradient-soft hover:border-teal hover:text-teal hover:-translate-y-px">
                   💼 LinkedIn
                 </a>
               )}
               {org.socialLinks!.twitter && (
                 <a href={org.socialLinks!.twitter} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted bg-card hover:border-teal hover:text-teal hover:-translate-y-px">
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted button-gradient-soft hover:border-teal hover:text-teal hover:-translate-y-px">
                   🐦 Twitter / X
                 </a>
               )}
@@ -427,6 +431,7 @@ function OrgProfileContent() {
                   return (
                     <button
                       key={tab}
+                      aria-pressed={activeOppTab === tab}
                       onClick={() => {
                         setActiveOppTab(tab);
                         setExpandedOppTab((current) => (current === tab ? current : null));
@@ -450,11 +455,11 @@ function OrgProfileContent() {
                 {activeOppTab === "jobs" && (
                   <div className="flex flex-col gap-2.5">
                     {visibleJobs.map((j, i) => (
-                      <Link key={j.id} href={`/jobs/${j.slug || j.id}`} className="no-underline block">
+                      <Link key={j.id} href={j.href || `/jobs/${j.slug || j.id}`} className="no-underline block">
                         <div className="flex items-center justify-between px-4 py-3.5 rounded-xl cursor-pointer transition-all hover:-translate-y-0.5"
                           style={{
-                            background: i === 0 && j.featured ? "rgba(20,184,166,0.06)" : "rgba(30,41,59,0.4)",
-                            border: i === 0 && j.featured ? "1px solid rgba(20,184,166,0.15)" : "1px solid rgba(255,255,255,0.04)",
+                            background: i === 0 && j.featured ? "rgba(20,184,166,0.06)" : "var(--bg)",
+                            border: i === 0 && j.featured ? "1px solid rgba(20,184,166,0.15)" : "1px solid var(--border)",
                           }}>
                           <div>
                             <p className="text-sm font-bold text-text">{j.title}</p>
@@ -469,8 +474,8 @@ function OrgProfileContent() {
                       <button
                         type="button"
                         onClick={() => setExpandedOppTab((current) => (current === "jobs" ? null : "jobs"))}
-                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
-                        style={{ color: "#14B8A6", border: "1px solid rgba(20,184,166,0.2)", background: "rgba(20,184,166,0.04)" }}
+                        className="brand-button flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        style={{ color: "var(--button-gradient-soft-text)", border: "1px solid rgba(20,184,166,0.2)", background: "var(--button-gradient-soft)" }}
                       >
                         {expandedOppTab === "jobs" ? "Show fewer jobs" : `Show all ${relatedJobCount} jobs`}
                       </button>
@@ -489,18 +494,18 @@ function OrgProfileContent() {
                           <>
                             <div className="w-12 h-12 rounded-[10px] flex flex-col items-center justify-center shrink-0"
                               style={{ background: i === 0 ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.08)" }}>
-                              <div className="text-[10px] font-bold leading-none" style={{ color: i === 0 ? "#F59E0B" : "var(--text-muted)" }}>{getEventMonth(ev)}</div>
-                              <div className="text-lg font-black leading-none" style={{ color: i === 0 ? "#F59E0B" : "var(--text-sec)" }}>{getEventDay(ev)}</div>
+                              <div className="text-[10px] font-bold leading-none" style={{ color: i === 0 ? "var(--org-opportunity-accent)" : "var(--text-muted)" }}>{getEventMonth(ev)}</div>
+                              <div className="text-lg font-black leading-none" style={{ color: i === 0 ? "var(--org-opportunity-accent)" : "var(--text-sec)" }}>{getEventDay(ev)}</div>
                             </div>
                             <div>
                               <p className="text-sm font-bold text-text">{ev.title}</p>
                               <p className="text-xs text-text-muted mt-0.5">{formatEventDate(ev)}{ev.location ? ` · ${ev.location}` : ""}</p>
-                              {ev.eventType && <p className="text-[11px] mt-0.5" style={{ color: "#F59E0B" }}>🎪 {ev.eventType}</p>}
+                              {ev.eventType && <p className="text-[11px] mt-0.5" style={{ color: "var(--org-opportunity-accent)" }}>🎪 {ev.eventType}</p>}
                             </div>
                           </>,
                           {
-                            background: i === 0 ? "rgba(245,158,11,0.06)" : "rgba(30,41,59,0.4)",
-                            border: i === 0 ? "1px solid rgba(245,158,11,0.15)" : "1px solid rgba(255,255,255,0.04)",
+                            background: i === 0 ? "rgba(245,158,11,0.06)" : "var(--bg)",
+                            border: i === 0 ? "1px solid rgba(245,158,11,0.15)" : "1px solid var(--border)",
                           },
                         )}
                       </div>
@@ -509,8 +514,8 @@ function OrgProfileContent() {
                       <button
                         type="button"
                         onClick={() => setExpandedOppTab((current) => (current === "events" ? null : "events"))}
-                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
-                        style={{ color: "#F59E0B", border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.04)" }}
+                        className="button-gradient-soft flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        style={{ color: "var(--org-opportunity-accent)", border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.04)" }}
                       >
                         {expandedOppTab === "events" ? "Show fewer events" : `Show all ${events.length} events`}
                       </button>
@@ -532,13 +537,13 @@ function OrgProfileContent() {
                           <>
                             <p className="text-sm font-bold text-text">{s.title}</p>
                             {s.description && <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{s.description}</p>}
-                            <p className="text-[11px] mt-1" style={{ color: i === 0 ? "#FBBF24" : "var(--text-muted)" }}>
+                            <p className="text-[11px] mt-1" style={{ color: i === 0 ? "var(--org-opportunity-accent)" : "var(--text-muted)" }}>
                               {scholarshipAmount ? `💰 ${scholarshipAmount}` : ""}{s.deadline ? ` · Deadline: ${s.deadline}` : ""}
                             </p>
                           </>,
                           {
-                            background: i === 0 ? "rgba(251,191,36,0.06)" : "rgba(30,41,59,0.4)",
-                            border: i === 0 ? "1px solid rgba(251,191,36,0.15)" : "1px solid rgba(255,255,255,0.04)",
+                            background: i === 0 ? "rgba(251,191,36,0.06)" : "var(--bg)",
+                            border: i === 0 ? "1px solid rgba(251,191,36,0.15)" : "1px solid var(--border)",
                           },
                         )}
                       </div>
@@ -548,8 +553,8 @@ function OrgProfileContent() {
                       <button
                         type="button"
                         onClick={() => setExpandedOppTab((current) => (current === "scholarships" ? null : "scholarships"))}
-                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
-                        style={{ color: "#FBBF24", border: "1px solid rgba(251,191,36,0.2)", background: "rgba(251,191,36,0.04)" }}
+                        className="button-gradient-soft flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        style={{ color: "var(--org-opportunity-accent)", border: "1px solid rgba(251,191,36,0.2)", background: "rgba(251,191,36,0.04)" }}
                       >
                         {expandedOppTab === "scholarships" ? "Show fewer scholarships" : `Show all ${scholarships.length} scholarships`}
                       </button>
@@ -585,7 +590,7 @@ function OrgProfileContent() {
                       <button
                         type="button"
                         onClick={() => setExpandedOppTab((current) => (current === "training" ? null : "training"))}
-                        className="flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
+                        className="button-gradient-soft flex items-center justify-center gap-1.5 mt-2 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer border-none"
                         style={{ color: "#A78BFA", border: "1px solid rgba(167,139,250,0.2)", background: "rgba(167,139,250,0.04)" }}
                       >
                         {expandedOppTab === "training" ? "Show less training" : `Show all ${training.length} training opportunities`}
@@ -646,7 +651,7 @@ function OrgProfileContent() {
           )}
 
           {/* Sign-in CTA */}
-          {!user && (
+          {!user && profileJobCount > 0 && (
             <div className="rounded-2xl p-6 text-center border border-teal/20"
               style={{ background: "linear-gradient(135deg, rgba(13,148,136,0.08), rgba(6,182,212,0.05))" }}>
               <h4 className="text-base font-bold text-text">Ready to apply?</h4>
@@ -654,15 +659,11 @@ function OrgProfileContent() {
                 Create a free account to apply for positions and connect with Indigenous employers.
               </p>
               <div className="flex gap-2 justify-center mt-3.5">
-                <Link href="/signup" className="no-underline">
-                  <button className="px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none bg-teal text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)]">
+                <Link href="/signup" className="no-underline inline-flex px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer border-none button-gradient text-white transition-all hover:shadow-[0_0_16px_rgba(20,184,166,0.3)]">
                     Join Free
-                  </button>
                 </Link>
-                <Link href="/login" className="no-underline">
-                  <button className="px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:border-teal hover:text-teal">
+                <Link href="/login" className="no-underline inline-flex px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer transition-all bg-transparent text-text-muted border border-border hover:border-teal hover:text-teal">
                     Sign In
-                  </button>
                 </Link>
               </div>
             </div>
@@ -673,35 +674,35 @@ function OrgProfileContent() {
         <div className="flex flex-col gap-5">
           {/* Contact Card */}
           {hasContact && (
-            <div className="bg-card rounded-2xl border border-border p-5">
+            <div id="business-contact" className="journey-business-contact bg-card rounded-2xl border border-border p-5">
               <h3 className="text-[13px] font-bold uppercase tracking-wider text-text-muted mb-3.5">Contact</h3>
               <div className="flex flex-col">
                 {websiteUrl && (
                   <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
                     <span className="text-base w-5 text-center shrink-0">🌐</span>
-                    <div><p className="text-[11px] text-text-muted">Website</p>
-                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-[13px] text-teal no-underline hover:underline">{org.website}</a>
+                    <div><p className="text-xs text-text-muted">Website</p>
+                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="break-words text-base text-teal no-underline hover:underline">{org.website}</a>
                     </div>
                   </div>
                 )}
                 {org.contactEmail && (
                   <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
                     <span className="text-base w-5 text-center shrink-0">✉️</span>
-                    <div><p className="text-[11px] text-text-muted">Email</p>
-                      <a href={`mailto:${org.contactEmail}`} className="text-[13px] text-teal no-underline hover:underline">{org.contactEmail}</a>
+                    <div><p className="text-xs text-text-muted">Email</p>
+                      <a href={`mailto:${org.contactEmail}`} className="break-words text-base text-teal no-underline hover:underline">{org.contactEmail}</a>
                     </div>
                   </div>
                 )}
                 {org.phone && (
                   <div className="flex items-center gap-2.5 py-2.5 border-b border-border/30">
                     <span className="text-base w-5 text-center shrink-0">📞</span>
-                    <div><p className="text-[11px] text-text-muted">Phone</p><p className="text-[13px] text-text">{org.phone}</p></div>
+                    <div><p className="text-xs text-text-muted">Phone</p><a href={`tel:${org.phone.replace(/[^+\d]/g, "")}`} className="text-base text-teal hover:underline">{org.phone}</a></div>
                   </div>
                 )}
                 {org.address && (
                   <div className="flex items-center gap-2.5 py-2.5">
                     <span className="text-base w-5 text-center shrink-0">📍</span>
-                    <div><p className="text-[11px] text-text-muted">Address</p><p className="text-[13px] text-text">{org.address}</p></div>
+                    <div><p className="text-xs text-text-muted">Address</p><p className="text-[13px] text-text">{org.address}</p></div>
                   </div>
                 )}
               </div>
@@ -735,7 +736,7 @@ function OrgProfileContent() {
             <div className="bg-card rounded-2xl border border-border p-5">
               <h3 className="text-[13px] font-bold uppercase tracking-wider text-text-muted mb-3.5">Location</h3>
               <div className="h-[140px] rounded-xl flex items-center justify-center text-sm text-text-muted border border-border"
-                style={{ background: "linear-gradient(135deg, #1e293b, #0f172a)" }}>
+                style={{ background: "var(--bg)" }}>
                 🗺️ {displayLocation(org.location) || org.address}
               </div>
               <p className="mt-2 text-xs text-text-muted">

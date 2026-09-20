@@ -1,7 +1,13 @@
+
 import type { Metadata } from "next";
-import { unstable_cache } from "next/cache";
+import { cache } from "react";
+import { getPublicOpportunity } from "@/lib/server/public-opportunities";
+import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
+import { isOrganizationPubliclyVisible } from "@/lib/organization-profile";
+import { findPublicJobDocument } from "@/lib/server/public-job-routing";
+import { resolvePublicOrganization } from "@/lib/server/public-organization-resolver";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { PUBLIC_DETAIL_CACHE_SECONDS } from "@/lib/server/public-detail-cache";
+
 import {
   buildEventJsonLd,
   buildJobPostingJsonLd,
@@ -10,6 +16,8 @@ import {
   stripHtml,
   truncate,
 } from "@/lib/server/seo";
+
+const opportunityForMetadata = cache(async (kind: "events" | "scholarships", slug: string) => getPublicOpportunity(kind, slug).catch(() => null));
 
 type JsonLd = Record<string, unknown>;
 
@@ -69,16 +77,9 @@ async function findFirstUncached(
   return null;
 }
 
-const cachedFindFirst = unstable_cache(
-  async (collectionsJson: string, slug: string, slugFieldsJson: string) =>
-    findFirstUncached(
-      JSON.parse(collectionsJson) as string[],
-      slug,
-      JSON.parse(slugFieldsJson) as string[],
-    ),
-  ["public-detail-metadata-v1"],
-  { revalidate: PUBLIC_DETAIL_CACHE_SECONDS },
-);
+// Request-local deduplication only: withdrawn or deleted names must not persist in metadata.
+const cachedFindFirst = cache(async (collectionsJson: string, slug: string, slugFieldsJson: string) =>
+  findFirstUncached(JSON.parse(collectionsJson), slug, JSON.parse(slugFieldsJson)));
 
 async function findFirst(
   collections: readonly string[],
@@ -110,16 +111,20 @@ export function fallbackMetadata(title: string, description: string, path = "/")
   return { ...metadata, robots: { index: false, follow: false } };
 }
 
+const jobForMetadata = cache(async (slug: string) => {
+  const db = getAdminDb();
+  const match = await findPublicJobDocument(db, slug);
+  if (!match) return null;
+  const doc = await db.collection(match.source).doc(match.id).get();
+  const job = doc.exists ? serializeForCache({ ...doc.data(), id: doc.id }) as Record<string, unknown> : null;
+  return job && isPublicJobRecordVisible(job) ? job : null;
+});
+const orgForMetadata = cache(async (slug: string) => resolvePublicOrganization(getAdminDb(), slug));
+
 export async function generateJobMetadata(slug: string): Promise<Metadata> {
-  const lookup: EntityLookup = { collections: ["jobs", "posts"] };
-  const job = await findFirst(lookup.collections, slug, lookup.slugFields);
-  if (!job) {
-    return buildListingMetadata({
-      title: "Job Opportunity",
-      description: "View full job details, requirements, and application instructions for this Indigenous career opportunity on IOPPS.ca.",
-      path: `/jobs/${slug}`,
-      type: "article",
-    });
+  const job = await jobForMetadata(slug);
+  if (!job || !isPublicJobRecordVisible(job)) {
+    return fallbackMetadata("Job Opportunity", "This job opportunity is not currently available.", `/jobs/${slug}`);
   }
   const title = field(job, "title") || "Job Opportunity";
   const employer = field(job, "employerName", "orgName", "companyName", "company", "organization");
@@ -140,8 +145,8 @@ export async function generateJobMetadata(slug: string): Promise<Metadata> {
 }
 
 export async function generateJobJsonLd(slug: string): Promise<JsonLd | null> {
-  const job = await findFirst(["jobs", "posts"], slug);
-  if (!job) return null;
+  const job = await jobForMetadata(slug);
+  if (!job || !isPublicJobRecordVisible(job)) return null;
   return buildJobPostingJsonLd({
     slug,
     title: field(job, "title") || "Job Opportunity",
@@ -156,8 +161,7 @@ export async function generateJobJsonLd(slug: string): Promise<JsonLd | null> {
 }
 
 export async function generateEventMetadata(slug: string): Promise<Metadata> {
-  const lookup: EntityLookup = { collections: ["events", "posts"] };
-  const event = await findFirst(lookup.collections, slug, lookup.slugFields);
+  const event = await opportunityForMetadata("events", slug);
   if (!event) {
     return buildListingMetadata({
       title: "Event",
@@ -185,7 +189,7 @@ export async function generateEventMetadata(slug: string): Promise<Metadata> {
 }
 
 export async function generateEventJsonLd(slug: string): Promise<JsonLd | null> {
-  const event = await findFirst(["events", "posts"], slug);
+  const event = await opportunityForMetadata("events", slug);
   if (!event) return null;
   return buildEventJsonLd({
     slug,
@@ -201,9 +205,8 @@ export async function generateEventJsonLd(slug: string): Promise<JsonLd | null> 
 }
 
 export async function generateOrgMetadata(slug: string): Promise<Metadata> {
-  const lookup: EntityLookup = { collections: ["organizations", "employers"] };
-  const org = await findFirst(lookup.collections, slug, lookup.slugFields);
-  if (!org) {
+  const org = await orgForMetadata(slug);
+  if (!org || !isOrganizationPubliclyVisible(org)) {
     return fallbackMetadata(
       "Organization Profile",
       "View this organization's profile, open positions, and details on IOPPS — Canada's Indigenous professional platform.",
@@ -332,7 +335,7 @@ export async function generateShopJsonLd(slug: string): Promise<JsonLd | null> {
 }
 
 export async function generateScholarshipMetadata(slug: string): Promise<Metadata> {
-  const scholarship = await findFirst(["scholarships"], slug);
+  const scholarship = await opportunityForMetadata("scholarships", slug);
   if (!scholarship) return fallbackMetadata("Scholarship Opportunity", "View scholarship details on IOPPS.ca.", `/scholarships/${slug}`);
   const title = field(scholarship, "title", "name") || "Scholarship Opportunity";
   const provider = field(scholarship, "provider", "organization", "orgName");
@@ -345,7 +348,7 @@ export async function generateScholarshipMetadata(slug: string): Promise<Metadat
 }
 
 export async function generateScholarshipJsonLd(slug: string): Promise<JsonLd | null> {
-  const scholarship = await findFirst(["scholarships"], slug);
+  const scholarship = await opportunityForMetadata("scholarships", slug);
   if (!scholarship) return null;
   return {
     "@context": "https://schema.org",
@@ -359,37 +362,7 @@ export async function generateScholarshipJsonLd(slug: string): Promise<JsonLd | 
   };
 }
 
-export async function generateMemberMetadata(uid: string): Promise<Metadata> {
-  const db = getAdminDb();
-  if (!db) {
-    return fallbackMetadata(
-      "Member Profile",
-      "View this Indigenous professional's profile, experience, and endorsements on IOPPS.",
-    );
-  }
-  try {
-    const doc = await db.collection("members").doc(uid).get();
-    if (!doc.exists) {
-      return fallbackMetadata(
-        "Member Profile",
-        "View this Indigenous professional's profile on IOPPS.",
-      );
-    }
-    const data = doc.data() || {};
-    const name = clean(data.name) || clean(data.displayName) || "IOPPS Member";
-    const headline = clean(data.headline) || clean(data.title);
-    const nation = clean(data.nation);
-    const parts = [headline, nation].filter(Boolean).join(" · ");
-    return buildListingMetadata({
-      title: parts ? `${name} — ${parts}` : name,
-      description: truncate(stripHtml(clean(data.bio)) || `${name} on IOPPS — Canada's Indigenous professional platform.`),
-      path: `/members/${uid}`,
-      type: "article",
-    });
-  } catch {
-    return fallbackMetadata(
-      "Member Profile",
-      "View this Indigenous professional's profile on IOPPS.",
-    );
-  }
+export async function generateMemberMetadata(_uid: string): Promise<Metadata> {
+  void _uid; // Never resolve identity from a legacy profile URL.
+  return fallbackMetadata("Profile", "Manage your own IOPPS profile.", "/profile");
 }

@@ -2,9 +2,32 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  loadOrganizationOnboardingProfile,
   saveOrganizationOnboardingProgress,
   uploadOrganizationOnboardingLogo,
 } from "../src/lib/organization-onboarding-client.ts";
+
+test("onboarding loads the authenticated assigned organization instead of the account UID", async () => {
+  const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+  const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    calls.push({ input, init });
+    return Response.json({ org: { id: "assigned-organization", name: "Assigned organization", description: "Existing profile", type: "business", location: { city: "Regina", province: "Saskatchewan" } } });
+  }) as typeof fetch;
+  const organization = await loadOrganizationOnboardingProfile("different-admin-uid-token", { fetchImpl });
+  assert.equal(organization?.id, "assigned-organization");
+  assert.equal(organization?.description, "Existing profile");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].input, "/api/employer/dashboard");
+  assert.equal((calls[0].init?.headers as Record<string, string>).Authorization, "Bearer different-admin-uid-token");
+  assert.equal(calls[0].init?.cache, "no-store");
+});
+
+test("onboarding distinguishes a missing profile from a failed or unauthorized load", async () => {
+  assert.equal(await loadOrganizationOnboardingProfile("token", { fetchImpl: (async () => Response.json({ org: null })) as typeof fetch }), null);
+  for (const status of [401, 403, 500]) {
+    await assert.rejects(loadOrganizationOnboardingProfile("token", { fetchImpl: (async () => Response.json({ error: "Unable to load assigned organization" }, { status })) as typeof fetch }), /Unable to load assigned organization/);
+  }
+});
 
 test("onboarding logo upload uses the authenticated same-origin API", async () => {
   let request: { input: RequestInfo | URL; init?: RequestInit } | null = null;

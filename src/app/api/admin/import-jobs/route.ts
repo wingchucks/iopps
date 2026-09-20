@@ -1,3 +1,4 @@
+import { prepareImportedDescription } from "@/lib/server/import-content-quality";
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
         company: job.company || "Unknown",
         organization: job.company || "Unknown",
         location: job.location || "",
-        description: job.description || "",
+        ...prepareImportedDescription(typeof job.description === "string" ? job.description : "", job.descriptionFormat),
         employmentType: job.employmentType || "",
         salary: job.salary || "",
         externalUrl: job.externalUrl,

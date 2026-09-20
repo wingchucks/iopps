@@ -58,7 +58,9 @@ export async function requireEmployerContext(
   const adminAuth = deps.adminAuth ?? getAdminAuth();
   const adminDb = deps.adminDb ?? getAdminDb();
 
-  const decoded = await adminAuth.verifyIdToken(getBearerToken(req));
+  let decoded: DecodedIdToken;
+  try { decoded = await adminAuth.verifyIdToken(getBearerToken(req), true); }
+  catch { throw new EmployerApiError(401, "Invalid session"); }
   await assertUserCanAccessApp(decoded as Pick<DecodedIdToken, "uid" | "email">, deps.accountAccessDeps ?? {
     auth: adminAuth,
     db: adminDb,
@@ -75,8 +77,6 @@ export async function requireEmployerContext(
 
   const userRole = typeof userData.role === "string" ? userData.role : null;
   const memberRole = typeof memberData.role === "string" ? memberData.role : null;
-  const claimRole = typeof decoded.role === "string" ? decoded.role : null;
-  const claimEmployerFlag = decoded.employer === true;
   const memberOrgId = typeof memberData.orgId === "string" && memberData.orgId
     ? memberData.orgId
     : null;
@@ -86,34 +86,22 @@ export async function requireEmployerContext(
   const userOrgId = typeof userData.orgId === "string" && userData.orgId
     ? userData.orgId
     : null;
-  const claimEmployerId = typeof decoded.employerId === "string" && decoded.employerId
-    ? decoded.employerId
-    : null;
-  const claimOrgId = typeof decoded.orgId === "string" && decoded.orgId
-    ? decoded.orgId
-    : null;
   const orgLinkSources = {
     memberOrgId,
     userOrgId,
     userEmployerId,
-    claimOrgId,
-    claimEmployerId,
   };
   const linkedOrganization = hasLinkedOrganization(orgLinkSources);
 
   const hasEmployerRole =
     isOrganizationRole(userRole) ||
     isOrganizationRole(memberRole) ||
-    isOrganizationRole(claimRole) ||
-    claimEmployerFlag ||
     linkedOrganization;
 
   const linkedOrgId = resolveLinkedOrganizationId(orgLinkSources);
   const employerId =
     userEmployerId ||
     userOrgId ||
-    claimEmployerId ||
-    claimOrgId ||
     memberOrgId ||
     (hasEmployerRole ? uid : null);
   const orgId = linkedOrgId || (hasEmployerRole ? uid : null);
@@ -124,9 +112,9 @@ export async function requireEmployerContext(
   const orgRole =
     typeof memberData.orgRole === "string" && memberData.orgRole
       ? memberData.orgRole
-      : hasEmployerRole
-        ? "owner"
-        : "member";
+      : typeof userData.orgRole === "string" && userData.orgRole
+        ? userData.orgRole
+        : orgId === uid || employerId === uid ? "owner" : "member";
 
   const organizationDocPromise = adminDb.collection("organizations").doc(orgId).get();
   const employerDocPromise = adminDb.collection("employers").doc(employerId).get();

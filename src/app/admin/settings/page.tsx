@@ -194,18 +194,23 @@ function SaveIcon({ className }: { className?: string }) {
 // ---------------------------------------------------------------------------
 
 function Toggle({
+  label,
   checked,
   onChange,
   disabled,
 }: {
+  label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
 }) {
   return (
     <button
+      type="button"
       role="switch"
+      aria-label={label}
       aria-checked={checked}
+      disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
       className={cn(
         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200",
@@ -553,6 +558,7 @@ export default function AdminSettingsPage() {
             </div>
           ) : (
             <Toggle
+              label="Maintenance Mode"
               checked={!!settings.maintenanceMode}
               onChange={() => setMaintenanceConfirm(true)}
             />
@@ -583,6 +589,7 @@ export default function AdminSettingsPage() {
                   </p>
                 </div>
                 <Toggle
+                  label={flag.label}
                   checked={enabled}
                   onChange={(v) => updateFeatureFlag(flag.key, v)}
                   disabled={saving}
@@ -611,6 +618,7 @@ export default function AdminSettingsPage() {
               </p>
             </div>
             <Toggle
+              label="Show Announcement"
               checked={ann.enabled}
               onChange={(v) => updateAnnouncement("enabled", v)}
               disabled={saving}
@@ -777,7 +785,7 @@ export default function AdminSettingsPage() {
               <button
                 onClick={savePricingSettings}
                 disabled={saving}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg button-gradient px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50"
               >
                 <SaveIcon className="h-3.5 w-3.5" />
                 Save Pricing
@@ -831,7 +839,7 @@ export default function AdminSettingsPage() {
               <button
                 onClick={saveEmailSettings}
                 disabled={saving}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg button-gradient px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50"
               >
                 <SaveIcon className="h-3.5 w-3.5" />
                 Save Email Settings

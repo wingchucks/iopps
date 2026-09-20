@@ -57,6 +57,11 @@ export function mergePublicJobRecords<
   return merged.filter(job => isPublicJobRecordVisible(job));
 }
 
+export function jobMatchesOrganization(job: Record<string, unknown>, organization: Record<string, unknown>): boolean {
+  const identities = new Set([organization.id, organization.employerId, organization.name, organization.shortName, organization.orgName].map(normalizeIdentity).filter(Boolean));
+  return [job.employerId, job.orgId, job.employerName, job.orgName, job.companyName].map(normalizeIdentity).some(identity => !!identity && identities.has(identity));
+}
+
 export function withAuthoritativeJobCounts<
   TOrganization extends Record<string, unknown>,
   TJob extends Record<string, unknown>,

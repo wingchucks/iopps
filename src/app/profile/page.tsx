@@ -19,7 +19,7 @@ import {
   type ApplicationStatus,
 } from "@/lib/firestore/applications";
 import { getUserRSVPs, type RSVP } from "@/lib/firestore/rsvps";
-import { getFollowerCount, getFollowingCount } from "@/lib/firestore/connections";
+
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Footer from "@/components/Footer";
@@ -90,8 +90,6 @@ function ProfileContent() {
   const [apps, setApps] = useState<Application[]>([]);
   const [savedCount, setSavedCount] = useState(0);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -114,19 +112,17 @@ function ProfileContent() {
         setSkillsText(data.skillsText || "");
         setEditInterests(data.interests || []);
       }
-      // Load activity stats, RSVPs, and connection counts
-      const [userApps, saved, userRsvps, followers, following] = await Promise.all([
+      // Load own activity stats and RSVPs
+      const [userApps, saved, userRsvps] = await Promise.all([
         getApplications(user.uid),
         getSavedItems(user.uid),
         getUserRSVPs(user.uid),
-        getFollowerCount(user.uid),
-        getFollowingCount(user.uid),
+
       ]);
       setApps(userApps);
       setSavedCount(saved.length);
       setRsvps(userRsvps);
-      setFollowerCount(followers);
-      setFollowingCount(following);
+
     } catch (err) {
       console.error("Failed to load profile:", err);
     } finally {
@@ -289,7 +285,7 @@ function ProfileContent() {
               {profile?.openToWork && (
                 <Badge
                   text="Open to Work"
-                  color="var(--green)"
+                  color="#6EE7B7"
                   bg="rgba(34,197,94,.15)"
                   small
                 />
@@ -297,7 +293,7 @@ function ProfileContent() {
             </div>
           </div>
           <div className="flex gap-2.5 mt-2 sm:mt-0">
-            <Button
+            <Button className="brand-button"
               small
               onClick={() => {
                 if (editing) {
@@ -308,14 +304,14 @@ function ProfileContent() {
                   setEditSection("identity");
                 }
               }}
-              style={{ color: "#fff", borderColor: "rgba(255,255,255,.25)", background: "rgba(255,255,255,.12)" }}
+              style={{ color: "var(--button-gradient-soft-text)", borderColor: "rgba(255,255,255,.25)", background: "var(--button-gradient-soft)" }}
             >
               {editing ? "Cancel" : "Edit Profile"}
             </Button>
             <Button
               small
               onClick={async () => { await signOut(); router.push("/"); }}
-              style={{ color: "#DC2626", borderColor: "rgba(220,38,38,.3)", background: "rgba(220,38,38,.1)" }}
+              style={{ color: "#FECACA", borderColor: "rgba(220,38,38,.3)", background: "rgba(220,38,38,.1)" }}
             >
               Sign Out
             </Button>
@@ -434,10 +430,14 @@ function ProfileContent() {
                   <textarea
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
+                    aria-describedby="profile-bio-count"
                     rows={4}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal resize-none"
                     placeholder="A few words about yourself..."
                   />
+                  <span id="profile-bio-count" aria-live="polite" className="text-xs text-text-muted mt-1 block text-right">
+                    {`${bio.length} characters`}
+                  </span>
                 </label>
                 <label className="block">
                   <span className="text-sm font-semibold text-text-sec mb-1.5 block">
@@ -517,11 +517,11 @@ function ProfileContent() {
               >
                 Cancel
               </Button>
-              <Button
+              <Button className="brand-button"
                 primary
                 onClick={handleSave}
                 style={{
-                  background: "var(--teal)",
+                  background: "var(--button-gradient)",
                   borderRadius: 14,
                   padding: "12px 24px",
                   opacity: saving ? 0.7 : 1,
@@ -633,35 +633,6 @@ function ProfileContent() {
                   </p>
                 )}
 
-                {/* Connections */}
-                <Card className="mb-5">
-                  <div style={{ padding: 16 }}>
-                    <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">
-                      CONNECTIONS
-                    </p>
-                    <div className="grid grid-cols-2 gap-3 text-center">
-                      {user && (
-                        <>
-                          <Link
-                            href={`/members/${user.uid}/followers`}
-                            className="no-underline hover:opacity-80 transition-opacity"
-                          >
-                            <p className="text-xl font-extrabold text-text mb-0">{followerCount}</p>
-                            <p className="text-[11px] text-text-muted m-0">Followers</p>
-                          </Link>
-                          <Link
-                            href={`/members/${user.uid}/following`}
-                            className="no-underline hover:opacity-80 transition-opacity"
-                          >
-                            <p className="text-xl font-extrabold text-text mb-0">{followingCount}</p>
-                            <p className="text-[11px] text-text-muted m-0">Following</p>
-                          </Link>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-
                 {/* Quick Stats */}
                 <Card>
                   <div style={{ padding: 16 }}>
@@ -704,11 +675,11 @@ function ProfileContent() {
                     <span className="text-lg">&#9989;</span>
                   </span>
                   <div>
-                    <p className="text-sm font-bold m-0" style={{ color: "var(--green)" }}>
+                    <p className="text-sm font-bold m-0" style={{ color: "var(--success-text)" }}>
                       Open to Work
                     </p>
                     <p className="text-xs text-text-muted m-0">
-                      Employers can see you&apos;re looking for opportunities
+                      Your career preferences are saved for your job search
                     </p>
                   </div>
                 </div>

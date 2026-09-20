@@ -64,6 +64,8 @@ function endpointUrl(baseValue, operation) {
     "convert-apply": "/api/hermes/v1/users/convert-to-individual/apply",
     "job-review": "/api/hermes/v1/jobs/approve/review",
     "job-apply": "/api/hermes/v1/jobs/approve/apply",
+    "editorial-review": "/api/hermes/v1/jobs/editorial/review",
+    "editorial-apply": "/api/hermes/v1/jobs/editorial/apply",
     "event-hide-review": "/api/hermes/v1/events/hide/review",
     "event-hide-apply": "/api/hermes/v1/events/hide/apply",
   };
@@ -76,11 +78,11 @@ async function main() {
   const operations = new Set([
     "reconciliation-report",
     "review", "apply", "convert-review", "convert-apply", "job-review", "job-apply",
-    "event-hide-review", "event-hide-apply",
+    "event-hide-review", "event-hide-apply", "editorial-review", "editorial-apply",
   ]);
   if (!operations.has(operation) || !bodyPath) {
     throw new Error(
-      "Usage: node scripts/hermes-admin-client.mjs <review|apply|convert-review|convert-apply|job-review|job-apply|event-hide-review|event-hide-apply|reconciliation-report> <json-body-path>",
+      "Usage: node scripts/hermes-admin-client.mjs <review|apply|convert-review|convert-apply|job-review|job-apply|event-hide-review|event-hide-apply|editorial-review|editorial-apply|reconciliation-report> <json-body-path>",
     );
   }
 

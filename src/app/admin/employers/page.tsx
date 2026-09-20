@@ -219,7 +219,7 @@ function RejectModal({
           <button
             type="button"
             onClick={handleClose}
-            className="rounded-xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--card-border-hover)] hover:text-foreground"
+            className="rounded-xl border border-[var(--card-border)] button-gradient-soft px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--card-border-hover)] hover:text-foreground"
           >
             Cancel
           </button>
@@ -676,7 +676,7 @@ export default function AdminEmployersPage() {
                 )}
                 <Link
                   href={employer.publicHref}
-                  className="inline-flex items-center rounded-xl border border-[var(--card-border)] bg-[var(--input-bg)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--card-border-hover)] hover:text-foreground"
+                  className="inline-flex items-center rounded-xl border border-[var(--card-border)] button-gradient-soft px-3 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--card-border-hover)] hover:text-foreground"
                 >
                   View public page
                 </Link>

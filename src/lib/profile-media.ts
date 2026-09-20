@@ -1,3 +1,5 @@
+import { isIpLiteral, isPublicIpAddress } from "@/lib/public-ip";
+
 export const PROFILE_MEDIA_MAX_BYTES = 5 * 1024 * 1024;
 export const PROFILE_MEDIA_MAX_GALLERY_ITEMS = 6;
 export const PROFILE_MEDIA_ALLOWED_MIME_TYPES = [
@@ -24,10 +26,6 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   webp: "image/webp",
   gif: "image/gif",
 };
-
-function isHex(value: string): boolean {
-  return /^[0-9a-f]+$/i.test(value);
-}
 
 export function isAllowedProfileMediaMimeType(value: string | null | undefined): boolean {
   if (!value) return false;
@@ -79,6 +77,10 @@ export function normalizeCloudImportUrl(value: string): NormalizedCloudImport {
 
   if (parsed.protocol !== "https:") {
     throw new Error("Only HTTPS image links are supported");
+  }
+
+  if (parsed.username || parsed.password || (parsed.port && parsed.port !== "443")) {
+    throw new Error("Image links must use port 443 without URL credentials");
   }
 
   const hostname = parsed.hostname.toLowerCase();
@@ -220,45 +222,16 @@ export function buildProfileMediaStoragePath(args: {
   return `organizations/${args.orgId}/profile/${args.slot}/${randomSuffix}-${fileName}`;
 }
 
+// Compatibility name: all special-use/nonpublic literals are blocked.
 export function isPrivateIpAddress(value: string): boolean {
-  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(value)) {
-    const parts = value.split(".").map((segment) => Number.parseInt(segment, 10));
-    if (parts.length !== 4 || parts.some((part) => Number.isNaN(part) || part < 0 || part > 255)) {
-      return true;
-    }
-
-    if (parts[0] === 10) return true;
-    if (parts[0] === 127) return true;
-    if (parts[0] === 0) return true;
-    if (parts[0] === 169 && parts[1] === 254) return true;
-    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
-    if (parts[0] === 192 && parts[1] === 168) return true;
-    if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) return true;
-    if (parts[0] === 198 && (parts[1] === 18 || parts[1] === 19)) return true;
-    if (parts[0] >= 224) return true;
-    return false;
-  }
-
-  if (!value.includes(":")) return false;
-
-  const normalized = value.toLowerCase();
-  if (normalized === "::1" || normalized === "::") return true;
-  if (normalized.startsWith("fe80:")) return true;
-  if (normalized.startsWith("fc") || normalized.startsWith("fd")) return true;
-
-  const compact = normalized.replace(/:/g, "");
-  if (compact.length >= 2 && isHex(compact.slice(0, 2))) {
-    const prefix = Number.parseInt(compact.slice(0, 2), 16);
-    if ((prefix & 0xfe) === 0xfc) return true;
-  }
-
-  return false;
+  return isIpLiteral(value) && !isPublicIpAddress(value);
 }
 
 export function isBlockedRemoteHostname(value: string): boolean {
-  const hostname = value.trim().toLowerCase();
+  const hostname = value.trim().toLowerCase().replace(/\.$/, "");
   if (!hostname) return true;
   if (hostname === "localhost" || hostname.endsWith(".localhost")) return true;
-  if (hostname.endsWith(".local")) return true;
+  if (hostname.endsWith(".local") || hostname.endsWith(".internal") || hostname.endsWith(".home.arpa")) return true;
+  if (!hostname.includes(".") && !hostname.includes(":")) return true;
   return isPrivateIpAddress(hostname);
 }

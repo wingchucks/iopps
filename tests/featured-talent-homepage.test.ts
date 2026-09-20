@@ -18,17 +18,20 @@ test("former current Featured Talent profile is removed", () => {
 
 test("homepage section now supports Indigenous businesses", () => {
   const home = read("src/app/page.tsx");
-  const spotlightIndex = home.indexOf("Indigenous Business Spotlight");
+  const jobsIndex = home.indexOf('<section className="op-jobs"');
+  const liveIndex = home.indexOf('<section className="journey-live"');
+  const spotlightIndex = home.indexOf('<section className="entrepreneurship');
   const partnerIndex = home.indexOf("<PartnerShowcase");
 
-  assert.ok(spotlightIndex > -1, "homepage should feature the Indigenous Business Spotlight");
+  assert.ok(jobsIndex > -1 && liveIndex > jobsIndex && spotlightIndex > liveIndex, "homepage must prioritize jobs, then IOPPS Live, then Indigenous businesses");
   assert.ok(partnerIndex > -1, "homepage should keep the partner section");
-  assert.ok(partnerIndex < spotlightIndex, "partners should appear before business discovery");
-  assert.match(home, /Your business could be featured next/);
-  assert.match(home, /Add Your Business Free/);
-  assert.match(home, /Browse Indigenous Businesses/);
+  assert.ok(partnerIndex > spotlightIndex, "partner showcase follows the three primary journeys");
+  assert.match(home, /Indigenous Entrepreneurship/);
+  assert.match(home, /Create your business page/);
+  assert.match(home, /href="\/signup\?intent=indigenous-business"/);
+  assert.match(home, /Discover Indigenous businesses/);
   assert.match(home, /href="\/businesses\?type=Indigenous"/);
-  assert.match(home, /Complete business profiles can also be considered for a free IOPPS spotlight/);
+  assert.match(home, /href="\/funding"/);
 });
 
 test("Indigenous Business Spotlight gives the real signup path and precise free offer", () => {

@@ -8,11 +8,11 @@ import {
   updatePassword,
   EmailAuthProvider,
   reauthenticateWithCredential,
-  deleteUser,
 } from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { useToast } from "@/lib/toast-context";
-import { updateMemberProfile, deleteMemberProfile } from "@/lib/firestore/members";
+import { updateMemberProfile, deleteOwnAccount } from "@/lib/firestore/members";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
@@ -63,7 +63,7 @@ function AccountContent() {
       showToast("Display name updated");
     } catch (err) {
       console.error("Failed to update display name:", err);
-      showToast("Failed to update name. Please try again.", "error");
+      showToast(authErrorMessage(err, "Failed to update name. Please try again."), "error");
     } finally {
       setSavingName(false);
     }
@@ -95,13 +95,7 @@ function AccountContent() {
       setConfirmPassword("");
       showToast("Password changed successfully");
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to change password.";
-      if (message.includes("wrong-password") || message.includes("invalid-credential")) {
-        setPasswordError("Current password is incorrect.");
-      } else {
-        setPasswordError(message);
-      }
+      setPasswordError(authErrorMessage(err, "Unable to change your password. Please try again."));
     } finally {
       setSavingPassword(false);
     }
@@ -117,17 +111,11 @@ function AccountContent() {
         deletePassword
       );
       await reauthenticateWithCredential(user, credential);
-      await deleteMemberProfile(user.uid);
-      await deleteUser(user);
+      await deleteOwnAccount(user.uid);
+      await signOut();
       router.push("/");
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to delete account.";
-      if (message.includes("wrong-password") || message.includes("invalid-credential")) {
-        setDeleteError("Password is incorrect.");
-      } else {
-        setDeleteError(message);
-      }
+      setDeleteError(authErrorMessage(err, "Unable to delete your account. If you manage an organization, transfer its ownership or contact support before trying again."));
     } finally {
       setDeleting(false);
     }
@@ -163,9 +151,9 @@ function AccountContent() {
             <button
               onClick={handleUpdateName}
               disabled={savingName || !displayName.trim()}
-              className="px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+              className="brand-button px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
               style={{
-                background: "var(--teal)",
+                background: "var(--button-gradient)",
                 opacity: savingName || !displayName.trim() ? 0.5 : 1,
               }}
             >
@@ -231,9 +219,9 @@ function AccountContent() {
               disabled={
                 savingPassword || !currentPassword || !newPassword || !confirmPassword
               }
-              className="px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+              className="brand-button px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
               style={{
-                background: "var(--teal)",
+                background: "var(--button-gradient)",
                 opacity:
                   savingPassword ||
                   !currentPassword ||
@@ -287,8 +275,9 @@ function AccountContent() {
             Delete Account
           </h3>
           <p className="text-xs text-text-muted mb-3">
-            Permanently delete your account and all associated data. This action
-            cannot be undone.
+            Permanently remove your sign-in and member profile. Applications and
+            messages you already shared may remain with their recipients. This
+            action cannot be undone.
           </p>
           {!showDelete ? (
             <button
@@ -323,11 +312,11 @@ function AccountContent() {
                     setDeletePassword("");
                     setDeleteError("");
                   }}
-                  className="px-5 py-2.5 rounded-xl font-semibold text-sm cursor-pointer"
+                  className="brand-button px-5 py-2.5 rounded-xl font-semibold text-sm cursor-pointer"
                   style={{
                     border: "1.5px solid var(--border)",
-                    background: "var(--card)",
-                    color: "var(--text)",
+                    background: "var(--button-gradient-soft)",
+                    color: "var(--button-gradient-soft-text)",
                   }}
                 >
                   Cancel

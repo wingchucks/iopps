@@ -8,7 +8,6 @@ import { getAppCheckTokenValue } from "@/lib/firebase";
 
 const ORG_TYPES = [
   { value: "employer", label: "Employer / Business", desc: "Post jobs and find Indigenous talent" },
-  { value: "school", label: "School / Training", desc: "List programs, courses, and scholarships" },
   { value: "business", label: "Indigenous Business", desc: "Showcase your products and services" },
   { value: "nonprofit", label: "Non-Profit / Organization", desc: "Share events, scholarships, and opportunities" },
   { value: "legal", label: "Legal Services", desc: "Law firms and legal service providers" },
@@ -185,7 +184,7 @@ function OrgUpgradeContent() {
                   setError("");
                   setStep(2);
                 }}
-                className="w-full py-3 rounded-xl bg-teal text-white font-bold hover:bg-teal/90 transition-colors mt-2"
+                className="w-full py-3 rounded-xl button-gradient text-white font-bold hover:bg-teal/90 transition-colors mt-2"
               >
                 Continue →
               </button>
@@ -242,7 +241,7 @@ function OrgUpgradeContent() {
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex-2 flex-grow py-3 rounded-xl bg-teal text-white font-bold hover:bg-teal/90 transition-colors disabled:opacity-50"
+                  className="flex-2 flex-grow py-3 rounded-xl button-gradient text-white font-bold hover:bg-teal/90 transition-colors disabled:opacity-50"
                 >
                   {loading ? "Setting up…" : "Create Organization Page →"}
                 </button>

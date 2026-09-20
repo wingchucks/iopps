@@ -73,15 +73,12 @@ export default function AboutPage() {
               <span>&mdash; Funding opportunities for students, entrepreneurs, and community projects.</span>
             </li>
             <li className="flex gap-3">
-              <span className="text-teal font-bold shrink-0">Shop Indigenous</span>
-              <span>&mdash; A marketplace to discover and support Indigenous-owned businesses.</span>
+              <span className="text-teal font-bold shrink-0">Indigenous Entrepreneurship</span>
+              <span>&mdash; Discover Indigenous businesses and find entrepreneurship resources.</span>
             </li>
+
             <li className="flex gap-3">
-              <span className="text-teal font-bold shrink-0">Schools &amp; Programs</span>
-              <span>&mdash; Training, education, and skills development programs.</span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-teal font-bold shrink-0">IOPPS Spotlight</span>
+              <span className="text-teal font-bold shrink-0">IOPPS Live</span>
               <span>&mdash; Live streams, interviews, and stories from the community.</span>
             </li>
           </ul>
@@ -107,8 +104,8 @@ export default function AboutPage() {
           <div className="flex gap-4 flex-wrap">
             <Link
               href="/signup"
-              className="inline-block text-sm font-bold no-underline rounded-xl px-6 py-3 transition-opacity hover:opacity-90"
-              style={{ background: "var(--teal)", color: "#fff" }}
+              className="brand-button inline-block text-sm font-bold no-underline rounded-xl px-6 py-3 transition-opacity hover:opacity-90"
+              style={{ background: "var(--button-gradient)", color: "#fff" }}
             >
               Join the Community
             </Link>

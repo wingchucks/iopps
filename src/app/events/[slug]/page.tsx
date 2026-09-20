@@ -8,8 +8,9 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ShareButton from "@/components/ShareButton";
-import { getPost } from "@/lib/firestore/posts";
-import { savePost, unsavePost } from "@/lib/firestore/savedItems";
+import { createEventCalendar } from "@/lib/event-calendar";
+import { plainOpportunityText } from "@/lib/opportunity-posting";
+import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import {
   getRSVP,
   setRSVP,
@@ -21,9 +22,7 @@ import { useAuth } from "@/lib/auth-context";
 import ReportButton from "@/components/ReportButton";
 import {
   getEventDisplayDates,
-  isPublicEventVisible,
   normalizeEventTypeLabel,
-  normalizePublicEvent,
 } from "@/lib/public-events";
 import { buildLoginRedirectHref, displayAmount, displayLocation } from "@/lib/utils";
 
@@ -34,6 +33,14 @@ type EventData = {
   slug?: string;
   description?: string;
   dates?: string;
+  startDate?: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  timeZone?: string;
+  imageUrl?: string;
+  sourceUrl?: string;
+  delivery?: string;
   location?: string | { city?: string; venue?: string; province?: string; remote?: boolean };
   eventType?: string;
   orgName?: string;
@@ -58,32 +65,9 @@ export default function EventDetailPage() {
   );
 }
 
-function generateICS(event: EventData): string {
-  const now = new Date();
-  const formatDate = (d: Date) =>
-    d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-  const uid = `${event.id}@iopps.ca`;
-  const start = formatDate(now);
-  const end = formatDate(new Date(now.getTime() + 2 * 60 * 60 * 1000));
-  const lines = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//IOPPS//Event//EN",
-    "BEGIN:VEVENT",
-    `UID:${uid}`,
-    `DTSTART:${start}`,
-    `DTEND:${end}`,
-    `SUMMARY:${event.title}`,
-    `DESCRIPTION:${event.dates || ""} - ${event.description?.substring(0, 200) || ""}`,
-    `LOCATION:${event.location || ""}`,
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ];
-  return lines.join("\r\n");
-}
-
 function downloadICS(event: EventData) {
-  const ics = generateICS(event);
+  const ics = createEventCalendar(event);
+  if (!ics) return;
   const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -99,6 +83,8 @@ function EventDetailContent() {
   const params = useParams();
   const slug = params.slug as string;
   const [event, setEvent] = useState<EventData | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const [attempt, setAttempt] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [rsvpStatus, setRsvpStatus] = useState<RSVPStatus | null>(null);
@@ -111,61 +97,25 @@ function EventDetailContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    let live = true;
+    const abort = new AbortController();
+    setLoading(true); setLoadError(""); setEvent(null); setSaved(false); setRsvpStatus(null);
     async function load() {
       try {
-        let data: EventData | null = null;
-
-        const eventRes = await fetch(`/api/events/${slug}`);
-        if (eventRes.ok) {
-          const payload = await eventRes.json();
-          data = payload?.event ?? null;
-        }
-
-        // Fallback: posts collection
-        if (!data) {
-          const post = await getPost(`event-${slug}`);
-          if (post) {
-            data = normalizePublicEvent({
-              id: post.id,
-              title: post.title,
-              slug: post.slug || slug,
-              description: post.description,
-              dates: post.dates,
-              location: post.location,
-              eventType: post.eventType,
-              orgName: post.orgName,
-              price: post.price,
-              schedule: post.schedule,
-              highlights: post.highlights,
-              type: post.type,
-              rsvpLink: (post as unknown as Record<string, unknown>).rsvpLink as string | undefined,
-            }) as EventData;
-          }
-        }
-
-        if (data && !isPublicEventVisible(data)) {
-          data = null;
-        }
-
-        setEvent(data ? (normalizePublicEvent(data as unknown as Record<string, unknown>) as EventData) : null);
+        const response = await fetch(`/api/events/${encodeURIComponent(slug)}`, { signal: abort.signal, cache: "no-store" });
+        if (!response.ok && response.status !== 404) throw new Error("The event could not load. Please try again.");
+        const data = response.ok ? (await response.json()).event as EventData : null;
         if (data && user) {
-          const [existingRsvp, count] = await Promise.all([
-            getRSVP(user.uid, data.id),
-            getEventRSVPCount(data.id),
-          ]);
-          if (existingRsvp) {
-            setRsvpStatus(existingRsvp.status);
-          }
-          setGoingCount(count);
+          const [rsvp, count, savedItem] = await Promise.all([getRSVP(user.uid, data.id).catch(() => null), getEventRSVPCount(data.id).catch(() => 0), isPostSaved(user.uid, data.id).catch(() => false)]);
+          if (live) { setRsvpStatus(rsvp?.status || null); setGoingCount(count); setSaved(savedItem); }
         }
-      } catch (err) {
-        console.error("Failed to load event:", err);
-      } finally {
-        setLoading(false);
-      }
+        if (live) setEvent(data);
+      } catch (error) { if (live) setLoadError(error instanceof Error ? error.message : "The event could not load."); }
+      finally { if (live) setLoading(false); }
     }
-    load();
-  }, [slug, user]);
+    void load();
+    return () => { live = false; abort.abort(); };
+  }, [slug, user, attempt]);
 
   const handleSave = async () => {
     if (!event) return;
@@ -188,6 +138,7 @@ function EventDetailContent() {
       }
     } catch (err) {
       console.error("Save failed:", err);
+      setActionNotice("Your saved event could not update. Please try again.");
     } finally {
       setActionLoading("");
     }
@@ -195,18 +146,19 @@ function EventDetailContent() {
 
   // C-3: when returning from login with ?save=1 intent, auto-fire save once
   useEffect(() => {
-    if (!user || !event || saved) return;
+    if (!user || !event || loading) return;
     if (searchParams?.get("save") !== "1") return;
     const cleanQs = new URLSearchParams(searchParams.toString());
     cleanQs.delete("save");
     const qs = cleanQs.toString();
     router.replace(qs ? `${pathname}?${qs}` : (pathname || `/events/${slug}`));
-    void handleSave();
+    if (!saved) void handleSave();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, event, saved]);
+  }, [user, event, saved, loading]);
 
   const handleRsvp = async (status: RSVPStatus) => {
-    if (!user || !event) return;
+    if (!event) return;
+    if (!user) { router.push(buildLoginRedirectHref(`${pathname || `/events/${slug}`}?rsvp=${status}`)); return; }
     setActionLoading(`rsvp-${status}`);
     try {
       if (rsvpStatus === status) {
@@ -237,10 +189,22 @@ function EventDetailContent() {
       }
     } catch (err) {
       console.error("RSVP failed:", err);
+      setActionNotice("Your RSVP could not update. Please try again.");
     } finally {
       setActionLoading("");
     }
   };
+
+  useEffect(() => {
+    const intent = searchParams?.get("rsvp");
+    if (!user || !event || loading || !["going", "interested", "not_going"].includes(intent || "")) return;
+    const clean = new URLSearchParams(searchParams.toString()); clean.delete("rsvp");
+    router.replace(`${pathname}${clean.size ? `?${clean}` : ""}`);
+    if (rsvpStatus !== intent) void handleRsvp(intent as RSVPStatus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, event, loading]);
+
+  if (loadError) return <div className="mx-auto max-w-xl p-8 text-center" role="alert"><h1 className="text-2xl font-bold">Event couldn’t load</h1><p className="my-4">{loadError}</p><Button onClick={() => setAttempt(n => n + 1)}>Try again</Button></div>;
 
   if (loading) {
     return (
@@ -248,7 +212,7 @@ function EventDetailContent() {
         <div className="skeleton h-4 w-24 rounded mb-4" />
         <div className="skeleton h-[200px] rounded-2xl mb-6" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
+          <div className="min-w-0 md:col-span-2">
             <div className="skeleton h-[150px] rounded-2xl" />
           </div>
           <div>
@@ -273,10 +237,10 @@ function EventDetailContent() {
   }
 
   const eventTypeLabel = normalizeEventTypeLabel(event.eventType);
-  const emoji = eventTypeLabel === "Pow Wow" ? "\u{1FAB6}" : eventTypeLabel === "Career Fair" ? "\u{1F4BC}" : eventTypeLabel === "Round Dance" ? "\u{1F483}" : "\u{1F3AA}";
+  const emoji = "↗";
   const displayDates = getEventDisplayDates(event);
   const priceLabel = displayAmount(event.price);
-  const descriptionHasHtml = typeof event.description === "string" && event.description.includes("<");
+
 
   const rsvpButtons: { status: RSVPStatus; label: string; icon: string }[] = [
     { status: "going", label: "Going", icon: "\u2714" },
@@ -298,7 +262,7 @@ function EventDetailContent() {
       <div
         className="rounded-2xl mb-6 relative overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, rgba(15,43,76,.06), rgba(217,119,6,.08))",
+          background: "linear-gradient(135deg, rgba(15,43,76,.06), rgba(13,148,136,.1))",
           padding: "clamp(24px, 4vw, 48px)",
         }}
       >
@@ -312,9 +276,9 @@ function EventDetailContent() {
               <Badge text="Free Event" color="var(--green)" bg="var(--green-soft)" small />
             )}
           </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-text mb-2">{event.title}</h1>
+          <h1 className="break-words text-2xl sm:text-4xl font-extrabold text-text mb-2">{event.title}</h1>
           <div className="flex flex-wrap justify-center gap-4 text-sm text-text-sec">
-            {displayDates && <span>&#128197; {displayDates}</span>}
+            {displayDates && <span>&#128197; {displayDates}{event.timeZone ? ` · ${event.timeZone}` : ""}</span>}
             {event.location && <span>&#128205; {displayLocation(event.location)}</span>}
             {priceLabel && <span>&#127915; {priceLabel}</span>}
           </div>
@@ -323,21 +287,15 @@ function EventDetailContent() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Main Content */}
-        <div className="md:col-span-2">
+        <div className="min-w-0 md:col-span-2">
+          {event.sourceUrl && <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" className="mb-5 mr-4 inline-flex min-h-11 items-center font-bold text-teal underline">Organizer information ↗</a>}
+          {!event.sourceUrl && !event.imageUrl && !event.rsvpLink && !event.contactEmail && !event.contactPhone && <p className="mb-5 rounded-xl border border-border p-4 text-sm text-text-sec">Organizer contact details have not been supplied. Confirm arrangements before travelling.</p>}
+          {event.imageUrl && <a href={event.imageUrl} target="_blank" rel="noopener noreferrer" className="mb-5 inline-flex min-h-11 items-center font-bold text-teal underline">View event poster ↗</a>}
           {/* Description */}
           {event.description && (
             <>
               <h3 className="text-lg font-bold text-text mb-2">About This Event</h3>
-              {descriptionHasHtml ? (
-                <div
-                  className="text-sm text-text-sec leading-relaxed mb-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: event.description }}
-                />
-              ) : (
-                <p className="text-sm text-text-sec leading-relaxed mb-6 whitespace-pre-line">
-                  {event.description}
-                </p>
-              )}
+              <p className="mb-6 whitespace-pre-line break-words text-sm leading-relaxed text-text-sec">{plainOpportunityText(event.description)}</p>
             </>
           )}
 
@@ -434,9 +392,9 @@ function EventDetailContent() {
                   href={event.rsvpLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold no-underline cursor-pointer transition-opacity hover:opacity-90 mb-4"
+                  className="brand-button flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold no-underline cursor-pointer transition-opacity hover:opacity-90 mb-4"
                   style={{
-                    background: "var(--teal)",
+                    background: "var(--button-gradient)",
                     color: "#fff",
                     border: "none",
                   }}
@@ -489,7 +447,7 @@ function EventDetailContent() {
 
               {actionNotice && (
                 <div className="mb-3 rounded-xl border px-3 py-2 text-xs" style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--text-sec)" }}>
-                  {actionNotice}
+                  <span role="status">{actionNotice}</span>
                 </div>
               )}
 
@@ -497,6 +455,7 @@ function EventDetailContent() {
               <Button
                 full
                 onClick={() => downloadICS(event)}
+                disabled={!createEventCalendar(event)}
                 style={{
                   borderRadius: 14,
                   padding: "12px 24px",
@@ -504,13 +463,16 @@ function EventDetailContent() {
                   marginBottom: 12,
                 }}
               >
-                &#128197; Add to Calendar
+                &#128197; Add event dates
               </Button>
+
+              <p className="mb-4 text-xs leading-relaxed text-text-muted">{createEventCalendar(event) ? "Adds the event dates as all-day calendar entries. Confirm times with the organizer." : "Calendar download will be available when event dates are confirmed."}</p>
 
               {/* Save */}
               <Button
                 full
                 onClick={handleSave}
+                disabled={actionLoading !== ""}
                 style={{
                   borderRadius: 14,
                   padding: "12px 24px",

@@ -104,7 +104,7 @@ function RoleDropdown({
           setOpen(!open);
         }}
         disabled={loading}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--card-border)] bg-[var(--input-bg)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--card-border-hover)] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--card-border)] button-gradient-soft px-3 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--card-border-hover)] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
         aria-expanded={open}
         aria-haspopup="listbox"
       >
@@ -162,6 +162,7 @@ function getInitials(name: string) {
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [canChangeRoles, setCanChangeRoles] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -186,10 +187,12 @@ export default function AdminUsersPage() {
 
       const data = await res.json();
       setUsers(data.users || []);
+      setCanChangeRoles(data.capabilities?.canChangeRoles === true);
     } catch (err) {
       console.error("Error fetching users:", err);
       setError("Failed to load users.");
       setUsers([]);
+      setCanChangeRoles(false);
     } finally {
       setLoading(false);
     }
@@ -417,12 +420,12 @@ export default function AdminUsersPage() {
               className: "text-right",
               render: (userRow) => (
                 <div className="flex justify-end">
-                  <RoleDropdown
+                  {canChangeRoles && <RoleDropdown
                     currentRole={userRow.role}
                     userId={userRow.id}
                     onRoleChange={handleRoleChange}
                     loading={actionLoading === userRow.id}
-                  />
+                  />}
                 </div>
               ),
             },
@@ -454,12 +457,12 @@ export default function AdminUsersPage() {
               </div>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-[var(--text-muted)]">Joined {formatDate(userRow.createdAt)}</p>
-                <RoleDropdown
+                {canChangeRoles && <RoleDropdown
                   currentRole={userRow.role}
                   userId={userRow.id}
                   onRoleChange={handleRoleChange}
                   loading={actionLoading === userRow.id}
-                />
+                />}
               </div>
             </div>
           )}

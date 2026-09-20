@@ -33,14 +33,14 @@ test("signup presents the personal account type as Individual", () => {
   assert.match(signup, /selected=\{role === "community"\}/);
 });
 
-test("public profile role badges use Individual", () => {
+test("own profile role badges use Individual while peer profile browsing stays retired", () => {
   const labels = source("src/lib/account-labels.ts");
   const ownProfile = source("src/app/profile/page.tsx");
   const memberProfile = source("src/app/members/[uid]/page.tsx");
-  const sidebar = source("src/components/FeedSidebar.tsx");
 
   assert.match(labels, /community: "Individual"/);
-  for (const file of [ownProfile, memberProfile, sidebar]) {
+  assert.match(memberProfile, /redirect\("\/profile"\)/);
+  for (const file of [ownProfile]) {
     assert.match(file, /getPublicAccountTypeLabel/);
     assert.doesNotMatch(file, /"Community Member"/);
   }
@@ -53,7 +53,6 @@ test("missing display names use IOPPS Member rather than an account-type label",
   for (const path of [
     "src/app/api/profile/route.ts",
     "src/app/api/posts/route.ts",
-    "src/components/CreatePostModal.tsx",
   ]) {
     const file = source(path);
     assert.match(file, /ANONYMOUS_MEMBER_NAME/);

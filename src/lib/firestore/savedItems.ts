@@ -1,6 +1,7 @@
 import {
   collection,
   getDocs,
+  getDocsFromServer,
   setDoc,
   deleteDoc,
   doc,
@@ -49,14 +50,25 @@ export async function savePost(
   postOrgName?: string
 ): Promise<void> {
   const docId = `${userId}_${postId}`;
-  await setDoc(doc(db, "saved_items", docId), {
-    userId,
-    postId,
-    postTitle,
-    postType,
-    ...(postOrgName ? { postOrgName } : {}),
-    savedAt: serverTimestamp(),
-  });
+  // Own-user queries are permitted even when no document exists; direct reads
+  // of missing documents are not. Rules deny updates to existing saved items.
+  const savedQuery = query(col, where("userId", "==", userId), where("postId", "==", postId));
+  if (!(await getDocsFromServer(savedQuery)).empty) return;
+  try {
+    await setDoc(doc(db, "saved_items", docId), {
+      userId,
+      postId,
+      postTitle,
+      postType,
+      ...(postOrgName ? { postOrgName } : {}),
+      savedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    // Another tab may have created the same save. Only server-confirmed own
+    // data can acknowledge success; offline/cache state cannot consume intent.
+    if (!(await getDocsFromServer(savedQuery)).empty) return;
+    throw error;
+  }
 }
 
 export async function unsavePost(

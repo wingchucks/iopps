@@ -1,9 +1,9 @@
+import SkipToContent from "@/components/SkipToContent";
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { ToastProvider } from "@/lib/toast-context";
-import { OnboardingProvider } from "@/lib/onboarding-context";
 import AuthErrorBoundary from "@/components/AuthErrorBoundary";
 import SessionManager from "@/components/SessionManager";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
@@ -11,6 +11,7 @@ import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { serializeJsonLd, siteJsonLd } from "@/lib/server/seo";
 import "./globals.css";
 import "./opportunity.css";
+import "./buttons.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -87,23 +88,16 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: swScript }} />
       </head>
       <body className={`${geistSans.variable} antialiased`}>
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-navy"
-        >
-          Skip to content
-        </a>
+        <SkipToContent />
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider>
-              <OnboardingProvider>
                 <AuthErrorBoundary>
                   <SessionManager />
                   <AnalyticsTracker />
                   <GoogleAnalytics />
                   <main id="main-content">{children}</main>
                 </AuthErrorBoundary>
-              </OnboardingProvider>
             </ToastProvider>
           </AuthProvider>
         </ThemeProvider>

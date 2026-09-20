@@ -4,8 +4,9 @@ import React, { Suspense, useState, useCallback, useRef } from "react";
 import { authIntentHref, postSignupDestination, signupPasswordError } from "@/lib/auth-redirect";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { auth, getAppCheckTokenValue, storage } from "@/lib/firebase";
+import { getAppCheckTokenValue, storage } from "@/lib/firebase";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 import {
   BackgroundMesh, TopBar, ProgressBar, StepDots, StepHeader,
@@ -56,9 +57,9 @@ function UnifiedSignupContent() {
 
   const [step, setStep] = useState(1);
   const formStartedAtRef = useRef(Date.now());
-  const [role, setRole] = useState<Role>(searchParams.get("resume") === "organization" ? "organization" : entrepreneurIntent ? "organization" : "");
+  const [role, setRole] = useState<Role>(searchParams.get("resume") === "organization" ? "organization" : (entrepreneurIntent || searchParams.get("type") === "employer") ? "organization" : "");
   const [websiteTrap, setWebsiteTrap] = useState("");
-  const [orgType, setOrgType] = useState<OrgType>(searchParams.get("resume") === "organization" ? (searchParams.get("type") === "school" ? "school" : "employer") : entrepreneurIntent ? "employer" : "");
+  const [orgType, setOrgType] = useState<OrgType>(searchParams.get("resume") === "organization" ? "employer" : (entrepreneurIntent || searchParams.get("type") === "employer") ? "employer" : "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   // C-5: field-level validation errors keyed by input id (name, email, password, confirmPassword)
@@ -69,6 +70,11 @@ function UnifiedSignupContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [accountUid, setAccountUid] = useState<string | null>(null);
+  const [verificationEmailSent, setVerificationEmailSent] = useState(false);
+  const [signupNotice, setSignupNotice] = useState("");
+  const [deliveryNotice, setDeliveryNotice] = useState("");
 
 
   // School
@@ -87,7 +93,7 @@ function UnifiedSignupContent() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [admissionsEmail, setAdmissionsEmail] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState(["tier3", "standard-post", "featured-post", "program-post"].includes(searchParams.get("plan") || "") ? searchParams.get("plan")! : "");
+  const [selectedPlan, setSelectedPlan] = useState(["tier1", "tier2", "featured-post"].includes(searchParams.get("plan") || "") ? searchParams.get("plan")! : "");
 
   // Employer
   const [orgName, setOrgName] = useState("");
@@ -97,7 +103,7 @@ function UnifiedSignupContent() {
   const [empServices, setEmpServices] = useState("");
   const [empProvince, setEmpProvince] = useState("");
   const [empCity, setEmpCity] = useState("");
-  const [capabilities, setCapabilities] = useState<string[]>(["post_jobs"]);
+  const [capabilities, setCapabilities] = useState<string[]>(searchParams.get("intent") === "hiring" ? ["post_jobs"] : ["list_business"]);
   const [empLogoFile, setEmpLogoFile] = useState<File | null>(null);
   const [empBannerFile, setEmpBannerFile] = useState<File | null>(null);
 
@@ -128,8 +134,10 @@ function UnifiedSignupContent() {
     : memberDestination;
 
   const handleCreateAccount = async () => {
+    if (submitting) return;
+    if (!consent) { setError("Please agree to the Terms of Service and Privacy Policy before creating an account."); return; }
     if (user) {
-      goTo(user.emailVerified ? (role === "organization" ? (orgType === "school" ? 4 : 10) : 3) : 3);
+      setError("You’re already signed in. Sign out before creating a different account, or continue from your account dashboard.");
       return;
     }
     setError("");
@@ -162,13 +170,16 @@ function UnifiedSignupContent() {
     setFieldErrors({});
     setSubmitting(true);
     try {
-        await signUp(name, email, password, verificationDestination);
+        const outcome = await signUp(name, email, password, verificationDestination);
+        setAccountUid(outcome.user.uid);
+        setVerificationEmailSent(outcome.verificationEmailSent);
+        setDeliveryNotice(outcome.verificationError);
+        setSignupNotice([outcome.profileError, !outcome.sessionReady ? "Your account was created, but your session needs attention. Please sign in again to continue." : ""].filter(Boolean).join(" "));
         try {
-          const { getAuth } = await import("firebase/auth");
-          const cu = getAuth().currentUser;
-          if (cu) {
+          const cu = outcome.user;
+          if (outcome.sessionReady) {
             const t = await cu.getIdToken();
-            await fetch("/api/profile", {
+            const profileResponse = await fetch("/api/profile", {
               method: "PATCH",
               headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
               body: JSON.stringify({
@@ -176,22 +187,27 @@ function UnifiedSignupContent() {
                 ...(role === "community" ? { signupRole: "community" } : {}),
               }),
             });
+            if (!profileResponse.ok) throw new Error("Profile save unavailable");
           }
-        } catch { /* non-blocking */ }
+        } catch {
+          setSignupNotice(previous => [previous, "Your account was created, but your profile details could not be saved. Please finish them in setup."].filter(Boolean).join(" "));
+        }
         goTo(3);
       }
-    catch (err: unknown) { setError(err instanceof Error ? err.message : "Signup failed"); }
+    catch (err: unknown) { setError(authErrorMessage(err, "Signup failed. Please try again.")); }
     finally { setSubmitting(false); }
   };
 
   const handleGoogle = async () => {
+    if (submitting) return;
+    if (!consent) { setError("Please agree to the Terms of Service and Privacy Policy before creating an account."); return; }
     setError(""); setSubmitting(true);
     try {
         const cred = await signInWithGoogle();
         try {
           if (cred?.user) {
             const t = await cred.user.getIdToken();
-            await fetch("/api/profile", {
+            const profileResponse = await fetch("/api/profile", {
               method: "PATCH",
               headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
               body: JSON.stringify({
@@ -199,29 +215,37 @@ function UnifiedSignupContent() {
                 ...(role === "community" ? { signupRole: "community" } : {}),
               }),
             });
+            if (!profileResponse.ok) throw new Error("Profile save unavailable");
           }
-        } catch { /* non-blocking */ }
+        } catch {
+          setSignupNotice("You’re signed in, but your profile details could not be saved. Please finish them in setup.");
+        }
+        setAccountUid(cred.user.uid);
+        setEmail(cred.user.email || "");
+        if (!cred.user.emailVerified) {
+          goTo(3);
+          return;
+        }
         if (role === "organization") {
           goTo(orgType === "school" ? 4 : 10);
         } else {
           router.push(memberDestination);
         }
       }
-    catch (err: unknown) { setError(err instanceof Error ? err.message : "Google sign-in failed"); }
+    catch (err: unknown) { setError(authErrorMessage(err, "Google sign-in failed. Please try again.")); }
     finally { setSubmitting(false); }
   };
 
   const handleContinueAfterVerification = async () => {
     setError("");
-    if (!user) {
-      setError("Your session expired. Please sign in again.");
+    if (!user || (accountUid && user.uid !== accountUid)) {
+      setError("Please sign in to the account you just created before continuing.");
       return;
     }
 
     setSubmitting(true);
     try {
-      await reloadUser();
-      if (!auth.currentUser?.emailVerified) {
+      if (!await reloadUser(accountUid || user.uid)) {
         setError("Please verify your email before continuing.");
         return;
       }
@@ -231,6 +255,8 @@ function UnifiedSignupContent() {
       } else {
         router.push(memberDestination);
       }
+    } catch (err: unknown) {
+      setError(authErrorMessage(err, "We couldn’t verify your session. Please retry."));
     } finally {
       setSubmitting(false);
     }
@@ -238,12 +264,15 @@ function UnifiedSignupContent() {
 
   const handleResendVerification = async () => {
     if (submitting) return;
+    if (!user || (accountUid && user.uid !== accountUid)) { setError("Please sign in to the account you just created before requesting another email."); return; }
     setError("");
     setSubmitting(true);
     try {
-      await sendVerificationEmail(verificationDestination);
+      const sent = await sendVerificationEmail(verificationDestination, accountUid || user.uid);
+      setVerificationEmailSent(sent);
+      if (sent) setDeliveryNotice("");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to resend verification email");
+      setError(authErrorMessage(err, "Failed to resend verification email. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -304,7 +333,7 @@ function UnifiedSignupContent() {
       const checkoutIntent = new URLSearchParams(searchParams.toString());
       checkoutIntent.set("plan", selectedPlan);
       router.push(postSignupDestination(checkoutIntent, "/org/plans"));
-    } catch (err: unknown) { setError(err instanceof Error ? err.message : "Failed to submit"); }
+    } catch (err: unknown) { setError(authErrorMessage(err, "We couldn’t save your organization profile. Check the required details and try again.")); }
     finally { setSubmitting(false); }
   };
 
@@ -353,7 +382,7 @@ function UnifiedSignupContent() {
       } else {
         goTo(13); // success+verify step
       }
-    } catch (err: unknown) { setError(err instanceof Error ? err.message : "Failed to submit"); }
+    } catch (err: unknown) { setError(authErrorMessage(err, "We couldn’t save your organization profile. Check the required details and try again.")); }
     finally { setSubmitting(false); }
   };
 
@@ -393,17 +422,18 @@ function UnifiedSignupContent() {
         </div>
         <StepDots labels={labels} current={current} />
 
-        {error && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: CSS.error }}>{error}</div>}
+        {(signupNotice || deliveryNotice) && <div role="status" style={{ marginBottom: 24 }}>{signupNotice} {deliveryNotice} <a href={authIntentHref("/login", searchParams)}>Sign in</a></div>}
+        {error && <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: CSS.error }}>{error}</div>}
 
         {/* STEP 1 */}
         {step === 1 && (<div>
           {entrepreneurIntent && (
             <InfoBanner icon="🪶"><strong style={{ color: CSS.text }}>Indigenous Entrepreneur Signup</strong><br />Your free business profile and directory listing starts here.</InfoBanner>
           )}
-          <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "What kind of"} highlight={entrepreneurIntent ? "Business Profile" : "account do you need?"} desc={entrepreneurIntent ? "Your free business profile and directory listing helps customers and communities discover what you offer. You can still change your account type below." : "Are you signing up for yourself or on behalf of an organization?"} />
+          <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "What kind of"} highlight={entrepreneurIntent ? "Business Profile" : "account do you need?"} desc={entrepreneurIntent ? "Help customers discover your work with a free business profile. First, choose who you’re joining as." : "Are you signing up for yourself or on behalf of an organization?"} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <RoleCard icon="👤" label="Individual" desc="For people looking for jobs, training, scholarships, events, or professional connections." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
-            <RoleCard icon="🏢" label="Organization / Employer" desc="For First Nations, tribal councils, businesses, nonprofits, governments, and organizations that want to post opportunities or manage a public profile." selected={role === "organization"} onClick={() => { setRole("organization"); setOrgType("employer"); }} />
+            <RoleCard icon="🏢" label={entrepreneurIntent ? "My business" : "Business or organization"} desc={entrepreneurIntent ? "Showcase your products and services, share your story, and help customers find you." : "Create a public profile, promote your work, or hire talent. For businesses, First Nations, nonprofits, and organizations."} selected={role === "organization"} onClick={() => { setRole("organization"); setOrgType("employer"); }} />
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
             <BtnPrimary onClick={() => goTo(2)} disabled={!role || (role === "organization" && !orgType)}>Continue →</BtnPrimary>
@@ -413,6 +443,17 @@ function UnifiedSignupContent() {
         {/* STEP 2 */}
         {step === 2 && (<div>
           <StepHeader eyebrow="Account Setup" title="Create your" highlight="Account" desc={orgType === "school" ? "Create your admin account. You'll set up your school profile next." : "Enter your details to get started."} />
+          <div style={{ marginBottom: 20 }}>
+            <input id="signup-consent" type="checkbox" required checked={consent} onChange={e => setConsent(e.target.checked)} />{" "}
+            <label htmlFor="signup-consent">I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a></label>
+          </div>
+          {user && searchParams.get("resume") === "organization" && (
+            <BtnSecondary onClick={() => {
+              setAccountUid(user.uid);
+              setEmail(user.email || "");
+              goTo(user.emailVerified ? (orgType === "school" ? 4 : 10) : 3);
+            }}>Continue organization setup as {user.email}</BtnSecondary>
+          )}
           <GoogleButton onClick={handleGoogle} />
           <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "24px 0" }}>
             <div style={{ flex: 1, height: 1, background: CSS.border }} />
@@ -443,7 +484,7 @@ function UnifiedSignupContent() {
 
         {/* STEP 3 */}
         {step === 3 && (<div>
-          <StepHeader eyebrow="Verification" title="Check your" highlight="Inbox" desc={`We've sent a verification link to ${email || "your email"}.`} />
+          <StepHeader eyebrow="Verification" title="Check your" highlight="Inbox" desc={verificationEmailSent ? `We've sent a verification link to ${email || "your email"}.` : "Verify your email address to continue. Request a verification link below."} />
           <div style={{ textAlign: "center", padding: "32px 0" }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>📧</div>
             <div style={{ fontSize: 14, color: CSS.textDim, marginBottom: 8 }}>Didn&apos;t receive it? Check your spam folder.</div>
@@ -589,7 +630,7 @@ function UnifiedSignupContent() {
 
         {/* STEP 10: Employer Basics */}
         {step === 10 && (<div>
-          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 1 of 3" : "Employer Setup — 1 of 3"} title="About your" highlight={entrepreneurIntent ? "Business" : "Organization"} desc={entrepreneurIntent ? "Share the essentials customers need to discover your business." : "Tell us about your business."} />
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 1 of 3" : "Organization Setup — 1 of 3"} title="About your" highlight={entrepreneurIntent ? "Business" : "Organization"} desc={entrepreneurIntent ? "Share the essentials customers need to discover your business." : "Tell us about your business."} />
           <div style={{ display: "grid", gap: 20 }}>
             <FormInput label={entrepreneurIntent ? "Business Name" : "Organization Name"} required placeholder="e.g., Northern Resources Inc." value={orgName} onChange={e => setOrgName(e.target.value)} />
             <FormTextarea label="Short Business Description" required placeholder="Tell people what your business does and who you serve." maxLength={600} value={empDescription} onChange={e => setEmpDescription(e.target.value)} />
@@ -599,7 +640,7 @@ function UnifiedSignupContent() {
               <div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>How should we represent your business?</div>
               <div style={{ display: "grid", gap: 12 }}>
                 {BUSINESS_IDENTITY_OPTIONS.map((option) => (
-                  <button
+                  <button className="brand-button"
                     key={option.value}
                     type="button"
                     onClick={() => setBusinessIdentity(option.value)}
@@ -622,7 +663,7 @@ function UnifiedSignupContent() {
               <FormSelect label="Province / Territory" required={entrepreneurIntent} value={empProvince} onChange={e => setEmpProvince(e.target.value)} options={[{ value: "", label: "Select..." }, ...PROVINCES.map(p => ({ value: p, label: p }))]} />
               <FormInput label="City" required={entrepreneurIntent} placeholder="City" value={empCity} onChange={e => setEmpCity(e.target.value)} />
             </div>
-            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>What do you want to do on IOPPS?</div>
+            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>What do you want to do on IOPPS?</div><p style={{fontSize:13,color:CSS.textMuted,marginBottom:12}}>One account for your organization. Promote your business, hire, or do both. Posting jobs is optional.</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{EMPLOYER_CAPABILITIES.map(c => <CheckboxItem key={c.id} icon={c.icon} label={c.label} checked={capabilities.includes(c.id)} onToggle={() => toggleCapability(c.id)} />)}</div>
             </div>
           </div>
@@ -636,17 +677,17 @@ function UnifiedSignupContent() {
 
         {/* STEP 11: Employer Brand */}
         {step === 11 && (<div>
-          <StepHeader eyebrow="Employer Setup — 2 of 3" title="Brand your" highlight="Profile" desc="Profiles with branding get 4× more engagement." />
-          <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 24 }}>
-            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Logo</div><UploadZone label="Upload Logo" hint="400×400px, PNG or JPG" hasFile={!!empLogoFile} onFileChange={setEmpLogoFile} /></div>
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 2 of 3" : "Organization Setup — 2 of 3"} title="Brand your" highlight="Profile" desc="Add your logo to complete your organization profile. A cover image is optional." />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
+            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Logo (required)</div><UploadZone label="Upload Logo" hint="400×400px, PNG or JPG" hasFile={!!empLogoFile} onFileChange={setEmpLogoFile} /></div>
             <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Cover Image</div><UploadZone label="Upload Cover" hint="1200×400px recommended" hasFile={!!empBannerFile} onFileChange={setEmpBannerFile} /></div>
           </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(10)}>← Back</BtnGhost><BtnSecondary onClick={() => goTo(12)}>Skip for now</BtnSecondary><BtnPrimary onClick={() => goTo(12)}>Continue →</BtnPrimary></div>
+          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(10)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(12)} disabled={!empLogoFile}>Continue →</BtnPrimary></div>
         </div>)}
 
         {/* STEP 12: Employer Launch */}
         {step === 12 && (<div>
-          <StepHeader eyebrow="Employer Setup — 3 of 3" title="Ready to" highlight="Launch?" desc="Your organization profile is ready." />
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 3 of 3" : "Organization Setup — 3 of 3"} title="Ready to" highlight="Launch?" desc="Your organization profile is ready." />
           <ReviewSection icon="🏢" title="Organization Summary" onEdit={() => goTo(10)}>
             <ReviewRow label="Name" value={orgName} />
             <ReviewRow label="Business Identity" value={BUSINESS_IDENTITY_OPTIONS.find(option => option.value === businessIdentity)?.label || "Not set"} />
@@ -656,8 +697,8 @@ function UnifiedSignupContent() {
             <ReviewRow label="Location" value={[empCity, empProvince].filter(Boolean).join(", ") || "Not set"} />
             <ReviewRow label="Capabilities" value={<div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-end" }}>{capabilities.map(id => { const c = EMPLOYER_CAPABILITIES.find(x => x.id === id); return <span key={id} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: CSS.accentLight, color: CSS.accent, fontWeight: 500 }}>{c?.label || id}</span>; })}</div>} />
           </ReviewSection>
-          <InfoBanner icon="✅"><strong style={{ color: CSS.text }}>Auto-approved!</strong> Your profile goes live immediately after verification. Paid plans are only needed for extra promotion.</InfoBanner>
-          <div style={{ display: "flex", gap: 12, marginTop: 32, justifyContent: "center" }}><BtnGhost onClick={() => goTo(11)}>← Back</BtnGhost><BtnPrimary onClick={handleEmployerSubmit} disabled={submitting} style={{ flex: 1, justifyContent: "center" }}>{submitting ? "Creating..." : "Publish & Go Live 🚀"}</BtnPrimary></div>
+          <InfoBanner icon="✅"><strong style={{ color: CSS.text }}>Ready to create your profile.</strong> Verify your email to use your dashboard and post jobs. Submit your business listing for review when it is ready; it appears in the directory after approval.</InfoBanner>
+          <div style={{ display: "flex", gap: 12, marginTop: 32, justifyContent: "center" }}><BtnGhost onClick={() => goTo(11)}>← Back</BtnGhost><BtnPrimary onClick={handleEmployerSubmit} disabled={submitting} style={{ flex: 1, justifyContent: "center" }}>{submitting ? "Creating..." : "Create organization profile"}</BtnPrimary></div>
         </div>)}
 
         {/* STEP 13: Post-launch success + email verify reminder (stays in wizard UI) */}
@@ -676,7 +717,7 @@ function UnifiedSignupContent() {
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: CSS.text, marginBottom: 4 }}>Check your inbox</div>
                 <div style={{ fontSize: 13, color: CSS.textMuted, lineHeight: 1.5 }}>
-                  We sent a verification link to <strong style={{ color: CSS.accent }}>{email || "your email"}</strong>.<br />
+                  {verificationEmailSent ? "We sent a verification link to " : "Request a verification link for "}<strong style={{ color: CSS.accent }}>{email || "your email"}</strong>.<br />
                   Check your spam folder if you don&apos;t see it within a minute.
                 </div>
               </div>

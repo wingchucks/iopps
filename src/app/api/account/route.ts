@@ -1,0 +1,64 @@
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuthToken } from "@/lib/api-auth";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
+import { getStorage } from "firebase-admin/storage";
+import { getAdminApp } from "@/lib/firebase-admin";
+import { cleanClosedAccountUploads } from "@/lib/server/account-upload-cleanup";
+import { isSuperAdminAccount } from "@/lib/server/super-admin";
+
+export const runtime = "nodejs";
+
+// Self-service closure is separate from administrators deleting other accounts.
+export async function DELETE(request: NextRequest) {
+  const viewer = await verifyAuthToken(request, { checkRevoked: true });
+  if (!viewer.success) return viewer.response;
+  const uid = viewer.decodedToken.uid;
+  const authTime = viewer.decodedToken.auth_time;
+  if (!Number.isFinite(authTime) || Date.now() / 1000 - authTime > 300) {
+    return NextResponse.json({ error: "Please sign in again before deleting your account." }, { status: 401 });
+  }
+  try {
+    const body = await request.json();
+    if (body?.confirmDelete !== true) return NextResponse.json({ error: "Confirm account deletion." }, { status: 400 });
+    const auth = getAdminAuth();
+    if (await isSuperAdminAccount(uid, auth)) return NextResponse.json({ error: "The IOPPS owner account cannot be deleted here." }, { status: 403 });
+    const db = getAdminDb();
+    // Preserve a server-owned tombstone: a still-valid token must not recreate
+    // the profile or regain database access during Auth cleanup.
+    const closed = await db.runTransaction(async tx => {
+      const [member, user, organization, employer, cleanup] = await tx.getAll(db.doc(`members/${uid}`), db.doc(`users/${uid}`), db.doc(`organizations/${uid}`), db.doc(`employers/${uid}`), db.doc(`account_cleanup/${uid}`));
+      const profiles = [member.data(), user.data()];
+      const linkedIds = [...new Set(profiles.flatMap(data => [data?.orgId, data?.employerId])
+        .filter((id): id is string => typeof id === "string" && id.length > 0))];
+      const linkedRecords = linkedIds.length
+        ? await tx.getAll(...linkedIds.flatMap(id => [db.doc(`organizations/${id}`), db.doc(`employers/${id}`)]))
+        : [];
+      const linkedOwner = linkedIds.length > 0 && profiles.some(data => data?.orgRole === "owner");
+      const recordedOwner = linkedRecords.some(record => record.data()?.ownerId === uid || record.data()?.uid === uid);
+      if (organization.exists || employer.exists || linkedOwner || recordedOwner) return false;
+      // Retries must not replace a worker's lease, confirmation or cursor.
+      if (!cleanup.exists) tx.set(db.doc(`account_cleanup/${uid}`), { notBefore: new Date(Date.now() + 90 * 60 * 1000).toISOString(), createdAt: new Date().toISOString() });
+      if (user.data()?.status !== "deleted" || !user.data()?.deletedAt) tx.set(db.doc(`users/${uid}`), { status: "deleted", deletedAt: new Date().toISOString() });
+      for (const collection of ["members", "member_settings", "notification_preferences"]) tx.delete(db.doc(`${collection}/${uid}`));
+      return true;
+    });
+    if (!closed) return NextResponse.json({ error: "Contact IOPPS to transfer or close your organization before deleting its owner account." }, { status: 409 });
+    try { await auth.deleteUser(uid); } catch (error) {
+      if ((error as { code?: string }).code !== "auth/user-not-found") throw error;
+    }
+    await db.runTransaction(async tx => {
+      const ref = db.doc(`account_cleanup/${uid}`);
+      const data = (await tx.get(ref)).data();
+      // Only the current worker may change a leased job. If it loses this
+      // confirmation, its next not-found retry starts a conservative grace.
+      if (!data || Number.isFinite(Date.parse(data.authRemovedAt)) || Date.parse(data.leaseUntil) > Date.now()) return;
+      tx.update(ref, { authRemovedAt: new Date().toISOString(), finalSweepStarted: false,
+        notBefore: new Date(Date.now() + 90 * 60 * 1000).toISOString() });
+    });
+    // Best effort immediately; the durable sweep also catches late uploads from old ID tokens.
+    await cleanClosedAccountUploads(db, getStorage(getAdminApp()).bucket(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET), auth, uid).catch(() => console.error("[account-cleanup] Queued upload cleanup needs retry"));
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Unable to finish account deletion. Please contact IOPPS if you cannot sign in." }, { status: 503 });
+  }
+}
