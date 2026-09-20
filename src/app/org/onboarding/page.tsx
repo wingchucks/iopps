@@ -514,9 +514,10 @@ function OrgOnboardingContent() {
                 </div>
               </div>
 
-              <label className="block">
-                <span className="text-sm font-semibold text-text-sec mb-1.5 block">Description</span>
+              <div>
+                <label htmlFor="organization-description" className="text-sm font-semibold text-text-sec mb-1.5 block">Description</label>
                 <textarea
+                  id="organization-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
@@ -524,7 +525,7 @@ function OrgOnboardingContent() {
                   style={{ resize: "vertical" }}
                   placeholder="Tell the community about your organization..."
                 />
-              </label>
+              </div>
 
               <label className="block">
                 <span className="text-sm font-semibold text-text-sec mb-1.5 block">Founded Year</span>

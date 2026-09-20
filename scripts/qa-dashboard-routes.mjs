@@ -326,9 +326,21 @@ try {
   browser = await chromium.launch({ headless: true });
   for (const width of [1440, 390]) {
     const assignedContext = await isolatedContext(width);
+    const assignedPage = await assignedContext.newPage(); currentPage = assignedPage;
+    const assignedErrors = [], assignedConsole = [], assignedNetwork = [], assignedDashboard = [];
+    assignedPage.on('pageerror', error => assignedErrors.push(error.message));
+    assignedPage.on('console', message => {
+      if (message.type() === 'error') assignedConsole.push(message.text());
+    });
+    assignedPage.on('requestfailed', request => assignedNetwork.push({
+      path: new URL(request.url()).pathname, error: request.failure()?.errorText,
+    }));
+    assignedPage.on('response', response => {
+      if (new URL(response.url()).pathname === '/api/employer/dashboard') {
+        assignedDashboard.push(response);
+      }
+    });
     try {
-      const assignedPage = await assignedContext.newPage(); currentPage = assignedPage;
-      const assignedErrors = []; assignedPage.on('pageerror', error => assignedErrors.push(error.message));
       await login(assignedPage, 'assigned-admin');
       await assignedPage.goto(base + '/org/onboarding', { waitUntil: 'domcontentloaded' });
       await expect(assignedPage.getByLabel('Description', { exact: true })).toHaveValue(width === 1440 ? 'Assigned profile draft' : 'Assigned profile saved at 1440', { timeout: 30000 });
@@ -343,6 +355,18 @@ try {
       assert.equal(await assignedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
       await assignedPage.screenshot({ path: path.join(output, `assigned-onboarding-${width}.png`), fullPage: true });
       interactionChecks.push({ check: 'Assigned administrator resumes and saves the correct organization', width, passed: true });
+    } catch (error) {
+      // This context closes before the global failure handler can inspect it.
+      await assignedPage.screenshot({ path: path.join(output, `assigned-onboarding-failure-${width}.png`), fullPage: true }).catch(() => {});
+      await fs.writeFile(path.join(output, `assigned-onboarding-failure-${width}.json`), JSON.stringify({
+        error: error.stack, url: assignedPage.url(),
+        text: await assignedPage.locator('body').innerText().catch(() => ''),
+        pageErrors: assignedErrors, consoleErrors: assignedConsole, networkErrors: assignedNetwork,
+        dashboard: await Promise.all(assignedDashboard.map(async response => ({
+          status: response.status(), body: await response.json().catch(() => null),
+        }))),
+      }, null, 2));
+      throw error;
     } finally { await assignedContext.close(); }
     for (const role of ['owner', 'school', 'member', 'admin']) {
       const context = await isolatedContext(width);
