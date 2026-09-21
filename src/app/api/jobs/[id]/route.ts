@@ -1,4 +1,4 @@
-import { updateImportedJobWithEditorialGuard } from "@/lib/server/editorial-import-guard";
+import { updateImportedJobWithEditorialGuard } from "@/lib/server/job-cleanup-guards";
 import { publicContentRecord } from "@/lib/server/public-content-record";
 import { NextResponse } from "next/server";
 import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
@@ -73,6 +73,7 @@ export async function GET(
 
       if (hydratedPatch) {
         const firestorePatch = await updateImportedJobWithEditorialGuard(db, docRef.ref, { ...hydratedPatch }, normalizeImportedDescription);
+        if (!Object.keys(firestorePatch).length) return NextResponse.json({ error: "Job not found" }, { status: 404 });
         Object.assign(data, firestorePatch);
 
         if (!isPublicJobRecordVisible(data, new Date())) {

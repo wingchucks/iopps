@@ -8,5 +8,5 @@ test('detail dates separate source posting, IOPPS addition and explicit source c
  const result=dates({postedAt:'2026-09-01',createdAt:'2026-09-03',sourceVerifiedAt:'2026-09-04',updatedAt:'2026-09-08'});
  assert.deepEqual(result.map((row:{label:string})=>row.label),['Originally posted','Added to IOPPS','Last source check']);
  assert.deepEqual(dates({updatedAt:'2026-09-08'}),[]);
- assert.match(readFileSync(new URL('../src/app/jobs/[slug]/page.tsx',import.meta.url),'utf8'),/jobDetailDates\(job\)/);
+ assert.match(readFileSync(new URL('../src/app/jobs/[slug]/JobDetailClient.tsx',import.meta.url),'utf8'),/jobDetailDates\(job\)/);
 });

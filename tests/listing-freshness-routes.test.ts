@@ -19,6 +19,7 @@ import * as opportunityPosting from '../src/lib/opportunity-posting.ts';
 import * as opportunityLookups from '../src/lib/server/opportunity-lookups.ts';
 import * as jobDocuments from '../src/lib/server/public-job-documents.ts';
 import * as editorialImportGuard from '../src/lib/server/editorial-import-guard.ts';
+import * as cleanupGuards from '../src/lib/server/job-cleanup-guards.ts';
 const nativeRequire = createRequire(import.meta.url);
 function jobFixture(jobs: Array<Record<string, any>>, posts: Array<Record<string, any>> = []) {
   const records: Record<string, Array<Record<string, any>>> = { jobs, posts };
@@ -45,6 +46,7 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
   const dependencies: Record<string, unknown> = {
     '@/lib/server/job-expiration': expiration,
     '@/lib/server/editorial-import-guard': editorialImportGuard,
+    '@/lib/server/job-cleanup-guards': cleanupGuards,
     '@/lib/public-job-merge': visibility,
     '@/lib/listing-freshness': freshness,
     '@/lib/job-metadata': metadata,
@@ -123,7 +125,7 @@ test('detail checks newly hydrated deadlines and enriches eligible metadata with
   for(const description of ['Deadline is August 28, 2026','Salary: hourly range $25.00 - $30.00']) {
     const route=loadRoute('src/app/api/jobs/[id]/route.ts',{
       'next/server':next,
-      '@/lib/firebase-admin':{getAdminDb:()=>({collection:()=>({doc:()=>({get:async()=>({exists:true,id:'one',data:()=>({active:true,status:'active',slug:'one'}),ref:{id:'one',parent:{id:'jobs'},update:async()=>{}}})})})})},
+      '@/lib/firebase-admin':{getAdminDb:()=>({collection:(name:string)=>({doc:()=>({parent:{id:name},get:async()=>({exists:true,id:'one',data:()=>({active:true,status:'active',slug:'one'}),ref:{id:'one',parent:{id:'jobs'},update:async()=>{}}})})}),runTransaction:async(fn:any)=>fn({get:async(ref:any)=>ref.parent.id==='jobs'?{exists:true,data:()=>({active:true,status:'active',slug:'one'})}:{exists:false},update:()=>{}})})},
       '@/lib/server/public-job-routing':{findPublicJobDocument:async()=>({id:'one',source:'jobs',routeSlug:'one'})},
       '@/lib/server/imported-job-descriptions':{fetchImportedDescriptionPatch:async()=>({description}),normalizeImportedDescription:(s:string)=>s},
       '@/lib/server/public-detail-cache':{withPublicDetailCache:(r:Response)=>r},
@@ -193,7 +195,7 @@ test('expiry cron uses full record cutoffs and keeps active/status mirrors align
     {id:'unknown',active:true,status:'active'},
   ];
   const writes: Array<{id:string;patch:any}> = [];
-  const db = {collection:(collection:string) => ({where:(_field:string,_op:string,value:unknown) => ({get:async()=>({docs:collection === 'jobs' ? rows.filter(r=>r[_field as keyof typeof r]===value).map(row=>({id:row.id,ref:row.id,data:()=>row})) : []})})}), runTransaction:async(callback:any)=>callback({get:async(id:string)=>({exists:true,ref:id,data:()=>rows.find(row=>row.id===id)}),update:(id:string,patch:unknown)=>writes.push({id,patch})})};
+  const db = {collection:(collection:string) => ({doc:(id:string)=>({collection,id}),where:(_field:string,_op:string,value:unknown) => ({get:async()=>({docs:collection === 'jobs' ? rows.filter(r=>r[_field as keyof typeof r]===value).map(row=>({id:row.id,ref:row.id,data:()=>row})) : []})})}), runTransaction:async(callback:any)=>callback({get:async(id:any)=>typeof id==='string'?{exists:true,id,ref:id,data:()=>rows.find(row=>row.id===id)}:{exists:false},update:(id:string,patch:unknown)=>writes.push({id,patch})})};
   const route = loadRoute('src/app/api/cron/expire-jobs/route.ts', {'next/server':next,'@/lib/firebase-admin':{getAdminDb:()=>db}});
   assert.equal((await route.GET({headers:new Headers()})).status,401);
   assert.equal(writes.length,0);

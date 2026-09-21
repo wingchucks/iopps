@@ -1,3 +1,4 @@
+import { cleanupWriteAllowed } from "./job-cleanup-guards.ts";
 import { createHash } from "node:crypto";
 import { feedJobKey } from "./feed-source";
 import type { Firestore } from "firebase-admin/firestore";
@@ -32,6 +33,7 @@ export async function createImportedJobOnce(db: Firestore, data: Job): Promise<b
   return db.runTransaction(async tx => {
     const [claim, existing, legacy] = await Promise.all([tx.get(reservation), tx.get(job), tx.get(mirror)]);
     if (claim.exists || existing.exists || legacy.exists) return false;
+    if (!await cleanupWriteAllowed(db, tx, job.id, {}, data)) return false;
     tx.create(reservation, { version: 1, jobId: job.id, feedId: data.feedId, employerId: data.employerId });
     tx.create(job, { ...data, importIdentity: identity });
     return true;

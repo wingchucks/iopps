@@ -64,6 +64,10 @@ function endpointUrl(baseValue, operation) {
     "convert-apply": "/api/hermes/v1/users/convert-to-individual/apply",
     "job-review": "/api/hermes/v1/jobs/approve/review",
     "job-apply": "/api/hermes/v1/jobs/approve/apply",
+    "cleanup-review": "/api/hermes/v1/jobs/cleanup/review",
+    "cleanup-apply": "/api/hermes/v1/jobs/cleanup/apply",
+    "cleanup-rollback-review": "/api/hermes/v1/jobs/cleanup/rollback-review",
+    "cleanup-rollback": "/api/hermes/v1/jobs/cleanup/rollback",
     "editorial-review": "/api/hermes/v1/jobs/editorial/review",
     "editorial-apply": "/api/hermes/v1/jobs/editorial/apply",
     "event-hide-review": "/api/hermes/v1/events/hide/review",
@@ -78,11 +82,12 @@ async function main() {
   const operations = new Set([
     "reconciliation-report",
     "review", "apply", "convert-review", "convert-apply", "job-review", "job-apply",
+    "cleanup-review", "cleanup-apply", "cleanup-rollback-review", "cleanup-rollback",
     "event-hide-review", "event-hide-apply", "editorial-review", "editorial-apply",
   ]);
   if (!operations.has(operation) || !bodyPath) {
     throw new Error(
-      "Usage: node scripts/hermes-admin-client.mjs <review|apply|convert-review|convert-apply|job-review|job-apply|event-hide-review|event-hide-apply|editorial-review|editorial-apply|reconciliation-report> <json-body-path>",
+      "Usage: node scripts/hermes-admin-client.mjs <review|apply|convert-review|convert-apply|job-review|job-apply|event-hide-review|event-hide-apply|editorial-review|editorial-apply|cleanup-review|cleanup-apply|cleanup-rollback-review|cleanup-rollback|reconciliation-report> <json-body-path>",
     );
   }
 
@@ -94,10 +99,13 @@ async function main() {
     throw new Error("HERMES_ADMIN_IDEMPOTENCY_KEY is invalid");
   }
 
-  const parsedBody = JSON.parse(await readFile(bodyPath, "utf8"));
-  const body = JSON.stringify(parsedBody);
+  const sourceBody = await readFile(bodyPath, "utf8");
+  const parsedBody = JSON.parse(sourceBody);
+  // Cleanup signs exact bytes so duplicate/escaped keys reach its strict parser.
+  const body = operation.startsWith("cleanup-") ? sourceBody : JSON.stringify(parsedBody);
   const bodyBytes = Buffer.byteLength(body, "utf8");
-  if (bodyBytes > MAX_BODY_BYTES) throw new Error(`JSON body exceeds ${MAX_BODY_BYTES} bytes`);
+  const bodyLimit = operation.startsWith("cleanup-") ? 4096 : MAX_BODY_BYTES;
+  if (bodyBytes > bodyLimit) throw new Error(`JSON body exceeds ${bodyLimit} bytes`);
 
   const url = endpointUrl(baseUrl, operation);
   const timestamp = String(Math.floor(Date.now() / 1000));

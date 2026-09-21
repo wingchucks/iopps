@@ -7,11 +7,11 @@ import ts from 'typescript';
 // Isolated component/persistence seam: actual website TSX and member helpers,
 // deterministic hooks and an in-memory Firestore transport. No network or auth.
 const settle = () => new Promise(resolve => setImmediate(resolve));
-function load(file, dependencies, extra = '') {
+function load(file, dependencies, extra = '', globals = {}) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(file, 'utf8') + extra, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-  }).outputText, { exports, console, require: id => {
+  }).outputText, { ...globals, exports, console, require: id => {
     if (id in dependencies) return dependencies[id];
     throw new Error(`Unexpected dependency: ${id}`);
   } });
@@ -19,7 +19,7 @@ function load(file, dependencies, extra = '') {
 }
 function harness(page, initial = null, count = 0) {
   let stored = initial && { ...initial }, cells = [], cursor = 0;
-  const effects = [], writes = [], messages = [], routes = [];
+  const effects = [], writes = [], messages = [], routes = [], aliasRequests = [];
   const user = { uid: 'fictional-profile-copy', displayName: 'Fictional Member', email: 'member@example.invalid' };
   const firestore = {
     doc: () => user.uid, serverTimestamp: () => 'fictional-time',
@@ -56,7 +56,14 @@ function harness(page, initial = null, count = 0) {
     '@/lib/auth-context': { useAuth: () => ({ user }) },
     '@/lib/toast-context': { useToast: () => ({ showToast: value => messages.push(value) }) },
     '@/lib/firestore/members': members,
-    '@/lib/firestore/savedItems': { getSavedItems: async () => Array.from({ length: count }, (_, id) => ({ id, postType: 'job', postId: `job-${id}` })) },
+    '@/lib/firestore/savedItems': { getSavedItems: async () => Array.from({ length: count }, (_, id) => ({ id: `saved-${id}`, userId: user.uid, postType: 'job', postId: `job-${id}` })) },
+    // Run the actual alias loader/grouping; replace only its HTTP transport.
+    '@/lib/saved-job-aliases': load('src/lib/saved-job-aliases.ts', {}, '', {
+      fetch: async (url, options) => {
+        aliasRequests.push({ url, ...options, headers: { ...options.headers } });
+        return { ok: true, json: async () => ({ aliases: [] }) };
+      },
+    }),
     '@/lib/firestore/applications': { getApplications: async () => [] },
     '@/lib/firestore/rsvps': { getUserRSVPs: async () => [] },
     '@/lib/account-labels': { getPublicAccountTypeLabel: () => 'Member' },
@@ -70,7 +77,7 @@ function harness(page, initial = null, count = 0) {
   return {
     render() { cursor = 0; return component(); },
     async flush() { for (const effect of effects.splice(0)) effect(); await settle(); },
-    stored: () => stored, writes, messages, routes, members, firestore,
+    stored: () => stored, writes, messages, routes, members, firestore, aliasRequests,
   };
 }
 function nodes(tree) {
@@ -154,6 +161,12 @@ for (const [count, expected] of [[0, '0 items saved'], [1, '1 item saved'], [2, 
     const summary = nodes(h.render()).find(node => node.type === 'p' && text(node) === expected);
     assert.ok(summary);
     assert.equal(summary.props.children, expected);
+    assert.deepEqual(h.aliasRequests, count === 0 ? [] : [{
+      url: '/api/jobs/aliases', method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: Array.from({ length: count }, (_, id) => `job-${id}`) }),
+      cache: 'no-store',
+    }]);
   });
 }
 test('skipping setup before prefill finishes preserves the stored long bio', async () => {

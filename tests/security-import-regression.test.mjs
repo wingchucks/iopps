@@ -14,7 +14,7 @@ const imageBody = { source: 'link', slot: 'logo', url: 'https://images.fixture.t
 function renderJob(description) {
   let state = 0;
   const wrapper = ({ children }) => React.createElement('div', null, children);
-  const page = sourceModule('src/app/jobs/[slug]/page.tsx', { mocks: {
+  const page = sourceModule('src/app/jobs/[slug]/JobDetailClient.tsx', { mocks: {
     react: { ...React, useState(initial) { const i = state++; return [i === 0 ? { id: 'fixture', title: 'Fixture role', description } : i === 1 ? false : initial, () => {}]; }, useEffect() {} },
     'next/navigation': { useParams: () => ({ slug: 'fixture' }), useRouter: () => ({}), usePathname: () => '/jobs/fixture', useSearchParams: () => new URLSearchParams() },
     'next/link': { default: ({ children, href }) => React.createElement('a', { href }, children), __esModule: true },
@@ -176,9 +176,12 @@ test('actual GET hydration stores the text contract and detail/list projections 
   const writes = [];
   const snapshot = { id: 'fixture', exists: true, data: () => ({ ...record }), ref: { id: 'fixture', parent: { id: 'jobs' }, update: async patch => { writes.push(patch); Object.assign(record, patch); } } };
   const db = { collection(name) {
-    const query = { where: () => query, get: async () => ({ docs: name === 'jobs' ? [snapshot] : [] }), doc: () => ({ get: async () => name === 'rssFeeds' ? { data: () => ({ feedUrl: 'https://workforcenow.adp.com/feed?cid=fixture-tenant' }) } : snapshot }) };
+    const query = { where: () => query, get: async () => ({ docs: name === 'jobs' ? [snapshot] : [] }), doc: () => ({ parent: { id: name }, get: async () => name === 'rssFeeds' ? { data: () => ({ feedUrl: 'https://workforcenow.adp.com/feed?cid=fixture-tenant' }) } : snapshot }) };
     return query;
-  } };
+  }, runTransaction: async fn => fn({
+    get: async ref => ref.parent.id === 'jobs' ? snapshot : { exists: false },
+    update: (_ref, patch) => { writes.push(patch); Object.assign(record, patch); },
+  }) };
   const options = { ...net, mocks: { ...net.mocks,
     'next/server': { NextResponse: { json: Response.json } },
     '@/lib/firebase-admin': { getAdminDb: () => db },

@@ -12,9 +12,11 @@ import { useToast } from "@/lib/toast-context";
 import { getMemberProfile } from "@/lib/firestore/members";
 import {
   getSavedItems,
-  unsavePost,
+  removeOwnSavedRecords,
   type SavedItem,
 } from "@/lib/firestore/savedItems";
+
+import { groupSavedAliases, loadSavedJobAliases, type SavedAliasGroup, type SavedJobAlias } from "@/lib/saved-job-aliases";
 
 const tabs = ["All", "Jobs", "Events", "Scholarships", "Other"] as const;
 type Tab = (typeof tabs)[number];
@@ -76,7 +78,8 @@ function getSlug(postId: string, postType: string): string {
   return postId;
 }
 
-function getDetailLink(item: SavedItem): string {
+function getDetailLink(item: SavedAliasGroup): string {
+  if (item.destination) return item.destination;
   const cfg = typeConfig[item.postType];
   if (!cfg) return "/feed";
   const slug = getSlug(item.postId, item.postType);
@@ -111,6 +114,7 @@ function SavedContent() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [items, setItems] = useState<SavedItem[]>([]);
+  const [aliases, setAliases] = useState<SavedJobAlias[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("All");
   const [removing, setRemoving] = useState<string | null>(null);
@@ -123,18 +127,27 @@ function SavedContent() {
 
   useEffect(() => {
     if (!user) return;
+    let active = true;
+    setItems([]); setAliases([]); setLoading(true);
     getSavedItems(user.uid)
-      .then(setItems)
+      .then(async records => {
+        if (!active) return;
+        setItems(records);
+        try { const resolved = await loadSavedJobAliases(records.filter(r => r.postType === "job").map(r => r.postId)); if (active) setAliases(resolved); }
+        catch { /* Keep original saves removable when alias service is unavailable. */ }
+      })
       .catch((err) => console.error("Failed to load saved items:", err))
-      .finally(() => setLoading(false));
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [user]);
 
-  const handleRemove = async (item: SavedItem) => {
+  const handleRemove = async (item: SavedAliasGroup) => {
     if (!user || removing) return;
     setRemoving(item.postId);
     try {
-      await unsavePost(user.uid, item.postId);
-      setItems((prev) => prev.filter((i) => i.postId !== item.postId));
+      const ids = item.records.map(record => record.id);
+      await removeOwnSavedRecords(user.uid, ids);
+      setItems((prev) => prev.filter((i) => !ids.includes(i.id)));
       showToast("Item removed from saved");
     } catch (err) {
       console.error("Failed to unsave:", err);
@@ -144,14 +157,15 @@ function SavedContent() {
     }
   };
 
+  const groups = groupSavedAliases(items.filter(item => item.userId === user?.uid), aliases);
   const filtered =
     activeTab === "All"
-      ? items
+      ? groups
       : activeTab === "Other"
-        ? items.filter(
+        ? groups.filter(
             (i) => !["job", "event", "scholarship"].includes(i.postType)
           )
-        : items.filter(
+        : groups.filter(
             (i) => i.postType === activeTab.toLowerCase().replace(/s$/, "")
           );
 
