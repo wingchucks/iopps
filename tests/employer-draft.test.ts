@@ -1,0 +1,5 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { encodeEmployerDraft, decodeEmployerDraft } from '../src/lib/employer-draft.ts';
+test('draft roundtrip is UID bound and excludes credentials, files and entitlements',()=>{const raw=encodeEmployerDraft('alice',{step:11,orgName:'Fictional Org',empDescription:'Description',password:'secret',token:'secret',empLogoFile:{},plan:'premium'},100);assert.doesNotMatch(raw,/secret|premium|empLogoFile/);assert.equal(decodeEmployerDraft('alice',raw,101)?.orgName,'Fictional Org');assert.equal(decodeEmployerDraft('bob',raw,101),null);assert.equal(decodeEmployerDraft('alice',raw,100+31*86400000),null);});
+test('malformed drafts cannot skip validation or introduce unbounded values',()=>{assert.equal(decodeEmployerDraft('alice','invalid',100),null);const d=decodeEmployerDraft('alice',encodeEmployerDraft('alice',{step:99,orgName:'x'.repeat(3000),capabilities:['evil','post_jobs'],businessIdentity:'evil'},100),101);assert.equal(d?.step,10);assert.equal(d?.orgName.length,200);assert.deepEqual(d?.capabilities,['post_jobs']);assert.equal(d?.businessIdentity,'not_specified');});

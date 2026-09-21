@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/lib/theme-context";
 import { ToastProvider } from "@/lib/toast-context";
 import AuthErrorBoundary from "@/components/AuthErrorBoundary";
 import SessionManager from "@/components/SessionManager";
+import OrganizationSetupReminder from "@/components/OrganizationSetupReminder";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { serializeJsonLd, siteJsonLd } from "@/lib/server/seo";
@@ -96,7 +97,7 @@ export default function RootLayout({
                   <SessionManager />
                   <AnalyticsTracker />
                   <GoogleAnalytics />
-                  <main id="main-content">{children}</main>
+                  <main id="main-content"><OrganizationSetupReminder />{children}</main>
                 </AuthErrorBoundary>
             </ToastProvider>
           </AuthProvider>

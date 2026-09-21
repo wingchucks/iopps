@@ -141,7 +141,7 @@ jobs:
           npx --yes firebase-tools@14.17.0 emulators:exec
           --project demo-iopps-preview --config firebase.ci.json
           --only firestore,auth,storage
-          "npm run build && node scripts/qa-release-browser.mjs"
+          "npm run build && node scripts/qa-release-browser.mjs && node --import ./scripts/test-typescript-loader.mjs scripts/qa-employer-browser.mjs"
       - name: Retain fixture browser evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -149,6 +149,7 @@ jobs:
           name: release-browser-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             test-results/release-browser/
+            test-results/employer-browser/
             output/playwright/organization-admin-assignment/*.png
           retention-days: 7
 

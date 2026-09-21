@@ -55,6 +55,7 @@ const MODERATE_SPAM_PATTERNS = [
 ];
 
 const RATE_LIMITS = [
+  { scope: "uid", windowMs: 30 * 60 * 1000, maxAttempts: 5 },
   { scope: "ip", windowMs: 30 * 60 * 1000, maxAttempts: 5 },
   { scope: "email", windowMs: 24 * 60 * 60 * 1000, maxAttempts: 3 },
   { scope: "org", windowMs: 24 * 60 * 60 * 1000, maxAttempts: 3 },
@@ -69,7 +70,7 @@ function hashValue(value: string): string {
 }
 
 function extractClientIp(ip: string | null | undefined): string {
-  return normalizeString(ip).split(",")[0]?.trim() || "unknown";
+  return normalizeString(ip).split(",")[0]?.trim() || "";
 }
 
 function parseFormAgeMs(value: unknown): number | null {
@@ -167,6 +168,7 @@ async function applyRateLimit(
   const now = new Date();
   const nowMs = now.getTime();
   const normalizedInputs = {
+    uid: input.uid,
     ip: extractClientIp(input.clientIp),
     email: normalizeString(input.contactEmail).toLowerCase(),
     org: normalizeString(input.name).toLowerCase(),
@@ -257,7 +259,9 @@ export async function evaluateEmployerSignupProtection(
     allow: false,
     hardBlock,
     status: rateLimit.blocked ? 429 : 403,
-    message: "We couldn't verify this organization signup. Please contact support if this is a legitimate organization.",
+    message: rateLimit.blocked
+      ? "Too many organization setup attempts. Wait 30 minutes before retrying; repeated email or organization attempts may require 24 hours. Your account has not been upgraded. For help, contact support@iopps.ca with your account email."
+      : "We couldn't verify this organization signup. Review your organization details and use a permanent contact email. For help, contact support@iopps.ca with your account email; do not send your password.",
     reasons,
     riskScore,
   };

@@ -255,6 +255,12 @@ test("hasOrganizationVisibilityBlock only flags explicit public hide signals", (
   );
 });
 
+test("workspace readiness permits deferred branding without relaxing public directory readiness", () => {
+  const org = { description: "Fictional business", contactEmail: "fictional@example.invalid" };
+  assert.equal(getBusinessProfileReadiness(org, { workspace: true }).isReady, true);
+  assert.equal(getBusinessProfileReadiness(org).isReady, false);
+});
+
 test("getBusinessProfileReadiness requires logo, story, and contact for businesses", () => {
   assert.deepEqual(
     getBusinessProfileReadiness({

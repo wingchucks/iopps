@@ -73,7 +73,8 @@ test("persisted community role values remain compatible", () => {
   const adminApi = source("src/app/api/admin/users/route.ts");
   const authProvider = source("src/components/auth/AuthProvider.tsx");
 
-  assert.match(signup, /signupRole: "community"/);
+  assert.match(signup, /signupRole: role/);
+  assert.match(signup, /type Role = "" \| "community" \| "organization"/);
   assert.match(adminApi, /type UserRole = "community" \| "employer" \| "moderator" \| "admin"/);
   assert.match(authProvider, /\|\| "community"/);
 });

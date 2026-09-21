@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
           };
     const org = normalizeOrganizationRecord(rawOrganization as Record<string, unknown>);
     const school = isSchoolOrganization(org);
-    const readiness = getBusinessProfileReadiness(org);
+    const readiness = getBusinessProfileReadiness(org, { workspace: true });
 
     return NextResponse.json({
       authorized: true,

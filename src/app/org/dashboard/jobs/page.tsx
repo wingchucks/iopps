@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import OrgDashboardNav from "@/components/OrgDashboardNav";
 import Avatar from "@/components/Avatar";
+import { buildEmployerJobDuplicate } from "@/lib/employer-job-duplicate";
 
 /* ─── types ─── */
 type JobStatus = "active" | "draft" | "closed";
@@ -182,6 +183,29 @@ export default function OrgDashboardJobsPage() {
       setJobs((prev) => prev.filter((j) => j.id !== job.id));
       showToast("Job deleted", "success");
     }
+  };
+
+  const handleDuplicate = async (job: Job) => {
+    if (!user || actionLoading) return;
+    setActionLoading(job.id);
+    let created = false;
+    try {
+      const token = await user.getIdToken();
+      const headers = { Authorization: "Bearer " + token, "Content-Type": "application/json" };
+      const source = await fetch(`/api/employer/jobs/${job.id}`, { headers });
+      if (!source.ok) throw new Error("Unable to load the original job.");
+      const original = await source.json();
+      const response = await fetch("/api/employer/jobs", { method: "POST", headers, body: JSON.stringify(buildEmployerJobDuplicate(original.job)) });
+      if (!response.ok) throw new Error("Unable to duplicate this job. Please try again.");
+      created = true;
+      const result = await response.json();
+      const readback = await fetch(`/api/employer/jobs/${result.jobId}`, { headers });
+      if (!readback.ok || (await readback.json()).job.status !== "draft") throw new Error("The copy was saved. Reload Jobs to review it before trying again.");
+      await fetchJobs();
+      showToast("Job duplicated as a draft. Review it before publishing.", "success");
+    } catch (error) {
+      showToast(created ? "The copy was saved. Reload Jobs to review it before trying again." : error instanceof Error ? error.message : "Unable to duplicate this job.", "error");
+    } finally { setActionLoading(null); }
   };
 
   /* ─── computed stats ─── */
@@ -477,6 +501,10 @@ export default function OrgDashboardJobsPage() {
                                   Reopen
                                 </button>
                               )}
+                              <button type="button" onClick={() => handleDuplicate(job)} disabled={Boolean(actionLoading)}
+                                className="button-gradient-soft min-h-11 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50">
+                                Duplicate as draft
+                              </button>
                               <button
                                 onClick={() => handleDelete(job)}
                                 disabled={isDisabled}

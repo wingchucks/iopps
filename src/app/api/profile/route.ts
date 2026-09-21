@@ -62,6 +62,7 @@ export async function PATCH(req: NextRequest) {
     await userRef.set(
       {
         ...data,
+        ...(signupRole === "organization" ? { signupIntent: "organization" } : {}),
         ...(shouldNotifyCommunitySignup ? { adminSignupNotifiedAt: new Date().toISOString() } : {}),
         updatedAt: new Date().toISOString(),
       },
