@@ -8,6 +8,7 @@ import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getAuth} from 'firebase-admin/auth';
 import {getFirestore} from 'firebase-admin/firestore';
 import {startIsolatedQaServer} from './local-qa-server.mjs';
+import {signOutFromFeed} from './qa-browser-auth.mjs';
 assert.equal(process.env.GCLOUD_PROJECT,'demo-iopps-preview');
 assert.equal(process.env.FIREBASE_AUTH_EMULATOR_HOST,'127.0.0.1:9099');
 const output=path.join(process.env.QA_EMPLOYER_EVIDENCE || (process.platform === 'win32' ? 'C:/Users/natha/Documents/Codex/2026-09-20/employer-qa' : 'test-results/employer-browser'),'browser-'+Date.now());
@@ -48,11 +49,24 @@ try {
  await page.reload();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await expect(page.getByLabel('City',{exact:true})).toHaveValue('Saskatoon');await expect(page.getByRole('checkbox',{name:'Post Jobs',exact:true})).toHaveAttribute('aria-checked','true');
  await expect(page.getByLabel('Short Business Description',{exact:false})).toHaveValue('Fictional services organization used only for isolated employer acceptance.');await expect(page.getByLabel('Products or Services (comma-separated)',{exact:false})).toHaveValue('Training, Community services');await expect(page.getByRole('textbox',{name:'Website',exact:true})).toHaveValue('https://example.invalid');await expect(page.getByLabel('Province / Territory',{exact:false})).toHaveValue('Saskatchewan');await shot('step4-complete-fields');await record('step4-reload-preserves-fields-intent-and-progress');
  await page.goto(server.base+'/feed');await page.getByRole('link',{name:'Finish organization setup',exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await record('abandonment-uid-bound-resume-cta');
- const switchUser=await fictionalUser('draft-isolation');const otherTab=await context.newPage();await otherTab.goto(server.base+'/feed');await otherTab.getByRole('button',{name:'Sign out',exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveCount(0);
- async function loginTab(target,address){await target.goto(server.base+'/login');await target.getByPlaceholder('you@example.com').fill(address);await target.getByPlaceholder('Enter your password').fill(password);await target.getByRole('button',{name:'Sign In',exact:true}).click();await target.waitForURL(u=>u.pathname!='/login');}
+ const switchUser=await fictionalUser('draft-isolation');const otherTab=await context.newPage();await otherTab.goto(server.base+'/feed');await signOutFromFeed(otherTab);await expect(page.getByLabel('Organization Name',{exact:false})).toHaveCount(0);
+ async function loginTab(target,address){
+  try{
+   await target.goto(server.base+'/login');
+   await target.getByPlaceholder('you@example.com').fill(address);
+   await target.getByPlaceholder('Enter your password').fill(password);
+   await target.getByRole('button',{name:'Sign In',exact:true}).click();
+   await target.waitForURL(u=>u.pathname!='/login');
+  }catch(error){
+   // The main signup page is not the tab that failed. Retain this tab before cleanup.
+   await target.screenshot({path:path.join(output,'login-failure.png'),fullPage:true});
+   await fs.writeFile(path.join(output,'login-failure.json'),JSON.stringify({path:new URL(target.url()).pathname,text:await target.locator('body').innerText()},null,2));
+   throw error;
+  }
+ }
  await loginTab(otherTab,switchUser.email);await page.getByRole('button',{name:'Continue →',exact:true}).click();await page.getByRole('button',{name:'Continue organization setup as '+switchUser.email,exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('');await page.getByLabel('Organization Name',{exact:false}).fill('Fictional second account private draft');
  const firstDraft=await page.evaluate(uid=>JSON.parse(localStorage.getItem('iopps-employer-draft-v1:'+uid)).draft,owner.uid);assert.equal(firstDraft.orgName,'Fictional Prairie Employer '+prefix);await record('live-cross-tab-account-switch-clears-fields-and-isolates-drafts');
- await otherTab.goto(server.base+'/feed');await otherTab.getByRole('button',{name:'Sign out',exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveCount(0);await loginTab(otherTab,email);await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await otherTab.close();await record('original-account-resume-restores-only-own-draft');
+ await otherTab.goto(server.base+'/feed');await signOutFromFeed(otherTab);await expect(page.getByLabel('Organization Name',{exact:false})).toHaveCount(0);await loginTab(otherTab,email);await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await otherTab.close();await record('original-account-resume-restores-only-own-draft');
  await page.getByRole('button',{name:'Continue →',exact:true}).click();await expect(page.getByRole('heading',{name:'Brand your Profile',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'← Back',exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await page.getByRole('button',{name:'Continue →',exact:true}).click();await page.getByRole('heading',{name:'Brand your Profile',exact:true}).waitFor();await record('step5-back-to-step4-preserves-input');
  for(const label of ['Upload Logo','Upload Cover'])for(const key of ['Enter','Space']){
@@ -66,7 +80,7 @@ try {
  let releaseSignup,signupHeld;const heldSignup=new Promise(r=>signupHeld=r),signupGate=new Promise(r=>releaseSignup=r);
  await page.route('**/api/employer/signup',async route=>{const response=await route.fetch();signupHeld();await signupGate;await route.fulfill({response});});
  await page.getByRole('button',{name:'Create organization profile',exact:true}).click();await heldSignup;
- const raceTab=await context.newPage();await raceTab.goto(server.base+'/feed');await raceTab.getByRole('button',{name:'Sign out',exact:true}).click();await loginTab(raceTab,switchUser.email);
+ const raceTab=await context.newPage();await raceTab.goto(server.base+'/feed');await signOutFromFeed(raceTab);await loginTab(raceTab,switchUser.email);
  await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional second account private draft');
  await page.getByLabel('Organization Name',{exact:false}).fill('B draft while A pending');
  await expect.poll(()=>page.evaluate(uid=>JSON.parse(localStorage.getItem('iopps-employer-draft-v1:'+uid)).draft.orgName,switchUser.uid)).toBe('B draft while A pending');
@@ -74,7 +88,25 @@ try {
  await page.getByLabel('Organization Name',{exact:false}).fill('B draft after A success');
  await expect.poll(()=>page.evaluate(uid=>JSON.parse(localStorage.getItem('iopps-employer-draft-v1:'+uid)).draft.orgName,switchUser.uid)).toBe('B draft after A success');assert.equal(new URL(page.url()).pathname,'/signup');
  await record('held-A-signup-cross-tab-B-edit-before-after-success-no-stale-navigation');
- await raceTab.goto(server.base+'/feed');await raceTab.getByRole('button',{name:'Sign out',exact:true}).click();await loginTab(raceTab,email);await raceTab.close();await page.goto(server.base+'/org/dashboard');
+ await raceTab.goto(server.base+'/feed');
+ // Regression: a slow session DELETE must finish before navigation can cancel
+ // Firebase sign-out and leave the previous account persisted in this context.
+ let delayedSignOutRequests=0;
+ const delaySignOut=async route=>{
+  if(route.request().method()!=='DELETE')return route.continue();
+  delayedSignOutRequests++;
+  await new Promise(resolve=>setTimeout(resolve,1500)); // injected network latency, not a readiness wait
+  await route.continue();
+ };
+ await raceTab.route('**/api/auth/session',delaySignOut);
+ await signOutFromFeed(raceTab);
+ assert.ok(delayedSignOutRequests>0,'exercise the delayed session DELETE');
+ // Auth-state synchronization can issue another DELETE after explicit sign-out.
+ // Drain those delayed handlers before login/navigation or closing this tab.
+ await raceTab.unrouteAll({behavior:'wait'});
+ await expect(page.getByLabel('Organization Name',{exact:false})).toHaveCount(0);
+ await loginTab(raceTab,email);await raceTab.close();await page.goto(server.base+'/org/dashboard');
+ await record('delayed-signout-completes-before-next-account-login');
  await page.waitForURL(u=>u.pathname==='/org/dashboard');await page.getByRole('button',{name:'Post a Job',exact:true}).first().waitFor();
  const organization=(await db.doc('organizations/'+owner.uid).get()).data(),employer=(await db.doc('employers/'+owner.uid).get()).data();assert.equal(organization.name,'Fictional Prairie Employer '+prefix);assert.equal(organization.logoUrl,undefined);assert.equal(employer.plan,'free');assert.equal(organization.businessIdentity,'non_indigenous');assert.deepEqual(organization.capabilities,['list_business','post_jobs']);assert.deepEqual(employer.capabilities,['list_business','post_jobs']);await record('selected-capabilities-persist-and-hiring-cta-visible');assert.equal((await db.doc('users/'+owner.uid).get()).data().role,'employer');
  assert.equal(await page.evaluate(uid=>localStorage.getItem('iopps-employer-draft-v1:'+uid),owner.uid),null);await shot('persisted-employer-dashboard');await record('full-signup-verified-org-persisted-no-logo-no-paid-grant');
@@ -116,7 +148,7 @@ try {
  let releaseCheck,checkHeld;const checkGate=new Promise(r=>releaseCheck=r),heldCheck=new Promise(r=>checkHeld=r);
  await page.route('**/api/employer/check',async route=>{const response=await route.fetch();checkHeld();await checkGate;await route.fulfill({response});});
  await page.goto(server.base+'/org/dashboard');await heldCheck;
- await authTab.goto(server.base+'/feed');await authTab.getByRole('button',{name:'Sign out',exact:true}).click();await loginTab(authTab,switchUser.email);
+ await authTab.goto(server.base+'/feed');await signOutFromFeed(authTab);await loginTab(authTab,switchUser.email);
  releaseCheck();await page.waitForURL(u=>u.pathname==='/login'||u.pathname==='/org/upgrade'||u.pathname==='/feed');
  await expect(page.getByRole('button',{name:'Post a Job',exact:true})).toHaveCount(0);await record('held-organization-authorization-cross-tab-signout-switch-denies-stale-workspace');await authTab.close();
  await page.goto(server.base+'/employers/for-business');await page.waitForURL(u=>u.pathname==='/for-employers');await record('business-entry-alias');
