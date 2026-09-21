@@ -55,7 +55,12 @@ try {
  await otherTab.goto(server.base+'/feed');await otherTab.getByRole('button',{name:'Sign out',exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveCount(0);await loginTab(otherTab,email);await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await otherTab.close();await record('original-account-resume-restores-only-own-draft');
  await page.getByRole('button',{name:'Continue →',exact:true}).click();await expect(page.getByRole('heading',{name:'Brand your Profile',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'← Back',exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await page.getByRole('button',{name:'Continue →',exact:true}).click();await page.getByRole('heading',{name:'Brand your Profile',exact:true}).waitFor();await record('step5-back-to-step4-preserves-input');
- for(const label of ['Upload Logo','Upload Cover'])for(const key of ['Enter','Space']){const control=page.getByRole('button',{name:label,exact:true});await control.focus();const chooser=page.waitForEvent('filechooser');await page.keyboard.press(key);await (await chooser).setFiles([]);await expect(control).toBeFocused();}
+ for(const label of ['Upload Logo','Upload Cover'])for(const key of ['Enter','Space']){
+  const control=page.getByRole('button',{name:label,exact:true});await control.focus();
+  await page.evaluate(()=>{window.__qaUploadEvents=[];for(const type of ['keydown','keyup','click'])document.addEventListener(type,e=>window.__qaUploadEvents.push({type,key:e.key,target:e.target.getAttribute('aria-label'),tag:e.target.tagName,trusted:e.isTrusted,active:document.activeElement?.getAttribute('aria-label'),activation:navigator.userActivation.isActive}),{capture:true,once:true});});
+  try{const [chooser]=await Promise.all([page.waitForEvent('filechooser'),page.keyboard.press(key)]);await chooser.setFiles([]);await expect(control).toBeFocused();}
+  finally{await fs.writeFile(path.join(output,'upload-keyboard-'+label.replaceAll(' ','-')+'-'+key+'.json'),JSON.stringify(await page.evaluate(()=>({events:window.__qaUploadEvents,focused:document.hasFocus(),active:document.activeElement?.getAttribute('aria-label')})),null,2));}
+ }
  await shot('optional-branding-keyboard');await record('logo-cover-enter-space-accessible-names');
  await page.reload();await page.getByRole('heading',{name:'Brand your Profile',exact:true}).waitFor();await page.getByRole('button',{name:'Skip for now',exact:true}).click();
  let releaseSignup,signupHeld;const heldSignup=new Promise(r=>signupHeld=r),signupGate=new Promise(r=>releaseSignup=r);
