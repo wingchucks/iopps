@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createJobSaveSession as create } from '../src/lib/job-save-session.ts';
 test('job page delegates saved state and login intent to the account-scoped save hook', () => {
-  const page = readFileSync('src/app/jobs/[slug]/page.tsx', 'utf8');
+  const page = readFileSync('src/app/jobs/[slug]/JobDetailClient.tsx', 'utf8');
+  const wrapper = readFileSync('src/app/jobs/[slug]/page.tsx', 'utf8');
+  assert.match(wrapper, /return <JobDetailClient/);
   assert.match(page, /useJobSave\(/);
   assert.doesNotMatch(page, /void handleSave\(\)/);
 });

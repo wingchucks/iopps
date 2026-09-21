@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { fetchImportedDescriptionPatch, normalizeImportedDescription } from "@/lib/server/imported-job-descriptions";
-import { updateImportedJobWithEditorialGuard } from "@/lib/server/editorial-import-guard";
+import { updateImportedJobWithEditorialGuard } from "@/lib/server/job-cleanup-guards";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -89,10 +89,10 @@ export async function GET(request: NextRequest) {
               const lifecycle = sourceLifecyclePatch(item, existingDoc.data());
               const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
               if (feed.updateExistingJobs || (feedType === "dayforce" && feed.updateExistingJobs !== false)) {
-                await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, { ...identity, title, location: item.location || "Canada", ...feedContent, description: resolvedDescription, descriptionFormat: "plain-text", ...(descriptionPatch || {}), ...lifecycle, updatedAt: FieldValue.serverTimestamp() }, normalizeImportedDescription);
-                jobsUpdated++;
+                const appliedPatch = await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, { ...identity, title, location: item.location || "Canada", ...feedContent, description: resolvedDescription, descriptionFormat: "plain-text", ...(descriptionPatch || {}), ...lifecycle, updatedAt: FieldValue.serverTimestamp() }, normalizeImportedDescription);
+                if (Object.keys(appliedPatch).length) jobsUpdated++;
               } else if (Object.keys(lifecycle).length || (feedType === "dayforce" && existingDoc.get("feedId") !== feed.id)) {
-                await existingDoc.ref.update({...identity,...lifecycle});
+                await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, {...identity,...lifecycle}, normalizeImportedDescription);
               }
               continue;
             }
@@ -136,16 +136,16 @@ export async function GET(request: NextRequest) {
         }
 
         const missingIds = missingSourceJobIds(existingJobs.docs.map(d=>({id:d.id,...d.data()})), items, {id:feed.id,employerId:feed.employerId,feedType,feedUrl:feed.feedUrl!}, jobsFailed, (feed as Record<string, unknown>).lastSyncItemCount === 0 && (feed as Record<string, unknown>).lastSyncJobsFailed === 0 && !(feed as Record<string, unknown>).lastSyncError);
-        for (let start = 0; start < missingIds.length; start += 400) {
-          const batch = adminDb.batch();
-          for (const id of missingIds.slice(start,start+400)) batch.update(adminDb.collection("jobs").doc(id),expirationPatch("removed_from_source"));
-          await batch.commit();
-        }
+        let jobsExpired = 0;
+                for (const id of missingIds) {
+                  const appliedPatch = await updateImportedJobWithEditorialGuard(adminDb, adminDb.collection("jobs").doc(id), expirationPatch("removed_from_source"), normalizeImportedDescription);
+                  if (Object.keys(appliedPatch).length) jobsExpired++;
+                }
         await adminDb.collection("rssFeeds").doc(feed.id).update({
           lastSyncedAt: FieldValue.serverTimestamp(),
           lastSyncError: jobsFailed ? `${jobsFailed} job(s) failed during sync` : null,
           lastSyncItemCount: items.length,
-          lastSyncJobsExpired: missingIds.length,
+          lastSyncJobsExpired: jobsExpired,
           lastSyncJobsUpdated: jobsUpdated,
           lastSyncJobsFailed: jobsFailed,
           totalJobsImported: (feed.totalJobsImported || 0) + jobsImported,

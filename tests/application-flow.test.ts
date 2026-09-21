@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 const source = (path: string) => readFileSync(new URL('../'+path, import.meta.url),'utf8');
 test('all application entry points use one validated destination contract', () => {
- for (const path of ['src/app/jobs/page.tsx','src/app/jobs/[slug]/page.tsx','src/app/jobs/[slug]/apply/page.tsx']) {
+ for (const path of ['src/app/jobs/page.tsx','src/app/jobs/[slug]/JobDetailClient.tsx','src/app/jobs/[slug]/apply/page.tsx']) {
   assert.match(source(path), /resolveApplicationDestination\(/, path);
  }
 });

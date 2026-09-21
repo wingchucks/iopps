@@ -21,9 +21,9 @@ test('desktop feed uniqueness and authenticated save intent retries/account isol
     exports.useSearchParams=()=>new URLSearchParams(React.useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn)},()=>snapshot));`);
   const auth = put('auth.js', `const React=require('react');const listeners=new Set();let uid='';window.setUser=value=>{uid=value;listeners.forEach(fn=>fn())};exports.useAuth=()=>{const id=React.useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn)},()=>uid);return {user:id?{uid:id}:null,loading:false}};`);
   const saves = put('saves.js', `window.saved={alice:['existing'],bob:['bob-existing']};window.writes=[];window.offline=false;window.hold=false;
-    exports.isPostSaved=async(uid,id)=>window.saved[uid].includes(id);
-    exports.savePost=async(uid,id)=>{window.writes.push([uid,id]);if(window.offline)throw Error('offline');if(window.hold)await new Promise(resolve=>window.release=resolve);if(!window.saved[uid].includes(id))window.saved[uid].push(id)};
-    exports.unsavePost=async(uid,id)=>{window.saved[uid]=window.saved[uid].filter(value=>value!==id)};`);
+    exports.isJobSaved=async(uid,id)=>window.saved[uid].includes(id);
+    exports.saveJob=async(uid,id)=>{window.writes.push([uid,id]);if(window.offline)throw Error('offline');if(window.hold)await new Promise(resolve=>window.release=resolve);if(!window.saved[uid].includes(id))window.saved[uid].push(id)};
+    exports.unsaveJob=async(uid,id)=>{window.saved[uid]=window.saved[uid].filter(value=>value!==id)};`);
   const shell = put('shell.js', `const React=require('react');module.exports=({children,href,className,style})=>React.createElement(href?'a':'div',{href,className,style},children);`);
   const loader = put('loader.cjs', `const ts=require(${JSON.stringify(require.resolve('typescript'))});module.exports=source=>ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;`);
   const entry = put('entry.js', `import React from 'react';import {createRoot} from 'react-dom/client';import Feed from ${JSON.stringify(path.join(root,'src/app/feed/page.tsx'))};import {useJobSave} from ${JSON.stringify(path.join(root,'src/hooks/useJobSave.ts'))};
@@ -51,6 +51,9 @@ test('desktop feed uniqueness and authenticated save intent retries/account isol
   assert.deepEqual(await page.evaluate(()=>window.writes),[]);
   await page.evaluate(()=>{window.offline=true;window.navigate('/jobs/fixture?save=1');window.setUser('alice')});
   await page.getByRole('alert').waitFor();assert.equal(new URL(page.url()).searchParams.get('save'),'1');
+  // A missing mock export can also produce an alert; prove persistence was attempted.
+  assert.deepEqual(await page.evaluate(()=>window.writes),[['alice','fixture']]);
+  assert.deepEqual(await page.evaluate(()=>window.saved.alice),['existing']);
   await page.evaluate(()=>window.offline=false);await page.getByRole('button',{name:'Save job'}).click();
   await page.waitForFunction(()=>!location.search.includes('save=1'));
   assert.deepEqual(await page.evaluate(()=>window.saved.alice),['existing','fixture']);

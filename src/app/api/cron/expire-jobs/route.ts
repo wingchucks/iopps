@@ -1,3 +1,4 @@
+import { cleanupWriteAllowed } from '@/lib/server/job-cleanup-guards';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { expirationPatch, isJobRecordExpired } from '@/lib/server/job-expiration';
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
           if (!doc.exists) return null;
           const job = doc.data()!;
           if (collection === 'posts' && job.type !== 'job') return null;
+          if (!await cleanupWriteAllowed(db, tx, doc.id, job, {})) return null;
           const status = String(job.status || '').trim().toLowerCase();
           if (['archived','cancelled','canceled','closed','completed','deleted','draft','expired','inactive','removed'].includes(status)) {
             if (job.active !== true) return null;

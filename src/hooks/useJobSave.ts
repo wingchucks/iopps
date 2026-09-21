@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { buildLoginRedirectHref } from "@/lib/utils";
-import { isPostSaved, savePost, unsavePost } from "@/lib/firestore/savedItems";
+import { isJobSaved, saveJob, unsaveJob } from "@/lib/firestore/savedItems";
 import { createJobSaveSession } from "@/lib/job-save-session";
 
 type SaveJob = { id: string; title: string; employerName?: string; orgName?: string };
@@ -34,9 +34,9 @@ export function useJobSave(job: SaveJob | null) {
       if (active) setState(previous => ({ ...(previous.scope === scope ? previous : { saved: false, saving: false, error: "" }), scope, ...patch }));
     };
     const session = createJobSaveSession({
-      read: () => isPostSaved(uid, id),
-      add: () => savePost(uid, id, title, "job", org),
-      remove: () => unsavePost(uid, id),
+      read: () => isJobSaved(uid, id),
+      add: () => saveJob(uid, id, title, org),
+      remove: () => unsaveJob(uid, id),
       changed: saved => update({ saved, error: "" }),
       failed: () => update({ error: "Couldn't update saved jobs. Please try again." }),
     });

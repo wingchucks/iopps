@@ -10,7 +10,7 @@ import { Parser } from 'htmlparser2';
 import ts from 'typescript';
 
 // Render exact page JSX seams, without executing API, auth or Firebase code.
-const page = fs.readFileSync('src/app/jobs/[slug]/page.tsx', 'utf8');
+const page = fs.readFileSync('src/app/jobs/[slug]/JobDetailClient.tsx', 'utf8');
 function compile(source) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText, {

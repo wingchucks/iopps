@@ -38,7 +38,7 @@ test('browser analytics never transmits visitor identity or private URL context'
  assert.doesNotMatch(ga,/window\.location\.(href|search)|document\.title/);assert.match(ga,/send_page_view: false/);assert.match(ga,/analyticsPath/);
 });
 test('job funnel milestones are wired to result/detail/start and confirmed receipt only',()=>{
- const list=readFileSync('src/app/jobs/page.tsx','utf8');const detail=readFileSync('src/app/jobs/[slug]/page.tsx','utf8');const apply=readFileSync('src/app/jobs/[slug]/apply/page.tsx','utf8');
+ const list=readFileSync('src/app/jobs/page.tsx','utf8');const detail=readFileSync('src/app/jobs/[slug]/JobDetailClient.tsx','utf8');const apply=readFileSync('src/app/jobs/[slug]/apply/page.tsx','utf8');
  assert.match(list,/trackJobFunnelEvent\("job_search_results"/);
  assert.match(detail,/trackJobFunnelEvent\("job_detail_view"/);assert.match(detail,/trackJobFunnelEvent\("external_application_click"/);
  assert.match(apply,/trackJobFunnelEvent\("application_start"/);
