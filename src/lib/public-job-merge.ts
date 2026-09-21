@@ -59,35 +59,66 @@ export function mergePublicJobRecords<
   const now = new Date();
   const visibility = new Map(merged.map(job => [job, isPublicJobRecordVisible(job, now)]));
   const compareId = (a: PublicJobMergeRecord, b: PublicJobMergeRecord) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
-  return merged.sort((a, b) =>
-    Number(!importedIdentities.has(a.id)) - Number(!importedIdentities.has(b.id)) ||
-    Number(visibility.get(a)) - Number(visibility.get(b)) || compareId(a, b)
-  ).filter(job => {
+  const identityKey = (job: PublicJobMergeRecord): string => {
     const exact = (value: unknown): string => {
       if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.toISOString() : "invalid-date";
       if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") return exact(value.toDate());
       return typeof value === "string" ? value.normalize("NFC").replace(/\s+/gu, " ").trim() : typeof value === "number" ? String(value) : "";
     };
     const normalize = (value: unknown) => exact(value).toLowerCase();
-    const parts = [job.employerName || job.orgName || job.companyName || job.employerId || job.orgId, job.title, job.location].map(normalize);
-    // Missing identity or content is not evidence of a duplicate.
-    const closing = exact(job.closingDate || job.deadline || job.applicationDeadline);
-    const closingIdentity = !closing.includes("T") ? descriptionApplicationDeadline(`Closing date: ${closing}`) || normalize(closing) : closing;
+    const owners = [job.employerName, job.orgName, job.companyName, job.employerId, job.orgId];
+    const parts = [job.title, job.location].map(normalize);
+    // Compare each deadline independently; a primary date cannot hide another.
+    const deadlines = [job.closingDate, job.deadline, job.applicationDeadline].map(value => {
+      const closing = exact(value);
+      return !closing.includes("T") ? descriptionApplicationDeadline(`Closing date: ${closing}`) || normalize(closing) : closing;
+    });
     // Every supplied destination is evidence; a shared landing URL cannot mask
     // a distinct application URL. Paths and query values remain case-sensitive.
     const destinations = [job.externalUrl, job.applicationUrl, job.applyUrl, job.externalApplyUrl, job.applicationLink].map(exact);
-    const intakeEvidence = closingIdentity || exact(job.publishedAt || job.postedAt || job.externalId || job.requisitionId) || destinations.find(Boolean);
+    const intakeEvidence = [...deadlines, ...[job.publishedAt, job.postedAt, job.externalId, job.requisitionId].map(exact), ...destinations].some(Boolean);
     // Normalize only the comparison projection, exactly as the jobs API does.
     // Keep source/display bodies intact, including case-sensitive embedded links.
     const description = typeof job.description === "string"
       ? exact(normalizePartnerDescription(job.description, job.descriptionFormat)) : "";
-    const key = parts.every(Boolean) && description && intakeEvidence
-      ? JSON.stringify([...parts, closingIdentity, description,
-        ...[job.employerId || job.orgId, job.requisitionId || job.requisitionNumber || job.jobRequisitionId,
-          job.externalId, job.publishedAt || job.postedAt].map(exact), ...destinations]) : `id:${job.id}`;
+    const explicitIntake = [job.requisitionId, job.requisitionNumber, job.jobRequisitionId,
+      job.intake, job.intakeId, job.startDate, job.endDate, job.intakeStartDate, job.intakeEndDate];
+    // Keep source dates independent of display precedence (job-detail-dates),
+    // expiry (listing-freshness), and indexable endAt (discoverability).
+    // Local createdAt/updatedAt/order are ingestion/ordering, not source identity.
+    // Keep this inventory aligned with public-job-discovery-projection.
+    const evidence = [...owners.slice(0, 3).map(normalize), job.employerId, job.orgId, job.source, job.sourceUrl, job.externalId,
+      job.publishedAt, job.postedAt, job.sourcePostingDate, job.datePosted, job.expiresAt, job.sourceVerifiedAt, job.endAt,
+      job.salary, job.salaryRange, job.compensation, job.department,
+      job.jobType, job.employmentType, job.workLocation, job.remoteFlag, job.positions, ...explicitIntake];
+    // Unknown structured values must veto dedupe, not normalize to absence.
+    const unsupportedEvidence = explicitIntake.some(value => value != null && !exact(value)) ||
+      [...owners, ...evidence, job.closingDate, job.deadline, job.applicationDeadline,
+        job.externalUrl, job.applicationUrl, job.applyUrl, job.externalApplyUrl, job.applicationLink]
+        .some(value => value != null && typeof value !== "boolean" && !exact(value) && typeof value !== "string");
+    const key = owners.some(value => !!exact(value)) && parts.every(Boolean) && description && intakeEvidence && !unsupportedEvidence
+      ? JSON.stringify([...parts, ...deadlines, description,
+        ...evidence.map(value => typeof value === "boolean" ? value : exact(value)), ...destinations]) : `id:${job.id}`;
+    return key;
+  };
+
+  // Ordinary dedupe preserves every supplied date. Lifecycle suppression is
+  // directional: an expired canonical copy may veto an otherwise exact stale
+  // copy that has no expiresAt, but never a conflicting explicit expiry/intake.
+  // Use the full identity proof (including owner/source/salary) and only jobs,
+  // not the cross-owner discovery projection or a legacy post, as authority.
+  const expiredCanonicalKeys = new Set(importedJobs
+    .filter(job => !visibility.get(job) && isJobRecordExpired({ expiresAt: job.expiresAt }, now))
+    .map(job => identityKey({ ...job, expiresAt: undefined }))
+    .filter(key => !key.startsWith("id:")));
+  return merged.sort((a, b) =>
+    Number(!importedIdentities.has(a.id)) - Number(!importedIdentities.has(b.id)) ||
+    Number(visibility.get(a)) - Number(visibility.get(b)) || compareId(a, b)
+  ).filter(job => {
+    const key = identityKey(job);
     if (seen.has(key)) return false;
     seen.add(key);
-    return visibility.get(job);
+    return visibility.get(job) && !expiredCanonicalKeys.has(key);
   });
 }
 

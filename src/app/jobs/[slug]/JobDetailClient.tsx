@@ -1,6 +1,7 @@
 "use client";
 import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
 import JobDescription from "@/components/jobs/JobDescription";
+import { importedSalaryLabel, jobImportLabels } from "@/lib/job-import-labels";
 
 import { Suspense, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -154,7 +155,10 @@ function JobDetailContent() {
   const requiresResume = !!(job as unknown as Record<string, unknown>).requiresResume;
   const requiresCoverLetter = !!(job as unknown as Record<string, unknown>).requiresCoverLetter;
   const requiresReferences = !!(job as unknown as Record<string, unknown>).requiresReferences;
-  const salaryLabel = displayAmount(job.salary);
+  const salaryLabel = job.source === "feed" ? importedSalaryLabel(job.salary) : displayAmount(job.salary);
+  const imported = jobImportLabels(job, { pay: Boolean(salaryLabel), closing: Boolean(closingDate) });
+  const missingPay = !salaryLabel && imported.pay;
+  const missingClosing = !closingDate && imported.closing;
   const locationLabel = displayLocation(job.location);
 
   const applicationAction = destination.kind === "unavailable" ? (
@@ -219,6 +223,11 @@ function JobDetailContent() {
               {locationLabel && <span>📍 {locationLabel}</span>}
               {salaryLabel && <span>💰 {salaryLabel}</span>}
               {closingDate && <span>📅 Closes: {closingDate}</span>}
+              {missingPay && <span>{missingPay}</span>}
+              {missingClosing && <span>{missingClosing}</span>}
+              {(missingPay || missingClosing) && imported.sourceHref && (
+                <a href={imported.sourceHref} target="_blank" rel="noopener noreferrer" className="text-teal underline underline-offset-4">Check original posting <span>(opens in a new tab)</span></a>
+              )}
               {jobDetailDates(job).map(row => <span key={row.label}>{row.label}: {row.date}</span>)}
             </div>
           </div>

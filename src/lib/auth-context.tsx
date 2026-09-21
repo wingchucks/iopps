@@ -17,6 +17,7 @@ import {
 import { buildEmailVerificationContinueUrl } from "@/lib/auth-verification-email";
 import { auth, getAppCheckTokenValue } from "./firebase";
 import { authErrorMessage } from "@/lib/auth-errors";
+import { clearSignupDraft } from "@/lib/signup-draft";
 
 export interface SignupOutcome {
   user: User;
@@ -152,7 +153,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let previousUid: string | null = null;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // This provider outlives signup routes. Invalidate before any async session
+      // work, including sign-out or cross-tab changes while signup is unmounted.
+      // Initial anonymous resolution is not a boundary: allow reload recovery.
+      // Clear storage only; the current signup retains its in-memory transition.
+      if (firebaseUser || previousUid !== null) clearSignupDraft();
+      previousUid = firebaseUser?.uid ?? null;
       setLoading(true);
 
       // Sync session cookie BEFORE updating user state so the middleware

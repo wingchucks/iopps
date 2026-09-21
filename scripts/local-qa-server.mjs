@@ -52,6 +52,6 @@ export async function startIsolatedQaServer({ maintenanceMode } = {}) {
     // Allow bounded cold route loading while the complete test suite saturates local workers.
     const health = await fetch(base + (maintenanceMode ? '/api/launch-status' : '/api/applications'), { redirect: 'error', signal: AbortSignal.timeout(30000) });
     assert.equal(health.status, maintenanceMode ? 200 : 401);
-    return { base, stop };
+    return { base, stop, getLogs: () => logs };
   } catch (error) { await stop(); throw new Error(`Isolated QA startup failed: ${logs}`, { cause: error }); }
 }

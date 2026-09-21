@@ -8,6 +8,8 @@ import * as runtime from 'react/jsx-runtime';
 import { renderToString } from 'react-dom/server';
 import { Parser } from 'htmlparser2';
 import ts from 'typescript';
+import * as jobDates from '../src/lib/job-detail-dates.ts';
+import * as importLabels from '../src/lib/job-import-labels.ts';
 
 // Render exact page JSX seams, without executing API, auth or Firebase code.
 const page = fs.readFileSync('src/app/jobs/[slug]/JobDetailClient.tsx', 'utf8');
@@ -17,6 +19,8 @@ function compile(source) {
     exports, URL, require(id) {
       if (id === 'react/jsx-runtime') return runtime;
       if (id === 'react') return React;
+      if (id === '@/lib/job-detail-dates') return jobDates;
+      if (id === '@/lib/job-import-labels') return importLabels;
       if (id.startsWith('@/components/jobs/')) return compile(fs.readFileSync(path.join('src', id.slice(2) + '.tsx'), 'utf8'));
       throw Error(`Unexpected dependency: ${id}`);
     },
@@ -35,17 +39,35 @@ function inspect(html) {
   return { text, tags };
 }
 let metadataHtml;
-test('baseline metadata JSX renders literal spaces in SSR', () => {
+function renderMetadata(job, salaryLabel = '$25', closingDate = 'Sep 30, 2026') {
   const start = page.indexOf('<div className="flex flex-wrap gap-3 text-sm text-text-sec">');
   const jsx = page.slice(start, page.indexOf('</div>', start) + 6);
-  const C = compile(`export default function Fixture(){const locationLabel='Saskatoon, SK', salaryLabel='$25', closingDate='Sep 30, 2026',job={}; const jobDetailDates=()=>[{label:'Originally posted',date:'2026-09-17'},{label:'Added to IOPPS',date:'2026-09-19'}];return (${jsx});}`).default;
-  const html = renderToString(React.createElement(C));
+  const imports = page.split('\n').filter(line => /from "@\/lib\/(job-detail-dates|job-import-labels)"/.test(line)).join('\n');
+  const labels = page.slice(page.indexOf('  const imported = jobImportLabels('), page.indexOf('  const locationLabel ='));
+  const C = compile(`${imports}\nexport default function Fixture({job, salaryLabel, closingDate}) { const locationLabel='Saskatoon, SK'; ${labels} return (${jsx}); }`).default;
+  return renderToString(React.createElement(C, { job, salaryLabel, closingDate }));
+}
+test('baseline metadata JSX renders literal spaces in SSR', () => {
+  const html = renderMetadata({ sourcePostingDate: '2026-09-17', createdAt: '2026-09-19' });
   const {text} = inspect(html);
   assert.ok(text.includes('📍 Saskatoon, SK'));
+  assert.ok(text.includes('💰 $25'));
+  assert.ok(text.includes('📅 Closes: Sep 30, 2026'));
   assert.ok(text.includes('Originally posted: 2026-09-17'));
   assert.ok(text.includes('Added to IOPPS: 2026-09-19'));
+  assert.doesNotMatch(text, /not imported|Check original posting/);
   metadataHtml = html;
   console.log('Metadata SSR:', html);
+});
+test('metadata JSX uses real import labels for missing pay and closing details', () => {
+  const { text, tags } = inspect(renderMetadata({ source: 'feed', sourceMetadata: { salary: 'not-imported', closingDate: 'not-imported' }, externalUrl: 'https://source.example/job' }, '', ''));
+  assert.ok(text.includes('Pay not imported'));
+  assert.ok(text.includes('Closing details not imported'));
+  assert.ok(text.includes('Check original posting (opens in a new tab)'));
+  const link = tags.find(tag => tag.name === 'a');
+  assert.equal(link.attrs.href, 'https://source.example/job');
+  assert.equal(link.attrs.target, '_blank');
+  assert.equal(link.attrs.rel, 'noopener noreferrer');
 });
 test('excerpt keeps all supplied text and offers clearly external source details', () => {
   const description = 'A supplied description ending mid-sentence because the source';

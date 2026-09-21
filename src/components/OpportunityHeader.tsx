@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 const links = [
   ["/jobs", "Jobs"],
@@ -15,6 +15,7 @@ export default function OpportunityHeader() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`) || (href === "/businesses" && /^\/org\/[^/]+$/.test(pathname));
   return (
     <header className="op-header">
@@ -45,6 +46,7 @@ export default function OpportunityHeader() {
               </>
             ))}
           <button
+            ref={menuButtonRef}
             className="op-menu"
             aria-expanded={open}
             aria-controls="op-mobile-nav"
@@ -60,7 +62,10 @@ export default function OpportunityHeader() {
         className="op-mobile-nav op-wrap"
         aria-label="Mobile navigation"
         onKeyDown={(e) => {
-          if (e.key === "Escape") setOpen(false);
+          if (e.key === "Escape") {
+            setOpen(false);
+            menuButtonRef.current?.focus();
+          }
         }}
       >
         {links.map(([href, label]) => (

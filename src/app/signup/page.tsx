@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useState, useCallback, useRef, useEffect } from "react";
+import { readSignupDraft, saveSignupDraft, clearSignupDraft, SIGNUP_DRAFT_TTL } from "@/lib/signup-draft";
 import { decodeEmployerDraft, encodeEmployerDraft, employerDraftKey } from "@/lib/employer-draft";
 import { authIntentHref, postSignupDestination, signupPasswordError } from "@/lib/auth-redirect";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -57,7 +58,8 @@ function UnifiedSignupContent() {
   const orgDestination = postSignupDestination(searchParams, "/org/dashboard");
   const intent = "intent";
   const entrepreneurIntent = searchParams.get(intent) === "indigenous-business";
-  const { signUp, signInWithGoogle, user, sendVerificationEmail, reloadUser } = useAuth();
+  const explicitOrganization = searchParams.get("resume") === "organization" || searchParams.get("type") === "employer" || entrepreneurIntent;
+  const { signUp, signInWithGoogle, user, loading: authLoading, sendVerificationEmail, reloadUser } = useAuth();
 
   const [step, setStep] = useState(1);
   const formStartedAtRef = useRef(Date.now());
@@ -112,6 +114,10 @@ function UnifiedSignupContent() {
   const [empBannerFile, setEmpBannerFile] = useState<File | null>(null);
 
   const [draftUid, setDraftUid] = useState<string | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
+  const [observedOwner, setObservedOwner] = useState<string | null>(user?.uid ?? null);
+  const anonymousExpiresAt = useRef(Date.now() + SIGNUP_DRAFT_TTL);
+  const currentOwner = user?.uid ?? null;
   const completedDraft = useRef(false);
   // Invalidate immediately during identity render, including A -> B -> A.
   const operationOwner = useRef({ uid: user?.uid, generation: 0 });
@@ -120,16 +126,8 @@ function UnifiedSignupContent() {
   }
   useEffect(() => () => { operationOwner.current.generation += 1; }, []);
   useEffect(() => {
-    if (draftUid && draftUid !== user?.uid) {
-      setAccountUid(null); setDraftUid(null); setStep(1); setSubmitting(false);
-      setOrgName(""); setEmpDescription(""); setEmpServices(""); setEmpWebsite("");
-      setEmpProvince(""); setEmpCity(""); setBusinessIdentity("not_specified"); setCapabilities(["list_business"]);
-      setEmpLogoFile(null); setEmpBannerFile(null);
-      setName(""); setEmail(""); setPassword(""); setConfirmPassword(""); setConsent(false);
-      setVerificationEmailSent(false); setSignupNotice(""); setDeliveryNotice(""); setError("");
-      completedDraft.current = false;
-      return;
-    }
+    // Reset the previous owner's private state before reading the new UID's draft.
+    if (!draftReady || authLoading || observedOwner !== currentOwner) return;
     if (!user || role !== "organization" || orgType !== "employer") return;
     if (draftUid === user.uid) return;
     try {
@@ -144,7 +142,7 @@ function UnifiedSignupContent() {
       }
     } catch { setSignupNotice("Draft storage is unavailable. Keep this tab open until setup is complete."); }
     setDraftUid(user.uid);
-  }, [user, role, orgType, accountUid, draftUid]);
+  }, [user, role, orgType, accountUid, draftUid, draftReady, authLoading, observedOwner, currentOwner]);
 
   useEffect(() => {
     if (!user || draftUid !== user.uid || accountUid !== user.uid || role !== "organization" || orgType !== "employer" || completedDraft.current) return;
@@ -152,6 +150,51 @@ function UnifiedSignupContent() {
       localStorage.setItem(employerDraftKey(user.uid), encodeEmployerDraft(user.uid, { step, orgName, empDescription, empServices, empWebsite, empProvince, empCity, businessIdentity, capabilities }));
     } catch { /* Storage is optional; account and validation remain authoritative. */ }
   }, [user, draftUid, accountUid, role, orgType, step, orgName, empDescription, empServices, empWebsite, empProvince, empCity, businessIdentity, capabilities]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!draftReady) {
+      const draft = readSignupDraft();
+
+      if (!currentOwner && draft && (!explicitOrganization || draft.role === "organization")) {
+        setRole(draft.role); setOrgType(draft.orgType); setStep(draft.step);
+
+        anonymousExpiresAt.current = draft.expiresAt;
+      }
+      if (currentOwner) clearSignupDraft();
+      setObservedOwner(currentOwner); setDraftReady(true);
+      return;
+    }
+    if (observedOwner === currentOwner) return;
+    clearSignupDraft();
+    // Credential creation may notify auth before its promise resolves. Preserve
+    // that in-flight flow; an already observed account switch always resets.
+    if (observedOwner !== null || (!submitting && accountUid !== currentOwner)) {
+      // URL intent is public navigation, never authorization or another user's draft.
+      // A cross-tab login can arrive after Continue was clicked while anonymous.
+      // Retain only that public URL-intent navigation, never private form state.
+      setStep(previous => observedOwner === null && explicitOrganization && previous === 2 ? 2 : 1);
+      setRole(explicitOrganization ? "organization" : ""); setOrgType(explicitOrganization ? "employer" : ""); setAccountUid(null); setDraftUid(null);
+      setName(""); setEmail(""); setPassword(""); setConfirmPassword(""); setConsent(false);
+      setSchoolName(""); setInstitutionType(""); setWebsite(""); setDescription(""); setIndigenousControlled(false);
+      setProvince(""); setCity(""); setStreetAddress(""); setPostalCode(""); setAdmissionsPhone(""); setAdmissionsEmail("");
+      setCampuses([]); setIndigenousServices([]); setSelectedPlan("");
+      setOrgName(""); setEmpDescription(""); setEmpServices(""); setEmpWebsite("");
+      setEmpProvince(""); setEmpCity(""); setBusinessIdentity("not_specified"); setCapabilities(["list_business"]);
+      setLogoFile(null); setBannerFile(null); setEmpLogoFile(null); setEmpBannerFile(null);
+      setWebsiteTrap(""); formStartedAtRef.current = Date.now(); completedDraft.current = false;
+      setVerificationEmailSent(false); setSignupNotice(""); setDeliveryNotice("");
+      setError(""); setFieldErrors({}); setSubmitting(false);
+      anonymousExpiresAt.current = Date.now() + SIGNUP_DRAFT_TTL;
+    }
+    setObservedOwner(currentOwner);
+  }, [authLoading, draftReady, currentOwner, observedOwner, submitting, accountUid, explicitOrganization]);
+  useEffect(() => {
+    if (!draftReady || authLoading || observedOwner !== currentOwner) return;
+    if (user || accountUid) { clearSignupDraft(); return; }
+    if (step !== 1 && step !== 2) return;
+    saveSignupDraft({ role, orgType, step }, anonymousExpiresAt.current);
+  }, [draftReady, authLoading, observedOwner, currentOwner, user, accountUid, role, orgType, step]);
 
   const goTo = useCallback((s: number) => { setStep(s); setError(""); setFieldErrors({}); window.scrollTo({ top: 0, behavior: "smooth" }); }, []);
 
@@ -454,7 +497,7 @@ function UnifiedSignupContent() {
   const updateCampus = (i: number, f: keyof Campus, v: string) => setCampuses(p => p.map((c, idx) => idx === i ? { ...c, [f]: v } : c));
 
   // Do not expose the previous account's fields even for the render before reset effects.
-  if (draftUid && draftUid !== user?.uid) return <p role="status">Updating account…</p>;
+  if ((observedOwner !== currentOwner && !(observedOwner === null && accountUid === currentOwner)) || (draftUid && draftUid !== user?.uid)) return <p role="status">Updating account…</p>;
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", background: CSS.bg, color: CSS.text, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -463,7 +506,7 @@ function UnifiedSignupContent() {
         <TopBar loginHref={authIntentHref("/login", searchParams)} stepLabel={`Step ${current} of ${total}`} />
         <ProgressBar percent={percent} />
       </div>
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px", flex: 1, width: "100%" }}>
+      <fieldset disabled={!draftReady || authLoading} style={{ border: 0, minWidth: 0, position: "relative", zIndex: 1, maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px", flex: 1, width: "100%" }}>
         <div
           aria-hidden="true"
           style={{
@@ -527,7 +570,7 @@ function UnifiedSignupContent() {
           <div style={{ display: "grid", gap: 20 }}>
             <div>
               <FormInput id="name" label={role === "organization" ? "Your Name (Contact Person)" : orgType === "school" ? "Contact Name" : "Your Name"} required autoComplete="name" error={fieldErrors.name} placeholder={role === "organization" ? "e.g., Jane Smith" : "Your full name"} value={name} onChange={e => { setName(e.target.value); if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: "" })); }} />
-              {role === "organization" && <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 6, paddingLeft: 2 }}>&#8594; You&apos;ll enter your <strong style={{ color: CSS.textMuted }}>business name</strong> on the next step.</div>}
+              {role === "organization" && <div style={{ fontSize: 12, color: CSS.textDim, marginTop: 6, paddingLeft: 2 }}>&#8594; You&apos;ll enter your <strong style={{ color: CSS.textMuted }}>business name</strong> in Basics, after email verification.</div>}
             </div>
             <FormInput id="email" label="Email Address" required type="email" autoComplete="email" error={fieldErrors.email} placeholder="you@example.com" value={email} onChange={e => { setEmail(e.target.value); if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" })); }} />
             <div className="signup-account-password-grid grid grid-cols-1 gap-5 min-w-0 sm:grid-cols-2">
@@ -810,7 +853,7 @@ function UnifiedSignupContent() {
           </div>
         </div>)}
 
-      </div>
+      </fieldset>
     </div>
   );
 }

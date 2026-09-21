@@ -20,6 +20,7 @@ test('candidate preview disabled with prior settings and crons unchanged',()=>{
        'fix/master-employer-login-race': false,
     'fix/individual-qa3-20260921': false,
     'fix/individual-safe-cleanup-20260921': false,
+    'fix/public-audit-remediation-20260921': false,
      },
    },
    crons: [

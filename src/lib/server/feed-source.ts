@@ -1,4 +1,5 @@
 import { normalizeImportedLabel } from "./import-content-quality";
+import { sourcePostingDatePatch } from "./source-posting-date";
 
 export type FeedItem = Record<string, string>;
 type Json = Record<string, unknown>;
@@ -115,7 +116,7 @@ export async function fetchOracleItems(feedUrl: string, fetcher: Fetcher = fetch
       const id = text(job.Id);
       if (!id || !text(job.Title) || ids.has(id)) throw new Error("Invalid or repeated Oracle job identity");
       ids.add(id);
-      items.push({ guid: id, title: normalizeImportedLabel(text(job.Title)), description: text(job.ShortDescriptionStr), pubDate: text(job.PostedDate), closingDate: text(job.PostingEndDate), location: normalizeImportedLabel(text(job.PrimaryLocation)) || "Canada", link: `${url.origin}/hcmUI/CandidateExperience/en/sites/${encodeURIComponent(text(result.SiteNumber) || "SIGA")}/job/${encodeURIComponent(id)}` });
+      items.push({ guid: id, title: normalizeImportedLabel(text(job.Title)), description: text(job.ShortDescriptionStr), pubDate: text(job.PostedDate), ...sourcePostingDatePatch(job.PostedDate), closingDate: text(job.PostingEndDate), location: normalizeImportedLabel(text(job.PrimaryLocation)) || "Canada", link: `${url.origin}/hcmUI/CandidateExperience/en/sites/${encodeURIComponent(text(result.SiteNumber) || "SIGA")}/job/${encodeURIComponent(id)}` });
     }
     if (items.length === result.TotalJobsCount) return items;
     if (!result.requisitionList.length || items.length > Number(result.TotalJobsCount)) throw new Error("Incomplete Oracle source results");
@@ -197,6 +198,7 @@ export function parseSimpleXml(xml: string): Array<Record<string, string>> {
     if (!item.link && item.url) item.link = item.url;
     if (!item.guid && item.referencenumber) item.guid = item.referencenumber;
     if (item.pubdate || item.date) item.pubDate = item.pubdate || item.date;
+    Object.assign(item, sourcePostingDatePatch(item.pubDate));
     if (!item.location && (item.city || item.state)) {
       item.location = [item.city, item.state, item.country]
         .filter(Boolean)
@@ -244,6 +246,7 @@ export function parseAdp(text: string, feedUrl?: string): Array<Record<string, s
           ? `https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=${cid}&jobId=${itemID}&lang=en_CA&source=CC2`
           : "",
         pubDate: String((req.postDate as string)?.substring(0, 10) || ""),
+        ...sourcePostingDatePatch(req.postDate),
         description: String(req.requisitionDescription || req.shortDescription || ""),
         location: String(req.location || req.primaryLocation || "Canada"),
       };

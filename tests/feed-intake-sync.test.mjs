@@ -90,6 +90,45 @@ function harness(kind) {
   } };
 }
 
+for (const kind of ['manual', 'cron']) {
+  test(`${kind}: parser timestamp input and legacy midnight records cannot trigger backfill`, async () => {
+    const h = harness(kind);
+    const parser = sourceModule('src/lib/server/feed-source.ts');
+    const items = parser.parseAdp(JSON.stringify({ jobRequisitions: [{ itemID: 'instant-fixture', requisitionTitle: 'Instant role', postDate: '2026-09-19T00:00:00.000Z' }] }));
+    await h.sync(items);
+    assert.equal(h.jobs()[0][1].sourcePostingDate, undefined);
+    await h.sync(items);
+    assert.equal(h.jobs()[0][1].sourcePostingDate, undefined);
+  });
+  test(`${kind}: updateExistingJobs false retains explicit existing-record backfill gate`, async () => {
+    const h = harness(kind);
+    const parser = sourceModule('src/lib/server/feed-source.ts');
+    const items = parser.parseSimpleXml('<jobs><job><guid>gate-fixture</guid><title>Gate role</title><date>2028-02-29</date></job></jobs>');
+    await h.sync(items);
+    delete h.jobs()[0][1].sourcePostingDate;
+    h.rows.get('rssFeeds/fixture-feed').updateExistingJobs = false;
+    await h.sync(items);
+    assert.equal(h.jobs()[0][1].sourcePostingDate, undefined);
+  });
+  test(`${kind}: actual Oracle parser calendar provenance survives create, update and public projection`, async () => {
+    const h = harness(kind);
+    const parser = sourceModule('src/lib/server/feed-source.ts');
+    const items = await parser.fetchOracleItems('https://fixture.test/jobs?finder=findReqs;siteNumber=TEST', async () => Response.json({ items: [{ TotalJobsCount: 1, Offset: 0, requisitionList: [{ Id: 'calendar-fixture', Title: 'Calendar role', PostedDate: '2028-02-29' }] }] }));
+    const project = sourceModule('src/lib/server/public-content-record.ts').publicContentRecord;
+    await h.sync(items);
+    assert.equal(h.jobs().length, 1);
+    assert.equal(project(h.jobs()[0][1]).sourcePostingDate, '2028-02-29');
+    // A previously imported row without provenance receives it only from the original source.
+    delete h.jobs()[0][1].sourcePostingDate;
+    await h.sync(items);
+    assert.equal(project(h.jobs()[0][1]).sourcePostingDate, '2028-02-29');
+    // Description-only refresh with no date provenance does not erase known evidence.
+    await h.sync(items.map(({ sourcePostingDate, ...item }) => ({ ...item, description: 'Refreshed' })));
+    assert.equal(project(h.jobs()[0][1]).sourcePostingDate, '2028-02-29');
+    assert.equal(h.jobs()[0][1].description, 'Refreshed');
+  });
+}
+
 const variants = ['Regina', 'Saskatoon'].flatMap(location => ['2026-01-01', '2026-02-01'].map(pubDate => ({
   guid: 'shared-source-id', link: 'https://example.test/shared-job', title: 'Fictional role',
   location, pubDate, description: `Original ${location} ${pubDate}`, closingDate: '2099-01-01',

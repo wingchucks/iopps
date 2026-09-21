@@ -46,6 +46,11 @@ export interface Job {
   active?: boolean;
   status?: string;
   source?: string;
+  sourceMetadata?: {
+    salary: "available" | "not-imported";
+    closingDate: "available" | "not-imported";
+    employmentType: "available" | "not-imported";
+  };
   closingDate?: string;
   expiresAt?: unknown;
   createdAt?: unknown;

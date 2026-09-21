@@ -9,23 +9,35 @@ import {getAuth} from 'firebase-admin/auth';
 import {getFirestore} from 'firebase-admin/firestore';
 import {startIsolatedQaServer} from './local-qa-server.mjs';
 import {signOutFromFeed} from './qa-browser-auth.mjs';
+import {restoreSignupSecurityLimits} from './qa-signup-security-fixture.mjs';
 assert.equal(process.env.GCLOUD_PROJECT,'demo-iopps-preview');
 assert.equal(process.env.FIREBASE_AUTH_EMULATOR_HOST,'127.0.0.1:9099');
+assert.equal(process.env.FIRESTORE_EMULATOR_HOST,'127.0.0.1:8080');
 const output=path.join(process.env.QA_EMPLOYER_EVIDENCE || (process.platform === 'win32' ? 'C:/Users/natha/Documents/Codex/2026-09-20/employer-qa' : 'test-results/employer-browser'),'browser-'+Date.now());
 await fs.mkdir(output,{recursive:true});
+console.log('Employer browser evidence:',output);
 const app=initializeApp({projectId:'demo-iopps-preview'},'employer-browser');
 const auth=getAuth(app),db=getFirestore(app),prefix='qa-employer-'+crypto.randomUUID();
 const email=prefix+'@example.invalid',password='Fictional-only-2026!';
-const users=[],docs=new Map(),checks=[],errors=[];let server,browser,page,context;
+const users=[],docs=new Map(),checks=[],errors=[],securityNetwork=[];let server,browser,page,context;
 const remember=ref=>{docs.set(ref.path,ref);return ref;};
 async function record(name,detail={}){checks.push({name,status:'pass',...detail});await fs.writeFile(path.join(output,'browser-results.json'),JSON.stringify({prefix,checks,errors},null,2));}
 async function shot(name){await page.screenshot({path:path.join(output,name+'.png'),fullPage:true});}
+async function signupState(label){
+ const state=await page.evaluate(async()=>{
+  const request=indexedDB.open('firebaseLocalStorageDb');
+  const uid=await new Promise(resolve=>{request.onerror=()=>resolve(null);request.onsuccess=()=>{const db=request.result;if(!db.objectStoreNames.contains('firebaseLocalStorage')){db.close();resolve(null);return;}const read=db.transaction('firebaseLocalStorage').objectStore('firebaseLocalStorage').getAll();read.onsuccess=()=>{resolve(read.result.find(row=>row.value?.uid)?.value.uid||null);db.close();};read.onerror=()=>{db.close();resolve(null);};};});
+  return {path:location.pathname,query:location.search,uid,headings:[...document.querySelectorAll('h1,h2')].map(e=>e.textContent),fieldsetDisabled:document.querySelector('fieldset')?.disabled,buttons:[...document.querySelectorAll('button')].map(e=>({text:e.textContent,disabled:e.disabled,pressed:e.getAttribute('aria-pressed')})),drafts:Object.keys(localStorage).filter(k=>k.startsWith('iopps-employer-draft-v1:')).map(key=>({key,step:JSON.parse(localStorage.getItem(key))?.draft?.step}))};
+ });
+ await fs.writeFile(path.join(output,label+'.json'),JSON.stringify(state,null,2));
+}
 async function identity(email){const user=await auth.getUserByEmail(email);users.push(user.uid);for(const collection of ['users','members','organizations','employers'])remember(db.doc(collection+'/'+user.uid));return user;}
-async function contextFor(){const c=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'});c.on('page',p=>{p.on('pageerror',e=>errors.push(e.message));p.on('filechooser',()=>{});});await c.route('**/*',r=>{const u=new URL(r.request().url());return u.hostname==='127.0.0.1'&&[new URL(server.base).port,'8080','9099','9199'].includes(u.port)?r.continue():r.abort();});return c;}
+async function contextFor(){const c=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'});c.on('page',p=>{p.on('pageerror',e=>errors.push(e.message));p.on('filechooser',()=>{});p.on('response',r=>{const u=new URL(r.url());if(u.pathname==='/api/employer/signup'||u.pathname==='/api/employer/upgrade')securityNetwork.push({path:u.pathname,method:r.request().method(),status:r.status()});});});await c.route('**/*',r=>{const u=new URL(r.request().url());return u.hostname==='127.0.0.1'&&[new URL(server.base).port,'8080','9099','9199'].includes(u.port)?r.continue():r.abort();});return c;}
 async function verify(email,c){const codes=await(await fetch('http://127.0.0.1:9099/emulator/v1/projects/demo-iopps-preview/oobCodes')).json();const code=codes.oobCodes.find(c=>c.email===email&&c.requestType==='VERIFY_EMAIL');assert.ok(code);const p=await c.newPage(),url=new URL(server.base+'/auth/action');url.searchParams.set('mode','verifyEmail');url.searchParams.set('oobCode',code.oobCode);await p.goto(url.href);await p.getByRole('heading',{name:'Email verified',exact:true}).waitFor();await p.close();}
 async function tokenFor(uid){const r=await fetch('http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=fictional-emulator-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:await auth.createCustomToken(uid),returnSecureToken:true})});assert.equal(r.status,200);return (await r.json()).idToken;}
 async function request(method,route,token,body){const r=await fetch(server.base+route,{method,redirect:'error',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,data:await r.json()};}
 async function fictionalUser(suffix){const u=await auth.createUser({email:prefix+'-'+suffix+'@example.invalid',password,emailVerified:true});await identity(u.email);await remember(db.doc('users/'+u.uid)).set({role:'community',displayName:'Fictional '+suffix});return u;}
+const securityBaseline=new Map((await db.collection('signup_security_limits').get()).docs.map(d=>[d.id,d.data()]));
 try {
  server=await startIsolatedQaServer();
  const home=os.userInfo().homedir;
@@ -64,9 +76,14 @@ try {
    throw error;
   }
  }
- await loginTab(otherTab,switchUser.email);await page.getByRole('button',{name:'Continue →',exact:true}).click();await page.getByRole('button',{name:'Continue organization setup as '+switchUser.email,exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('');await page.getByLabel('Organization Name',{exact:false}).fill('Fictional second account private draft');
+ if(process.argv.includes('--adverse-auth-order')){
+  await page.getByRole('button',{name:'Continue →',exact:true}).click();await signupState('anonymous-account-step-before-login');await loginTab(otherTab,switchUser.email);await signupState('second-account-after-login');
+ }else{
+  await loginTab(otherTab,switchUser.email);await signupState('second-account-before-continue');await page.getByRole('button',{name:'Continue →',exact:true}).click();
+ }
+ await page.getByRole('button',{name:'Continue organization setup as '+switchUser.email,exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('');await page.getByLabel('Organization Name',{exact:false}).fill('Fictional second account private draft');
  const firstDraft=await page.evaluate(uid=>JSON.parse(localStorage.getItem('iopps-employer-draft-v1:'+uid)).draft,owner.uid);assert.equal(firstDraft.orgName,'Fictional Prairie Employer '+prefix);await record('live-cross-tab-account-switch-clears-fields-and-isolates-drafts');
- await otherTab.goto(server.base+'/feed');await signOutFromFeed(otherTab);await expect(page.getByLabel('Organization Name',{exact:false})).toHaveCount(0);await loginTab(otherTab,email);await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await otherTab.close();await record('original-account-resume-restores-only-own-draft');
+ await otherTab.goto(server.base+'/feed');await signOutFromFeed(otherTab);await expect(page.getByLabel('Organization Name',{exact:false})).toHaveCount(0);await loginTab(otherTab,email);await signupState('original-account-return');await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await otherTab.close();await record('original-account-resume-restores-only-own-draft');
  await page.getByRole('button',{name:'Continue →',exact:true}).click();await expect(page.getByRole('heading',{name:'Brand your Profile',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'← Back',exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await page.getByRole('button',{name:'Continue →',exact:true}).click();await page.getByRole('heading',{name:'Brand your Profile',exact:true}).waitFor();await record('step5-back-to-step4-preserves-input');
  for(const label of ['Upload Logo','Upload Cover'])for(const key of ['Enter','Space']){
@@ -153,9 +170,16 @@ try {
  await expect(page.getByRole('button',{name:'Post a Job',exact:true})).toHaveCount(0);await record('held-organization-authorization-cross-tab-signout-switch-denies-stale-workspace');await authTab.close();
  await page.goto(server.base+'/employers/for-business');await page.waitForURL(u=>u.pathname==='/for-employers');await record('business-entry-alias');
  assert.deepEqual(errors,[]);
-} catch(error) {if(page&&!page.isClosed()){await shot('failure');await fs.writeFile(path.join(output,'browser-failure.json'),JSON.stringify({error:error.stack,url:page.url().split('?')[0],text:await page.locator('body').innerText(),checks,errors},null,2));}throw error;
+} catch(error) {if(page&&!page.isClosed()){await shot('failure');await signupState('failure-state');await fs.writeFile(path.join(output,'browser-failure.json'),JSON.stringify({error:error.stack,url:page.url().split('?')[0],text:await page.locator('body').innerText(),checks,errors},null,2));}throw error;
 } finally {
+ await fs.writeFile(path.join(output,'security-network.json'),JSON.stringify(securityNetwork,null,2));
+ const securityEvents=[];for(const uid of users){const rows=await db.collection('signup_security_events').where('uid','==',uid).get();for(const row of rows.docs)securityEvents.push({id:row.id,...row.data()});}
+ await fs.writeFile(path.join(output,'security-events.json'),JSON.stringify(securityEvents,null,2));
+ const limits=await db.collection('signup_security_limits').get();await fs.writeFile(path.join(output,'security-limits.json'),JSON.stringify(limits.docs.map(d=>({id:d.id,...d.data()})),null,2));
+ if(server)await fs.writeFile(path.join(output,'server.log'),server.getLogs());
  if(browser)await browser.close();if(server)await server.stop();
+ const securityCleanup=await restoreSignupSecurityLimits(db,securityBaseline,securityEvents);
+ await fs.writeFile(path.join(output,'security-cleanup.json'),JSON.stringify(securityCleanup,null,2));
  for(const uid of users){for(const [collection,field] of [['adminNotifications','orgId'],['adminNotifications','userId'],['signup_security_events','uid']]){const rows=await db.collection(collection).where(field,'==',uid).get();for(const row of rows.docs)remember(row.ref);}}
  for(const uid of users){for(const collection of ['activity','views']){const rows=await db.doc('organizations/'+uid).collection(collection).get();for(const row of rows.docs)remember(row.ref);}}
  for(const ref of docs.values())await ref.delete();for(const uid of users)await auth.deleteUser(uid);

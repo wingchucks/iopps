@@ -1,0 +1,10 @@
+{
+  "evidence": "jobs/ats-01.json, captured 2026-09-21; public role text only",
+  "sourceLabels": {
+    "Apply Before": "10/03/2026, 12:00 AM",
+    "Pay Range": "$65,100 - $84,600",
+    "Job Schedule": "Full time"
+  },
+  "rawDescription": "This position focuses on organizational excellence, by ensuring SIGA �s employees are paid accurately and promptly.",
+  "boundary": "Rendered source evidence is not a captured provider API schema. Apply Before has no timezone; Pay Range has no explicit currency/period. Do not backfill or infer those semantics."
+}

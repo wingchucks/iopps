@@ -2,6 +2,7 @@
 import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import OpportunityHeader from "./OpportunityHeader";
+import Footer from "./Footer";
 import NavBar from "./NavBar";
 import IconRailSidebar from "./IconRailSidebar";
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -17,6 +18,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <>
         <OpportunityHeader />
         <div data-main-content tabIndex={-1} className="op-account-surface">{children}</div>
+        {["/businesses", "/scholarships", "/events"].includes(pathname) && <Footer />}
       </>
     );
   return (
