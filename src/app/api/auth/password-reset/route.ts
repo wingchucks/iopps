@@ -4,6 +4,7 @@ import { validateOrigin } from "@/lib/csrf";
 import { verifyAppCheckFromRequest } from "@/lib/server/app-check";
 import { reservePasswordReset } from "@/lib/server/password-reset-limit";
 import { sendAccountPasswordResetEmail } from "@/lib/email";
+import { buildBrandedPasswordResetLink } from "@/lib/auth-verification-email";
 
 export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
     if (!await reservePasswordReset(getAdminDb(), email, ip)) return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
     try {
       const resetLink = await getAdminAuth().generatePasswordResetLink(email, { url: "https://www.iopps.ca/login", handleCodeInApp: false });
-      await sendAccountPasswordResetEmail(email, resetLink);
+      await sendAccountPasswordResetEmail(email, buildBrandedPasswordResetLink("https://iopps.ca", resetLink));
     } catch (error) {
       // Account existence and provider failure must never become an email lookup oracle.
       if ((error as { code?: string }).code !== "auth/user-not-found") console.error("[password-reset] Delivery unavailable");

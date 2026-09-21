@@ -60,6 +60,32 @@ test('action effect replay consumes a code once and does not report success befo
   assert.equal(values[0], 'success');
 });
 
+test('reset action displays accessible password form and safe failure', () => {
+  const { PasswordResetView } = load('src/app/auth/action/ActionContent.tsx', {
+    './verification-action': load('src/app/auth/action/verification-action.ts'), '@/lib/firebase': { auth: {} }, 'firebase/auth': {},
+  });
+  assert.equal(typeof PasswordResetView, 'function');
+  for (const [state, text] of [['loading', 'Checking your reset link'], ['ready', 'Choose a new password'], ['success', 'Password updated'], ['error', 'Request a new reset link']]) {
+    const html = renderToStaticMarkup(React.createElement(PasswordResetView, { state, continuePath: '/login', onSubmit: async () => {} }));
+    assert.ok(DomUtils.textContent(parseDocument(html)).includes(text));
+    if (state === 'ready') { assert.match(html, /autocomplete="new-password"/i); assert.match(html, /New password/); assert.match(html, /Confirm new password/); }
+    assert.doesNotMatch(html, /oobCode|Firebase/);
+  }
+});
+
+test('reset action validates code before presenting a form and restricts continuation', async () => {
+  const { validateResetAction, resetContinuePath } = load('src/app/auth/action/verification-action.ts');
+  assert.equal(typeof validateResetAction, 'function');
+  let checks = 0;
+  const check = async code => { assert.equal(code, 'fictional'); checks++; return 'fixture@example.invalid'; };
+  assert.equal(await validateResetAction(new URLSearchParams('mode=resetPassword&oobCode=fictional'), check), 'fictional');
+  for (const params of ['mode=verifyEmail&oobCode=fictional', 'mode=resetPassword&oobCode=fictional&oobCode=other', 'mode=resetPassword']) await assert.rejects(validateResetAction(new URLSearchParams(params), check));
+  assert.equal(checks, 1);
+  await assert.rejects(validateResetAction(new URLSearchParams('mode=resetPassword&oobCode=fictional'), async () => { throw Error('expired'); }));
+  assert.equal(resetContinuePath('https://iopps.ca/jobs/one?save=1', 'https://iopps.ca'), '/login?redirect=%2Fjobs%2Fone%3Fsave%3D1');
+  for (const value of ['https://evil.invalid/', '//evil.invalid', '/auth/action', '/login?redirect=//evil.invalid', '/\\\\evil.invalid']) assert.equal(resetContinuePath(value, 'https://iopps.ca'), '/login');
+});
+
 test('every installed Firebase Auth error code and unknown code has safe friendly output (existing behavior)', async t => {
   const { AuthErrorCodes } = await import('firebase/auth');
   const { authErrorMessage } = load('src/lib/auth-errors.ts');

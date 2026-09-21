@@ -12,7 +12,7 @@ import {prepareImportedDescription} from '../src/lib/server/import-content-quali
 import {startIsolatedQaServer} from './local-qa-server.mjs';
 assert.equal(process.env.GCLOUD_PROJECT,'demo-iopps-preview');
 assert.equal(process.env.FIREBASE_AUTH_EMULATOR_HOST,'127.0.0.1:9099');
-const output='C:/Users/natha/Documents/Codex/2026-09-19/so-i-need-you-to-go/output/qa-round2';
+const output=process.env.IOPPS_QA3_OUTPUT ? path.join(process.env.IOPPS_QA3_OUTPUT,'regression-browser') : 'C:/Users/natha/Documents/Codex/2026-09-19/so-i-need-you-to-go/output/qa-round2';
 await fs.mkdir(output,{recursive:true});
 const app=initializeApp({projectId:'demo-iopps-preview'},'round2-browser');
 const db=getFirestore(app),auth=getAuth(app),prefix='qa-round2-'+crypto.randomUUID();

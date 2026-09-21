@@ -1,6 +1,7 @@
+import { createImportedJobOnce, feedImportIdentity, importedJobCandidateSelector } from "@/lib/server/feed-import-identity";
 import { prepareImportedDescription, withImportedLabelQuality } from "@/lib/server/import-content-quality";
 import { missingSourceJobIds, expirationPatch, sourceLifecyclePatch } from "@/lib/server/job-expiration";
-import { loadFeedItems, feedJobKey, stripCdata } from "@/lib/server/feed-source";
+import { loadFeedItems, stripCdata } from "@/lib/server/feed-source";
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { verifyAdminToken } from "@/lib/api-auth";
@@ -51,8 +52,7 @@ export async function POST(
     const items = await loadFeedItems(feed.feedUrl!, feedType);
     // Scope identity matching to this employer, including historical Dayforce apply URLs.
     const existingJobs = await adminDb.collection("jobs").where("employerId", "==", feed.employerId).get();
-    const byId = new Map(existingJobs.docs.filter(d => d.get("externalId") && d.get("feedId") === feed.id).map(d => [String(d.get("externalId")), d]));
-    const byUrl = new Map(existingJobs.docs.flatMap(d => [d.get("externalUrl"), d.get("applyUrl"), d.get("applicationUrl")].map(value => [feedJobKey(value), d] as const).filter(([key]) => key)));
+    const selectExistingJob = importedJobCandidateSelector(existingJobs.docs, feed.id);
     const seen = new Set<string>();
     let jobsUpdated = 0;
     let jobsFailed = 0;
@@ -62,7 +62,7 @@ export async function POST(
       try {
         const externalId = item.guid || item.id || item.link || "";
         const externalUrl = item.link || item.url || "";
-        const key = feedJobKey(externalUrl) || externalId;
+        const key = feedImportIdentity({ feedId: feed.id, employerId: feed.employerId, title: item.title, location: item.location || "Canada", externalId, externalUrl, publishedAt: item.pubDate });
         if (!key || !item.title) throw new Error("Feed job is missing identity or title");
         if (seen.has(key)) continue;
         seen.add(key);
@@ -81,7 +81,7 @@ export async function POST(
 
         if (!externalId && !externalUrl) continue;
 
-        const existingDoc = byId.get(externalId) || byUrl.get(feedJobKey(externalUrl));
+        const existingDoc = selectExistingJob({ externalId, externalUrl, location: item.location || "Canada", publishedAt: item.pubDate });
         if (existingDoc) {
           const lifecycle = sourceLifecyclePatch(item, existingDoc.data());
               const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
@@ -125,8 +125,7 @@ export async function POST(
           }
         }
 
-        await adminDb.collection("jobs").add(jobData);
-        jobsImported++;
+        if (await createImportedJobOnce(adminDb, jobData)) jobsImported++;
       } catch (itemErr) {
         jobsFailed++;
         console.error(`[admin/feeds/sync] Error processing item:`, itemErr);

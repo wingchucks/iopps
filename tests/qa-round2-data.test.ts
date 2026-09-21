@@ -2,7 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mergePublicJobRecords, withAuthoritativeJobCounts } from '../src/lib/public-job-merge.ts';
 import { parseSimpleXml, parseAdp, parseDayforcePage, fetchOracleItems } from '../src/lib/server/feed-source.ts';
-import { prepareImportedDescription, normalizePartnerDescription } from '../src/lib/server/import-content-quality.ts';
+import { prepareImportedDescription, normalizePartnerDescription, normalizeImportedLabel } from '../src/lib/server/import-content-quality.ts';
+
+test('qa3: imported labels remove actual markup once without inventing damaged text', () => {
+ assert.equal(normalizeImportedLabel('<b>Food &amp; Beverage</b>\n Porter- 2 Casual'), 'Food & Beverage Porter- 2 Casual');
+ assert.equal(normalizeImportedLabel('Métis � &lt;team&gt;'), 'Métis � <team>');
+ const quality=prepareImportedDescription('SIGA �s employees',undefined,{title:'Human Resource in Age of Indigenous Law'});
+ assert.equal(quality.description,'SIGA �s employees');
+ assert.equal(quality.importContentQuality.rawDescription,'SIGA �s employees');
+ assert.equal(quality.importContentQuality.needsReview,true);
+});
 
 test('round2: Oracle labels normalize safely through actual offline importer', async () => {
  const rows=await fetchOracleItems('https://example.test/jobs?finder=findReqs;site=fixture', async()=>Response.json({items:[{TotalJobsCount:1,Offset:0,requisitionList:[{Id:'1',Title:'Canad Inns &amp; Suites',PrimaryLocation:'Winnipeg&nbsp;MB'}]}]}));

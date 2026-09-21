@@ -3,7 +3,9 @@ import { normalizeJobDiscoveryMetadata } from "./job-metadata";
 
 export type EmployerBrand = { id: string; name?: string; employerId?: string; logoUrl?: string };
 export const employerName = (job: Job) => job.employerName || job.orgName || job.companyName || "Hiring organization";
-export const jobArea = (job: Job) => job.department || job.category || "";
+// Match the canonical job-publishing taxonomy; provider departments are not categories.
+const JOB_AREAS = new Set(["Administration", "Agriculture", "Arts & Culture", "Business", "Construction & Trades", "Education", "Environment & Land", "Finance", "Government & Public Service", "Health & Wellness", "Hospitality & Tourism", "Human Resources", "Information Technology", "Legal", "Management", "Marketing & Communications", "Natural Resources", "Social Services", "Transportation", "Other"]);
+export const jobArea = (job: Job) => JOB_AREAS.has(job.category || "") ? job.category! : "";
 const identity = (value?: string) => (value || "").trim().toLowerCase();
 export function employerLogo(job: Job, brands: EmployerBrand[]): string | undefined {
   if (job.companyLogoUrl) return job.companyLogoUrl;

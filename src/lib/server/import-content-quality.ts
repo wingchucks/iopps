@@ -44,8 +44,8 @@ function importedHtmlText(value: string): string {
 }
 
 export function normalizeImportedLabel(value: string): string {
-  // Escape literal markup before the single parser pass; only entities are decoded.
-  return importedHtmlText(value.replace(/</g, "&lt;").replace(/>/g, "&gt;"))
+  // Remove actual source markup and decode entities in one pass; never reparse decoded text.
+  return importedHtmlText(value)
     .replace(encodingPattern, match => knownEncoding.get(match)!)
     .normalize("NFC").replace(/\s+/gu, " ").trim();
 }

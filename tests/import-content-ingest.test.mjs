@@ -10,12 +10,13 @@ for (const kind of ['manual', 'cron', 'batch']) {
     const writes = [];
     const feedDoc = { id: 'fixture-feed', exists: true, data: () => feed };
     const db = {
+      runTransaction: async callback => callback({get: async () => ({exists:false}), create: (ref,data) => {if(ref.collection === "jobs") writes.push(data);}}),
       batch: () => ({ set: (_ref, data) => writes.push(data), commit: async () => {} }),
       collection: name => {
         const query = {
           where: () => query, limit: () => query,
           get: async () => ({ empty: true, docs: name === 'rssFeeds' ? [feedDoc] : [], size: name === 'rssFeeds' ? 1 : 0 }),
-          doc: () => ({ get: async () => feedDoc, update: async () => {} }),
+          doc: () => ({ collection: name, id: "fixture-job", get: async () => feedDoc, update: async () => {} }),
           add: async data => { if (name === 'jobs') writes.push(data); },
         };
         return query;
