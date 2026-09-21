@@ -20,6 +20,7 @@ ok=run('lint',['node_modules/eslint/bin/eslint.js','src','public','packages','te
 const tests=fs.readdirSync('tests').filter(n=>/\.test\.(ts|mjs)$/.test(n)).map(n=>'tests/'+n);
 ok=run('full-suite',['--import',loader,'--test','--test-concurrency=1',...tests])&&ok;
 if(results.find(r=>r.name==='build')?.status===0){
- for(const [name,script] of [['audit-browser','qa-public-audit-browser'],['cleanup-browser','qa-safe-cleanup-browser'],['qa3-browser','qa-individual3-browser'],['regression-browser','qa-round2-browser']])ok=run(name,['--import',loader,`scripts/${script}.mjs`])&&ok;
+ for(const [name,script] of [['audit-browser','qa-public-audit-browser'],['cleanup-browser','qa-safe-cleanup-browser'],['qa3-browser','qa-individual3-browser'],['regression-browser','qa-round2-browser'],['release-browser','qa-release-browser'],['employer-browser','qa-employer-browser']])ok=run(name,['--import',loader,`scripts/${script}.mjs`])&&ok;
+ ok=run('employer-adverse-browser',['--import',loader,'scripts/qa-employer-browser.mjs','--adverse-auth-order'])&&ok;
 }
 process.exitCode=ok?0:1;

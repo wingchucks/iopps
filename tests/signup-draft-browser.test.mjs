@@ -43,17 +43,23 @@ test('signup draft restores audited Step 2 after reload without credentials or c
   await page.getByLabel('Email Address',{exact:false}).fill('fictional@example.invalid');
   await page.locator('#password').fill('Fictional1!');await page.locator('#confirmPassword').fill('Fictional1!');
   await page.getByRole('checkbox').check();
+  const stored = await page.evaluate(() => ({ keys: Object.keys(sessionStorage), draft: JSON.parse(sessionStorage.getItem('iopps:signup-draft:v1')), all: [Object.values(sessionStorage), Object.values(localStorage)] }));
+  assert.deepEqual(stored.keys, ['iopps:signup-draft:v1']);
+  assert.deepEqual(Object.keys(stored.draft).sort(), ['version', 'expiresAt', 'role', 'orgType', 'step'].sort());
+  assert.deepEqual({ ...stored.draft, expiresAt: 0 }, { version: 2, expiresAt: 0, role: 'community', orgType: '', step: 2 });
+  assert.doesNotMatch(JSON.stringify(stored.all), /Fictional QA|fictional@example|Fictional1|name|email|password|consent/i);
   await page.reload();
+  assert.equal(await page.evaluate(() => JSON.parse(sessionStorage.getItem('iopps:signup-draft:v1')).expiresAt), stored.draft.expiresAt);
   assert.match(await page.locator('body').innerText(), /Step 2 of 3/);
-  assert.equal(await page.locator('#name').inputValue(),'Fictional QA');
-  assert.equal(await page.locator('#email').inputValue(),'fictional@example.invalid');
+  assert.equal(await page.locator('#name').inputValue(),'');
+  assert.equal(await page.locator('#email').inputValue(),'');
   assert.equal(await page.locator('#password').inputValue(),'');
   assert.equal(await page.locator('#confirmPassword').inputValue(),'');
   assert.equal(await page.locator('#signup-consent').isChecked(),false);
   await page.goto(`http://127.0.0.1:${server.address().port}/away`);
   await page.goBack();
   await page.locator('#name').waitFor();
-  assert.equal(await page.locator('#name').inputValue(),'Fictional QA');
+  assert.equal(await page.locator('#name').inputValue(),'');
   // An explicit employer entry must not be replaced by an individual draft.
   await page.goto(`http://127.0.0.1:${server.address().port}/signup?type=employer`);
   await page.getByRole('button',{name:/Business or organization/}).waitFor();
@@ -72,7 +78,8 @@ test('signup draft restores audited Step 2 after reload without credentials or c
   await page.locator('#name').fill('Fictional Employer');
   await page.reload();
   assert.match(await page.locator('body').innerText(), /Step 2 of 6/);
-  assert.equal(await page.locator('#name').inputValue(),'Fictional Employer');
+  assert.equal(await page.locator('#name').inputValue(),'');
+  assert.equal(await page.locator('#email').inputValue(),'');
   assert.match(await page.locator('body').innerText(), /business name.*after.*email.*verif/i);
   for (const theme of ['light','dark']) for (const width of [360,768,1440]) {
     await page.setViewportSize({width,height:1000});
@@ -95,6 +102,17 @@ test('signup draft restores audited Step 2 after reload without credentials or c
     const overlayRatio=(Math.max(a,overlay)+.05)/(Math.min(a,overlay)+.05);
     assert.ok(overlayRatio>=4.5, `mesh worst-case contrast ${overlayRatio}`);
     t.diagnostic(`${theme}/${width}: Role ${ratio.toFixed(3)}:1; mesh lower bound ${overlayRatio.toFixed(3)}:1`);
+  }
+  // Legacy PII and malformed current drafts are discarded, not migrated.
+  await page.goto(`http://127.0.0.1:${server.address().port}/signup`);
+  for (const raw of ['{broken', JSON.stringify({ version: 1, expiresAt: Date.now() + 60000, role: 'community', orgType: '', step: 2, name: 'Legacy PII', email: 'legacy@example.invalid' })]) {
+    await page.evaluate(raw => sessionStorage.setItem('iopps:signup-draft:v1', raw), raw);
+    await page.reload();
+    await page.getByRole('button', { name: /Individual/ }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Continue →', exact: true }).isDisabled(), true);
+    assert.equal(await page.locator('#name').count(), 0);
+    const fresh = await page.evaluate(() => JSON.parse(sessionStorage.getItem('iopps:signup-draft:v1') || 'null'));
+    if (fresh) assert.deepEqual({ ...fresh, expiresAt: 0 }, { version: 2, expiresAt: 0, role: '', orgType: '', step: 1 });
   }
   assert.deepEqual(errors,[]);assert.deepEqual(escaped,[]);
 });

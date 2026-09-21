@@ -2,7 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { parseDocument, DomUtils } from 'htmlparser2';
 import { sourceModule } from './helpers/security-fixtures.mjs';
+
+function renderedText(markup) {
+  // Extract assertion text from an inert DOM; never sanitize or re-render it as HTML.
+  return DomUtils.textContent(parseDocument(markup));
+}
+
+for (const [name, markup, expected] of [
+  ['multiline comments', 'Originally posted: <!-- hidden\ncomment -->2026-09-19', 'Originally posted: 2026-09-19'],
+  ['nested comment opener', 'Originally posted: <!--<!-- hidden -->2026-09-19', 'Originally posted: 2026-09-19'],
+  ['comment opener reconstructed by stripping', '<!<!-- hidden -->--', '--'],
+  ['escaped security strings', '<p>&lt;!-- &lt;script&gt;alert(1)&lt;/script&gt; &amp; text</p>', '<!-- <script>alert(1)</script> & text'],
+]) {
+  test(`SSR text assertions parse ${name} without sanitizing HTML`, () => {
+    assert.equal(renderedText(markup), expected);
+  });
+}
 
 function renderDetail(record) {
   let state=0;
@@ -16,7 +33,7 @@ function renderDetail(record) {
     '@/lib/auth-context':{useAuth:()=>({user:null})},
     '@/lib/firestore/savedItems':{},'@/lib/firestore/applications':{},'@/lib/job-funnel-analytics':{},
   }});
-  return renderToStaticMarkup(React.createElement(page.default)).replace(/<!--.*?-->/g,'');
+  return renderedText(renderToStaticMarkup(React.createElement(page.default)));
 }
 
 async function jsonLd(record) {

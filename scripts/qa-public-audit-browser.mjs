@@ -187,27 +187,28 @@ try {
     await page.locator('#name').fill(name); await page.locator('#email').fill(email);
     const password = 'Fictional-not-persisted-2026!';
     await page.locator('#password').fill(password); await page.locator('#confirmPassword').fill(password); await page.locator('#signup-consent').check();
-    await expect.poll(() => page.evaluate(key => JSON.parse(sessionStorage.getItem(key) || '{}').email, draftKey)).toBe(email);
+    await expect.poll(() => page.evaluate(key => JSON.parse(sessionStorage.getItem(key) || '{}').step, draftKey)).toBe(2);
     const draft = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)), draftKey);
-    assert.deepEqual(Object.keys(draft).sort(), ['version', 'expiresAt', 'role', 'orgType', 'step', 'name', 'email'].sort());
-    assert.deepEqual({ role: draft.role, orgType: draft.orgType, step: draft.step, name: draft.name, email: draft.email }, { role, orgType, step: 2, name, email });
+    assert.deepEqual(Object.keys(draft).sort(), ['version', 'expiresAt', 'role', 'orgType', 'step'].sort());
+    assert.equal(draft.version, 2);
+    assert.deepEqual({ role: draft.role, orgType: draft.orgType, step: draft.step }, { role, orgType, step: 2 });
     assert.ok(draft.expiresAt > Date.now() && draft.expiresAt <= Date.now() + 1800000);
-    const passwordStored = await page.evaluate(secret => [localStorage, sessionStorage].some(storage => Object.values(storage).some(value => String(value).includes(secret))), password);
-    assert.equal(passwordStored, false);
-    await page.reload(); await expect(page.locator('#name')).toHaveValue(name); await expect(page.locator('#email')).toHaveValue(email);
+    const privateFieldsStored = await page.evaluate(secrets => [localStorage, sessionStorage].some(storage => Object.values(storage).some(value => secrets.some(secret => String(value).includes(secret)))), [name, email, password]);
+    assert.equal(privateFieldsStored, false);
+    await page.reload(); await expect(page.locator('#name')).toHaveValue(''); await expect(page.locator('#email')).toHaveValue('');
     await expect(page.locator('#password')).toHaveValue(''); await expect(page.locator('#confirmPassword')).toHaveValue(''); await expect(page.locator('#signup-consent')).not.toBeChecked();
-    const restored = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)), draftKey); assert.equal(restored.expiresAt, draft.expiresAt); assert.equal(restored.role, role);
+    const restored = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)), draftKey); assert.equal(restored.expiresAt, draft.expiresAt); assert.equal(restored.role, role); assert.equal(restored.orgType, orgType); assert.equal(restored.step, 2);
     await progressRoleContrast('step2-restored', role, width);
     await shot('signup-restored-' + role + '-' + width); await record('signup-reload-' + role + '-' + width + '-safe-fields-only-expiry-not-extended');
   }
-  const validShape = { version: 1, expiresAt: Date.now() + 900000, role: 'community', orgType: '', step: 2, name: 'Fictional invalid draft', email: 'invalid@example.invalid' };
-  for (const [label, raw] of [['malformed', '{broken'], ['expired', JSON.stringify({ ...validShape, expiresAt: Date.now() - 1 })], ['invalid-role', JSON.stringify({ ...validShape, role: 'admin' })], ['invalid-step', JSON.stringify({ ...validShape, step: 10 })], ['future-expiry', JSON.stringify({ ...validShape, expiresAt: Date.now() + 86400000 })]]) {
+  const validShape = { version: 2, expiresAt: Date.now() + 900000, role: 'community', orgType: '', step: 2 };
+  for (const [label, raw] of [['legacy-pii', JSON.stringify({ ...validShape, version: 1, name: 'Legacy private name', email: 'legacy@example.invalid' })], ['current-pii', JSON.stringify({ ...validShape, email: 'private@example.invalid' })], ['malformed', '{broken'], ['expired', JSON.stringify({ ...validShape, expiresAt: Date.now() - 1 })], ['invalid-role', JSON.stringify({ ...validShape, role: 'admin' })], ['invalid-step', JSON.stringify({ ...validShape, step: 10 })], ['future-expiry', JSON.stringify({ ...validShape, expiresAt: Date.now() + 86400000 })]]) {
     await page.evaluate(({ key, raw }) => sessionStorage.setItem(key, raw), { key: draftKey, raw }); await page.reload();
     await expect(page.getByRole('button', { name: /^(?:✓ )?👤 Individual/ })).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Continue →', exact: true })).toBeDisabled();
     await expect(page.locator('#name')).toHaveCount(0);
     const fresh = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key) || 'null'), draftKey);
-    if (fresh) { assert.equal(fresh.step, 1); assert.equal(fresh.role, ''); assert.equal(fresh.name, ''); assert.equal(fresh.email, ''); }
+    if (fresh) { assert.equal(fresh.step, 1); assert.equal(fresh.role, ''); assert.deepEqual(Object.keys(fresh).sort(), ['version', 'expiresAt', 'role', 'orgType', 'step'].sort()); }
     await record('signup-rejects-' + label);
   }
   for (const width of [360, 768, 1440]) {

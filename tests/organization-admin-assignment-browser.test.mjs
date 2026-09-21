@@ -22,8 +22,9 @@ test('local browser: desktop/mobile review, exact confirmation, cancel/focus, ap
   fs.writeFileSync(path.join(output,'entry.js'),`import React from 'react';import {createRoot} from 'react-dom/client';import Component from './component.js';createRoot(document.getElementById('root')).render(React.createElement(Component,{orgId:'batc',getToken:async()=>'local-fixture',onApplied:async()=>{window.refreshed=true}}));`);
   const require=createRequire(import.meta.url);const {webpack}=require('next/dist/compiled/webpack/webpack');
   await new Promise((resolve,reject)=>{webpack({mode:'development',entry:path.join(output,'entry.js'),output:{path:output,filename:'bundle.js'},devtool:false},(err,stats)=>err||stats.hasErrors()?reject(err||Error(stats.toString('errors-only'))):resolve());});
-  const cssDirectory=path.join(process.env.IOPPS_BUILD_DIRECTORY || '.next','static/chunks');
-  const cssFiles=fs.readdirSync(cssDirectory).filter(f=>f.endsWith('.css'));
+  // Webpack emits static/css; Turbopack emits static/chunks. Read real build assets in either layout.
+  const cssDirectory=path.join(process.env.IOPPS_BUILD_DIRECTORY || '.next','static');
+  const cssFiles=fs.readdirSync(cssDirectory,{recursive:true}).filter(f=>f.endsWith('.css')).sort();
   assert.ok(cssFiles.length,'Build-generated app styles are required');
   const css=cssFiles.map(f=>fs.readFileSync(path.join(cssDirectory,f),'utf8')).join('\n');
   const id='demo-batc-browser-'+Date.now();const app=initializeApp({projectId:id},id);const db=getFirestore(app);const auth=getAuth(app);

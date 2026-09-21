@@ -52,14 +52,20 @@ test('unmounted signup draft is invalidated by real provider auth boundaries on 
   await page.locator('#name').fill('Prior Identity');await page.locator('#email').fill('prior@example.invalid');
   await page.locator('#password').fill('Fictional1!');await page.locator('#confirmPassword').fill('Fictional1!');await page.getByRole('checkbox').check();
   const stored=await page.evaluate(key=>sessionStorage.getItem(key),key);
-  assert.equal(JSON.parse(stored).name,'Prior Identity');assert.doesNotMatch(stored,/Fictional1|password|token|consent/i);
+  assert.deepEqual(Object.keys(JSON.parse(stored)).sort(), ['version','expiresAt','role','orgType','step'].sort());
+  assert.equal(JSON.parse(stored).role,'community');assert.equal(JSON.parse(stored).step,2);
+  assert.doesNotMatch(stored,/Prior Identity|prior@example|name|email|Fictional1|password|token|consent/i);
   await page.reload();await page.locator('#name').waitFor();
-  assert.equal(await page.locator('#name').inputValue(),'Prior Identity','initial anonymous provider callback preserves reload recovery');
+  assert.equal(await page.locator('#name').inputValue(),'');
+  assert.equal(await page.locator('#email').inputValue(),'');
+  assert.match(await page.locator('body').innerText(), /Step 2 of 3/, 'initial anonymous provider callback preserves role/step recovery');
   await page.evaluate(()=>window.navigate('/elsewhere'));await page.getByRole('heading',{name:'Elsewhere'}).waitFor();
   assert.equal(await page.locator('#name').count(),0,'signup really unmounted');
   // No auth boundary: leaving and returning must still preserve the draft.
   await page.evaluate(()=>window.navigate('/signup'));await page.locator('#name').waitFor();
-  assert.equal(await page.locator('#name').inputValue(),'Prior Identity');
+  assert.equal(await page.locator('#name').inputValue(),'');
+  assert.equal(await page.locator('#email').inputValue(),'');
+  assert.match(await page.locator('body').innerText(), /Step 2 of 3/);
   await page.evaluate(()=>window.navigate('/elsewhere'));await page.getByRole('heading',{name:'Elsewhere'}).waitFor();
   await page.evaluate(()=>window.testAuth.signIn('other@example.invalid','fictional'));
   await page.evaluate(()=>window.testAuth.signOut());
