@@ -31,6 +31,12 @@ The completed separate desktop runs exercise individual description/spacing, sea
 - Source title repairs stay conservative. Current SIGA corrupted bytes do not match the existing narrowly approved repair. A separate exact mapping approval is required.
 - QA runners retain machine-specific paths and use installed Chrome headlessly with a desktop viewport; they are local acceptance scripts, not a portable CI setup or manual desktop session.
 
+## Independent-review remediation
+
+Independent review found a P1: single-value source indexes lost existing location/date variants, preventing later content updates and explicit expiration. Both manual and cron handlers now use all-candidate intake-aware selection with ID preference and URL fallback. Ten new actual-handler two-pass tests failed before the fix and pass after it; independent re-review passed the original P1 fix. Fresh full isolated acceptance is required for this changed source.
+
+Known unchanged limitation: missing-source detection uses source ID/URL, not intake. Disappearance of just one location/date variant sharing a still-present source key is not detected. Explicit closing-date expiration is covered; this is not proof of partial-disappearance handling. The selector returns one matching document and does not reconcile duplicate legacy documents of the same intake.
+
 ## Authorization boundary
 
-User approved final local review and local commit only. No push, PR creation, deployment, provider configuration change or live-data mutation is authorized by this step.
+User subsequently authorized progression through release steps. PR #231 is held as draft until exact-source verification and independent review pass. Branch automatic deployment is disabled. No provider-template change or live-data cleanup is included in this code release; documented backup/ownership/alias safeguards remain required.

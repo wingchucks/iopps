@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { feedJobKey } from "./feed-source";
 import type { Firestore } from "firebase-admin/firestore";
 
 type Job = Record<string, unknown>;
@@ -35,6 +36,31 @@ export async function createImportedJobOnce(db: Firestore, data: Job): Promise<b
     tx.create(job, { ...data, importIdentity: identity });
     return true;
   });
+}
+
+/** Keep every intake under a reused source key; select only after intake validation. */
+export function importedJobCandidateSelector<T extends { data(): Job }>(docs: T[], feedId: string) {
+  const byId = new Map<string, T[]>();
+  const byUrl = new Map<string, T[]>();
+  const append = (index: Map<string, T[]>, key: string, doc: T) => {
+    if (!key) return;
+    const candidates = index.get(key);
+    if (candidates) candidates.push(doc);
+    else index.set(key, [doc]);
+  };
+  for (const doc of docs) {
+    const data = doc.data();
+    if (data.externalId && data.feedId === feedId) append(byId, String(data.externalId), doc);
+    for (const key of new Set([data.externalUrl, data.applyUrl, data.applicationUrl].map(feedJobKey))) {
+      append(byUrl, key, doc);
+    }
+  }
+  return (incoming: Job): T | undefined => {
+    const matches = (doc: T) => sameImportedIntake(doc.data(), { ...incoming, feedId });
+    // An incompatible ID hit must not suppress another ID intake or URL fallback.
+    return byId.get(String(incoming.externalId || ""))?.find(matches)
+      ?? byUrl.get(feedJobKey(incoming.externalUrl))?.find(matches);
+  };
 }
 
 /** Reused requisition URLs must not collapse separately dated intakes or locations. */

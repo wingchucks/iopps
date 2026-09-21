@@ -1,7 +1,7 @@
-import { createImportedJobOnce, feedImportIdentity, sameImportedIntake } from "@/lib/server/feed-import-identity";
+import { createImportedJobOnce, feedImportIdentity, importedJobCandidateSelector } from "@/lib/server/feed-import-identity";
 import { prepareImportedDescription, withImportedLabelQuality } from "@/lib/server/import-content-quality";
 import { missingSourceJobIds, expirationPatch, sourceLifecyclePatch } from "@/lib/server/job-expiration";
-import { loadFeedItems, feedJobKey, stripCdata } from "@/lib/server/feed-source";
+import { loadFeedItems, stripCdata } from "@/lib/server/feed-source";
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
@@ -55,8 +55,7 @@ export async function GET(request: NextRequest) {
         const items = await loadFeedItems(feed.feedUrl!, feedType);
         // Scope identity matching to this employer, including historical Dayforce apply URLs.
         const existingJobs = await adminDb.collection("jobs").where("employerId", "==", feed.employerId).get();
-        const byId = new Map(existingJobs.docs.filter(d => d.get("externalId") && d.get("feedId") === feed.id).map(d => [String(d.get("externalId")), d]));
-        const byUrl = new Map(existingJobs.docs.flatMap(d => [d.get("externalUrl"), d.get("applyUrl"), d.get("applicationUrl")].map(value => [feedJobKey(value), d] as const).filter(([key]) => key)));
+        const selectExistingJob = importedJobCandidateSelector(existingJobs.docs, feed.id);
         const seen = new Set<string>();
         let jobsUpdated = 0;
         let jobsFailed = 0;
@@ -85,8 +84,7 @@ export async function GET(request: NextRequest) {
 
             if (!externalId && !externalUrl) continue;
 
-            const matchedDoc = byId.get(externalId) || byUrl.get(feedJobKey(externalUrl));
-            const existingDoc = matchedDoc && sameImportedIntake(matchedDoc.data(), { feedId: feed.id, externalId, location: item.location || "Canada", publishedAt: item.pubDate }) ? matchedDoc : undefined;
+            const existingDoc = selectExistingJob({ externalId, externalUrl, location: item.location || "Canada", publishedAt: item.pubDate });
             if (existingDoc) {
               const lifecycle = sourceLifecyclePatch(item, existingDoc.data());
               const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
