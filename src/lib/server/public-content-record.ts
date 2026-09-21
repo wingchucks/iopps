@@ -1,4 +1,6 @@
 import { descriptionText } from "@/lib/description-text";
+import { publicImportSourceMetadata } from "@/lib/server/import-source-metadata";
+import { sourcePostingDatePatch } from "@/lib/server/source-posting-date";
 
 // Public responses are positive projections, so future internal fields stay private.
 const fields = new Set([
@@ -16,6 +18,12 @@ const fields = new Set([
 ]);
 export function publicContentRecord(record: Record<string, unknown>): Record<string, unknown> {
   const projected = Object.fromEntries(Object.entries(record).filter(([key]) => fields.has(key)));
+  // Never forward nested values or promote inherited calendar provenance.
+  if (Object.hasOwn(record, "sourcePostingDate")) {
+    Object.assign(projected, sourcePostingDatePatch(record.sourcePostingDate));
+  }
+  const sourceMetadata = publicImportSourceMetadata(record);
+  if (sourceMetadata) projected.sourceMetadata = sourceMetadata;
   if (typeof record.description === "string") {
     projected.description = descriptionText(record.description, record.descriptionFormat);
     projected.descriptionFormat = "plain-text";

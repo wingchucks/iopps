@@ -1,4 +1,5 @@
 import { publicContentRecord } from "@/lib/server/public-content-record";
+import { projectPublicJobDiscovery } from "@/lib/server/public-job-discovery-projection";
 import { NextResponse } from "next/server";
 import { normalizeJobDiscoveryMetadata } from "@/lib/job-metadata";
 import { getAdminDb } from "@/lib/firebase-admin";
@@ -65,11 +66,7 @@ function normalizeJob(doc: FirebaseFirestore.DocumentSnapshot, source: "jobs" | 
     slug: typeof serialized.slug === "string" ? serialized.slug : undefined,
     title: typeof serialized.title === "string" ? serialized.title : undefined,
   });
-  // Normalize salary object to string
-  if (serialized.salary && typeof serialized.salary === "object") {
-    const salObj = serialized.salary as Record<string, unknown>;
-    serialized.salary = salObj.display ? String(salObj.display) : "";
-  }
+
   // Normalize employer name fields
   if (!serialized.employerName) {
     serialized.employerName = serialized.orgName || serialized.companyName || "";
@@ -81,7 +78,20 @@ function normalizeJob(doc: FirebaseFirestore.DocumentSnapshot, source: "jobs" | 
   // Tag source
   serialized._source = source;
   if (source === "jobs") serialized.active = data.active === true;
-  return normalizeJobDiscoveryMetadata(serialized) as NormalizedJob;
+  return serialized as NormalizedJob;
+}
+
+function normalizeJobDisplay(job: NormalizedJob): NormalizedJob {
+  // Keep structured identity evidence through BOTH merge and discovery selection.
+  // Only the selected public representatives may lose it for display.
+  const salary = job.salary;
+  const display = {
+    ...job,
+    salary: salary && typeof salary === "object"
+      ? "display" in salary && salary.display ? String(salary.display) : ""
+      : salary,
+  };
+  return normalizeJobDiscoveryMetadata(display);
 }
 
 export async function GET(request: Request) {
@@ -108,10 +118,10 @@ export async function GET(request: Request) {
       job.slug = publicSlugMap.get(String(job.id)) || String(job.slug || job.id);
     });
 
-    const sortedJobs = sortJobsByRecency(publicJobs.filter(job =>
+    const sortedJobs = sortJobsByRecency(projectPublicJobDiscovery(publicJobs.filter(job =>
       (!employerId || job.employerId === employerId || job.orgId === employerId) &&
       (!employerName || job.employerName === employerName || job.orgName === employerName)
-    ));
+    )).map(normalizeJobDisplay));
 
     return NextResponse.json(
       { jobs: sortedJobs.map(publicContentRecord), count: sortedJobs.length },

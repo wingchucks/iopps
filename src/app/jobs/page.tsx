@@ -9,10 +9,11 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
+import { importedSalaryLabel, jobImportLabels } from "@/lib/job-import-labels";
 import OpportunityHeader from "@/components/OpportunityHeader";
 import Card from "@/components/Card";
 import EmployerLogo from "@/components/EmployerLogo";
-import { addedAt, closesAt, employerLogo, employerName as getEmployerName, jobArea, jobSummary, loadEmployerBrands, matchesDiscoveryFilters, salaryInfo, type EmployerBrand } from "@/lib/job-discovery";
+import { addedAt, closesAt, employerLogo, employerName as getEmployerName, jobArea, jobSummary, loadEmployerBrands, matchesEmploymentType, matchesDiscoveryFilters, salaryInfo, type EmployerBrand } from "@/lib/job-discovery";
 import DirectoryPagination, {
   useDirectoryFilter,
   useDirectoryFilterActions,
@@ -172,11 +173,7 @@ function JobsPageContent() {
       );
     }
     if (typeFilter !== "All") {
-      result = result.filter(
-        (job) =>
-          (job.employmentType || job.jobType)?.toLowerCase() ===
-          typeFilter.toLowerCase(),
-      );
+      result = result.filter(job => matchesEmploymentType(job, typeFilter));
     }
     if (remoteOnly) {
       result = result.filter(
@@ -437,12 +434,14 @@ function JobsPageContent() {
             >
               {pageItems.map((job) => {
                 const employerName = getEmployerName(job);
-                const pay = salaryInfo(job);
+                const payLabel = job.source === "feed" ? importedSalaryLabel(job.salary) : salaryInfo(job)?.display;
                 const summary = jobSummary(job);
                 const closingDate = closesAt(job);
+                const imported = jobImportLabels(job, { pay: Boolean(payLabel), closing: Boolean(closingDate) });
                 const posted = daysAgo(job);
                 return (
-                  <Link key={job.id} href={getJobHref(job)} className="job-rich-card no-underline">
+                  <div key={job.id}>
+                  <Link href={getJobHref(job)} className="job-rich-card no-underline">
                     <div className="job-brand-panel"><EmployerLogo name={employerName} src={employerLogo(job, brands)} /><span className="job-brand-name">{employerName}</span></div>
                     <div className="job-rich-content">
                       <div className="job-card-kicker"><span>{jobArea(job) || "Career opportunity"}</span>{job.featured && <span className="job-chip">Featured</span>}</div>
@@ -450,10 +449,14 @@ function JobsPageContent() {
                       <div className="job-facts"><span>{job.location || "Location not listed"}</span>{(job.employmentType || job.jobType) && <span>{job.employmentType || job.jobType}</span>}{job.workLocation && <span>{job.workLocation}</span>}</div>
                       <p className="job-summary">{summary || "Explore this opportunity and review the employer’s application details."}</p>
                       <div className="job-facts job-benefits">{job.willTrain && <span className="job-chip">Training provided</span>}{job.indigenousPreference && <span className="job-chip">Indigenous preference stated</span>}{job.benefits?.slice(0,2).map(benefit => <span className="job-chip" key={benefit}>{benefit}</span>)}</div>
-                      <div className="job-card-bottom"><div><strong>{pay?.display || "Pay not listed"}</strong><span>{closingDate ? `Closes ${new Date(closingDate).toLocaleDateString("en-CA", {month:"short",day:"numeric",timeZone:"UTC"})}` : "See listing for closing details"}</span></div><span className="job-view">View opportunity <span aria-hidden="true">↗</span></span></div>
+                      <div className="job-card-bottom"><div><strong>{payLabel || imported.pay || "Pay not listed"}</strong><span>{closingDate ? `Closes ${new Date(closingDate).toLocaleDateString("en-CA", {month:"short",day:"numeric",timeZone:"UTC"})}` : imported.closing || "See listing for closing details"}</span></div><span className="job-view">View opportunity <span aria-hidden="true">↗</span></span></div>
                       <div className="job-footnote"><span>{getApplyLabel(job)}</span>{posted && <span>{`Added to IOPPS ${posted.toLowerCase()}`}</span>}</div>
                     </div>
                   </Link>
+                  {((!payLabel && imported.pay) || (!closingDate && imported.closing)) && imported.sourceHref && (
+                    <a href={imported.sourceHref} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-teal underline underline-offset-4">Check original posting <span>(opens in a new tab)</span></a>
+                  )}
+                  </div>
                 );
               })}
             </div>

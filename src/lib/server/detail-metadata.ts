@@ -1,4 +1,5 @@
 
+import { jobPostingDate } from "@/lib/job-detail-dates";
 import type { Metadata } from "next";
 import { cache } from "react";
 import { getPublicOpportunity } from "@/lib/server/public-opportunities";
@@ -153,7 +154,8 @@ export async function generateJobJsonLd(slug: string): Promise<JsonLd | null> {
     description: clean(job.description),
     employerName: field(job, "employerName", "orgName", "companyName", "company", "organization"),
     location: job.location || field(job, "locationProvince"),
-    datePosted: field(job, "datePosted", "postedAt", "publishedAt", "createdAt"),
+    // Feed creation is ingestion, not evidence of the employer's posting date.
+    datePosted: clean(jobPostingDate(job)) || (job.source === "feed" ? "" : field(job, "createdAt")),
     closingDate: field(job, "closingDate", "deadline", "expiresAt"),
     employmentType: field(job, "employmentType", "jobType"),
     salary: field(job, "salary"),

@@ -2,6 +2,7 @@ import { createImportedJobOnce, feedImportIdentity, importedJobCandidateSelector
 import { prepareImportedDescription, withImportedLabelQuality } from "@/lib/server/import-content-quality";
 import { missingSourceJobIds, expirationPatch, sourceLifecyclePatch } from "@/lib/server/job-expiration";
 import { loadFeedItems, stripCdata } from "@/lib/server/feed-source";
+import { sourcePostingDatePatch, sourcePublishedAtPatch } from "@/lib/server/source-posting-date";
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { verifyAdminToken } from "@/lib/api-auth";
@@ -86,7 +87,7 @@ export async function POST(
           const lifecycle = sourceLifecyclePatch(item, existingDoc.data());
               const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
           if (feed.updateExistingJobs || (feedType === "dayforce" && feed.updateExistingJobs !== false)) {
-            const appliedPatch = await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, { ...identity, title, location: item.location || "Canada", ...feedContent, description: resolvedDescription, descriptionFormat: "plain-text", ...(descriptionPatch || {}), ...lifecycle, updatedAt: FieldValue.serverTimestamp() }, normalizeImportedDescription);
+            const appliedPatch = await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, { ...identity, title, location: item.location || "Canada", ...feedContent, description: resolvedDescription, descriptionFormat: "plain-text", ...(descriptionPatch || {}), ...lifecycle, ...sourcePostingDatePatch(item.sourcePostingDate), updatedAt: FieldValue.serverTimestamp() }, normalizeImportedDescription);
             if (Object.keys(appliedPatch).length) jobsUpdated++;
           } else if (Object.keys(lifecycle).length || (feedType === "dayforce" && existingDoc.get("feedId") !== feed.id)) {
             await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, {...identity,...lifecycle}, normalizeImportedDescription);
@@ -114,16 +115,10 @@ export async function POST(
           updatedAt: FieldValue.serverTimestamp(),
           ...(descriptionPatch ? descriptionPatch : {}),
               ...sourceLifecyclePatch(item),
+          ...sourcePostingDatePatch(item.sourcePostingDate),
         };
 
-        if (item.pubDate) {
-          try {
-            const publishedAt = new Date(item.pubDate);
-            if (!Number.isNaN(publishedAt.getTime())) jobData.publishedAt = publishedAt;
-          } catch {
-            // ignore invalid date
-          }
-        }
+        Object.assign(jobData, sourcePublishedAtPatch(item.pubDate));
 
         if (await createImportedJobOnce(adminDb, jobData)) jobsImported++;
       } catch (itemErr) {

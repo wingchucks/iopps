@@ -13,6 +13,7 @@ import * as publicJobs from '../src/lib/public-jobs.ts';
 import * as jobSlugs from '../src/lib/server/job-slugs.ts';
 import * as metadata from '../src/lib/job-metadata.ts';
 import * as contentProjection from '../src/lib/server/public-content-record.ts';
+import * as discoveryProjection from '../src/lib/server/public-job-discovery-projection.ts';
 import * as publicEvents from '../src/lib/public-events.ts';
 import * as eventDedupe from '../src/lib/event-directory-dedupe.ts';
 import * as opportunityPosting from '../src/lib/opportunity-posting.ts';
@@ -51,6 +52,7 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
     '@/lib/listing-freshness': freshness,
     '@/lib/job-metadata': metadata,
     '@/lib/server/public-content-record': contentProjection,
+    '@/lib/server/public-job-discovery-projection': discoveryProjection,
     '@/lib/public-events': publicEvents,
     '@/lib/event-directory-dedupe': eventDedupe,
     '@/lib/opportunity-posting': opportunityPosting,

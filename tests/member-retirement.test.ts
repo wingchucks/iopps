@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
 import * as salaryRange from "../src/lib/salary-range.ts";
+import * as jobDetailDates from "../src/lib/job-detail-dates.ts";
 
 function load(file: string, imports: Record<string, unknown> = {}, globals: Record<string, unknown> = {}) {
   // VM exports are callable modules from the actual candidate source.
@@ -12,7 +13,7 @@ function load(file: string, imports: Record<string, unknown> = {}, globals: Reco
   vm.runInNewContext(ts.transpileModule(readFileSync(file, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText, { exports, Response, ...globals, require: (id: string) => {
-    if (id in imports) return imports[id];
+    if (Object.hasOwn(imports, id)) return imports[id];
     throw new Error(`Retired surface loaded service ${id}`);
   }});
   return exports;
@@ -54,6 +55,7 @@ for (const route of retiredPages) test(`legacy ${route} redirects without loadin
 
 test("retired member metadata never resolves a member identity", async () => {
   const mod = load("src/lib/server/detail-metadata.ts", {
+    "@/lib/job-detail-dates": jobDetailDates,
     "react": { cache: (fn: unknown) => fn }, "next/cache": { unstable_cache: (fn: unknown) => fn },
     "@/lib/firebase-admin": { getAdminDb: () => { throw new Error("Member metadata touched database"); } },
     "@/lib/server/public-opportunities": {}, "@/lib/server/public-detail-cache": {},

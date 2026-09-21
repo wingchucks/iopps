@@ -85,9 +85,10 @@ export function StepDots({ labels, current }: { labels: string[]; current: numbe
               transition: "all 0.4s ease",
             }} />
             <span style={{
-              fontSize: 10, color: CSS.textDim,
+              fontSize: 10, color: CSS.textMuted,
               opacity: isActive || isDone ? 1 : 0,
-              transition: "opacity 0.3s",
+              // Visible labels stay fully opaque for readable progress text.
+              transition: "none",
               whiteSpace: "nowrap",
             }}>{label}</span>
           </div>

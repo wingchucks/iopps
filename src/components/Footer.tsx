@@ -23,12 +23,12 @@ export default function Footer() {
           </span>
         </div>
 
-        <div className="flex items-center gap-4 flex-wrap justify-center">
+        <nav aria-label="Utility navigation" className="flex items-center gap-4 flex-wrap justify-center">
           {links.map(({ href, label }) => (
             <Link
               key={href}
               href={href}
-              className="text-xs font-medium no-underline hover:underline transition-colors"
+              className="text-xs font-medium no-underline hover:underline transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300"
               style={{ color: "rgba(255,255,255,.55)" }}
             >
               {label}
@@ -41,7 +41,7 @@ export default function Footer() {
           >
             info@iopps.ca
           </a>
-        </div>
+        </nav>
       </div>
     </footer>
   );
