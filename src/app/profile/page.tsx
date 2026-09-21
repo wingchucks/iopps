@@ -268,9 +268,10 @@ function ProfileContent() {
           <div className="relative group">
             <Avatar name={displayName} size={72} src={profile?.photoURL} />
             <button
+              aria-label="Edit profile photo"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 transition-opacity cursor-pointer"
               style={{ borderRadius: 16 }}
             >
               <span className="text-white text-xs font-semibold">

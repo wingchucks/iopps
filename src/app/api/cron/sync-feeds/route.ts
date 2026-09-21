@@ -1,3 +1,4 @@
+import { createImportedJobOnce, feedImportIdentity, sameImportedIntake } from "@/lib/server/feed-import-identity";
 import { prepareImportedDescription, withImportedLabelQuality } from "@/lib/server/import-content-quality";
 import { missingSourceJobIds, expirationPatch, sourceLifecyclePatch } from "@/lib/server/job-expiration";
 import { loadFeedItems, feedJobKey, stripCdata } from "@/lib/server/feed-source";
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
           try {
             const externalId = item.guid || item.id || item.link || "";
             const externalUrl = item.link || item.url || "";
-            const key = feedJobKey(externalUrl) || externalId;
+            const key = feedImportIdentity({ feedId: feed.id, employerId: feed.employerId, title: item.title, location: item.location || "Canada", externalId, externalUrl, publishedAt: item.pubDate });
             if (!key || !item.title) throw new Error("Feed job is missing identity or title");
             if (seen.has(key)) continue;
             seen.add(key);
@@ -84,7 +85,8 @@ export async function GET(request: NextRequest) {
 
             if (!externalId && !externalUrl) continue;
 
-            const existingDoc = byId.get(externalId) || byUrl.get(feedJobKey(externalUrl));
+            const matchedDoc = byId.get(externalId) || byUrl.get(feedJobKey(externalUrl));
+            const existingDoc = matchedDoc && sameImportedIntake(matchedDoc.data(), { feedId: feed.id, externalId, location: item.location || "Canada", publishedAt: item.pubDate }) ? matchedDoc : undefined;
             if (existingDoc) {
               const lifecycle = sourceLifecyclePatch(item, existingDoc.data());
               const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
@@ -128,8 +130,7 @@ export async function GET(request: NextRequest) {
               }
             }
 
-            await adminDb.collection("jobs").add(jobData);
-            jobsImported++;
+            if (await createImportedJobOnce(adminDb, jobData)) jobsImported++;
           } catch (itemErr) {
             jobsFailed++;
             console.error(`[cron/sync-feeds] Error processing item:`, itemErr);

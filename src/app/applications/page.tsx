@@ -186,7 +186,7 @@ function ApplicationsContent() {
               {opt.label}
               {opt.value !== "all" && (
                 <span style={{ marginLeft: 4, opacity: 0.7 }}>
-                  {applications.filter(
+                  {" "}{applications.filter(
                     (a) => a.status === opt.value
                   ).length}
                 </span>

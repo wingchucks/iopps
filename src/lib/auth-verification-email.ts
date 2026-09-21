@@ -51,6 +51,23 @@ export function buildBrandedVerificationActionLink(siteUrl: string, generatedLin
   return target.toString();
 }
 
+export function buildBrandedPasswordResetLink(siteUrl: string, generatedLink: string): string {
+  try {
+    const source = new URL(generatedLink);
+    const target = new URL("/auth/action", siteUrl);
+    const code = source.searchParams.get("oobCode");
+    if (source.searchParams.getAll("mode").length !== 1 || source.searchParams.get("mode") !== "resetPassword" ||
+        source.searchParams.getAll("oobCode").length !== 1 || !code || /\s/.test(code)) throw new Error();
+    target.searchParams.set("mode", "resetPassword");
+    target.searchParams.set("oobCode", code);
+    const continuation = source.searchParams.get("continueUrl");
+    if (continuation) target.searchParams.set("continueUrl", continuation);
+    return target.toString();
+  } catch {
+    throw new Error("Password reset link unavailable");
+  }
+}
+
 export function buildAccountVerificationEmailContent(opts: {
   displayName?: string | null;
   verificationLink: string;

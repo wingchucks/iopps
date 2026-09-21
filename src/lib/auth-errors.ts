@@ -8,7 +8,7 @@ export function authErrorMessage(error: unknown, fallback = "We couldn’t compl
     case "auth/user-not-found":
     case "auth/wrong-password":
     case "auth/invalid-credential": return "The email or password is incorrect. Please check your details and try again.";
-    case "auth/email-already-in-use":
+    case "auth/email-already-in-use": return "This email is already registered. Please sign in or reset your password.";
     case "auth/account-exists-with-different-credential": return "We couldn’t create an account with these details. Try signing in or resetting your password.";
     case "auth/too-many-requests": return "Too many attempts. Please wait and try again later.";
     case "auth/network-request-failed": return "Please check your connection and try again.";

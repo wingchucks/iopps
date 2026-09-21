@@ -6,8 +6,8 @@ for (const kind of ['manual','cron','batch']) for (const hydrate of [false, true
  const writes=[];
  const feed={feedUrl:'https://example.test/jobs.xml',feedName:'Fixture',employerId:'fixture-org'};
  const feedDoc={id:'fixture-feed',exists:true,data:()=>feed};
- const db={batch:()=>({set:(_ref,data)=>writes.push(data),commit:async()=>{}}),collection:name=>{
-  const query={where:()=>query,limit:()=>query,get:async()=>({empty:true,docs:name==='rssFeeds'?[feedDoc]:[],size:name==='rssFeeds'?1:0}),doc:()=>({get:async()=>feedDoc,update:async()=>{}}),add:async data=>{if(name==='jobs')writes.push(data);}};return query;
+ const db={runTransaction:async callback=>callback({get:async()=>({exists:false}),create:(ref,data)=>{if(ref.collection==="jobs")writes.push(data);}}),batch:()=>({set:(_ref,data)=>writes.push(data),commit:async()=>{}}),collection:name=>{
+  const query={where:()=>query,limit:()=>query,get:async()=>({empty:true,docs:name==='rssFeeds'?[feedDoc]:[],size:name==='rssFeeds'?1:0}),doc:()=>({collection:name,id:"fixture-job",get:async()=>feedDoc,update:async()=>{}}),add:async data=>{if(name==='jobs')writes.push(data);}};return query;
  }};
  const net=offlineNetwork();
  const rawTitle=kind==='batch'?'ChildYouth Support Worker � &amp; Canad Inns':'ChildYouth Support Worker �';

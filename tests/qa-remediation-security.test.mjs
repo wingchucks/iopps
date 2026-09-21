@@ -18,6 +18,7 @@ import * as organizationJobs from '../src/lib/server/public-organization-jobs.ts
 import * as partnerPayload from '../src/lib/server/partners-payload.ts';
 import * as partnerPromotion from '../src/lib/server/partner-promotion.ts';
 import * as publicOrganization from '../src/lib/public-organization.ts';
+import * as actionLinks from '../src/lib/auth-verification-email.ts';
 import * as schoolVisibility from '../src/lib/school-visibility.ts';
 
 const requireNative = createRequire(import.meta.url);
@@ -202,12 +203,13 @@ test('password reset checks origin, App Check, input and limits; absent users an
     'next/server': { NextResponse: Response }, '@/lib/csrf': { validateOrigin: () => origin },
     '@/lib/server/app-check': { verifyAppCheckFromRequest: async () => appCheck },
     '@/lib/server/password-reset-limit': { reservePasswordReset: async () => allowed },
+    '@/lib/auth-verification-email': actionLinks,
     '@/lib/firebase-admin': { getAdminDb: () => ({}), getAdminAuth: () => ({ generatePasswordResetLink: async (email, settings) => {
       generated++; assert.equal(email, 'qa@example.invalid'); assert.equal(settings.url, 'https://www.iopps.ca/login');
       if (failure === 'missing') throw Object.assign(Error(), { code: 'auth/user-not-found' });
-      return 'https://fictional.firebaseapp.com/action?mode=resetPassword&code=fictional';
+      return 'https://fictional.firebaseapp.com/action?mode=resetPassword&oobCode=fictional';
     } }) },
-    '@/lib/email': { sendAccountPasswordResetEmail: async () => { sent++; if (failure === 'provider') throw Error('Provider unavailable'); } },
+    '@/lib/email': { sendAccountPasswordResetEmail: async (_email, link) => { assert.equal(new URL(link).origin + new URL(link).pathname, 'https://iopps.ca/auth/action'); assert.equal(new URL(link).searchParams.get('oobCode'), 'fictional'); sent++; if (failure === 'provider') throw Error('Provider unavailable'); } },
   }, { process: { env: { RESEND_API_KEY: 'fictional-unit-key' } }, console: { error: () => {} } });
   const call = (email = 'QA@example.invalid') => route.POST(new Request('https://www.iopps.ca/api/auth/password-reset', { method: 'POST', body: JSON.stringify({ email }), headers: { 'x-forwarded-for': '127.0.0.1' } }));
   origin = false; assert.equal((await call()).status, 403); origin = true;

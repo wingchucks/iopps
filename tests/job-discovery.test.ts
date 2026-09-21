@@ -41,8 +41,8 @@ test("compensation enrichment never overrides undisclosed pay or guesses from un
 
 test("combined discovery filters use explicit job data and reset cleanly", () => {
  const now=Date.parse("2026-09-08T12:00:00Z");
- const job={id:"j",title:"Worker",employerName:"STC",department:"Client Services",createdAt:"2026-09-07T12:00:00Z",closingDate:"2026-09-10T12:00:00Z",willTrain:true};
- assert.equal(matchesDiscoveryFilters(job,{...empty,employer:"STC",area:"Client Services",added:"7",closing:"1",training:"1"},now),true);
+ const job={id:"j",title:"Worker",employerName:"STC",department:"Raw provider unit",category:"Social Services",createdAt:"2026-09-07T12:00:00Z",closingDate:"2026-09-10T12:00:00Z",willTrain:true};
+ assert.equal(matchesDiscoveryFilters(job,{...empty,employer:"STC",area:"Social Services",added:"7",closing:"1",training:"1"},now),true);
  assert.equal(matchesDiscoveryFilters({...job,willTrain:false},{...empty,training:"1"},now),false);
  assert.equal(matchesDiscoveryFilters({...job,closingDate:"2026-09-01"},{...empty,closing:"1"},now),false);
  assert.equal(matchesDiscoveryFilters(job,{...empty,employer:"Another employer"},now),false);
