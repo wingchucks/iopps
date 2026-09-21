@@ -18,6 +18,7 @@ test('candidate preview disabled with prior settings and crons unchanged',()=>{
        'codex/qa-remediation-20260919': false,
        'fix/employer-qa-20260920': false,
        'fix/master-employer-login-race': false,
+    'fix/individual-qa3-20260921': false,
      },
    },
    crons: [
