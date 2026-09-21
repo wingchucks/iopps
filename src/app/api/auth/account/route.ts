@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
           ...raw,
           contactEmail: raw.contactEmail || raw.email || decoded.email,
         });
-        const readiness = getBusinessProfileReadiness(org);
+        const readiness = getBusinessProfileReadiness(org, { workspace: true });
         organization = {
           authorized: true,
           organizationType: isSchoolOrganization(org) ? "school" : "business",

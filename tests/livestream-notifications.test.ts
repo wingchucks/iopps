@@ -12,7 +12,8 @@ test("community signup sends admin notification trigger through profile PATCH", 
   const signup = read("src/app/signup/page.tsx");
   const profile = read("src/app/api/profile/route.ts");
 
-  assert.match(signup, /signupRole:\s*"community"/);
+  assert.match(signup, /signupRole: role/);
+  assert.match(signup, /type Role = "" \| "community" \| "organization"/);
   assert.match(signup, /displayName:\s*name/);
   assert.match(profile, /sendAdminNewSignup/);
   assert.match(profile, /adminNotifications/);

@@ -28,8 +28,7 @@ export const INDIGENOUS_SERVICES = [
 export const EMPLOYER_CAPABILITIES = [
   { id: "post_jobs", icon: "\ud83d\udcbc", label: "Post Jobs" },
   { id: "list_business", icon: "\ud83c\udfea", label: "List Business" },
-  { id: "host_events", icon: "\ud83d\udcc5", label: "Host Events" },
-  { id: "post_grants", icon: "\ud83d\udcb0", label: "Post Grants" },
+
 ];
 
 export const CSS = {

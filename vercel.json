@@ -6,7 +6,8 @@
       "codex/security-remediation-20260917": false,
       "codex/job-flow-reliability-20260908": false,
       "fix/batc-pete-admin": false,
-      "codex/qa-remediation-20260919": false
+      "codex/qa-remediation-20260919": false,
+      "fix/employer-qa-20260920": false
     }
   },
   "crons": [

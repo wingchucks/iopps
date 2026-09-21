@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         context.memberData.email,
     });
     const school = isSchoolOrganization(normalizedOrg);
-    const readiness = getBusinessProfileReadiness(normalizedOrg);
+    const readiness = getBusinessProfileReadiness(normalizedOrg, { workspace: true });
 
     if (!school && !readiness.isReady) {
       const labels: Record<string, string> = {

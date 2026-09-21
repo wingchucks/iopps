@@ -290,7 +290,7 @@ export function getBusinessProfileReadiness(org: {
   contactEmail?: unknown;
   phone?: unknown;
   website?: unknown;
-}): BusinessProfileReadiness {
+}, options: { workspace?: boolean } = {}): BusinessProfileReadiness {
   const type = normalizeString(org.type).toLowerCase();
   const ownerType = normalizeString(org.ownerType).toLowerCase();
   const partnerTier = normalizeString(org.partnerTier).toLowerCase();
@@ -309,7 +309,7 @@ export function getBusinessProfileReadiness(org: {
     normalizeString(org.website)
   );
 
-  if (!hasLogo) missingFields.push("logo");
+  if (!hasLogo && !options.workspace) missingFields.push("logo");
   if (!hasStory) missingFields.push("description");
   if (!hasContactMethod) missingFields.push("contact");
 

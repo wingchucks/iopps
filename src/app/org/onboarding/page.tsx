@@ -179,7 +179,7 @@ function OrgOnboardingContent() {
         router.replace(authIntentHref("/org/signup", searchParams));
         return;
       }
-      const readiness = getBusinessProfileReadiness(org);
+      const readiness = getBusinessProfileReadiness(org, { workspace: true });
       if (org.onboardingComplete && (org.type === "school" || readiness.isReady)) {
         router.replace(postSignupDestination(searchParams, "/org/plans"));
         return;
@@ -228,7 +228,7 @@ function OrgOnboardingContent() {
     const nextRequiredFields = (params.get("required") || "")
       .split(",")
       .map((field) => field.trim())
-      .filter(Boolean);
+      .filter((field) => field === "description" || field === "contact");
 
     setRequiredFields(nextRequiredFields);
     setProfileIncomplete(
@@ -323,7 +323,7 @@ function OrgOnboardingContent() {
       setSubmitError("");
       if (orgType !== "school" && step === 0) {
         const missing: string[] = [];
-        if (!(logoPreview || logoFile)) missing.push("upload your logo");
+
         if (!description.trim()) missing.push("add a description");
         if (missing.length > 0) {
           throw new Error(`Before moving on, please ${missing.join(" and ")}.`);
@@ -351,7 +351,7 @@ function OrgOnboardingContent() {
           contactEmail,
           phone,
           website,
-        });
+        }, { workspace: true });
 
         if (!readiness.isReady) {
           const messages: Record<string, string> = {
@@ -481,7 +481,7 @@ function OrgOnboardingContent() {
           {step === 0 && (
             <div className="space-y-5">
               <div>
-                <span className="text-sm font-semibold text-text-sec mb-2 block">Organization Logo</span>
+                <span className="text-sm font-semibold text-text-sec mb-2 block">Organization Logo (optional for workspace)</span>
                 <div className="flex items-center gap-4">
                   <div
                     onClick={() => fileInputRef.current?.click()}
@@ -502,7 +502,7 @@ function OrgOnboardingContent() {
                     >
                       Upload logo
                     </button>
-                    <p className="text-xs text-text-muted mt-1">PNG or JPG, max 2MB</p>
+                    <p className="text-xs text-text-muted mt-1">PNG or JPG, max 2MB. Add later; required for public directory readiness.</p>
                   </div>
                   <input
                     ref={fileInputRef}

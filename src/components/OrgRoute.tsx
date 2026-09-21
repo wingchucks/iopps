@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MemberProfile } from "@/lib/firestore/members";
 
 interface OrgRouteProps {
@@ -16,6 +16,12 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
   const [checking, setChecking] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [profile, setProfile] = useState<MemberProfile | null>(null);
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const requestKey = JSON.stringify([user?.uid, requiredRole, attempt, loading]);
+  const currentKey = useRef(requestKey);
+  currentKey.current = requestKey;
+  const [checkedKey, setCheckedKey] = useState<string | null>(null);
 
   const buildOnboardingRedirect = (missingFields?: unknown) => {
     const params = new URLSearchParams({ reason: "incomplete-profile" });
@@ -31,6 +37,8 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    const isCurrent = () => !cancelled && currentKey.current === requestKey;
     if (loading) return;
 
     if (!user) {
@@ -39,17 +47,22 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
     }
 
     async function checkOrg() {
+      setChecking(true); setError(""); setAuthorized(false);
       try {
         // Use server-side API to avoid Firestore client offline issues
         const idToken = await user!.getIdToken();
+        if (!isCurrent()) return;
         const res = await fetch("/api/employer/check", {
           headers: { Authorization: `Bearer ${idToken}` },
         });
 
+        if (!isCurrent()) return;
         if (res.ok) {
           const data = await res.json();
+          if (!isCurrent()) return;
           if (data.authorized && data.profile) {
             const memberProfile = data.profile as MemberProfile;
+            if (memberProfile.uid !== user!.uid) throw new Error("Organization identity mismatch");
             const organizationType = data.organizationType as string | undefined;
             const profileReady = data.profileReady !== false;
 
@@ -83,19 +96,25 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
         }
 
         // Not an employer/org member
-        router.replace("/feed");
+        if (!res.ok) throw new Error("Organization access check unavailable");
+        router.replace("/org/upgrade");
       } catch (err) {
+        if (!isCurrent()) return;
         console.error("[OrgRoute] checkOrg failed:", err);
-        router.replace("/feed");
+        setError("We could not load your organization workspace. Retry below, or contact support@iopps.ca with your account email.");
       } finally {
-        setChecking(false);
+        if (isCurrent()) {
+          setCheckedKey(requestKey);
+          setChecking(false);
+        }
       }
     }
 
     checkOrg();
-  }, [user, loading, router, requiredRole]);
+    return () => { cancelled = true; };
+  }, [user, loading, router, requiredRole, attempt, requestKey]);
 
-  if (loading || checking) {
+  if (loading || checking || checkedKey !== requestKey) {
     return (
       <div className="min-h-screen bg-bg">
         <div
@@ -138,7 +157,8 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
     );
   }
 
-  if (!user || !authorized || !profile) return null;
+  if (error) return <section className="p-8"><p role="alert">{error}</p><button type="button" onClick={() => setAttempt(value => value + 1)}>Retry workspace</button> <a href="mailto:support@iopps.ca">Contact support</a></section>;
+  if (!user || !authorized || !profile || profile.uid !== user.uid) return null;
 
   return <>{children}</>;
 }

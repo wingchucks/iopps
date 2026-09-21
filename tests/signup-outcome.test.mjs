@@ -37,7 +37,7 @@ function provider({ createError, profileError, emailError, currentUser, response
 }
 function signupPage({ user = null, outcome, signupError, query = new URLSearchParams() } = {}) {
   const state = []; let cursor = 0; const calls = []; const destinations = [];
-  const react = { useState(initial) { const i = cursor++; if (!(i in state)) state[i] = typeof initial === 'function' ? initial() : initial; return [state[i], value => { state[i] = typeof value === 'function' ? value(state[i]) : value; }]; }, useCallback: f => f, useRef: value => ({ current: value }), Suspense: 'Suspense' };
+  const react = { useEffect() {}, useState(initial) { const i = cursor++; if (!(i in state)) state[i] = typeof initial === 'function' ? initial() : initial; return [state[i], value => { state[i] = typeof value === 'function' ? value(state[i]) : value; }]; }, useCallback: f => f, useRef: value => ({ current: value }), Suspense: 'Suspense' };
   const jsx = (type, props) => ({ type, props });
   const page = load('src/app/signup/page.tsx', {
     react: { ...react, default: react }, 'react/jsx-runtime': { jsx, jsxs: jsx },

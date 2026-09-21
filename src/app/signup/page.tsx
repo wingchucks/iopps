@@ -1,10 +1,12 @@
 "use client";
 
-import React, { Suspense, useState, useCallback, useRef } from "react";
+import React, { Suspense, useState, useCallback, useRef, useEffect } from "react";
+import { decodeEmployerDraft, encodeEmployerDraft, employerDraftKey } from "@/lib/employer-draft";
 import { authIntentHref, postSignupDestination, signupPasswordError } from "@/lib/auth-redirect";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { authErrorMessage } from "@/lib/auth-errors";
+import { organizationSetupError } from "@/lib/organization-setup-error";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAppCheckTokenValue, storage } from "@/lib/firebase";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
@@ -109,6 +111,48 @@ function UnifiedSignupContent() {
   const [empLogoFile, setEmpLogoFile] = useState<File | null>(null);
   const [empBannerFile, setEmpBannerFile] = useState<File | null>(null);
 
+  const [draftUid, setDraftUid] = useState<string | null>(null);
+  const completedDraft = useRef(false);
+  // Invalidate immediately during identity render, including A -> B -> A.
+  const operationOwner = useRef({ uid: user?.uid, generation: 0 });
+  if (operationOwner.current.uid !== user?.uid) {
+    operationOwner.current = { uid: user?.uid, generation: operationOwner.current.generation + 1 };
+  }
+  useEffect(() => () => { operationOwner.current.generation += 1; }, []);
+  useEffect(() => {
+    if (draftUid && draftUid !== user?.uid) {
+      setAccountUid(null); setDraftUid(null); setStep(1); setSubmitting(false);
+      setOrgName(""); setEmpDescription(""); setEmpServices(""); setEmpWebsite("");
+      setEmpProvince(""); setEmpCity(""); setBusinessIdentity("not_specified"); setCapabilities(["list_business"]);
+      setEmpLogoFile(null); setEmpBannerFile(null);
+      setName(""); setEmail(""); setPassword(""); setConfirmPassword(""); setConsent(false);
+      setVerificationEmailSent(false); setSignupNotice(""); setDeliveryNotice(""); setError("");
+      completedDraft.current = false;
+      return;
+    }
+    if (!user || role !== "organization" || orgType !== "employer") return;
+    if (draftUid === user.uid) return;
+    try {
+      const draft = decodeEmployerDraft(user.uid, localStorage.getItem(employerDraftKey(user.uid)));
+      if (draft) {
+        setAccountUid(user.uid); setEmail(user.email || "");
+        setOrgName(draft.orgName); setEmpDescription(draft.empDescription);
+        setEmpServices(draft.empServices); setEmpWebsite(draft.empWebsite);
+        setEmpProvince(draft.empProvince); setEmpCity(draft.empCity);
+        setBusinessIdentity(draft.businessIdentity); setCapabilities(draft.capabilities);
+        setStep(user.emailVerified ? draft.step === 3 ? 10 : draft.step : 3);
+      }
+    } catch { setSignupNotice("Draft storage is unavailable. Keep this tab open until setup is complete."); }
+    setDraftUid(user.uid);
+  }, [user, role, orgType, accountUid, draftUid]);
+
+  useEffect(() => {
+    if (!user || draftUid !== user.uid || accountUid !== user.uid || role !== "organization" || orgType !== "employer" || completedDraft.current) return;
+    try {
+      localStorage.setItem(employerDraftKey(user.uid), encodeEmployerDraft(user.uid, { step, orgName, empDescription, empServices, empWebsite, empProvince, empCity, businessIdentity, capabilities }));
+    } catch { /* Storage is optional; account and validation remain authoritative. */ }
+  }, [user, draftUid, accountUid, role, orgType, step, orgName, empDescription, empServices, empWebsite, empProvince, empCity, businessIdentity, capabilities]);
+
   const goTo = useCallback((s: number) => { setStep(s); setError(""); setFieldErrors({}); window.scrollTo({ top: 0, behavior: "smooth" }); }, []);
 
   const getStepInfo = () => {
@@ -186,7 +230,7 @@ function UnifiedSignupContent() {
               headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
               body: JSON.stringify({
                 displayName: name,
-                ...(role === "community" ? { signupRole: "community" } : {}),
+                signupRole: role,
               }),
             });
             if (!profileResponse.ok) throw new Error("Profile save unavailable");
@@ -214,7 +258,7 @@ function UnifiedSignupContent() {
               headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
               body: JSON.stringify({
                 displayName: cred.user.displayName || name,
-                ...(role === "community" ? { signupRole: "community" } : {}),
+                signupRole: role,
               }),
             });
             if (!profileResponse.ok) throw new Error("Profile save unavailable");
@@ -280,9 +324,10 @@ function UnifiedSignupContent() {
     }
   };
 
-  const uploadFile = async (file: File, path: string) => {
+  const uploadFile = async (file: File, path: string, isCurrent: () => boolean = () => true) => {
     const storageRef = ref(storage, path);
     await uploadBytes(storageRef, file);
+    if (!isCurrent()) return "";
     return getDownloadURL(storageRef);
   };
 
@@ -328,8 +373,7 @@ function UnifiedSignupContent() {
         }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to create school profile");
+        setError(organizationSetupError(res.status)); return;
       }
       // Navigate to authenticated checkout for explicit review; signup never grants a plan.
       const checkoutIntent = new URLSearchParams(searchParams.toString());
@@ -340,13 +384,23 @@ function UnifiedSignupContent() {
   };
 
   const handleEmployerSubmit = async () => {
-    if (!user) return;
+    if (submitting) return;
+    if (!user || (accountUid && user.uid !== accountUid)) { setError("Sign in to the account that owns this draft, then resume organization setup."); return; }
+    if (!user.emailVerified) { goTo(3); setError("Verify your email before creating your organization."); return; }
+    if (!orgName.trim() || !empDescription.trim() || !empServices.trim()) { goTo(10); setError("Enter your organization name, description and services before continuing."); return; }
+    const operationUser = user;
+    const generation = ++operationOwner.current.generation;
+    const isCurrent = () => operationOwner.current.uid === operationUser.uid && operationOwner.current.generation === generation;
     setSubmitting(true); setError("");
     try {
-      const logoUrl = empLogoFile ? await uploadFile(empLogoFile, `org-logos/${user.uid}`) : "";
-      const bannerUrl = empBannerFile ? await uploadFile(empBannerFile, `org-banners/${user.uid}`) : "";
-      const idToken = await user.getIdToken();
+      const logoUrl = empLogoFile ? await uploadFile(empLogoFile, `org-logos/${operationUser.uid}`, isCurrent) : "";
+      if (!isCurrent()) return;
+      const bannerUrl = empBannerFile ? await uploadFile(empBannerFile, `org-banners/${operationUser.uid}`, isCurrent) : "";
+      if (!isCurrent()) return;
+      const idToken = await operationUser.getIdToken();
+      if (!isCurrent()) return;
       const appCheckToken = await getAppCheckTokenValue();
+      if (!isCurrent()) return;
       const orgData: Record<string, unknown> = {
         name: orgName, type: "employer",
         businessIdentity,
@@ -375,17 +429,22 @@ function UnifiedSignupContent() {
         }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to create org");
+        if (isCurrent()) setError(organizationSetupError(res.status));
+        return;
       }
-      // If email already verified, go straight to dashboard; otherwise stay in wizard verify step
-      if (user.emailVerified) {
+      // A completed request owns only its captured draft, never the next account's UI.
+      try { localStorage.removeItem(employerDraftKey(operationUser.uid)); } catch { /* optional storage */ }
+      if (!isCurrent()) return;
+      completedDraft.current = true;
+      await operationUser.getIdToken(true);
+      if (!isCurrent()) return;
+      if (operationUser.emailVerified) {
         router.push(orgDestination);
       } else {
         goTo(13); // success+verify step
       }
-    } catch (err: unknown) { setError(authErrorMessage(err, "We couldn’t save your organization profile. Check the required details and try again.")); }
-    finally { setSubmitting(false); }
+    } catch (err: unknown) { if (isCurrent()) setError(authErrorMessage(err, "We couldn’t save your organization profile. Check the required details and try again.")); }
+    finally { if (isCurrent()) setSubmitting(false); }
   };
 
   const toggleService = (id: string) => setIndigenousServices(p => p.includes(id) ? p.filter(s => s !== id) : [...p, id]);
@@ -393,6 +452,9 @@ function UnifiedSignupContent() {
   const addCampus = () => setCampuses(p => [...p, { name: "", city: "" }]);
   const removeCampus = (i: number) => setCampuses(p => p.filter((_, idx) => idx !== i));
   const updateCampus = (i: number, f: keyof Campus, v: string) => setCampuses(p => p.map((c, idx) => idx === i ? { ...c, [f]: v } : c));
+
+  // Do not expose the previous account's fields even for the render before reset effects.
+  if (draftUid && draftUid !== user?.uid) return <p role="status">Updating account…</p>;
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", background: CSS.bg, color: CSS.text, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -671,7 +733,7 @@ function UnifiedSignupContent() {
           </div>
           <div style={{ marginTop: 24 }}>
             <InfoBanner icon="💡">
-              Indigenous businesses can stay on a free profile. Non-Indigenous companies only need a paid plan if they want promoted visibility.
+              Indigenous and non-Indigenous organizations can start with a Free Starter profile. A paid plan or featured-post purchase is needed for promoted visibility, not account creation. Standard is {SUBSCRIPTION_PLANS.tier1.priceLabel} CAD/year; Premium is {SUBSCRIPTION_PLANS.tier2.priceLabel} CAD/year. Review the plan features before purchasing.
             </InfoBanner>
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(3)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(11)} disabled={!orgName.trim() || !empDescription.trim() || !empServices.trim() || (entrepreneurIntent && (!empCity.trim() || !empProvince))}>Continue →</BtnPrimary></div>
@@ -679,12 +741,12 @@ function UnifiedSignupContent() {
 
         {/* STEP 11: Employer Brand */}
         {step === 11 && (<div>
-          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 2 of 3" : "Organization Setup — 2 of 3"} title="Brand your" highlight="Profile" desc="Add your logo to complete your organization profile. A cover image is optional." />
+          <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 2 of 3" : "Organization Setup — 2 of 3"} title="Brand your" highlight="Profile" desc="Logo and cover image are optional. You can add or change them later in your organization profile. Selected files must be reselected after a refresh." />
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
-            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Logo (required)</div><UploadZone label="Upload Logo" hint="400×400px, PNG or JPG" hasFile={!!empLogoFile} onFileChange={setEmpLogoFile} /></div>
+            <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Logo (optional)</div><UploadZone label="Upload Logo" hint="400×400px, PNG or JPG" hasFile={!!empLogoFile} onFileChange={setEmpLogoFile} /></div>
             <div><div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>Cover Image</div><UploadZone label="Upload Cover" hint="1200×400px recommended" hasFile={!!empBannerFile} onFileChange={setEmpBannerFile} /></div>
           </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(10)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(12)} disabled={!empLogoFile}>Continue →</BtnPrimary></div>
+          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(10)}>← Back</BtnGhost><BtnSecondary onClick={() => { setEmpLogoFile(null); setEmpBannerFile(null); goTo(12); }}>Skip for now</BtnSecondary><BtnPrimary onClick={() => goTo(12)}>Continue →</BtnPrimary></div>
         </div>)}
 
         {/* STEP 12: Employer Launch */}

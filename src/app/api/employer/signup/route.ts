@@ -193,14 +193,8 @@ export async function POST(req: NextRequest) {
   });
 
   if (!protection.allow) {
-    if (protection.hardBlock) {
-      try {
-        await adminAuth.deleteUser(uid);
-      } catch (deleteError) {
-        console.error("[employer/signup] Failed to delete blocked auth user:", deleteError);
-      }
-    }
-
+    // Deny creation, not the already-authenticated person's account. A false
+    // positive must remain recoverable without destroying their member data.
     return NextResponse.json({ error: protection.message }, { status: protection.status });
   }
 

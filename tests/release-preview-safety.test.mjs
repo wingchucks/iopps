@@ -11,6 +11,7 @@ test('release branch disables automatic Vercel deployment without disabling mast
     'codex/job-flow-reliability-20260908': false,
     'fix/batc-pete-admin': false,
     'codex/qa-remediation-20260919': false,
+    'fix/employer-qa-20260920': false,
   });
   assert.deepEqual(config.crons, [
     { path: '/api/cron/sync-feeds', schedule: '0 8 * * *' },

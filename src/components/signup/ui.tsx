@@ -117,6 +117,8 @@ export function FormInput({ label, required, error, id, ...props }: { label: str
   // C-5: surface field-level validation — pass `required` to the native input,
   // show a red border + error text when `error` is set.
   const borderColor = error ? CSS.error : CSS.border;
+  const generatedId = React.useId();
+  id = id || generatedId;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <label htmlFor={id} style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted }}>
@@ -147,13 +149,17 @@ export function FormInput({ label, required, error, id, ...props }: { label: str
 export function FormSelect({ label, required, options, ...props }: {
   label: string; required?: boolean; options: { value: string; label: string }[];
 } & React.SelectHTMLAttributes<HTMLSelectElement>) {
+  const generatedId = React.useId();
+  const id = props.id || generatedId;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <label style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted }}>
+      <label htmlFor={id} style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted }}>
         {label} {required && <span style={{ color: CSS.accent }}>*</span>}
       </label>
       <select
         {...props}
+        id={id}
+        required={required}
         style={{
           background: "rgba(15,23,42,0.8)", border: `1px solid ${CSS.border}`, borderRadius: 10,
           padding: "12px 16px", fontSize: 15, color: CSS.text, fontFamily: "inherit",
@@ -169,13 +175,17 @@ export function FormSelect({ label, required, options, ...props }: {
 
 /* ── Form Textarea ── */
 export function FormTextarea({ label, required, ...props }: { label: string; required?: boolean } & React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const generatedId = React.useId();
+  const id = props.id || generatedId;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <label style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted }}>
+      <label htmlFor={id} style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted }}>
         {label} {required && <span style={{ color: CSS.accent }}>*</span>}
       </label>
       <textarea
         {...props}
+        id={id}
+        required={required}
         style={{
           background: "rgba(15,23,42,0.8)", border: `1px solid ${CSS.border}`, borderRadius: 10,
           padding: "12px 16px", fontSize: 15, color: CSS.text, fontFamily: "inherit",
@@ -194,6 +204,9 @@ export function CheckboxItem({ icon, label, checked, onToggle }: {
   return (
     <div
       onClick={onToggle}
+      role="checkbox" aria-checked={checked} aria-label={label} tabIndex={0}
+      className="focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal"
+      onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onToggle(); } }}
       style={{
         display: "flex", alignItems: "center", gap: 10, padding: "12px 16px",
         background: checked ? "rgba(20,184,166,0.05)" : CSS.card,
@@ -225,6 +238,11 @@ export function UploadZone({ label, hint, hasFile, onFileChange }: {
   return (
     <div
       onClick={() => inputRef.current?.click()}
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      className="focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal"
+      onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); inputRef.current?.click(); } }}
       style={{
         border: `2px dashed ${hasFile ? CSS.success : CSS.border}`,
         borderStyle: hasFile ? "solid" : "dashed",
@@ -237,7 +255,7 @@ export function UploadZone({ label, hint, hasFile, onFileChange }: {
       <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.6 }}>{hasFile ? "✅" : "🖼️"}</div>
       <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>{hasFile ? "File Selected" : label}</div>
       <div style={{ fontSize: 12, color: CSS.textDim }}>{hint}</div>
-      <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }}
+      <input ref={inputRef} type="file" aria-label={label} accept="image/*" style={{ display: "none" }}
         onChange={e => onFileChange(e.target.files?.[0] || null)} />
     </div>
   );
