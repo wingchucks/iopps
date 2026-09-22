@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 assert.equal(process.env.GCLOUD_PROJECT,'demo-iopps-preview');
 for(const [key,value] of Object.entries({FIRESTORE_EMULATOR_HOST:'127.0.0.1:8080',FIREBASE_AUTH_EMULATOR_HOST:'127.0.0.1:9099',FIREBASE_STORAGE_EMULATOR_HOST:'127.0.0.1:9199'}))assert.equal(process.env[key],value);
+if(process.argv.includes('--browser-only'))assert.ok(fs.existsSync('.next/BUILD_ID'),'browser-only requires an existing .next/BUILD_ID');
 const out=path.resolve('reports/round5/acceptance');fs.mkdirSync(out,{recursive:true});
 const results=[];
 const env={...process.env,IOPPS_TEST_EMULATORS:'true',IOPPS_TEST_MEMBER_RETIREMENT:'true',IOPPS_AUDIT_OUTPUT:out,IOPPS_CLEANUP_OUTPUT:out,IOPPS_QA3_OUTPUT:out,USERPROFILE:'C:/Users/natha',LOCALAPPDATA:'C:/Users/natha/AppData/Local',APPDATA:'C:/Users/natha/AppData/Roaming',PROGRAMFILES:'C:/Program Files',TMPDIR:'C:/Users/natha/AppData/Local/hermes/cache/scratch',TEMP:'C:/Users/natha/AppData/Local/hermes/cache/scratch',TMP:'C:/Users/natha/AppData/Local/hermes/cache/scratch'};

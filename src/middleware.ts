@@ -53,9 +53,13 @@ export function middleware(req: NextRequest) {
   // canonical authorization boundary for document, Flight and data requests.
   const rawPath = req.nextUrl.pathname;
   const dataPath = /^\/_next\/data\/[^/]+\/(.+)\.json$/.exec(rawPath);
-  const segmentPath = /^(.*?)\.segments\/.+\.segment\.rsc$/.exec(rawPath);
+  const segmentMarker = rawPath.indexOf(".segments/");
+  const segmentPath = segmentMarker >= 0 && rawPath.endsWith(".segment.rsc")
+    && rawPath.length > segmentMarker + ".segments/".length + ".segment.rsc".length
+    && !/[\r\n\u2028\u2029]/.test(rawPath)
+    ? rawPath.slice(0, segmentMarker) : null;
   const canonicalPath = dataPath ? `/${dataPath[1] === "index" ? "" : dataPath[1]}`
-    : segmentPath ? segmentPath[1] || "/"
+    : segmentPath !== null ? segmentPath || "/"
     : rawPath.endsWith(".rsc") ? rawPath.slice(0, -4) || "/" : rawPath;
   req.nextUrl.pathname = canonicalPath;
   req.nextUrl.buildId = "";
