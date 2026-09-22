@@ -3,12 +3,13 @@ import { authIntentHref, postSignupDestination, safeAuthRedirect } from "@/lib/a
 type Query = { get(name: string): string | null };
 
 /** Only the authenticated account endpoint, not query role hints, selects a workspace. */
-export function setupDestination(destination: unknown, query: Query): string | null {
+export function setupDestination(destination: unknown, query: Query, resolveOnly = false): string | null {
   const intent: Query = { get: name => {
     const value = query.get(name);
     return name === "redirect" && value && /^\/(setup|onboarding)(?:[/?#]|$)/.test(value) ? null : value;
   } };
-  if (destination === "/setup" || destination === "/feed") return null;
+  if (destination === "/setup" || destination === "/feed") return resolveOnly ? destination : null;
+  if (destination === "/signup?resume=organization&type=employer") return authIntentHref(destination, intent);
   if (destination === "/org/dashboard") return postSignupDestination(intent, destination);
   if (typeof destination === "string" && safeAuthRedirect(destination) && /^\/org\/onboarding(?:\?|$)/.test(destination)) return authIntentHref(destination, intent);
   if (destination === "/admin") return destination;

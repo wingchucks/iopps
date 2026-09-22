@@ -82,8 +82,9 @@ export function withImportedLabelQuality(quality: ImportContentQuality, labels: 
 
 export function normalizePartnerDescription(value: string, format?: unknown): string {
   const source = value.replace(/\r\n?/g, "\n");
-  if (format === "plain-text") return descriptionText(source, "plain-text");
   const repaired = source.replace(encodingPattern, match => knownEncoding.get(match)!);
+  // The marker prevents HTML/entity/Markdown decoding, not reversible encoding repair.
+  if (format === "plain-text") return descriptionText(repaired, "plain-text");
   // Deliberately a conservative prose subset, not a Markdown-to-HTML engine.
   // Parse source HTML once; decoded text is NEVER parsed again.
   const text = (format === "decoded-text" ? repaired : importedHtmlText(repaired))

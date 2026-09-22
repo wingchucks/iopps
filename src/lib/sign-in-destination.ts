@@ -1,6 +1,8 @@
 interface AccountDestination {
   admin?: boolean;
   hasMemberProfile: boolean;
+  setupComplete?: boolean;
+  signupIntent?: unknown;
   organization?: {
     authorized: boolean;
     organizationType?: string;
@@ -24,5 +26,6 @@ export function accountDestination(account: AccountDestination): string {
     }
     return "/org/dashboard";
   }
-  return account.hasMemberProfile ? "/feed" : "/setup";
+  if (account.signupIntent === "organization") return "/signup?resume=organization&type=employer";
+  return (account.setupComplete || account.hasMemberProfile) ? "/feed" : "/setup";
 }

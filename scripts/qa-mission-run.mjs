@@ -1,0 +1,29 @@
+import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';import {createHash} from 'node:crypto';
+function sourceHashes(){const files=spawnSync('git',['ls-files','--cached','--others','--exclude-standard'],{encoding:'utf8'});if(files.status!==0)throw Error('Cannot inventory source');return Object.fromEntries([...new Set(files.stdout.trim().split(/\r?\n/))].sort().filter(f=>(/^(src|tests|scripts)\//.test(f)||!f.includes('/'))&&!path.basename(f).startsWith('.env')&&fs.existsSync(f)&&fs.statSync(f).isFile()).map(f=>[f,createHash('sha256').update(fs.readFileSync(f)).digest('hex')]));}
+const before=sourceHashes();fs.writeFileSync(path.join(process.env.MISSION_OUTPUT,'source-before.json'),JSON.stringify(before,null,2));
+process.on('exit',()=>{const after=sourceHashes();const drift=[...new Set([...Object.keys(before),...Object.keys(after)])].filter(f=>before[f]!==after[f]);fs.writeFileSync(path.join(process.env.MISSION_OUTPUT,'source-after.json'),JSON.stringify({files:after,drift},null,2));if(drift.length)process.exitCode=1;});
+const out=process.env.MISSION_OUTPUT;const env={...process.env,GOAL01_FICTIONAL_YOUTUBE:'true',USERPROFILE:'C:/Users/natha',LOCALAPPDATA:'C:/Users/natha/AppData/Local',APPDATA:'C:/Users/natha/AppData/Roaming',PROGRAMFILES:'C:/Program Files',TMPDIR:'C:/Users/natha/AppData/Local/hermes/cache/scratch',TEMP:'C:/Users/natha/AppData/Local/hermes/cache/scratch',TMP:'C:/Users/natha/AppData/Local/hermes/cache/scratch'};
+const commands=[];function run(name,args){const r=spawnSync(process.execPath,args,{env,encoding:'utf8',timeout:15*60*1000,maxBuffer:30*1024*1024});fs.writeFileSync(path.join(out,name+'.log'),((r.stdout||'')+(r.stderr||'')).replace(/([?&](?:oobCode|apiKey|token)=)[^\s&"']+/g,'$1[REDACTED]'));commands.push({name,args,status:r.status,error:r.error?.message});fs.writeFileSync(path.join(out,'commands.json'),JSON.stringify(commands,null,2));console.log(name,r.status);return r.status===0;}
+fs.rmSync('.next',{recursive:true,force:true});
+if(run('BUILD',['node_modules/next/dist/bin/next','build','--webpack'])){
+ run('typecheck',['node_modules/typescript/bin/tsc','--noEmit','--incremental','false']);
+ run('focused-lint',['node_modules/eslint/bin/eslint.js','src/app/auth/action/ActionContent.tsx','src/app/profile/page.tsx','tests/goal01-profile-lifecycle.test.mjs','tests/profile-copy.test.mjs','src/lib/useAccountContext.ts','src/lib/firestore/cancellable-read.ts','src/lib/firestore/members.ts','src/lib/firestore/subscriptions.ts','src/app/org/plans/page.tsx','tests/goal01-read-cancellation.test.mjs','scripts/qa-goal01-signout-probe.mjs','scripts/qa-goal01-transport-run.mjs','scripts/qa-goal01-browser-options.mjs','tests/goal01-proxy-routing.test.mjs','tests/goal01-proxy-transport.test.mjs','src/middleware.ts','next.config.ts','tests/auth-middleware.test.ts','tests/helpers/goal01-mail-api.mjs','tests/goal01-account-lifecycle.test.mjs','tests/e2e-goals/goal-01-auth.mjs','scripts/qa-mission-owner.mjs','scripts/qa-mission-run.mjs']);
+ run('auth-regressions',['--import',new URL('./test-typescript-loader.mjs',import.meta.url).href,'--test','tests/auth-verification-email.test.ts','tests/auth-middleware.test.ts','tests/password-reset-action.test.ts','tests/round5-logout.test.mjs','tests/goal01-account-lifecycle.test.mjs','tests/goal01-read-cancellation.test.mjs','tests/goal01-proxy-transport.test.mjs','tests/goal01-proxy-routing.test.mjs','tests/goal01-profile-lifecycle.test.mjs','tests/profile-copy.test.mjs']);
+ run('onboarding-lint',['node_modules/eslint/bin/eslint.js','src/app/setup/page.tsx','src/app/org/onboarding/page.tsx','scripts/qa-goal02-run.mjs','tests/goal02-org-draft.test.mjs','src/app/api/profile/setup/route.ts','tests/e2e-goals/goal-02-onboarding.mjs','tests/goal02-onboarding.test.mjs','tests/round5-setup-behavior.test.mjs']);
+ run('onboarding-regressions',['--import',new URL('./test-typescript-loader.mjs',import.meta.url).href,'--test','tests/goal02-org-draft.test.mjs','tests/goal02-onboarding.test.mjs','tests/round5-setup-account.test.ts','tests/round5-setup-routing.test.ts','tests/round5-setup-behavior.test.mjs','tests/round5-review-setup.test.mjs','tests/round5-review-avatar-sync.test.mjs']);
+ run('employer-lint',['node_modules/eslint/bin/eslint.js','tests/e2e-goals/goal-03-employer.mjs','scripts/qa-goal03-run.mjs']);
+ run('employer-regressions',['--import',new URL('./test-typescript-loader.mjs',import.meta.url).href,'--test','tests/round5-organization-errors.test.mjs','tests/employer-signup-recovery.test.mjs','tests/employer-async-identity.test.mjs','tests/employer-auth.test.ts','tests/employer-draft.test.ts','tests/employer-job-duplicate.test.ts','tests/employer-job-list.test.ts','tests/employer-onboarding-wiring.test.mjs','tests/qa-signup-security-fixture.test.mjs','tests/signup-protection-transaction.test.ts']);
+ const authArgs=['--import',new URL('./test-typescript-loader.mjs',import.meta.url).href,'tests/e2e-goals/goal-01-auth.mjs'];
+ if(process.env.GOAL01_SAME_TAB_PROBE!=='true'){
+  const probeOut=path.join(out,'same-tab-probe');fs.mkdirSync(probeOut,{recursive:true});
+  env.MISSION_OUTPUT=probeOut;env.GOAL01_SAME_TAB_PROBE='true';
+  run('auth-same-tab-probe',authArgs);
+  env.MISSION_OUTPUT=out;env.GOAL01_SAME_TAB_PROBE='false';
+ }
+ run('auth',authArgs);
+ const onboardingOut=path.join(out,'goal02');fs.mkdirSync(onboardingOut,{recursive:true});env.MISSION_OUTPUT=onboardingOut;
+ run('onboarding',['--import',new URL('./test-typescript-loader.mjs',import.meta.url).href,'tests/e2e-goals/goal-02-onboarding.mjs']);
+ const employerOut=path.join(out,'goal03');fs.mkdirSync(employerOut,{recursive:true});env.MISSION_OUTPUT=employerOut;
+ run('employer',['--import',new URL('./test-typescript-loader.mjs',import.meta.url).href,'tests/e2e-goals/goal-03-employer.mjs']);
+ env.MISSION_OUTPUT=out;
+}process.exitCode=commands.some(r=>r.status!==0)?1:0;

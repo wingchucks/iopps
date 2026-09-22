@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { storage, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import {
@@ -118,50 +118,55 @@ function ProfileContent() {
   const [savedCount, setSavedCount] = useState(0);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
 
-  const loadProfile = useCallback(async () => {
-    if (!user) return;
-    try {
-      const data = await getMemberProfile(user.uid);
-      // Redirect org users to the org dashboard profile
-      if (data?.orgId) {
-        router.replace("/org/dashboard?tab=Edit%20Profile&section=Identity");
-        return;
-      }
-      setProfile(data);
-      if (data) {
-        // Older/partially completed members can omit these optional fields.
-        // Never copy undefined into the form and then into a Firestore update.
-        setCommunity(data.community ?? "");
-        setLocation(data.location ?? "");
-        setBio(data.bio ?? "");
-        setNation(data.nation || "");
-        setTerritory(data.territory || "");
-        setLanguages(data.languages || "");
-        setHeadline(data.headline || "");
-        setSkillsText(data.skillsText || "");
-        setEditInterests(data.interests || []);
-      }
-      // Load own activity stats and RSVPs
-      const [userApps, saved, userRsvps] = await Promise.all([
-        getApplications(user.uid),
-        getSavedItems(user.uid),
-        getUserRSVPs(user.uid),
-
-      ]);
-      setApps(userApps);
-      setSavedCount(saved.length);
-      setRsvps(userRsvps);
-
-    } catch (err) {
-      console.error("Failed to load profile:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [router, user]);
-
   useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+    if (!user) return;
+    const controller = new AbortController();
+    const isCurrent = () => !controller.signal.aborted && auth.currentUser === user;
+    const loadProfile = async () => {
+      if (!isCurrent()) return;
+      try {
+        const data = await getMemberProfile(user.uid, controller.signal);
+        if (!isCurrent()) return;
+        // Redirect org users to the org dashboard profile
+        if (data?.orgId) {
+          router.replace("/org/dashboard?tab=Edit%20Profile&section=Identity");
+          return;
+        }
+        setProfile(data);
+        if (data) {
+          // Older/partially completed members can omit these optional fields.
+          // Never copy undefined into the form and then into a Firestore update.
+          setCommunity(data.community ?? "");
+          setLocation(data.location ?? "");
+          setBio(data.bio ?? "");
+          setNation(data.nation || "");
+          setTerritory(data.territory || "");
+          setLanguages(data.languages || "");
+          setHeadline(data.headline || "");
+          setSkillsText(data.skillsText || "");
+          setEditInterests(data.interests || []);
+        }
+        // Load own activity stats and RSVPs
+        const [userApps, saved, userRsvps] = await Promise.all([
+          getApplications(user.uid),
+          getSavedItems(user.uid),
+          getUserRSVPs(user.uid),
+
+        ]);
+        if (!isCurrent()) return;
+        setApps(userApps);
+        setSavedCount(saved.length);
+        setRsvps(userRsvps);
+
+      } catch (err) {
+        if (isCurrent()) console.error("Failed to load profile:", err);
+      } finally {
+        if (isCurrent()) setLoading(false);
+      }
+    };
+    void loadProfile();
+    return () => controller.abort();
+  }, [router, user]);
 
   const displayName = profile?.displayName || user?.displayName || user?.email?.split("@")[0] || "User";
   const email = profile?.email || user?.email || "";

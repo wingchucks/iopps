@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { descriptionSnippet } from "@/lib/description-snippet";
 import { isJobRecordExpired } from "@/lib/listing-freshness";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
@@ -534,7 +535,7 @@ function ScholarshipDetailContent() {
                 </div>
                 {org?.description && (
                   <p className="text-xs text-text-sec leading-relaxed mb-3">
-                    {(org.description || "").length > 120 ? `${(org.description || "").slice(0, 120)}...` : org.description}
+                    {descriptionSnippet(org.description, 120)}
                   </p>
                 )}
                 {orgLink && <Link href={orgLink} className="text-xs text-teal font-semibold no-underline hover:underline">

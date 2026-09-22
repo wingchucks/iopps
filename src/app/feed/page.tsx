@@ -10,6 +10,7 @@ import {
 } from "@/lib/public-featured";
 import { displayAmount, displayLocation } from "@/lib/utils";
 import { uniqueFeedItems, freshFeedItems } from "@/lib/feed-card-identity";
+import { isJobRecordExpired } from "@/lib/listing-freshness";
 
 type FeedItemType = "job" | "event" | "scholarship";
 
@@ -81,7 +82,7 @@ async function fetchScholarships(): Promise<FeedItem[]> {
   const data = await res.json();
   const scholarships = Array.isArray(data) ? data : (data.scholarships || []);
   return scholarships
-    .filter((scholarship: Record<string, unknown>) => scholarship.status === "active" || !scholarship.status)
+    .filter((scholarship: Record<string, unknown>) => (scholarship.status === "active" || !scholarship.status) && !isJobRecordExpired(scholarship))
     .map((scholarship: Record<string, unknown>) => ({
       id: String(scholarship.id || ""),
       type: "scholarship" as FeedItemType,

@@ -1,10 +1,11 @@
-type MetadataJob = { salary?: unknown; salaryRange?: unknown; description?: unknown; workLocation?: unknown; remoteFlag?: unknown };
+import { jobCategoryPatch } from "./job-taxonomy";
+type MetadataJob = { title?: unknown; category?: unknown; salary?: unknown; salaryRange?: unknown; description?: unknown; workLocation?: unknown; remoteFlag?: unknown };
 
 /** Read-time enrichment; retain explicit compensation and work-location choices. */
 export function normalizeJobDiscoveryMetadata<T extends MetadataJob>(job: T): T {
-  if (typeof job.description !== "string") return job;
+  let normalized = { ...job, ...jobCategoryPatch(job) };
+  if (typeof job.description !== "string") return normalized;
   const description = job.description.replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/g, " ").replace(/\s+/g, " ");
-  let normalized = { ...job };
   // Require a statement about this role, not a general mention of remote benefits.
   if (!job.workLocation && !/\b(?:not|no|cannot|isn[’']t)\s+(?:a\s+)?(?:fully\s+)?remote\b/i.test(description)
     && /\b(?:this\s+(?:is\s+a|position\s+is|role\s+(?:is|can\s+be)))\s+(?:either\s+hybrid\s+or\s+)?fully\s+remote\b/i.test(description)) {

@@ -16,7 +16,7 @@ function load(file, dependencies, extra = '') {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(file, 'utf8') + extra, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-  }).outputText, { exports, console, require: id => {
+  }).outputText, { exports, console, AbortController, DOMException, setTimeout, clearTimeout, require: id => {
     if (id in dependencies) return dependencies[id];
     throw new Error(`Unexpected dependency: ${id}`);
   } });
@@ -29,12 +29,20 @@ function harness(page, initial = null, count = 0) {
   const firestore = {
     doc: () => user.uid, serverTimestamp: () => 'fictional-time',
     getDoc: async () => ({ id: user.uid, exists: () => !!stored, data: () => stored && { ...stored } }),
+    onSnapshot: (reference, _options, next, error) => {
+      let active = true;
+      firestore.getDoc(reference).then(snapshot => {
+        if (active) next({ ...snapshot, metadata: { fromCache: false } });
+      }, failure => { if (active) error(failure); });
+      return () => { active = false; };
+    },
     setDoc: async (_ref, data) => { writes.push(data); stored = { ...data }; },
     updateDoc: async (_ref, data) => { validateWrite(data); writes.push(data); stored = { ...stored, ...data }; },
   };
   const firebase = { auth: { currentUser: user }, db: {}, storage: {} };
   const members = load('src/lib/firestore/members.ts', {
     'firebase/firestore': firestore, '../firebase': firebase, '../salary-range': { salaryRangeError: () => null },
+    './cancellable-read': load('src/lib/firestore/cancellable-read.ts', { 'firebase/firestore': firestore }),
   });
   const hooks = {
     useState(initialValue) {

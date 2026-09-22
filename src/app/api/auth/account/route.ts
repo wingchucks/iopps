@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      destination: accountDestination({ admin, hasMemberProfile: member.exists, organization }),
+      destination: accountDestination({ admin, hasMemberProfile: member.exists, setupComplete: userData.setupComplete === true, signupIntent: userData.signupIntent, organization }),
     }, { headers });
   } catch (error) {
     if (error instanceof AccountAccessError || error instanceof EmployerApiError) {

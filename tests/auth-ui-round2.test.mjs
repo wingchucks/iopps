@@ -25,7 +25,7 @@ test('email action is public in real middleware without weakening setup protecti
     jose: { decodeJwt: () => { throw Error('No credentials permitted'); } },
     './lib/launch-maintenance': { maintenanceResponse: () => null },
   }).middleware;
-  function request(path) { const url = new URL(path, 'https://fixture.invalid'); url.clone = () => new URL(url); return { nextUrl: url, url: url.href, cookies: { get: () => undefined }, method: 'GET' }; }
+  function request(path) { const url = new URL(path, 'https://fixture.invalid'); url.clone = () => new URL(url); return { nextUrl: url, url: url.href, headers: new Headers(), cookies: { get: () => undefined }, method: 'GET' }; }
   assert.equal(middleware(request('/auth/action?mode=verifyEmail&oobCode=fictional-code')), 'allow');
   assert.equal(middleware(request('/setup')), '/login');
   assert.equal(middleware(request('/verify-email')), '/login');

@@ -7,7 +7,7 @@ import { authIntentHref, postSignupDestination, signupPasswordError } from "@/li
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { authErrorMessage } from "@/lib/auth-errors";
-import { organizationSetupError } from "@/lib/organization-setup-error";
+import { organizationSetupError, organizationContactEmailError } from "@/lib/organization-setup-error";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAppCheckTokenValue, storage } from "@/lib/firebase";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
@@ -416,7 +416,7 @@ function UnifiedSignupContent() {
         }),
       });
       if (!res.ok) {
-        setError(organizationSetupError(res.status)); return;
+        setError(organizationSetupError(res.status, await res.json().catch(() => null))); return;
       }
       // Navigate to authenticated checkout for explicit review; signup never grants a plan.
       const checkoutIntent = new URLSearchParams(searchParams.toString());
@@ -430,6 +430,8 @@ function UnifiedSignupContent() {
     if (submitting) return;
     if (!user || (accountUid && user.uid !== accountUid)) { setError("Sign in to the account that owns this draft, then resume organization setup."); return; }
     if (!user.emailVerified) { goTo(3); setError("Verify your email before creating your organization."); return; }
+    const contactError = organizationContactEmailError(email || user.email);
+    if (contactError) { setError(contactError); return; }
     if (!orgName.trim() || !empDescription.trim() || !empServices.trim()) { goTo(10); setError("Enter your organization name, description and services before continuing."); return; }
     const operationUser = user;
     const generation = ++operationOwner.current.generation;
@@ -472,7 +474,8 @@ function UnifiedSignupContent() {
         }),
       });
       if (!res.ok) {
-        if (isCurrent()) setError(organizationSetupError(res.status));
+        const failure = await res.json().catch(() => null);
+        if (isCurrent()) setError(organizationSetupError(res.status, failure));
         return;
       }
       // A completed request owns only its captured draft, never the next account's UI.

@@ -1,5 +1,6 @@
 import { Parser } from "htmlparser2";
 
+
 /** Contract: output is plain text for React text children, NEVER an HTML sink.
  * Mark parsed values so projections don't decode or parse them a second time.
  */

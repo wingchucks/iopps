@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import { isDisposableOrganizationContact } from "../organization-contact-email";
 import type { Firestore, Transaction } from "firebase-admin/firestore";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -22,19 +23,11 @@ interface SignupProtectionDecision {
   hardBlock: boolean;
   status: number;
   message: string;
+  code?: "CONTACT_EMAIL_NOT_SUPPORTED" | "ORGANIZATION_RATE_LIMITED" | "ORGANIZATION_REVIEW_REQUIRED";
   reasons: string[];
   riskScore: number;
 }
 
-const DISPOSABLE_EMAIL_DOMAINS = new Set([
-  "10minutemail.com",
-  "guerrillamail.com",
-  "mailinator.com",
-  "sharklasers.com",
-  "temp-mail.org",
-  "tempmail.com",
-  "yopmail.com",
-]);
 
 const HIGH_CONFIDENCE_SPAM_PATTERNS = [
   /\bpay\s*for\s*my\s*exam\b/i,
@@ -79,10 +72,6 @@ function parseFormAgeMs(value: unknown): number | null {
   return Math.max(0, Date.now() - num);
 }
 
-function extractEmailDomain(email: string): string {
-  const parts = email.toLowerCase().split("@");
-  return parts[1] || "";
-}
 
 function collectSignals(input: SignupProtectionInput): {
   reasons: string[];
@@ -118,8 +107,7 @@ function collectSignals(input: SignupProtectionInput): {
     riskScore += 4;
   }
 
-  const emailDomain = extractEmailDomain(email);
-  if (DISPOSABLE_EMAIL_DOMAINS.has(emailDomain)) {
+  if (isDisposableOrganizationContact(email)) {
     reasons.push("disposable_email_domain");
     riskScore += 8;
     hardBlock = true;
@@ -259,6 +247,7 @@ export async function evaluateEmployerSignupProtection(
     allow: false,
     hardBlock,
     status: rateLimit.blocked ? 429 : 403,
+    code: rateLimit.blocked ? "ORGANIZATION_RATE_LIMITED" : signalDecision.reasons.includes("disposable_email_domain") ? "CONTACT_EMAIL_NOT_SUPPORTED" : "ORGANIZATION_REVIEW_REQUIRED",
     message: rateLimit.blocked
       ? "Too many organization setup attempts. Wait 30 minutes before retrying; repeated email or organization attempts may require 24 hours. Your account has not been upgraded. For help, contact support@iopps.ca with your account email."
       : "We couldn't verify this organization signup. Review your organization details and use a permanent contact email. For help, contact support@iopps.ca with your account email; do not send your password.",

@@ -22,6 +22,37 @@ function loadMiddleware() {
   return exports.middleware!;
 }
 
+test("transport paths cannot bypass protected-route guards when normalization is disabled", () => {
+  const middleware = loadMiddleware();
+  for (const path of ["/profile.rsc", "/_next/data/fictional/profile.json", "/profile.segments/_tree.segment.rsc"]) {
+    const response = middleware(new NextRequest("https://iopps.ca" + path));
+    assert.equal(response.status, 307, path);
+    assert.equal(new URL(response.headers.get("location")!).pathname, "/login");
+    assert.equal(new URL(response.headers.get("location")!).searchParams.get("redirect"), "/profile");
+  }
+});
+
+test("auth redirect removes the internal RSC cache key from continuation", () => {
+  const middleware = loadMiddleware();
+  const req = new NextRequest("https://iopps.ca/profile?section=career&_rsc=fictional-cache-key");
+  const response = middleware(req);
+  assert.equal(new URL(response.headers.get("location")!).searchParams.get("redirect"), "/profile?section=career");
+});
+
+test("only foreign auth segment speculation is cancelled; navigation remains intact", () => {
+  const middleware = loadMiddleware();
+  const headers = { rsc: "1", "next-router-prefetch": "1", "next-router-segment-prefetch": "/org/dashboard/__PAGE__" };
+  const cancelled = middleware(new NextRequest("https://iopps.ca/login?redirect=%2Forg%2Fdashboard", { headers }));
+  assert.equal(cancelled.status, 204);
+  assert.equal(cancelled.headers.get("cache-control"), "private, no-store");
+  for (const requestHeaders of [{}, {rsc: "1"}, {...headers, "next-router-segment-prefetch": "/login/__PAGE__"}, {...headers, "next-router-segment-prefetch": "/_tree"}]) {
+    assert.equal(middleware(new NextRequest("https://iopps.ca/login", {headers: requestHeaders})).headers.get("x-middleware-next"), "1");
+  }
+  const protectedPage = middleware(new NextRequest("https://iopps.ca/org/dashboard"));
+  assert.equal(protectedPage.status, 307);
+  assert.equal(new URL(protectedPage.headers.get("location")!).pathname, "/login");
+});
+
 // Middleware uses claims for navigation only; APIs verify credentials separately.
 function session(emailVerified: boolean) {
   const header = Buffer.from(JSON.stringify({ alg: "HS256" })).toString("base64url");

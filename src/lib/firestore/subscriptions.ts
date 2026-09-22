@@ -2,7 +2,7 @@ import {
   collection,
   doc,
   addDoc,
-  getDoc,
+
   getDocs,
   query,
   where,
@@ -10,6 +10,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { getDocsCancellable } from "./cancellable-read";
 
 export interface Subscription {
   id: string;
@@ -35,13 +36,14 @@ export async function createSubscription(
 }
 
 export async function getOrgSubscriptions(
-  orgId: string
+  orgId: string,
+  signal?: AbortSignal,
 ): Promise<Subscription[]> {
   const q = query(
     collection(db, "subscriptions"),
     where("orgId", "==", orgId)
   );
-  const snap = await getDocs(q);
+  const snap = await (signal ? getDocsCancellable(q, signal) : getDocs(q));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Subscription);
 }
 

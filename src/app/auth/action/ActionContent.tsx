@@ -18,7 +18,7 @@ export function VerificationActionView({ state, continuePath }: { state: State; 
       </h1>
       <p role={state === "error" ? "alert" : "status"} className="text-text-sec mb-6">
         {state === "loading" ? "Please wait while we confirm your email address." : state === "success"
-          ? "Your email address is confirmed. Continue to refresh your session or sign in to your account."
+          ? "Your email address is confirmed."
           : "This link may be expired, already used, or invalid. Request a new email, or sign in if you have already verified."}
       </p>
       {state !== "loading" && <a className="brand-button block rounded-xl p-3 font-bold" href={continuePath}>

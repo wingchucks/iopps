@@ -55,9 +55,9 @@ export default function ForgotPasswordPage() {
             <span className="text-white text-xl font-extrabold tracking-[3px]">IOPPS</span>
           </Link>
           <div className="auth-fade-up" style={{ animationDelay: "0.1s" }}>
-            <h2 className="text-white text-3xl font-extrabold leading-tight mb-4">
+            <p className="text-white text-3xl font-extrabold leading-tight mb-4">
               No worries, it happens
-            </h2>
+            </p>
             <p style={{ color: "rgba(255,255,255,.6)", fontSize: 15, lineHeight: 1.7 }}>
               We&apos;ll send you a link to reset your password and get you back into your account.
             </p>

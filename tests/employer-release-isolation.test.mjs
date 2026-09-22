@@ -21,6 +21,7 @@ test('candidate preview disabled with prior settings and crons unchanged',()=>{
     'fix/individual-qa3-20260921': false,
     'fix/individual-safe-cleanup-20260921': false,
     'fix/public-audit-remediation-20260921': false,
+    'fix/qa-round5-20260921': false,
      },
    },
    crons: [

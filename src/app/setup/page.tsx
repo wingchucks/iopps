@@ -3,11 +3,12 @@
 import { Suspense, useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setupDestination, setupCompletionDestination } from "./destination";
+import { useAuth } from "@/lib/auth-context";
+import { getMemberProfile, updateMemberProfile } from "@/lib/firestore/members";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
-import { storage } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth-context";
-import { createMemberProfile, getMemberProfile } from "@/lib/firestore/members";
+import { auth, storage } from "@/lib/firebase";
+import AccountAvatarMenu from "@/components/AccountAvatarMenu";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Avatar from "@/components/Avatar";
 import Badge from "@/components/Badge";
@@ -74,10 +75,12 @@ function SetupWizard() {
   const [community, setCommunity] = useState("");
   const [location, setLocation] = useState("");
   const [bio, setBio] = useState("");
-  const bioEdited = useRef(false);
   const [interests, setInterests] = useState<string[]>([]);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [savedPhotoURL, setSavedPhotoURL] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState("");
+  const photoInput = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [nation, setNation] = useState("");
@@ -85,19 +88,51 @@ function SetupWizard() {
   const [languages, setLanguages] = useState("");
   const [headline, setHeadline] = useState("");
   const [skillsText, setSkillsText] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [targetRolesText, setTargetRolesText] = useState("");
+  const [savedDisplayName, setSavedDisplayName] = useState("");
+  const [loadedUid, setLoadedUid] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const { user } = useAuth();
   const router = useRouter();
-  const displayName = user?.displayName || "there";
+  const displayName = savedDisplayName || user?.displayName || "there";
+  const activeUid = useRef<string | null>(user?.uid ?? null);
+  useEffect(() => {
+    if (!photoFile) return;
+    const preview = URL.createObjectURL(photoFile);
+    setPhotoPreview(preview);
+    return () => URL.revokeObjectURL(preview);
+  }, [photoFile]);
+  useEffect(() => {
+    activeUid.current = user?.uid ?? null;
+    return () => { activeUid.current = null; };
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+    setLoadError(false);
+    const loadingUser = auth.currentUser;
+    if (!loadingUser || loadingUser.uid !== user.uid) return;
     getMemberProfile(user.uid).then((existing) => {
-      if (!cancelled && !bioEdited.current) setBio(existing?.bio || "");
-    }).catch((err) => console.error("Failed to load existing bio:", err));
+      if (cancelled || auth.currentUser !== loadingUser) return;
+      setBio(existing?.bio || "");
+      setCommunity(existing?.community || "");
+      setLocation(existing?.location || "");
+      setNation(existing?.nation || "");
+      setTerritory(existing?.territory || "");
+      setLanguages(existing?.languages || "");
+      setHeadline(existing?.headline || "");
+      setSkillsText(existing?.skillsText ?? existing?.skills?.join(", ") ?? "");
+      setTargetRolesText(existing?.targetRoles?.join(", ") ?? "");
+      setSavedDisplayName(existing?.displayName || "");
+      setInterests(existing?.interests || []);
+      setPhotoPreview(existing?.photoURL || null);
+      setSavedPhotoURL(existing?.photoURL || null);
+      setLoadedUid(user.uid);
+    }).catch(() => { if (!cancelled && auth.currentUser === loadingUser) setLoadError(true); });
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, loadAttempt]);
 
   const toggleInterest = (id: string) => {
     setInterests((prev) =>
@@ -105,75 +140,83 @@ function SetupWizard() {
     );
   };
 
-  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhotoFile(file);
-    const reader = new FileReader();
-    reader.onload = () => setPhotoPreview(reader.result as string);
-    reader.readAsDataURL(file);
-  };
-
   const parsedSkills = skillsText.split(",").map((s) => s.trim()).filter(Boolean);
 
   const handleFinish = async () => {
-    if (!user) return;
+    if (!user || loadedUid !== user.uid || saving) return;
+    // Context waits for session reconciliation; also bind to the live SDK
+    // object so even a replacement same-UID session cannot resume this save.
+    const savingUser = auth.currentUser;
+    if (!savingUser || savingUser.uid !== user.uid) return;
+    const isCurrent = () => activeUid.current === user.uid && auth.currentUser === savingUser;
     setSaving(true);
     setSaveError("");
+    let profileSaved = false;
+    let photoSaved = false;
     try {
-      let photoURL: string | undefined;
-      if (photoFile) {
-        const storageRef = ref(storage, `avatars/${user.uid}.${photoFile.name.split(".").pop() || "jpg"}`);
-        await uploadBytes(storageRef, photoFile);
-        photoURL = await getDownloadURL(storageRef);
-        await updateProfile(user, { photoURL });
+      const token = await savingUser.getIdToken();
+      if (!isCurrent()) return;
+      const response = await fetch("/api/profile/setup", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ community, location, bio, interests, nation, territory, languages, headline, skillsText, targetRoles: targetRolesText.split(",").map(value => value.trim()).filter(Boolean) }),
+      });
+      if (!isCurrent()) return;
+      if (!response.ok) {
+        if (response.status === 400) {
+          const result = await response.json().catch(() => null);
+          if (!isCurrent()) return;
+          const labels: Record<string, string> = {
+            community: "Community / First Nation", location: "Location", bio: "Bio",
+            nation: "Nation / People", territory: "Territory / Homeland", languages: "Languages Spoken",
+            headline: "Professional Headline", skillsText: "Skills", interests: "Interests", targetRoles: "Target Roles",
+          };
+          if (typeof result?.field === "string" && Object.hasOwn(labels, result.field)) {
+            setSaveError(`Check ${labels[result.field]} and try again. Use Back to edit this field. Your draft is still here.`);
+            return;
+          }
+        }
+        throw new Error("Setup save failed");
       }
-
-      // Check if profile already exists (e.g. created via admin)
-      const existing = await getMemberProfile(user.uid);
-      if (existing) {
-        // Update existing profile instead of overwriting
-        const { doc: firestoreDoc, updateDoc, serverTimestamp } = await import("firebase/firestore");
-        const { db } = await import("@/lib/firebase");
-        await updateDoc(firestoreDoc(db, "members", user.uid), {
-          community,
-          location,
-          // An untouched field must not erase a stored bio if prefill is pending.
-          ...(bioEdited.current ? { bio } : {}),
-          interests,
-          nation,
-          territory,
-          languages,
-          headline,
-          skillsText,
-          skills: parsedSkills,
-          ...(photoURL ? { photoURL } : {}),
-          updatedAt: serverTimestamp(),
-        });
-      } else {
-        await createMemberProfile(user.uid, {
-          displayName: user.displayName || "",
-          email: user.email || "",
-          community,
-          location,
-          bio,
-          interests,
-          nation,
-          territory,
-          languages,
-          headline,
-          skillsText,
-          skills: parsedSkills,
-        });
+      profileSaved = true;
+      // The setup endpoint creates the member atomically. Persist the optional
+      // photo afterward, using the existing own-member photo update contract.
+      let photoURL = savedPhotoURL;
+      if (photoFile) {
+        const extension = photoFile.type === "image/png" ? "png" : photoFile.type === "image/webp" ? "webp" : "jpg";
+        const target = ref(storage, `avatars/${user.uid}.${extension}`);
+        await uploadBytes(target, photoFile);
+        if (!isCurrent()) return;
+        photoURL = await getDownloadURL(target);
+        if (!isCurrent()) return;
+        await updateMemberProfile(user.uid, { photoURL });
+        if (!isCurrent()) return;
+        setSavedPhotoURL(photoURL);
+      }
+      // Repair a previous sync failure after reload using the saved member URL,
+      // without requiring the lost local File or changing the setup transaction.
+      if (photoURL && photoURL !== savingUser.photoURL) {
+        photoSaved = true;
+        await updateProfile(savingUser, { photoURL });
+        if (!isCurrent()) return;
       }
       router.push(setupCompletionDestination(searchParams));
     } catch (err) {
       console.error("Failed to save profile:", err);
-      setSaveError("Your profile could not be saved. Your draft is still here. Please try again.");
+      if (isCurrent()) setSaveError(photoSaved
+        ? "Your profile and photo were saved, but your account photo could not be updated. Please try again."
+        : profileSaved
+        ? "Your profile was saved, but your photo could not be saved. Your selected photo is still here. Please try again."
+        : "Your profile could not be saved. Your draft is still here. Please try again.");
     } finally {
-      setSaving(false);
+      if (isCurrent()) setSaving(false);
     }
   };
+
+  if (!user || auth.currentUser?.uid !== user.uid) return <p role="status">Loading your profile...</p>;
+  if (loadedUid !== user.uid) return <div className="p-8">
+    {loadError ? <><p role="alert">We couldn’t load your profile. Please retry.</p><button onClick={() => setLoadAttempt(value => value + 1)}>Try again</button></> : <p role="status">Loading your profile...</p>}
+  </div>;
 
   const currentStepInfo = stepInfo[step - 1];
 
@@ -288,11 +331,14 @@ function SetupWizard() {
       {/* Form panel */}
       <div className="flex-1 bg-bg flex items-start lg:items-center justify-center px-6 py-10 lg:py-8 overflow-y-auto">
         <div className="w-full" style={{ maxWidth: 480 }}>
+          <div className="flex justify-end mb-4">
+            <AccountAvatarMenu name={displayName} src={user.photoURL} profileHref="/profile" onSignOut={() => router.push("/logout")} />
+          </div>
 
           {/* Mobile step indicator */}
           <div className="lg:hidden mb-6">
             <div className="flex gap-2 mb-2">
-              {[1, 2, 3, 4, 5].map((s) => (
+              {stepInfo.map(({ num: s }) => (
                 <div
                   key={s}
                   className="flex-1 h-1.5 rounded-full transition-all duration-300"
@@ -300,53 +346,30 @@ function SetupWizard() {
                 />
               ))}
             </div>
-            <p className="text-xs text-text-muted">Step {step} of 5 — {currentStepInfo.title}</p>
+            <p className="text-xs text-text-muted">Step {step} of {stepInfo.length} — {currentStepInfo.title}</p>
           </div>
 
           {/* ═══ STEP 1: Profile Basics ═══ */}
           {step === 1 && (
             <div className="auth-scale-in">
               <div className="flex items-center gap-4 mb-8">
-                {/* Photo upload */}
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="relative group cursor-pointer border-0 bg-transparent p-0 flex-shrink-0"
-                >
-                  {photoPreview ? (
-                    <img
-                      src={photoPreview}
-                      alt="Profile"
-                      className="rounded-2xl object-cover"
-                      style={{ width: 64, height: 64 }}
-                    />
-                  ) : user?.photoURL ? (
-                    <img
-                      src={user.photoURL}
-                      alt="Profile"
-                      className="rounded-2xl object-cover"
-                      style={{ width: 64, height: 64 }}
-                    />
-                  ) : (
-                    <Avatar name={displayName} size={64} />
-                  )}
-                  <div
-                    className="absolute inset-0 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ background: "rgba(0,0,0,.45)" }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                      <circle cx="12" cy="13" r="4"/>
-                    </svg>
-                  </div>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhoto}
-                  />
-                </button>
+                <div className="flex-shrink-0">
+                  {photoPreview || user?.photoURL ? <img src={photoPreview || user?.photoURL || ""} alt="Profile" className="rounded-2xl object-cover" style={{ width: 64, height: 64 }} /> : <Avatar name={displayName} size={64} />}
+                  <button type="button" disabled={saving} onClick={() => photoInput.current?.click()} className="block text-xs text-teal cursor-pointer">Choose profile photo</button>
+                  <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={event => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
+                    if (!file) return;
+                    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size >= 5 * 1024 * 1024) {
+                      setPhotoError("Choose a JPG, PNG or WebP image under 5MB.");
+                      return;
+                    }
+                    setPhotoError("");
+                    setPhotoFile(file);
+                  }} />
+                  <p className="text-xs text-text-muted">Optional · saved when you finish setup.</p>
+                  {photoError && <p role="alert" className="text-xs">{photoError}</p>}
+                </div>
                 <div>
                   <h2 className="font-bold text-text m-0" style={{ fontSize: 24 }}>
                     Hey {displayName}!
@@ -396,6 +419,7 @@ function SetupWizard() {
 
               <button
                 onClick={() => { handleFinish(); }}
+                disabled={saving}
                 className="w-full mt-3 text-sm font-medium text-text-muted bg-transparent border-0 cursor-pointer hover:text-text-sec transition-colors py-2"
               >
                 Skip for now
@@ -490,7 +514,7 @@ function SetupWizard() {
                   type="text"
                   value={headline}
                   onChange={(e) => {
-                    if (e.target.value.length <= 80) setHeadline(e.target.value);
+                    if (e.target.value.length <= 80 || e.target.value.length < headline.length) setHeadline(e.target.value);
                   }}
                   className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10"
                   placeholder="e.g. Software Developer | Treaty 6"
@@ -504,7 +528,7 @@ function SetupWizard() {
                 </span>
                 <textarea
                   value={bio}
-                  onChange={(e) => { bioEdited.current = true; setBio(e.target.value); }}
+                  onChange={(e) => { setBio(e.target.value); }}
                   aria-describedby="setup-bio-count"
                   rows={3}
                   className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10 resize-none"
@@ -528,6 +552,14 @@ function SetupWizard() {
                 />
                 <span className="text-xs text-text-muted mt-1 block">Comma-separated</span>
               </label>
+
+              <div className="mb-8">
+                <label htmlFor="setup-target-roles" className="text-xs font-semibold text-text-sec mb-2 block tracking-wide uppercase">Target Roles</label>
+                <input id="setup-target-roles" type="text" value={targetRolesText} onChange={event => setTargetRolesText(event.target.value)}
+                  aria-describedby="setup-target-roles-help"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all duration-200 focus:border-teal focus:ring-2 focus:ring-teal/10" />
+                <p id="setup-target-roles-help" className="text-xs text-text-muted mt-1">Optional · comma-separated</p>
+              </div>
 
               <div className="flex gap-3">
                 <button
@@ -567,6 +599,7 @@ function SetupWizard() {
                   return (
                     <button
                       key={opt.id}
+                      aria-pressed={selected}
                       onClick={() => toggleInterest(opt.id)}
                       className="flex items-center gap-3.5 rounded-xl cursor-pointer text-left transition-all duration-200 bg-card"
                       style={{
@@ -678,7 +711,7 @@ function SetupWizard() {
                       </div>
                     )}
                     <div className="pb-0.5">
-                      <p className="text-base font-bold text-text m-0">{user?.displayName || "Your Name"}</p>
+                      <p className="text-base font-bold text-text m-0">{displayName}</p>
                       {headline && <p className="text-xs text-text-sec m-0 mt-0.5">{headline}</p>}
                       {community && <p className="text-xs text-teal m-0">{community}</p>}
                     </div>

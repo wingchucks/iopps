@@ -3,12 +3,13 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 import { isPublicJobVisible } from "@/lib/public-jobs";
+import { mergePublicJobRecords } from "@/lib/public-job-merge";
 import { withPublicDetailCache } from "@/lib/server/public-detail-cache";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
 
-type JobRow = Record<string, unknown>;
+type JobRow = Record<string, unknown> & { id: string };
 
 function serialize(value: unknown): unknown {
   if (value === null || value === undefined) return value;
@@ -40,16 +41,23 @@ function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot): JobRow {
     slug: typeof row.slug === "string" ? row.slug : undefined,
     title: typeof row.title === "string" ? row.title : undefined,
   });
-  if (row.salary && typeof row.salary === "object") {
-    const sal = row.salary as Record<string, unknown>;
-    row.salary = sal.display ? String(sal.display) : "";
-  }
+
   if (!row.employerName) {
     row.employerName =
       (typeof row.orgName === "string" ? row.orgName : "") ||
       (typeof row.companyName === "string" ? row.companyName : "");
   }
   return row;
+}
+
+// Canonical evidence (especially structured salary) must reach dedupe intact.
+// Only the final display projection may discard it; the client renders these rows.
+function relatedDisplayRows(rows: JobRow[]): JobRow[] {
+  return mergePublicJobRecords(rows, []).map(row => {
+    if (!row.salary || typeof row.salary !== "object") return row;
+    const salary = row.salary as Record<string, unknown>;
+    return { ...row, salary: salary.display ? String(salary.display) : "" };
+  });
 }
 
 function firstLocationSegment(value: unknown): string {
@@ -166,8 +174,8 @@ export async function GET(
 
     return withPublicDetailCache(
       NextResponse.json({
-        employerJobs: employerResults,
-        similarJobs: similarResults,
+        employerJobs: relatedDisplayRows(employerResults),
+        similarJobs: relatedDisplayRows(similarResults),
       }),
     );
   } catch (err) {

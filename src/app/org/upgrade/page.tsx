@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { authIntentHref } from "@/lib/auth-redirect";
 import { useAuth } from "@/lib/auth-context";
 import { getAppCheckTokenValue } from "@/lib/firebase";
-import { organizationSetupError } from "@/lib/organization-setup-error";
+import { organizationSetupError, organizationContactEmailError } from "@/lib/organization-setup-error";
 
 const ORG_TYPES = [
   { value: "employer", label: "Employer / Business", desc: "Post jobs and find Indigenous talent" },
@@ -48,6 +48,8 @@ function OrgUpgradeContent() {
   }
 
   async function handleSubmit() {
+    const contactError = organizationContactEmailError(user?.email);
+    if (contactError) { setError(contactError); return; }
     if (!form.name || !form.type) {
       setError("Organization name and type are required.");
       return;
@@ -71,7 +73,7 @@ function OrgUpgradeContent() {
         }),
       });
 
-      if (!res.ok) { setError(organizationSetupError(res.status)); setLoading(false); return; }
+      if (!res.ok) { setError(organizationSetupError(res.status, await res.json().catch(() => null))); setLoading(false); return; }
       // Force token refresh so new role takes effect
       await user!.getIdToken(true);
       router.push(authIntentHref("/org/onboarding", searchParams));

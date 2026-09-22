@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { sourceModule } from './helpers/security-fixtures.mjs';
+const { organizationContactEmailError } = sourceModule('src/lib/organization-setup-error.ts');
 
 // Execute the actual component with deterministic hook scheduling; no provider claims.
 function harness(file, initialUser, adapters={}) {
@@ -23,7 +25,7 @@ function harness(file, initialUser, adapters={}) {
  }
  const draft=loadHelper('src/lib/employer-draft.ts');
  const signupDraft=loadHelper('src/lib/signup-draft.ts');
- const modules={'react':{...react,default:react},'next/navigation':{useRouter:()=>router,useSearchParams:()=>new URLSearchParams('resume=organization')},'@/lib/auth-context':{useAuth:()=>({user,loading:false})},'@/lib/employer-draft':draft,'@/lib/signup-draft':signupDraft,'@/lib/auth-redirect':{authIntentHref:p=>p,postSignupDestination:(_s,p)=>p},'@/lib/firebase':{getAppCheckTokenValue:async()=>null},'@/lib/organization-setup-error':{organizationSetupError:()=> 'Rejected'},'@/lib/auth-errors':{authErrorMessage:()=> 'Failed'},'@/lib/pricing':{SUBSCRIPTION_PLANS:{tier1:{price:1250},tier2:{price:2500}},ONE_TIME_PLANS:{}},'@/components/signup/constants':{CSS:{},PROVINCES:[],EMPLOYER_CAPABILITIES:[],INSTITUTION_TYPES:[],INDIGENOUS_SERVICES:[]},'@/components/signup/ui':{},'./StepHeader':{}};
+ const modules={'react':{...react,default:react},'next/navigation':{useRouter:()=>router,useSearchParams:()=>new URLSearchParams('resume=organization')},'@/lib/auth-context':{useAuth:()=>({user,loading:false})},'@/lib/employer-draft':draft,'@/lib/signup-draft':signupDraft,'@/lib/auth-redirect':{authIntentHref:p=>p,postSignupDestination:(_s,p)=>p},'@/lib/firebase':{getAppCheckTokenValue:async()=>null},'@/lib/organization-setup-error':{organizationSetupError:()=> 'Rejected', organizationContactEmailError},'@/lib/auth-errors':{authErrorMessage:()=> 'Failed'},'@/lib/pricing':{SUBSCRIPTION_PLANS:{tier1:{price:1250},tier2:{price:2500}},ONE_TIME_PLANS:{}},'@/components/signup/constants':{CSS:{},PROVINCES:[],EMPLOYER_CAPABILITIES:[],INSTITUTION_TYPES:[],INDIGENOUS_SERVICES:[]},'@/components/signup/ui':{},'./StepHeader':{}};
  const unexpectedUpload=()=>{throw new Error('Unexpected Firebase storage operation');};
  Object.assign(modules,{'firebase/storage':{ref:unexpectedUpload,uploadBytes:unexpectedUpload,getDownloadURL:unexpectedUpload}},adapters);
  let source=fs.readFileSync(file,'utf8');if(file.includes('/signup/'))source+='\nexport { UnifiedSignupContent };';
@@ -177,3 +179,12 @@ test('signup stale successful submission preserves B draft autosave and navigati
  if(['token','appcheck','upload'].includes(boundary))assert.equal(h.requests.length,0);
  const submit=h.nodes().find(n=>h.text(n)==='Create organization profile');assert.ok(submit);assert.ok(!submit.props.disabled);assert.equal(h.readDraft('B').orgName,'B');
  });
+
+test('temporary email repeated launch attempts explain the rule without requesting a token or spending API attempts',async()=>{
+ let tokens=0;
+ const account={...user('qa-round5'),email:'qaretest5biz@mailinator.com',getIdToken:async()=>{tokens++;throw new Error('No token should be requested');}};
+ const h=harness('src/app/signup/page.tsx',account);
+ h.seedDraft(account.uid,{step:12,orgName:'Fictional QA',empDescription:'Description',empServices:'Services'});h.render();
+ for(let i=0;i<4;i++) {await h.nodes().find(n=>h.text(n)==='Create organization profile').props.onClick();await h.settle();}
+ assert.equal(tokens,0);assert.deepEqual(h.requests,[]);assert.deepEqual(h.routes,[]);assert.match(h.text(),/permanent contact email/);
+});

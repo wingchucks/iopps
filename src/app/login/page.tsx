@@ -229,9 +229,9 @@ function LoginForm() {
             <span className="text-white text-xl font-extrabold tracking-[3px]">IOPPS</span>
           </Link>
           <div className="auth-fade-up" style={{ animationDelay: "0.1s" }}>
-            <h2 className="text-white text-3xl font-extrabold leading-tight mb-4">
+            <p className="text-white text-3xl font-extrabold leading-tight mb-4">
               Welcome back
-            </h2>
+            </p>
             <p style={{ color: "rgba(255,255,255,.6)", fontSize: 15, lineHeight: 1.7 }}>
               Pick up where you left off. Your community, opportunities, and connections are waiting.
             </p>

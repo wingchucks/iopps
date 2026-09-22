@@ -12,7 +12,7 @@ function load(file: string, imports: Record<string, unknown> = {}, globals: Reco
   const exports: Record<string, any> = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(file, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-  }).outputText, { exports, Response, ...globals, require: (id: string) => {
+  }).outputText, { exports, Response, AbortController, DOMException, setTimeout, clearTimeout, ...globals, require: (id: string) => {
     if (Object.hasOwn(imports, id)) return imports[id];
     throw new Error(`Retired surface loaded service ${id}`);
   }});
@@ -91,6 +91,13 @@ test("member client keeps own profile but never queries a directory or another a
     "firebase/firestore": { doc: (...args: unknown[]) => args, getDoc: async () => { reads++; return { id: "self", exists: () => true, data: () => ({ displayName: "Own", resumeUrl: "PRIVATE_RESUME" }) }; } },
     "../firebase": { auth: { currentUser: { uid: "self" } }, db: {} },
     "../salary-range": salaryRange,
+    "./cancellable-read": load("src/lib/firestore/cancellable-read.ts", {
+      "firebase/firestore": { onSnapshot: (_ref: unknown, _options: unknown, next: (value: unknown) => void) => {
+        reads++;
+        next({ id: "self", exists: () => true, data: () => ({ displayName: "Own", resumeUrl: "PRIVATE_RESUME" }), metadata: { fromCache: false } });
+        return () => {};
+      } },
+    }),
   });
   assert.equal((await mod.getMemberProfile("self")).resumeUrl, "PRIVATE_RESUME");
   assert.equal(await mod.getMemberProfile("peer"), null);
