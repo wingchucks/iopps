@@ -49,8 +49,20 @@ function isUnverifiedAllowed(pathname: string): boolean {
 }
 
 export function middleware(req: NextRequest) {
+  // Header-preserving middleware receives raw transport URLs. Keep the same
+  // canonical authorization boundary for document, Flight and data requests.
+  const rawPath = req.nextUrl.pathname;
+  const dataPath = /^\/_next\/data\/[^/]+\/(.+)\.json$/.exec(rawPath);
+  const segmentPath = /^(.*?)\.segments\/.+\.segment\.rsc$/.exec(rawPath);
+  const canonicalPath = dataPath ? `/${dataPath[1] === "index" ? "" : dataPath[1]}`
+    : segmentPath ? segmentPath[1] || "/"
+    : rawPath.endsWith(".rsc") ? rawPath.slice(0, -4) || "/" : rawPath;
+  req.nextUrl.pathname = canonicalPath;
+  req.nextUrl.buildId = "";
+  req.nextUrl.searchParams.delete("_rsc");
   const maintenance = maintenanceResponse(req.nextUrl.pathname, process.env.IOPPS_MAINTENANCE_MODE, req.method);
   if (maintenance) return maintenance;
+
   const { pathname } = req.nextUrl;
   const retired = ["/schools", "/programs", "/education", "/training"];
   if (retired.some(prefix => pathname === prefix || pathname.startsWith(prefix + "/"))) {
@@ -117,6 +129,15 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(verifyUrl);
   }
 
+  // Session-obsolete speculation cannot use a private route's segment in
+  // the login payload. Next treats a non-Flight 204 as a prefetch cache miss.
+  // Never apply this to navigation or login's own valid segment requests.
+  const segment = req.headers.get("next-router-segment-prefetch");
+  if (pathname === "/login" && req.headers.get("rsc") === "1" &&
+      req.headers.get("next-router-prefetch") === "1" && segment &&
+      [...PROTECTED_PREFIXES, ...AUTH_PAGES].some(prefix => segment.startsWith(prefix + "/"))) {
+    return new NextResponse(null, { status: 204, headers: { "Cache-Control": "private, no-store" } });
+  }
   return NextResponse.next();
 }
 

@@ -12,6 +12,7 @@ function load(file, mocks = {}) {
     require(id) {
       if (id in mocks) return mocks[id];
       if (id.startsWith('@/lib/')) return load(`src/lib/${id.slice(6)}.ts`, mocks);
+      if (id === './organization-contact-email') return load('src/lib/organization-contact-email.ts', mocks);
       throw Error(`Unexpected dependency ${id}`);
     },
   });

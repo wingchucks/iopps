@@ -16,6 +16,7 @@ import {
   getPublicAuthNavItems,
 } from "@/lib/navigation";
 import Avatar from "./Avatar";
+import AccountAvatarMenu from "./AccountAvatarMenu";
 import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import ChatButton from "./ChatButton";
@@ -136,7 +137,7 @@ export default function NavBar() {
         <div className="flex items-center justify-between h-16 px-4 md:px-10">
           <div className="flex items-center gap-4 md:gap-8">
             <Link href={brandHref} className="flex items-center gap-2.5 no-underline">
-              <Image src="/logo.png" alt="IOPPS" width={36} height={36} className="shrink-0" />
+              <Image src="/logo.png" alt="" width={36} height={36} className="shrink-0" />
               <span className="text-white font-black text-xl md:text-2xl tracking-[2px]">IOPPS</span>
               <span
                 className="text-teal-light rounded opacity-80 hidden sm:inline"
@@ -244,9 +245,7 @@ export default function NavBar() {
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
                   </svg>
                 </Link>
-                <Link href={profileHref}>
-                  <Avatar name={displayName} size={36} />
-                </Link>
+                <AccountAvatarMenu key={user?.uid} name={displayName} src={user?.photoURL} profileHref={profileHref} profileLabel={profileLabel} onSignOut={handleSignOut} />
               </>
             ) : (
               !authLoading && publicAuthLinks.map((link) => (
@@ -283,9 +282,7 @@ export default function NavBar() {
             )}
 
             {isAuthenticated && (
-              <Link href={profileHref}>
-                <Avatar name={displayName} size={32} />
-              </Link>
+              <AccountAvatarMenu key={user?.uid} name={displayName} src={user?.photoURL} size={32} profileHref={profileHref} profileLabel={profileLabel} onSignOut={handleSignOut} />
             )}
 
             <button

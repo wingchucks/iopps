@@ -13,10 +13,15 @@ import { scholarshipDeadlineType, fundingTypeLabel, type OpportunityKind, type O
 const selectClass = "mt-2 min-h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700";
 export default function OpportunityDirectory({ kind }: { kind: OpportunityKind }) {
   const events = kind === "events";
-  const [items, setItems] = useState<OpportunityRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const [result, setResult] = useState<{
+    kind: OpportunityKind; attempt: number; items: OpportunityRecord[]; error: string;
+  } | null>(null);
+  // A new request never displays a previous request's error or listings.
+  const currentResult = result?.kind === kind && result.attempt === attempt ? result : null;
+  const loading = currentResult === null;
+  const items = useMemo(() => currentResult?.items ?? [], [currentResult]);
+  const error = currentResult?.error ?? "";
   const [search, setSearch] = useDirectoryFilter("q", "");
   const [province, setProvince] = useDirectoryFilter("province", "");
   const [category, setCategory] = useDirectoryFilter(events ? "type" : "category", "");
@@ -30,8 +35,11 @@ export default function OpportunityDirectory({ kind }: { kind: OpportunityKind }
     const abort = new AbortController();
     fetch(`/api/${kind}`, { signal: abort.signal, cache: "no-store" }).then(async response => {
       if (!response.ok) throw new Error("We couldn’t load the listings. Please try again.");
-      setItems((await response.json())[kind] || []);
-    }).catch(caught => { if (!abort.signal.aborted) setError(caught instanceof Error ? caught.message : "Could not load listings."); }).finally(() => { if (!abort.signal.aborted) setLoading(false); });
+      const items = (await response.json())[kind] || [];
+      if (!abort.signal.aborted) setResult({ kind, attempt, items, error: "" });
+    }).catch(caught => {
+      if (!abort.signal.aborted) setResult({ kind, attempt, items: [], error: caught instanceof Error ? caught.message : "Could not load listings." });
+    });
     return () => abort.abort();
   }, [kind, attempt]);
   const label = (item: OpportunityRecord) => events ? normalizeEventTypeLabel(String(item.eventType || item.category || "Other")) : fundingTypeLabel(item);
@@ -58,7 +66,7 @@ export default function OpportunityDirectory({ kind }: { kind: OpportunityKind }
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4"><p className="text-xs text-slate-500">{events ? "Event details can change. Confirm with the organizer before travelling." : "An unspecified deadline does not mean applications are always open."}</p><button type="button" className="min-h-11 text-sm font-bold text-teal-800 underline underline-offset-4" onClick={clear}>Clear filters</button></div>
       </section>
       <div className="my-6 flex flex-wrap items-end justify-between gap-2"><h2 id="directory-results" tabIndex={-1} className="text-xl font-extrabold">{events ? "What’s happening" : "Explore opportunities"}</h2><p aria-live="polite" className="text-sm text-slate-600">{loading ? "Loading listings…" : error ? "Listings unavailable" : `${filtered.length} ${filtered.length === 1 ? "opportunity" : "opportunities"}`}</p></div>
-      {loading ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Loading listings">{[1, 2, 3].map(n => <div key={n} className="h-64 animate-pulse rounded-2xl bg-slate-200 motion-reduce:animate-none" />)}</div> : error ? <div role="alert" className="rounded-2xl border border-red-200 bg-white p-7 text-center"><h3 className="text-lg font-bold">Listings couldn’t load</h3><p className="mt-2 text-sm text-slate-600">{error}</p><button className="mt-4 min-h-11 rounded-xl button-gradient px-5 font-bold text-white" onClick={() => { setLoading(true); setError(""); setAttempt(n => n + 1); }}>Try again</button></div> : !pageItems.length ? <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center"><h3 className="text-xl font-bold">No matches just yet.</h3><p className="mt-2 text-sm text-slate-600">Try another type, province or search term.</p><button className="mt-5 min-h-11 rounded-xl button-gradient px-5 font-bold text-white" onClick={clear}>Show all opportunities</button></div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{pageItems.map(item => {
+      {loading ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Loading listings">{[1, 2, 3].map(n => <div key={n} className="h-64 animate-pulse rounded-2xl bg-slate-200 motion-reduce:animate-none" />)}</div> : error ? <div role="alert" className="rounded-2xl border border-red-200 bg-white p-7 text-center"><h3 className="text-lg font-bold">Listings couldn’t load</h3><p className="mt-2 text-sm text-slate-600">{error}</p><button className="mt-4 min-h-11 rounded-xl button-gradient px-5 font-bold text-white" onClick={() => setAttempt(n => n + 1)}>Try again</button></div> : !pageItems.length ? <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center"><h3 className="text-xl font-bold">No matches just yet.</h3><p className="mt-2 text-sm text-slate-600">Try another type, province or search term.</p><button className="mt-5 min-h-11 rounded-xl button-gradient px-5 font-bold text-white" onClick={clear}>Show all opportunities</button></div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{pageItems.map(item => {
         const closed = !events && isJobRecordExpired(item), deadlineType = scholarshipDeadlineType(item), location = item.delivery === "online" ? "Online" : displayLocation(item.location) || [item.city, item.province].filter(Boolean).join(", ");
         const date = getEventStartDate(item);
         return <article key={item.id} className="flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">

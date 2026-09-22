@@ -10,6 +10,7 @@ import { Parser } from 'htmlparser2';
 import ts from 'typescript';
 import * as jobDates from '../src/lib/job-detail-dates.ts';
 import * as importLabels from '../src/lib/job-import-labels.ts';
+import * as snippets from '../src/lib/description-snippet.ts';
 
 // Render exact page JSX seams, without executing API, auth or Firebase code.
 const page = fs.readFileSync('src/app/jobs/[slug]/JobDetailClient.tsx', 'utf8');
@@ -21,6 +22,7 @@ function compile(source) {
       if (id === 'react') return React;
       if (id === '@/lib/job-detail-dates') return jobDates;
       if (id === '@/lib/job-import-labels') return importLabels;
+      if (id === '@/lib/description-snippet') return snippets;
       if (id.startsWith('@/components/jobs/')) return compile(fs.readFileSync(path.join('src', id.slice(2) + '.tsx'), 'utf8'));
       throw Error(`Unexpected dependency: ${id}`);
     },

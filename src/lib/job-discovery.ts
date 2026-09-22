@@ -1,5 +1,7 @@
+import { descriptionSnippet } from "./description-snippet";
 import type { Job } from "./firestore/jobs";
 import { normalizeJobDiscoveryMetadata } from "./job-metadata";
+import { classifyJobArea } from "./job-taxonomy";
 
 const employmentKey = (value: string) => value.trim().toLowerCase()
   .replace(/[\u2010-\u2015]/g, "-")
@@ -35,8 +37,7 @@ export function matchesEmploymentType(job: Pick<Job, "employmentType" | "jobType
 export type EmployerBrand = { id: string; name?: string; employerId?: string; logoUrl?: string };
 export const employerName = (job: Job) => job.employerName || job.orgName || job.companyName || "Hiring organization";
 // Match the canonical job-publishing taxonomy; provider departments are not categories.
-const JOB_AREAS = new Set(["Administration", "Agriculture", "Arts & Culture", "Business", "Construction & Trades", "Education", "Environment & Land", "Finance", "Government & Public Service", "Health & Wellness", "Hospitality & Tourism", "Human Resources", "Information Technology", "Legal", "Management", "Marketing & Communications", "Natural Resources", "Social Services", "Transportation", "Other"]);
-export const jobArea = (job: Job) => JOB_AREAS.has(job.category || "") ? job.category! : "";
+export const jobArea = (job: Job) => classifyJobArea(job).category;
 const identity = (value?: string) => (value || "").trim().toLowerCase();
 export function employerLogo(job: Job, brands: EmployerBrand[]): string | undefined {
   if (job.companyLogoUrl) return job.companyLogoUrl;
@@ -70,7 +71,7 @@ export function jobSummary(job: Job): string {
   if (summary) text = summary[1];
   text = text.replace(/\s+/g, " ").trim();
   if (text.length <= 240) return text;
-  return text.slice(0, 240).replace(/\s+\S*$/, "") + "…";
+  return descriptionSnippet(text, 240);
 }
 export function salaryInfo(input: Job) {
   const job = normalizeJobDiscoveryMetadata(input);

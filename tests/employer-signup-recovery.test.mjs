@@ -1,11 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import {createRequire} from 'node:module';
-import vm from 'node:vm';
-import ts from 'typescript';
-const require=createRequire(import.meta.url);
-function load(){const exports={};vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/server/signup-protection.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,Date,require});return exports;}
+import { sourceModule } from './helpers/security-fixtures.mjs';
+function load(){return sourceModule('src/lib/server/signup-protection.ts');}
 function database(){const rows=new Map();return {collection(name){return {doc(id){return {key:name+'/'+id};},async add() {}};},async runTransaction(fn){return fn({async getAll(...refs){return refs.map(r=>({exists:rows.has(r.key),data:()=>rows.get(r.key)}));},set(ref,data){rows.set(ref.key,data);}});}};}
 const base={kind:'employer_upgrade',name:'Fictional Northern Services',contactName:'Fictional Owner',contactEmail:'owner@example.invalid',formStartedAt:Date.now()-10000};
 test('unavailable network address does not pool unrelated legitimate organizations into one permanent rejection bucket',async()=>{const db=database(),{evaluateEmployerSignupProtection:evaluate}=load();for(let i=0;i<7;i++){const result=await evaluate(db,{...base,uid:'fictional-'+i,name:base.name+i,contactEmail:`owner${i}@example.invalid`,clientIp:null});assert.equal(result.allow,true,JSON.stringify(result));}});

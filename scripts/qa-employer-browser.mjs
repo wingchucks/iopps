@@ -166,7 +166,10 @@ try {
  await page.route('**/api/employer/check',async route=>{const response=await route.fetch();checkHeld();await checkGate;await route.fulfill({response});});
  await page.goto(server.base+'/org/dashboard');await heldCheck;
  await authTab.goto(server.base+'/feed');await signOutFromFeed(authTab);await loginTab(authTab,switchUser.email);
- releaseCheck();await page.waitForURL(u=>u.pathname==='/login'||u.pathname==='/org/upgrade'||u.pathname==='/feed');
+ releaseCheck();await page.waitForURL(u=>u.pathname==='/login'||u.pathname==='/org/upgrade'||u.pathname==='/feed'||u.pathname==='/setup');
+ // Sign-in can briefly visit /login before resolving the new community account.
+ // Wait for its actual ready UI rather than racing that redirect with the next goto.
+ await expect(page.getByPlaceholder('e.g. Muskoday First Nation').or(page.getByPlaceholder('e.g. MLT Aikins LLP'))).toBeVisible();
  await expect(page.getByRole('button',{name:'Post a Job',exact:true})).toHaveCount(0);await record('held-organization-authorization-cross-tab-signout-switch-denies-stale-workspace');await authTab.close();
  await page.goto(server.base+'/employers/for-business');await page.waitForURL(u=>u.pathname==='/for-employers');await record('business-entry-alias');
  assert.deepEqual(errors,[]);

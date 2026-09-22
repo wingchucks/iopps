@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
+import { getDocCancellable } from "@/lib/firestore/cancellable-read";
 import { useAuth } from "@/lib/auth-context";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { getMemberProfile, type MemberProfile } from "@/lib/firestore/members";
 import { getOrganization } from "@/lib/firestore/organizations";
 import { resolveLinkedOrganizationId } from "@/lib/account-state";
@@ -42,6 +43,8 @@ export function useAccountContext(): AccountContextState {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+    const isCurrent = () => !cancelled && auth.currentUser === user;
 
     if (authLoading) {
       return () => {
@@ -88,13 +91,15 @@ export function useAccountContext(): AccountContextState {
       let idToken = "";
 
       try {
-        memberProfile = await getMemberProfile(currentUser.uid);
+        if (!isCurrent()) return;
+        memberProfile = await getMemberProfile(currentUser.uid, controller.signal);
       } catch {
         memberProfile = null;
       }
 
       try {
-        const userSnap = await getDoc(doc(db, "users", currentUser.uid));
+        if (!isCurrent()) return;
+        const userSnap = await getDocCancellable(doc(db, "users", currentUser.uid), controller.signal);
         userData = userSnap.exists()
           ? (userSnap.data() as Record<string, unknown>)
           : null;
@@ -103,6 +108,7 @@ export function useAccountContext(): AccountContextState {
       }
 
       try {
+        if (!isCurrent()) return;
         const idTokenResult = await currentUser.getIdTokenResult();
         idToken = idTokenResult.token;
         claimOrgId =
@@ -121,34 +127,41 @@ export function useAccountContext(): AccountContextState {
         idToken = "";
       }
 
+      if (!isCurrent()) return;
       try {
         if (!idToken) {
           idToken = await currentUser.getIdToken();
         }
 
+        if (!isCurrent()) return;
         const res = await fetchWithTimeout(
           "/api/employer/check",
           {
+            signal: controller.signal,
             headers: { Authorization: `Bearer ${idToken}` },
           },
           4500,
         );
 
+        if (!isCurrent()) return;
         if (res.ok) {
           const data = (await res.json()) as {
             authorized?: boolean;
             profile?: { orgId?: string | null };
           };
+          if (!isCurrent()) return;
           employerAuthorized = data.authorized === true;
           employerOrgId = data.profile?.orgId ?? null;
         }
       } catch (error) {
+        if (!isCurrent()) return;
         if (!isAbortError(error)) {
           console.error("[useAccountContext] employer check failed:", error);
         }
         employerAuthorized = false;
       }
 
+      if (!isCurrent()) return;
       const userRole =
         typeof userData?.role === "string"
           ? (userData.role as string)
@@ -164,6 +177,7 @@ export function useAccountContext(): AccountContextState {
       if (orgId) {
         try {
           const organization = await getOrganization(orgId);
+          if (!isCurrent()) return;
           if (organization && !isOrganizationAccessBlocked(organization)) {
             activeOrgId = orgId;
             orgSlug = organization.slug || orgId;
@@ -190,7 +204,7 @@ export function useAccountContext(): AccountContextState {
         userRole === "admin" ||
         userRole === "moderator";
 
-      if (!cancelled) {
+      if (isCurrent()) {
         setState({
           loading: false,
           memberProfile,
@@ -210,6 +224,7 @@ export function useAccountContext(): AccountContextState {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [authLoading, user]);
 

@@ -7,6 +7,7 @@ import {
 } from "firebase/firestore";
 import { salaryRangeError } from "../salary-range";
 import { auth, db } from "../firebase";
+import { getDocCancellable } from "./cancellable-read";
 
 export type WorkPreference = "remote" | "in-person" | "hybrid" | "any";
 
@@ -53,10 +54,12 @@ export interface MemberProfile {
 }
 
 export async function getMemberProfile(
-  uid: string
+  uid: string,
+  signal?: AbortSignal,
 ): Promise<MemberProfile | null> {
   if (auth.currentUser?.uid !== uid) return null;
-  const snap = await getDoc(doc(db, "members", uid));
+  const ref = doc(db, "members", uid);
+  const snap = await (signal ? getDocCancellable(ref, signal) : getDoc(ref));
   if (!snap.exists()) return null;
   return { uid: snap.id, ...snap.data() } as MemberProfile;
 }

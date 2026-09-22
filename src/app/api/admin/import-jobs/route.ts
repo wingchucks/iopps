@@ -11,6 +11,12 @@ export async function POST(request: NextRequest) {
   try {
     const { jobs } = await request.json();
     if (!Array.isArray(jobs) || jobs.length === 0) return NextResponse.json({ error: "jobs array required" }, { status: 400 });
+    // Validate the whole batch before writes. An explicit unsupported category
+    // is not absence and must never authorize title-based inference.
+    if (jobs.some(job => job && Object.hasOwn(job, "category") &&
+      (typeof job.category !== "string" || !job.category.trim()))) {
+      return NextResponse.json({ error: "Explicit category must be a non-empty string" }, { status: 400 });
+    }
     const db = getAdminDb();
     const imported: string[] = [], skipped: string[] = [];
     for (const job of jobs) {
@@ -41,6 +47,7 @@ export async function POST(request: NextRequest) {
       const now = new Date().toISOString();
       const created = await createImportedJobOnce(db, {
         ...identityFields, title, company: job.company || "Unknown", organization: job.company || "Unknown",
+        ...(Object.hasOwn(job, "category") ? { category: job.category } : {}),
         ...prepareImportedDescription(typeof job.description === "string" ? job.description : "", job.descriptionFormat, { title: job.title, location: job.location, company: job.company }),
         employmentType: job.employmentType || "", salary: job.salary || "", externalUrl: job.externalUrl, applicationUrl: job.externalUrl,
         source: "google-alerts", status: "pending", featured: false, createdAt: now, updatedAt: now,

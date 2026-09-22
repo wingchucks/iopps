@@ -291,12 +291,12 @@ function OrgOnboardingContent() {
         // H-3 — owner-supplied year is trusted for the public chip.
         data.foundedYearVerified = true;
       }
-      if (communityAffiliation) data.communityAffiliation = communityAffiliation;
+      data.communityAffiliation = communityAffiliation;
       if (industry) data.industry = industry;
       if (size) data.size = size;
       if (city || province) data.location = { city, province };
-      if (website) data.website = website;
-      if (services.length > 0) data.services = services;
+      data.website = website;
+      data.services = services;
       if (hiringStatus) data.hiringStatus = hiringStatus;
       if (partnershipInterests.length > 0) data.partnershipInterests = partnershipInterests;
       if (phone) data.phone = phone;

@@ -16,10 +16,10 @@ export default function Footer() {
     >
       <div className="max-w-[1200px] mx-auto px-4 py-5 md:px-10 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Image src="/logo.png" alt="IOPPS" width={24} height={24} />
+          <Image src="/logo.png" alt="" width={24} height={24} />
           <span className="text-white font-extrabold text-sm tracking-wide">IOPPS</span>
           <span className="text-xs" style={{ color: "rgba(255,255,255,.65)" }}>
-            &copy; {new Date().getFullYear()}
+            {" "}&copy; {new Date().getFullYear()}. All rights reserved.
           </span>
         </div>
 

@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
   const appCheckValid = await verifyAppCheckFromRequest(req);
   if (!appCheckValid) {
-    return NextResponse.json({ error: "Security check failed. Please refresh the page and try again." }, { status: 403 });
+    return NextResponse.json({ code: "SECURITY_CHECK_FAILED", error: "Security check failed. Please refresh the page and try again." }, { status: 403 });
   }
 
   let uid: string;
@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
   if (!protection.allow) {
     // Deny creation, not the already-authenticated person's account. A false
     // positive must remain recoverable without destroying their member data.
-    return NextResponse.json({ error: protection.message }, { status: protection.status });
+    return NextResponse.json({ code: protection.code, error: protection.message }, { status: protection.status });
   }
 
   const slug = name

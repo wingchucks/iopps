@@ -11,7 +11,7 @@ for (const file of ['.env', '.env.local', '.env.production', '.env.production.lo
   if (existsSync(file)) throw new Error(`Refusing QA in a directory containing ${file}`);
 }
 const env = {};
-for (const key of ['PATH', 'HOME', 'SYSTEMROOT', 'WINDIR', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP', 'TMPDIR', 'JAVA_HOME', 'HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY']) {
+for (const key of ['PATH', 'HOME', 'SYSTEMROOT', 'WINDIR', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP', 'TMPDIR', 'USERPROFILE', 'LOCALAPPDATA', 'APPDATA', 'PROGRAMFILES', 'PROGRAMFILES(X86)', 'JAVA_HOME', 'HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY']) {
   if (process.env[key]) env[key] = process.env[key];
 }
 Object.assign(env, { NEXT_TELEMETRY_DISABLED: '1', NODE_USE_SYSTEM_CA: '1', NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS: '1', PUPPETEER_SKIP_DOWNLOAD: 'true' });

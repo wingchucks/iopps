@@ -165,5 +165,7 @@ test('BATC branch cannot auto deploy and existing deployment/crons settings rema
   delete config.git.deploymentEnabled['fix/individual-safe-cleanup-20260921'];
   assert.equal(config.git.deploymentEnabled['fix/public-audit-remediation-20260921'], false);
   delete config.git.deploymentEnabled['fix/public-audit-remediation-20260921'];
+  assert.equal(config.git.deploymentEnabled['fix/qa-round5-20260921'], false);
+  delete config.git.deploymentEnabled['fix/qa-round5-20260921'];
   assert.deepEqual(config, {git:{deploymentEnabled:{'codex/release-gates-20260918':false,'codex/ui-route-audit-20260918':false,'codex/job-flow-reliability-20260908':false,'codex/security-remediation-20260917':false,'codex/qa-remediation-20260919':false}}, crons:[{path:'/api/cron/sync-feeds',schedule:'0 8 * * *'},{path:'/api/cron/check-subscriptions',schedule:'0 6 * * *'},{path:'/api/cron/expire-jobs',schedule:'0 7 * * *'},{path:'/api/cron/expire-events',schedule:'15 7 * * *'},{path:'/api/cron/account-cleanup',schedule:'30 7 * * *'}]});
 });

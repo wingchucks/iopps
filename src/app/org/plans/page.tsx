@@ -26,14 +26,17 @@ function PlansContent() {
 
   useEffect(() => {
     if (!user) return;
-    getOrgSubscriptions(user.uid)
+    const controller = new AbortController();
+    getOrgSubscriptions(user.uid, controller.signal)
       .then((subs) => {
+        if (controller.signal.aborted) return;
         const active = subs.find(
           (s) => (s.status === "active" || s.status === "pending") && isSubscriptionPlanId(s.plan)
         );
         if (active) setCurrentPlan(active.plan);
       })
       .catch(() => {});
+    return () => controller.abort();
   }, [user]);
 
   return (

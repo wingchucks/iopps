@@ -1,4 +1,5 @@
 import { cleanupWriteAllowed } from "./job-cleanup-guards.ts";
+import { jobCategoryPatch } from "../job-taxonomy";
 import { createHash } from "node:crypto";
 import { feedJobKey } from "./feed-source";
 import type { Firestore } from "firebase-admin/firestore";
@@ -35,7 +36,7 @@ export async function createImportedJobOnce(db: Firestore, data: Job): Promise<b
     if (claim.exists || existing.exists || legacy.exists) return false;
     if (!await cleanupWriteAllowed(db, tx, job.id, {}, data)) return false;
     tx.create(reservation, { version: 1, jobId: job.id, feedId: data.feedId, employerId: data.employerId });
-    tx.create(job, { ...data, importIdentity: identity });
+    tx.create(job, { ...data, ...jobCategoryPatch(data), importIdentity: identity });
     return true;
   });
 }

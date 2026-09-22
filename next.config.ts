@@ -20,6 +20,9 @@ const contentSecurityPolicyReportOnly = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Keep Flight headers available to the auth middleware so it can cancel a
+  // session-obsolete segment prefetch without turning it into a login 404.
+  skipProxyUrlNormalize: true,
   distDir: process.env.IOPPS_BUILD_DIRECTORY || ".next",
   async rewrites() {
     // The private local preview can consume the existing public video feed.
