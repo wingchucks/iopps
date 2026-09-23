@@ -52,10 +52,13 @@ export function jobFingerprint(job: Job): string | null {
 /** Defense in depth: catch near-duplicates the reservation collection has never
  * seen (legacy records, backfilled fingerprints, direct-write scripts). A match
  * only blocks when it comes from a DIFFERENT source namespace; a feed's own
- * re-imports stay governed by feedImportIdentity/sameImportedIntake. */
+ * re-imports stay governed by feedImportIdentity/sameImportedIntake.
+ * The defensive query sticks to the lowest-common query surface (where/get):
+ * chained limit() is valid in production Firestore but not guaranteed by every
+ * caller-supplied query double, so the cap is applied in memory instead. */
 async function fingerprintDuplicateExists(db: Firestore, fingerprint: string, jobId: string, feedId: unknown): Promise<boolean> {
-  const matches = await db.collection("jobs").where("importFingerprint", "==", fingerprint).limit(5).get();
-  return matches.docs.some(doc => doc.id !== jobId && (doc.data() as Job | undefined)?.feedId !== feedId);
+  const matches = await db.collection("jobs").where("importFingerprint", "==", fingerprint).get();
+  return matches.docs.slice(0, 5).some(doc => doc.id !== jobId && (doc.data() as Job | undefined)?.feedId !== feedId);
 }
 
 /** Atomic reservation prevents concurrent manual/cron imports. Never revive a tombstone.

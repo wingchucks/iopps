@@ -57,18 +57,34 @@ export function repairSpacingArtifacts(text: string): string {
     .replace(/\bpost(?=(?:scholarships|events)\b)/gi, "post ");
 }
 
+/** Valid encoded entities (named, decimal, hex): their semicolons are part of the
+ * entity, never a segment separator. */
+const entityPattern = /&(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#x[0-9a-fA-F]+);/g;
+
 /** Collapse duplicated location segments: "Vancouver, Vancouver" and
  * "Vancouver Vancouver" both mean one Vancouver. Scoped to short labels
- * (titles, locations, company names), never to full descriptions. */
+ * (titles, locations, company names), never to full descriptions.
+ * Entity-aware: valid entities such as "&lt;team&gt;" are stashed before the
+ * separator split so their semicolons survive verbatim. */
 export function collapseDuplicateSegments(label: string): string {
+  const entities: string[] = [];
+  // U+0000 sentinels: never matched by \s or the separator class, so stashed
+  // entities survive the split untouched and are restored verbatim.
+  const stash = (entity: string): string => {
+    entities.push(entity);
+    return `\u0000${entities.length - 1}\u0000`;
+  };
+  const stashed = label.replace(entityPattern, stash);
   const seen = new Set<string>();
-  const segments = label.split(/\s*[,;|]\s*/).filter(segment => {
+  const segments = stashed.split(/\s*[,;|]\s*/).filter(segment => {
     const key = segment.toLowerCase();
     if (!segment || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
-  return segments.join(", ").replace(/\b([\p{L}\p{N}']+)(?:\s+\1)+\b/giu, "$1");
+  const restore = (segment: string): string =>
+    segment.replace(/\u0000(\d+)\u0000/g, (_match, index: string) => entities[Number(index)]);
+  return segments.map(restore).join(", ").replace(/\b([\p{L}\p{N}']+)(?:\s+\1)+\b/giu, "$1");
 }
 
 export function normalizeImportedLabel(value: string): string {
