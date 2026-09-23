@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- plain Node script, require() is idiomatic here */
 /**
  * Import Saskatoon Tribal Council Jobs into IOPPS
  * Run from web directory: cd web && node ../scripts/import-stc-jobs.js
@@ -185,6 +186,27 @@ const STC_JOBS = [
 async function importJobs() {
   console.log('Starting STC job import...\n');
 
+  // Fingerprint guard (mirrors jobFingerprint() in src/lib/server/feed-import-identity.ts):
+  // the exact title+employerName check below misses near-duplicates that differ only
+  // in case, whitespace or punctuation (e.g. "Harm Reduction Outreach Worker" twice).
+  // The fingerprint MUST stay byte-identical to the server implementation so the
+  // import-time guard can compare records across both write paths.
+  const { createHash } = require('node:crypto');
+  const fingerprintOf = (title, employer, location) => {
+    const norm = (value) => String(value || '').normalize('NFD').replace(/\p{M}/gu, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const parts = [norm(title), norm(employer), norm(location)];
+    if (parts.some((part) => !part) || ['unknown', 'n a', 'na', 'none', 'tbd'].includes(parts[1])) return null;
+    return createHash('sha256').update(JSON.stringify(parts)).digest('hex');
+  };
+  const knownFingerprints = new Set();
+  const priorJobs = await db.collection('jobs').where('employerId', '==', STC_EMPLOYER.id).get();
+  for (const doc of priorJobs.docs) {
+    const data = doc.data();
+    const fingerprint = fingerprintOf(data.title, data.employerName || data.company || data.organization, data.location);
+    if (fingerprint) knownFingerprints.add(fingerprint);
+  }
+
   // Import jobs
   let imported = 0;
   let skipped = 0;
@@ -202,6 +224,15 @@ async function importJobs() {
       skipped++;
       continue;
     }
+
+    // Cross-check the normalized fingerprint so near-duplicates can't slip in.
+    const fingerprint = fingerprintOf(job.title, STC_EMPLOYER.name, job.location);
+    if (fingerprint && knownFingerprints.has(fingerprint)) {
+      console.log(`⏭ Skipped (fingerprint duplicate): ${job.title}`);
+      skipped++;
+      continue;
+    }
+    if (fingerprint) knownFingerprints.add(fingerprint);
 
     const jobData = {
       title: job.title,
@@ -235,6 +266,8 @@ async function importJobs() {
       applicationsCount: 0,
       source: 'manual-import',
       sourceOrg: 'Saskatoon Tribal Council',
+      // Lets the server-side import guard (fingerprintDuplicateExists) see this record.
+      ...(fingerprint ? { importFingerprint: fingerprint } : {}),
     };
 
     const jobRef = await db.collection('jobs').add(jobData);

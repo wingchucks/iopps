@@ -1,5 +1,5 @@
-import { normalizeImportedLabel } from "./import-content-quality";
-import { sourcePostingDatePatch } from "./source-posting-date";
+import { normalizeImportedLabel } from "./import-content-quality.ts";
+import { sourcePostingDatePatch } from "./source-posting-date.ts";
 
 export type FeedItem = Record<string, string>;
 type Json = Record<string, unknown>;

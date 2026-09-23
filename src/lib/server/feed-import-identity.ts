@@ -1,7 +1,7 @@
 import { cleanupWriteAllowed } from "./job-cleanup-guards.ts";
-import { jobCategoryPatch } from "../job-taxonomy";
+import { jobCategoryPatch } from "../job-taxonomy.ts";
 import { createHash } from "node:crypto";
-import { feedJobKey } from "./feed-source";
+import { feedJobKey } from "./feed-source.ts";
 import type { Firestore } from "firebase-admin/firestore";
 
 type Job = Record<string, unknown>;
@@ -25,18 +25,69 @@ export function feedImportIdentity(job: Job): string {
   return createHash("sha256").update(JSON.stringify(fields)).digest("hex");
 }
 
-/** Atomic reservation prevents concurrent manual/cron imports. Never revive a tombstone. */
+const UNKNOWN_EMPLOYERS = new Set(["unknown", "n a", "na", "none", "tbd", ""]);
+
+/** Case/whitespace/punctuation-insensitive text for near-duplicate detection.
+ * Diacritics fold ("Métis" -> "metis") but nothing is translated or invented. */
+export function normalizeFingerprintText(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.normalize("NFD").replace(/\p{M}/gu, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** Cross-source duplicate fingerprint: normalized title + employer/org + location.
+ * Returns null when the employer is unknown or a field is missing, so unrelated
+ * postings can never collapse. Deliberately namespace-agnostic: the same role
+ * arriving from two different feeds/sources is the duplicate this guards against.
+ * Within one feed the feed's own identity rules (case-sensitive external IDs,
+ * requisition IDs, posting dates) still decide, per the existing test contract. */
+export function jobFingerprint(job: Job): string | null {
+  const title = normalizeFingerprintText(job.title);
+  const employer = normalizeFingerprintText(job.employerName ?? job.company ?? job.organization ?? job.employerId);
+  const location = normalizeFingerprintText(job.location);
+  if (!title || !location || UNKNOWN_EMPLOYERS.has(employer)) return null;
+  return createHash("sha256").update(JSON.stringify([title, employer, location])).digest("hex");
+}
+
+/** Defense in depth: catch near-duplicates the reservation collection has never
+ * seen (legacy records, backfilled fingerprints, direct-write scripts). A match
+ * only blocks when it comes from a DIFFERENT source namespace; a feed's own
+ * re-imports stay governed by feedImportIdentity/sameImportedIntake. */
+async function fingerprintDuplicateExists(db: Firestore, fingerprint: string, jobId: string, feedId: unknown): Promise<boolean> {
+  const matches = await db.collection("jobs").where("importFingerprint", "==", fingerprint).limit(5).get();
+  return matches.docs.some(doc => doc.id !== jobId && (doc.data() as Job | undefined)?.feedId !== feedId);
+}
+
+/** Atomic reservation prevents concurrent manual/cron imports. Never revive a tombstone.
+ * In addition to the per-source identity claim, a cross-source fingerprint claim
+ * (feedImportFingerprints) blocks the same role arriving from a second feed or
+ * import path — the "appears twice" duplicate class. A fingerprint claim held by
+ * the SAME feedId does not block: that feed's own identity rules decide. */
 export async function createImportedJobOnce(db: Firestore, data: Job): Promise<boolean> {
   const identity = feedImportIdentity(data);
+  const fingerprint = jobFingerprint(data);
   const reservation = db.collection("feedImportIdentities").doc(identity);
   const job = db.collection("jobs").doc(`import-${identity}`);
   const mirror = db.collection("posts").doc(job.id);
+  const fingerprintReservation = fingerprint ? db.collection("feedImportFingerprints").doc(fingerprint) : null;
+  if (fingerprint && await fingerprintDuplicateExists(db, fingerprint, job.id, data.feedId)) return false;
   return db.runTransaction(async tx => {
-    const [claim, existing, legacy] = await Promise.all([tx.get(reservation), tx.get(job), tx.get(mirror)]);
+    const reads = [tx.get(reservation), tx.get(job), tx.get(mirror)];
+    if (fingerprintReservation) reads.push(tx.get(fingerprintReservation));
+    const [claim, existing, legacy, fingerprintClaim] = await Promise.all(reads);
     if (claim.exists || existing.exists || legacy.exists) return false;
+    if (fingerprintClaim?.exists) {
+      // Same-namespace holder: this feed's own identity rules already decided above.
+      // Different-namespace holder: the same role was already imported elsewhere.
+      // Claims are never revived, matching the tombstone rule above.
+      if ((fingerprintClaim.data() as Job | undefined)?.feedId !== data.feedId) return false;
+    }
     if (!await cleanupWriteAllowed(db, tx, job.id, {}, data)) return false;
     tx.create(reservation, { version: 1, jobId: job.id, feedId: data.feedId, employerId: data.employerId });
-    tx.create(job, { ...data, ...jobCategoryPatch(data), importIdentity: identity });
+    if (fingerprintReservation && !fingerprintClaim?.exists) {
+      tx.create(fingerprintReservation, { version: 1, jobId: job.id, feedId: data.feedId, employerId: data.employerId, title: data.title });
+    }
+    tx.create(job, { ...data, ...jobCategoryPatch(data), importIdentity: identity, ...(fingerprint ? { importFingerprint: fingerprint } : {}) });
     return true;
   });
 }

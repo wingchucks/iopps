@@ -9,11 +9,15 @@ import { sourceModule, offlineNetwork } from './helpers/security-fixtures.mjs';
 const fixtures = JSON.parse(readFileSync(new URL('./fixtures/import-content-quality.json', import.meta.url), 'utf8'));
 for (const fixture of fixtures) {
   test(`offline fixture: ${fixture.name}`, () => {
-    const { prepareImportedDescription, normalizePartnerDescription } = sourceModule('src/lib/server/import-content-quality.ts');
-    const result = prepareImportedDescription(fixture.raw);
+    const { prepareImportedDescription, normalizePartnerDescription, normalizeImportedLabel } = sourceModule('src/lib/server/import-content-quality.ts');
+    const result = prepareImportedDescription(fixture.raw, fixture.format, fixture.labels);
     assert.equal(result.description, fixture.expected);
     assert.equal(result.importContentQuality.needsReview, fixture.review);
     assert.equal(result.importContentQuality.rawDescription, fixture.raw);
+    if (fixture.label !== undefined) {
+      assert.equal(normalizeImportedLabel(fixture.label), fixture.expectedLabel);
+      assert.equal(normalizeImportedLabel(fixture.expectedLabel), fixture.expectedLabel);
+    }
     assert.equal(normalizePartnerDescription(result.description, result.descriptionFormat), result.description);
     const tags = [];
     const parser = new Parser({ onopentag: name => tags.push(name) });
