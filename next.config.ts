@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { orgSlugRedirectEntries } from "./src/lib/org-slug-aliases";
 
 // Start in report-only mode so production traffic can reveal any missing
 // Firebase, analytics, media, or embed origins before CSP is enforced.
@@ -70,6 +71,10 @@ const nextConfig: NextConfig = {
       { source: "/member/profile", destination: "/profile", permanent: true },
       { source: "/member/settings/:path*", destination: "/settings/:path*", permanent: true },
       { source: "/member/:uid", destination: "/members/:uid", permanent: true },
+      // Canonical organization slugs: alias slugs permanently redirect to the
+      // canonical slug so renamed businesses keep resolving (bug 10). Any org
+      // whose slug has an entry in ORG_SLUG_ALIASES is covered.
+      ...orgSlugRedirectEntries(),
     ];
   },
   async headers() {

@@ -25,17 +25,10 @@ import type { Job } from "@/lib/firestore/jobs";
 import { mixJobsForBrowse } from "@/lib/public-featured";
 import { useJobSearchDrafts } from "./useJobSearchDrafts";
 import { canonicalEmployerName, matchesEmployerFilter, projectEmployerFilters } from "./employerFilters";
-const employmentTypes = [
-  "All",
-  "Full-time",
-  "Part-time",
-  "Contract",
-  "Temporary",
-  "Seasonal",
-  "Volunteer",
-  "Internship",
-  "Casual",
-];
+import { EMPLOYMENT_TYPE_OPTIONS } from "@/lib/job-taxonomy";
+// Employment-type vocabulary shared with the employer job wizard and job
+// edit form (bug 19d): one source of truth so the terms never drift apart.
+const employmentTypes: readonly string[] = ["All", ...EMPLOYMENT_TYPE_OPTIONS];
 const JOB_RECENCY_KEYS = ["createdAt", "postedAt", "order"];
 function daysAgo(job: Job): string {
   let ts = 0;

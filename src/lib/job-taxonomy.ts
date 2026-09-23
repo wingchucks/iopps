@@ -1,10 +1,19 @@
 /** Shared publishing taxonomy. Classification never changes posting identity or copy. */
-export const JOB_AREAS = ["Administration", "Agriculture", "Arts & Culture", "Business", "Construction & Trades", "Education", "Environment & Land", "Finance", "Government & Public Service", "Health & Wellness", "Hospitality & Tourism", "Human Resources", "Information Technology", "Legal", "Management", "Marketing & Communications", "Natural Resources", "Social Services", "Transportation", "Other"] as const;
+export const JOB_AREAS = ["Administration", "Agriculture", "Arts & Culture", "Business", "Construction & Trades", "Education", "Environment & Land", "Finance", "Food & Beverage / Restaurant", "Government & Public Service", "Health & Wellness", "Hospitality & Tourism", "Human Resources", "Information Technology", "Legal", "Management", "Marketing & Communications", "Natural Resources", "Social Services", "Transportation", "Other"] as const;
 export type JobArea = typeof JOB_AREAS[number];
+
+/** Single vocabulary for employment type, shared by the job wizard, the job
+ *  edit form, and the jobs board filter. Never reorder meaning — keep this as
+ *  the only source so employer and job-seeker wording can't drift apart. */
+export const EMPLOYMENT_TYPE_OPTIONS = ["Full-time", "Part-time", "Contract", "Casual", "Temporary", "Seasonal", "Internship", "Volunteer"] as const;
+export type EmploymentTypeOption = typeof EMPLOYMENT_TYPE_OPTIONS[number];
 type Job = { title?: unknown; category?: unknown };
 const key = (value: string) => value.normalize("NFC").trim().toLowerCase().replace(/\s+/gu, " ");
 const canonical = new Map<string, JobArea>(JOB_AREAS.map(area => [key(area), area]));
 for (const alias of ["Health", "Healthcare", "Nursing", "Mental Health & Wellness", "Mental Health & Addictions", "Health / Mental Health"]) canonical.set(key(alias), "Health & Wellness");
+// "Food & Beverage" (profile Industry wording) is the same category as the
+// wizard's "Food & Beverage / Restaurant" — classify to the canonical label.
+canonical.set(key("Food & Beverage"), "Food & Beverage / Restaurant");
 
 // Deliberately bounded role phrases, not employer names, boilerplate, broad
 // department names or words such as "student", "support", "field" or "manager".
