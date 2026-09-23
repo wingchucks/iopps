@@ -2,15 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import OrgRoute from "@/components/OrgRoute";
-import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
-import OrgDashboardNav from "@/components/OrgDashboardNav";
+import DashboardSectionShell from "@/components/org-dashboard/DashboardSectionShell";
 import Avatar from "@/components/Avatar";
 import { buildEmployerJobDuplicate } from "@/lib/employer-job-duplicate";
+import { markJobClosedInList, removeJobFromList } from "@/lib/employer-job-actions";
 
 /* ─── types ─── */
 type JobStatus = "active" | "draft" | "closed";
@@ -220,11 +219,7 @@ export default function OrgDashboardJobsPage() {
   const handleClosePosition = async (job: Job) => {
     const res = await apiAction(job.id, "PUT", { status: "closed" });
     if (res) {
-      setJobs((prev) =>
-        prev.map((j) =>
-          j.id === job.id ? { ...j, status: "closed" as JobStatus } : j
-        )
-      );
+      setJobs((prev) => markJobClosedInList(prev, job.id));
       showToast("Position closed", "success");
     }
     return Boolean(res);
@@ -233,7 +228,10 @@ export default function OrgDashboardJobsPage() {
   const handleDelete = async (job: Job) => {
     const res = await apiAction(job.id, "DELETE");
     if (res) {
-      setJobs((prev) => prev.filter((j) => j.id !== job.id));
+      // The API tombstones the job (status: "deleted"); it drops out of this
+      // list immediately and is excluded from the Overview/Analytics queries,
+      // which all filter deletion tombstones.
+      setJobs((prev) => removeJobFromList(prev, job.id));
       showToast("Job deleted", "success");
     }
     return Boolean(res);
@@ -273,60 +271,39 @@ export default function OrgDashboardJobsPage() {
     job.applicationCount ?? job.applications ?? 0;
 
   return (
-    <OrgRoute>
-      <AppShell>
-        <div className="min-h-screen bg-bg">
-          <div className="max-w-[1100px] mx-auto px-4 py-8 md:px-10">
-            {loading ? (
-              <div className="flex flex-col gap-4">
-                <div className="h-10 w-64 rounded-xl skeleton" />
-                <div className="grid grid-cols-3 gap-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 rounded-2xl skeleton" />
-                  ))}
-                </div>
-                <div className="h-64 rounded-2xl skeleton" />
-              </div>
-            ) : error ? (
-              <Card className="p-8 text-center">
-                <p
-                  className="text-sm font-semibold mb-4"
-                  style={{ color: "#DC2626" }}
-                >
-                  {error}
-                </p>
-                <Button onClick={fetchJobs}>Retry</Button>
-              </Card>
-            ) : (
-              <>
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar
-                      name={orgName || ""}
-                      size={48}
-                      src={orgLogo}
-                    />
-                    <div>
-                      <h1
-                        className="text-2xl font-bold"
-                        style={{ color: "var(--text)" }}
-                      >
-                        Jobs
-                      </h1>
-                      <p
-                        className="text-sm"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        Manage your organization&apos;s job listings
-                      </p>
-                    </div>
-                  </div>
-                  <OrgDashboardNav orgSlug={orgSlug} orgType={orgType} orgPlan={orgPlan} orgTier={orgTier} />
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <DashboardSectionShell
+      title="Jobs"
+      description="Manage your organization's job listings"
+      headerLeading={<Avatar name={orgName || ""} size={48} src={orgLogo} />}
+      orgSlug={orgSlug}
+      orgType={orgType}
+      orgPlan={orgPlan}
+      orgTier={orgTier}
+    >
+      {loading ? (
+        <div className="flex flex-col gap-4">
+          <div className="h-10 w-64 rounded-xl skeleton" />
+          <div className="grid grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-24 rounded-2xl skeleton" />
+            ))}
+          </div>
+          <div className="h-64 rounded-2xl skeleton" />
+        </div>
+      ) : error ? (
+        <Card className="p-8 text-center">
+          <p
+            className="text-sm font-semibold mb-4"
+            style={{ color: "#DC2626" }}
+          >
+            {error}
+          </p>
+          <Button onClick={fetchJobs}>Retry</Button>
+        </Card>
+      ) : (
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                   {[
                     { label: "Total Jobs", value: stats.total },
                     { label: "Active", value: stats.active },
@@ -581,14 +558,11 @@ export default function OrgDashboardJobsPage() {
                 )}
               </>
             )}
-          </div>
-        </div>
-        {confirmation && confirmation.uid === user?.uid && (
-          <JobActionDialog job={confirmation.job} action={confirmation.action}
-            onCancel={() => setConfirmation(null)}
-            onConfirm={() => confirmation.action === "delete" ? handleDelete(confirmation.job) : handleClosePosition(confirmation.job)} />
-        )}
-      </AppShell>
-    </OrgRoute>
+            {confirmation && confirmation.uid === user?.uid && (
+              <JobActionDialog job={confirmation.job} action={confirmation.action}
+                onCancel={() => setConfirmation(null)}
+                onConfirm={() => confirmation.action === "delete" ? handleDelete(confirmation.job) : handleClosePosition(confirmation.job)} />
+            )}
+    </DashboardSectionShell>
   );
 }

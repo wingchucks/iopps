@@ -2,10 +2,8 @@
 import { updateApplicationBatch } from "@/lib/employer-application-updates";
 
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import ApplicationDetails from "@/components/ApplicationDetails";
-import OrgRoute from "@/components/OrgRoute";
-import AppShell from "@/components/AppShell";
+import DashboardSectionShell from "@/components/org-dashboard/DashboardSectionShell";
 import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
 import type { MemberProfile } from "@/lib/firestore/members";
@@ -473,33 +471,15 @@ export default function OrgApplicationsPage() {
   };
 
   return (
-    <OrgRoute>
-      <AppShell>
-      <div className="min-h-screen bg-bg">
-        <div className="max-w-[1200px] mx-auto px-4 py-8 md:px-10">
-          {/* Back link */}
-          <Link
-            href="/org/dashboard"
-            className="inline-flex items-center gap-1 text-sm font-semibold no-underline mb-6"
-            style={{ color: "var(--teal)" }}
-          >
-            &larr; Back to Dashboard
-          </Link>
-
-          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-            <div>
-              <h1
-                className="text-2xl font-bold"
-                style={{ color: "var(--text)" }}
-              >
-                Applications
-              </h1>
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {totalApps} total application{totalApps !== 1 ? "s" : ""} across{" "}
-                {groups.length} posting{groups.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-
+    <DashboardSectionShell
+      title="Applications"
+      description={
+        <>
+          {totalApps} total application{totalApps !== 1 ? "s" : ""} across{" "}
+          {groups.length} posting{groups.length !== 1 ? "s" : ""}
+        </>
+      }
+      headerActions={
             <div className="flex items-center gap-3">
               {/* Filter by posting */}
               {groups.length > 1 && (
@@ -550,7 +530,8 @@ export default function OrgApplicationsPage() {
                 </button>
               </div>
             </div>
-          </div>
+      }
+    >
 
           {actionError && <p role="alert" className="p-4 mb-4 rounded-xl bg-red-50 text-red-800">{actionError}</p>}
           {actionNotice && <p role="status" className="p-4 mb-4 rounded-xl bg-teal-50 text-teal-900">{actionNotice}</p>}
@@ -884,9 +865,6 @@ export default function OrgApplicationsPage() {
               </div>
             </div>
           )}
-        </div>
-      </div>
-    </AppShell>
-    </OrgRoute>
+    </DashboardSectionShell>
   );
 }
