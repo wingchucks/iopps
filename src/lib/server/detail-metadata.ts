@@ -1,5 +1,6 @@
 
 import { jobPostingDate } from "@/lib/job-detail-dates";
+import { resolveApplicationDestination } from "@/lib/application-destination";
 import type { Metadata } from "next";
 import { cache } from "react";
 import { getPublicOpportunity } from "@/lib/server/public-opportunities";
@@ -159,6 +160,7 @@ export async function generateJobJsonLd(slug: string): Promise<JsonLd | null> {
     closingDate: field(job, "closingDate", "deadline", "expiresAt"),
     employmentType: field(job, "employmentType", "jobType"),
     salary: field(job, "salary"),
+    application: resolveApplicationDestination(job, slug),
   });
 }
 

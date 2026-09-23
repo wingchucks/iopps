@@ -86,3 +86,35 @@ test("global schema has stable graph IDs and JSON-LD serialization cannot close 
   assert.equal(graph[1]["@id"], "https://www.iopps.ca/#website");
   assert.equal(serializeJsonLd({ description: "</script><script>alert(1)</script>" }).includes("<"), false);
 });
+
+test("buildJobPostingJsonLd marks directApply for in-app applications", () => {
+  const jsonLd = buildJobPostingJsonLd({
+    slug: "direct-posted-job",
+    title: "Direct Posted Job",
+    application: { kind: "internal", href: "/jobs/direct-posted-job/apply" },
+  });
+  assert.equal(jsonLd.directApply, true);
+  assert.equal(jsonLd.applicationContact, undefined);
+});
+
+test("buildJobPostingJsonLd emits applicationContact email matching visible email apply", () => {
+  const jsonLd = buildJobPostingJsonLd({
+    slug: "email-apply-job",
+    title: "Email Apply Job",
+    application: { kind: "email", href: "mailto:hr@sfnfci.ca" },
+  });
+  assert.deepEqual(jsonLd.applicationContact, { "@type": "ContactPoint", email: "hr@sfnfci.ca" });
+  assert.equal(jsonLd.directApply, undefined);
+});
+
+test("buildJobPostingJsonLd omits application instructions for external/unavailable apply", () => {
+  for (const kind of ["external", "unavailable"]) {
+    const jsonLd = buildJobPostingJsonLd({
+      slug: "external-job",
+      title: "External Job",
+      application: { kind, href: "https://example.com/apply" },
+    });
+    assert.equal(jsonLd.directApply, undefined);
+    assert.equal(jsonLd.applicationContact, undefined);
+  }
+});
