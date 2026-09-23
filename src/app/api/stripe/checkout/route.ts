@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   if (context.uid !== context.orgId || (body.orgId !== undefined && body.orgId !== context.orgId) || context.orgRole !== "owner") {
     return NextResponse.json({ error: "Organization owner access required" }, { status: 403 });
   }
-  if (!isPlanAvailableForPurchase(body.planId)) return NextResponse.json({ error: "This product is no longer available. Standard job listings are free; view the current promotion options." }, { status: 400 });
+  if (!isPlanAvailableForPurchase(body.planId)) return NextResponse.json({ error: "This product is no longer available. Posting a job is free; view the current promotion options." }, { status: 400 });
   const orgId = context.orgId;
   const stripe = getStripe();
   if (!stripe) {

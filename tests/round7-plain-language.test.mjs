@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+const read=p=>readFileSync('src/'+p,'utf8');
+test('public profile heading uses people rather than unexplained membership',()=>{const s=read('app/org/[slug]/page.tsx');assert.match(s,/Why People Connect Here/);assert.doesNotMatch(s,/Why Members Connect Here/);});
+test('hiring and promotion jargon has visible plain-language explanations',()=>{assert.match(read('app/org/dashboard/jobs/new/page.tsx'),/Public Service Employment Act/);const fields=read('components/employer/HiringDetailsFields.tsx');assert.match(fields,/police background check/);assert.match(fields,/children or vulnerable people/);assert.match(read('components/FeaturedJobControl.tsx'),/credit lets you highlight one job/);});

@@ -93,7 +93,8 @@ test('all canonical semantic switches outside the separately owned apply flow ha
     }
   }
   scan('src');
-  assert.ok(controls.length >= 8, 'Switch inventory must not silently be empty');
+  // Business hours now use an explicit Not provided/Open/Closed select, not a binary switch.
+  assert.ok(controls.length >= 7, 'Switch inventory must not silently be empty');
 });
 
 test('notification controls reference visible category/channel labels and quiet-hours purpose', () => {

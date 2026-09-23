@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
@@ -63,6 +63,65 @@ function StatusBadge({ status }: { status?: JobStatus }) {
   );
 }
 
+function JobActionDialog({ job, action, onConfirm, onCancel }: {
+  job: Job;
+  action: "delete" | "close";
+  onConfirm: () => Promise<boolean>;
+  onCancel: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const cancelButton = useRef<HTMLButtonElement>(null);
+  const pending = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    const element = dialog.current;
+    const trigger = document.activeElement;
+    element?.showModal();
+    cancelButton.current?.focus();
+    return () => {
+      element?.close();
+      if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus();
+    };
+  }, []);
+  async function confirmAction() {
+    if (pending.current) return;
+    pending.current = true;
+    setBusy(true);
+    setFailed(false);
+    try {
+      if (await onConfirm()) onCancel();
+      else setFailed(true);
+    } catch {
+      setFailed(true);
+    } finally {
+      pending.current = false;
+      setBusy(false);
+    }
+  }
+  return (
+    <dialog ref={dialog} aria-labelledby="job-action-title" aria-describedby="job-action-description"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border p-6 backdrop:bg-black/50"
+      style={{ background: "var(--card)", color: "var(--text)", borderColor: "var(--border)" }}
+      onCancel={event => { event.preventDefault(); if (!pending.current) onCancel(); }}>
+      <h2 id="job-action-title" className="text-lg font-bold mb-2">{action === "delete" ? "Delete Job Posting?" : "Close Position?"}</h2>
+      <p id="job-action-description" className="text-sm mb-5">
+        {action === "delete" ? <>Delete &quot;{job.title}&quot;? This action cannot be undone.</> : <>Close &quot;{job.title}&quot;? It will no longer accept applications.</>}
+      </p>
+      {failed && <p role="alert" className="text-sm mb-4">We couldn’t {action} this job. Please try again.</p>}
+      {busy && <p role="status" className="text-sm mb-4">Saving your change…</p>}
+      <div className="flex gap-3 justify-end">
+        <button ref={cancelButton} type="button" disabled={busy} onClick={onCancel}
+          className="min-h-11 px-4 rounded-xl border disabled:opacity-50">Cancel</button>
+        <button type="button" disabled={busy} onClick={confirmAction}
+          className="brand-button min-h-11 px-4 rounded-xl font-semibold disabled:opacity-50">
+          {action === "delete" ? "Delete job" : "Close position"}
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
 /* ─── main page ─── */
 export default function OrgDashboardJobsPage() {
   const { user } = useAuth();
@@ -71,6 +130,7 @@ export default function OrgDashboardJobsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<{ job: Job; action: "delete" | "close"; uid: string } | null>(null);
   const [orgName, setOrgName] = useState("");
   const [orgSlug, setOrgSlug] = useState<string | undefined>();
   const [orgLogo, setOrgLogo] = useState<string | undefined>();
@@ -158,8 +218,6 @@ export default function OrgDashboardJobsPage() {
   };
 
   const handleClosePosition = async (job: Job) => {
-    if (!confirm("Close this position? It will no longer accept applications."))
-      return;
     const res = await apiAction(job.id, "PUT", { status: "closed" });
     if (res) {
       setJobs((prev) =>
@@ -169,20 +227,16 @@ export default function OrgDashboardJobsPage() {
       );
       showToast("Position closed", "success");
     }
+    return Boolean(res);
   };
 
   const handleDelete = async (job: Job) => {
-    if (
-      !confirm(
-        `Delete "${job.title}"? This action cannot be undone.`
-      )
-    )
-      return;
     const res = await apiAction(job.id, "DELETE");
     if (res) {
       setJobs((prev) => prev.filter((j) => j.id !== job.id));
       showToast("Job deleted", "success");
     }
+    return Boolean(res);
   };
 
   const handleDuplicate = async (job: Job) => {
@@ -477,7 +531,8 @@ export default function OrgDashboardJobsPage() {
                               )}
                               {currentStatus !== "closed" && (
                                 <button
-                                  onClick={() => handleClosePosition(job)}
+                                  type="button"
+                                  onClick={() => user && setConfirmation({ job, action: "close", uid: user.uid })}
                                   disabled={isDisabled}
                                   className="button-gradient-soft px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold transition-all hover:opacity-80"
                                   style={{
@@ -506,7 +561,8 @@ export default function OrgDashboardJobsPage() {
                                 Duplicate as draft
                               </button>
                               <button
-                                onClick={() => handleDelete(job)}
+                                type="button"
+                                onClick={() => user && setConfirmation({ job, action: "delete", uid: user.uid })}
                                 disabled={isDisabled}
                                 className="px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold transition-all hover:opacity-80"
                                 style={{
@@ -527,6 +583,11 @@ export default function OrgDashboardJobsPage() {
             )}
           </div>
         </div>
+        {confirmation && confirmation.uid === user?.uid && (
+          <JobActionDialog job={confirmation.job} action={confirmation.action}
+            onCancel={() => setConfirmation(null)}
+            onConfirm={() => confirmation.action === "delete" ? handleDelete(confirmation.job) : handleClosePosition(confirmation.job)} />
+        )}
       </AppShell>
     </OrgRoute>
   );

@@ -189,7 +189,8 @@ test('setup resolves employer and member intents before mounting the member writ
   const { setupDestination, setupCompletionDestination } = load('src/app/setup/destination.ts');
   const query = new URLSearchParams({ redirect: '/jobs/example?save=1', plan: 'tier2', intent: 'hiring' });
   assert.equal(setupDestination('/setup', query), null);
-  assert.equal(setupDestination('/feed', query), null);
+  // Completed setup follows its safe continuation; explicit edit is tested in Round 6.
+  assert.equal(setupDestination('/feed', query), '/jobs/example?save=1');
   assert.match(setupDestination('/org/onboarding', query), /^\/org\/onboarding\?/);
   const incomplete = setupDestination('/org/onboarding?reason=incomplete-profile&required=name', query);
   assert.match(incomplete, /reason=incomplete-profile/);

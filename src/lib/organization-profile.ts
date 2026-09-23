@@ -12,12 +12,15 @@ export interface OrganizationSocialLinks {
   linkedin?: string;
   instagram?: string;
   twitter?: string;
+  tiktok?: string;
+  youtube?: string;
 }
 
 export interface OrganizationHoursDay {
   open: string;
   close: string;
   isOpen: boolean;
+  configured?: boolean;
   label?: string;
 }
 
@@ -162,6 +165,10 @@ export function normalizeOrganizationSocialLinks(value: unknown): OrganizationSo
   if (linkedin) normalized.linkedin = linkedin;
   if (instagram) normalized.instagram = instagram;
   if (twitter) normalized.twitter = twitter;
+  const tiktok = normalizeOptionalString(record.tiktok);
+  const youtube = normalizeOptionalString(record.youtube);
+  if (tiktok) normalized.tiktok = tiktok;
+  if (youtube) normalized.youtube = youtube;
 
   return Object.keys(normalized).length > 0 ? normalized : undefined;
 }
@@ -187,6 +194,7 @@ export function normalizeOrganizationHours(value: unknown): OrganizationHours | 
     if (typeof entry !== "object") continue;
 
     const hours = entry as Record<string, unknown>;
+    if (hours.configured === false) continue;
     const open = normalizeString(hours.open);
     const close = normalizeString(hours.close);
     const label = normalizeOptionalString(hours.label);
@@ -207,7 +215,7 @@ export function normalizeOrganizationHours(value: unknown): OrganizationHours | 
 }
 
 export function formatOrganizationHoursDay(value: unknown): string {
-  if (!value) return "Closed";
+  if (!value) return "Not provided";
 
   if (typeof value === "string") {
     const trimmed = value.trim();
@@ -217,6 +225,7 @@ export function formatOrganizationHoursDay(value: unknown): string {
   if (typeof value !== "object") return "Closed";
 
   const hours = value as Partial<OrganizationHoursDay>;
+  if (hours.configured === false) return "Not provided";
   if (hours.isOpen === false) return "Closed";
 
   if (typeof hours.label === "string" && hours.label.trim()) {

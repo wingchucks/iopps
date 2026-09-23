@@ -13,7 +13,7 @@ import AppShell from "@/components/AppShell";
 import { useAuth } from "@/lib/auth-context";
 import type { Organization } from "@/lib/firestore/organizations";
 import Avatar from "@/components/Avatar";
-import CanonicalEditProfileTab from "@/components/org-dashboard/CanonicalEditProfileTab";
+import CanonicalEditProfileTab, { type DashboardProfileForm } from "@/components/org-dashboard/CanonicalEditProfileTab";
 import { getOrganizationBusinessIdentity, normalizeOrganizationRecord, isOrganizationPubliclyVisible } from "@/lib/organization-profile";
 import {
   buildSchoolVisibilityPatch,
@@ -73,6 +73,7 @@ interface HoursDay {
   open: string;
   close: string;
   isOpen: boolean;
+  configured?: boolean;
   label?: string;
 }
 type HoursMap = Record<string, HoursDay>;
@@ -82,9 +83,10 @@ function createDefaultHours(): HoursMap {
   const hours: HoursMap = {};
   DAYS.forEach((day) => {
     hours[day] = {
-      open: "9:00 AM",
-      close: "5:00 PM",
-      isOpen: day !== "saturday" && day !== "sunday",
+      open: "",
+      close: "",
+      isOpen: false,
+      configured: false,
     };
   });
   return hours;
@@ -143,7 +145,7 @@ function OrgDashboardContent() {
   const availableTabs = isSchoolOrg ? SCHOOL_TABS : ORG_TABS;
 
   // Edit profile state
-  const [profileForm, setProfileForm] = useState({
+  const [profileForm, setProfileForm] = useState<DashboardProfileForm>({
     name: "",
     businessIdentity: "not_specified" as import("@/lib/organization-profile").OrganizationBusinessIdentity,
     tagline: "",
@@ -161,6 +163,8 @@ function OrgDashboardContent() {
     instagram: "",
     facebook: "",
     twitter: "",
+    tiktok: "",
+    youtube: "",
     logoUrl: "",
     bannerUrl: "",
   });
@@ -252,10 +256,12 @@ function OrgDashboardContent() {
           instagram: o.socialLinks?.instagram || "",
           facebook: o.socialLinks?.facebook || "",
           twitter: o.socialLinks?.twitter || "",
+          tiktok: o.socialLinks?.tiktok || "",
+          youtube: o.socialLinks?.youtube || "",
           logoUrl: o.logoUrl || o.logo || "",
           bannerUrl: o.bannerUrl || "",
         });
-        setHours(o.hours || createDefaultHours());
+        setHours({ ...createDefaultHours(), ...o.hours });
         setGallery(o.gallery || []);
         setTags(o.tags || []);
         setServices(o.services || []);
@@ -435,7 +441,7 @@ function OrgDashboardContent() {
   };
 
   const businessIsPublic = org ? isOrganizationPubliclyVisible(org) : false;
-  const publicProfileHref = isSchoolOrg ? "/opportunities-update" : !businessIsPublic ? "/org/dashboard?tab=Edit%20Profile" : getOrganizationPublicHref(org);
+  const publicProfileHref = isSchoolOrg ? "/opportunities-update" : getOrganizationPublicHref(org);
   const heroDescription = isSchoolOrg
     ? "Manage your existing account records, jobs, events, and scholarships."
     : businessFirst ? "Promote your business, share your services, and help people find you." : "Manage your organization, jobs, and applications";

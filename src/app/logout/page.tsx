@@ -26,7 +26,7 @@ export default function LogoutPage() {
     <section className="mx-auto max-w-lg px-6 py-16">
       <h1 className="text-3xl font-bold">Sign out of IOPPS</h1>
       {error && <p role="alert" className="mt-4">{error}</p>}
-      {loading ? <p role="status" className="mt-4">Checking your session…</p> : user ? (
+      {loading ? <p role="status" className="mt-4">Checking your session…</p> : user || error ? (
         <>
           <p className="mt-4">Ready to sign out on this device?</p>
           <button type="button" disabled={busy} onClick={handleSignOut} className="mt-6 rounded-xl bg-teal-700 px-6 py-3 font-semibold text-white disabled:opacity-60">

@@ -187,7 +187,7 @@ export default function PricingTabs({
 
   return (
     <>
-      <p className="mb-5 text-sm text-text-sec">Standard job listings and application management are free. Paid plans support promoted profiles and eligible featured placements. Business directory listings require review.</p>
+      <p className="mb-5 text-sm text-text-sec">Job posting and application management are free. Paid plans support promoted profiles and eligible featured placements. Business directory listings require review.</p>
       {/* Tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {tabs.map((tab) => {

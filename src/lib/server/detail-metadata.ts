@@ -220,7 +220,7 @@ export async function generateOrgMetadata(slug: string): Promise<Metadata> {
   return buildListingMetadata({
     title: name,
     description: truncate(tagline || stripHtml(clean(org.description)) || `${name} on IOPPS.ca.`),
-    path: `/org/${slug}`,
+    path: `/org/${encodeURIComponent(clean(org.slug) || clean(org.id) || slug)}`,
     type: "article",
   });
 }

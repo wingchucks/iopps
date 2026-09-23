@@ -61,13 +61,14 @@ export async function resolvePublicOrganization(
     .limit(1)
     .get();
 
-  if (!employerQuery.empty) {
-    const employer = employerQuery.docs[0];
-    const linkedId = employer.data().orgId || employer.id;
+  const directEmployer = employerQuery.empty ? await db.collection("employers").doc(slug).get() : null;
+  if (!employerQuery.empty || directEmployer?.exists) {
+    const employer = employerQuery.empty ? directEmployer! : employerQuery.docs[0];
+    const linkedId = employer.data()?.orgId || employer.id;
     const canonical = typeof linkedId === "string" && !linkedId.includes("/")
       ? await db.collection("organizations").doc(linkedId).get() : null;
     // A linked legacy copy must not resurrect a removed canonical organization.
-    if (employer.data().orgId && !canonical?.exists) return null;
+    if (employer.data()?.orgId && !canonical?.exists) return null;
     return normalizeOrganizationRecord(
       applyNormalizedSubscriptionState(serializeDoc(canonical?.exists ? canonical : employer))
     );

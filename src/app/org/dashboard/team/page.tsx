@@ -5,6 +5,7 @@ import Link from "next/link";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
+import TeamInvitations from "@/components/employer/TeamInvitations";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import type { MemberProfile } from "@/lib/firestore/members";
@@ -98,7 +99,7 @@ function TeamContent() {
             })}
             {!members.length && <p className="text-text-muted">No team members found.</p>}
           </div>
-          <p className="text-sm text-text-muted mt-6">To add a colleague, <Link href="/contact" className="text-teal underline">contact IOPPS support</Link>.</p>
+          <TeamInvitations />
         </>}
     </div>
   );

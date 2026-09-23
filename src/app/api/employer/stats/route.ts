@@ -37,15 +37,20 @@ export async function GET(req: NextRequest) {
       .where("employerId", "==", orgId)
       .get();
 
-    const totalPosts = jobsSnap.size;
-    const activePosts = jobsSnap.docs.filter((d) => {
+    // Job deletion is a tombstone, not a hard delete. Match the Jobs list.
+    const visibleJobs = jobsSnap.docs.filter((d) => {
+      const data = d.data();
+      return data.status !== "deleted" && !data.deletedAt;
+    });
+    const totalPosts = visibleJobs.length;
+    const activePosts = visibleJobs.filter((d) => {
       const data = d.data();
       return data.active === true || data.status === "active";
     }).length;
 
     // Count applications across all jobs
     let applications = 0;
-    for (const jobDoc of jobsSnap.docs) {
+    for (const jobDoc of visibleJobs) {
       const appsSnap = await adminDb
         .collection("applications")
         .where("jobId", "==", jobDoc.id)

@@ -5,7 +5,7 @@ import {PassThrough} from 'node:stream';
 
 for (const file of ['scripts/qa-goal01-signout-probe.mjs', 'tests/e2e-goals/goal-01-auth.mjs', 'tests/e2e-goals/goal-02-onboarding.mjs', 'tests/e2e-goals/goal-03-employer.mjs']) {
   test(`${file}: proxy dials a fixed loopback address and trusted port`, () => {
-    const source=fs.readFileSync(file,'utf8');
+    const source=fs.readFileSync(file,'utf8').replace(/\r\n/g, '\n');
     const owner=file.includes('signout-probe')?'proxy':'denyProxy';
     const marker=owner+'=http.createServer(';
     const start=source.indexOf(marker)+marker.length;

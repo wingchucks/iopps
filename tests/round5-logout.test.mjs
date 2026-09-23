@@ -10,7 +10,7 @@ function fixture(user, signOut) {
     '@/lib/auth-context': {useAuth: () => ({user, loading:false, signOut})},
   }});
   const nodes = node => !node || typeof node !== 'object' ? [] : [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)];
-  return { render() {cursor = 0; return nodes(Page());}, routes };
+  return { render() {cursor = 0; return nodes(Page());}, routes, setUser(value) {user=value;} };
 }
 test('logout page exists and does not sign out merely on GET/render', () => {
   let calls = 0; const f = fixture({uid:'fictional'}, () => {calls++;});
@@ -34,6 +34,13 @@ test('logout rejection stays retryable without claiming success', async () => {
   assert.ok(nodes.some(n => n.props?.role === 'alert'));
   assert.equal(nodes.find(n => n.type === 'button').props.disabled, false);
 });
+test('failed server cleanup remains retryable after Firebase becomes anonymous', async () => {
+  const f = fixture({uid:'fictional'}, async () => {f.setUser(null);throw new Error('fictional outage');});
+  await f.render().find(n => n.type === 'button').props.onClick();
+  assert.deepEqual(f.routes, []);
+  assert.ok(f.render().some(n => n.type === 'button' && !n.props.disabled));
+});
+
 test('anonymous logout page offers home instead of a dead sign-out action', () => {
   const f = fixture(null, () => {throw new Error('unexpected signOut');});
   assert.equal(f.render().some(n => n.type === 'button'), false);
