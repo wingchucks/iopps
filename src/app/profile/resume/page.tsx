@@ -247,6 +247,9 @@ function ResumeContent() {
             {resume ? "UPLOAD NEW RESUME" : "UPLOAD RESUME"}
           </p>
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="Upload resume. PDF or DOC, max 5MB. Activate to choose a file."
             onDragOver={(e) => {
               e.preventDefault();
               setDragOver(true);
@@ -254,6 +257,12 @@ function ResumeContent() {
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
             className="rounded-2xl cursor-pointer transition-colors text-center"
             style={{
               border: `2px dashed ${dragOver ? "var(--teal)" : "var(--border)"}`,
@@ -265,7 +274,7 @@ function ResumeContent() {
               ref={fileInputRef}
               type="file"
               accept=".pdf,.doc,.docx"
-              className="hidden"
+              className="sr-only"
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) handleFileSelect(f);
