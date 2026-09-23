@@ -48,8 +48,8 @@ const PLAN_FEATURES: Record<string, { label: string; features: string[]; color: 
   free: {
     label: "Free",
     color: "var(--text-muted)",
-    jobLimit: "Standard job listings included",
-    features: ["Organization profile with directory review", "Standard job listings", "Application management", "Events and scholarships"],
+    jobLimit: "Free job listings included",
+    features: ["Organization profile with directory review", "Free job listings", "Application management", "Events and scholarships"],
   },
 };
 
@@ -120,7 +120,7 @@ function BillingContent() {
       </Link>
 
       <h1 className="text-2xl font-extrabold text-text mb-1">Billing & Plan</h1>
-      <p className="text-sm text-text-muted mb-8">Standard job listings are free. Paid options add promotion and featured placement.</p>
+      <p className="text-sm text-text-muted mb-8">Posting a job is free. Paid options add promotion and featured placement.</p>
 
       {/* Current Plan Card */}
       <Card className="mb-6">

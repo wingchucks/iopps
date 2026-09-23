@@ -61,21 +61,36 @@ async function fetchWithTimeout(
   }
 }
 
-/** Sync Firebase ID token to httpOnly session cookie */
-async function syncSessionCookie(
+/** One writer per document; Web Locks extend ordering to other same-origin tabs. */
+let sessionWrites: Promise<unknown> = Promise.resolve();
+function syncSessionCookie(user: User | null, options?: { forceRefresh?: boolean }): Promise<boolean> {
+  const write = () => writeSessionCookie(user, options);
+  const pending = sessionWrites.then(async () => {
+    if (typeof navigator !== "undefined" && navigator.locks) {
+      return await navigator.locks.request("iopps:session-cookie", write);
+    }
+    return write();
+  });
+  sessionWrites = pending.catch(() => false);
+  return pending;
+}
+
+/** Sync Firebase ID token to httpOnly session cookie, only for the current identity. */
+async function writeSessionCookie(
   user: User | null,
   options?: { forceRefresh?: boolean },
 ): Promise<boolean> {
   if (user) {
     try {
+      if (auth.currentUser !== user) return false;
       const idToken = await user.getIdToken(options?.forceRefresh === true);
-      if (auth.currentUser?.uid !== user.uid) return false;
+      if (auth.currentUser !== user) return false;
       const response = await fetchWithTimeout("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken }),
       });
-      return response.ok;
+      return response.ok && auth.currentUser === user;
     } catch {
       return false;
     }
@@ -94,8 +109,7 @@ async function syncSessionCookie(
 
 async function ensureSessionCookie(user: User | null): Promise<boolean> {
   if (!user) {
-    await syncSessionCookie(null);
-    return true;
+    return syncSessionCookie(null);
   }
 
   const firstAttempt = await syncSessionCookie(user);
@@ -154,7 +168,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let previousUid: string | null = null;
+    let generation = 0;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      const observedGeneration = ++generation;
+      const isCurrent = () => observedGeneration === generation && auth.currentUser === firebaseUser;
       // This provider outlives signup routes. Invalidate before any async session
       // work, including sign-out or cross-tab changes while signup is unmounted.
       // Initial anonymous resolution is not a boundary: allow reload recovery.
@@ -162,15 +179,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (firebaseUser || previousUid !== null) clearSignupDraft();
       previousUid = firebaseUser?.uid ?? null;
       setLoading(true);
+      // Never expose the previous account while the next identity's cookie is pending.
+      setUser(null);
 
       // Sync session cookie BEFORE updating user state so the middleware
       // cookie is ready by the time any component tries to navigate to a
       // protected route (prevents the black-screen race condition).
       const sessionReady = await ensureSessionCookie(firebaseUser);
 
-      if (auth.currentUser?.uid !== firebaseUser?.uid) return;
+      if (!isCurrent()) return;
       if (firebaseUser && !sessionReady) {
         await firebaseSignOut(auth).catch(() => {});
+        if (!isCurrent()) return;
         setUser(null);
         setLoading(false);
         return;
@@ -179,14 +199,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(firebaseUser);
       setLoading(false);
     });
-    return unsubscribe;
+    return () => { ++generation; unsubscribe(); };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const sessionReady = await ensureSessionCookie(cred.user);
     if (!sessionReady) {
-      await firebaseSignOut(auth).catch(() => {});
+      if (auth.currentUser === cred.user) await firebaseSignOut(auth).catch(() => {});
       throw new Error("We signed you in, but could not start a secure session. Please try again.");
     }
     return cred;
@@ -212,15 +232,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cred = await signInWithPopup(auth, provider);
     const sessionReady = await ensureSessionCookie(cred.user);
     if (!sessionReady) {
-      await firebaseSignOut(auth).catch(() => {});
+      if (auth.currentUser === cred.user) await firebaseSignOut(auth).catch(() => {});
       throw new Error("We signed you in, but could not start a secure session. Please try again.");
     }
     return cred;
   };
 
   const signOut = async () => {
-    await fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
+    // Clear SDK persistence first. A late POST must settle before the final DELETE;
+    // callers must not announce success or navigate until both stores are cleared.
     await firebaseSignOut(auth);
+    setUser(null);
+    if (!await ensureSessionCookie(null)) {
+      throw new Error("We could not finish signing you out. Please try again.");
+    }
   };
 
   const resetPassword = async (email: string) => {

@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
       orgData = {
         id: employerId,
         name: companyName,
-        slug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        slug: text(empData.slug) || employerId,
         description: typeof empData.description === "string" ? empData.description : "",
         logoUrl: typeof empData.logoUrl === "string" ? empData.logoUrl : "",
         website: typeof empData.website === "string" ? empData.website : "",
@@ -95,7 +95,10 @@ export async function GET(req: NextRequest) {
       .orderBy("createdAt", "desc")
       .get();
 
-    const jobs = jobsSnap.docs.map((doc) => {
+    const jobs = jobsSnap.docs.filter((doc) => {
+      const data = doc.data();
+      return data.status !== "deleted" && !data.deletedAt;
+    }).map((doc) => {
       const d = doc.data();
       return {
         id: doc.id,
@@ -138,7 +141,10 @@ export async function GET(req: NextRequest) {
       .limit(50)
       .get();
 
-    const posts: Array<Record<string, unknown> & { id: string; applicationCount: number }> = postsSnap.docs.map((doc) => ({
+    const posts: Array<Record<string, unknown> & { id: string; applicationCount: number }> = postsSnap.docs.filter((doc) => {
+      const data = doc.data();
+      return data.status !== "deleted" && !data.deletedAt;
+    }).map((doc) => ({
       id: doc.id,
       ...doc.data(),
       applicationCount: 0,

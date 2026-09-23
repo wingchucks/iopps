@@ -1,4 +1,6 @@
 "use client";
+import ClosingDateField from "@/components/employer/ClosingDateField";
+import { isValidClosingDate } from "@/lib/job-closing-date";
 import JobLocationFields, { formatJobLocation } from "@/components/employer/JobLocationFields";
 
 import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
@@ -29,8 +31,7 @@ const JOB_CATEGORIES = [
 
 const COMMUNITY_TAGS = [
   "Treaty 6", "Treaty 4", "Treaty 7", "Cree", "Métis", "Dene",
-  "Ojibwe", "Inuit", "Blackfoot", "Healthcare", "Education",
-  "Government", "Technology", "Trades",
+  "Ojibwe", "Inuit", "Blackfoot",
 ];
 
 const PREFERENCE_LEVELS = [
@@ -38,7 +39,7 @@ const PREFERENCE_LEVELS = [
   { value: "open", label: "Open to All" },
   { value: "preferred", label: "Indigenous Preferred" },
   { value: "strongly-preferred", label: "Strongly Preferred" },
-  { value: "psea-s22", label: "Per PSEA Section 22" },
+  { value: "psea-s22", label: "Public-service employment policy (PSEA s.22)" },
 ];
 
 const STEP_LABELS = ["Job Details", "Requirements", "Review & Publish"];
@@ -122,13 +123,13 @@ function formatSalary(min: string, max: string, period: string): string {
 
 function ProgressBar({ step }: { step: number }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 32 }}>
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 32 }}>
       {STEP_LABELS.map((label, i) => {
         const done = i < step;
         const active = i === step;
         return (
-          <div key={label} style={{ display: "flex", alignItems: "center", flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div key={label} style={{ display: "flex", justifyContent: "center", flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, minWidth: 0 }}>
               <div
                 style={{
                   width: 32,
@@ -155,24 +156,15 @@ function ProgressBar({ step }: { step: number }) {
                   fontSize: 13,
                   fontWeight: active ? 700 : 500,
                   color: active ? "var(--text)" : "var(--text-muted)",
-                  whiteSpace: "nowrap",
+                  whiteSpace: "normal",
+                  textAlign: "center",
+                  overflowWrap: "anywhere",
                 }}
               >
                 {label}
               </span>
             </div>
-            {i < STEP_LABELS.length - 1 && (
-              <div
-                style={{
-                  flex: 1,
-                  height: 2,
-                  margin: "0 12px",
-                  background: done ? "var(--teal)" : "var(--border)",
-                  borderRadius: 1,
-                  transition: "background .2s",
-                }}
-              />
-            )}
+
           </div>
         );
       })}
@@ -652,6 +644,7 @@ export default function NewJobWizardPage() {
   /* ---- Validation ---- */
   const validateStep0 = (): boolean => {
     const e: Record<string, string> = {};
+    if (!isValidClosingDate(form.closingDate)) e.closingDate = "Enter a valid closing date or clear it";
     if (!form.title.trim()) e.title = "Title is required";
     if (!form.category) e.category = "Category is required";
     if (!form.locationProvince) e.location = "Select a province, territory, or multiple-province option";
@@ -682,6 +675,7 @@ export default function NewJobWizardPage() {
 
   /* ---- Save ---- */
   const handleSave = async (status: "active" | "draft") => {
+    if (!isValidClosingDate(form.closingDate)) { setSubmitError("Enter a valid closing date or clear it."); return; }
     if (!profile?.orgId || !user) { setSubmitError("Your organization session isn’t ready. Please reload and try again."); return; }
     setSubmitError("");
     setSaving(true);
@@ -993,6 +987,7 @@ export default function NewJobWizardPage() {
                           <option>Part-time</option>
                           <option>Contract</option>
                           <option>Casual</option>
+                          <option>Temporary</option>
                           <option>Seasonal</option>
                           <option>Internship</option>
                           <option>Volunteer</option>
@@ -1055,13 +1050,7 @@ export default function NewJobWizardPage() {
                     </div>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                      <FormField label="Closing Date">
-                        <TextInput
-                          type="date"
-                          value={form.closingDate}
-                          onChange={(v) => set("closingDate", v)}
-                        />
-                      </FormField>
+                      <ClosingDateField value={form.closingDate} onChange={v => set("closingDate", v)} />
                       <FormField
                         label="External Apply URL"
                         hint="Leave blank to use IOPPS built-in apply form"
@@ -1129,7 +1118,7 @@ export default function NewJobWizardPage() {
                         subtitle="Indicate hiring preferences for this role"
                       />
 
-                      <FormField label="Preference Level">
+                      <FormField label="Preference Level" hint="PSEA means Public Service Employment Act. This option is for applicable public-service hiring policies, not a general small-business preference. Check your organization’s HR policy before selecting it.">
                         <Select
                           value={form.indigenousPreferenceLevel}
                           onChange={(v) => set("indigenousPreferenceLevel", v)}
@@ -1142,7 +1131,7 @@ export default function NewJobWizardPage() {
                         </Select>
                       </FormField>
 
-                      <FormField label="Community Tags" hint="Select all that apply to help candidates find relevant opportunities">
+                      <FormField label="Community Tags" hint="Choose community or Nation connections relevant to this role. Use Category for the industry; these tags do not establish hiring eligibility.">
                         <ChipSelect
                           options={COMMUNITY_TAGS}
                           selected={form.communityTags}

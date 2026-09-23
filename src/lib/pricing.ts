@@ -45,9 +45,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanId, SubscriptionPlanDefi
     priceLabel: "$1,250",
     periodLabel: "/year",
     shortDescription: "Business profile promotion and application analytics.",
-    jobLimit: "Standard job listings included",
+    jobLimit: "Free job listings included",
     features: [
-      "Standard job listings included",
+      "Free job listings included",
       "Business profile promotion",
       "Basic analytics",
       "Community feed access",

@@ -217,7 +217,9 @@ export async function GET(req: NextRequest) {
       orgName:
         String(context.organizationData.name || context.employerData.name || context.employerData.companyName || ""),
       orgSlug:
-        String(context.organizationData.slug || context.employerData.slug || "") || undefined,
+        Object.keys(context.organizationData).length
+          ? String(context.organizationData.slug || context.orgId)
+          : String(context.employerData.slug || context.employerId),
       orgLogo:
         String(context.organizationData.logoUrl || context.organizationData.logo || context.employerData.logoUrl || ""),
       orgType,

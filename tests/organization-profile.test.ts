@@ -33,7 +33,7 @@ test("normalizeOrganizationRecord preserves normalized media and social fields",
     socialLinks: {
       instagram: "instagram.com/northernlights",
       twitter: "x.com/northernlights",
-      tiktok: "ignored",
+      unsupportedNetwork: "ignored",
     },
   });
 
@@ -57,7 +57,7 @@ test("normalizeOrganizationProfilePatch supports normalized partial writes", () 
     socialLinks: {
       linkedin: "linkedin.com/company/iopps",
       facebook: "facebook.com/iopps",
-      tiktok: "should-not-be-written",
+      unsupportedNetwork: "should-not-be-written",
     },
     hours: {
       monday: { open: "9:00 AM", close: "5:00 PM", isOpen: true },

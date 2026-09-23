@@ -21,6 +21,8 @@ import * as publicOrganization from '../src/lib/public-organization.ts';
 import * as actionLinks from '../src/lib/auth-verification-email.ts';
 import * as schoolVisibility from '../src/lib/school-visibility.ts';
 import * as jobDetailDates from '../src/lib/job-detail-dates.ts';
+import * as accessState from '../src/lib/access-state.ts';
+import * as businessReview from '../src/lib/business-listing-review.ts';
 
 const requireNative = createRequire(import.meta.url);
 function load(file, dependencies, globals = {}) {
@@ -267,6 +269,9 @@ test('scoped organization job links resolve the exact listing when another organ
   const doc = row => ({ id: row.id, data: () => row });
   const empty = { where() { return this; }, limit() { return this; }, get: async () => ({ docs: [] }) };
   const route = load('src/app/api/org/[slug]/route.ts', {
+    '@/lib/server/employer-auth': { requireEmployerContext: async () => { throw new Error('Public fixture must not request private access'); } },
+    '@/lib/access-state': accessState,
+    '@/lib/business-listing-review': businessReview,
     'next/server': { NextResponse: Response },
     '@/lib/public-organization': { toPublicOrganization: value => value },
     '@/lib/firebase-admin': { getAdminDb: () => ({ collection: () => empty }), hasAdminRuntimeSupport: () => true },
@@ -321,6 +326,7 @@ test('organization profiles omit opportunity tombstones, stale mirrors, hidden l
       '@/lib/organization-profile': { isOrganizationPubliclyVisible: () => true, normalizeOrganizationRecord: value => value },
       '@/lib/school-visibility': { isSchoolOrganization: () => false },
     };
+    Object.assign(mocks, { '@/lib/server/employer-auth': { requireEmployerContext: async () => { throw new Error('Public fixture must not request private access'); } }, '@/lib/access-state': accessState, '@/lib/business-listing-review': businessReview });
     const route = load('src/app/api/org/[slug]/route.ts', mocks, { process: { env: { NODE_ENV: 'production' } } });
     const response = await route.GET(new Request('https://example.invalid/api/org/qa'), { params: Promise.resolve({ slug: 'qa' }) });
     assert.equal(response.status, 200);

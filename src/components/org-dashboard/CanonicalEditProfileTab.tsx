@@ -18,7 +18,7 @@ const DAY_LABELS: Record<(typeof DAYS)[number], string> = {
   saturday: "Saturday",
   sunday: "Sunday",
 };
-const INDUSTRY_OPTIONS = ["", "Technology", "Healthcare", "Education", "Finance", "Manufacturing", "Retail", "Construction", "Transportation", "Agriculture", "Energy", "Media & Entertainment", "Hospitality", "Real Estate", "Non-Profit", "Government", "Other"];
+const INDUSTRY_OPTIONS = ["", "Technology", "Healthcare", "Education", "Finance", "Manufacturing", "Retail", "Construction", "Transportation", "Agriculture", "Energy", "Media & Entertainment", "Hospitality", "Food & Beverage", "Personal Care & Beauty", "Automotive Services", "Sports & Recreation", "Real Estate", "Non-Profit", "Government", "Other"];
 const SIZE_OPTIONS = ["", "1-10", "11-50", "51-200", "200+"];
 const SUGGESTED_TAGS = ["Recruitment", "Training", "Hospitality", "Human Resources", "First Nations", "Saskatchewan", "Career Development", "Gaming Industry"];
 const SUGGESTED_SERVICES = ["Hiring", "Training", "Scholarships", "Events", "Professional Services", "Community Partnerships"];
@@ -31,6 +31,7 @@ export interface HoursDay {
   open: string;
   close: string;
   isOpen: boolean;
+  configured?: boolean;
   label?: string;
 }
 
@@ -54,6 +55,8 @@ export interface DashboardProfileForm {
   instagram: string;
   facebook: string;
   twitter: string;
+  tiktok?: string;
+  youtube?: string;
   logoUrl: string;
   bannerUrl: string;
 }
@@ -261,6 +264,8 @@ export default function CanonicalEditProfileTab({
       instagram: profileForm.instagram,
       facebook: profileForm.facebook,
       twitter: profileForm.twitter,
+      tiktok: profileForm.tiktok || "",
+      youtube: profileForm.youtube || "",
     },
   });
 
@@ -498,7 +503,7 @@ export default function CanonicalEditProfileTab({
           <SectionCard>
             <h3 className="text-base font-bold mb-1" style={{ color: "var(--text, #f8fafc)" }}>Business Hours</h3>
             <p className="text-[13px] mb-6" style={{ color: "var(--text-sec)" }}>
-              Publish accurate hours so members know when to call, visit, or expect a response.
+              Hours are optional and start as Not provided. Choose Open and enter your times, or explicitly choose Closed for each day.
             </p>
             <div className="flex flex-col gap-2">
               {DAYS.map((day) => (
@@ -511,19 +516,13 @@ export default function CanonicalEditProfileTab({
                       <input className="text-center text-[13px] font-medium" aria-label={`${DAY_LABELS[day]} closing time`} style={{ ...inputStyle, minWidth: 0, padding: "8px", borderRadius: 8 }} value={hours[day].close} onChange={(event) => setHours((prev) => ({ ...prev, [day]: { ...prev[day], close: event.target.value } }))} />
                     </div>
                   ) : (
-                    <span className="text-[13px] italic" style={{ gridArea: "hours", color: "var(--text-sec)" }}>Closed</span>
+                    <span className="text-[13px] italic" style={{ gridArea: "hours", color: "var(--text-sec)" }}>{hours[day].configured === false ? "Not provided" : "Closed"}</span>
                   )}
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-label={`${DAY_LABELS[day]} open`}
-                    aria-checked={hours[day].isOpen}
-                    className="w-12 h-[26px] rounded-[13px] relative cursor-pointer transition-all border shrink-0"
-                    style={{ gridArea: "toggle", background: hours[day].isOpen ? `linear-gradient(135deg, ${TEAL}, #0F766E)` : "rgba(30,41,59,0.8)", borderColor: hours[day].isOpen ? TEAL : "var(--border)" }}
-                    onClick={() => setHours((prev) => ({ ...prev, [day]: { ...prev[day], isOpen: !prev[day].isOpen } }))}
-                  >
-                    <div className="absolute top-[3px] w-[18px] h-[18px] bg-white rounded-full transition-all shadow" style={{ left: hours[day].isOpen ? 26 : 3 }} />
-                  </button>
+                  <select aria-label={`${DAY_LABELS[day]} hours`} style={{ gridArea: "toggle", minHeight: 44, maxWidth: "100%", color: "var(--text)", background: "var(--card)" }}
+                    value={hours[day].configured === false ? "unset" : hours[day].isOpen ? "open" : "closed"}
+                    onChange={event => { const status = event.target.value; setHours(prev => ({ ...prev, [day]: { ...prev[day], configured: status !== "unset", isOpen: status === "open" } })); }}>
+                    <option value="unset">Not provided</option><option value="open">Open</option><option value="closed">Closed</option>
+                  </select>
                 </div>
               ))}
             </div>
@@ -718,6 +717,10 @@ export default function CanonicalEditProfileTab({
               <label style={labelStyle} htmlFor="business-field-17">Twitter / X</label>
               <input id="business-field-17" style={inputStyle} value={profileForm.twitter} onChange={(event) => setProfileForm((prev) => ({ ...prev, twitter: event.target.value }))} placeholder="x.com/yourhandle" />
             </div>
+            {([['tiktok', 'TikTok'], ['youtube', 'YouTube']] as const).map(([key, label]) => <div className="mb-5" key={key}>
+              <label style={labelStyle} htmlFor={`business-social-${key}`}>{label}</label>
+              <input id={`business-social-${key}`} type="url" style={inputStyle} value={profileForm[key] || ""} onChange={event => setProfileForm(prev => ({ ...prev, [key]: event.target.value }))} placeholder={`https://www.${key}.com/@yourbusiness`} />
+            </div>)}
             <ActionButton disabled={saving} onClick={saveContact}>{saving ? "Saving..." : "Save Social"}</ActionButton>
           </SectionCard>
         </div>

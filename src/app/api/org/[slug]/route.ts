@@ -11,6 +11,14 @@ import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
 import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
 
+import { requireEmployerContext } from "@/lib/server/employer-auth";
+import { getOrganizationAccessBlockReason } from "@/lib/access-state";
+import { getBusinessListingReview } from "@/lib/business-listing-review";
+
+function profileResponse(body: unknown, init?: ResponseInit) {
+  return NextResponse.json(body, { ...init, headers: { "Cache-Control": "private, no-store", Vary: "Authorization" } });
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -218,7 +226,7 @@ async function loadScholarships(
 }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
@@ -226,14 +234,14 @@ export async function GET(
   if (process.env.NODE_ENV !== "production" && !hasAdminRuntimeSupport()) {
     const payload = getLocalDevOrganizationPayload(slug);
     if (payload) {
-      return NextResponse.json({
+      return profileResponse({
         ...payload,
         training: [],
         programs: [],
       });
     }
 
-    return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+    return profileResponse({ error: "Organization not found" }, { status: 404 });
   }
 
   try {
@@ -241,15 +249,21 @@ export async function GET(
     const orgRecord = await resolvePublicOrganization(db, slug);
 
     if (!orgRecord) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+      return profileResponse({ error: "Organization not found" }, { status: 404 });
     }
 
+    let ownerPreview = false;
+    if (getOrganizationAccessBlockReason(orgRecord) || String(orgRecord.status).trim().toLowerCase() === "suspended") return profileResponse({ error: "Organization not found" }, { status: 404 });
     if (isSchoolOrganization(orgRecord)) {
       if (!isSchoolPubliclyVisible(orgRecord)) {
-        return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+        return profileResponse({ error: "Organization not found" }, { status: 404 });
       }
     } else if (!isOrganizationPubliclyVisible(orgRecord)) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+      try {
+        const context = await requireEmployerContext(req);
+        ownerPreview = context.orgRole === "owner" && context.orgId === orgRecord.id;
+      } catch { /* Nonpublic records remain indistinguishable from missing records. */ }
+      if (!ownerPreview) return profileResponse({ error: "Organization not found" }, { status: 404 });
     }
 
     const org = normalizeOrganizationRecord(withPartnerPromotion(orgRecord));
@@ -263,8 +277,9 @@ export async function GET(
       loadScholarships(db, orgId, orgName),
     ]);
 
-    return NextResponse.json({
+    return profileResponse({
       org: toPublicOrganization(org),
+      ...(ownerPreview ? { ownerPreview: true, reviewStatus: getBusinessListingReview(org)?.status || "hidden" } : {}),
       jobs,
       events,
       scholarships,
@@ -274,6 +289,6 @@ export async function GET(
     });
   } catch (err) {
     console.error("[api/org] Error:", err);
-    return NextResponse.json({ error: "Failed to load organization" }, { status: 500 });
+    return profileResponse({ error: "Failed to load organization" }, { status: 500 });
   }
 }

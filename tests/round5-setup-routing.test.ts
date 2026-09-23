@@ -16,5 +16,5 @@ test('organization intent resumes organization signup ahead of personal profile'
  assert.equal(setupDestination(destination, query), destination);
 });
 test('explicit setup revisit stays editable', () => {
- assert.equal(setupDestination('/feed', query), null);
+ assert.equal(setupDestination('/feed', new URLSearchParams('edit=1')), null);
 });

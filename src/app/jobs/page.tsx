@@ -31,6 +31,8 @@ const employmentTypes = [
   "Part-time",
   "Contract",
   "Temporary",
+  "Seasonal",
+  "Volunteer",
   "Internship",
   "Casual",
 ];

@@ -41,24 +41,35 @@ function SetupAccess() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+    const loadingUser = auth.currentUser;
+    if (!loadingUser || loadingUser.uid !== user.uid) return;
+    const isCurrent = () => !cancelled && auth.currentUser === loadingUser;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     setError("");
     void (async () => {
       try {
         const token = await user.getIdToken();
-        if (cancelled) return;
+        if (!isCurrent()) return;
         const response = await fetch("/api/auth/account", {
           headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal,
         });
         if (!response.ok) throw new Error("Account unavailable");
         const data = await response.json();
-        const destination = setupDestination(data.destination, searchParams);
-        if (cancelled) return;
+        if (!isCurrent()) return;
+        // Completion is durable, but optional Auth photo sync can fail afterward.
+        // Keep that repair reachable after reload without reopening every completed wizard.
+        let photoRepair = false;
+        if (data.destination === "/feed" && searchParams.get("edit") !== "1") {
+          const member = await getMemberProfile(user.uid, controller.signal);
+          if (!isCurrent()) return;
+          photoRepair = !!member?.photoURL && member.photoURL !== loadingUser.photoURL;
+        }
+        const destination = setupDestination(data.destination, searchParams, false, photoRepair);
         if (destination) router.replace(destination);
         else setReadyUid(user.uid);
       } catch {
-        if (!cancelled) setError("We couldn’t load your account. Please retry.");
+        if (isCurrent()) setError("We couldn’t load your account. Please retry.");
       } finally { clearTimeout(timer); }
     })();
     return () => { cancelled = true; controller.abort(); clearTimeout(timer); };

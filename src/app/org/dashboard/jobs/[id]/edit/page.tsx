@@ -1,4 +1,6 @@
 "use client";
+import ClosingDateField from "@/components/employer/ClosingDateField";
+import { isValidClosingDate } from "@/lib/job-closing-date";
 import JobLocationFields from "@/components/employer/JobLocationFields";
 import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
 import { normalizeHiringDetails } from "@/lib/job-hiring-details";
@@ -47,6 +49,9 @@ const employmentTypes = [
   "Part-time",
   "Contract",
   "Temporary",
+  "Seasonal",
+  "Volunteer",
+  "Casual",
   "Internship",
 ];
 
@@ -163,6 +168,7 @@ export default function JobEditPage() {
 
   const handleSave = async () => {
     if (!user) return;
+    if (!isValidClosingDate(closingDate)) { showToast("Enter a valid closing date or clear it.", "error"); return; }
     if (!title.trim()) {
       showToast("Title is required", "error");
       return;
@@ -622,22 +628,7 @@ export default function JobEditPage() {
                     )}
                   </div>
 
-                  {/* Closing Date */}
-                  <div>
-                    <label
-                      className="block text-sm font-semibold mb-1.5"
-                      style={{ color: "var(--text)" }}
-                    >
-                      Closing Date
-                    </label>
-                    <input
-                      type="date"
-                      value={closingDate}
-                      onChange={(e) => setClosingDate(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl text-sm"
-                      style={inputStyle}
-                    />
-                  </div>
+                  <ClosingDateField value={closingDate} onChange={setClosingDate} />
 
                   <HiringDetailsFields value={hiringDetails} onChange={setHiringDetails} />
                   {/* Application URL */}

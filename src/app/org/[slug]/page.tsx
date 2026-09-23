@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,6 +26,8 @@ interface OrgContentResponse {
   scholarships?: OrgScholarship[];
   training?: OrgTraining[];
   programs?: OrgTraining[];
+  ownerPreview?: boolean;
+  reviewStatus?: string;
 }
 
 // ── Helpers ──
@@ -86,7 +88,7 @@ export default function OrgProfilePage() {
 function OrgProfileContent() {
   const params = useParams();
   const slug = params.slug as string;
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [org, setOrg] = useState<Organization | null>(null);
   const [jobs, setJobs] = useState<OrgJob[]>([]);
   const [events, setEvents] = useState<OrgEvent[]>([]);
@@ -95,12 +97,17 @@ function OrgProfileContent() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const requestKey = JSON.stringify([slug, user?.uid, authLoading, loadAttempt]);
+  const currentKey = useRef(requestKey);
+  currentKey.current = requestKey;
+  const [resolvedKey, setResolvedKey] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [activeOppTab, setActiveOppTab] = useState<"jobs"|"events"|"scholarships"|"training">("jobs");
   const [expandedOppTab, setExpandedOppTab] = useState<"jobs"|"events"|"scholarships"|"training"|null>(null);
   const [shareMsg, setShareMsg] = useState("");
 
   const handleShare = async () => {
-    const url = window.location.href;
+    const url = new URL(`/org/${encodeURIComponent(org?.slug || org?.id || slug)}`, window.location.origin).href;
     if (navigator.share) {
       try { await navigator.share({ title: org?.name || "IOPPS", url }); } catch { /* cancelled */ }
     } else {
@@ -115,16 +122,22 @@ function OrgProfileContent() {
   };
 
   useEffect(() => {
+    if (authLoading) return;
     const controller = new AbortController();
+    const isCurrent = () => !controller.signal.aborted && currentKey.current === requestKey;
     async function load() {
       setLoading(true);
       setLoadError(false);
       try {
-        const orgRes = await fetch(`/api/org/${encodeURIComponent(slug)}`, { signal: controller.signal });
+        const token = user ? await user.getIdToken() : null;
+        if (!isCurrent()) return;
+        const orgRes = await fetch(`/api/org/${encodeURIComponent(slug)}`, { signal: controller.signal, cache: "no-store", headers: token ? { Authorization: "Bearer " + token } : {} });
+        if (!isCurrent()) return;
         if (orgRes.status === 404) { setOrg(null); return; }
         if (!orgRes.ok) throw new Error("Profile could not be loaded");
         const orgJson = await orgRes.json() as OrgContentResponse;
-        if (controller.signal.aborted) return;
+        if (!isCurrent()) return;
+        setPreview(orgJson.ownerPreview ? orgJson.reviewStatus || "hidden" : null);
         const orgData = orgJson.org;
         setOrg(orgData);
         if (orgData) {
@@ -140,7 +153,7 @@ function OrgProfileContent() {
           setExpandedOppTab(null);
 
           // Track view
-          fetch("/api/employer/views", {
+          if (!orgJson.ownerPreview) fetch("/api/employer/views", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ orgId: orgData.id, type: "profile" }),
@@ -153,19 +166,19 @@ function OrgProfileContent() {
           else if (nextTraining.length > 0) setActiveOppTab("training");
         }
       } catch (err) {
-        if (!controller.signal.aborted) {
+        if (isCurrent()) {
           console.error("Failed to load organization:", err);
           setLoadError(true);
         }
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (isCurrent()) { setResolvedKey(requestKey); setLoading(false); }
       }
     }
     void load();
     return () => controller.abort();
-  }, [slug, loadAttempt]);
+  }, [slug, user, authLoading, loadAttempt, requestKey]);
 
-  if (loading) {
+  if (authLoading || loading || resolvedKey !== requestKey) {
     return (
       <div className="max-w-[960px] mx-auto">
         <div className="px-4 pt-4"><div className="skeleton h-4 w-32 rounded" /></div>
@@ -244,6 +257,10 @@ function OrgProfileContent() {
 
   return (
     <div className="journey-profile journey-org-profile max-w-[1120px] mx-auto pb-16">
+      {preview && <aside role="status" className="m-4 rounded-xl border border-border bg-card p-4 text-text">
+        <strong>Owner preview</strong><p>{preview === "pending" ? "Your listing is under review and is not public yet." : "Your listing is not public yet. Review its status in your dashboard."} This is the profile visitors will see once it is approved and visible.</p>
+        <Link href="/org/dashboard">Back to dashboard</Link>
+      </aside>}
       {/* Back Link */}
       <div className="px-4 pt-4">
         <Link href="/businesses" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal">
@@ -325,6 +342,8 @@ function OrgProfileContent() {
           {/* Social Links Row */}
           {hasSocialLinks && (
             <div className="flex gap-2 flex-wrap mt-4">
+              {org.socialLinks!.tiktok && <a href={org.socialLinks!.tiktok} target="_blank" rel="noopener noreferrer" className="min-h-11 inline-flex items-center px-3 rounded-xl border border-border">TikTok</a>}
+              {org.socialLinks!.youtube && <a href={org.socialLinks!.youtube} target="_blank" rel="noopener noreferrer" className="min-h-11 inline-flex items-center px-3 rounded-xl border border-border">YouTube</a>}
               {org.socialLinks!.instagram && (
                 <a href={org.socialLinks!.instagram} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold no-underline transition-all border border-border text-text-muted button-gradient-soft hover:border-teal hover:text-teal hover:-translate-y-px">
@@ -398,7 +417,7 @@ function OrgProfileContent() {
           {hasStory && (
             <div className="bg-card rounded-2xl border border-border p-6">
               <h2 className="text-base font-bold text-text mb-4 flex items-center gap-2">
-                <span className="text-lg">🧭</span> Why Members Connect Here
+                <span className="text-lg">🧭</span> Why People Connect Here
               </h2>
               {org.tagline && (
                 <p className="mb-3 text-lg font-semibold text-text">

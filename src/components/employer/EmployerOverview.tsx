@@ -31,6 +31,6 @@ export function EmployerMetrics({stats, available}: {stats: DashboardStats; avai
   return <div className="employer-metrics">{[
     ["Total job posts", stats.totalPosts], ["Active job posts", stats.activePosts],
     ["Recorded applications", stats.applications], ["Recorded profile views", stats.profileViews],
-  ].map(([label,value]) => <div className="employer-panel" key={label}><span>{label}</span><strong>{available ? value : "—"}</strong>{!available && <small>Unavailable</small>}</div>)}</div>;
+  ].map(([label,value]) => { const hasValue = available && typeof value === "number" && Number.isFinite(value) && value >= 0; return <div className="employer-panel" key={label}><span>{label}</span><strong>{hasValue ? value : "—"}</strong>{!hasValue && <small>Unavailable</small>}</div>; })}</div>;
 }
 
