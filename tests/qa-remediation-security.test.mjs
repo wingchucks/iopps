@@ -244,8 +244,10 @@ test('organization metadata resolves the canonical record and immediately drops 
     const docs = [...rows].filter(([path, record]) => path.startsWith(name + '/') && record[field] === value).map(([path]) => snapshot(path)); return { empty: docs.length === 0, docs };
   } }) }) }) };
   const resolver = load('src/lib/server/public-organization-resolver.ts', { '@/lib/organization-profile': organization, '@/lib/server/subscription-state': subscription });
+  const applicationDestination = load('src/lib/application-destination.ts', { './utils.ts': load('src/lib/utils.ts', {}) });
   const metadata = load('src/lib/server/detail-metadata.ts', {
     '@/lib/job-detail-dates': jobDetailDates,
+    '@/lib/application-destination': applicationDestination,
     react: { cache: fn => fn }, '@/lib/firebase-admin': { getAdminDb: () => db }, '@/lib/server/public-opportunities': {},
     '@/lib/public-job-merge': jobs, '@/lib/organization-profile': organization, '@/lib/server/public-job-routing': {},
     '@/lib/server/public-organization-resolver': resolver, '@/lib/server/seo': seo,

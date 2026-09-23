@@ -91,10 +91,12 @@ function memoryDb() {
     collection(name) {
       const query = filters => ({
         where: (key, op, value) => { assert.equal(op, '=='); return query([...filters, [key, value]]); },
+        limit: count => query([...filters, ['__limit', count]]),
         get: async () => {
-          const docs = [...rows].filter(([path, data]) => path.startsWith(`${name}/`) && filters.every(([key, value]) => data[key] === value))
+          const limit = filters.find(([key]) => key === '__limit')?.[1];
+          const docs = [...rows].filter(([path, data]) => path.startsWith(`${name}/`) && filters.every(([key, value]) => key === '__limit' || data[key] === value))
             .map(([path]) => snapshot(reference(name, path.slice(name.length + 1))));
-          return { docs, size: docs.length, empty: !docs.length };
+          return { docs: typeof limit === 'number' ? docs.slice(0, limit) : docs, size: docs.length, empty: !docs.length };
         },
         doc: id => reference(name, id),
         add: async data => { rows.set(`${name}/log-${++serial}`, { ...data }); },

@@ -24,7 +24,8 @@ function store(initial:Record<string,MockData>={}) {
  const snapshot=(path:string)=>({id:path.split('/').at(-1),exists:data.has(path),data:()=>data.get(path)});
  const query=(collection:string,filters:MockFilter[]=[],bound=Infinity):MockQuery=>({collection,filters,bound,
   doc:(id:string)=>({path:`${collection}/${id}`,id,parent:{id:collection}}),
-  where:(...filter:MockFilter)=>query(collection,[...filters,filter],bound),limit:(n:number)=>query(collection,filters,n)});
+  where:(...filter:MockFilter)=>query(collection,[...filters,filter],bound),limit:(n:number)=>query(collection,filters,n),
+  get:async()=>{const docs=[...data.keys()].filter(path=>path.startsWith(collection+'/')).filter(path=>filters.every(([field,op,value])=>{const stored=data.get(path)![field];return op==='array-contains'?Array.isArray(stored)&&stored.includes(value):stored===value;})).slice(0,bound).map(snapshot);return {docs,size:docs.length,empty:!docs.length};}});
  const tx={get:async(ref:MockRef|MockQuery)=>{
   if('path' in ref)return snapshot(ref.path);
   const docs=[...data.keys()].filter(path=>path.startsWith(ref.collection+'/')).filter(path=>ref.filters.every(([field,op,value])=>{const stored=data.get(path)![field];return op==='array-contains'?Array.isArray(stored)&&stored.includes(value):stored===value;})).slice(0,ref.bound).map(snapshot);
@@ -75,7 +76,7 @@ test('source suppression survives title/date changes and only blocks original em
  const s=store({['jobCleanupSources/'+cleanupSourceDocId(key)]:source});
  const base={feedId:'feed',externalId:'R',externalUrl:url,employerId:'blocked',title:'changed title',location:'changed location',publishedAt:'2026-01-01'};
  assert.equal(await createImportedJobOnce(s.db,base),false);assert.deepEqual(s.writes,[]);
- assert.equal(await createImportedJobOnce(s.db,{...base,employerId:'different'}),true);assert.equal(s.writes.length,2);
+ assert.equal(await createImportedJobOnce(s.db,{...base,employerId:'different'}),true);assert.equal(s.writes.length,3);
 });
 test('old URL and fallback URL remain guarded when incoming source changes',async()=>{
  const s=store({['jobCleanupSources/'+cleanupSourceDocId(key)]:source});

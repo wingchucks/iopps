@@ -59,16 +59,24 @@ export function repairSpacingArtifacts(text: string): string {
 
 /** Collapse duplicated location segments: "Vancouver, Vancouver" and
  * "Vancouver Vancouver" both mean one Vancouver. Scoped to short labels
- * (titles, locations, company names), never to full descriptions. */
+ * (titles, locations, company names), never to full descriptions.
+ * HTML entities ("&lt;", "&#8211;") are protected first so their semicolons
+ * are never mistaken for segment separators. */
 export function collapseDuplicateSegments(label: string): string {
+  const entities: string[] = [];
+  const protectedLabel = label.replace(/&(?:#\d+|#x[\da-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);/g, match => {
+    entities.push(match);
+    return `\u0000${entities.length - 1}\u0000`;
+  });
   const seen = new Set<string>();
-  const segments = label.split(/\s*[,;|]\s*/).filter(segment => {
+  const segments = protectedLabel.split(/\s*[,;|]\s*/).filter(segment => {
     const key = segment.toLowerCase();
     if (!segment || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
-  return segments.join(", ").replace(/\b([\p{L}\p{N}']+)(?:\s+\1)+\b/giu, "$1");
+  const collapsed = segments.join(", ").replace(/\b([\p{L}\p{N}']+)(?:\s+\1)+\b/giu, "$1");
+  return collapsed.replace(/\u0000(\d+)\u0000/g, (_, index) => entities[Number(index)]);
 }
 
 export function normalizeImportedLabel(value: string): string {

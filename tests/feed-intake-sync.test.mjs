@@ -24,6 +24,7 @@ function memoryDb() {
     collection(name) {
       const query = filters => ({
         where: (key, op, value) => { assert.equal(op, '=='); return query([...filters, [key, value]]); },
+        limit: () => query(filters),
         get: async () => {
           const docs = [...rows].filter(([path, data]) => path.startsWith(`${name}/`) && filters.every(([key, value]) => data[key] === value))
             .map(([path]) => snapshot(reference(name, path.slice(name.length + 1))));

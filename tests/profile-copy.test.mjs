@@ -110,6 +110,8 @@ function harness(page, initial = null, count = 0) {
     '@/lib/auth-context': { useAuth: () => ({ user }) },
     '@/lib/toast-context': { useToast: () => ({ showToast: value => messages.push(value) }) },
     '@/lib/firestore/members': members,
+    '@/lib/profile-entries': load('src/lib/profile-entries.ts', {}),
+    '@/lib/upload-file': { uploadToStorage: async () => 'https://fixture.invalid/upload.png', validateImageFile: () => null },
     '@/lib/firestore/savedItems': { getSavedItems: async () => Array.from({ length: count }, (_, id) => ({ id: `saved-${id}`, userId: user.uid, postType: 'job', postId: `job-${id}` })) },
     // Run the actual alias loader/grouping; replace only its HTTP transport.
     '@/lib/saved-job-aliases': load('src/lib/saved-job-aliases.ts', {}, '', {

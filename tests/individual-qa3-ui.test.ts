@@ -21,6 +21,9 @@ test('application status counts have explicit textual spacing', () => {
 
 test('avatar edit is explicitly named and visible on keyboard focus', () => {
   const source = readFileSync('src/app/profile/page.tsx','utf8');
-  assert.match(source,/aria-label="Edit profile photo"/);
-  assert.match(source,/focus-visible:opacity-100/);
+  // The avatar edit control is an always-visible button (not a hover-only overlay)
+  // whose accessible name is "Edit profile photo" when idle and announces upload
+  // progress while a photo is uploading.
+  assert.match(source,/aria-label=\{[\s\S]*?"Edit profile photo"/);
+  assert.match(source,/focus-visible:/);
 });

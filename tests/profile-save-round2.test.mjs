@@ -60,6 +60,7 @@ function harness(page, initial = null, count = 0) {
     },
   };
   const jsx = (type, props) => ({ type, props });
+  const profileEntries = load('src/lib/profile-entries.ts', {});
   const dependencies = {
     react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx },
     'next/navigation': { useRouter: () => ({ push: value => routes.push(value), replace() {} }) },
@@ -68,10 +69,12 @@ function harness(page, initial = null, count = 0) {
     '@/lib/auth-context': { useAuth: () => ({ user }) },
     '@/lib/toast-context': { useToast: () => ({ showToast: value => messages.push(value) }) },
     '@/lib/firestore/members': members,
+    '@/lib/profile-entries': profileEntries,
     '@/lib/firestore/savedItems': { getSavedItems: async () => Array.from({ length: count }, (_, id) => ({ id, postType: 'job', postId: `job-${id}` })) },
     '@/lib/firestore/applications': { getApplications: async () => [] },
     '@/lib/firestore/rsvps': { getUserRSVPs: async () => [] },
     '@/lib/account-labels': { getPublicAccountTypeLabel: () => 'Member' },
+    '@/lib/upload-file': { uploadToStorage: async () => 'https://fixture.invalid/upload.png', validateImageFile: () => null },
     '@/lib/constants/interests': { interestOptions: [{ id: 'jobs', label: 'Jobs', desc: 'Opportunities', icon: '*' }], interestLabels: {} },
   };
   for (const name of ['ProtectedRoute', 'Avatar', 'Badge', 'AppShell', 'Footer', 'Button', 'Card']) {

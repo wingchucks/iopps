@@ -56,6 +56,7 @@ for (const route of retiredPages) test(`legacy ${route} redirects without loadin
 test("retired member metadata never resolves a member identity", async () => {
   const mod = load("src/lib/server/detail-metadata.ts", {
     "@/lib/job-detail-dates": jobDetailDates,
+    "@/lib/application-destination": load("src/lib/application-destination.ts", { "./utils.ts": load("src/lib/utils.ts", {}) }),
     "react": { cache: (fn: unknown) => fn }, "next/cache": { unstable_cache: (fn: unknown) => fn },
     "@/lib/firebase-admin": { getAdminDb: () => { throw new Error("Member metadata touched database"); } },
     "@/lib/server/public-opportunities": {}, "@/lib/server/public-detail-cache": {},
