@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import {
+  uploadToStorage,
+  validateImageFile,
+} from "@/lib/upload-file";
 import { storage, auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
@@ -93,6 +97,7 @@ function ProfileContent() {
   const [editing, setEditing] = useState(false);
   const [editSection, setEditSection] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [photoProgress, setPhotoProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Edit form state
@@ -209,27 +214,38 @@ function ProfileContent() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file
-    if (!file.type.startsWith("image/")) return;
-    if (file.size > 5 * 1024 * 1024) {
-      showToast("Image must be under 5MB", "error");
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      showToast(validationError, "error");
+      e.target.value = "";
       return;
     }
 
     setUploading(true);
+    setPhotoProgress(0);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const storageRef = ref(storage, `avatars/${user.uid}.${ext}`);
-      await uploadBytes(storageRef, file);
-      const photoURL = await getDownloadURL(storageRef);
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const photoURL = await uploadToStorage(
+        { ref, uploadBytesResumable, getDownloadURL },
+        storage,
+        `avatars/${user.uid}.${ext}`,
+        file,
+        { contentType: file.type },
+        setPhotoProgress
+      );
       await updateMemberProfile(user.uid, { photoURL });
       setProfile((prev) => (prev ? { ...prev, photoURL } : prev));
       showToast("Photo updated");
     } catch (err) {
       console.error("Failed to upload photo:", err);
-      showToast("Failed to upload photo. Please try again.", "error");
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Failed to upload photo. Please try again.";
+      showToast(message, "error");
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -274,15 +290,12 @@ function ProfileContent() {
           <div className="relative group">
             <Avatar name={displayName} size={72} src={profile?.photoURL} />
             <button
-              aria-label="Edit profile photo"
+              aria-label={uploading ? `Uploading photo ${photoProgress}%` : "Edit profile photo"}
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 transition-opacity cursor-pointer"
-              style={{ borderRadius: 16 }}
+              className="absolute -bottom-1 -right-1 flex items-center justify-center bg-black/70 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full cursor-pointer hover:bg-black/85 focus-visible:outline-2 focus-visible:outline-offset-2 transition-colors"
             >
-              <span className="text-white text-xs font-semibold">
-                {uploading ? "..." : "Edit"}
-              </span>
+              {uploading ? `${photoProgress}%` : "Edit"}
             </button>
             <input
               ref={fileInputRef}
