@@ -88,7 +88,7 @@ async function main() {
   }
   if (APPLY && projectFlag !== creds.projectId) {
     console.error('Refusing to apply: pass --project <id> naming the target Firebase project explicitly.');
-    console.error(`Credentials point at project "${creds.projectId}". This is the human-approval gate — do not bypass it.`);
+    console.error('Credentials point at a configured project. This is the human-approval gate — do not bypass it.');
     process.exit(1);
   }
 
@@ -96,7 +96,7 @@ async function main() {
   const db = admin.firestore();
 
   console.log(APPLY
-    ? `⚠️  APPLY MODE against project "${creds.projectId}". Writes WILL happen.`
+    ? '⚠️  APPLY MODE. Writes WILL happen.'
     : 'DRY RUN — no writes. Pass --apply --project <id> to perform cleanup after human approval.');
 
   const groups = new Map(); // fingerprint -> docs

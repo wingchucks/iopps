@@ -301,6 +301,7 @@ function ProfileContent() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              aria-label="Upload profile photo"
               onChange={handlePhotoUpload}
               className="sr-only"
             />
