@@ -18,6 +18,14 @@ export interface Education {
   year: number;
 }
 
+export interface WorkExperience {
+  title: string;
+  employer: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+}
+
 export interface SalaryRange {
   min: number;
   max: number;
@@ -43,6 +51,7 @@ export interface MemberProfile {
   workPreference?: WorkPreference;
   skills?: string[];
   education?: Education[];
+  workExperience?: WorkExperience[];
   nation?: string;
   territory?: string;
   languages?: string;
@@ -138,6 +147,7 @@ export async function updateCareerPreferences(
     workPreference?: WorkPreference;
     skills?: string[];
     education?: Education[];
+    workExperience?: WorkExperience[];
   }
 ): Promise<void> {
   const error = salaryRangeError(data.salaryRange);

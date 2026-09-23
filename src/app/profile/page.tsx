@@ -28,6 +28,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import { getPublicAccountTypeLabel } from "@/lib/account-labels";
+import { formatWorkDateRange } from "@/lib/profile-entries";
 
 import { interestOptions, interestLabels } from "@/lib/constants/interests";
 
@@ -826,6 +827,45 @@ function ProfileContent() {
                       {skill}
                     </span>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Work Experience Section */}
+            {profile?.workExperience && profile.workExperience.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-bold text-text mb-3">Work Experience</h3>
+                <div className="flex flex-col gap-2">
+                  {profile.workExperience.map((exp, i) => {
+                    const dateRange = formatWorkDateRange(exp.startDate, exp.endDate);
+                    return (
+                      <Card key={i}>
+                        <div style={{ padding: 14 }} className="flex items-start gap-3">
+                          <div
+                            className="flex items-center justify-center rounded-xl flex-shrink-0"
+                            style={{ width: 40, height: 40, background: "rgba(13,148,136,.08)" }}
+                          >
+                            <span className="text-base">&#128188;</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-text mb-0.5 truncate">
+                              {exp.title || exp.employer}
+                            </p>
+                            <p className="text-xs text-text-muted m-0">
+                              {exp.title && exp.employer ? exp.employer : null}
+                              {exp.title && exp.employer && dateRange ? " \u00b7 " : null}
+                              {dateRange}
+                            </p>
+                            {exp.description && (
+                              <p className="text-sm text-text mt-2 mb-0 whitespace-pre-line">
+                                {exp.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
             )}
