@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import {
   uploadToStorage,
   validateImageFile,
@@ -226,7 +226,7 @@ function ProfileContent() {
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const photoURL = await uploadToStorage(
-        { ref, uploadBytesResumable, getDownloadURL },
+        { ref, uploadBytes, uploadBytesResumable, getDownloadURL },
         storage,
         `avatars/${user.uid}.${ext}`,
         file,
@@ -290,12 +290,15 @@ function ProfileContent() {
           <div className="relative group">
             <Avatar name={displayName} size={72} src={profile?.photoURL} />
             <button
-              aria-label={uploading ? `Uploading photo ${photoProgress}%` : "Edit profile photo"}
+              aria-label="Edit profile photo"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="absolute -bottom-1 -right-1 flex items-center justify-center bg-black/70 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full cursor-pointer hover:bg-black/85 focus-visible:outline-2 focus-visible:outline-offset-2 transition-colors"
+              className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 transition-opacity cursor-pointer"
+              style={{ borderRadius: 16 }}
             >
-              {uploading ? `${photoProgress}%` : "Edit"}
+              <span className="text-white text-xs font-semibold">
+                {uploading ? `${photoProgress}%` : "Edit"}
+              </span>
             </button>
             <input
               ref={fileInputRef}

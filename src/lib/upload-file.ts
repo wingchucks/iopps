@@ -70,11 +70,21 @@ export function validateImageFile(file: UploadCandidate): string | null {
 
 export interface StorageDeps {
   ref: (storage: FirebaseStorage, path: string) => StorageReference;
-  uploadBytesResumable: (
+  /**
+   * Resumable upload. Optional so environments whose storage surface predates
+   * it (e.g. mocked SDKs exposing only uploadBytes) still work: the uploader
+   * falls back to a plain uploadBytes when this is absent.
+   */
+  uploadBytesResumable?: (
     storageRef: StorageReference,
     file: Blob,
     metadata?: { contentType?: string }
   ) => UploadTask;
+  uploadBytes: (
+    storageRef: StorageReference,
+    file: Blob,
+    metadata?: { contentType?: string }
+  ) => Promise<unknown>;
   getDownloadURL: (storageRef: StorageReference) => Promise<string>;
 }
 
@@ -82,6 +92,12 @@ export interface StorageDeps {
  * Upload a file to Firebase Storage with progress callbacks.
  * Resolves with the download URL; rejects when the upload or the
  * download-URL fetch fails so callers can show an error state.
+ *
+ * Prefers the resumable API (progress reporting) and falls back to plain
+ * uploadBytes when the injected deps don't provide uploadBytesResumable.
+ * The fallback still keeps the caller-visible contract: the promise stays
+ * pending until the upload finishes, so pages can disable Next/continue
+ * and explain the wait, then flip eligibility when the URL resolves.
  */
 export function uploadToStorage(
   deps: StorageDeps,
@@ -92,20 +108,26 @@ export function uploadToStorage(
   onProgress: (percent: number) => void
 ): Promise<string> {
   const storageRef = deps.ref(storage, path);
-  return new Promise<string>((resolve, reject) => {
-    const task = deps.uploadBytesResumable(storageRef, file, metadata);
-    task.on(
-      "state_changed",
-      (snapshot: UploadTaskSnapshot) => {
-        const total = snapshot.totalBytes || 1;
-        onProgress(
-          Math.min(100, Math.round((snapshot.bytesTransferred / total) * 100))
-        );
-      },
-      (err) => reject(err),
-      () => {
-        deps.getDownloadURL(task.snapshot.ref).then(resolve, reject);
-      }
-    );
+  if (typeof deps.uploadBytesResumable === "function") {
+    return new Promise<string>((resolve, reject) => {
+      const task = (deps.uploadBytesResumable as NonNullable<StorageDeps["uploadBytesResumable"]>)(storageRef, file, metadata);
+      task.on(
+        "state_changed",
+        (snapshot: UploadTaskSnapshot) => {
+          const total = snapshot.totalBytes || 1;
+          onProgress(
+            Math.min(100, Math.round((snapshot.bytesTransferred / total) * 100))
+          );
+        },
+        (err) => reject(err),
+        () => {
+          deps.getDownloadURL(task.snapshot.ref).then(resolve, reject);
+        }
+      );
+    });
+  }
+  return deps.uploadBytes(storageRef, file, metadata).then(() => {
+    onProgress(100);
+    return deps.getDownloadURL(storageRef);
   });
 }

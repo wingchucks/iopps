@@ -170,7 +170,7 @@ function ApplyWizard() {
       const contentType =
         file.type || resumeContentType(file.name) || "application/pdf";
       const url = await uploadToStorage(
-        { ref, uploadBytesResumable, getDownloadURL },
+        { ref, uploadBytes, uploadBytesResumable, getDownloadURL },
         storage,
         `resumes/${user.uid}/${createResumeObjectName(file.name)}`,
         file,

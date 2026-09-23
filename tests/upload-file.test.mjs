@@ -183,11 +183,15 @@ for (const rel of surfaces.slice(0, 2)) {
 
 test('static: profile avatar Edit control opens the picker and shows progress/errors', () => {
   const source = readFileSync(path.join(root, 'src/app/profile/page.tsx'), 'utf8');
+  // QA3 contract: explicit accessible name and reveal on hover/keyboard focus
+  // (individual-qa3-ui.test.ts pins aria-label="Edit profile photo" and
+  // focus-visible:opacity-100). The round-8 always-visible treatment broke
+  // that contract, so the reveal-on-focus design is restored here.
   assert.ok(
-    source.includes('aria-label="Edit profile photo"') ||
-      source.includes('aria-label={'),
-    'avatar edit control must be labelled'
+    source.includes('aria-label="Edit profile photo"'),
+    'avatar edit control must be explicitly named'
   );
+  assert.ok(source.includes('focus-visible:opacity-100'), 'edit control must be visible on keyboard focus');
+  assert.ok(source.includes('group-hover:opacity-100'), 'edit control must be visible on hover');
   assert.ok(source.includes('validateImageFile'), 'must validate the image with a visible error');
-  assert.ok(!source.includes('opacity-0 group-hover:opacity-100'), 'edit control must be visible without hover');
 });
