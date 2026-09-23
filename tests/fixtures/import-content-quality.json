@@ -1,13 +1,146 @@
 [
-  {"name":"replacement character is not reconstructed","raw":"SIGA �s employees","expected":"SIGA �s employees","review":true},
-  {"name":"known punctuation beside intact languages","raw":"Métis ᐃ 💚 â€™ â€“ â€”","expected":"Métis ᐃ 💚 ’ – —","review":false},
-  {"name":"plain prose whitespace","raw":"  First\r\n\r\n\r\nSecond line  \rThird  ","expected":"First\n\nSecond line\nThird","review":false},
-  {"name":"ordered list preserves order","raw":"1. **First**\n2. Second\n\nAfter","expected":"1. First\n2. Second\n\nAfter","review":false},
-  {"name":"unsafe HTML link loses destination","raw":"<a href=\"javascript:fixture()\">Apply</a><script>fixture()</script>","expected":"Apply","review":false},
-  {"name":"unsafe Markdown link is text only","raw":"[Apply](javascript:fixture)","expected":"Apply","review":false},
-  {"name":"encoded markup remains literal","raw":"&lt;img src=x onerror=fixture()&gt;","expected":"<img src=x onerror=fixture()>","review":false},
-  {"name":"double encoded markup is decoded once","raw":"&amp;lt;svg/onload=fixture()&amp;gt;","expected":"&lt;svg/onload=fixture()&gt;","review":false},
-  {"name":"unknown encoding is flagged not guessed","raw":"Ã unknown","expected":"Ã unknown","review":true},
-  {"name":"typo is flagged not globally rewritten","raw":"More possiblilties","expected":"More possiblilties","review":true},
-  {"name":"unmatched Markdown remains literal","raw":"2 ** 3 and a_b identifier","expected":"2 ** 3 and a_b identifier","review":false}
+  {
+    "name": "replacement character is not reconstructed",
+    "raw": "SIGA �s employees",
+    "expected": "SIGA �s employees",
+    "review": true
+  },
+  {
+    "name": "known punctuation beside intact languages",
+    "raw": "Métis ᐃ 💚 â€™ â€“ â€”",
+    "expected": "Métis ᐃ 💚 ’ – —",
+    "review": false
+  },
+  {
+    "name": "plain prose whitespace",
+    "raw": "  First\r\n\r\n\r\nSecond line  \rThird  ",
+    "expected": "First\n\nSecond line\nThird",
+    "review": false
+  },
+  {
+    "name": "ordered list preserves order",
+    "raw": "1. **First**\n2. Second\n\nAfter",
+    "expected": "1. First\n2. Second\n\nAfter",
+    "review": false
+  },
+  {
+    "name": "unsafe HTML link loses destination",
+    "raw": "<a href=\"javascript:fixture()\">Apply</a><script>fixture()</script>",
+    "expected": "Apply",
+    "review": false
+  },
+  {
+    "name": "unsafe Markdown link is text only",
+    "raw": "[Apply](javascript:fixture)",
+    "expected": "Apply",
+    "review": false
+  },
+  {
+    "name": "encoded markup remains literal",
+    "raw": "&lt;img src=x onerror=fixture()&gt;",
+    "expected": "<img src=x onerror=fixture()>",
+    "review": false
+  },
+  {
+    "name": "double encoded markup is decoded once",
+    "raw": "&amp;lt;svg/onload=fixture()&amp;gt;",
+    "expected": "&lt;svg/onload=fixture()&gt;",
+    "review": false
+  },
+  {
+    "name": "unknown encoding is flagged not guessed",
+    "raw": "Ã unknown",
+    "expected": "Ã unknown",
+    "review": true
+  },
+  {
+    "name": "typo is flagged not globally rewritten",
+    "raw": "More possiblilties",
+    "expected": "More possiblilties",
+    "review": true
+  },
+  {
+    "name": "unmatched Markdown remains literal",
+    "raw": "2 ** 3 and a_b identifier",
+    "expected": "2 ** 3 and a_b identifier",
+    "review": false
+  },
+  {
+    "name": "artifact posted line is stripped",
+    "raw": "Great role.\nOriginally posted: Jan 5, 2026\nApply today.",
+    "expected": "Great role.\nApply today.",
+    "review": false
+  },
+  {
+    "name": "artifact posted line is stripped from HTML",
+    "raw": "<p>Great role.</p><p>Originally posted: 2026-01-05</p><p>Apply today.</p>",
+    "expected": "Great role.\n\nApply today.",
+    "review": false
+  },
+  {
+    "name": "broken hyphen spacing is repaired",
+    "raw": "18- unit apartment available now",
+    "expected": "18-unit apartment available now",
+    "review": false
+  },
+  {
+    "name": "hyphen range before digits is untouched",
+    "raw": "2024 - 2025 school year",
+    "expected": "2024 - 2025 school year",
+    "review": false
+  },
+  {
+    "name": "concatenated post tag is split",
+    "raw": "See postscholarships and postevents for details",
+    "expected": "See post scholarships and post events for details",
+    "review": false
+  },
+  {
+    "name": "duplicated location segments collapse",
+    "raw": "",
+    "expected": "",
+    "review": false,
+    "label": "Vancouver, Vancouver",
+    "expectedLabel": "Vancouver"
+  },
+  {
+    "name": "duplicated adjacent location words collapse",
+    "raw": "",
+    "expected": "",
+    "review": false,
+    "label": "Vancouver Vancouver, BC",
+    "expectedLabel": "Vancouver, BC"
+  },
+  {
+    "name": "distinct location segments survive",
+    "raw": "",
+    "expected": "",
+    "review": false,
+    "label": "Saskatoon, SK",
+    "expectedLabel": "Saskatoon, SK"
+  },
+  {
+    "name": "ampersand spacing stays exact and flagged",
+    "raw": "FNC&FS&JPS Mental Health Worker",
+    "expected": "FNC&FS&JPS Mental Health Worker",
+    "review": true
+  },
+  {
+    "name": "camelCase stays exact and flagged",
+    "raw": "ChildYouth Support Worker",
+    "expected": "ChildYouth Support Worker",
+    "review": true
+  },
+  {
+    "name": "ampersand missing leading space stays exact and flagged",
+    "raw": "Circle Camp& National Day",
+    "expected": "Circle Camp& National Day",
+    "review": true
+  },
+  {
+    "name": "real brand name is untouched",
+    "raw": "Canad Inns",
+    "expected": "Canad Inns",
+    "review": false
+  }
 ]
