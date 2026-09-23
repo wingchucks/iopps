@@ -4,6 +4,7 @@ import ProfileMediaUploader from "@/components/org-dashboard/ProfileMediaUploade
 import ProvinceSelect from "@/components/ProvinceSelect";
 import BusinessIdentityField from "@/components/org-dashboard/BusinessIdentityField";
 import { TERRITORY_OPTIONS } from "@/lib/job-hiring-details";
+import { COMMUNITY_IDENTITY_TAG_SUGGESTIONS, INDUSTRY_TAG_SUGGESTIONS } from "@/lib/profile-tag-suggestions";
 import { formatOrganizationHoursDay, type OrganizationBusinessIdentity } from "@/lib/organization-profile";
 
 const TEAL = "var(--teal)";
@@ -20,7 +21,10 @@ const DAY_LABELS: Record<(typeof DAYS)[number], string> = {
 };
 const INDUSTRY_OPTIONS = ["", "Technology", "Healthcare", "Education", "Finance", "Manufacturing", "Retail", "Construction", "Transportation", "Agriculture", "Energy", "Media & Entertainment", "Hospitality", "Food & Beverage", "Personal Care & Beauty", "Automotive Services", "Sports & Recreation", "Real Estate", "Non-Profit", "Government", "Other"];
 const SIZE_OPTIONS = ["", "1-10", "11-50", "51-200", "200+"];
-const SUGGESTED_TAGS = ["Recruitment", "Training", "Hospitality", "Human Resources", "First Nations", "Saskatchewan", "Career Development", "Gaming Industry"];
+// Discovery-tag suggestions are split: community identity (nations, treaties,
+// Indigenous identity) separate from industry/sector tags (bug 9).
+const SUGGESTED_COMMUNITY_TAGS: readonly string[] = COMMUNITY_IDENTITY_TAG_SUGGESTIONS;
+const SUGGESTED_INDUSTRY_TAGS: readonly string[] = INDUSTRY_TAG_SUGGESTIONS;
 const SUGGESTED_SERVICES = ["Hiring", "Training", "Scholarships", "Events", "Professional Services", "Community Partnerships"];
 const TREATY_OPTIONS = ["", ...TERRITORY_OPTIONS];
 const SECTION_LABELS = { Identity: "Business basics", Story: "Our story", Credibility: "Identity & community", Discoverability: "Services & location", Contact: "Contact", Media: "Photos" };
@@ -643,10 +647,25 @@ export default function CanonicalEditProfileTab({
                   }
                 }} />
               </div>
-              <div className="flex flex-wrap gap-2">
-                {SUGGESTED_TAGS.filter((tag) => !tags.includes(tag)).map((tag) => (
-                  <button type="button" key={tag} className="brand-button px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", border: "1px solid var(--border)" }} onClick={() => setTags((prev) => [...prev, tag])}>+ {tag}</button>
-                ))}
+              <div className="mb-4">
+                <div className="text-xs font-semibold mb-2" style={{ color: "var(--text-sec)" }}>
+                  Community & identity
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {SUGGESTED_COMMUNITY_TAGS.filter((tag) => !tags.includes(tag)).map((tag) => (
+                    <button type="button" key={tag} className="brand-button px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", border: "1px solid var(--border)" }} onClick={() => setTags((prev) => [...prev, tag])}>+ {tag}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold mb-2" style={{ color: "var(--text-sec)" }}>
+                  Industry & sector
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {SUGGESTED_INDUSTRY_TAGS.filter((tag) => !tags.includes(tag)).map((tag) => (
+                    <button type="button" key={tag} className="brand-button px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all" style={{ background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", border: "1px solid var(--border)" }} onClick={() => setTags((prev) => [...prev, tag])}>+ {tag}</button>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="mb-5">
@@ -686,7 +705,10 @@ export default function CanonicalEditProfileTab({
             </div>
             <div className="mb-5">
               <label style={labelStyle} htmlFor="business-field-11">Public contact email</label>
-              <input id="business-field-11" type="email" style={inputStyle} value={profileForm.contactEmail} onChange={(event) => setProfileForm((prev) => ({ ...prev, contactEmail: event.target.value }))} />
+              <input id="business-field-11" type="email" style={inputStyle} value={profileForm.contactEmail} onChange={(event) => setProfileForm((prev) => ({ ...prev, contactEmail: event.target.value }))} placeholder="team@yourorg.ca" aria-describedby="business-field-11-hint" />
+              <p id="business-field-11-hint" className="text-xs mt-2" style={{ color: "var(--text-sec)" }}>
+                This email is shown publicly on your profile. Your sign-in email is never displayed publicly.
+              </p>
             </div>
             <div className="mb-5">
               <label style={labelStyle} htmlFor="business-field-12">Phone</label>

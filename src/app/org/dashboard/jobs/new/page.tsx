@@ -6,8 +6,9 @@ import JobLocationFields, { formatJobLocation } from "@/components/employer/JobL
 import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
 import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
 import { normalizeHiringDetails, type HiringDetails } from "@/lib/job-hiring-details";
+import { JOB_AREAS, EMPLOYMENT_TYPE_OPTIONS } from "@/lib/job-taxonomy";
 import { confirmSavedJob, type JobSaveConfirmation } from "@/lib/job-save-confirmation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
@@ -20,14 +21,10 @@ import type { Organization } from "@/lib/firestore/organizations";
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const JOB_CATEGORIES = [
-  "Administration", "Agriculture", "Arts & Culture", "Business",
-  "Construction & Trades", "Education", "Environment & Land",
-  "Finance", "Government & Public Service", "Health & Wellness",
-  "Hospitality & Tourism", "Human Resources", "Information Technology",
-  "Legal", "Management", "Marketing & Communications",
-  "Natural Resources", "Social Services", "Transportation", "Other",
-];
+// Job categories come from the shared taxonomy (src/lib/job-taxonomy.ts) so
+// the wizard, the job edit form, and the jobs board can never contradict
+// each other. "Food & Beverage / Restaurant" is a first-class category (bug 11).
+const JOB_CATEGORIES = JOB_AREAS;
 
 const COMMUNITY_TAGS = [
   "Treaty 6", "Treaty 4", "Treaty 7", "Cree", "Métis", "Dene",
@@ -641,6 +638,87 @@ export default function NewJobWizardPage() {
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  /* ---- Private auto-save (bug 13) ----
+   * Abandoning the wizard mid-flow used to lose everything. The wizard now
+   * auto-saves a draft to this browser's localStorage (debounced), restored
+   * when the owner returns. The draft is device-private: nothing is sent to
+   * the server until Publish / Save as Draft, so an abandoned wizard never
+   * creates a public draft or listing. */
+  const DRAFT_KEY = `iopps:job-wizard-draft:v1:${user?.uid ?? "anon"}`;
+  const [draftNotice, setDraftNotice] = useState("");
+  const didRestoreRef = useRef(false);
+  const formRef = useRef(form);
+  formRef.current = form;
+
+  const hasDraftContent = (f: FormState): boolean =>
+    Boolean(
+      f.title.trim() || f.department.trim() || f.category || f.employmentType ||
+      f.location.trim() || f.locationCity.trim() || f.locationProvince ||
+      f.salaryMin || f.salaryMax || f.closingDate || f.externalApplyUrl.trim() ||
+      f.description.trim() || f.responsibilities.length || f.qualifications.length ||
+      f.benefits.length || f.indigenousPreferenceLevel || f.communityTags.length,
+    );
+
+  // Restore a previously auto-saved draft into a pristine form.
+  useEffect(() => {
+    if (!user || didRestoreRef.current) return;
+    didRestoreRef.current = true;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { savedAt?: number; step?: number; form?: FormState };
+      if (!parsed?.form || !hasDraftContent(parsed.form)) return;
+      if (hasDraftContent(formRef.current)) return; // never clobber fresh input
+      setForm({
+        ...emptyForm,
+        ...parsed.form,
+        responsibilities: parsed.form.responsibilities ?? [],
+        qualifications: parsed.form.qualifications ?? [],
+        benefits: parsed.form.benefits ?? [],
+        communityTags: parsed.form.communityTags ?? [],
+        hiringDetails: normalizeHiringDetails(parsed.form.hiringDetails ?? {}),
+      });
+      if (typeof parsed.step === "number" && parsed.step >= 0 && parsed.step <= 2) {
+        setStep(parsed.step as WizardStep);
+      }
+      setDraftNotice(
+        parsed.savedAt
+          ? `Restored your unsent draft from ${new Date(parsed.savedAt).toLocaleString()}.`
+          : "Restored your unsent draft.",
+      );
+    } catch {
+      // Corrupt or unreadable draft: start fresh, wizard keeps working.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // Auto-save the draft (debounced) while the wizard is in progress.
+  useEffect(() => {
+    if (!user || loading || step === "success") return;
+    if (!hasDraftContent(form)) return; // don't overwrite a real draft with an empty form
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({ savedAt: Date.now(), step: typeof step === "number" ? step : 0, form }),
+        );
+      } catch {
+        // Storage full or blocked: the wizard still works, restore just won't fire.
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, step, user, loading]);
+
+  const discardDraft = () => {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // ignore
+    }
+    setDraftNotice("");
+  };
+
   /* ---- Validation ---- */
   const validateStep0 = (): boolean => {
     const e: Record<string, string> = {};
@@ -748,6 +826,7 @@ export default function NewJobWizardPage() {
 
       setConfirmation(await confirmSavedJob(result.jobId, (url) => fetch(url, { headers: { Authorization: `Bearer ${idToken}` } })));
       setStep("success");
+      discardDraft(); // job is saved server-side now; the private auto-save is redundant
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Failed to create job:", err);
@@ -768,7 +847,21 @@ export default function NewJobWizardPage() {
   return (
     <OrgRoute>
       <AppShell>
-        <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+        {/* Mobile pass (bug 19c): 390px-safe layout. Two-column field grids
+            collapse to one column, the salary row reflows, and inputs get a
+            16px font (no iOS auto-zoom) with 44px touch targets. */}
+        <style>{`
+          @media (max-width: 520px) {
+            .job-wizard .job-wizard-two-col { grid-template-columns: 1fr !important; }
+            .job-wizard .job-wizard-salary { grid-template-columns: 1fr 1fr !important; }
+            .job-wizard .job-wizard-salary > :last-child { grid-column: 1 / -1; }
+            .job-wizard input:not([type="checkbox"]):not([type="radio"]),
+            .job-wizard select,
+            .job-wizard textarea { font-size: 16px; min-height: 44px; }
+            .job-wizard .brand-button { min-height: 44px; }
+          }
+        `}</style>
+        <div className="job-wizard" style={{ minHeight: "100vh", background: "var(--bg)" }}>
           <div
             style={{
               maxWidth: 720,
@@ -938,6 +1031,45 @@ export default function NewJobWizardPage() {
 
                 <ProgressBar step={typeof step === "number" ? step : 0} />
 
+                {draftNotice && (
+                  <div
+                    role="status"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      flexWrap: "wrap",
+                      padding: "12px 16px",
+                      borderRadius: 12,
+                      background: "rgba(13,148,136,.08)",
+                      border: "1px solid rgba(13,148,136,.25)",
+                      fontSize: 13,
+                      color: "var(--text)",
+                      marginBottom: 16,
+                    }}
+                  >
+                    <span>{draftNotice} Nothing has been published.</span>
+                    <button
+                      type="button"
+                      onClick={discardDraft}
+                      style={{
+                        minHeight: 44,
+                        padding: "8px 16px",
+                        borderRadius: 10,
+                        border: "1px solid var(--border)",
+                        background: "var(--button-gradient-soft)",
+                        color: "var(--button-gradient-soft-text)",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Discard draft
+                    </button>
+                  </div>
+                )}
+
                 {/* ============ STEP 0: JOB DETAILS ============ */}
                 {step === 0 && (
                   <div style={cardStyle}>
@@ -955,7 +1087,7 @@ export default function NewJobWizardPage() {
                       />
                     </FormField>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    <div className="job-wizard-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                       <FormField label="Department">
                         <TextInput
                           value={form.department}
@@ -976,21 +1108,16 @@ export default function NewJobWizardPage() {
                       </FormField>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    <div className="job-wizard-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                       <FormField label="Employment Type">
                         <Select
                           value={form.employmentType}
                           onChange={(v) => set("employmentType", v)}
                         >
                           <option value="">Select type...</option>
-                          <option>Full-time</option>
-                          <option>Part-time</option>
-                          <option>Contract</option>
-                          <option>Casual</option>
-                          <option>Temporary</option>
-                          <option>Seasonal</option>
-                          <option>Internship</option>
-                          <option>Volunteer</option>
+                          {EMPLOYMENT_TYPE_OPTIONS.map((type) => (
+                            <option key={type}>{type}</option>
+                          ))}
                         </Select>
                       </FormField>
                       <FormField label="Work Location">
@@ -1022,7 +1149,7 @@ export default function NewJobWizardPage() {
                       >
                         Salary Range
                       </label>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 140px", gap: 8 }}>
+                      <div className="job-wizard-salary" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 140px", gap: 8 }}>
                         <input
                           type="number"
                           value={form.salaryMin}
@@ -1049,7 +1176,7 @@ export default function NewJobWizardPage() {
                       </div>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    <div className="job-wizard-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                       <ClosingDateField value={form.closingDate} onChange={v => set("closingDate", v)} />
                       <FormField
                         label="External Apply URL"
