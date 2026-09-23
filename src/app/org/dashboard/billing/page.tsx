@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import OrgRoute from "@/components/OrgRoute";
-import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
 import type { FeaturedJobSummary } from "@/components/FeaturedJobControl";
 import { useAuth } from "@/lib/auth-context";
+import DashboardSectionShell from "@/components/org-dashboard/DashboardSectionShell";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 
 interface EmployerData {
@@ -54,18 +53,6 @@ const PLAN_FEATURES: Record<string, { label: string; features: string[]; color: 
 };
 
 export default function BillingPage() {
-  return (
-    <OrgRoute>
-      <AppShell>
-        <div className="min-h-screen bg-bg">
-          <BillingContent />
-        </div>
-      </AppShell>
-    </OrgRoute>
-  );
-}
-
-function BillingContent() {
   const { user } = useAuth();
   const [employer, setEmployer] = useState<EmployerData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,6 +75,30 @@ function BillingContent() {
     })();
   }, [user]);
 
+  return (
+    <DashboardSectionShell
+      title="Billing & Plan"
+      description="Posting a job is free. Paid options add promotion and featured placement."
+      orgPlan={employer?.subscriptionTier || employer?.plan}
+    >
+      {loading ? (
+        <div>
+          <div className="skeleton h-8 w-48 rounded mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-32 rounded-2xl" />)}
+          </div>
+        </div>
+      ) : (
+        <BillingContent employer={employer} />
+      )}
+    </DashboardSectionShell>
+  );
+}
+
+function BillingContent({ employer }: { employer: EmployerData | null }) {
+  // Captured once per mount: the render-purity rule forbids Date.now() during render.
+  const [now] = useState(() => Date.now());
+
   const currentPlan = employer?.subscriptionTier || employer?.plan || "free";
   const planInfo = PLAN_FEATURES[currentPlan] || PLAN_FEATURES.free;
   const billingStart = employer?.billingStartAt || employer?.subscriptionStart;
@@ -97,31 +108,13 @@ function BillingContent() {
   const subscriptionEndLabel = employer?.subscriptionEnd
     ? new Date(employer.subscriptionEnd).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })
     : null;
-  const hasBonusAccess = Boolean(employer?.bonusAccessGrantedAt && billingStart && new Date(billingStart).getTime() > Date.now());
+  const hasBonusAccess = Boolean(employer?.bonusAccessGrantedAt && billingStart && new Date(billingStart).getTime() > now);
 
-  const hasExpired = Boolean(employer?.subscriptionEnd && Date.parse(employer.subscriptionEnd) <= Date.now());
+  const hasExpired = Boolean(employer?.subscriptionEnd && Date.parse(employer.subscriptionEnd) <= now);
   const isActive = currentPlan === "free" || (!hasExpired && (employer?.subscriptionStatus === "active" || hasBonusAccess));
 
-  if (loading) {
-    return (
-      <div className="max-w-[800px] mx-auto px-4 py-8">
-        <div className="skeleton h-8 w-48 rounded mb-6" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-32 rounded-2xl" />)}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-[800px] mx-auto px-4 py-8 md:px-6">
-      <Link href="/org/dashboard" className="inline-flex items-center gap-1 text-sm font-semibold no-underline mb-6" style={{ color: "var(--teal)" }}>
-        ← Back to Dashboard
-      </Link>
-
-      <h1 className="text-2xl font-extrabold text-text mb-1">Billing & Plan</h1>
-      <p className="text-sm text-text-muted mb-8">Posting a job is free. Paid options add promotion and featured placement.</p>
-
+    <div className="max-w-[800px]">
       {/* Current Plan Card */}
       <Card className="mb-6">
         <div className="p-6">

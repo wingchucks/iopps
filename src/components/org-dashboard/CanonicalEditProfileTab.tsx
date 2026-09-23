@@ -475,6 +475,9 @@ export default function CanonicalEditProfileTab({
             </div>
             <div className="mb-5">
               <label style={labelStyle} htmlFor="business-field-6">Description</label>
+              <p className="text-xs mb-2 leading-relaxed" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                This appears on your public profile under “Why People Connect Here” — the section that tells visitors why people connect with your organization.
+              </p>
               <textarea id="business-field-6"
                 style={{ ...inputStyle, minHeight: 180, resize: "vertical" }}
                 value={profileForm.description}

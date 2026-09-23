@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import {
+  computeJobStats,
+  visibleJobRecords,
+  type JobStatRecord,
+} from "@/lib/dashboard-stats";
 
 export async function GET(req: NextRequest) {
   try {
@@ -31,32 +36,53 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "No org found" }, { status: 403 });
     }
 
-    // Count jobs
+    // Count jobs. Employer jobs live in BOTH the `jobs` collection and the
+    // `posts` collection (type === "job") — /api/employer/dashboard and the
+    // Jobs list merge both, so stats must too, or orgs whose jobs are stored
+    // as posts see 0/0/0 here while their listings show jobs.
     const jobsSnap = await adminDb
       .collection("jobs")
       .where("employerId", "==", orgId)
       .get();
 
-    // Job deletion is a tombstone, not a hard delete. Match the Jobs list.
-    const visibleJobs = jobsSnap.docs.filter((d) => {
-      const data = d.data();
-      return data.status !== "deleted" && !data.deletedAt;
-    });
-    const totalPosts = visibleJobs.length;
-    const activePosts = visibleJobs.filter((d) => {
-      const data = d.data();
-      return data.active === true || data.status === "active";
-    }).length;
-
-    // Count applications across all jobs
-    let applications = 0;
-    for (const jobDoc of visibleJobs) {
-      const appsSnap = await adminDb
-        .collection("applications")
-        .where("jobId", "==", jobDoc.id)
+    let postDocs: Array<{ id: string; data: () => Record<string, unknown> }> = [];
+    try {
+      const postsSnap = await adminDb
+        .collection("posts")
+        .where("orgId", "==", orgId)
         .get();
-      applications += appsSnap.size;
+      postDocs = postsSnap.docs.filter((d) => d.data()?.type === "job");
+    } catch (err) {
+      // Stats must not fail outright when the posts read is unavailable;
+      // fall back to the jobs collection rather than returning nothing.
+      console.error("[employer/stats] posts read failed, using jobs only:", err instanceof Error ? err.message : err);
     }
+
+    const records: JobStatRecord[] = [
+      ...jobsSnap.docs.map((d) => ({ ...(d.data() as Record<string, unknown>), id: d.id })),
+      ...postDocs.map((d) => ({ ...d.data(), id: d.id })),
+    ];
+    const visibleJobs = visibleJobRecords(records);
+    const { totalPosts, activePosts } = computeJobStats(records);
+
+    // Count applications across all visible jobs. The per-job reads run in
+    // parallel: the old sequential loop made this endpoint intermittently
+    // slow enough to fail, which the dashboard then swallowed silently.
+    const db = adminDb;
+    const applicationCounts = await Promise.all(
+      visibleJobs.map(async (job) => {
+        try {
+          const appsSnap = await db
+            .collection("applications")
+            .where("jobId", "==", job.id)
+            .get();
+          return appsSnap.size;
+        } catch {
+          return 0;
+        }
+      }),
+    );
+    const applications = applicationCounts.reduce((sum, n) => sum + n, 0);
 
     // Count profile views from subcollection
     let profileViews = 0;

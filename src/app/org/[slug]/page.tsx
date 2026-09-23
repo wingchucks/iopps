@@ -223,7 +223,9 @@ function OrgProfileContent() {
   const hasContact = websiteUrl || org.contactEmail || org.phone || org.address;
   const hasTags = Boolean(org.tags?.length);
   const hasQuickStats = foundedYear || employeeCount || profileJobCount > 0;
-  const hasStory = Boolean(org.tagline || org.description);
+  // The tagline is already the profile intro in the hero header; the story
+  // section renders the description exactly once (bug 12).
+  const hasStory = Boolean(org.description);
   const hasOpportunities = relatedJobCount > 0 || events.length > 0 || scholarships.length > 0 || training.length > 0;
   const hasHours = org.hours && typeof org.hours === "object" && Object.keys(org.hours).length > 0;
   const hasGallery = org.gallery && Array.isArray(org.gallery) && org.gallery.length > 0;
@@ -419,16 +421,9 @@ function OrgProfileContent() {
               <h2 className="text-base font-bold text-text mb-4 flex items-center gap-2">
                 <span className="text-lg">🧭</span> Why People Connect Here
               </h2>
-              {org.tagline && (
-                <p className="mb-3 text-lg font-semibold text-text">
-                  {org.tagline}
-                </p>
-              )}
-              {org.description && (
-                <p className="text-sm text-text-muted leading-[1.7] whitespace-pre-wrap">
-                  {org.description}
-                </p>
-              )}
+              <p className="text-sm text-text-muted leading-[1.7] whitespace-pre-wrap">
+                {org.description}
+              </p>
             </div>
           )}
 
