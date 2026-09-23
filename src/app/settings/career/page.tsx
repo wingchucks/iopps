@@ -11,8 +11,17 @@ import {
   updateCareerPreferences,
   type WorkPreference,
   type Education,
+  type WorkExperience,
   type SalaryRange,
 } from "@/lib/firestore/members";
+import {
+  addEntry,
+  educationEntryLabel,
+  formatWorkDate,
+  removeEntry,
+  updateEntry,
+  workExperienceEntryLabel,
+} from "@/lib/profile-entries";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
@@ -28,6 +37,14 @@ const workPreferenceOptions: { value: WorkPreference; label: string }[] = [
 ];
 
 const emptyEducation: Education = { school: "", degree: "", field: "", year: new Date().getFullYear() };
+
+const emptyWorkExperience: WorkExperience = {
+  title: "",
+  employer: "",
+  startDate: "",
+  endDate: "",
+  description: "",
+};
 
 export default function CareerSettingsPage() {
   return (
@@ -59,6 +76,7 @@ function CareerSettingsContent() {
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
   const [education, setEducation] = useState<Education[]>([]);
+  const [workExperience, setWorkExperience] = useState<WorkExperience[]>([]);
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -74,6 +92,7 @@ function CareerSettingsContent() {
         setWorkPreference(data.workPreference ?? "any");
         setSkills(data.skills ?? []);
         setEducation(data.education ?? []);
+        setWorkExperience(data.workExperience ?? []);
       }
     } catch (err) {
       console.error("Failed to load career preferences:", err);
@@ -117,17 +136,27 @@ function CareerSettingsContent() {
   };
 
   const addEducation = () => {
-    setEducation((prev) => [...prev, { ...emptyEducation }]);
+    setEducation((prev) => addEntry(prev, emptyEducation));
   };
 
   const updateEducation = (index: number, field: keyof Education, value: string | number) => {
-    setEducation((prev) =>
-      prev.map((edu, i) => (i === index ? { ...edu, [field]: value } : edu))
-    );
+    setEducation((prev) => updateEntry(prev, index, field, value));
   };
 
   const removeEducation = (index: number) => {
-    setEducation((prev) => prev.filter((_, i) => i !== index));
+    setEducation((prev) => removeEntry(prev, index));
+  };
+
+  const addWorkExperience = () => {
+    setWorkExperience((prev) => addEntry(prev, emptyWorkExperience));
+  };
+
+  const updateWorkExperience = (index: number, field: keyof WorkExperience, value: string) => {
+    setWorkExperience((prev) => updateEntry(prev, index, field, value));
+  };
+
+  const removeWorkExperience = (index: number) => {
+    setWorkExperience((prev) => removeEntry(prev, index));
   };
 
   const handleSave = async () => {
@@ -150,6 +179,9 @@ function CareerSettingsContent() {
         workPreference,
         skills,
         education: education.filter((e) => e.school.trim() !== ""),
+        workExperience: workExperience.filter(
+          (e) => e.title.trim() !== "" || e.employer.trim() !== ""
+        ),
       });
       showToast("Career preferences saved");
     } catch (err) {
@@ -405,7 +437,7 @@ function CareerSettingsContent() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-text-muted">
-                      Entry {i + 1}
+                      {educationEntryLabel(edu, i)}
                     </span>
                     <button
                       onClick={() => removeEducation(i)}
@@ -445,6 +477,93 @@ function CareerSettingsContent() {
                       placeholder="Year"
                     />
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Work Experience */}
+      <Card className="mb-6">
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-[15px] font-bold text-text m-0">Work Experience</h3>
+            <Button small onClick={addWorkExperience}>
+              + Add
+            </Button>
+          </div>
+          {workExperience.length === 0 ? (
+            <p className="text-sm text-text-muted italic m-0">
+              No work experience entries yet.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {workExperience.map((exp, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl p-3"
+                  style={{
+                    border: "1px solid var(--border)",
+                    background: "var(--bg)",
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-text-muted">
+                      {workExperienceEntryLabel(exp, i)}
+                    </span>
+                    <button
+                      onClick={() => removeWorkExperience(i)}
+                      className="text-xs cursor-pointer bg-transparent border-none p-0"
+                      style={{ color: "var(--red)" }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={exp.title}
+                      onChange={(e) => updateWorkExperience(i, "title", e.target.value)}
+                      className="px-3 py-2 rounded-lg border border-border bg-card text-text text-sm outline-none focus:border-teal"
+                      placeholder="Job Title"
+                    />
+                    <input
+                      type="text"
+                      value={exp.employer}
+                      onChange={(e) => updateWorkExperience(i, "employer", e.target.value)}
+                      className="px-3 py-2 rounded-lg border border-border bg-card text-text text-sm outline-none focus:border-teal"
+                      placeholder="Employer"
+                    />
+                    <input
+                      type="month"
+                      value={exp.startDate}
+                      aria-label="Start date"
+                      onChange={(e) => updateWorkExperience(i, "startDate", e.target.value)}
+                      className="px-3 py-2 rounded-lg border border-border bg-card text-text text-sm outline-none focus:border-teal"
+                    />
+                    <input
+                      type="month"
+                      value={exp.endDate}
+                      aria-label="End date (leave blank if current)"
+                      onChange={(e) => updateWorkExperience(i, "endDate", e.target.value)}
+                      className="px-3 py-2 rounded-lg border border-border bg-card text-text text-sm outline-none focus:border-teal"
+                    />
+                    <textarea
+                      value={exp.description}
+                      onChange={(e) => updateWorkExperience(i, "description", e.target.value)}
+                      className="px-3 py-2 rounded-lg border border-border bg-card text-text text-sm outline-none focus:border-teal sm:col-span-2"
+                      placeholder="What did you do in this role?"
+                      rows={3}
+                    />
+                  </div>
+                  {(exp.startDate || exp.endDate) && (
+                    <p className="text-xs text-text-muted mt-2 mb-0">
+                      {formatWorkDate(exp.startDate)}
+                      {formatWorkDate(exp.startDate) && " — "}
+                      {formatWorkDate(exp.endDate) || "Present"}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
