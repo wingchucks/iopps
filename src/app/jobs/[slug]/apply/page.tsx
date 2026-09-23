@@ -426,10 +426,19 @@ function ApplyWizard() {
             {/* File upload area */}
             {!resumeFile && !useProfile && (
               <div
+                role="button"
+                tabIndex={0}
+                aria-label="Upload resume. PDF or DOC, max 5MB. Activate to choose a file."
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
                 className="rounded-2xl cursor-pointer transition-colors mb-4 text-center"
                 style={{
                   border: `2px dashed ${dragOver ? "var(--teal)" : "var(--border)"}`,
@@ -441,7 +450,7 @@ function ApplyWizard() {
                   ref={fileInputRef}
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  className="hidden"
+                  className="sr-only"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) handleFileSelect(f);
