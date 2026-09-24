@@ -108,7 +108,12 @@ export async function POST(req: NextRequest) {
       employerId: uid,
       name,
       contactName: userData?.displayName || name,
-      contactEmail: email,
+      // Public contact email starts empty on purpose (bug 14): the
+      // organizations record is rendered publicly, so the sign-in email must
+      // never be copied into it. The owner enters a public email during
+      // onboarding or in the profile editor. The sign-in email stays private
+      // on the employers doc.
+      contactEmail: "",
       slug,
       type,
       website: website || "",

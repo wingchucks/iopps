@@ -2,8 +2,8 @@ import Link from "next/link";
 interface DashboardStats { totalPosts: number; activePosts: number; applications: number; profileViews: number; }
 interface ActivityItem { id: string; type: string; message: string; timestamp: { _seconds: number } | string; }
 interface DashJob { id: string; title: string; status?: string; applicationCount: number; createdAt?: unknown; }
-export function EmployerOverview({ stats, statsAvailable, activity, jobs, timeAgo, formatTimestamp, demo = false }: {
-  demo?: boolean; stats: DashboardStats; statsAvailable: boolean; activity: ActivityItem[]; jobs: DashJob[];
+export function EmployerOverview({ stats, statsAvailable, statsLoading = false, statsError = false, onRetryStats, activity, jobs, timeAgo, formatTimestamp, demo = false }: {
+  demo?: boolean; stats: DashboardStats; statsAvailable: boolean; statsLoading?: boolean; statsError?: boolean; onRetryStats?: () => void; activity: ActivityItem[]; jobs: DashJob[];
   timeAgo: (ts: unknown) => string; formatTimestamp: (ts: unknown) => string;
 }) {
   const drafts = jobs.filter((job) => job.status === "draft");
@@ -17,7 +17,7 @@ export function EmployerOverview({ stats, statsAvailable, activity, jobs, timeAg
       <Link href={demo ? `/demo/employer?tab=Applicants` : "/org/dashboard/applications"}><span>02 / CANDIDATES</span><h3>Find your next hire</h3><p>Review applications, shortlist candidates, and record notes.</p><strong>Review applicants →</strong></Link>
       <Link href={demo ? `/demo/employer?tab=Profile` : "/org/dashboard?tab=Edit%20Profile"}><span>03 / YOUR ORGANIZATION</span><h3>Make a strong first impression</h3><p>Tell candidates who you are and why they should join you.</p><strong>Edit employer profile →</strong></Link>
     </div>
-    <EmployerMetrics stats={stats} available={statsAvailable} />
+    <EmployerMetrics stats={stats} available={statsAvailable} loading={statsLoading} error={statsError} onRetry={onRetryStats} />
     <div className="employer-columns">
       <section className="employer-panel"><div className="employer-section-heading"><h2>Recent jobs</h2><Link href={demo ? `/demo/employer?tab=Jobs` : "/org/dashboard/jobs"}>View all →</Link></div>
         {!jobs.length ? <div className="employer-empty"><h3>Your first opportunity starts here.</h3><p>Draft your job, choose how candidates apply, then review it before publishing.</p><Link href={demo ? `/demo/employer?tab=Post%20a%20Job` : "/org/dashboard/jobs/new"} className="employer-primary">Create your first job</Link></div> : jobs.slice(0, 5).map(job => <Link key={job.id} className="employer-job-row" href={demo ? `/demo/employer?tab=Jobs&job=${job.id}` : `/org/dashboard/jobs/${job.id}/edit`}><div><span className="employer-status">{job.status || "active"}</span><h3>{job.title}</h3><p>{formatTimestamp(job.createdAt)}</p></div><span>{job.applicationCount || 0} applications <span aria-hidden="true">↗</span></span></Link>)}
@@ -27,10 +27,40 @@ export function EmployerOverview({ stats, statsAvailable, activity, jobs, timeAg
   </>;
 }
 
-export function EmployerMetrics({stats, available}: {stats: DashboardStats; available: boolean}) {
-  return <div className="employer-metrics">{[
-    ["Total job posts", stats.totalPosts], ["Active job posts", stats.activePosts],
-    ["Recorded applications", stats.applications], ["Recorded profile views", stats.profileViews],
-  ].map(([label,value]) => { const hasValue = available && typeof value === "number" && Number.isFinite(value) && value >= 0; return <div className="employer-panel" key={label}><span>{label}</span><strong>{hasValue ? value : "—"}</strong>{!hasValue && <small>Unavailable</small>}</div>; })}</div>;
+export function EmployerMetrics({stats, available, loading = false, error = false, onRetry}: {
+  stats: DashboardStats; available: boolean; loading?: boolean; error?: boolean; onRetry?: () => void;
+}) {
+  const labels = ["Total job posts", "Active job posts", "Recorded applications", "Recorded profile views"] as const;
+  if (loading) {
+    return (
+      <div className="employer-metrics" role="status" aria-label="Loading dashboard statistics">
+        {labels.map((label) => (
+          <div className="employer-panel" key={label}>
+            <span>{label}</span>
+            <div className="skeleton h-8 w-16 rounded mt-1" aria-hidden="true" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  const values: Record<(typeof labels)[number], number> = {
+    "Total job posts": stats.totalPosts,
+    "Active job posts": stats.activePosts,
+    "Recorded applications": stats.applications,
+    "Recorded profile views": stats.profileViews,
+  };
+  return <div className="employer-metrics">{labels.map((label) => {
+    const value = values[label];
+    const hasValue = available && typeof value === "number" && Number.isFinite(value) && value >= 0;
+    return (
+      <div className="employer-panel" key={label}>
+        <span>{label}</span>
+        <strong>{hasValue ? value : "—"}</strong>
+        {error && !hasValue && onRetry
+          ? <button type="button" onClick={onRetry} className="brand-button mt-1 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none">Retry</button>
+          : !hasValue && <small>Unavailable</small>}
+      </div>
+    );
+  })}</div>;
 }
 

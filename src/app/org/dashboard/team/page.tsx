@@ -1,17 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import OrgRoute from "@/components/OrgRoute";
-import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import TeamInvitations from "@/components/employer/TeamInvitations";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
+import DashboardSectionShell from "@/components/org-dashboard/DashboardSectionShell";
 import type { MemberProfile } from "@/lib/firestore/members";
 
 export default function TeamPage() {
-  return <OrgRoute requiredRole="owner"><AppShell><TeamContent /></AppShell></OrgRoute>;
+  return (
+    <DashboardSectionShell
+      requiredRole="owner"
+      title="Team Members"
+      description="Manage existing members and their access to your organization dashboard."
+    >
+      <TeamContent />
+    </DashboardSectionShell>
+  );
 }
 
 function TeamContent() {
@@ -66,10 +72,7 @@ function TeamContent() {
   };
 
   return (
-    <div className="max-w-[900px] mx-auto px-4 py-8 md:px-10">
-      <Link href="/org/dashboard" className="text-sm text-teal font-semibold mb-6 inline-block">&larr; Back to Dashboard</Link>
-      <h1 className="text-2xl font-bold text-text mb-2">Team Members</h1>
-      <p className="text-sm text-text-muted mb-6">Manage existing members and their access to your organization dashboard.</p>
+    <div className="max-w-[900px]">
       {loading ? <div role="status" className="h-20 rounded-2xl skeleton"><span className="sr-only">Loading team</span></div>
         : error ? <p role="alert" className="text-error">{error}</p>
         : <>

@@ -22,6 +22,8 @@ type JobSchemaInput = {
   closingDate?: string;
   employmentType?: string;
   salary?: string;
+  /** Actual application method as resolved for the visible page — JSON-LD must match it. */
+  application?: { kind: "internal" | "external" | "email" | "unavailable"; href: string };
 };
 
 type EventSchemaInput = {
@@ -188,6 +190,16 @@ export function buildJobPostingJsonLd(input: JobSchemaInput) {
   if (closingDate) jsonLd.validThrough = closingDate;
   if (employmentType) jsonLd.employmentType = employmentType;
   if (salary) jsonLd.baseSalary = salary;
+  // Structured application instructions must match the visible application method.
+  const applicationKind = input.application?.kind;
+  if (applicationKind === "internal") {
+    jsonLd.directApply = true;
+  } else if (applicationKind === "email") {
+    const email = /^mailto:([^?\s]+)/i.exec(input.application?.href || "")?.[1];
+    if (email) {
+      jsonLd.applicationContact = { "@type": "ContactPoint", email };
+    }
+  }
   return jsonLd;
 }
 

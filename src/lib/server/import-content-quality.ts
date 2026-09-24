@@ -1,5 +1,5 @@
 import { Parser } from "htmlparser2";
-import { descriptionText } from "@/lib/description-text";
+import { descriptionText } from "../description-text.ts";
 
 // Exact, reversible UTF-8 punctuation interpreted as Windows-1252/Latin-1.
 // Never recode the entire string: that destroys valid Unicode beside corruption.
@@ -43,11 +43,42 @@ function importedHtmlText(value: string): string {
   return parts.join("");
 }
 
+/** Deterministic repairs for unambiguous import artifacts. Never guesses at meaning:
+ * genuinely ambiguous copy (FNC&FS&JPS, ChildYouth, "Canad Inns" the brand) is
+ * left exact and flagged for human review instead. */
+export function repairSpacingArtifacts(text: string): string {
+  return text
+    // "Originally posted: <date>" scrape artifact lines carry no job content.
+    .replace(/^[ \t]*originally posted\s*:.*(?:\r?\n|$)/gim, "")
+    // "18- unit" -> "18-unit": stray space after a hyphen that follows a digit.
+    .replace(/(\d)-\s+(?=[A-Za-z])/g, "$1-")
+    // "postscholarships"/"postevents" -> "post scholarships"/"post events":
+    // known concatenated category/tag artifacts; the two words are unambiguous.
+    .replace(/\bpost(?=(?:scholarships|events)\b)/gi, "post ");
+}
+
+/** Collapse duplicated location segments. Do not apply this to titles or
+ * company names: repeated words and punctuation can be meaningful there. */
+export function collapseDuplicateSegments(label: string): string {
+  const seen = new Set<string>();
+  const segments = label.split(/\s*[,;|]\s*/).filter(segment => {
+    const key = segment.toLowerCase();
+    if (!segment || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return segments.join(", ").replace(/\b([\p{L}\p{N}']+)(?:\s+\1)+\b/giu, "$1");
+}
+
 export function normalizeImportedLabel(value: string): string {
   // Remove actual source markup and decode entities in one pass; never reparse decoded text.
-  return importedHtmlText(value)
+  return repairSpacingArtifacts(importedHtmlText(value))
     .replace(encodingPattern, match => knownEncoding.get(match)!)
     .normalize("NFC").replace(/\s+/gu, " ").trim();
+}
+
+export function normalizeImportedLocation(value: string): string {
+  return collapseDuplicateSegments(normalizeImportedLabel(value));
 }
 
 export interface ImportContentQuality {
@@ -84,7 +115,7 @@ export function normalizePartnerDescription(value: string, format?: unknown): st
   const source = value.replace(/\r\n?/g, "\n");
   const repaired = source.replace(encodingPattern, match => knownEncoding.get(match)!);
   // The marker prevents HTML/entity/Markdown decoding, not reversible encoding repair.
-  if (format === "plain-text") return descriptionText(repaired, "plain-text");
+  if (format === "plain-text") return descriptionText(repairSpacingArtifacts(repaired), "plain-text");
   // Deliberately a conservative prose subset, not a Markdown-to-HTML engine.
   // Parse source HTML once; decoded text is NEVER parsed again.
   const text = (format === "decoded-text" ? repaired : importedHtmlText(repaired))
@@ -94,5 +125,5 @@ export function normalizePartnerDescription(value: string, format?: unknown): st
     .replace(/\*\*([^*\n]+)\*\*/g, "$1")
     .replace(/^ {0,3}#{1,6}[ \t]+/gm, "")
     .replace(/^ {0,3}[-*+][ \t]+/gm, "• ");
-  return descriptionText(text, "plain-text");
+  return descriptionText(repairSpacingArtifacts(text), "plain-text");
 }

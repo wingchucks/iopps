@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import * as uploadFile from '../src/lib/upload-file.ts';
+import * as profileEntries from '../src/lib/profile-entries.ts';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, writeBatch, doc } from 'firebase/firestore';
 const sdkDb = getFirestore(initializeApp({ projectId: 'demo-profile-offline' }, 'profile-save-offline'));
@@ -61,6 +63,7 @@ function harness(page, initial = null, count = 0) {
   };
   const jsx = (type, props) => ({ type, props });
   const dependencies = {
+    '@/lib/upload-file': uploadFile, '@/lib/profile-entries': profileEntries,
     react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx },
     'next/navigation': { useRouter: () => ({ push: value => routes.push(value), replace() {} }) },
     'next/link': { default: 'a' }, 'firebase/storage': {}, 'firebase/auth': {},

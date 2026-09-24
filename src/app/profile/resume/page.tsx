@@ -12,19 +12,17 @@ import { db, storage } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import {
   ref,
-  uploadBytes,
+  uploadBytesResumable,
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
 
 import { createResumeObjectName } from "@/lib/application-snapshot";
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const ACCEPTED_TYPES = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
+import {
+  resumeContentType,
+  uploadToStorage,
+  validateResumeFile,
+} from "@/lib/upload-file";
 
 interface ResumeInfo {
   url: string;
@@ -52,6 +50,8 @@ function ResumeContent() {
   const [resume, setResume] = useState<ResumeInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
@@ -80,21 +80,31 @@ function ResumeContent() {
   }, [user]);
 
   const handleFileSelect = async (file: File) => {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      showToast("Please upload a PDF or DOC file", "error");
-      return;
-    }
-    if (file.size >= MAX_FILE_SIZE) {
-      showToast("File must be under 5MB", "error");
+    const validationError = validateResumeFile(file);
+    if (validationError) {
+      setUploadError(validationError);
+      showToast(validationError, "error");
       return;
     }
     if (!user) return;
 
     setUploading(true);
+    setProgress(0);
+    setUploadError(null);
     try {
-      const storageRef = ref(storage, `resumes/${user.uid}/${createResumeObjectName(file.name)}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      // Send an explicit content type: some browsers report an empty or
+      // generic MIME type for .doc/.docx, and storage.rules requires a
+      // matching contentType for the write to be allowed.
+      const contentType =
+        file.type || resumeContentType(file.name) || "application/pdf";
+      const url = await uploadToStorage(
+        { ref, uploadBytesResumable, getDownloadURL },
+        storage,
+        `resumes/${user.uid}/${createResumeObjectName(file.name)}`,
+        file,
+        { contentType },
+        setProgress
+      );
       const now = new Date().toISOString();
 
       await updateDoc(doc(db, "members", user.uid), {
@@ -107,7 +117,12 @@ function ResumeContent() {
       showToast("Resume uploaded", "success");
     } catch (err) {
       console.error("Upload failed:", err);
-      showToast("Upload failed. Please try again.", "error");
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Upload failed. Please try again.";
+      setUploadError(message);
+      showToast(message, "error");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -247,6 +262,9 @@ function ResumeContent() {
             {resume ? "UPLOAD NEW RESUME" : "UPLOAD RESUME"}
           </p>
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="Upload resume. PDF or DOC, max 5MB. Activate to choose a file."
             onDragOver={(e) => {
               e.preventDefault();
               setDragOver(true);
@@ -254,6 +272,12 @@ function ResumeContent() {
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
             className="rounded-2xl cursor-pointer transition-colors text-center"
             style={{
               border: `2px dashed ${dragOver ? "var(--teal)" : "var(--border)"}`,
@@ -265,14 +289,35 @@ function ResumeContent() {
               ref={fileInputRef}
               type="file"
               accept=".pdf,.doc,.docx"
-              className="hidden"
+              className="sr-only"
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) handleFileSelect(f);
               }}
             />
             {uploading ? (
-              <p className="text-sm text-text-sec">Uploading...</p>
+              <>
+                <p className="text-sm font-semibold text-text mb-2">
+                  Uploading... {progress}%
+                </p>
+                <div
+                  role="progressbar"
+                  aria-valuenow={progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="Resume upload progress"
+                  className="h-2 rounded-full overflow-hidden mx-auto max-w-[240px]"
+                  style={{ background: "var(--border)" }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${progress}%`,
+                      background: "var(--button-gradient)",
+                    }}
+                  />
+                </div>
+              </>
             ) : (
               <>
                 <p className="text-3xl mb-2">&#128196;</p>
@@ -281,6 +326,11 @@ function ResumeContent() {
                 </p>
                 <p className="text-xs text-text-muted">PDF or DOC, max 5MB</p>
               </>
+            )}
+            {uploadError && !uploading && (
+              <p role="alert" className="text-xs mt-3" style={{ color: "var(--red)" }}>
+                {uploadError}
+              </p>
             )}
           </div>
         </div>

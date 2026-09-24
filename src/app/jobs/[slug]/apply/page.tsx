@@ -13,9 +13,14 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { storage } from "@/lib/firebase";
 import { getApplicantReceipt } from "@/lib/firestore/applications";
-import { ref, uploadBytes, getDownloadURL, getBlob } from "firebase/storage";
+import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getBlob } from "firebase/storage";
 
 import { createResumeObjectName, buildApplicationProfileSnapshot } from "@/lib/application-snapshot";
+import {
+  resumeContentType,
+  uploadToStorage,
+  validateResumeFile,
+} from "@/lib/upload-file";
 import { getMemberProfile, type MemberProfile } from "@/lib/firestore/members";
 import { resolveApplicationDestination } from "@/lib/application-destination";
 import { trackJobFunnelEvent } from "@/lib/job-funnel-analytics";
@@ -24,12 +29,6 @@ import { buildApplicationReceipt, type ApplicationReceipt } from "@/lib/applicat
 
 
 const STEPS = ["Resume", "Cover Letter", "Review & Submit"];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ACCEPTED_TYPES = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
 
 const COVER_LETTER_PROMPTS = [
   "I'm excited about this role because...",
@@ -72,6 +71,8 @@ function ApplyWizard() {
   const [resumeUrl, setResumeUrl] = useState("");
   const [useProfile, setUseProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
   // Step 2 state
@@ -150,31 +151,49 @@ function ApplyWizard() {
   }, [slug, user, router, showToast]);
 
   const handleFileSelect = async (file: File) => {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      showToast("Please upload a PDF or DOC file", "error");
-      return;
-    }
-    if (file.size >= MAX_FILE_SIZE) {
-      showToast("File must be under 5MB", "error");
+    const validationError = validateResumeFile(file);
+    if (validationError) {
+      setUploadError(validationError);
+      showToast(validationError, "error");
       return;
     }
     if (!user) return;
 
     setUploading(true);
+    setProgress(0);
+    setUploadError(null);
     try {
       await assertLaunchAvailable();
-      const storageRef = ref(storage, `resumes/${user.uid}/${createResumeObjectName(file.name)}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      // Send an explicit content type: some browsers report an empty or
+      // generic MIME type for .doc/.docx, and storage.rules requires a
+      // matching contentType for the write to be allowed.
+      const contentType =
+        file.type || resumeContentType(file.name) || "application/pdf";
+      const url = await uploadToStorage(
+        { ref, uploadBytesResumable, getDownloadURL },
+        storage,
+        `resumes/${user.uid}/${createResumeObjectName(file.name)}`,
+        file,
+        { contentType },
+        setProgress
+      );
       setResumeFile(file);
       setResumeUrl(url);
       setUseProfile(false);
       showToast("Resume uploaded", "success");
     } catch (err) {
       console.error("Upload failed:", err);
-      showToast(err instanceof Error ? err.message : "Upload failed. Please try again.", "error");
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Upload failed. Please try again.";
+      setUploadError(message);
+      showToast(message, "error");
     } finally {
       setUploading(false);
+      // Reset so picking the same file again (e.g. after a failed upload)
+      // still fires the change event.
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -426,10 +445,19 @@ function ApplyWizard() {
             {/* File upload area */}
             {!resumeFile && !useProfile && (
               <div
+                role="button"
+                tabIndex={0}
+                aria-label="Upload resume. PDF or DOC, max 5MB. Activate to choose a file."
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
                 className="rounded-2xl cursor-pointer transition-colors mb-4 text-center"
                 style={{
                   border: `2px dashed ${dragOver ? "var(--teal)" : "var(--border)"}`,
@@ -441,14 +469,35 @@ function ApplyWizard() {
                   ref={fileInputRef}
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  className="hidden"
+                  className="sr-only"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) handleFileSelect(f);
                   }}
                 />
                 {uploading ? (
-                  <p className="text-sm text-text-sec">Uploading...</p>
+                  <>
+                    <p className="text-sm font-semibold text-text mb-2">
+                      Uploading... {progress}%
+                    </p>
+                    <div
+                      role="progressbar"
+                      aria-valuenow={progress}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label="Resume upload progress"
+                      className="h-2 rounded-full overflow-hidden mx-auto max-w-[240px]"
+                      style={{ background: "var(--border)" }}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${progress}%`,
+                          background: "var(--button-gradient)",
+                        }}
+                      />
+                    </div>
+                  </>
                 ) : (
                   <>
                     <p className="text-3xl mb-2">&#128196;</p>
@@ -457,6 +506,11 @@ function ApplyWizard() {
                     </p>
                     <p className="text-xs text-text-muted">PDF or DOC, max 5MB</p>
                   </>
+                )}
+                {uploadError && !uploading && (
+                  <p role="alert" className="text-xs mt-3" style={{ color: "var(--red)" }}>
+                    {uploadError}
+                  </p>
                 )}
               </div>
             )}

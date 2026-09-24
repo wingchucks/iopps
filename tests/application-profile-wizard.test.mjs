@@ -37,7 +37,20 @@ test('profile wizard: accessible selection, explained requirements and profile-o
   const navigation = write('navigation.js', `const router={replace:()=>{}}; export const useRouter=()=>router; export const useParams=()=>({slug:'fixture-role'});`);
   const toast = write('toast.js', 'const showToast=()=>{}; export const useToast=()=>({showToast});');
   const data = write('data.js', 'export const getPost=async()=>window.fixture.job; export const getMemberProfile=async()=>window.fixture.profile; export const getApplicantReceipt=async()=>null;');
-  const storage = write('storage.js', `export const storage={}; export const ref=()=>({}); export const uploadBytes=async()=>{await new Promise(resolve=>{window.finishFixtureUpload=resolve;});}; export const getDownloadURL=async()=>'https://fixture.invalid/resume.pdf'; export const getBlob=async()=>{throw Error('Unexpected saved resume read');};`);
+  const storage = write('storage.js', `
+    export const storage={}; export const ref=()=>({});
+    export const uploadBytesResumable=(ref,file,metadata)=>{
+      if(metadata?.contentType!=='application/pdf') throw Error('Missing resume content type');
+      const task={snapshot:{ref,bytesTransferred:0,totalBytes:file.size},on:(event,progress,error,complete)=>{
+        if(event!=='state_changed') throw Error('Unexpected upload event');
+        progress(task.snapshot);
+        window.finishFixtureUpload=()=>{task.snapshot.bytesTransferred=file.size;progress(task.snapshot);complete();};
+      }};
+      return task;
+    };
+    export const getDownloadURL=async()=>'https://fixture.invalid/resume.pdf';
+    export const getBlob=async()=>{throw Error('Unexpected saved resume read');};
+  `);
   const loader = write('loader.cjs', `const ts=require(${JSON.stringify(require.resolve('typescript'))});module.exports=function(source){return ts.transpileModule(source,{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;};`);
   const entry = write('entry.js', `import React from 'react'; import {createRoot} from 'react-dom/client'; import Page from ${JSON.stringify(path.join(root, 'src/app/jobs/[slug]/apply/page.tsx'))}; createRoot(document.getElementById('root')).render(React.createElement(Page));`);
   const { webpack } = require('next/dist/compiled/webpack/webpack');

@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import {sourceModule,offlineNetwork} from './helpers/security-fixtures.mjs';
 function fixture(){
  const stored=new Map(),net=offlineNetwork();
- const db={collection:name=>({doc:id=>({id,path:name+'/'+id}),where:()=>({get:async()=>({docs:[]})})}),runTransaction:async callback=>callback({get:async ref=>({exists:stored.has(ref.path),data:()=>stored.get(ref.path)}),create:(ref,data)=>{assert.equal(stored.has(ref.path),false);stored.set(ref.path,data);}})};
+ const db={collection:name=>({doc:id=>({id,path:name+'/'+id}),where:(field,op,value)=>{
+   assert.equal(op,'==');
+   let bound=Infinity;
+   return {limit(n){bound=n;return this;},get:async()=>({docs:[...stored].filter(([path,data])=>path.startsWith(name+'/')&&data[field]===value).slice(0,bound).map(([path,data])=>({id:path.slice(name.length+1),data:()=>data}))})};
+  }}),runTransaction:async callback=>callback({get:async ref=>({exists:stored.has(ref.path),data:()=>stored.get(ref.path)}),create:(ref,data)=>{assert.equal(stored.has(ref.path),false);stored.set(ref.path,data);}})};
  const {POST}=sourceModule('src/app/api/admin/import-jobs/route.ts',{...net,globals:{...net.globals,process:{env:{CRON_SECRET:'fictional'}}},mocks:{...net.mocks,'@/lib/firebase-admin':{getAdminDb:()=>db},'next/server':{NextResponse:{json:Response.json}}}});
  const job={title:'Accountant',company:'Fictional Employer',location:'Town',externalUrl:'https://fixture.invalid/job',externalId:'REQ-A',description:'Original approved copy.',descriptionFormat:'plain-text'};
  return {stored,net,job,call:jobs=>POST(new Request('https://fixture.invalid/import',{method:'POST',headers:{'content-type':'application/json','x-cron-secret':'fictional'},body:JSON.stringify({jobs})}))};

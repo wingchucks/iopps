@@ -15,6 +15,7 @@ import type { Organization } from "@/lib/firestore/organizations";
 import Avatar from "@/components/Avatar";
 import CanonicalEditProfileTab, { type DashboardProfileForm } from "@/components/org-dashboard/CanonicalEditProfileTab";
 import { getOrganizationBusinessIdentity, normalizeOrganizationRecord, isOrganizationPubliclyVisible } from "@/lib/organization-profile";
+import { sanitizeStats } from "@/lib/dashboard-stats";
 import {
   buildSchoolVisibilityPatch,
   getOrganizationPublicHref,
@@ -137,6 +138,11 @@ function OrgDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [statsAvailable, setStatsAvailable] = useState(false);
+  // Stats hydrate independently of the dashboard payload: the shell renders
+  // as soon as the org/jobs data lands, while the metric cards show a
+  // skeleton until stats resolve (never silent empty labels).
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>("Overview");
   const [profileSub, setProfileSub] = useState<(typeof PROFILE_SUBS)[number]>("Identity");
   const isSchoolOrg = isSchoolOrganization(org);
@@ -212,18 +218,63 @@ function OrgDashboardContent() {
     return user.getIdToken();
   }, [user]);
 
+  // Stats fetch with its own lifecycle: parallel to the dashboard fetch,
+  // explicit loading + error states, and a retry entry point. A failed stats
+  // fetch no longer silently leaves the cards empty.
+  const loadStats = useCallback(async (idToken: string, cancelled: { current: boolean }) => {
+    setStatsLoading(true);
+    setStatsError(false);
+    try {
+      const statsRes = await fetch("/api/employer/stats", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!statsRes.ok) throw new Error(`Stats fetch failed (${statsRes.status})`);
+      const next = sanitizeStats(await statsRes.json());
+      if (cancelled.current) return;
+      setStats(next);
+      setStatsAvailable(true);
+    } catch (err) {
+      console.error("[Dashboard] stats load failed:", err);
+      if (!cancelled.current) setStatsError(true);
+    } finally {
+      if (!cancelled.current) setStatsLoading(false);
+    }
+  }, []);
+
+  const retryStats = useCallback(async () => {
+    if (!user) return;
+    await loadStats(await user.getIdToken(), { current: false });
+  }, [user, loadStats]);
+
   // Fetch dashboard data
   useEffect(() => {
     if (!user) return;
+    const cancelled = { current: false };
     (async () => {
       try {
         const idToken = await user.getIdToken();
         const headers = { Authorization: `Bearer ${idToken}` };
 
-        // Fetch dashboard data (org + jobs)
-        const dashRes = await fetch("/api/employer/dashboard", { headers });
-        if (!dashRes.ok) throw new Error("Dashboard fetch failed");
-        const dashData = await dashRes.json();
+        // Dashboard payload, stats, and activity resolve independently so a
+        // slow stats endpoint can never block or silently empty the shell.
+        const dashTask = (async () => {
+          const dashRes = await fetch("/api/employer/dashboard", { headers });
+          if (!dashRes.ok) throw new Error("Dashboard fetch failed");
+          return dashRes.json();
+        })();
+        // Stats hydrate fire-and-forget: loadStats owns its loading/error
+        // state, so a slow or failed stats fetch can never block or silently
+        // empty the dashboard shell.
+        void loadStats(idToken, cancelled);
+        const activityTask = fetch("/api/employer/activity", { headers })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((payload) => {
+            if (!cancelled.current && payload) setActivity(payload.activity || []);
+          })
+          .catch(() => { /* activity is best-effort */ });
+
+        const dashData = await dashTask;
+        if (cancelled.current) return;
 
         const normalizedOrg = normalizeOrganizationRecord(dashData.org as Organization);
         setOrg(normalizedOrg);
@@ -269,28 +320,19 @@ function OrgDashboardContent() {
         setNation(o.nation || "");
         setTreatyTerritory(o.treatyTerritory || "");
 
-        // Fetch stats
-        const statsRes = await fetch("/api/employer/stats", { headers });
-        if (statsRes.ok) {
-          const s = await statsRes.json();
-          setStats(s);
-          setStatsAvailable(true);
-        }
-
-        // Fetch activity
-        const actRes = await fetch("/api/employer/activity", { headers });
-        if (actRes.ok) {
-          const a = await actRes.json();
-          setActivity(a.activity || []);
-        }
+        // Fetch activity (best-effort; never blocks the shell)
+        await activityTask;
+        if (!cancelled.current) setLoading(false);
       } catch (err) {
         console.error("[Dashboard] load failed:", err);
-        setLoadError("We couldn’t load your dashboard. Please reload to try again.");
-      } finally {
-        setLoading(false);
+        if (!cancelled.current) {
+          setLoadError("We couldn’t load your dashboard. Please reload to try again.");
+          setLoading(false);
+        }
       }
     })();
-  }, [user]);
+    return () => { cancelled.current = true; };
+  }, [user, loadStats]);
 
   const showSaveMessage = (message: string) => {
     setSaveMsg(message);
@@ -616,6 +658,7 @@ function OrgDashboardContent() {
                     <SchoolOverviewTab
                       org={org}
                       stats={stats}
+                      statsLoading={statsLoading}
                       schoolPrograms={schoolPrograms}
                       studentInquiries={studentInquiries}
                       jobs={jobs}
@@ -625,12 +668,12 @@ function OrgDashboardContent() {
                       timeAgo={timeAgo}
                     />
                   ) : (
-                    businessFirst ? <BusinessOverview publicHref={publicProfileHref} isPublic={businessIsPublic} /> : <EmployerOverview stats={stats} statsAvailable={statsAvailable} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
+                    businessFirst ? <BusinessOverview publicHref={publicProfileHref} isPublic={businessIsPublic} /> : <EmployerOverview stats={stats} statsAvailable={statsAvailable} statsLoading={statsLoading} statsError={statsError} onRetryStats={retryStats} activity={activity} jobs={jobs} timeAgo={timeAgo} formatTimestamp={formatTimestamp} />
                   )
                 )}
 
                 {activeTab === "Analytics" && (
-                  <AnalyticsTab stats={stats} statsAvailable={statsAvailable} jobs={jobs} formatTimestamp={formatTimestamp} />
+                  <AnalyticsTab stats={stats} statsAvailable={statsAvailable} statsLoading={statsLoading} statsError={statsError} onRetryStats={retryStats} jobs={jobs} formatTimestamp={formatTimestamp} />
                 )}
 
                 {activeTab === "Edit Profile" && (
@@ -675,6 +718,7 @@ function OrgDashboardContent() {
 function SchoolOverviewTab({
   org,
   stats,
+  statsLoading,
   schoolPrograms,
   studentInquiries,
   jobs,
@@ -685,6 +729,7 @@ function SchoolOverviewTab({
 }: {
   org: Organization | null;
   stats: DashboardStats;
+  statsLoading: boolean;
   schoolPrograms: SchoolProgramItem[];
   studentInquiries: StudentInquiryItem[];
   jobs: DashJob[];
@@ -756,7 +801,7 @@ function SchoolOverviewTab({
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}>
-              {card.value}
+              {statsLoading ? <span className="inline-block h-8 w-16 rounded skeleton" role="status" aria-label={`Loading ${card.label}`} /> : card.value}
             </div>
           </DashCard>
         ))}
@@ -1027,10 +1072,10 @@ function StudentInquiriesTab({ inquiries, timeAgo }: {
 /* ═══════════════════════════════════════════════════════════
    ANALYTICS TAB
    ═══════════════════════════════════════════════════════════ */
-function AnalyticsTab({stats, statsAvailable, jobs, formatTimestamp}: {
-  stats: DashboardStats; statsAvailable: boolean; jobs: DashJob[]; formatTimestamp: (ts: unknown) => string;
+function AnalyticsTab({stats, statsAvailable, statsLoading, statsError, onRetryStats, jobs, formatTimestamp}: {
+  stats: DashboardStats; statsAvailable: boolean; statsLoading: boolean; statsError: boolean; onRetryStats: () => void; jobs: DashJob[]; formatTimestamp: (ts: unknown) => string;
 }) {
-  return <><h2 className="text-xl font-bold mb-5">Hiring activity</h2><EmployerMetrics stats={stats} available={statsAvailable} />
+  return <><h2 className="text-xl font-bold mb-5">Hiring activity</h2><EmployerMetrics stats={stats} available={statsAvailable} loading={statsLoading} error={statsError} onRetry={onRetryStats} />
     <section className="employer-panel"><h3>Jobs by recorded applications</h3>{[...jobs].sort((a,b) => (b.applicationCount || 0) - (a.applicationCount || 0)).slice(0,5).map(job => <Link className="employer-job-row" key={job.id} href={`/org/dashboard/jobs/${job.id}/edit`}><div><h3>{job.title}</h3><p>{formatTimestamp(job.createdAt)}</p></div><strong>{job.applicationCount || 0}</strong></Link>)}{!jobs.length && <p>No jobs to report yet.</p>}</section>
     <p className="employer-note">These are recorded totals, not a date-filtered report. Visitor trends, referral sources, and time-to-hire reporting are not available yet.</p></>;
 }

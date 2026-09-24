@@ -21,6 +21,7 @@ import * as publicOrganization from '../src/lib/public-organization.ts';
 import * as actionLinks from '../src/lib/auth-verification-email.ts';
 import * as schoolVisibility from '../src/lib/school-visibility.ts';
 import * as jobDetailDates from '../src/lib/job-detail-dates.ts';
+import * as applicationDestination from '../src/lib/application-destination.ts';
 import * as accessState from '../src/lib/access-state.ts';
 import * as businessReview from '../src/lib/business-listing-review.ts';
 
@@ -245,6 +246,7 @@ test('organization metadata resolves the canonical record and immediately drops 
   } }) }) }) };
   const resolver = load('src/lib/server/public-organization-resolver.ts', { '@/lib/organization-profile': organization, '@/lib/server/subscription-state': subscription });
   const metadata = load('src/lib/server/detail-metadata.ts', {
+    '@/lib/application-destination': applicationDestination,
     '@/lib/job-detail-dates': jobDetailDates,
     react: { cache: fn => fn }, '@/lib/firebase-admin': { getAdminDb: () => db }, '@/lib/server/public-opportunities': {},
     '@/lib/public-job-merge': jobs, '@/lib/organization-profile': organization, '@/lib/server/public-job-routing': {},

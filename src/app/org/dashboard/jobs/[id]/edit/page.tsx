@@ -4,6 +4,7 @@ import { isValidClosingDate } from "@/lib/job-closing-date";
 import JobLocationFields from "@/components/employer/JobLocationFields";
 import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
 import { normalizeHiringDetails } from "@/lib/job-hiring-details";
+import { EMPLOYMENT_TYPE_OPTIONS } from "@/lib/job-taxonomy";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -44,16 +45,8 @@ interface EditableJob {
   requiresReferences?: boolean;
 }
 
-const employmentTypes = [
-  "Full-time",
-  "Part-time",
-  "Contract",
-  "Temporary",
-  "Seasonal",
-  "Volunteer",
-  "Casual",
-  "Internship",
-];
+// Shared vocabulary with the new-job wizard and the jobs board filter (bug 19d).
+const employmentTypes = EMPLOYMENT_TYPE_OPTIONS;
 
 function normalizeSalaryParts(job: EditableJob): { min: string; max: string } {
   const salaryValue = job.salaryRange || job.salary;

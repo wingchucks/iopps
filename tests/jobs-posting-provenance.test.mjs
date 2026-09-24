@@ -89,11 +89,12 @@ function memoryDb() {
   });
   const db = {
     collection(name) {
-      const query = filters => ({
-        where: (key, op, value) => { assert.equal(op, '=='); return query([...filters, [key, value]]); },
+      const query = (filters, bound = Infinity) => ({
+        where: (key, op, value) => { assert.equal(op, '=='); return query([...filters, [key, value]], bound); },
+        limit: n => query(filters, n),
         get: async () => {
           const docs = [...rows].filter(([path, data]) => path.startsWith(`${name}/`) && filters.every(([key, value]) => data[key] === value))
-            .map(([path]) => snapshot(reference(name, path.slice(name.length + 1))));
+            .slice(0, bound).map(([path]) => snapshot(reference(name, path.slice(name.length + 1))));
           return { docs, size: docs.length, empty: !docs.length };
         },
         doc: id => reference(name, id),

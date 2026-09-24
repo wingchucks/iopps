@@ -5,6 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import * as salaryRange from "../src/lib/salary-range.ts";
 import * as jobDetailDates from "../src/lib/job-detail-dates.ts";
+import * as applicationDestination from "../src/lib/application-destination.ts";
 
 function load(file: string, imports: Record<string, unknown> = {}, globals: Record<string, unknown> = {}) {
   // VM exports are callable modules from the actual candidate source.
@@ -55,6 +56,7 @@ for (const route of retiredPages) test(`legacy ${route} redirects without loadin
 
 test("retired member metadata never resolves a member identity", async () => {
   const mod = load("src/lib/server/detail-metadata.ts", {
+    "@/lib/application-destination": applicationDestination,
     "@/lib/job-detail-dates": jobDetailDates,
     "react": { cache: (fn: unknown) => fn }, "next/cache": { unstable_cache: (fn: unknown) => fn },
     "@/lib/firebase-admin": { getAdminDb: () => { throw new Error("Member metadata touched database"); } },

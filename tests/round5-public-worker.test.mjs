@@ -77,7 +77,7 @@ for (const [file,name] of [['login','LoginForm'],['forgot-password','default']])
 });
 test('#13 footer copyright is spaced and includes rights statement', () => {
   const tree = load('src/components/Footer.tsx').default();
-  assert.ok(text(tree).includes(`IOPPS © ${new Date().getFullYear()}. All rights reserved.`), text(tree));
+  assert.ok(text(tree).replace(/\s+/gu, ' ').includes(`IOPPS © ${new Date().getFullYear()}. All rights reserved.`), text(tree));
 });
 test('#14 header logo does not repeat the adjacent IOPPS name', () => {
   const nav = load('src/components/NavBar.tsx', [], {'@/lib/theme-context':{useTheme:()=>({theme:'light'})}}).default;

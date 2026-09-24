@@ -22,5 +22,9 @@ test('application status counts have explicit textual spacing', () => {
 test('avatar edit is explicitly named and visible on keyboard focus', () => {
   const source = readFileSync('src/app/profile/page.tsx','utf8');
   assert.match(source,/aria-label="Edit profile photo"/);
-  assert.match(source,/focus-visible:opacity-100/);
+  const editButton = source.match(/<button\s+aria-label="Edit profile photo"[\s\S]*?<\/button>/)?.[0];
+  assert.ok(editButton, 'Photo editing has a named button');
+  assert.match(editButton,/focus-visible:outline/);
+  assert.doesNotMatch(editButton,/opacity-0|\bhidden\b/, 'Edit remains visible without hover or focus');
+  assert.match(source, /type="file"\s+aria-label="Choose profile photo"/);
 });
