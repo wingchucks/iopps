@@ -57,6 +57,7 @@ function endpointUrl(baseValue, operation) {
     throw new Error("HERMES_ADMIN_BASE_URL must be an origin without credentials, query, or fragment");
   }
   const paths = {
+    "import-inventory": "/api/hermes/v1/reports/import-inventory",
     "reconciliation-report": "/api/hermes/v1/reports/billing-publishing",
     review: "/api/hermes/v1/employers/review",
     apply: "/api/hermes/v1/employers/apply",
@@ -80,6 +81,7 @@ async function main() {
   const operation = process.argv[2];
   const bodyPath = process.argv[3];
   const operations = new Set([
+    "import-inventory",
     "reconciliation-report",
     "review", "apply", "convert-review", "convert-apply", "job-review", "job-apply",
     "cleanup-review", "cleanup-apply", "cleanup-rollback-review", "cleanup-rollback",
@@ -87,7 +89,7 @@ async function main() {
   ]);
   if (!operations.has(operation) || !bodyPath) {
     throw new Error(
-      "Usage: node scripts/hermes-admin-client.mjs <review|apply|convert-review|convert-apply|job-review|job-apply|event-hide-review|event-hide-apply|editorial-review|editorial-apply|cleanup-review|cleanup-apply|cleanup-rollback-review|cleanup-rollback|reconciliation-report> <json-body-path>",
+      "Usage: node scripts/hermes-admin-client.mjs <review|apply|convert-review|convert-apply|job-review|job-apply|event-hide-review|event-hide-apply|editorial-review|editorial-apply|cleanup-review|cleanup-apply|cleanup-rollback-review|cleanup-rollback|reconciliation-report|import-inventory> <json-body-path>",
     );
   }
 
