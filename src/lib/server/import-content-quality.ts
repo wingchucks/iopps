@@ -57,9 +57,8 @@ export function repairSpacingArtifacts(text: string): string {
     .replace(/\bpost(?=(?:scholarships|events)\b)/gi, "post ");
 }
 
-/** Collapse duplicated location segments: "Vancouver, Vancouver" and
- * "Vancouver Vancouver" both mean one Vancouver. Scoped to short labels
- * (titles, locations, company names), never to full descriptions. */
+/** Collapse duplicated location segments. Do not apply this to titles or
+ * company names: repeated words and punctuation can be meaningful there. */
 export function collapseDuplicateSegments(label: string): string {
   const seen = new Set<string>();
   const segments = label.split(/\s*[,;|]\s*/).filter(segment => {
@@ -73,11 +72,13 @@ export function collapseDuplicateSegments(label: string): string {
 
 export function normalizeImportedLabel(value: string): string {
   // Remove actual source markup and decode entities in one pass; never reparse decoded text.
-  return collapseDuplicateSegments(
-    repairSpacingArtifacts(importedHtmlText(value))
-      .replace(encodingPattern, match => knownEncoding.get(match)!)
-      .normalize("NFC").replace(/\s+/gu, " ").trim()
-  );
+  return repairSpacingArtifacts(importedHtmlText(value))
+    .replace(encodingPattern, match => knownEncoding.get(match)!)
+    .normalize("NFC").replace(/\s+/gu, " ").trim();
+}
+
+export function normalizeImportedLocation(value: string): string {
+  return collapseDuplicateSegments(normalizeImportedLabel(value));
 }
 
 export interface ImportContentQuality {

@@ -9,6 +9,7 @@ interface MockQuery {
  doc(id:string):MockRef;
  where(...filter:MockFilter):MockQuery;
  limit(n:number):MockQuery;
+ get():Promise<unknown>;
 }
 import { handleJobAliases, readJobAliasRedirect } from '../src/lib/server/job-aliases.ts';
 import { updateImportedJobWithEditorialGuard, cleanupWriteAllowed } from '../src/lib/server/job-cleanup-guards.ts';
@@ -24,7 +25,8 @@ function store(initial:Record<string,MockData>={}) {
  const snapshot=(path:string)=>({id:path.split('/').at(-1),exists:data.has(path),data:()=>data.get(path)});
  const query=(collection:string,filters:MockFilter[]=[],bound=Infinity):MockQuery=>({collection,filters,bound,
   doc:(id:string)=>({path:`${collection}/${id}`,id,parent:{id:collection}}),
-  where:(...filter:MockFilter)=>query(collection,[...filters,filter],bound),limit:(n:number)=>query(collection,filters,n)});
+  where:(...filter:MockFilter)=>query(collection,[...filters,filter],bound),limit:(n:number)=>query(collection,filters,n),
+  get:()=>tx.get(query(collection,filters,bound))});
  const tx={get:async(ref:MockRef|MockQuery)=>{
   if('path' in ref)return snapshot(ref.path);
   const docs=[...data.keys()].filter(path=>path.startsWith(ref.collection+'/')).filter(path=>ref.filters.every(([field,op,value])=>{const stored=data.get(path)![field];return op==='array-contains'?Array.isArray(stored)&&stored.includes(value):stored===value;})).slice(0,ref.bound).map(snapshot);
@@ -75,7 +77,9 @@ test('source suppression survives title/date changes and only blocks original em
  const s=store({['jobCleanupSources/'+cleanupSourceDocId(key)]:source});
  const base={feedId:'feed',externalId:'R',externalUrl:url,employerId:'blocked',title:'changed title',location:'changed location',publishedAt:'2026-01-01'};
  assert.equal(await createImportedJobOnce(s.db,base),false);assert.deepEqual(s.writes,[]);
- assert.equal(await createImportedJobOnce(s.db,{...base,employerId:'different'}),true);assert.equal(s.writes.length,2);
+ assert.equal(await createImportedJobOnce(s.db,{...base,employerId:'different'}),true);
+ assert.deepEqual(s.writes.map(([path])=>path.split('/')[0]).sort(),['feedImportFingerprints','feedImportIdentities','jobs']);
+ assert.ok(s.writes.every(([,data])=>data.employerId==='different'));
 });
 test('old URL and fallback URL remain guarded when incoming source changes',async()=>{
  const s=store({['jobCleanupSources/'+cleanupSourceDocId(key)]:source});

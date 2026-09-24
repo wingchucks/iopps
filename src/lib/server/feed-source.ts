@@ -1,4 +1,4 @@
-import { normalizeImportedLabel } from "./import-content-quality.ts";
+import { normalizeImportedLabel, normalizeImportedLocation } from "./import-content-quality.ts";
 import { sourcePostingDatePatch } from "./source-posting-date.ts";
 
 export type FeedItem = Record<string, string>;
@@ -116,7 +116,7 @@ export async function fetchOracleItems(feedUrl: string, fetcher: Fetcher = fetch
       const id = text(job.Id);
       if (!id || !text(job.Title) || ids.has(id)) throw new Error("Invalid or repeated Oracle job identity");
       ids.add(id);
-      items.push({ guid: id, title: normalizeImportedLabel(text(job.Title)), description: text(job.ShortDescriptionStr), pubDate: text(job.PostedDate), ...sourcePostingDatePatch(job.PostedDate), closingDate: text(job.PostingEndDate), location: normalizeImportedLabel(text(job.PrimaryLocation)) || "Canada", link: `${url.origin}/hcmUI/CandidateExperience/en/sites/${encodeURIComponent(text(result.SiteNumber) || "SIGA")}/job/${encodeURIComponent(id)}` });
+      items.push({ guid: id, title: normalizeImportedLabel(text(job.Title)), description: text(job.ShortDescriptionStr), pubDate: text(job.PostedDate), ...sourcePostingDatePatch(job.PostedDate), closingDate: text(job.PostingEndDate), location: normalizeImportedLocation(text(job.PrimaryLocation)) || "Canada", link: `${url.origin}/hcmUI/CandidateExperience/en/sites/${encodeURIComponent(text(result.SiteNumber) || "SIGA")}/job/${encodeURIComponent(id)}` });
     }
     if (items.length === result.TotalJobsCount) return items;
     if (!result.requisitionList.length || items.length > Number(result.TotalJobsCount)) throw new Error("Incomplete Oracle source results");
@@ -191,7 +191,8 @@ export function parseSimpleXml(xml: string): Array<Record<string, string>> {
     }
 
     for (const field of ["title", "location", "city", "state", "country", "company", "employername"]) {
-      if (item[field]) item[field] = normalizeImportedLabel(item[field]);
+      if (item[field]) item[field] = field === "location"
+        ? normalizeImportedLocation(item[field]) : normalizeImportedLabel(item[field]);
     }
 
     // Normalize SmartJobBoard field names to RSS standard
@@ -255,4 +256,3 @@ export function parseAdp(text: string, feedUrl?: string): Array<Record<string, s
     throw new Error("Unable to parse ADP job feed");
   }
 }
-

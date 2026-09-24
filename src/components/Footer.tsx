@@ -19,7 +19,7 @@ export default function Footer() {
           <Image src="/logo.png" alt="" width={24} height={24} />
           <span className="text-white font-extrabold text-sm tracking-wide">IOPPS</span>
           <span className="text-xs" style={{ color: "rgba(255,255,255,.65)" }}>
-            &copy;&nbsp;{new Date().getFullYear()}. All rights reserved.
+            {" "}&copy;&nbsp;{new Date().getFullYear()}. All rights reserved.
           </span>
         </div>
 

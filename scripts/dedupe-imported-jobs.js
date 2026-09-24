@@ -28,10 +28,9 @@
  *   node scripts/dedupe-imported-jobs.js --apply --project <firebase-project-id> [--limit N]
  */
 
-require('dotenv').config({ path: '.env.local' });
-
 const admin = require('firebase-admin');
 const { createHash } = require('node:crypto');
+const { existsSync } = require('node:fs');
 
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
@@ -45,8 +44,8 @@ function getCredentials() {
     try {
       const parsed = JSON.parse(Buffer.from(base64Str, 'base64').toString('utf-8'));
       return { projectId: parsed.project_id, clientEmail: parsed.client_email, privateKey: parsed.private_key };
-    } catch (e) {
-      console.error('Failed to parse base64 credentials:', e.message);
+    } catch {
+      throw new Error('Invalid Firebase credential configuration.');
     }
   }
   return {
@@ -81,6 +80,7 @@ function locationHasDuplicateSegments(location) {
 }
 
 async function main() {
+  if (existsSync('.env.local')) process.loadEnvFile('.env.local');
   const creds = getCredentials();
   if (!creds.projectId || !creds.clientEmail || !creds.privateKey) {
     console.error('Missing Firebase credentials. Configure .env.local first.');
@@ -88,7 +88,6 @@ async function main() {
   }
   if (APPLY && projectFlag !== creds.projectId) {
     console.error('Refusing to apply: pass --project <id> naming the target Firebase project explicitly.');
-    console.error(`Credentials point at project "${creds.projectId}". This is the human-approval gate — do not bypass it.`);
     process.exit(1);
   }
 
@@ -96,7 +95,7 @@ async function main() {
   const db = admin.firestore();
 
   console.log(APPLY
-    ? `⚠️  APPLY MODE against project "${creds.projectId}". Writes WILL happen.`
+    ? '⚠️  APPLY MODE. The explicit project matches the configured credentials. Writes WILL happen.'
     : 'DRY RUN — no writes. Pass --apply --project <id> to perform cleanup after human approval.');
 
   const groups = new Map(); // fingerprint -> docs
@@ -197,4 +196,5 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => { console.error('Cleanup failed:', err); process.exit(1); });
+// SDK and parsing errors can embed credential values. Never print raw errors.
+main().catch(() => { console.error('Cleanup failed. Check configuration and access without sharing credential values.'); process.exit(1); });

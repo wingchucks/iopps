@@ -101,7 +101,8 @@
     "expected": "",
     "review": false,
     "label": "Vancouver, Vancouver",
-    "expectedLabel": "Vancouver"
+    "expectedLabel": "Vancouver",
+    "labelKind": "location"
   },
   {
     "name": "duplicated adjacent location words collapse",
@@ -109,7 +110,8 @@
     "expected": "",
     "review": false,
     "label": "Vancouver Vancouver, BC",
-    "expectedLabel": "Vancouver, BC"
+    "expectedLabel": "Vancouver, BC",
+    "labelKind": "location"
   },
   {
     "name": "distinct location segments survive",
@@ -117,7 +119,8 @@
     "expected": "",
     "review": false,
     "label": "Saskatoon, SK",
-    "expectedLabel": "Saskatoon, SK"
+    "expectedLabel": "Saskatoon, SK",
+    "labelKind": "location"
   },
   {
     "name": "ampersand spacing stays exact and flagged",

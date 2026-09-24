@@ -290,7 +290,8 @@ function ProfileContent() {
           <div className="relative group">
             <Avatar name={displayName} size={72} src={profile?.photoURL} />
             <button
-              aria-label={uploading ? `Uploading photo ${photoProgress}%` : "Edit profile photo"}
+              aria-label="Edit profile photo"
+              aria-busy={uploading}
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               className="absolute -bottom-1 -right-1 flex items-center justify-center bg-black/70 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full cursor-pointer hover:bg-black/85 focus-visible:outline-2 focus-visible:outline-offset-2 transition-colors"
@@ -300,7 +301,9 @@ function ProfileContent() {
             <input
               ref={fileInputRef}
               type="file"
+              aria-label="Choose profile photo"
               accept="image/*"
+              disabled={uploading}
               onChange={handlePhotoUpload}
               className="sr-only"
             />
