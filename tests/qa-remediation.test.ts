@@ -45,8 +45,8 @@ test("salary validation rejects negative, inverted and non-numeric ranges", () =
 });
 
 test("retired sales cannot be purchased while historical receipts still resolve", () => {
-  for (const plan of ["tier3", "program-post", "standard-post"]) { assert.equal(isPlanAvailableForPurchase(plan), false); assert.ok(getPlanById(plan)); }
-  for (const plan of ["tier1", "tier2", "featured-post"]) assert.equal(isPlanAvailableForPurchase(plan), true);
+  for (const plan of ["tier3", "program-post"]) { assert.equal(isPlanAvailableForPurchase(plan), false); assert.ok(getPlanById(plan)); }
+  for (const plan of ["tier1", "tier2", "standard-post", "featured-post"]) assert.equal(isPlanAvailableForPurchase(plan), true);
 });
 
 test("official event sources survive projection; only equivalent dated events combine", () => {

@@ -6,8 +6,9 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import Stripe from 'stripe';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as pricing from '../src/lib/pricing.ts';
+import { resolvePaidPublicationTerm } from '../src/lib/server/paid-job-term.ts';
 import { expireSubscriptionAtomically } from '../src/lib/server/subscription-expiration.ts';
 import { buildSubscriptionState } from '../src/lib/server/subscription-state.ts';
 
@@ -56,6 +57,7 @@ async function harness(t: any) {
     process: { env: { STRIPE_SECRET_KEY: ['sk', 'test', 'fictional'].join('_'), STRIPE_WEBHOOK_SECRET: secret } },
     require: (id: string) => {
       if (id === 'stripe') return { default: Stripe };
+      if (id === 'firebase-admin/firestore') return { FieldValue };
       if (id === 'next/server') return { NextResponse: { json: Response.json } };
       if (id === '@/lib/firebase-admin') return { getAdminDb: () => port };
       if (id === '@/lib/pricing') return pricing;
@@ -88,6 +90,34 @@ async function harness(t: any) {
     failOnce: (path = employer.path) => { failNextPath = path; },
     rejectEmails: () => { rejectEmails = true; } };
 }
+
+test('paid pricing checkout replaces stale manual grant projection with a usable paid term', { skip: !enabled }, async t => {
+  const h=await harness(t);
+  const old={billingStartAt:'2025-01-01T00:00:00.000Z',bonusAccessEndsAt:'2025-01-01T00:00:00.000Z',subscription:{tier:'standard',status:'active',billingStartAt:'2025-01-01T00:00:00.000Z',paymentId:'admin-grant-tier1',termId:'old-term',amountPaid:0,bonusAccessEndsAt:'2025-01-01T00:00:00.000Z'}};
+  await h.employer.set(old,{merge:true}); await h.db.doc(`organizations/${h.orgId}`).set(old,{merge:true});
+  const e=h.event({amount_total:131250,metadata:{orgId:h.orgId,planId:'tier1',amount:'125000',gstAmount:'6250'}});
+  assert.equal((await h.send(e)).status,200);
+  const receipts=(await h.purchases()).docs.map(d=>({id:d.id,data:d.data()}));
+  for(const ref of [h.employer,h.db.doc(`organizations/${h.orgId}`)]) {
+    const account=(await ref.get()).data()!;
+    assert.equal(resolvePaidPublicationTerm({employerId:h.orgId,employer:account,receipts,now:new Date()})?.id,e.data.object.id);
+    assert.equal(account.subscription.paymentId,undefined);
+    assert.equal(account.subscription.amountPaid,undefined);
+    assert.equal(account.bonusAccessEndsAt,undefined);
+  }
+});
+
+test('paid pricing annual fulfillment initializes one receipt-bound quota without resetting replayed usage', { skip: !enabled }, async t => {
+  const h=await harness(t);
+  const e=h.event({amount_total:131250,metadata:{orgId:h.orgId,planId:'tier1',amount:'125000',gstAmount:'6250'}});
+  assert.equal((await h.send(e)).status,200);
+  const account=(await h.employer.get()).data()!;
+  assert.deepEqual(account.jobPostingUsage,{termId:e.data.object.id,used:0});
+  assert.equal(account.subscription.termId,e.data.object.id);
+  await h.employer.update({'jobPostingUsage.used':4});
+  assert.equal((await h.send(h.event(e.data.object,'checkout.session.async_payment_succeeded',e.data.object.id))).status,200);
+  assert.equal((await h.employer.get()).data()?.jobPostingUsage.used,4);
+});
 
 test('failed fulfillment rolls back receipt and event, then retry succeeds exactly once', { skip: !enabled }, async t => {
   const h = await harness(t); const e = h.event(); h.failOnce();

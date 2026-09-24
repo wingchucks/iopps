@@ -10,8 +10,10 @@ import {
 } from "@/lib/server/employer-auth";
 import {
   buildFeaturedJobSummary,
-  evaluateFeaturedActivation,
 } from "@/lib/server/featured-job-entitlements";
+import { preparePaidPublication } from "@/lib/server/paid-job-publication-reader";
+import { firestorePublicationReader } from "@/lib/server/paid-job-publication-firestore";
+import { PublicationError } from "@/lib/server/paid-job-publication";
 import { isSchoolOrganization } from "@/lib/school-visibility";
 import { sendAdminContentPosted } from "@/lib/email";
 
@@ -35,6 +37,7 @@ async function runCreateTransaction<T>(db: Firestore, action: (tx: Transaction) 
 type JobStatus = "active" | "draft" | "closed";
 
 interface EmployerJobInput {
+  durationDays?: unknown;
   hiringDetails?: unknown;
   title?: string;
   slug?: string;
@@ -94,9 +97,6 @@ function normalizeStatus(value: unknown): JobStatus {
   return value === "active" || value === "closed" ? value : "draft";
 }
 
-function isActiveFeaturedJob(data: Record<string, unknown>): boolean {
-  return Boolean(data.featured) && (data.active === true || data.status === "active");
-}
 
 function buildJobPayload(input: EmployerJobInput, authorContext: { uid: string; employerId: string; orgId: string; orgName?: string; orgShort?: string }) {
   const status = normalizeStatus(input.status);
@@ -227,7 +227,7 @@ export async function GET(req: NextRequest) {
       orgTier: (context.organizationData.tier as string | undefined) || (context.employerData.tier as string | undefined),
     });
   } catch (error) {
-    const status = error instanceof EmployerApiError ? error.status : 500;
+    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Failed to load jobs.";
     console.error("[api/employer/jobs][GET]", error);
     return NextResponse.json({ error: message }, { status });
@@ -258,6 +258,7 @@ export async function POST(req: NextRequest) {
     });
 
     let nextFeaturedSummary = null;
+    const publicationNow = new Date();
 
     await runCreateTransaction(db, async (transaction) => {
 
@@ -270,60 +271,25 @@ export async function POST(req: NextRequest) {
       if (existingJob.exists || existingPost.exists) {
         throw new EmployerApiError(409, "A job with this identifier already exists.");
       }
-      const [employerSnap, jobsSnap, postsSnap] = await Promise.all([
-        transaction.get(employerRef),
-        transaction.get(db.collection("jobs").where("employerId", "==", context.employerId)),
-        transaction.get(db.collection("posts").where("orgId", "==", context.employerId)),
-      ]);
-
-      const employerData = employerSnap.data() ?? {};
-      const activeFeaturedCount = [
-        ...jobsSnap.docs.map((doc) => doc.data()),
-        ...postsSnap.docs.map((doc) => doc.data()).filter((doc) => doc.type === "job"),
-      ].filter((doc) => isActiveFeaturedJob(doc as Record<string, unknown>)).length;
-
-      const featuredSummary = buildFeaturedJobSummary({
-        plan: employerData.plan as string | undefined,
-        subscriptionTier: employerData.subscriptionTier as string | undefined,
-        featuredJobsUsed: activeFeaturedCount,
-        featuredPostCredits: employerData.featuredPostCredits as number | undefined,
+      const paid = await preparePaidPublication(firestorePublicationReader(db, transaction), {
+        employerId: context.employerId, organizationId: context.orgId, jobId: baseSlug,
+        current: null, status, featured, durationDays: body.durationDays, now: publicationNow,
       });
-
-      const decision = evaluateFeaturedActivation({
-        requestedActiveFeatured: featured && status === "active",
-        existingActiveFeatured: false,
-        existingFeaturedCreditConsumed: false,
-        activeFeaturedCountExcludingCurrent: activeFeaturedCount,
-        summary: featuredSummary,
-      });
-
-      if (!decision.allowed) {
-        throw new EmployerApiError(400, decision.reason || "This job cannot be featured.");
-      }
-
-      if (decision.consumeCredit) {
-        const currentCredits = Math.max(0, Number(employerData.featuredPostCredits ?? 0) || 0);
-        transaction.set(employerRef, {
-          featuredPostCredits: currentCredits - 1,
-          updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
-      }
-
+      if (status === 'active') transaction.set(employerRef, {
+        ...paid.employerPatch, updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
       transaction.create(jobRef, stripUndefined({
         ...payload,
         slug: baseSlug,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
-        postedAt: status === "active" ? FieldValue.serverTimestamp() : null,
-        featuredCreditConsumed: decision.consumeCredit,
-        featuredCreditConsumedAt: decision.consumeCredit ? FieldValue.serverTimestamp() : undefined,
+        postedAt: null,
+        ...paid.jobPatch,
       }));
-
       nextFeaturedSummary = buildFeaturedJobSummary({
-        plan: employerData.plan as string | undefined,
-        subscriptionTier: employerData.subscriptionTier as string | undefined,
-        featuredJobsUsed: activeFeaturedCount + (featured && status === "active" ? 1 : 0),
-        featuredPostCredits: (Number(employerData.featuredPostCredits ?? 0) || 0) - (decision.consumeCredit ? 1 : 0),
+        plan: paid.paidTerm?.tier ?? 'free',
+        featuredJobsUsed: paid.includedFeaturedUsed + (paid.jobPatch.featuredEntitlement === 'included_slot' ? 1 : 0),
+        featuredPostCredits: Number(paid.employerPatch.featuredPostCredits ?? paid.employer.featuredPostCredits ?? 0),
       });
     });
 
@@ -346,7 +312,7 @@ export async function POST(req: NextRequest) {
       featuredSummary: nextFeaturedSummary,
     });
   } catch (error) {
-    const status = error instanceof EmployerApiError ? error.status : 500;
+    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Failed to create job.";
     console.error("[api/employer/jobs][POST]", error);
     return NextResponse.json({ error: message }, { status });

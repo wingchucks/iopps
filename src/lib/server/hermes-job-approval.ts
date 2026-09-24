@@ -5,6 +5,7 @@ import {
   randomBytes,
 } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
+import type {HermesPaidPublicationState} from "./hermes-paid-publication";
 
 export const JOB_APPROVAL_CONFIRMATION = "APPROVE IOPPS JOB";
 
@@ -26,7 +27,10 @@ export interface HermesJobApprovalProjection {
   organization: string;
   status: string;
   featuredIntent: "standard" | "featured";
-  entitlementDecision: "not_required" | "included_slot" | "featured_post_credit" | "existing_entitlement";
+  entitlementDecision: "not_required" | "included_slot" | "featured_post_credit" | "existing_entitlement" | HermesPaidPublicationState["funding"];
+  funding?: HermesPaidPublicationState["funding"];
+  durationDays?: number|null;
+  expiresAt?: string|null;
 }
 
 export interface HermesFeaturedJobIdentity {
@@ -60,9 +64,11 @@ export interface HermesJobApprovalBoundState {
     featured: boolean;
   };
   featuredEntitlement: HermesFeaturedEntitlementBoundState | null;
+  paidPublication?: HermesPaidPublicationState;
 }
 
 export interface HermesJobApprovalServiceDeps {
+  resolvePaidPublication?: (document:HermesJobApprovalDocument,featured:boolean,reviewed?:HermesPaidPublicationState)=>Promise<{ok:true;state:HermesPaidPublicationState}|{ok:false;status:number;error:string}>;
   reviewSecret: string;
   now?: () => Date;
   findJobCandidates: (jobId: string) => Promise<HermesJobApprovalDocument[]>;
@@ -164,7 +170,7 @@ function boundState(
 }
 
 function reviewPayload(command: HermesJobApprovalCommand, state: HermesJobApprovalBoundState) {
-  return { protocol: "iopps-hermes-job-approval-review-v2", command, boundState: state };
+  return { protocol: "iopps-hermes-job-approval-review-v3", command, boundState: state };
 }
 
 const REVIEW_TOKEN_VERSION = "v1";
@@ -239,12 +245,12 @@ function parseReviewToken(token: string, secret: string): {
     const payload = JSON.parse(payloadText) as Record<string, unknown>;
     if (!isRecord(payload) || canonicalize(payload) !== payloadText ||
         !hasExactKeys(payload, ["protocol", "command", "boundState"]) ||
-        payload.protocol !== "iopps-hermes-job-approval-review-v2" || !isRecord(payload.boundState)) return null;
+        payload.protocol !== "iopps-hermes-job-approval-review-v3" || !isRecord(payload.boundState)) return null;
     const normalized = normalizeHermesJobReviewCommand(payload.command);
     if (!normalized.ok) return null;
     const state = payload.boundState;
     const desired = state.desiredState;
-    if (!hasExactKeys(state, ["documentId", "collection", "schema", "version", "desiredState", "featuredEntitlement"]) ||
+    if (!hasExactKeys(state, ["documentId", "collection", "schema", "version", "desiredState", "featuredEntitlement", ...(state.paidPublication===undefined?[]:["paidPublication"])]) ||
         typeof state.documentId !== "string" || !state.documentId || state.documentId.length > MAX_BOUND_STRING_LENGTH ||
         (state.collection !== "jobs" && state.collection !== "posts") ||
         (state.schema !== "employer-job-v1" && state.schema !== "legacy-job-post-v1") ||
@@ -253,13 +259,25 @@ function parseReviewToken(token: string, secret: string): {
         !hasExactKeys(desired, ["status", "active", "setPostedAt", "featured"]) ||
         desired.status !== "active" || desired.active !== true || typeof desired.setPostedAt !== "boolean" ||
         typeof desired.featured !== "boolean" ||
-        !isValidFeaturedEntitlement(state.featuredEntitlement)) {
+        !isValidFeaturedEntitlement(state.featuredEntitlement) ||
+        (state.paidPublication!==undefined && (!isValidPaidState(state.paidPublication) || state.featuredEntitlement!==null))) {
       return null;
     }
     return { command: normalized.command, boundState: state as unknown as HermesJobApprovalBoundState };
   } catch {
     return null;
   }
+}
+
+function isValidPaidState(value:unknown): value is HermesPaidPublicationState {
+ if(!isRecord(value) || !hasExactKeys(value,['employerId','organizationId','evaluatedAt','inputsDigest','planDigest','funding','durationDays','expiresAt']))return false;
+ const id=(v:unknown)=>typeof v==='string'&&v.length>0&&v.length<=128&&!v.includes('/')&&!/[\u0000-\u001f]/.test(v);
+ const iso=(v:unknown)=>typeof v==='string'&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString()===v;
+ return id(value.employerId)&&id(value.organizationId)&&iso(value.evaluatedAt)&&
+  typeof value.inputsDigest==='string'&&/^[a-f0-9]{64}$/.test(value.inputsDigest)&&typeof value.planDigest==='string'&&/^[a-f0-9]{64}$/.test(value.planDigest)&&
+  ['standard_credit','featured_credit','standard_subscription','premium_subscription','school_subscription','existing_legacy'].includes(String(value.funding))&&
+  (value.durationDays===null || (typeof value.durationDays==='number'&&Number.isInteger(value.durationDays)&&value.durationDays>=1&&value.durationDays<=45))&&
+  (value.expiresAt===null||iso(value.expiresAt));
 }
 
 function isValidFeaturedEntitlement(value: unknown): value is HermesFeaturedEntitlementBoundState | null {
@@ -338,10 +356,17 @@ async function resolveBoundState(
   document: HermesJobApprovalDocument,
   command: HermesJobApprovalCommand,
   deps: HermesJobApprovalServiceDeps,
+  reviewed?: HermesPaidPublicationState,
 ): Promise<
   | { ok: true; state: HermesJobApprovalBoundState }
   | { ok: false; status: number; error: string }
 > {
+  if(deps.resolvePaidPublication){
+    const featured=command.featured===false?false:Boolean(document.data.featured);
+    const paid=await deps.resolvePaidPublication(document,featured,reviewed);
+    if(!paid.ok)return paid;
+    return {ok:true,state:{...boundState(document,null,featured),paidPublication:paid.state}};
+  }
   if (command.featured === false) {
     return { ok: true, state: boundState(document, null, false) };
   }
@@ -377,7 +402,7 @@ export async function reviewHermesJobApproval(
     ok: true as const,
     reviewToken: createReviewToken(normalized.command, bound.state, deps.reviewSecret),
     current,
-    desired,
+    desired: bound.state.paidPublication ? {...desired,funding:bound.state.paidPublication.funding,durationDays:bound.state.paidPublication.durationDays,expiresAt:bound.state.paidPublication.expiresAt,entitlementDecision:bound.state.paidPublication.funding} : desired,
   };
 }
 
@@ -395,7 +420,7 @@ export async function applyHermesJobApproval(
   if ("error" in resolved) {
     return { ok: false as const, status: 409, error: "Review token is invalid or stale" };
   }
-  const currentState = await resolveBoundState(resolved.document, reviewed.command, deps);
+  const currentState = await resolveBoundState(resolved.document, reviewed.command, deps, reviewed.boundState.paidPublication);
   if (!currentState.ok || !isDeepStrictEqual(currentState.state, reviewed.boundState)) {
     return { ok: false as const, status: 409, error: "Review token is invalid or stale" };
   }

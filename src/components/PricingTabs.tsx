@@ -6,7 +6,7 @@ import Link from "next/link";
 import Card from "@/components/Card";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 
-const tabs = ["Promotion Plans", "Featured Jobs", "Conferences", "Businesses"] as const;
+const tabs = ["Annual Plans", "Single Job Posts", "Conferences", "Businesses"] as const;
 type Tab = (typeof tabs)[number];
 
 function Check() {
@@ -173,7 +173,7 @@ export default function PricingTabs({
   variant?: "public" | "org";
   currentPlan?: string;
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>("Promotion Plans");
+  const [activeTab, setActiveTab] = useState<Tab>("Annual Plans");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const subHref = (plan: string) =>
@@ -187,7 +187,7 @@ export default function PricingTabs({
 
   return (
     <>
-      <p className="mb-5 text-sm text-text-sec">Job posting and application management are free. Paid plans support promoted profiles and eligible featured placements. Business directory listings require review.</p>
+      <p className="mb-5 text-sm text-text-sec">All job postings require a paid posting credit or an eligible annual plan. Standard listings run for 30 days; featured listings run for your choice of up to 45 days. Business directory listings require review.</p>
       {/* Tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {tabs.map((tab) => {
@@ -210,7 +210,7 @@ export default function PricingTabs({
       </div>
 
       {/* Tab content */}
-      {activeTab === "Promotion Plans" && (
+      {activeTab === "Annual Plans" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <PlanCard
             title={SUBSCRIPTION_PLANS.tier1.title}
@@ -235,9 +235,16 @@ export default function PricingTabs({
         </div>
       )}
 
-      {activeTab === "Featured Jobs" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-
+      {activeTab === "Single Job Posts" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <PlanCard
+            title={ONE_TIME_PLANS["standard-post"].title}
+            price={ONE_TIME_PLANS["standard-post"].priceLabel}
+            period={ONE_TIME_PLANS["standard-post"].periodLabel}
+            features={ONE_TIME_PLANS["standard-post"].features}
+            cta={postCta}
+            href={postHref("standard-post")}
+          />
           <PlanCard
             title={ONE_TIME_PLANS["featured-post"].title}
             price={ONE_TIME_PLANS["featured-post"].priceLabel}
@@ -267,7 +274,7 @@ export default function PricingTabs({
           <FreeCard
             title="Indigenous Businesses"
             description="Indigenous businesses and employers can create a profile on IOPPS for free and join the opportunities network without a promotion fee."
-            features={["Free business profile", "Directory visibility", "Jobs and events listing", "Community discovery"]}
+            features={["Free business profile", "Directory review", "Events listing", "Community discovery"]}
             cta={variant === "org" ? "Manage Profile" : `Create Free Profile${freeSuffix}`}
             href={freeHref}
           />
@@ -280,7 +287,7 @@ export default function PricingTabs({
                   </p>
                   <h3 className="text-xl font-extrabold text-text mb-2">Non-Indigenous Companies</h3>
                   <p className="text-sm text-text-sec max-w-2xl mb-0">
-                    Non-Indigenous companies can still create a profile and participate on IOPPS. Payment is only required when they want promoted visibility, featured placement, or campaign support.
+                    Non-Indigenous companies can create a profile and participate on IOPPS. All job postings are paid, either individually or through an eligible annual plan. Promotion and campaign support are also available.
                   </p>
                 </div>
                 <div
@@ -293,7 +300,7 @@ export default function PricingTabs({
                   }}
                 >
                   <p className="text-xs font-bold mb-1" style={{ color: "var(--gold)" }}>How it works</p>
-                  <p className="text-sm text-text-sec mb-0">Profile creation is free. Promotion is optional and paid.</p>
+                  <p className="text-sm text-text-sec mb-0">Profile creation is free. Job postings require payment or an eligible annual plan.</p>
                 </div>
               </div>
             </div>

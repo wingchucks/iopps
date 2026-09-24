@@ -18,6 +18,8 @@ const fields = new Set([
 ]);
 export function publicContentRecord(record: Record<string, unknown>): Record<string, unknown> {
   const projected = Object.fromEntries(Object.entries(record).filter(([key]) => fields.has(key)));
+  // Paid publication time is not evidence of an employer's original source date.
+  if (record.source === 'feed' && Object.hasOwn(record, 'publication')) delete projected.postedAt;
   // Never forward nested values or promote inherited calendar provenance.
   if (Object.hasOwn(record, "sourcePostingDate")) {
     Object.assign(projected, sourcePostingDatePatch(record.sourcePostingDate));

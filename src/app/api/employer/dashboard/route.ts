@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { buildFeaturedJobSummary } from "@/lib/server/featured-job-entitlements";
+import { readPaidFeaturedSummary } from "@/lib/server/paid-job-publication-reader";
+import { firestorePublicationReader } from "@/lib/server/paid-job-publication-firestore";
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 import { normalizeOrganizationRecord } from "@/lib/organization-profile";
 import { isSchoolOrganization } from "@/lib/school-visibility";
@@ -198,21 +199,8 @@ export async function GET(req: NextRequest) {
         });
     }
 
-    const activeFeaturedCount =
-      jobs.filter((job) => job.status === "active" && job.featured).length +
-      posts.filter((post) => post.type === "job" && post.status === "active" && post.featured).length;
-
-    const orgPlan =
-      orgData && typeof (orgData as Record<string, unknown>).plan === "string"
-        ? ((orgData as Record<string, unknown>).plan as string)
-        : undefined;
-
-    const featuredSummary = buildFeaturedJobSummary({
-      plan: (empData?.plan as string | undefined) || orgPlan,
-      subscriptionTier: empData?.subscriptionTier as string | undefined,
-      featuredJobsUsed: activeFeaturedCount,
-      featuredPostCredits: empData?.featuredPostCredits as number | undefined,
-    });
+    const summaryNow = new Date();
+    const featuredSummary = await adminDb.runTransaction(tx => readPaidFeaturedSummary(firestorePublicationReader(adminDb,tx), {employerId,organizationId:context.orgId,now:summaryNow}));
 
     return NextResponse.json({
       org: orgData,

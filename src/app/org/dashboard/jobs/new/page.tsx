@@ -70,6 +70,7 @@ interface FormState {
   communityTags: string[];
   hiringDetails: HiringDetails;
   featured: boolean;
+  durationDays: string;
   requiresResume: boolean;
   requiresCoverLetter: boolean;
   requiresReferences: boolean;
@@ -97,6 +98,7 @@ const emptyForm: FormState = {
   communityTags: [],
   hiringDetails: normalizeHiringDetails({}),
   featured: false,
+  durationDays: "",
   requiresResume: true,
   requiresCoverLetter: false,
   requiresReferences: false,
@@ -675,6 +677,7 @@ export default function NewJobWizardPage() {
 
   /* ---- Save ---- */
   const handleSave = async (status: "active" | "draft") => {
+    if (status === 'active' && form.featured && (!/^\d+$/.test(form.durationDays) || Number(form.durationDays) < 1 || Number(form.durationDays) > 45)) { setSubmitError("Choose a featured listing duration from 1 to 45 days."); return; }
     if (!isValidClosingDate(form.closingDate)) { setSubmitError("Enter a valid closing date or clear it."); return; }
     if (!profile?.orgId || !user) { setSubmitError("Your organization session isn’t ready. Please reload and try again."); return; }
     setSubmitError("");
@@ -724,6 +727,7 @@ export default function NewJobWizardPage() {
         willTrain: form.hiringDetails.willTrain,
         driversLicense: form.hiringDetails.driversLicense,
         featured: form.featured,
+        durationDays: form.featured ? Number(form.durationDays) : 30,
         requiresResume: form.requiresResume,
           requiresCoverLetter: form.requiresCoverLetter,
           requiresReferences: form.requiresReferences,
@@ -1165,6 +1169,9 @@ export default function NewJobWizardPage() {
                           checked={form.featured}
                           onChange={(value) => set("featured", value)}
                         />
+                        {form.featured ? <label htmlFor="featured-duration">Featured listing duration (days, up to 45)
+                          <input id="featured-duration" type="number" min={1} max={45} step={1} value={form.durationDays} onChange={event => set("durationDays", event.target.value)} className="w-full rounded-xl border p-3" />
+                        </label> : <p>Standard job postings run for 30 days. A paid credit or annual-plan allowance is required.</p>}
                       </div>
                     </div>
 

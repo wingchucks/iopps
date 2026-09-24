@@ -48,8 +48,8 @@ const PLAN_FEATURES: Record<string, { label: string; features: string[]; color: 
   free: {
     label: "Free",
     color: "var(--text-muted)",
-    jobLimit: "Free job listings included",
-    features: ["Organization profile with directory review", "Free job listings", "Application management", "Events and scholarships"],
+    jobLimit: "Job postings purchased separately",
+    features: ["Organization profile with directory review", "Paid job posting options", "Application management", "Events and scholarships"],
   },
 };
 
@@ -120,7 +120,7 @@ function BillingContent() {
       </Link>
 
       <h1 className="text-2xl font-extrabold text-text mb-1">Billing & Plan</h1>
-      <p className="text-sm text-text-muted mb-8">Posting a job is free. Paid options add promotion and featured placement.</p>
+      <p className="text-sm text-text-muted mb-8">Job postings require a paid credit or an eligible annual plan. Standard postings run for 30 days; featured postings run for your choice of up to 45 days.</p>
 
       {/* Current Plan Card */}
       <Card className="mb-6">
@@ -218,11 +218,12 @@ function BillingContent() {
       </div>
 
       {/* One-Time Purchases */}
-      <h2 className="text-lg font-bold text-text mb-4">Featured Job Promotion</h2>
+      <h2 className="text-lg font-bold text-text mb-4">Single Job Postings</h2>
       <Card className="mb-8">
         <div className="p-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
+              { key: "standard-post", name: ONE_TIME_PLANS["standard-post"].title, price: ONE_TIME_PLANS["standard-post"].priceLabel, desc: ONE_TIME_PLANS["standard-post"].shortDescription },
               { key: "featured-post", name: ONE_TIME_PLANS["featured-post"].title, price: ONE_TIME_PLANS["featured-post"].priceLabel, desc: ONE_TIME_PLANS["featured-post"].shortDescription },
             ].map((p) => (
               <div key={p.key} className="flex flex-col gap-1">

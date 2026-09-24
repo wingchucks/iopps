@@ -141,7 +141,7 @@ jobs:
           npx --yes firebase-tools@14.17.0 emulators:exec
           --project demo-iopps-preview --config firebase.ci.json
           --only firestore,auth,storage
-          "npm run build && node scripts/qa-release-browser.mjs && node --import ./scripts/test-typescript-loader.mjs scripts/qa-employer-browser.mjs"
+          "npm run build && node scripts/qa-release-browser.mjs && node --import ./scripts/test-typescript-loader.mjs scripts/qa-employer-browser.mjs && node scripts/qa-paid-pricing-browser.mjs && node scripts/qa-paid-employer-browser.mjs"
       - name: Retain fixture browser evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -150,6 +150,8 @@ jobs:
           path: |
             test-results/release-browser/
             test-results/employer-browser/
+            reports/paid-pricing/browser-public-*/
+            reports/paid-pricing/browser-employer-*/
             output/playwright/organization-admin-assignment/*.png
           retention-days: 7
 

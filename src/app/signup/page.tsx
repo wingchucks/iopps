@@ -42,7 +42,7 @@ const BUSINESS_IDENTITY_OPTIONS: Array<{
   {
     value: "non_indigenous",
     label: "Non-Indigenous company or employer",
-    description: "Create your profile now and only pay when you want promoted visibility.",
+    description: "Create your profile for free. Job postings require a paid credit or annual plan.",
   },
   {
     value: "not_specified",
@@ -99,7 +99,7 @@ function UnifiedSignupContent() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [admissionsEmail, setAdmissionsEmail] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState(["tier1", "tier2", "featured-post"].includes(searchParams.get("plan") || "") ? searchParams.get("plan")! : "");
+  const [selectedPlan, setSelectedPlan] = useState(["tier1", "tier2", "standard-post", "featured-post"].includes(searchParams.get("plan") || "") ? searchParams.get("plan")! : "");
 
   // Employer
   const [orgName, setOrgName] = useState("");
@@ -682,24 +682,13 @@ function UnifiedSignupContent() {
         {/* STEP 8: Plan */}
         {step === 8 && (<div>
           <StepHeader eyebrow="School Setup — 5 of 6" title="Your" highlight="Plan" desc="Choose your plan to get started." />
-          <div onClick={() => setSelectedPlan("tier3")} style={{ background: CSS.card, border: `1px solid ${selectedPlan === "tier3" ? CSS.accent : CSS.border}`, borderRadius: 16, padding: 24, cursor: "pointer", position: "relative", boxShadow: selectedPlan === "tier3" ? `0 0 0 1px ${CSS.accent}, 0 8px 32px rgba(20,184,166,0.12)` : "none" }}>
-            <div style={{ position: "absolute", top: 12, right: 12, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", padding: "4px 10px", borderRadius: 20, background: `linear-gradient(135deg,${CSS.accent},${CSS.blue})`, color: "#fff" }}>School Plan</div>
-            <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>School Subscription</div>
-            <div style={{ fontSize: 32, fontWeight: 800 }}>{SUBSCRIPTION_PLANS.tier3.priceLabel} <span style={{ fontSize: 14, fontWeight: 400, color: CSS.textMuted }}>CAD</span></div>
-            <div style={{ fontSize: 12, color: CSS.textDim, marginBottom: 16 }}>per year</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 32px" }}>
-              {[SUBSCRIPTION_PLANS.tier3.features.slice(0, 3), SUBSCRIPTION_PLANS.tier3.features.slice(3)].map((col,ci) => (
-                <ul key={ci} style={{ listStyle: "none", padding: 0, margin: 0 }}>{col.map(f => <li key={f} style={{ fontSize: 13, color: CSS.textMuted, padding: "6px 0", display: "flex", gap: 8 }}><span style={{ color: CSS.accent, fontWeight: 700, fontSize: 12 }}>✓</span>{f}</li>)}</ul>
-              ))}
-            </div>
-          </div>
+          <InfoBanner icon="💳">Schools use the same paid job-posting options as other organizations. The School annual plan is no longer offered.</InfoBanner>
           <div style={{ marginTop: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: CSS.textMuted }}>Or: Pay Per Post</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
               {[
-                { id: "standard-post", l: ONE_TIME_PLANS["standard-post"].title, p: ONE_TIME_PLANS["standard-post"].priceLabel, n: "per post · 45 days" },
-                { id: "featured-post", l: ONE_TIME_PLANS["featured-post"].title, p: ONE_TIME_PLANS["featured-post"].priceLabel, n: "per post · 45 days", b: ONE_TIME_PLANS["featured-post"].badge },
-                { id: "program-post", l: ONE_TIME_PLANS["program-post"].title, p: ONE_TIME_PLANS["program-post"].priceLabel, n: "per post · 45 days" },
+                { id: "standard-post", l: ONE_TIME_PLANS["standard-post"].title, p: ONE_TIME_PLANS["standard-post"].priceLabel, n: "per post · 30 days" },
+                { id: "featured-post", l: ONE_TIME_PLANS["featured-post"].title, p: ONE_TIME_PLANS["featured-post"].priceLabel, n: "per post · choose up to 45 days", b: ONE_TIME_PLANS["featured-post"].badge },
               ].map(x => (
                 <div key={x.id} onClick={() => setSelectedPlan(x.id)} style={{ background: CSS.card, border: `1px solid ${selectedPlan === x.id ? CSS.accent : x.b ? "rgba(245,158,11,0.3)" : CSS.border}`, borderRadius: 12, padding: 16, textAlign: "center", cursor: "pointer", boxShadow: selectedPlan === x.id ? `0 0 0 1px ${CSS.accent}` : "none" }}>
                   {x.b && <div style={{ fontSize: 10, fontWeight: 600, color: CSS.amber, textTransform: "uppercase", marginBottom: 4 }}>{x.b}</div>}
@@ -731,8 +720,7 @@ function UnifiedSignupContent() {
               : "None selected"} />
           </ReviewSection>
           <ReviewSection icon="💳" title="Selected Plan" onEdit={() => goTo(8)}>
-            <ReviewRow label="Plan" value={<span style={{ color: CSS.accent, fontWeight: 600 }}>{!selectedPlan ? "No plan selected" : selectedPlan === "tier3" ? `School - ${SUBSCRIPTION_PLANS.tier3.priceLabel}/yr` : selectedPlan === "program-post" ? `${ONE_TIME_PLANS["program-post"].title} - ${ONE_TIME_PLANS["program-post"].priceLabel}` : selectedPlan === "standard-post" ? `${ONE_TIME_PLANS["standard-post"].title} - ${ONE_TIME_PLANS["standard-post"].priceLabel}` : `${ONE_TIME_PLANS["featured-post"].title} - ${ONE_TIME_PLANS["featured-post"].priceLabel}`}</span>} />
-            {selectedPlan === "tier3" && <><ReviewRow label="Programs" value="20 program listings" /><ReviewRow label="Jobs" value="Unlimited" /><ReviewRow label="Featured" value="6 included" /></>}
+            <ReviewRow label="Plan" value={<span style={{ color: CSS.accent, fontWeight: 600 }}>{selectedPlan === "standard-post" ? `${ONE_TIME_PLANS["standard-post"].title} - ${ONE_TIME_PLANS["standard-post"].priceLabel}` : selectedPlan === "featured-post" ? `${ONE_TIME_PLANS["featured-post"].title} - ${ONE_TIME_PLANS["featured-post"].priceLabel}` : "Choose an available plan"}</span>} />
           </ReviewSection>
           <InfoBanner icon="💳"><strong style={{ color: CSS.text }}>Ready to pay?</strong> Secure Stripe checkout. Account activates immediately after payment.</InfoBanner>
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(8)}>← Back</BtnGhost><BtnPrimary onClick={handleSchoolSubmit} disabled={submitting} style={{ flex: 1, justifyContent: "center" }}>{submitting ? "Processing..." : "Proceed to Payment →"}</BtnPrimary></div>
@@ -779,7 +767,7 @@ function UnifiedSignupContent() {
           </div>
           <div style={{ marginTop: 24 }}>
             <InfoBanner icon="💡">
-              Indigenous and non-Indigenous organizations can start with a Free Starter profile. A paid plan or featured-post purchase is needed for promoted visibility, not account creation. Standard is {SUBSCRIPTION_PLANS.tier1.priceLabel} CAD/year; Premium is {SUBSCRIPTION_PLANS.tier2.priceLabel} CAD/year. Review the plan features before purchasing.
+              Indigenous and non-Indigenous organizations can start with a free profile. All job postings require a paid posting credit or an eligible annual plan. Standard is {SUBSCRIPTION_PLANS.tier1.priceLabel} CAD/year for 15 postings; Premium is {SUBSCRIPTION_PLANS.tier2.priceLabel} CAD/year for unlimited postings. Single job postings are also available.
             </InfoBanner>
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(3)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(11)} disabled={!orgName.trim() || !empDescription.trim() || !empServices.trim() || (entrepreneurIntent && (!empCity.trim() || !empProvince))}>Continue →</BtnPrimary></div>

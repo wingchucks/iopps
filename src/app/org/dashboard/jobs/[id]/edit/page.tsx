@@ -19,6 +19,7 @@ import { useToast } from "@/lib/toast-context";
 type PostStatus = "draft" | "active" | "closed";
 
 interface EditableJob {
+  publication?: { durationDays?: number };
   id: string;
   title?: string;
   description?: string;
@@ -116,6 +117,7 @@ export default function JobEditPage() {
   const [documents, setDocuments] = useState({ requiresResume: true, requiresCoverLetter: false, requiresReferences: false });
   const [status, setStatus] = useState<PostStatus>("draft");
   const [featured, setFeatured] = useState(false);
+  const [durationDays, setDurationDays] = useState("");
   const [featuredSummary, setFeaturedSummary] = useState<FeaturedJobSummary | null>(null);
 
   const [isImported, setIsImported] = useState(false);
@@ -157,6 +159,7 @@ export default function JobEditPage() {
         setHiringDetails(normalizeHiringDetails(p.hiringDetails, p));
         setStatus(p.status || "active");
         setFeatured(Boolean(p.featured));
+        setDurationDays(p.publication?.durationDays ? String(p.publication.durationDays) : "");
       } catch (err) {
         console.error("Failed to load employer job:", err);
         router.replace("/org/dashboard");
@@ -168,6 +171,7 @@ export default function JobEditPage() {
 
   const handleSave = async () => {
     if (!user) return;
+    if (status === 'active' && featured && !post?.publication && post?.status === 'draft' && (!/^\d+$/.test(durationDays) || Number(durationDays) < 1 || Number(durationDays) > 45)) { showToast("Choose a featured listing duration from 1 to 45 days.", "error"); return; }
     if (!isValidClosingDate(closingDate)) { showToast("Enter a valid closing date or clear it.", "error"); return; }
     if (!title.trim()) {
       showToast("Title is required", "error");
@@ -213,6 +217,7 @@ export default function JobEditPage() {
           ...documents,
           status,
           featured,
+          durationDays: post?.publication ? undefined : featured ? Number(durationDays) : 30,
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -672,6 +677,9 @@ export default function JobEditPage() {
                     onChange={setFeatured}
                     disabled={isImported}
                   />
+                  {featured && !post?.publication && post?.status === 'draft' ? <label htmlFor="featured-duration">Featured listing duration (days, up to 45)
+                    <input id="featured-duration" type="number" min={1} max={45} step={1} value={durationDays} onChange={event => setDurationDays(event.target.value)} disabled={isImported} className="w-full rounded-xl border p-3" />
+                  </label> : <p className="text-sm text-text-muted">{post?.publication ? `Purchased listing duration: ${post.publication.durationDays} days. Editing does not extend the expiry.` : 'Standard listings run for 30 days. Publishing requires a paid credit or annual-plan allowance.'}</p>}
 
                   {/* Status */}
                   <div>

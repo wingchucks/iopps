@@ -4,7 +4,7 @@ export function signupPasswordError(password: string): string | null {
 }
 
 type IntentQuery = { get(name: string): string | null };
-const PLAN_IDS = ['tier1', 'tier2', 'tier3', 'standard-post', 'featured-post', 'program-post'];
+const PLAN_IDS = ['tier1', 'tier2', 'standard-post', 'featured-post'];
 
 /** Query intent is navigation only, never an entitlement or checkout authorization. */
 export function authIntentHref(path: string, query: IntentQuery): string {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { sendAdminPaymentNotification, sendSubscriptionConfirmation } from "@/lib/email";
 
@@ -125,11 +126,14 @@ export async function POST(req: NextRequest) {
         if (tier) {
           const access = {
             plan: tier, subscriptionTier: tier, subscriptionStatus: "active",
-            subscriptionStart: now, subscriptionEnd: expiresAt, updatedAt: now,
-            subscription: { tier, status: 'active', billingStartAt: now, subscriptionEnd: expiresAt },
+            subscriptionStart: now, billingStartAt: now, subscriptionEnd: expiresAt, updatedAt: now,
+            bonusAccessGrantedAt: FieldValue.delete(), bonusAccessEndsAt: FieldValue.delete(), bonusAccessReason: FieldValue.delete(),
+            subscription: { tier, status: 'active', billingStartAt: now, subscriptionEnd: expiresAt, termId: session.id },
+            ...(tier === 'standard' ? { jobPostingUsage: { termId: session.id, used: 0 } } : {}),
           };
-          tx.set(employerRef, access, { merge: true });
-          if (target) tx.set(target, access, { merge: true });
+          // Replace current-term maps, rather than recursively retaining old manual/grant evidence.
+                    tx.set(employerRef, access, { mergeFields: Object.keys(access) });
+                    if (target) tx.set(target, access, { mergeFields: Object.keys(access) });
         } else if (ONE_TIME_POSTS.has(planId)) {
           const creditField = planId === "featured-post" ? "featuredPostCredits"
             : planId === "program-post" ? "programPostCredits" : "standardPostCredits";

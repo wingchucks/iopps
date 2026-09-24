@@ -62,7 +62,7 @@ export function buildFeaturedJobSummary({
     featuredSlotsUsed: used,
     featuredSlotsRemaining: Math.max(slots - used, 0),
     featuredPostCredits: credits,
-    canFeatureJobs: used < totalCapacity,
+    canFeatureJobs: used < slots || credits > 0,
     isOverQuotaLegacy: used > totalCapacity,
   };
 }

@@ -3,6 +3,9 @@ import { jobCategoryPatch } from "../job-taxonomy";
 import { createHash } from "node:crypto";
 import { feedJobKey } from "./feed-source";
 import type { Firestore } from "firebase-admin/firestore";
+import {preparePaidPublication} from './paid-job-publication-reader';
+import {firestorePublicationReader} from './paid-job-publication-firestore';
+import {PublicationError} from './paid-job-publication';
 
 type Job = Record<string, unknown>;
 const label = (value: unknown) => typeof value === "string" ? value.normalize("NFC").replace(/\s+/gu, " ").trim() : "";
@@ -31,12 +34,20 @@ export async function createImportedJobOnce(db: Firestore, data: Job): Promise<b
   const reservation = db.collection("feedImportIdentities").doc(identity);
   const job = db.collection("jobs").doc(`import-${identity}`);
   const mirror = db.collection("posts").doc(job.id);
+  const publicationNow=new Date();
+  const publicIntent=data.active===true || data.status==='active' || data.status==='published';
+  if(publicIntent && (data.active===false || (data.status!==undefined && !['active','published'].includes(String(data.status))))) throw new PublicationError('invalid_lifecycle','Conflicting import publication state.');
   return db.runTransaction(async tx => {
     const [claim, existing, legacy] = await Promise.all([tx.get(reservation), tx.get(job), tx.get(mirror)]);
     if (claim.exists || existing.exists || legacy.exists) return false;
     if (!await cleanupWriteAllowed(db, tx, job.id, {}, data)) return false;
+    const paid=publicIntent ? await preparePaidPublication(firestorePublicationReader(db,tx),{
+      employerId:String(data.employerId ?? ''),organizationId:String(data.employerId ?? ''),jobId:job.id,
+      current:null,status:'active',featured:data.featured===true,durationDays:data.listingDurationDays,now:publicationNow,
+    }) : null;
+    if(paid)tx.set(db.collection('employers').doc(String(data.employerId)),{...paid.employerPatch,updatedAt:publicationNow},{merge:true});
     tx.create(reservation, { version: 1, jobId: job.id, feedId: data.feedId, employerId: data.employerId });
-    tx.create(job, { ...data, ...jobCategoryPatch(data), importIdentity: identity });
+    tx.create(job, { ...data, ...(!data.publishedAt && data.postedAt ? {publishedAt:data.postedAt} : {}), ...jobCategoryPatch(data), importIdentity: identity, publicationPolicyVersion: 1, ...(paid ? {status:'active',active:true,...paid.jobPatch} : {active:false}) });
     return true;
   });
 }

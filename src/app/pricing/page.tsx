@@ -73,7 +73,7 @@ export default function PricingPage() {
           className="relative text-base md:text-lg mx-auto max-w-lg mb-0"
           style={{ color: "rgba(255,255,255,.65)" }}
         >
-          Create your profile for free, then choose promotion only when your organization needs more visibility.
+          Create your profile for free. Choose a paid single job posting or an annual plan for your hiring needs.
         </p>
       </section>
 
