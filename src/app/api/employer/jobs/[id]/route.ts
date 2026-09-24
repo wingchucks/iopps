@@ -9,14 +9,17 @@ import {
 } from "@/lib/server/employer-auth";
 import {
   buildFeaturedJobSummary,
-  evaluateFeaturedActivation,
 } from "@/lib/server/featured-job-entitlements";
+import { preparePaidPublication, readPaidFeaturedSummary } from "@/lib/server/paid-job-publication-reader";
+import { firestorePublicationReader } from "@/lib/server/paid-job-publication-firestore";
+import { PublicationError } from "@/lib/server/paid-job-publication";
 
 export const runtime = "nodejs";
 
 type JobStatus = "active" | "draft" | "closed";
 
 interface EmployerJobInput {
+  durationDays?: unknown;
   hiringDetails?: unknown;
   title?: string;
   department?: string;
@@ -83,9 +86,7 @@ function normalizeStatus(value: unknown): JobStatus {
   return value === "active" || value === "closed" ? value : "draft";
 }
 
-function isActiveFeaturedJob(data: Record<string, unknown>): boolean {
-  return Boolean(data.featured) && (data.active === true || data.status === "active");
-}
+
 
 function isJobOwnedByEmployer(data: Record<string, unknown>, employerId: string, orgId: string): boolean {
   return data.employerId === employerId || data.orgId === employerId || data.orgId === orgId;
@@ -136,22 +137,8 @@ export async function GET(
     const db = getAdminDb();
     const job = await getOwnedJobOrThrow(id, context);
 
-    const [jobsSnap, postsSnap] = await Promise.all([
-      db.collection("jobs").where("employerId", "==", context.employerId).get(),
-      db.collection("posts").where("orgId", "==", context.employerId).get(),
-    ]);
-
-    const activeFeaturedCount = [
-      ...jobsSnap.docs.map((doc) => doc.data()),
-      ...postsSnap.docs.map((doc) => doc.data()).filter((doc) => doc.type === "job"),
-    ].filter((doc) => isActiveFeaturedJob(doc as Record<string, unknown>)).length;
-
-    const featuredSummary = buildFeaturedJobSummary({
-      plan: context.employerData.plan as string | undefined,
-      subscriptionTier: context.employerData.subscriptionTier as string | undefined,
-      featuredJobsUsed: activeFeaturedCount,
-      featuredPostCredits: context.employerData.featuredPostCredits as number | undefined,
-    });
+    const summaryNow=new Date();
+    const featuredSummary = await db.runTransaction(tx => readPaidFeaturedSummary(firestorePublicationReader(db,tx), {employerId:context.employerId,organizationId:context.orgId,now:summaryNow}));
 
     return NextResponse.json({
       job: serialize({ id, ...job.data, _source: job.source }),
@@ -159,7 +146,7 @@ export async function GET(
       featuredSummary,
     });
   } catch (error) {
-    const status = error instanceof EmployerApiError ? error.status : 500;
+    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Failed to load job.";
     console.error("[api/employer/jobs/:id][GET]", error);
     return NextResponse.json({ error: message }, { status });
@@ -178,16 +165,14 @@ export async function PUT(
     const employerRef = db.collection("employers").doc(context.employerId);
 
     let nextFeaturedSummary = null;
+    const publicationNow = new Date();
 
     await db.runTransaction(async (transaction) => {
       const jobRef = db.collection("jobs").doc(id);
       const postRef = db.collection("posts").doc(id);
-      const [jobSnap, postSnap, employerSnap, jobsSnap, postsSnap] = await Promise.all([
+      const [jobSnap, postSnap] = await Promise.all([
         transaction.get(jobRef),
         transaction.get(postRef),
-        transaction.get(employerRef),
-        transaction.get(db.collection("jobs").where("employerId", "==", context.employerId)),
-        transaction.get(db.collection("posts").where("orgId", "==", context.employerId)),
       ]);
 
       const current = jobSnap.exists
@@ -208,7 +193,7 @@ export async function PUT(
         throw new EmployerApiError(403, "This job is managed by an external source and cannot be edited here.");
       }
 
-      const employerData = employerSnap.data() ?? {};
+
       const mirror = current.source === 'jobs' && postSnap.exists && postSnap.data()?.type === 'job' ? postSnap.data()! : null;
       if (mirror) {
         if (!isJobOwnedByEmployer(mirror, context.employerId, context.orgId)) {
@@ -220,43 +205,16 @@ export async function PUT(
           }
         }
       }
-      // Canonical identity wins before visibility filtering; a mirror is not a second slot.
-      const identities = new Map<string, { id: string; data: Record<string, unknown> }>();
-      for (const doc of postsSnap.docs) if (doc.data().type === 'job') identities.set(doc.id, { id: doc.id, data: doc.data() });
-      for (const doc of jobsSnap.docs) identities.set(doc.id, { id: doc.id, data: doc.data() });
-      const activeFeaturedJobs = [...identities.values()].filter(doc => isActiveFeaturedJob(doc.data));
-      const activeFeaturedCountExcludingCurrent = activeFeaturedJobs.filter(doc => doc.id !== id).length;
-
-      const featuredSummary = buildFeaturedJobSummary({
-        plan: employerData.plan as string | undefined,
-        subscriptionTier: employerData.subscriptionTier as string | undefined,
-        featuredJobsUsed: activeFeaturedJobs.length,
-        featuredPostCredits: employerData.featuredPostCredits as number | undefined,
-      });
-
       const requestedStatus = normalizeStatus(body.status ?? current.data.status);
       const requestedFeatured = typeof body.featured === "boolean" ? body.featured : Boolean(current.data.featured);
-      const existingActiveFeatured = isActiveFeaturedJob(current.data);
-
-      const decision = evaluateFeaturedActivation({
-        requestedActiveFeatured: requestedFeatured && requestedStatus === "active",
-        existingActiveFeatured,
-        existingFeaturedCreditConsumed: Boolean(current.data.featuredCreditConsumed),
-        activeFeaturedCountExcludingCurrent,
-        summary: featuredSummary,
+      const paid = await preparePaidPublication(firestorePublicationReader(db, transaction), {
+        employerId: context.employerId, organizationId: context.orgId, jobId: id,
+        current: current.data, status: requestedStatus, featured: requestedFeatured,
+        durationDays: body.durationDays, now: publicationNow,
       });
-
-      if (!decision.allowed) {
-        throw new EmployerApiError(400, decision.reason || "This job cannot be featured.");
-      }
-
-      if (decision.consumeCredit) {
-        const currentCredits = Math.max(0, Number(employerData.featuredPostCredits ?? 0) || 0);
-        transaction.set(employerRef, {
-          featuredPostCredits: currentCredits - 1,
-          updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
-      }
+      if (requestedStatus === 'active') transaction.set(employerRef, {
+        ...paid.employerPatch, updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
 
       const hiringDetails = body.hiringDetails === undefined ? undefined : normalizeHiringDetails(body.hiringDetails, current.data);
       const updates = stripUndefined({
@@ -287,28 +245,22 @@ export async function PUT(
         status: requestedStatus,
         active: requestedStatus === "active",
         updatedAt: FieldValue.serverTimestamp(),
-        postedAt: requestedStatus === "active" && !current.data.postedAt ? FieldValue.serverTimestamp() : current.data.postedAt,
-        featuredCreditConsumed: Boolean(current.data.featuredCreditConsumed) || decision.consumeCredit,
-        featuredCreditConsumedAt: !current.data.featuredCreditConsumed && decision.consumeCredit
-          ? FieldValue.serverTimestamp()
-          : current.data.featuredCreditConsumedAt,
+        ...paid.jobPatch,
       });
 
       transaction.set(current.ref, updates, { merge: true });
       if (mirror) transaction.set(postRef, updates, { merge: true });
 
-      const nextFeaturedCount = activeFeaturedCountExcludingCurrent + (requestedFeatured && requestedStatus === "active" ? 1 : 0);
       nextFeaturedSummary = buildFeaturedJobSummary({
-        plan: employerData.plan as string | undefined,
-        subscriptionTier: employerData.subscriptionTier as string | undefined,
-        featuredJobsUsed: nextFeaturedCount,
-        featuredPostCredits: (Number(employerData.featuredPostCredits ?? 0) || 0) - (decision.consumeCredit ? 1 : 0),
+        plan: paid.paidTerm?.tier ?? 'free',
+        featuredJobsUsed: paid.includedFeaturedUsed + (requestedStatus === 'active' && requestedFeatured && (paid.jobPatch.featuredEntitlement ?? current.data.featuredEntitlement) === 'included_slot' ? 1 : 0),
+        featuredPostCredits: Number(paid.employerPatch.featuredPostCredits ?? paid.employer.featuredPostCredits ?? 0),
       });
     });
 
     return NextResponse.json({ success: true, featuredSummary: nextFeaturedSummary });
   } catch (error) {
-    const status = error instanceof EmployerApiError ? error.status : 500;
+    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Failed to update job.";
     console.error("[api/employer/jobs/:id][PUT]", error);
     return NextResponse.json({ error: message }, { status });
@@ -348,7 +300,7 @@ export async function DELETE(
     });
     return NextResponse.json({ success: true });
   } catch (error) {
-    const status = error instanceof EmployerApiError ? error.status : 500;
+    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Failed to delete job.";
     console.error("[api/employer/jobs/:id][DELETE]", error);
     return NextResponse.json({ error: message }, { status });

@@ -13,7 +13,7 @@ import {restoreSignupSecurityLimits} from './qa-signup-security-fixture.mjs';
 assert.equal(process.env.GCLOUD_PROJECT,'demo-iopps-preview');
 assert.equal(process.env.FIREBASE_AUTH_EMULATOR_HOST,'127.0.0.1:9099');
 assert.equal(process.env.FIRESTORE_EMULATOR_HOST,'127.0.0.1:8080');
-const output=path.join(process.env.QA_EMPLOYER_EVIDENCE || (process.platform === 'win32' ? 'C:/Users/natha/Documents/Codex/2026-09-20/employer-qa' : 'test-results/employer-browser'),'browser-'+Date.now());
+const output=path.join(process.env.QA_EMPLOYER_EVIDENCE || (process.platform === 'win32' ? 'reports/paid-pricing/legacy-browser' : 'test-results/employer-browser'),'browser-'+Date.now());
 await fs.mkdir(output,{recursive:true});
 console.log('Employer browser evidence:',output);
 const app=initializeApp({projectId:'demo-iopps-preview'},'employer-browser');
@@ -57,7 +57,7 @@ try {
  await page.getByLabel('Products or Services (comma-separated)',{exact:false}).fill('Training, Community services');
  await page.getByRole('textbox',{name:'Website',exact:true}).fill('https://example.invalid');await page.getByLabel('Province / Territory',{exact:false}).selectOption('Saskatchewan');await page.getByLabel('City',{exact:true}).fill('Saskatoon');
  await page.getByRole('checkbox',{name:'Post Jobs',exact:true}).click();await page.getByRole('button',{name:/Non-Indigenous company or employer/}).click();
- await expect(page.getByText(/Free Starter profile/)).toContainText('$1,250 CAD/year; Premium is $2,500 CAD/year');
+ await expect(page.getByText(/Indigenous and non-Indigenous organizations can start with a free profile/)).toContainText('All job postings require a paid posting credit or an eligible annual plan. Standard is $1,250 CAD/year for 15 postings; Premium is $2,500 CAD/year for unlimited postings.');
  await page.reload();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await expect(page.getByLabel('City',{exact:true})).toHaveValue('Saskatoon');await expect(page.getByRole('checkbox',{name:'Post Jobs',exact:true})).toHaveAttribute('aria-checked','true');
  await expect(page.getByLabel('Short Business Description',{exact:false})).toHaveValue('Fictional services organization used only for isolated employer acceptance.');await expect(page.getByLabel('Products or Services (comma-separated)',{exact:false})).toHaveValue('Training, Community services');await expect(page.getByRole('textbox',{name:'Website',exact:true})).toHaveValue('https://example.invalid');await expect(page.getByLabel('Province / Territory',{exact:false})).toHaveValue('Saskatchewan');await shot('step4-complete-fields');await record('step4-reload-preserves-fields-intent-and-progress');
  await page.goto(server.base+'/feed');await page.getByRole('link',{name:'Finish organization setup',exact:true}).click();await expect(page.getByLabel('Organization Name',{exact:false})).toHaveValue('Fictional Prairie Employer '+prefix);await record('abandonment-uid-bound-resume-cta');
@@ -134,7 +134,8 @@ try {
  await page.getByRole('button',{name:/Save.*Draft/i}).click();
  await expect.poll(async()=>{const jobs=await db.collection('jobs').where('employerId','==',owner.uid).get();return jobs.size;}).toBe(1);
  const jobDoc=(await db.collection('jobs').where('employerId','==',owner.uid).get()).docs[0];remember(jobDoc.ref);remember(db.doc('posts/'+jobDoc.id));assert.equal(jobDoc.data().status,'draft');await record('desktop-draft-job-persisted',{jobId:jobDoc.id});
- await page.goto(server.base+'/org/dashboard/jobs/'+jobDoc.id+'/edit');await page.getByRole('radio',{name:'active',exact:true}).check();await page.getByRole('button',{name:'Save Changes',exact:true}).click();await expect.poll(async()=>(await jobDoc.ref.get()).data().status).toBe('active');await record('desktop-publish-job-persisted');
+ await db.doc('employers/'+owner.uid).update({standardPostCredits:1});
+ await page.goto(server.base+'/org/dashboard/jobs/'+jobDoc.id+'/edit');await page.getByRole('radio',{name:'active',exact:true}).check();await page.getByRole('button',{name:'Save Changes',exact:true}).click();await expect.poll(async()=>(await jobDoc.ref.get()).data().status).toBe('active');assert.equal((await db.doc('employers/'+owner.uid).get()).data().standardPostCredits,0);const published=(await jobDoc.ref.get()).data();assert.equal(published.publication.funding,'standard_credit');assert.equal(published.publication.durationDays,30);await record('desktop-publish-job-persisted');
  const ownerToken=await tokenFor(owner.uid);
  const candidate=await fictionalUser('candidate'),candidateToken=await tokenFor(candidate.uid);
  await remember(db.doc('members/'+candidate.uid)).set({displayName:'Fictional Candidate',role:'community',email:candidate.email});

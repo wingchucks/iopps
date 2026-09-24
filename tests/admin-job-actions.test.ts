@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import { activateAdminJob } from '../src/lib/server/admin-job-lifecycle.ts';
+import { paidImportMemoryDb } from './helpers/paid-import-fixtures.mjs';
 
 test('admin jobs UI uses the implemented authenticated POST action endpoint', () => {
   const source = readFileSync('src/app/admin/jobs/page.tsx', 'utf8');
@@ -16,13 +17,14 @@ test('admin jobs UI uses the implemented authenticated POST action endpoint', ()
 });
 
 test('admin activate/deactivate synchronize both publication fields', async () => {
-  const updates: any[] = [];
-  const ref = { get: async () => ({ exists: true, data: () => ({}) }), update: async (data: any) => { updates.push(data); }, delete: async () => {} };
+  const store=paidImportMemoryDb();const updates=store.jobWrites;
+  store.rows.set('jobs/fixture',{employerId:'owner',status:'draft',active:false});
+  store.rows.set('employers/owner',{standardPostCredits:1});
   const exports: any = {};
   vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/admin/jobs/route.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
     exports, console, require: (id: string) => {
       if (id === 'next/server') return { NextResponse: { json: Response.json } };
-      if (id === '@/lib/firebase-admin') return { adminDb: { collection: () => ({ doc: () => ref }), runTransaction: async (callback: any) => callback({get: (ref: any) => ref.get(), update: (ref: any, data: any) => ref.update(data)}) } };
+      if (id === '@/lib/firebase-admin') return { adminDb: store.db };
       if (id === '@/lib/server/admin-job-lifecycle') return { activateAdminJob };
       if (id === '@/lib/public-job-merge') return { isPublicJobRecordVisible };
       if (id === 'firebase-admin/firestore') return { FieldValue: { serverTimestamp: () => 'fictional-time' } };

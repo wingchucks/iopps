@@ -4,12 +4,16 @@ import {initializeApp,deleteApp} from 'firebase-admin/app';import {getFirestore,
 import {mergePublicJobRecords,isPublicJobRecordVisible} from '../src/lib/public-job-merge.ts';
 import * as featured from '../src/lib/server/featured-job-entitlements.ts';
 import * as hiringDetails from '../src/lib/job-hiring-details.ts';
+import * as paid from '../src/lib/server/paid-job-publication.ts';
+import * as reader from '../src/lib/server/paid-job-publication-reader.ts';
+import * as firestoreReader from '../src/lib/server/paid-job-publication-firestore.ts';
 const enabled=process.env.IOPPS_TEST_EMULATORS==='true';
 class FixtureEmployerApiError extends Error {status:number;constructor(status:number,message:string){super(message);this.status=status;}}
 async function harness(t:any, options={closedFailures:0,message:'Transaction is invalid or closed.'}){
- process.env.FIRESTORE_EMULATOR_HOST='127.0.0.1:8080';const id='demo-admin-'+randomBytes(5).toString('hex');const app=initializeApp({projectId:id},id);const db=getFirestore(app);t.after(async()=>{await db.terminate();await deleteApp(app);});
+ process.env.FIRESTORE_EMULATOR_HOST='127.0.0.1:8080';const id='demo-admin-'+randomBytes(5).toString('hex');const app=initializeApp({projectId:id},id);const db=getFirestore(app);t.after(async()=>{for(const collection of ['jobs','posts','employers','subscriptions','archivedContent']){const rows=await db.collection(collection).get();for(const doc of rows.docs){await doc.ref.delete();assert.equal((await doc.ref.get()).exists,false);}}await db.terminate();await deleteApp(app);});
  const bridge=new Proxy(db,{get(target,prop){if(prop==='runTransaction')return(cb:any)=>{if(options.closedFailures>0){options.closedFailures--;throw Object.assign(new Error(options.message),{code:3});}return target.runTransaction(async tx=>await cb(tx));};const v=Reflect.get(target,prop);return typeof v==='function'?v.bind(target):v;}});
- function load(path:string):any{const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,console,Promise,Error,require:(name:string)=>{
+ function load(path:string):any{const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,console,Promise,Error,Date,require:(name:string)=>{
+ if(name.includes('paid-job-publication-firestore'))return firestoreReader;if(name.includes('paid-job-publication-reader'))return reader;if(name.includes('paid-job-publication'))return paid;
  if(name==='@/lib/public-job-merge')return{isPublicJobRecordVisible};if(name==='next/server')return{NextResponse:{json:Response.json}};if(name==='@/lib/firebase-admin')return{adminDb:bridge,getAdminDb:()=>bridge};if(name==='firebase-admin/firestore')return{FieldValue};if(name==='@/lib/api-auth')return{verifyAdminToken:async()=>({success:true})};if(name==='@/lib/server/employer-auth')return{EmployerApiError:FixtureEmployerApiError,requireEmployerContext:async()=>({uid:'owner',employerId:'owner',orgId:'owner'}),requireEmployerPublishingContext:async()=>({uid:'owner',employerId:'owner',orgId:'owner'})};if(name==='@/lib/job-hiring-details')return hiringDetails;if(name.includes('featured-job-entitlements'))return featured;if(name==='@/lib/server/admin-job-lifecycle')return load('src/lib/server/admin-job-lifecycle.ts');throw new Error(name);
  }});return exports;}
  const route=load('src/app/api/admin/jobs/route.ts');return{db,employerAction:(method:'PUT'|'DELETE',body={status:'active'} as Record<string,unknown>)=>load('src/app/api/employer/jobs/[id]/route.ts')[method](new Request('http://127.0.0.1/api/employer/jobs/fixture',{method,body:JSON.stringify(body)}),{params:Promise.resolve({id:'fixture'})}),list:()=>route.GET({nextUrl:new URL('http://127.0.0.1/api/admin/jobs')}),action:(action:string,jobId='fixture')=>route.POST(new Request('http://127.0.0.1/api/admin/jobs',{method:'POST',body:JSON.stringify({action,jobId})}))};
@@ -20,7 +24,7 @@ test('admin deletion keeps authoritative tombstone and closes job mirror', {skip
 });
 
 test('admin featured activation denies unpaid placement and consumes one credit exactly once',{skip:!enabled},async t=>{
- const {db,action}=await harness(t);await db.doc('employers/owner').set({plan:'free',featuredPostCredits:0});await db.doc('jobs/fixture').set({employerId:'owner',featured:true,status:'draft',active:false});
+ const {db,action}=await harness(t);await db.doc('employers/owner').set({plan:'free',featuredPostCredits:0});await db.doc('jobs/fixture').set({employerId:'owner',featured:true,listingDurationDays:30,status:'draft',active:false});
  assert.equal((await action('activate')).status,400);assert.equal((await db.doc('jobs/fixture').get()).data()?.active,false);
  await db.doc('employers/owner').update({featuredPostCredits:1});assert.equal((await action('activate')).status,200);assert.equal((await db.doc('employers/owner').get()).data()?.featuredPostCredits,0);assert.equal((await db.doc('jobs/fixture').get()).data()?.featuredCreditConsumed,true);
  assert.equal((await action('activate')).status,200);assert.equal((await db.doc('employers/owner').get()).data()?.featuredPostCredits,0);
@@ -32,7 +36,7 @@ test('deleted tombstones stay out of admin listing and malformed featured flags 
  assert.equal((await action('activate')).status,400);await action('delete');assert.equal((await (await list()).json()).jobs.length,0);
 });
 test('parallel admin activations cannot spend the same last credit twice',{skip:!enabled},async t=>{
- const {db,action}=await harness(t);await db.doc('employers/owner').set({plan:'free',featuredPostCredits:1});for(const id of ['first','second'])await db.doc('jobs/'+id).set({employerId:'owner',featured:true,status:'draft',active:false});
+ const {db,action}=await harness(t);await db.doc('employers/owner').set({plan:'free',featuredPostCredits:1});for(const id of ['first','second'])await db.doc('jobs/'+id).set({employerId:'owner',featured:true,listingDurationDays:30,status:'draft',active:false});
  const responses=await Promise.all(['first','second'].map(id=>action('activate',id)));assert.deepEqual(responses.map(r=>r.status).sort(),[200,400]);assert.equal((await db.doc('employers/owner').get()).data()?.featuredPostCredits,0);
 });
 
@@ -55,29 +59,29 @@ test('admin activation cannot publish a featured mirror behind a nonfeatured can
 test('employer featured edit preserves mirrored placement for later admin activation',{skip:!enabled},async t=>{
  const {db,action,employerAction}=await harness(t);await db.doc('employers/owner').set({plan:'free',featuredPostCredits:1});
  await db.doc('jobs/fixture').set({employerId:'owner',managedBy:'employer',featured:false,active:false,status:'draft'});await db.doc('posts/fixture').set({type:'job',orgId:'owner',featured:false,active:false,status:'draft'});
- assert.equal((await employerAction('PUT',{status:'active',featured:true})).status,200);
+ assert.equal((await employerAction('PUT',{status:'active',featured:true,durationDays:30})).status,200);
  assert.equal((await db.doc('posts/fixture').get()).data()?.featured,true);assert.equal((await db.doc('posts/fixture').get()).data()?.featuredCreditConsumed,true);
  await action('deactivate');assert.equal((await action('activate')).status,200);assert.equal((await db.doc('employers/owner').get()).data()?.featuredPostCredits,0);
 });
 test('employer update cannot rewrite another employer job mirror',{skip:!enabled},async t=>{
  const {db,employerAction}=await harness(t);await db.doc('employers/owner').set({plan:'free',featuredPostCredits:1});await db.doc('jobs/fixture').set({employerId:'owner',managedBy:'employer',featured:false,active:false,status:'draft'});await db.doc('posts/fixture').set({type:'job',orgId:'someone-else',featured:false,active:false,status:'draft'});
- assert.equal((await employerAction('PUT',{status:'active',featured:true})).status,409);assert.equal((await db.doc('posts/fixture').get()).data()?.active,false);assert.equal((await db.doc('employers/owner').get()).data()?.featuredPostCredits,1);
+ assert.equal((await employerAction('PUT',{status:'active',featured:true,durationDays:30})).status,409);assert.equal((await db.doc('posts/fixture').get()).data()?.active,false);assert.equal((await db.doc('employers/owner').get()).data()?.featuredPostCredits,1);
 });
 
 test('employer edit cannot silently reconcile contradictory paid placement proof',{skip:!enabled},async t=>{
  const {db,employerAction}=await harness(t);await db.doc('employers/owner').set({plan:'free',featuredPostCredits:1});await db.doc('jobs/fixture').set({employerId:'owner',managedBy:'employer',featured:true,active:false,status:'draft'});await db.doc('posts/fixture').set({type:'job',orgId:'owner',featured:true,featuredCreditConsumed:true,active:false,status:'draft'});
- assert.equal((await employerAction('PUT',{status:'active',featured:true})).status,409);assert.equal((await db.doc('posts/fixture').get()).data()?.featuredCreditConsumed,true);assert.equal((await db.doc('employers/owner').get()).data()?.featuredPostCredits,1);
+ assert.equal((await employerAction('PUT',{status:'active',featured:true,durationDays:30})).status,409);assert.equal((await db.doc('posts/fixture').get()).data()?.featuredCreditConsumed,true);assert.equal((await db.doc('employers/owner').get()).data()?.featuredPostCredits,1);
 });
 
 test('employer included-slot accounting counts each mirrored identity once',{skip:!enabled},async t=>{
- const {db,employerAction}=await harness(t);await db.doc('employers/owner').set({plan:'premium',featuredPostCredits:0});
+ const {db,employerAction}=await harness(t);const startsAt=new Date(Date.now()-86400000),expiresAt=new Date(Date.now()+31536000000);await db.doc('employers/owner').set({plan:'premium',subscriptionTier:'premium',subscriptionStatus:'active',subscriptionStart:startsAt,subscriptionEnd:expiresAt,featuredPostCredits:0});await db.doc('subscriptions/premium-fixture').set({orgId:'owner',plan:'tier2',status:'active',billingCycle:'annual',amount:2500,startsAt,expiresAt});
  for(const id of ['one','two','fixture']) { const active=id!=='fixture';await db.doc('jobs/'+id).set({employerId:'owner',managedBy:'employer',featured:true,active,status:active?'active':'draft'});await db.doc('posts/'+id).set({type:'job',orgId:'owner',featured:true,active,status:active?'active':'draft'}); }
- assert.equal((await employerAction('PUT')).status,200);assert.equal((await db.doc('employers/owner').get()).data()?.featuredPostCredits,0);
+ assert.equal((await employerAction('PUT',{status:'active',durationDays:30})).status,200);assert.equal((await db.doc('employers/owner').get()).data()?.featuredPostCredits,0);
 });
 
 test('admin activation recovers only bounded closed-transaction failures',{skip:!enabled},async t=>{
  for(const [failures,message,status,remaining] of [[1,'Transaction is invalid or closed.',200,0],[4,'Transaction is invalid or closed.',500,1],[3,'Unrelated invalid argument',500,2]] as const){
-  const options={closedFailures:failures as number,message:message as string};const {db,action}=await harness(t,options);await db.doc('jobs/fixture').set({active:false,status:'draft'});
+  const options={closedFailures:failures as number,message:message as string};const {db,action}=await harness(t,options);await db.doc('employers/owner').set({standardPostCredits:1});await db.doc('jobs/fixture').set({employerId:'owner',active:false,status:'draft'});
   assert.equal((await action('activate')).status,status);assert.equal(options.closedFailures,remaining);
  }
 });

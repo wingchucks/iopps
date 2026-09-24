@@ -43,7 +43,7 @@ export default function FeaturedJobControl({
       : hasCapacity
         ? "Featured jobs appear in the premium featured strip and receive stronger placement in discovery."
         : summary.featuredSlotsTotal === 0 && summary.featuredSlotsUsed === 0
-          ? "Featured placement requires an eligible plan or a featured job credit. Posting a job is free."
+          ? "Featured placement requires an eligible paid plan or a featured job credit. Standard postings also require a paid credit or annual-plan allowance."
           : "Your featured capacity is in use. Unfeature an active job or buy a featured job credit to add another.";
 
   return (
@@ -97,7 +97,7 @@ export default function FeaturedJobControl({
               maxWidth: 520,
             }}
           >
-            {helperText} A featured credit lets you highlight one job. You do not need a credit for a free listing.
+            {helperText} A featured credit covers one job posting with featured placement for your choice of up to 45 days.
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export default function FeaturedJobControl({
             style={{ width: 16, height: 16, accentColor: "var(--teal)" }}
           />
           <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
-            {checked ? "Featured" : "Free listing"}
+            {checked ? "Featured" : "Standard listing"}
           </span>
         </label>
       </div>

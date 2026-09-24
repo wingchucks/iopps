@@ -22,7 +22,7 @@ function postingValue(value: unknown): string | undefined {
 export function jobPostingDate(job: object): string | undefined {
   const record = job as Record<string, unknown>;
   return calendarDate(record.sourcePostingDate) || postingValue(record.publishedAt)
-    || postingValue(record.postedAt) || postingValue(record.datePosted);
+    || (record.source === 'feed' && Object.hasOwn(record, 'publication') ? undefined : postingValue(record.postedAt)) || postingValue(record.datePosted);
 }
 
 /** Never reinterpret a feed sync/update as a verified source check. */

@@ -24,6 +24,7 @@ test('candidate preview disabled with prior settings and crons unchanged',()=>{
     'fix/qa-round5-20260921': false,
     'release/round7-verified-fixes': false,
     'release/import-inventory-report': false,
+    'fix/paid-job-pricing-20260924': false,
      },
    },
    crons: [

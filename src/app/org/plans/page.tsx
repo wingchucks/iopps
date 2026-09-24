@@ -55,7 +55,7 @@ function PlansContent() {
           Promotion Plans
         </h1>
         <p className="text-sm text-text-muted m-0">
-          Your profile can stay free. Choose a plan only when you want promoted visibility or featured reach.
+          Your profile can stay free. Job postings require a paid posting credit or an eligible annual plan.
         </p>
       </div>
 

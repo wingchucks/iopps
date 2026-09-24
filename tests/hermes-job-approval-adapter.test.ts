@@ -84,6 +84,23 @@ function memoryPort(seed: Record<string, Record<string, StoredDoc>>) {
   };
 }
 
+function fundedMemoryPort(seed: Record<string, Record<string, StoredDoc>>) {
+  const prepared=structuredClone(seed);
+  prepared.employers ??= {};
+  prepared.employers['fixture-owner']={version:'e-fixture',data:{standardPostCredits:1}};
+  for(const collection of ['jobs','posts'])for(const doc of Object.values(prepared[collection]??{})) {
+    if(collection==='posts'&&doc.data.type!=='job')continue;
+    if(doc.data.employerId===undefined&&doc.data.orgId===undefined)doc.data[collection==='jobs'?'employerId':'orgId']='fixture-owner';
+  }
+  return memoryPort(prepared);
+}
+
+function expectedPaidFields(funding:string,days:number,termId?:string) {
+ const firstPublishedAt=new Date('2026-08-25T12:00:00.000Z');
+ const expiresAt=new Date(firstPublishedAt.getTime()+days*86400000);
+ return {expiresAt,publication:{version:1,funding,firstPublishedAt,expiresAt,durationDays:days,...(termId?{termId}:{})}};
+}
+
 function execution(key = "job-apply-1") {
   return { keyId: "primary", idempotencyKey: key, requestHash: "a".repeat(64) };
 }
@@ -141,7 +158,7 @@ test("a successful review with 500 active featured identities yields a small app
           title: "A",
           status: "draft",
           active: false,
-          featured: true,
+          featured: true, listingDurationDays:45,
         },
       },
     },
@@ -202,7 +219,7 @@ test("job adapter resolves the exact document ID across canonical jobs and legac
 });
 
 test("job approval transaction changes only canonical publication fields, preserves the job, audits safely, and verifies readback", async () => {
-  const memory = memoryPort({
+  const memory = fundedMemoryPort({
     jobs: {
       "job-123": {
         version: "j1",
@@ -239,9 +256,10 @@ test("job approval transaction changes only canonical publication fields, preser
     organization: "Northern Organization",
     status: "active",
     featuredIntent: "standard",
-    entitlementDecision: "not_required",
+    entitlementDecision: "standard_credit",funding:"standard_credit",durationDays:30,expiresAt:"2026-09-24T12:00:00.000Z",
   });
   assert.deepEqual(memory.get("jobs", "job-123")?.data, {
+    employerId:"fixture-owner",...expectedPaidFields("standard_credit",30),standardCreditConsumed:true,standardCreditConsumedAt:new Date("2026-08-25T12:00:00.000Z"),
     title: "Community Liaison",
     orgName: "Northern Organization",
     status: "active",
@@ -264,7 +282,7 @@ test("job approval transaction changes only canonical publication fields, preser
       assert.equal(serialized.includes(forbidden), false, forbidden);
     }
   }
-  assert.deepEqual(audit.changedFields, ["active", "postedAt", "status", "updatedAt"]);
+  assert.deepEqual(audit.changedFields, {employer:["standardPostCredits"],job:["active","expiresAt","postedAt","publication","standardCreditConsumed","standardCreditConsumedAt","status"]});
 });
 
 test("featured approval uses an included slot without consuming a purchased credit", async () => {
@@ -272,7 +290,7 @@ test("featured approval uses an included slot without consuming a purchased cred
     employers: {
       "employer-1": {
         version: "e1",
-        data: { plan: "premium", subscriptionTier: "premium", featuredPostCredits: 2, privateBillingNote: "keep-secret" },
+        data: { plan: "premium", subscriptionTier: "premium", subscriptionStatus:"active",subscriptionStart:"2026-01-01",subscriptionEnd:"2027-01-01",subscription:{paymentId:"admin-manual-tier2",amountPaid:2500}, featuredPostCredits: 2, privateBillingNote: "keep-secret" },
       },
     },
     jobs: {
@@ -280,7 +298,7 @@ test("featured approval uses an included slot without consuming a purchased cred
         version: "j1",
         data: {
           employerId: "employer-1", title: "Community Liaison", orgName: "Northern Organization",
-          status: "draft", active: false, featured: true, description: "preserve body",
+          status: "draft", active: false, featured: true, listingDurationDays:45, description: "preserve body",
         },
       },
       "job-existing": {
@@ -298,7 +316,7 @@ test("featured approval uses an included slot without consuming a purchased cred
   assert.equal(reviewed.ok, true);
   if (!reviewed.ok) return;
   assert.equal(reviewed.current.featuredIntent, "featured");
-  assert.equal(reviewed.current.entitlementDecision, "included_slot");
+  assert.equal(reviewed.desired.entitlementDecision, "premium_subscription");
   assert.equal(JSON.stringify(reviewed).includes("privateBillingNote"), false);
   assert.equal(JSON.stringify(reviewed).includes("featuredPostCredits"), false);
 
@@ -311,19 +329,19 @@ test("featured approval uses an included slot without consuming a purchased cred
   assert.deepEqual(memory.get("jobs", "job-123")?.data, {
     employerId: "employer-1", title: "Community Liaison", orgName: "Northern Organization",
     status: "active", active: true, featured: true, description: "preserve body",
-    featuredCreditConsumed: false,
+    listingDurationDays:45,featuredEntitlement:"included_slot",...expectedPaidFields("premium_subscription",45,"manual:employer-1:tier2:2026-01-01T00:00:00.000Z:2027-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-08-25T12:00:00.000Z"),
     postedAt: new Date("2026-08-25T12:00:00.000Z"),
   });
 });
 
-test("explicit standard publication removes featured intent without touching employer credits", async () => {
+test("explicit standard publication consumes a Standard credit, not a Featured credit", async () => {
   const memory = memoryPort({
-    employers: { emp1: { version: "e1", data: { plan: "free", featuredPostCredits: 0, keep: true } } },
+    employers: { emp1: { version: "e1", data: { plan: "free", standardPostCredits:1, featuredPostCredits: 0, keep: true } } },
     jobs: {
       "job-123": {
         version: "j1",
-        data: { title: "A", employerId: "emp1", status: "draft", active: false, featured: true, keep: true },
+        data: { title: "A", employerId: "emp1", status: "draft", active: false, featured: true, listingDurationDays:45, keep: true },
       },
     },
   });
@@ -342,7 +360,8 @@ test("explicit standard publication removes featured intent without touching emp
   assert.equal(job.active, true);
   assert.equal(job.featured, false);
   assert.equal(job.keep, true);
-  assert.deepEqual(memory.get("employers", "emp1")!.data, { plan: "free", featuredPostCredits: 0, keep: true });
+  const employer=memory.get("employers", "emp1")!.data;assert.ok(employer.updatedAt instanceof Date);
+  assert.deepEqual({...employer,updatedAt:undefined}, { plan: "free", standardPostCredits:0,featuredPostCredits: 0, keep: true,updatedAt:undefined });
 });
 
 test("featured approval consumes exactly one purchased credit, preserves unrelated fields, and retry does not debit again", async () => {
@@ -358,7 +377,7 @@ test("featured approval consumes exactly one purchased credit, preserves unrelat
         version: "j1",
         data: {
           employerId: "employer-1", title: "Community Liaison", orgName: "Northern Organization",
-          status: "draft", active: false, featured: true, description: "preserve body",
+          status: "draft", active: false, featured: true, listingDurationDays:45, description: "preserve body",
           applicationConfig: { preserve: true }, createdAt: "preserve-created",
         },
       },
@@ -372,7 +391,7 @@ test("featured approval consumes exactly one purchased credit, preserves unrelat
   assert.equal(reviewed.ok, true);
   if (!reviewed.ok) return;
   assert.equal(reviewed.desired.featuredIntent, "featured");
-  assert.equal(reviewed.desired.entitlementDecision, "featured_post_credit");
+  assert.equal(reviewed.desired.entitlementDecision, "featured_credit");
 
   const applied = await applyHermesJobApproval({ reviewToken: reviewed.reviewToken, confirmation: JOB_APPROVAL_CONFIRMATION }, deps);
   assert.equal(applied.ok, true);
@@ -384,6 +403,7 @@ test("featured approval consumes exactly one purchased credit, preserves unrelat
     employerId: "employer-1", title: "Community Liaison", orgName: "Northern Organization",
     status: "active", active: true, featured: true, description: "preserve body",
     applicationConfig: { preserve: true }, createdAt: "preserve-created",
+    listingDurationDays:45,featuredEntitlement:"featured_credit",...expectedPaidFields("featured_credit",45),
     featuredCreditConsumed: true, featuredCreditConsumedAt: timestamp,
     updatedAt: timestamp, postedAt: timestamp,
   });
@@ -393,8 +413,8 @@ test("featured approval consumes exactly one purchased credit, preserves unrelat
   assert.equal(memory.get("employers", "employer-1")?.data.featuredPostCredits, 1);
   const audit = memory.get("hermesAdminAudit", hermesJobApprovalIdempotencyDocumentId(exec))?.data ?? {};
   assert.deepEqual(audit.changedFields, {
-    employer: ["featuredPostCredits", "updatedAt"],
-    job: ["active", "featuredCreditConsumed", "featuredCreditConsumedAt", "postedAt", "status", "updatedAt"],
+    employer: ["featuredPostCredits"],
+    job: ["active","expiresAt", "featuredCreditConsumed", "featuredCreditConsumedAt","featuredEntitlement", "postedAt","publication", "status"],
   });
   assert.equal(JSON.stringify(audit).includes("unrelatedEmployer"), false);
   assert.equal(JSON.stringify(audit).includes("featuredPostCredits\":1"), false);
@@ -406,7 +426,7 @@ test("featured review rejects a draft with no included slot or purchased credit"
     jobs: {
       "job-123": {
         version: "j1",
-        data: { employerId: "employer-1", title: "A", status: "draft", active: false, featured: true },
+        data: { employerId: "employer-1", title: "A", status: "draft", active: false, featured: true, listingDurationDays:45 },
       },
     },
   });
@@ -414,8 +434,8 @@ test("featured review rejects a draft with no included slot or purchased credit"
     .createServiceDeps({ reviewSecret: "s".repeat(64), execution: execution("no-entitlement") });
   assert.deepEqual(await reviewHermesJobApproval({ jobId: "job-123" }, deps), {
     ok: false,
-    status: 400,
-    error: "Featured jobs require an eligible plan or an available featured post credit.",
+    status: 402,
+    error: "A paid posting credit or eligible annual plan is required.",
   });
   assert.equal(memory.targetWrites(), 0);
 });
@@ -424,11 +444,11 @@ test("featured apply rejects employer, active-featured-count, and identity-versi
   for (const race of ["employer", "count", "identity-version"] as const) {
     await t.test(race, async () => {
       const memory = memoryPort({
-        employers: { "employer-1": { version: "e1", data: { plan: "premium", featuredPostCredits: 0 } } },
+        employers: { "employer-1": { version: "e1", data: { plan: "premium", subscriptionStatus:"active",subscriptionStart:"2026-01-01",subscriptionEnd:"2027-01-01",subscription:{paymentId:"admin-manual-tier2",amountPaid:2500}, featuredPostCredits: 0 } } },
         jobs: {
           "job-123": {
             version: "j1",
-            data: { employerId: "employer-1", title: "A", status: "draft", active: false, featured: true },
+            data: { employerId: "employer-1", title: "A", status: "draft", active: false, featured: true, listingDurationDays:45 },
           },
           "job-existing": {
             version: "existing-v1",
@@ -478,7 +498,7 @@ test("featured apply rejects employer, active-featured-count, and identity-versi
 });
 
 test("an already public-active target is verified_noop only after reread and exact retry is deterministic", async () => {
-  const memory = memoryPort({
+  const memory = fundedMemoryPort({
     jobs: {
       "job-123": {
         version: "j1",
@@ -516,7 +536,7 @@ test("an already public-active target is verified_noop only after reread and exa
 });
 
 test("the transaction rechecks legacy job schema eligibility and rejects drift atomically", async () => {
-  const memory = memoryPort({
+  const memory = fundedMemoryPort({
     posts: {
       "job-123": {
         version: "p1",
@@ -549,7 +569,7 @@ test("the transaction rechecks legacy job schema eligibility and rejects drift a
 });
 
 test("an idempotent retry re-resolves exactly one target and rejects new cross-collection ambiguity", async () => {
-  const memory = memoryPort({
+  const memory = fundedMemoryPort({
     jobs: { "job-123": { version: "j1", data: { title: "A", status: "draft", active: false } } },
   });
   const exec = execution("retry-ambiguity");
@@ -571,7 +591,7 @@ test("an idempotent retry re-resolves exactly one target and rejects new cross-c
 });
 
 test("an unrelated non-job legacy post does not make a canonical job ambiguous", async () => {
-  const memory = memoryPort({
+  const memory = fundedMemoryPort({
     jobs: {
       "job-123": { version: "j1", data: { title: "A", status: "draft", active: false } },
     },
@@ -598,7 +618,7 @@ test("an unrelated non-job legacy post does not make a canonical job ambiguous",
 });
 
 test("an idempotent retry rejects a legacy post that is no longer a job", async () => {
-  const memory = memoryPort({
+  const memory = fundedMemoryPort({
     posts: {
       "job-123": {
         version: "p1",
@@ -624,12 +644,12 @@ test("an idempotent retry rejects a legacy post that is no longer a job", async 
   });
   await assert.rejects(
     () => adapter.getIdempotentApply(exec),
-    /Idempotent legacy job schema verification failed/,
+    /Paid publication verification detected drift/,
   );
 });
 
 test("post-transaction readback verifies the exact legacy job schema as well as public-active state", async () => {
-  const memory = memoryPort({
+  const memory = fundedMemoryPort({
     posts: {
       "job-123": {
         version: "p1",
@@ -658,6 +678,6 @@ test("post-transaction readback verifies the exact legacy job schema as well as 
   if (!reviewed.ok) return;
   await assert.rejects(
     () => applyHermesJobApproval({ reviewToken: reviewed.reviewToken, confirmation: JOB_APPROVAL_CONFIRMATION }, deps),
-    /Post-write public-active verification failed/,
+    /Paid publication verification detected drift/,
   );
 });

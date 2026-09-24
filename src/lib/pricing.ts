@@ -30,8 +30,8 @@ export interface PurchasePlanDefinition {
 }
 
 // Legacy definitions remain available for receipts and webhook fulfillment.
-export function isPlanAvailableForPurchase(value: unknown): value is "tier1" | "tier2" | "featured-post" {
-  return value === "tier1" || value === "tier2" || value === "featured-post";
+export function isPlanAvailableForPurchase(value: unknown): value is "tier1" | "tier2" | "standard-post" | "featured-post" {
+  return value === "tier1" || value === "tier2" || value === "standard-post" || value === "featured-post";
 }
 
 export const SUBSCRIPTION_PLAN_IDS: SubscriptionPlanId[] = ["tier1", "tier2", "tier3"];
@@ -44,10 +44,10 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanId, SubscriptionPlanDefi
     amount: 1250,
     priceLabel: "$1,250",
     periodLabel: "/year",
-    shortDescription: "Business profile promotion and application analytics.",
-    jobLimit: "Free job listings included",
+    shortDescription: "15 job postings, profile promotion, and basic analytics.",
+    jobLimit: "15 job postings/year",
     features: [
-      "Free job listings included",
+      "15 job postings per year",
       "Business profile promotion",
       "Basic analytics",
       "Community feed access",
@@ -100,9 +100,9 @@ export const ONE_TIME_PLANS: Record<OneTimePlanId, PurchasePlanDefinition> = {
     amount: 125,
     priceLabel: "$125",
     periodLabel: "/post",
-    shortDescription: "45 days, standard listing.",
+    shortDescription: "30 days, standard listing.",
     features: [
-      "45-day listing",
+      "30-day listing",
       "Basic visibility",
       "Application tracking",
     ],
@@ -113,11 +113,11 @@ export const ONE_TIME_PLANS: Record<OneTimePlanId, PurchasePlanDefinition> = {
     amount: 200,
     priceLabel: "$200",
     periodLabel: "/post",
-    shortDescription: "45 days, featured placement at the top.",
+    shortDescription: "Choose up to 45 days, with featured placement.",
     badge: "Best Value",
     highlight: true,
     features: [
-      "45-day listing",
+      "Choose a listing duration up to 45 days",
       "Homepage featured placement",
       "Highlighted in search",
       "Priority in feed",

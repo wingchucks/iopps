@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase-admin";
+import { activateAdminJob } from "@/lib/server/admin-job-lifecycle";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +104,9 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const { action, postId, collection } = body;
+  if (typeof postId !== 'string' || !postId || postId.includes('/') || !COLLECTIONS.some(item => item.name === collection)) {
+    return NextResponse.json({error:'Invalid post target'}, {status:400});
+  }
 
   try {
     if (action === "archive") {
@@ -138,6 +142,11 @@ export async function POST(request: NextRequest) {
       }
       const data = archivedDoc.data()!;
       const origCollection = data.originalCollection || collection;
+      if (origCollection !== collection || !COLLECTIONS.some(item => item.name === origCollection)) return NextResponse.json({error:'Archive identity requires review'}, {status:409});
+      if (origCollection === 'jobs') {
+        const error=await activateAdminJob(adminDb,postId,{restore:true});
+        return error ? NextResponse.json({error},{status:409}) : NextResponse.json({success:true});
+      }
 
       // Restore original doc status
       await adminDb.collection(origCollection).doc(postId).update({
@@ -150,6 +159,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "feature") {
+      if (collection === 'jobs') {
+        const error=await activateAdminJob(adminDb,postId,{feature:true});
+        return error ? NextResponse.json({error},{status:409}) : NextResponse.json({success:true});
+      }
       await adminDb.collection(collection).doc(postId).update({
         featured: true,
         featuredAt: new Date().toISOString(),

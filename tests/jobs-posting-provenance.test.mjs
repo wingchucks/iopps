@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {paidImportMemoryDb} from './helpers/paid-import-fixtures.mjs';
 import assert from 'node:assert/strict';
 import { sourceModule, offlineNetwork } from './helpers/security-fixtures.mjs';
 
@@ -71,56 +72,11 @@ test('actual public list GET retains calendar provenance through normalization a
 
 // Snapshot queries plus persistent writes: the second invocation sees exactly what
 // the first real handler stored. No Firebase bootstrap, env files or live sources.
-function memoryDb() {
-  const rows = new Map();
-  let serial = 0;
-  const snapshot = ref => {
-    const data = rows.get(ref.path);
-    const copy = data && { ...data };
-    return { id: ref.id, ref, exists: !!copy, data: () => copy, get: key => copy?.[key] };
-  };
-  const reference = (name, id) => ({
-    id, path: `${name}/${id}`, parent: { id: name },
-    get: async function () { return snapshot(this); },
-    update: async function (patch) {
-      assert.ok(rows.has(this.path), `update of missing ${this.path}`);
-      rows.set(this.path, { ...rows.get(this.path), ...patch });
-    },
-  });
-  const db = {
-    collection(name) {
-      const query = filters => ({
-        where: (key, op, value) => { assert.equal(op, '=='); return query([...filters, [key, value]]); },
-        get: async () => {
-          const docs = [...rows].filter(([path, data]) => path.startsWith(`${name}/`) && filters.every(([key, value]) => data[key] === value))
-            .map(([path]) => snapshot(reference(name, path.slice(name.length + 1))));
-          return { docs, size: docs.length, empty: !docs.length };
-        },
-        doc: id => reference(name, id),
-        add: async data => { rows.set(`${name}/log-${++serial}`, { ...data }); },
-      });
-      return query([]);
-    },
-    async runTransaction(callback) {
-      const writes = [];
-      const result = await callback({
-        get: async ref => snapshot(ref),
-        create: (ref, data) => { assert.ok(!rows.has(ref.path)); writes.push([ref.path, { ...data }]); },
-        update: (ref, data) => writes.push([ref.path, { ...rows.get(ref.path), ...data }]),
-      });
-      for (const [path, data] of writes) rows.set(path, data);
-      return result;
-    },
-    batch() {
-      const writes = [];
-      return { update: (ref, patch) => writes.push([ref, patch]), commit: async () => { for (const [ref, patch] of writes) await ref.update(patch); } };
-    },
-  };
-  return { db, rows, jobs: () => [...rows].filter(([path]) => path.startsWith('jobs/')) };
-}
+const memoryDb = paidImportMemoryDb;
 
 function harness(kind) {
   const store = memoryDb();
+  store.rows.set('employers/fixture-org',{standardPostCredits:4});
   store.rows.set('rssFeeds/fixture-feed', {
     active: true, feedUrl: 'https://example.test/jobs.xml', feedName: 'Fictional feed',
     employerId: 'fixture-org', updateExistingJobs: true,

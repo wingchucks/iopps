@@ -14,16 +14,18 @@ test('demo cleanup: source lane suppression, concurrent imports, exact aliases a
  const key='adp:11111111-1111-1111-1111-111111111111:'+suffix;
  const externalUrl='https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=11111111-1111-1111-1111-111111111111&jobId='+suffix;
  const base={feedId:'fixture-'+suffix,employerId:'blocked',title:'Fixture',location:'Fixture',externalId:suffix,externalUrl,active:true};
- const unblocked={...base,employerId:'other'};
+ const unblocked={...base,employerId:'other-'+suffix};
  const refs=[db.doc('jobs/'+old),db.doc('jobs/'+canonical),db.doc('jobAliases/'+old),db.doc('jobCleanupGuards/'+old),db.doc('jobCleanupSources/'+cleanupSourceDocId(key)),... [base,unblocked].flatMap(d=>[db.doc('jobs/import-'+feedImportIdentity(d)),db.doc('feedImportIdentities/'+feedImportIdentity(d))])];
+ const employer=db.doc('employers/'+unblocked.employerId);refs.push(employer);
  try {
+  await employer.set({standardPostCredits:1});
   await refs[0].set({...base,active:false,status:'deleted'});
   await refs[1].set({...base,employerId:'tsRvNLiRWARbOoiBOiEVFDwFfZn2',slug:'canonical-'+suffix});
   await refs[2].set({schemaVersion:1,active:true,kind:'duplicate',originalId:old,canonicalId:canonical,sourceKey:key,auditId:'fixture',slugs:['historic-'+suffix],redirectStatus:307});
   await refs[3].set({schemaVersion:1,active:true,kind:'duplicate',originalId:old,canonicalId:canonical,sourceKey:key,auditId:'fixture'});
   await refs[4].set({schemaVersion:1,active:true,sourceKey:key,canonicalId:canonical,blockedEmployerIds:['blocked'],auditId:'fixture'});
   assert.equal(await createImportedJobOnce(db,base),false);
-  const results=await Promise.all([createImportedJobOnce(db,unblocked),createImportedJobOnce(db,unblocked)]);assert.equal(results.filter(Boolean).length,1);
+  const results=await Promise.all([createImportedJobOnce(db,unblocked),createImportedJobOnce(db,unblocked)]);assert.equal(results.filter(Boolean).length,1);assert.equal((await employer.get()).data()?.standardPostCredits,0);
   await updateImportedJobWithEditorialGuard(db,refs[0],{active:true,title:'Changed'},text=>text);
   assert.equal((await refs[0].get()).get('active'),false);
   assert.equal((await readJobAliases(db,[canonical])).length,1);

@@ -1,0 +1,55 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {initializeApp,deleteApp} from 'firebase-admin/app';
+import {getFirestore} from 'firebase-admin/firestore';
+import {createImportedJobOnce,feedImportIdentity,sameImportedIntake} from '../src/lib/server/feed-import-identity.ts';
+import {updateImportedJobWithEditorialGuard} from '../src/lib/server/job-cleanup-guards.ts';
+const enabled=process.env.IOPPS_TEST_EMULATORS==='true';
+test('paid pricing imports debit atomically, pending ingestion stays unpaid and hidden', {skip:!enabled},async()=>{
+ process.env.FIRESTORE_EMULATOR_HOST='127.0.0.1:8080';
+ const app=initializeApp({projectId:'demo-paid-imports'},crypto.randomUUID());const db=getFirestore(app);
+ const owner='owner-'+crypto.randomUUID(); const account=db.doc('employers/'+owner);
+ const base={title:'Fictional job',location:'Fictional, SK',feedId:'fixture-'+crypto.randomUUID(),employerId:owner,externalId:'one',active:true,postedAt:new Date('2026-09-01T12:00:00Z')};
+ const second={...base,externalId:'two'};const third={...base,externalId:'three'};const pending={...base,employerId:'unknown-'+owner,externalId:'pending',active:false,status:'pending'};
+ const paths=[base,second,third,pending].flatMap(d=>['jobs/import-'+feedImportIdentity(d),'feedImportIdentities/'+feedImportIdentity(d)]);
+ try {
+  await account.set({standardPostCredits:2});
+  const results=await Promise.all([createImportedJobOnce(db,base),createImportedJobOnce(db,base)]);
+  assert.equal(results.filter(Boolean).length,1);
+  assert.equal((await account.get()).data().standardPostCredits,1);
+  const competing=await Promise.allSettled([createImportedJobOnce(db,second),createImportedJobOnce(db,third)]);
+  assert.equal(competing.filter(x=>x.status==='fulfilled'&&x.value===true).length,1);
+  assert.equal(competing.filter(x=>x.status==='rejected').length,1);
+  assert.equal((await account.get()).data().standardPostCredits,0);
+  const job=(await db.doc(paths[0]).get()).data();assert.equal(job.publication.durationDays,30);
+  assert.equal(feedImportIdentity(job),feedImportIdentity(base));assert.equal(sameImportedIntake(job,base),true);
+  assert.equal(job.status,'active');assert.equal(job.expiresAt.toMillis()-job.postedAt.toMillis(),30*86400000);
+  assert.equal(await createImportedJobOnce(db,pending),true);
+  const hidden=(await db.doc(paths[6]).get()).data();assert.equal(hidden.status,'pending');assert.equal(hidden.publication,undefined);
+  const ref=db.doc(paths[0]);
+  await updateImportedJobWithEditorialGuard(db,ref,{title:'Refreshed',publication:{forged:true},expiresAt:new Date('2099-01-01'),postedAt:new Date('2099-01-01')},text=>text);
+  let refreshed=(await ref.get()).data();
+  assert.equal(refreshed.publication.funding,'standard_credit');assert.equal(refreshed.expiresAt.toMillis(),job.expiresAt.toMillis());
+  assert.equal((await account.get()).data().standardPostCredits,0);
+  await ref.update({closingDate:new Date(Date.now()-86400000),status:'expired',active:false,expirationReason:'closing_date'});
+  await updateImportedJobWithEditorialGuard(db,ref,{status:'active',active:true,expirationReason:null},text=>text);
+  refreshed=(await ref.get()).data();assert.equal(refreshed.active,false);assert.equal(refreshed.expirationReason,'closing_date');
+  await updateImportedJobWithEditorialGuard(db,ref,{closingDate:new Date(Date.now()+86400000),status:'active',active:true,expirationReason:null},text=>text);
+  refreshed=(await ref.get()).data();assert.equal(refreshed.active,true);assert.equal(refreshed.publication.firstPublishedAt.toMillis(),job.publication.firstPublishedAt.toMillis());
+  const expired=new Date(Date.now()-86400000);
+  await ref.update({'publication.expiresAt':expired,expiresAt:expired,status:'expired',active:false});
+  await updateImportedJobWithEditorialGuard(db,ref,{status:'active',active:true,expiresAt:new Date('2099-01-01')},text=>text);
+  refreshed=(await ref.get()).data();assert.equal(refreshed.active,false);assert.equal(refreshed.status,'expired');
+  await assert.rejects(()=>updateImportedJobWithEditorialGuard(db,db.doc(paths[6]),{status:'active',active:true},text=>text),/publication|paid/i);
+  assert.equal((await db.doc(paths[6]).get()).data().status,'pending');
+  const legacyPath='jobs/legacy-'+owner;paths.push(legacyPath);
+  await db.doc(legacyPath).set({...base,status:'active',active:true});
+  await updateImportedJobWithEditorialGuard(db,db.doc(legacyPath),{title:'Existing owner seed updated'},text=>text);
+  const legacy=(await db.doc(legacyPath).get()).data();
+  assert.equal(legacy.publication,undefined);assert.equal(legacy.title,'Existing owner seed updated');
+ } finally {
+  for(const p of paths)await db.doc(p).delete();await account.delete();
+  for(const p of [...paths,account.path])assert.equal((await db.doc(p).get()).exists,false);
+  await db.terminate();await deleteApp(app);
+ }
+});

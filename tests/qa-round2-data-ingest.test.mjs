@@ -1,18 +1,16 @@
 import test from 'node:test';
+import {paidImportMemoryDb} from './helpers/paid-import-fixtures.mjs';
 import assert from 'node:assert/strict';
 import { sourceModule, offlineNetwork } from './helpers/security-fixtures.mjs';
 
 for (const kind of ['manual','cron','batch']) for (const hydrate of [false, true]) test(`round2 ${kind} hydrated=${hydrate}: label-only corruption is retained and queued for review offline`, async () => {
- const writes=[];
- const feed={feedUrl:'https://example.test/jobs.xml',feedName:'Fixture',employerId:'fixture-org'};
- const feedDoc={id:'fixture-feed',exists:true,data:()=>feed};
- const db={runTransaction:async callback=>callback({get:async()=>({exists:false}),create:(ref,data)=>{if(ref.collection==="jobs")writes.push(data);}}),batch:()=>({set:(_ref,data)=>writes.push(data),commit:async()=>{}}),collection:name=>{
-  const query={where:()=>query,limit:()=>query,get:async()=>({empty:true,docs:name==='rssFeeds'?[feedDoc]:[],size:name==='rssFeeds'?1:0}),doc:()=>({collection:name,id:"fixture-job",get:async()=>feedDoc,update:async()=>{}}),add:async data=>{if(name==='jobs')writes.push(data);}};return query;
- }};
+ const store=paidImportMemoryDb();const db=store.db;const writes=store.jobWrites;
+ store.rows.set('rssFeeds/fixture-feed',{active:true,feedUrl:'https://example.test/jobs.xml',feedName:'Fictional feed',employerId:'fixture-org'});
+ if(kind!=='batch')store.rows.set('employers/fixture-org',{standardPostCredits:1});
  const net=offlineNetwork();
  const rawTitle=kind==='batch'?'ChildYouth Support Worker � &amp; Canad Inns':'ChildYouth Support Worker �';
  const item={guid:'fixture',title:rawTitle,link:'https://example.test/job',description:'Valid description.'};
- const options={...net,globals:{...net.globals,process:{env:{CRON_SECRET:'fixture'}}},mocks:{...net.mocks,
+ const options={...net,globals:{...net.globals,Date,process:{env:{CRON_SECRET:'fixture'}}},mocks:{...net.mocks,
   'next/server':{NextResponse:{json:Response.json}},'@/lib/firebase-admin':{adminDb:db,getAdminDb:()=>db},
   '@/lib/api-auth':{verifyAdminToken:async()=>({success:true,decodedToken:{uid:'fixture'}})},
   'firebase-admin/firestore':{FieldValue:{serverTimestamp:()=> 'fixture-time'}},
