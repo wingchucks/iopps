@@ -52,20 +52,27 @@ export default function OrgApplicationsPage() {
   const [editingNote, setEditingNote] = useState<Record<string, string>>({});
   const [savingNote, setSavingNote] = useState<Record<string, boolean>>({});
   // Bulk selection
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selection, setSelection] = useState<{ owner: typeof user; filter: string; ids: Set<string> } | null>(null);
   const [bulkStatus, setBulkStatus] = useState<ApplicationStatus>("reviewing");
   const [bulkUpdating, setBulkUpdating] = useState(false);
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   // Filter by posting
   const [filterPostId, setFilterPostId] = useState("all");
+  const [pageRequest, setPageRequest] = useState<{ owner: typeof user; cursor: string } | null>(null);
+  const [nextPage, setNextPage] = useState<{ owner: typeof user; cursor: string } | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pageError, setPageError] = useState("");
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
+    const cursor = pageRequest?.owner === user ? pageRequest.cursor : null;
     (async () => {
       try {
         const idToken = await user.getIdToken();
-        const res = await fetch("/api/employer/applications", {
+        if (cancelled) return;
+        const res = await fetch("/api/employer/applications" + (cursor ? "?cursor=" + encodeURIComponent(cursor) : ""), {
           headers: { Authorization: `Bearer ${idToken}` },
         });
         const data = await res.json().catch(() => ({}));
@@ -91,16 +98,35 @@ export default function OrgApplicationsPage() {
           groupedByPost.get(postId)!.applications.push(app);
         }
 
-        setGroups(Array.from(groupedByPost.values()));
-        setProfiles((data.profiles || {}) as Record<string, MemberProfile>);
+        if (cancelled) return;
+        const incoming = Array.from(groupedByPost.values());
+        setGroups(previous => {
+          if (!cursor) return incoming;
+          const merged = new Map(previous.map(group => [group.post.id, group]));
+          for (const group of incoming) {
+            const existing = merged.get(group.post.id);
+            const apps = new Map((existing?.applications || []).map(app => [app.id, app]));
+            for (const app of group.applications) apps.set(app.id, app);
+            merged.set(group.post.id, { post: group.post, applications: Array.from(apps.values()) });
+          }
+          return Array.from(merged.values());
+        });
+        setProfiles(previous => ({ ...(cursor ? previous : {}), ...(data.profiles || {}) }));
+        setNextPage(data.hasMore && typeof data.nextCursor === "string" ? { owner: user, cursor: data.nextCursor } : null);
+        setPageError("");
+        setLoadError("");
+        setSelection(null);
       } catch (err) {
+        if (cancelled) return;
         console.error("Failed to load employer applications:", err);
-        setLoadError("Applications couldn’t be loaded. Please reload and try again.");
+        if (cursor) setPageError("More applications couldn’t be loaded. Please retry.");
+        else setLoadError("Applications couldn’t be loaded. Please reload and try again.");
       } finally {
-        setLoading(false);
+        if (!cancelled) { setLoading(false); setLoadingMore(false); }
       }
     })();
-  }, [user]);
+    return () => { cancelled = true; };
+  }, [user, pageRequest]);
 
   // All applications flat list (for board view and bulk ops)
   const allApps = useMemo(() => {
@@ -112,6 +138,15 @@ export default function OrgApplicationsPage() {
     }
     return apps;
   }, [groups, filterPostId]);
+
+  const eligibleApps = allApps.filter(app => app.status !== "withdrawn");
+  const selected = new Set(
+    selection?.owner === user && selection?.filter === filterPostId
+      ? eligibleApps.filter(app => selection.ids.has(app.id)).map(app => app.id) : []
+  );
+  const setSelected = (value: Set<string> | ((previous: Set<string>) => Set<string>)) => {
+    setSelection({ owner: user, filter: filterPostId, ids: typeof value === "function" ? value(selected) : value });
+  };
 
   const handleStatusChange = async (
     appId: string,
@@ -179,7 +214,7 @@ export default function OrgApplicationsPage() {
         if (!response.ok) throw new Error("Status update failed");
       });
       const saved = new Set(result.saved);
-      setGroups(prev=>prev.map(g=>({...g,applications:g.applications.map(a=>saved.has(a.id)?{...a,status:bulkStatus}:a)})));
+      setGroups(previous => previous.map(g=>({...g,applications:g.applications.map(a=>saved.has(a.id)?{...a,status:bulkStatus}:a)})));
       setSelected(new Set(result.failed));
       if (result.failed.length) setActionError(`${result.saved.length} saved; ${result.failed.length} couldn’t be updated. Failed applications remain selected for retry.`);
       else setActionNotice(`${result.saved.length} application statuses saved.`);
@@ -495,7 +530,7 @@ export default function OrgApplicationsPage() {
                 Applications
               </h1>
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {totalApps} total application{totalApps !== 1 ? "s" : ""} across{" "}
+                {totalApps} {nextPage?.owner === user ? "loaded" : "total"} application{totalApps !== 1 ? "s" : ""} across{" "}
                 {groups.length} posting{groups.length !== 1 ? "s" : ""}
               </p>
             </div>
@@ -506,7 +541,8 @@ export default function OrgApplicationsPage() {
                 <select
                   aria-label="Filter applications by posting"
                   value={filterPostId}
-                  onChange={(e) => setFilterPostId(e.target.value)}
+                  onChange={(e) => { setFilterPostId(e.target.value); setSelection(null); }}
+                  disabled={bulkUpdating}
                   className="px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer"
                   style={{
                     background: "var(--bg)",
@@ -552,6 +588,17 @@ export default function OrgApplicationsPage() {
             </div>
           </div>
 
+          {pageError && <p role="alert" className="mb-4">{pageError}</p>}
+          {nextPage?.owner === user && (
+            <div className="mb-4">
+              <p className="text-sm mb-2">More applications are available. Filters and select-all apply to loaded applications only.</p>
+              <button className="employer-primary" disabled={loadingMore || bulkUpdating || Object.values(updatingStatus).some(Boolean)} onClick={() => {
+                if (!nextPage || loadingMore) return;
+                setLoadingMore(true);
+                setPageRequest({ ...nextPage });
+              }}>{loadingMore ? "Loading more…" : "Load more applications"}</button>
+            </div>
+          )}
           {actionError && <p role="alert" className="p-4 mb-4 rounded-xl bg-red-50 text-red-800">{actionError}</p>}
           {actionNotice && <p role="status" className="p-4 mb-4 rounded-xl bg-teal-50 text-teal-900">{actionNotice}</p>}
           {/* Bulk action bar */}
@@ -645,7 +692,7 @@ export default function OrgApplicationsPage() {
                     className="text-xs font-semibold"
                     style={{ color: "var(--text-muted)" }}
                   >
-                    Select all ({allApps.length})
+                    Select all ({eligibleApps.length})
                   </span>
                 </label>
               </div>
@@ -702,7 +749,7 @@ export default function OrgApplicationsPage() {
                     className="text-xs font-semibold"
                     style={{ color: "var(--text-muted)" }}
                   >
-                    Select all ({allApps.length})
+                    Select all ({eligibleApps.length})
                   </span>
                 </label>
               </div>

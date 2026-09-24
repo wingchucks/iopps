@@ -129,8 +129,9 @@ function ResumeContent() {
       try {
         const storageRef = ref(storage, resume.url);
         await deleteObject(storageRef);
-      } catch {
-        // File may not exist in storage, continue anyway
+      } catch (error) {
+        // Only a confirmed missing object permits clearing its recoverable pointer.
+        if (!error || typeof error !== "object" || !("code" in error) || error.code !== "storage/object-not-found") throw error;
       }
 
       await updateDoc(doc(db, "members", user.uid), {

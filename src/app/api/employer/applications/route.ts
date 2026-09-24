@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { FieldValue, Timestamp, type QueryDocumentSnapshot } from "firebase-admin/firestore";
+import { FieldPath, FieldValue, Timestamp, type QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   EmployerApiError,
@@ -90,17 +90,32 @@ export async function GET(req: NextRequest) {
 
     // Legacy applications can have either ownership field. Both fields must be
     // queried even when the employer and organization identifiers are equal.
+    const cursor = new URL(req.url).searchParams.get("cursor");
+    if (cursor !== null && (!cursor || cursor.length > 500 || /[/\u0000-\u001f]/.test(cursor))) {
+      return NextResponse.json({ error: "Invalid application cursor." }, { status: 400 });
+    }
+    // A shared document-ID cursor merges both legacy ownership streams without
+    // skipping duplicate identities or documents lacking a timestamp.
+    const pageSize = 200;
     const ownerIds = [...new Set([context.employerId, context.orgId])];
+    const pageQuery = (field: string) => {
+      let query = db.collection("applications").where(field, "in", ownerIds).orderBy(FieldPath.documentId());
+      if (cursor) query = query.startAfter(cursor);
+      return query.limit(pageSize + 1).get();
+    };
     const [byEmployerSnap, byOrgSnap] = await Promise.all([
-      db.collection("applications").where("employerId", "in", ownerIds).limit(200).get(),
-      db.collection("applications").where("orgId", "in", ownerIds).limit(200).get(),
+      pageQuery("employerId"), pageQuery("orgId"),
     ]);
 
     const docs = new Map<string, QueryDocumentSnapshot>();
     for (const doc of byEmployerSnap.docs) docs.set(doc.id, doc);
     for (const doc of byOrgSnap.docs) docs.set(doc.id, doc);
 
-    const applications = Array.from(docs.values())
+    const orderedDocs = Array.from(docs.values()).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    const hasMore = orderedDocs.length > pageSize;
+    const page = orderedDocs.slice(0, pageSize);
+    const nextCursor = hasMore ? page[page.length - 1].id : null;
+    const applications = page
       .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }) as Record<string, unknown> & { id: string })
       .filter((app) => isOwnedApplication(app, context.employerId, context.orgId))
       .sort((a, b) => {
@@ -116,6 +131,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       applications: serialize(applications),
+      hasMore,
+      nextCursor,
       profiles,
       jobs,
     });
