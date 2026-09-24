@@ -241,8 +241,8 @@ async function checkLegacyMessages(page, width) {
     assert.deepEqual(await response.json(), { peer: { uid, displayName: 'IOPPS member' } });
   }
   interactionChecks.push({ check: 'legacy-query-two-thread-read-incoming-recipient-bound-drafts-send', width, passed: true });
-  // Keep the second viewport independent and remove only this owned fixture set.
-  for (const id of [a, b]) await db.doc(`conversations/${id}`).delete();
+  // Fixture conversations remain until this browser context has closed. Deleting
+  // them here races the mounted inbox's participant lookups and fabricates 404s.
 }
 async function checkAdminModal(page, kind, width) {
   const conference = kind === 'conferences', title = conference ? 'Conference' : 'Pow Wow';
@@ -539,6 +539,14 @@ try {
       if (role === 'member') { await checkLegacyMessages(page, width); await checkRemediationSettings(page, width); }
       assert.deepEqual(retired, []); assert.deepEqual(missing, []); assert.deepEqual(errors, []);
       await context.close();
+      // Keep viewports independent without deleting records under a mounted inbox.
+      if (role === 'member') {
+        for (const thread of ['a', 'b']) {
+          const ref = db.doc(`conversations/${prefix}-chat-${thread}-${width}`);
+          await ref.delete();
+          assert.equal((await ref.get()).exists, false);
+        }
+      }
     }
   }
   await checkBlockedThemeStorage();

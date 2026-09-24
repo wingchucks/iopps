@@ -8,7 +8,7 @@ import {
   query,
   where,
   orderBy,
-  limit,
+  limitToLast,
   serverTimestamp,
   onSnapshot,
   type QueryConstraint,
@@ -93,7 +93,7 @@ export async function getMessages(
   const constraints: QueryConstraint[] = [
     where("conversationId", "==", conversationId),
     orderBy("createdAt", "asc"),
-    limit(max),
+    limitToLast(max),
   ];
   const snap = await getDocs(query(msgCol, ...constraints));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Message);
@@ -178,7 +178,7 @@ export function onMessages(
     msgCol,
     where("conversationId", "==", conversationId),
     orderBy("createdAt", "asc"),
-    limit(50)
+    limitToLast(50)
   );
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Message));
