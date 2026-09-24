@@ -68,8 +68,8 @@ async function harness(t: any) {
   const paths = new Set<string>();
   const id = (suffix: string) => { const key = `${uid}-${suffix}`; paths.add(`jobs/${key}`); paths.add(`posts/${key}`); paths.add(`archivedContent/${key}`); return key; };
   const request = (body: unknown, authorized = true) => new Request('http://127.0.0.1/api/employer/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(authorized ? { authorization: 'Bearer fictional' } : {}) }, body: JSON.stringify(body) });
-  t.after(async () => { for (const path of paths) await db.doc(path).delete(); await employer.delete(); await db.terminate(); await deleteApp(app); });
-  return { uid, db, employer, id, closeOnce: () => { failures = 1; },
+  t.after(async () => { for (const path of paths) {await db.doc(path).delete();assert.equal((await db.doc(path).get()).exists,false);} await employer.delete();assert.equal((await employer.get()).exists,false); await db.terminate(); await deleteApp(app); });
+  return { uid, db, employer, id, receipt:async(data:Record<string,unknown>)=>{const ref=db.collection('subscriptions').doc();paths.add(ref.path);await ref.set(data);}, closeOnce: () => { failures = 1; },
     failTransactions: (count: number, message = failureMessage) => { failures = count; failureMessage = message; }, attempts: () => attempts,
     dashboard: () => dashboard.GET(request({})),
     get: (key: string) => edit.GET(request({}), { params: Promise.resolve({id:key}) }),
@@ -159,10 +159,10 @@ test('server retains draft creation/editing and rejects unpaid featured activati
   assert.equal((await h.create({ title: 'Draft', slug: id, status: 'draft', featured: true })).status, 200);
   assert.equal((await h.edit(id, { title: 'Edited draft' })).status, 200);
   assert.equal((await h.db.doc(`jobs/${id}`).get()).data()?.title, 'Edited draft');
-  assert.equal((await h.edit(id, { status: 'active', featured: true, featuredCreditConsumed: true })).status, 400);
+  assert.equal((await h.edit(id, { status: 'active', featured: true, durationDays: 30, featuredCreditConsumed: true })).status, 402);
   assert.equal((await h.db.doc(`jobs/${id}`).get()).data()?.status, 'draft');
   await h.employer.update({ featuredPostCredits: 1 });
-  assert.equal((await h.edit(id, { status: 'active', featured: true })).status, 200);
+  assert.equal((await h.edit(id, { status: 'active', featured: true, durationDays: 30 })).status, 200);
   assert.equal((await h.employer.get()).data()?.featuredPostCredits, 0);
   assert.equal((await h.edit(id, { title: 'Legitimate paid edit' })).status, 200);
   assert.equal((await h.employer.get()).data()?.featuredPostCredits, 0);
@@ -172,9 +172,9 @@ test('server preserves legacy job-post draft editing and entitlement enforcement
   const h = await harness(t); const id = h.id('legacy');
   await h.db.doc(`posts/${id}`).set({ orgId: h.uid, type: 'job', status: 'draft', featured: false, title: 'Legacy' });
   assert.equal((await h.edit(id, { title: 'Legacy edited', status: 'draft' })).status, 200);
-  assert.equal((await h.edit(id, { status: 'active', featured: true })).status, 400);
+  assert.equal((await h.edit(id, { status: 'active', featured: true, durationDays: 30 })).status, 402);
   await h.employer.update({ featuredPostCredits: 1 });
-  assert.equal((await h.edit(id, { status: 'active', featured: true })).status, 200);
+  assert.equal((await h.edit(id, { status: 'active', featured: true, durationDays: 30 })).status, 200);
   assert.equal((await h.db.doc(`posts/${id}`).get()).data()?.featuredCreditConsumed, true);
   assert.equal((await h.employer.get()).data()?.featuredPostCredits, 0);
 });
@@ -220,8 +220,8 @@ test('employers can revise required documents and return an external job to IOPP
 test('concurrent server publishing cannot spend the same featured credit twice', { skip: !enabled }, async t => {
   const h = await harness(t); await h.employer.update({ featuredPostCredits: 1 });
   const a = h.id('race-a'); const b = h.id('race-b');
-  const results = await Promise.all([a, b].map(slug => h.create({ title: 'Paid role', slug, status: 'active', featured: true })));
-  assert.deepEqual(results.map(r => r.status).sort(), [200, 400], JSON.stringify(await Promise.all(results.map(r => r.clone().json()))));
+  const results = await Promise.all([a, b].map(slug => h.create({ title: 'Paid role', slug, status: 'active', featured: true, durationDays: 30 })));
+  assert.deepEqual(results.map(r => r.status).sort(), [200, 402], JSON.stringify(await Promise.all(results.map(r => r.clone().json()))));
   assert.equal((await h.employer.get()).data()?.featuredPostCredits, 0);
   const snapshots = await Promise.all([a, b].map(id => h.db.doc(`jobs/${id}`).get()));
   assert.equal(snapshots.filter(s => s.exists).length, 1);
@@ -248,18 +248,24 @@ test('concurrent creates of the same identifier cannot replace the winner', { sk
 });
 
 test('concurrent publishing cannot exceed remaining included featured slots', { skip: !enabled }, async t => {
-  const h = await harness(t); await h.employer.update({ plan: 'premium', subscriptionTier: 'premium' });
+  const h = await harness(t);const startsAt=new Date(Date.now()-86400000),expiresAt=new Date(Date.now()+31536000000);
+  await h.employer.update({plan:'premium',subscriptionTier:'premium',subscriptionStatus:'active',subscriptionStart:startsAt,subscriptionEnd:expiresAt});
+  await h.receipt({orgId:h.uid,plan:'tier2',status:'active',billingCycle:'annual',amount:2500,startsAt,expiresAt});
   for (let i = 0; i < 3; i++) await h.db.doc(`jobs/${h.id(`slot-${i}`)}`).set({ employerId: h.uid, orgId: h.uid, status: 'active', active: true, featured: true });
-  const results = await Promise.all(['a', 'b'].map(suffix => h.create({ title: 'Slot race', slug: h.id(`slot-race-${suffix}`), status: 'active', featured: true })));
-  assert.deepEqual(results.map(r => r.status).sort(), [200, 400], JSON.stringify(await Promise.all(results.map(r => r.clone().json()))));
+  const ids=['a','b'].map(suffix=>h.id(`slot-race-${suffix}`));
+  const results = await Promise.all(ids.map(slug => h.create({ title: 'Slot race', slug, status: 'active', featured: true, durationDays: 30 })));
+  assert.deepEqual(results.map(r => r.status).sort(), [200, 402], JSON.stringify(await Promise.all(results.map(r => r.clone().json()))));
+  const saved=await Promise.all(ids.map(id=>h.db.doc(`jobs/${id}`).get()));
+  assert.equal(saved.filter(doc=>doc.exists).length,1);
+  assert.equal((await h.employer.get()).data()?.featuredPostCredits,0);
 });
 
 test('closed transaction retries with a fresh transaction without duplicate publishing', { skip: !enabled }, async t => {
   const h = await harness(t); const id = h.id('closed-transaction');
   await h.employer.update({ featuredPostCredits: 1 }); h.closeOnce();
-  assert.equal((await h.create({ title: 'Recovered', slug: id, status: 'active', featured: true })).status, 200);
+  assert.equal((await h.create({ title: 'Recovered', slug: id, status: 'active', featured: true, durationDays: 30 })).status, 200);
   assert.equal((await h.employer.get()).data()?.featuredPostCredits, 0);
-  assert.equal((await h.create({ title: 'Duplicate', slug: id, status: 'active', featured: true })).status, 409);
+  assert.equal((await h.create({ title: 'Duplicate', slug: id, status: 'active', featured: true, durationDays: 30 })).status, 409);
   assert.equal((await h.db.doc(`jobs/${id}`).get()).data()?.title, 'Recovered');
 });
 
