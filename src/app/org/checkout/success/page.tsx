@@ -18,7 +18,9 @@ export default function CheckoutSuccessPage({
   // The return query is not evidence of payment or webhook fulfillment.
   const successTitle = "Checkout returned";
   const successMessage = "Payment confirmation may still be processing. Check your dashboard for your current plan and posting credits before purchasing again.";
-  const destination = safeAuthRedirect(params.redirect || null) || "/org/dashboard";
+  const redirect = safeAuthRedirect(params.redirect || null);
+  const destination = redirect || "/org/dashboard";
+  const continueLabel = redirect?.startsWith("/org/dashboard/jobs/") ? "Return to your job posting" : "Continue";
 
   return (
     <ProtectedRoute>
@@ -61,7 +63,7 @@ export default function CheckoutSuccessPage({
                   className="brand-button w-full py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
                   style={{ background: "var(--button-gradient)", color: "#fff" }}
                 >
-                  Continue
+                  {continueLabel}
                 </button>
                 <Link
                   href="/org/plans"

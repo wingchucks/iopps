@@ -96,6 +96,26 @@ test('paid pricing GET summary requires paid evidence and excludes credit-funded
   assert.equal(summary.canFeatureJobs,true);
 });
 
+test('a draft saved before checkout publishes in place with the purchased credit, as the dashboard summary says', { skip: !enabled }, async t => {
+  const h = await harness(t); const id = h.id('resume-draft');
+  let summary = (await (await h.dashboard()).json()).publishingSummary;
+  assert.deepEqual(summary.standard, { covered: false, funding: null, remainingAfter: null, reason: 'payment_required' });
+  assert.equal((await h.create({ title: 'Resumed role', slug: id, status: 'draft', communityTags: ['Cree'] })).status, 200);
+  assert.equal((await h.edit(id, { title: 'Resumed role', status: 'active' })).status, 402);
+  await h.employer.update({ standardPostCredits: 1 });
+  summary = (await (await h.dashboard()).json()).publishingSummary;
+  assert.deepEqual(summary.standard, { covered: true, funding: 'standard_credit', remainingAfter: 0, reason: null });
+  const res = await h.edit(id, { title: 'Resumed role', status: 'active', communityTags: ['Métis'], indigenousPreference: true, indigenousPreferenceLevel: 'preferred' });
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).jobId, id);
+  const saved = (await h.db.doc(`jobs/${id}`).get()).data()!;
+  assert.equal(saved.status, 'active');
+  assert.deepEqual(saved.communityTags, ['Métis'], 'edits made after resuming are kept');
+  assert.equal(saved.indigenousPreferenceLevel, 'preferred');
+  assert.equal((await h.employer.get()).data()?.standardPostCredits, 0);
+  assert.equal((await h.db.collection('jobs').where('employerId', '==', h.uid).get()).size, 1, 'publishing the resumed draft does not create a second job');
+});
+
 test('paid pricing denies unentitled standard active creation and consumes one purchased credit', { skip: !enabled }, async t => {
   const h = await harness(t); const id = h.id('paid-standard');
   assert.equal((await h.create({ title: 'Paid required', slug: id, status: 'active' })).status, 402);
