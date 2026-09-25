@@ -1,5 +1,6 @@
 import { descriptionApplicationDeadline, isJobRecordExpired } from "./listing-freshness";
 import { normalizePartnerDescription } from "./server/import-content-quality";
+import { canonicalLocationSet } from "./server/feed-source";
 
 export interface PublicJobMergeRecord {
   id: string;
@@ -59,15 +60,55 @@ export function mergePublicJobRecords<
   const now = new Date();
   const visibility = new Map(merged.map(job => [job, isPublicJobRecordVisible(job, now)]));
   const compareId = (a: PublicJobMergeRecord, b: PublicJobMergeRecord) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
-  const identityKey = (job: PublicJobMergeRecord): string => {
+  const identityKey = publicJobIdentityKey;
+
+  // Ordinary dedupe preserves every supplied date. Lifecycle suppression is
+  // directional: an expired canonical copy may veto an otherwise exact stale
+  // copy that has no expiresAt, but never a conflicting explicit expiry/intake.
+  // Use the full identity proof (including owner/source/salary) and only jobs,
+  // not the cross-owner discovery projection or a legacy post, as authority.
+  const expiredCanonicalKeys = new Set(importedJobs
+    .filter(job => !visibility.get(job) && isJobRecordExpired({ expiresAt: job.expiresAt }, now))
+    .map(job => identityKey({ ...job, expiresAt: undefined }))
+    .filter(key => !key.startsWith("id:")));
+  return merged.sort((a, b) =>
+    Number(!importedIdentities.has(a.id)) - Number(!importedIdentities.has(b.id)) ||
+    Number(visibility.get(a)) - Number(visibility.get(b)) || compareId(a, b)
+  ).filter(job => {
+    const key = identityKey(job);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return visibility.get(job) && !expiredCanonicalKeys.has(key);
+  });
+}
+
+function stableJson(value: unknown): string {
+  const sort = (entry: unknown): unknown => Array.isArray(entry) ? entry.map(sort)
+    : entry && typeof entry === "object" && Object.getPrototypeOf(entry) === Object.prototype
+      ? Object.fromEntries(Object.keys(entry).sort().map(key => [key, sort((entry as Record<string, unknown>)[key])]))
+      : entry;
+  return JSON.stringify(sort(value)) ?? "";
+}
+
+/**
+ * Content identity used to merge duplicate public job records. Every vacancy
+ * detail must match (owner records, dates, deadlines, salary, intake, source,
+ * destinations, description); only ingestion artifacts and the order of a
+ * multi-location list are ignored. Unknown or missing evidence yields "id:<id>".
+ */
+export function publicJobIdentityKey(job: PublicJobMergeRecord): string {
     const exact = (value: unknown): string => {
       if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.toISOString() : "invalid-date";
       if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") return exact(value.toDate());
+      // Plain structured evidence (for example a salary range) compares by content,
+      // so identical values match and any difference still keeps jobs separate.
+      if (Array.isArray(value) || (value && typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype)) return stableJson(value);
       return typeof value === "string" ? value.normalize("NFC").replace(/\s+/gu, " ").trim() : typeof value === "number" ? String(value) : "";
     };
     const normalize = (value: unknown) => exact(value).toLowerCase();
     const owners = [job.employerName, job.orgName, job.companyName, job.employerId, job.orgId];
-    const parts = [job.title, job.location].map(normalize);
+    // Feeds reorder multi-location lists between runs; the same set is the same place.
+    const parts = [normalize(job.title), normalize(canonicalLocationSet(job.location))];
     // Compare each deadline independently; a primary date cannot hide another.
     const deadlines = [job.closingDate, job.deadline, job.applicationDeadline].map(value => {
       const closing = exact(value);
@@ -100,26 +141,6 @@ export function mergePublicJobRecords<
       ? JSON.stringify([...parts, ...deadlines, description,
         ...evidence.map(value => typeof value === "boolean" ? value : exact(value)), ...destinations]) : `id:${job.id}`;
     return key;
-  };
-
-  // Ordinary dedupe preserves every supplied date. Lifecycle suppression is
-  // directional: an expired canonical copy may veto an otherwise exact stale
-  // copy that has no expiresAt, but never a conflicting explicit expiry/intake.
-  // Use the full identity proof (including owner/source/salary) and only jobs,
-  // not the cross-owner discovery projection or a legacy post, as authority.
-  const expiredCanonicalKeys = new Set(importedJobs
-    .filter(job => !visibility.get(job) && isJobRecordExpired({ expiresAt: job.expiresAt }, now))
-    .map(job => identityKey({ ...job, expiresAt: undefined }))
-    .filter(key => !key.startsWith("id:")));
-  return merged.sort((a, b) =>
-    Number(!importedIdentities.has(a.id)) - Number(!importedIdentities.has(b.id)) ||
-    Number(visibility.get(a)) - Number(visibility.get(b)) || compareId(a, b)
-  ).filter(job => {
-    const key = identityKey(job);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return visibility.get(job) && !expiredCanonicalKeys.has(key);
-  });
 }
 
 export function jobMatchesOrganization(job: Record<string, unknown>, organization: Record<string, unknown>): boolean {
