@@ -45,6 +45,9 @@ export default function OpportunityDirectory({ kind }: { kind: OpportunityKind }
   const label = (item: OpportunityRecord) => events ? normalizeEventTypeLabel(String(item.eventType || item.category || "Other")) : fundingTypeLabel(item);
   const categories = [...new Set(items.map(label))].sort();
   const filtered = useMemo(() => items.filter(item => {
+    // Closed intakes leave browse at once (unless someone explicitly asks for closed
+    // intakes); their pages stay reachable from links and saved items.
+    if (!events && deadlineFilter !== "closed" && (item.intakeClosed === true || isJobRecordExpired(item))) return false;
     const text = [item.title, item.orgName, item.description, item.eligibility, item.category, item.city, item.province, displayLocation(item.location)].join(" ").toLowerCase();
     return (!search.trim() || text.includes(search.trim().toLowerCase())) && (!province || opportunityProvince(item) === province) && (!category || (events ? normalizeEventTypeLabel(String(item.eventType || item.category || "Other")) : fundingTypeLabel(item)) === category) && (events ? matchesEventDate(item, dateFilter) : matchesFundingDeadline(item, deadlineFilter));
   }).sort((a, b) => events ? (getEventStartDate(a)?.getTime() || Infinity) - (getEventStartDate(b)?.getTime() || Infinity) : Number(isJobRecordExpired(a)) - Number(isJobRecordExpired(b))), [items, search, province, category, events, dateFilter, deadlineFilter]);

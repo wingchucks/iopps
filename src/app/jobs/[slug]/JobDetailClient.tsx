@@ -17,6 +17,7 @@ import { buildLoginRedirectHref, displayAmount, displayLocation } from "@/lib/ut
 import { resolveApplicationDestination } from "@/lib/application-destination";
 import { trackJobFunnelEvent } from "@/lib/job-funnel-analytics";
 import { jobDetailDates } from "@/lib/job-detail-dates";
+import { formatListingDay } from "@/lib/listing-freshness";
 import { useJobSave } from "@/hooks/useJobSave";
 import { hasApplied } from "@/lib/firestore/applications";
 import { useAuth } from "@/lib/auth-context";
@@ -45,6 +46,8 @@ function JobDetailContent() {
   const slug = params.slug as string;
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
+  // A closed job keeps its page with a banner and no application action.
+  const [closed, setClosed] = useState<{ closedOn: string | null } | null>(null);
   const { saved, saving, saveError, handleSave } = useJobSave(job);
   const [applied, setApplied] = useState(false);
 
@@ -67,6 +70,7 @@ function JobDetailContent() {
         }
         const data = await res.json();
         loadedJob = data.job ? { ...data.job, companyLogoUrl: employerLogo(data.job, brands) } : null;
+        setClosed(data.closed ? { closedOn: typeof data.closed.closedOn === "string" ? data.closed.closedOn : null } : null);
         setJob(loadedJob);
         if (loadedJob) trackJobFunnelEvent("job_detail_view", { jobId: loadedJob.id });
 
@@ -128,8 +132,8 @@ function JobDetailContent() {
     return (
       <div className="max-w-[600px] mx-auto px-4 py-20 text-center">
         <p className="text-5xl mb-4">💼</p>
-        <h2 className="text-2xl font-extrabold text-text mb-2">Job Not Found</h2>
-        <p className="text-text-sec mb-6">This job posting doesn&apos;t exist or may have been removed.</p>
+        <h2 className="text-2xl font-extrabold text-text mb-2">This job is no longer available</h2>
+        <p className="text-text-sec mb-6">The posting was removed or the link is incorrect. Other open jobs may suit you.</p>
         <Link href="/jobs">
           <Button primary>Browse Jobs →</Button>
         </Link>
@@ -139,9 +143,8 @@ function JobDetailContent() {
 
   const jobType = job.employmentType || job.jobType;
   const employerName = job.employerName || job.orgName || job.orgShort || "";
-  const closingDate = job.closingDate
-    ? new Date(job.closingDate as string).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })
-    : null;
+  // A date-only deadline is that calendar day, not UTC midnight shown a day early.
+  const closingDate = formatListingDay(job.closingDate);
   const destination = resolveApplicationDestination(job, slug);
   const normalizedApplicationHref = destination.href;
   const applicationHrefIsMailto = destination.kind === "email";
@@ -161,7 +164,9 @@ function JobDetailContent() {
   const missingClosing = !closingDate && imported.closing;
   const locationLabel = displayLocation(job.location);
 
-  const applicationAction = destination.kind === "unavailable" ? (
+  const applicationAction = closed ? (
+    <button className="journey-apply-button" disabled>Applications closed</button>
+  ) : destination.kind === "unavailable" ? (
     <button className="journey-apply-button" disabled>Application link unavailable</button>
   ) : normalizedApplicationHref && !shouldUseInternalApply ? (
     <a href={normalizedApplicationHref} {...applicationLinkProps}
@@ -183,6 +188,17 @@ function JobDetailContent() {
       >
         ← Back to Jobs
       </Link>
+
+      {closed && (
+        <div role="status" className="mb-5 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--amber, #d97706)", background: "var(--amber-soft, rgba(217,119,6,.12))" }}>
+          <p className="m-0 font-bold text-text">
+            {closed.closedOn ? `This job closed on ${formatClosedDay(closed.closedOn)}.` : "This job is closed."} Applications are no longer accepted.
+          </p>
+          <p className="m-0 mt-1 text-sm text-text-sec">
+            Similar open jobs are listed below, or <Link href="/jobs" className="text-teal underline underline-offset-4">browse all open jobs</Link>.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Main Content */}
@@ -222,7 +238,7 @@ function JobDetailContent() {
             <div className="flex flex-wrap gap-3 text-sm text-text-sec">
               {locationLabel && <span>📍 {locationLabel}</span>}
               {salaryLabel && <span>💰 {salaryLabel}</span>}
-              {closingDate && <span>📅 Closes: {closingDate}</span>}
+              {closingDate && <span>📅 {closed ? "Closed" : "Closes"}: {closingDate}</span>}
               {missingPay && <span>{missingPay}</span>}
               {missingClosing && <span>{missingClosing}</span>}
               {(missingPay || missingClosing) && imported.sourceHref && (
@@ -233,7 +249,7 @@ function JobDetailContent() {
           </div>
 
           <div className="journey-mobile-apply">
-            <p>{destination.label}</p>
+            {!closed && <p>{destination.label}</p>}
             {applicationAction}
             <button className="journey-save-button" onClick={handleSave} disabled={saving} aria-pressed={saved}>
               {saving ? "Saving…" : saved ? "✓ Saved" : "Save job for later"}
@@ -248,7 +264,7 @@ function JobDetailContent() {
               externalApplyUrl={job.externalApplyUrl}
               applicationUrl={job.applicationUrl}
             />
-          ) : normalizedApplicationHref && !shouldUseInternalApply ? (
+          ) : normalizedApplicationHref && !shouldUseInternalApply && !closed ? (
             <div className="mb-6 p-5 rounded-2xl border border-border bg-[var(--card)]">
               <p className="text-sm text-text-sec mb-4">
                 Full job details are available on the employer&apos;s career site.
@@ -310,9 +326,11 @@ function JobDetailContent() {
           <Card className="journey-application-card mb-4" style={{ position: "sticky", top: 24 }}>
             <div style={{ padding: 20 }}>
               {/* M-4: show where the Apply action routes */}
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">
-                {destination.label}
-              </p>
+              {!closed && (
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+                  {destination.label}
+                </p>
+              )}
               {/* Apply button */}
               <div className="journey-desktop-apply">{applicationAction}</div>
 
@@ -473,4 +491,11 @@ function RelatedJobList({ title, jobs }: { title: string; jobs: RelatedJob[] }) 
       </div>
     </section>
   );
+}
+
+function formatClosedDay(iso: string): string {
+  const date = new Date(iso);
+  return Number.isFinite(date.getTime())
+    ? date.toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric", timeZone: "America/Regina" })
+    : iso;
 }

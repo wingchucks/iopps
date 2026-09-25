@@ -1,6 +1,7 @@
 import { dedupeEventDirectory } from "@/lib/event-directory-dedupe";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { isJobRecordExpired } from "@/lib/listing-freshness";
+import { listingClosedOn, listingState } from "@/lib/listing-lifecycle";
 import { isPublicEventVisible, normalizePublicEvent } from "@/lib/public-events";
 import { OPPORTUNITY_TEXT_FIELDS, OPPORTUNITY_ARRAY_FIELDS, normalizeOpportunityInput, safeOpportunityUrl, plainOpportunityText, type OpportunityKind } from "@/lib/opportunity-posting";
 import { displayAmount } from "@/lib/utils";
@@ -53,6 +54,26 @@ function scholarshipOwner(record: JsonRecord, organizations: JsonRecord[]): Json
   return { ...withPublicOwnership(record, { contentType: "scholarship", ownerType: deriveOwnerType(linked), ownerId: String(record.orgId || linked?.id || ""), ownerName: String(record.orgName || ""), ownerSlug: String(linked?.slug || record.orgId || "") }),
     isPartner: !!promoted?.isPartner, partnerTier: promoted?.partnerTier || null, partnerBadgeLabel: promoted?.partnerBadgeLabel || null };
 }
+/**
+ * A closed scholarship keeps its detail page (marked closed, never indexed) so
+ * saved bookmarks and old links still explain what happened. Only a listing
+ * that is closed and still has its public content qualifies; removed, draft or
+ * unpublished listings stay not found.
+ */
+export async function getClosedScholarship(id: string, db: Firestore = getAdminDb()): Promise<JsonRecord | null> {
+  const [main, posts] = await Promise.all([
+    loadOpportunityMatches(db, "scholarships", "scholarships", [{ id }]),
+    loadOpportunityMatches(db, "posts", "scholarships", [{ id }]),
+  ]);
+  const raw = [...main, ...posts.filter(record => record.type === "scholarship")].find(record => record.id === id || record.slug === id);
+  if (!raw || listingState(raw) !== "closed") return null;
+  // Bypass only the publication-status gate; every other projection rule applies.
+  const projected = publicOpportunityRecord({ ...raw, status: "active", active: true }, "scholarships");
+  if (!projected) return null;
+  const item = scholarshipOwner(projected, await loadRelatedOpportunityOrganizations(db, [projected]));
+  return { ...item, intakeClosed: true, closedOn: listingClosedOn(raw) };
+}
+
 export async function getPublicOpportunities(kind: OpportunityKind, combineDuplicates = true, db: Firestore = getAdminDb()): Promise<JsonRecord[]> {
   const [main, posts] = await Promise.all([
     loadPublicOpportunityCandidates(db, kind),

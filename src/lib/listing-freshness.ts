@@ -1,17 +1,34 @@
 type Job = Record<string, unknown>;
 const MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
 /** Strict calendar parsing, independent of the server/browser timezone. */
+// Full names and unambiguous abbreviations of three or more letters ("Sep", "Sept.").
+function monthNumber(name: string): number {
+  const key = name.toLowerCase();
+  return key.length >= 3 ? MONTHS.findIndex(month => month.startsWith(key)) + 1 : 0;
+}
 function calendarDate(value: string): string | null {
   const raw = value.trim().replace(/(\d)(st|nd|rd|th)/gi, '$1');
   const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  const named = raw.match(/^([a-z]+) (\d{1,2}),? (\d{4})$/i);
-  const reverse = raw.match(/^(\d{1,2}) ([a-z]+) (\d{4})$/i);
+  const named = raw.match(/^([a-z]+)\.? (\d{1,2}),? (\d{4})$/i);
+  const reverse = raw.match(/^(\d{1,2}) ([a-z]+)\.? (\d{4})$/i);
   if (!iso && !named && !reverse) return null;
   const year = Number(iso?.[1] || named?.[3] || reverse?.[3]);
-  const month = iso ? Number(iso[2]) : MONTHS.indexOf((named?.[1] || reverse?.[2] || '').toLowerCase()) + 1;
+  const month = iso ? Number(iso[2]) : monthNumber(named?.[1] || reverse?.[2] || '');
   const day = Number(iso?.[3] || named?.[2] || reverse?.[1]);
   const date = new Date(Date.UTC(year, month - 1, day));
   return year >= 1000 && month > 0 && date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? date.toISOString().slice(0,10) : null;
+}
+/**
+ * Human display of a listing date. A calendar date ("2026-09-10", "Sep 10, 2026")
+ * is a day, shown as that same day everywhere; an instant is shown in the same
+ * Saskatchewan time zone that expiry uses.
+ */
+export function formatListingDay(value: unknown, month: "short" | "long" = "short"): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const day = calendarDate(value);
+  const date = day ? new Date(`${day}T12:00:00Z`) : new Date(value);
+  if (!Number.isFinite(date.getTime())) return value.trim();
+  return date.toLocaleDateString("en-CA", { year: "numeric", month, day: "numeric", timeZone: "America/Regina" });
 }
 /** Deliberately narrow: a deadline label followed immediately by a full date.
  * Never infer an application cutoff from employment terms or a yearless date. */
