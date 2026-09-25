@@ -7,6 +7,10 @@ export interface ListingReviewItem {
   org: Record<string, unknown>;
   review: BusinessListingReview | null;
   issues: string[];
+  /** The listing's location problem, when it has one. */
+  locationIssue?: string | null;
+  /** Points for a person to check that never block a listing, such as a city named like a country. */
+  warnings?: string[];
   isPublic: boolean;
   emailVerified: boolean;
 }
@@ -31,7 +35,9 @@ export default function BusinessReviewPanel({ item, onDecision }: { item: Listin
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const pending = item.review?.status === "pending";
-  const actionable = pending || item.review?.status === "approved";
+  // A public listing from before review can be sent back for changes or rejected, not approved.
+  const actionable = pending || item.review?.status === "approved" || (!item.review && item.isPublic);
+  const attention = [...item.issues, ...(item.warnings ?? [])];
   async function decide(action: ReviewAction) {
     setError("");
     if (action !== "approve" && feedback.trim().length < 10) { setError("Please give the owner a specific reason, at least 10 characters long."); return; }
@@ -47,7 +53,7 @@ export default function BusinessReviewPanel({ item, onDecision }: { item: Listin
     <p className="mt-3 text-sm font-semibold">Sign-in email: {item.emailVerified ? "Confirmed" : "Not confirmed"} · Directory: {item.isPublic ? "Visible" : "Hidden"}</p>
     {item.review?.submittedAt && <p className="mt-1 text-xs text-slate-600">Submitted {new Date(item.review.submittedAt).toLocaleString()}</p>}
     <dl className="mt-6 grid min-w-0 gap-5 sm:grid-cols-2">{Object.entries(fieldLabels).filter(([key]) => label(item.org[key])).map(([key, title]) => <div key={key} className={key === "description" ? "sm:col-span-2" : ""}><dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{title}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 [overflow-wrap:anywhere]">{<ProfileValue value={item.org[key]} />}</dd></div>)}</dl>
-    {item.issues.length > 0 && <div className="mt-5 rounded-xl bg-amber-50 p-4"><p className="font-bold">Profile needs attention</p><ul className="mt-2 list-disc pl-5 text-sm">{item.issues.map(issue => <li key={issue}>{issue}</li>)}</ul></div>}
+    {attention.length > 0 && <div className="mt-5 rounded-xl bg-amber-50 p-4"><p className="font-bold">Profile needs attention</p><ul className="mt-2 list-disc pl-5 text-sm">{attention.map(issue => <li key={issue}>{issue}</li>)}</ul></div>}
     {item.review?.feedback && <p className="mt-5 whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-sm"><strong>Previous feedback: </strong>{item.review.feedback}</p>}
     {actionable && <div className="mt-6 border-t border-slate-200 pt-6">
       <label className="block text-sm font-semibold" htmlFor="review-feedback">Feedback for the business owner <span className="font-normal">(required for changes or rejection)</span></label>
