@@ -34,7 +34,9 @@ export async function POST(request: NextRequest) {
       input.resumeUrl = await archive;
     }
     };
-    const result = await submitApplication(getAdminDb(), auth.decodedToken.uid, input, verifyDocuments, { email: auth.decodedToken.email ?? null });
+    // viewerEmail is read from the current Auth user, so an email change made
+    // while an older ID token is still valid is reflected in the snapshot.
+    const result = await submitApplication(getAdminDb(), auth.decodedToken.uid, input, verifyDocuments, { email: auth.viewerEmail ?? auth.decodedToken.email ?? null });
     const persisted = await getAdminDb().collection("applications").doc(result.application.id).get();
     if (!persisted.exists) throw new Error("Application receipt is not available");
     return NextResponse.json({created:result.created, application:serialize(applicationReceiptRecord({...persisted.data(),id:persisted.id}))}, {status:result.created ? 201 : 200, headers:{"Cache-Control":"private, no-store"}});
