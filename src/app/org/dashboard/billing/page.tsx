@@ -23,6 +23,7 @@ interface EmployerData {
   bonusAccessReason?: string;
   name?: string;
   openJobs?: number;
+  standardPostCredits?: number;
   featuredSummary?: FeaturedJobSummary;
 }
 
@@ -153,12 +154,14 @@ function BillingContent() {
                 </p>
               )}
               {employer?.featuredSummary && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-4">
                   {[
+                    // Paid single job postings; featured credits are shown separately.
+                    { label: "Job Post Credits", value: `${Number.isSafeInteger(employer.standardPostCredits) ? employer.standardPostCredits : 0}` },
                     { label: "Featured Used", value: `${employer.featuredSummary.featuredSlotsUsed}` },
                     { label: "Plan Slots", value: `${employer.featuredSummary.featuredSlotsTotal}` },
                     { label: "Slots Left", value: `${employer.featuredSummary.featuredSlotsRemaining}` },
-                    { label: "Credits", value: `${employer.featuredSummary.featuredPostCredits}` },
+                    { label: "Featured Credits", value: `${employer.featuredSummary.featuredPostCredits}` },
                   ].map((item) => (
                     <div key={item.label} className="rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,.03)", border: "1px solid var(--border)" }}>
                       <p className="text-[10px] font-bold tracking-widest text-text-muted mb-1 uppercase">{item.label}</p>
