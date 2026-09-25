@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import Footer from "@/components/Footer";
-import { SUBSCRIPTION_PLANS } from "@/lib/pricing";
+import EmployerOfferGrid from "@/components/pricing/EmployerOfferGrid";
 
 const valueProps = [
   {
@@ -28,8 +28,6 @@ const valueProps = [
   },
 ];
 
-const standardFeatures = SUBSCRIPTION_PLANS.tier1.features;
-const premiumFeatures = SUBSCRIPTION_PLANS.tier2.features;
 
 export default function ForEmployersPage() {
   return (
@@ -162,118 +160,19 @@ export default function ForEmployersPage() {
         </div>
       </section>
 
-      {/* Pricing Tiers */}
+      {/* Pricing: every purchasable offer, each carrying its plan into signup */}
       <section
+        id="pricing"
         className="px-5 md:px-10 lg:px-20 py-12 md:py-16"
         style={{ background: "var(--bg-alt, var(--bg))" }}
       >
         <h2 className="text-2xl md:text-3xl font-extrabold text-text text-center mb-3">
-          Choose Your Plan
+          Pricing
         </h2>
-        <p className="text-base text-text-sec text-center mb-10 max-w-[500px] mx-auto">
-          Simple, transparent pricing to connect with Indigenous talent and
-          communities.
+        <p className="text-base text-text-sec text-center mb-10 max-w-[560px] mx-auto">
+          Your organization profile is free. Pay per job post, or choose an annual plan if you hire throughout the year. Prices are in Canadian dollars, plus GST.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[800px] mx-auto">
-          {/* Standard */}
-          <div className="rounded-2xl bg-card border border-border p-7">
-            <p className="text-xs font-bold tracking-[2px] text-text-muted mb-2">
-              STANDARD
-            </p>
-            <p className="text-3xl font-extrabold text-text mb-1">
-              $1,250
-              <span className="text-base font-semibold text-text-muted">
-                /yr
-              </span>
-            </p>
-            <p className="text-sm text-text-sec mb-6">
-              {SUBSCRIPTION_PLANS.tier1.shortDescription}
-            </p>
-            <ul className="space-y-3 mb-8">
-              {standardFeatures.map((f) => (
-                <li
-                  key={f}
-                  className="flex items-start gap-2.5 text-sm text-text-sec"
-                >
-                  <span className="text-teal font-bold shrink-0 mt-px">
-                    &#10003;
-                  </span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/signup?resume=organization&intent=hiring"
-              className="brand-button block text-center rounded-xl py-3 font-bold text-sm no-underline transition-all"
-              style={{
-                border: "1.5px solid var(--border)",
-                color: "var(--button-gradient-soft-text)",
-                background: "var(--button-gradient-soft)",
-              }}
-            >
-              Get Started
-            </Link>
-          </div>
-
-          {/* Premium */}
-          <div
-            className="rounded-2xl p-7 relative"
-            style={{
-              background:
-                "linear-gradient(160deg, var(--navy), #0D3B66 60%, var(--teal))",
-              border: "1.5px solid rgba(13,148,136,.3)",
-            }}
-          >
-            <span
-              className="absolute top-4 right-4 text-[10px] font-bold tracking-[1.5px] rounded-full px-3 py-1"
-              style={{
-                background: "rgba(245,215,142,.15)",
-                color: "#F5D78E",
-              }}
-            >
-              RECOMMENDED
-            </span>
-            <p
-              className="text-xs font-bold tracking-[2px] mb-2"
-              style={{ color: "rgba(255,255,255,.6)" }}
-            >
-              PREMIUM
-            </p>
-            <p className="text-3xl font-extrabold text-white mb-1">
-              $2,500
-              <span
-                className="text-base font-semibold"
-                style={{ color: "rgba(255,255,255,.5)" }}
-              >
-                /yr
-              </span>
-            </p>
-            <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,.6)" }}>
-              {SUBSCRIPTION_PLANS.tier2.shortDescription}
-            </p>
-            <ul className="space-y-3 mb-8">
-              {premiumFeatures.map((f) => (
-                <li
-                  key={f}
-                  className="flex items-start gap-2.5 text-sm"
-                  style={{ color: "rgba(255,255,255,.8)" }}
-                >
-                  <span className="font-bold shrink-0 mt-px" style={{ color: "#F5D78E" }}>
-                    &#10003;
-                  </span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/signup?resume=organization&intent=hiring"
-              className="brand-button block text-center rounded-xl py-3 font-bold text-sm no-underline transition-all"
-              style={{ background: "var(--button-gradient)", color: "#fff" }}
-            >
-              Get Premium
-            </Link>
-          </div>
-        </div>
+        <EmployerOfferGrid />
       </section>
 
       {/* CTA */}

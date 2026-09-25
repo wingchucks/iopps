@@ -1,4 +1,7 @@
 export type SubscriptionTier = "standard" | "premium" | "school";
+
+/** Shown with every employer price: amounts are Canadian dollars before GST. */
+export const PRICE_TAX_NOTE = "CAD + GST";
 export type SubscriptionPlanId = "tier1" | "tier2" | "tier3";
 export type OneTimePlanId = "standard-post" | "featured-post" | "program-post";
 export type BillingPlanId = SubscriptionPlanId | OneTimePlanId;
@@ -114,7 +117,6 @@ export const ONE_TIME_PLANS: Record<OneTimePlanId, PurchasePlanDefinition> = {
     priceLabel: "$200",
     periodLabel: "/post",
     shortDescription: "Choose up to 45 days, with featured placement.",
-    badge: "Best Value",
     highlight: true,
     features: [
       "Choose a listing duration up to 45 days",

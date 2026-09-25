@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { safeAuthRedirect } from "@/lib/auth-redirect";
+import SelectedOfferSummary from "@/components/pricing/SelectedOfferSummary";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
@@ -26,6 +27,8 @@ function VerifyEmailContent() {
   const [verificationError, setVerificationError] = useState("");
   const nextPath = searchParams.get("next");
   const redirectPath = safeAuthRedirect(nextPath) || "/setup";
+  // An offer chosen before signup continues to checkout after verification.
+  const checkoutPlan = redirectPath.startsWith("/org/checkout?") ? new URLSearchParams(redirectPath.split("?")[1]).get("plan") : null;
 
   // If already verified, redirect
   useEffect(() => {
@@ -118,6 +121,7 @@ function VerifyEmailContent() {
             <span className="text-text text-lg font-extrabold tracking-[2px]">IOPPS</span>
           </Link>
 
+          {checkoutPlan && <div className="text-left"><SelectedOfferSummary planId={checkoutPlan} /></div>}
           <div className="text-5xl mb-4">&#9993;&#65039;</div>
           <h1 className="text-2xl font-extrabold text-text mb-2">Check your email</h1>
           <p className="text-text-sec text-[15px] mb-2 leading-relaxed">

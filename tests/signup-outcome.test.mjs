@@ -48,6 +48,7 @@ function signupPage({ user = null, outcome, signupError, query = new URLSearchPa
     './StepHeader': { StepHeader: 'StepHeader' },
     '@/components/signup/ui': new Proxy({}, { get: (_, name) => name }),
     '@/components/signup/constants': { CSS: {}, EMPLOYER_CAPABILITIES: [] },
+    '@/components/pricing/SelectedOfferSummary': { default: 'SelectedOfferSummary' },
   }).default;
   function render() { cursor = 0; return page().props.children.type(); }
   function find(predicate, node = render()) { if (!node || typeof node !== 'object') return null; if (predicate(node)) return node; for (const child of [node.props?.children].flat(Infinity)) { const match = find(predicate, child ?? null); if (match) return match; } return null; }
