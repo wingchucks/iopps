@@ -171,8 +171,11 @@ function ResumeContent() {
       </Link>
 
       <h1 className="text-2xl font-extrabold text-text mb-1">Resume</h1>
-      <p className="text-sm text-text-sec mb-6">
+      <p className="text-sm text-text-sec mb-2">
         Manage your resume for job applications.
+      </p>
+      <p className="text-sm text-text-sec mb-6">
+        Your resume stays private. When you apply for a job on IOPPS, that employer receives a copy of the resume you choose. Replacing or deleting it here doesn&apos;t change copies already sent with applications.
       </p>
 
       {/* Current resume */}

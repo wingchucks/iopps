@@ -39,6 +39,17 @@ test("member explore nav includes jobs/events and appends org/admin links when a
   assert(keys.includes("events"));
   assert(keys.includes("dashboard"));
   assert(keys.includes("admin"));
+  assert(!keys.includes("applications"), "organizations manage applicants from the dashboard");
+});
+
+test("signed-in members keep all five destinations; individuals get My Applications", () => {
+  const keys = getAppExploreNavItems({ isAuthenticated: true }).map((item) => item.key);
+  for (const destination of ["jobs", "businesses", "live", "scholarships", "events"]) assert(keys.includes(destination), destination);
+  assert(keys.includes("applications"));
+  assert(!keys.includes("dashboard"));
+  const applications = getAppExploreNavItems({ isAuthenticated: true }).find((item) => item.key === "applications");
+  assert.equal(applications?.href, "/applications");
+  assert.equal(applications?.label, "My Applications");
 });
 
 test("brand and auth links use public-friendly destinations", () => {
