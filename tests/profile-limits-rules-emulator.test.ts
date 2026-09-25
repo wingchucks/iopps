@@ -33,6 +33,16 @@ test('profile rules cap oversized direct writes but keep existing long values ed
       await assert.rejects(updateDoc(doc(db, 'members', uid), { interests: Array(201).fill('jobs') }), denied);
       await updateDoc(doc(db, 'members', uid), { headline: 'Treaty 6 administrator' });
     });
+    await t.test('capped fields require their type, and lists are capped by total length', async () => {
+      await assert.rejects(updateDoc(doc(db, 'members', uid), { experienceLevel: 'x'.repeat(5001) }), denied);
+      await assert.rejects(updateDoc(doc(db, 'members', uid), { workPreference: 'x'.repeat(5001) }), denied);
+      await assert.rejects(updateDoc(doc(db, 'members', uid), { bio: { a: 'x'.repeat(100000) } }), denied);
+      await assert.rejects(updateDoc(doc(db, 'members', uid), { interests: ['x'.repeat(100000)] }), denied);
+      await assert.rejects(updateDoc(doc(db, 'members', uid), { skills: [{ name: 'x' }] }), denied);
+      await assert.rejects(updateDoc(doc(db, 'members', uid), { education: { a: 1 } }), denied);
+      await updateDoc(doc(db, 'members', uid), { workPreference: 'hybrid', experienceLevel: 'Mid', skills: Array(400).fill('Skill'), resumeUrl: null });
+      await updateDoc(doc(db, 'members', uid), { education: [{ school: 'First Nations University', degree: 'BA', field: 'Indigenous Studies', year: 2020 }] });
+    });
     await t.test('an existing legacy value over the cap does not block editing other fields', async () => {
       await server.doc(`users/${uid}`).set({ displayName: 'Legacy', bio: 'x'.repeat(30000) });
       await updateDoc(doc(db, 'users', uid), { displayName: 'Legacy (edited)' });
