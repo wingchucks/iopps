@@ -49,7 +49,7 @@ test('actual /jobs discovery keeps malformed canonical salary records and neighb
       assert.match(html, /2 jobs found/, JSON.stringify(salary));
       assert.match(html, /Malformed pay role/);
       assert.match(html, /Valid pay role/);
-      assert.match(html, /Pay not imported/);
+      assert.match(html, /Pay: see original posting/);
       assert.match(html, /Check original posting/);
       assert.ok(html.includes('$25–$30 / hour'));
       assert.doesNotMatch(html, /CAD|USD|\[object Object\]|NaN/);
