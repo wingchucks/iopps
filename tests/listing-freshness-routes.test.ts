@@ -8,6 +8,7 @@ import ts from 'typescript';
 import * as expiration from '../src/lib/server/job-expiration.ts';
 import * as visibility from '../src/lib/public-job-merge.ts';
 import * as ownership from '../src/lib/server/public-ownership.ts';
+import * as scholarshipProvider from '../src/lib/server/scholarship-provider.ts';
 import * as freshness from '../src/lib/listing-freshness.ts';
 import * as publicJobs from '../src/lib/public-jobs.ts';
 import * as jobSlugs from '../src/lib/server/job-slugs.ts';
@@ -57,6 +58,7 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
     '@/lib/event-directory-dedupe': eventDedupe,
     '@/lib/opportunity-posting': opportunityPosting,
     './opportunity-lookups': opportunityLookups,
+    '@/lib/server/scholarship-provider': scholarshipProvider,
     './public-job-documents': jobDocuments,
     '@/lib/server/public-job-documents': jobDocuments,
     ...mocks,
