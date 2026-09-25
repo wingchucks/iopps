@@ -155,7 +155,7 @@ function OrgOnboardingContent() {
   const [partnershipInterests, setPartnershipInterests] = useState<string[]>([]);
 
   // Step 4 — Contact
-  const [contactEmail, setContactEmail] = useState("");
+  const [publicContactEmail, setPublicContactEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [facebook, setFacebook] = useState("");
@@ -199,8 +199,8 @@ function OrgOnboardingContent() {
       if (org.location?.city) setCity(org.location.city);
       if (org.location?.province) setProvince(org.location.province);
       if (org.website) setWebsite(org.website);
-      if (org.contactEmail) setContactEmail(org.contactEmail);
-      else if (user.email) setContactEmail(user.email);
+      // Only an email the owner chose to publish; never the sign-in or account email.
+      if (org.publicContactEmail) setPublicContactEmail(org.publicContactEmail);
       if (org.services) setServices(org.services);
       if (org.hiringStatus) setHiringStatus(org.hiringStatus);
       if (org.partnershipInterests) setPartnershipInterests(org.partnershipInterests);
@@ -304,7 +304,7 @@ function OrgOnboardingContent() {
       if (hiringStatus) data.hiringStatus = hiringStatus;
       if (partnershipInterests.length > 0) data.partnershipInterests = partnershipInterests;
       if (phone) data.phone = phone;
-      if (contactEmail) data.contactEmail = contactEmail;
+      data.publicContactEmail = publicContactEmail.trim();
       if (address) data.address = address;
       data.socialLinks = { facebook, linkedin, instagram, twitter };
       // School-specific fields (conditional inclusion)
@@ -352,7 +352,7 @@ function OrgOnboardingContent() {
           type: orgType,
           logoUrl: logoPreview,
           description,
-          contactEmail,
+          publicContactEmail,
           phone,
           website,
         }, { workspace: true });
@@ -800,15 +800,19 @@ function OrgOnboardingContent() {
             <div className="space-y-5">
               <label className="block">
                 <span className="text-sm font-semibold text-text-sec mb-1.5 block">
-                  Public Contact Email {orgType !== "school" ? <span className="text-red-500">*</span> : null}
+                  Public contact email (optional)
                 </span>
                 <input
                   type="email"
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
+                  value={publicContactEmail}
+                  onChange={(e) => setPublicContactEmail(e.target.value)}
                   className={inputClass}
                   placeholder="team@yourorg.ca"
+                  aria-describedby="public-contact-email-help"
                 />
+                <span id="public-contact-email-help" className="mt-1.5 block text-xs text-text-muted">
+                  Shown on your public profile. Leave blank to show no email. IOPPS contacts you privately at your account email.
+                </span>
               </label>
 
               <label className="block">

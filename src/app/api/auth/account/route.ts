@@ -28,10 +28,8 @@ export async function GET(req: NextRequest) {
       try {
         const context = await requireEmployerContext(req);
         const raw = Object.keys(context.organizationData).length ? context.organizationData : context.employerData;
-        const org = normalizeOrganizationRecord({
-          ...raw,
-          contactEmail: raw.contactEmail || raw.email || decoded.email,
-        });
+        // Readiness counts only public contact methods, never account emails.
+        const org = normalizeOrganizationRecord({ ...raw } as Record<string, unknown>);
         const readiness = getBusinessProfileReadiness(org, { workspace: true });
         organization = {
           authorized: true,

@@ -10,7 +10,7 @@ const initialForm: DashboardProfileForm = {
   tagline: "Good work starts with a connection.",
   description: "A fictional organization offering community event planning and communications services. Use this sample to explore how your own business could tell its story on IOPPS.",
   industry: "Professional Services", size: "1-10", foundedYear: "", city: "Saskatoon", province: "SK", address: "",
-  website: "", contactEmail: "hello@example.invalid", phone: "", linkedin: "", instagram: "", facebook: "", twitter: "", logoUrl: "", bannerUrl: "",
+  website: "", publicContactEmail: "hello@example.invalid", phone: "", linkedin: "", instagram: "", facebook: "", twitter: "", logoUrl: "", bannerUrl: "",
 };
 const initialServices = ["Event planning", "Communications"];
 const initialHours = Object.fromEntries(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map(day => [day, { open: "9:00 AM", close: "5:00 PM", isOpen: false }])) as HoursMap;
@@ -41,7 +41,7 @@ export default function BusinessProfileDemo({ publicView, onNameSaved }: { publi
     { label: "Story", done: Boolean(profileForm.description.trim()) },
     { label: "Location", done: Boolean(profileForm.city.trim() && profileForm.province) },
     { label: "Services", done: services.length > 0 },
-    { label: "Contact", done: Boolean(profileForm.contactEmail.trim() || profileForm.website.trim() || profileForm.phone.trim()) },
+    { label: "Contact", done: Boolean(profileForm.publicContactEmail.trim() || profileForm.website.trim() || profileForm.phone.trim()) },
   ];
   const completed = checks.filter(check => check.done).length;
   const location = saved.location as { city?: string; province?: string } | undefined;
@@ -55,7 +55,7 @@ export default function BusinessProfileDemo({ publicView, onNameSaved }: { publi
     </div>
     {publicView ? <article className="business-demo-public">
       <header><span className="op-eyebrow">Fictional business · profile preview</span><h2>{previewText(saved.name)}</h2><p>{previewText(saved.tagline)}</p><div className="flex flex-wrap gap-2 mt-4">{saved.businessIdentity === "indigenous" && <span className="business-demo-badge">Indigenous-owned or led · demo selection</span>}<span>{[location?.city, location?.province].filter(Boolean).join(", ")}</span></div></header>
-      <div className="business-demo-public-content"><section><h3>Our story</h3><p className="whitespace-pre-wrap">{previewText(saved.description)}</p><h3>What we do</h3><div className="flex flex-wrap gap-2">{savedServices.map(service => <span className="business-demo-badge" key={service}>{service}</span>)}</div>{(savedGroups.length > 0 || saved.nation || saved.treatyTerritory) ? <><h3>Community connections</h3><p>{[...savedGroups, previewText(saved.nation), previewText(saved.treatyTerritory)].filter(Boolean).join(" · ")}</p></> : null}</section><aside><h3>Contact details</h3><p>{previewText(saved.contactEmail) || "No public email added"}</p>{saved.phone ? <p>{previewText(saved.phone)}</p> : null}{saved.website ? <p>{previewText(saved.website)}</p> : null}<p className="text-sm mt-4">This is a sample profile. It is not listed publicly, and contact details are shown as text only.</p><Link href="/demo/employer?tab=Post%20a%20Job" className="journey-text-link">Try hiring from this account →</Link></aside></div>
+      <div className="business-demo-public-content"><section><h3>Our story</h3><p className="whitespace-pre-wrap">{previewText(saved.description)}</p><h3>What we do</h3><div className="flex flex-wrap gap-2">{savedServices.map(service => <span className="business-demo-badge" key={service}>{service}</span>)}</div>{(savedGroups.length > 0 || saved.nation || saved.treatyTerritory) ? <><h3>Community connections</h3><p>{[...savedGroups, previewText(saved.nation), previewText(saved.treatyTerritory)].filter(Boolean).join(" · ")}</p></> : null}</section><aside><h3>Contact details</h3><p>{previewText(saved.publicContactEmail) || "No public email added"}</p>{saved.phone ? <p>{previewText(saved.phone)}</p> : null}{saved.website ? <p>{previewText(saved.website)}</p> : null}<p className="text-sm mt-4">This is a sample profile. It is not listed publicly, and contact details are shown as text only.</p><Link href="/demo/employer?tab=Post%20a%20Job" className="journey-text-link">Try hiring from this account →</Link></aside></div>
     </article> : <CanonicalEditProfileTab demo
       profileSub={profileSub} setProfileSub={section => { setProfileSub(section); setSaveMsg(""); }} profileForm={profileForm} setProfileForm={setProfileForm}
       hours={hours} setHours={setHours} gallery={gallery} setGallery={setGallery} tags={tags} setTags={setTags} tagInput={tagInput} setTagInput={setTagInput}
