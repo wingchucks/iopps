@@ -8,6 +8,7 @@ import Avatar from "@/components/Avatar";
 import { type Organization } from "@/lib/firestore/organizations";
 import { shouldDisplayFoundedYear } from "@/lib/organization-profile";
 import { displayAmount, displayLocation } from "@/lib/utils";
+import { trackOrganizationProfileView } from "@/lib/analytics/client";
 
 // ── Types ──
 interface SchoolProgram { id: string; title?: string; programName?: string; duration?: string; credential?: string; type?: string; campus?: string; location?: string; region?: string; schoolId?: string; institutionName?: string; provider?: string; description?: string; cost?: unknown; eligibility?: string; format?: string; applyUrl?: string; href?: string; }
@@ -94,11 +95,7 @@ function SchoolProfileContent() {
           }
 
           // Track view
-          fetch("/api/employer/views", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orgId: orgData.id, type: "profile" }),
-          }).catch(() => {});
+          trackOrganizationProfileView(orgData.id);
         }
       } catch (err) {
         console.error("Failed to load school:", err);

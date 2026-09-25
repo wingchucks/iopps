@@ -133,7 +133,7 @@
 ```
 Secret Key: sk_test_REDACTED
 Publishable Key: pk_test_51Kaumz4KL7oAnlGUQvaIXZkwGJLju9ASq27AlOfFdJo2hDIgyQjmAaiGsSBw6FlSfZFO7tkKlSSm7LTmnSQOgCfz00gC1hyCdN
-Webhook Secret: whsec_WXXQP4yazHZBaIkya1IbVXzQiGELyeah
+Webhook Secret: whsec_REDACTED_SET_IN_VERCEL
 ```
 
 **Test Cards:**

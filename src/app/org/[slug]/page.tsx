@@ -12,6 +12,7 @@ import type { Organization } from "@/lib/firestore/organizations";
 import type { Job } from "@/lib/firestore/jobs";
 import { formatOrganizationHoursDay, hasOrganizationIndigenousIdentity, shouldDisplayFoundedYear } from "@/lib/organization-profile";
 import { displayAmount, displayLocation } from "@/lib/utils";
+import { trackOrganizationProfileView } from "@/lib/analytics/client";
 
 // ── Types for opportunities ──
 interface LinkedItem { href?: string; }
@@ -153,11 +154,7 @@ function OrgProfileContent() {
           setExpandedOppTab(null);
 
           // Track view
-          if (!orgJson.ownerPreview) fetch("/api/employer/views", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orgId: orgData.id, type: "profile" }),
-          }).catch(() => {});
+          if (!orgJson.ownerPreview) trackOrganizationProfileView(orgData.id);
 
           // Default to first non-empty tab
           if (nextJobs.length > 0) setActiveOppTab("jobs");

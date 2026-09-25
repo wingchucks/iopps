@@ -91,7 +91,7 @@ Results: No commits found. The file has never been tracked in git.
 
 **File:** `C:\Users\natha\.gemini\antigravity\scratch\iopps\web\.env.local`
 
-**API Key Found:** `AIzaSyCIaT0aEJwtTR64H9L79pBVRYXag5G9hjI`
+**API Key Found:** `<REDACTED_GOOGLE_API_KEY>`
 
 **Risk Assessment:**
 - The key is in `.env.local`, which is properly ignored by git
@@ -108,7 +108,7 @@ Even though the key was not committed to git, it should be considered potentiall
 
 **Steps to Rotate:**
 1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Delete the existing API key: `AIzaSyCIaT0aEJwtTR64H9L79pBVRYXag5G9hjI`
+2. Delete the existing API key: `<REDACTED_GOOGLE_API_KEY>`
 3. Generate a new API key
 4. Update `.env.local` with the new key
 5. Restart the development server
