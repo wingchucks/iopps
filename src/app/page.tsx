@@ -11,7 +11,7 @@ import LandingLivePreview from "@/components/landing/LandingLivePreview";
 
 import Footer from "@/components/Footer";
 
-import { getLatestJobs, getPartners } from "@/lib/server/landing-content";
+import { getCachedLatestJobs, getCachedPartners } from "@/lib/server/public-page-cache";
 
 export const runtime = "nodejs";
 
@@ -24,7 +24,7 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const [jobs, partners] = await Promise.all([getLatestJobs(), getPartners()]);
+  const [jobs, partners] = await Promise.all([getCachedLatestJobs(), getCachedPartners()]);
 
   return (
     <div className="op-site journey-home">
