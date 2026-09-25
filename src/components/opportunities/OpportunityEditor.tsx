@@ -11,13 +11,15 @@ export class OpportunitySaveError extends Error {
   fields: Record<string, string>;
   constructor(message: string, fields: Record<string, string> = {}) { super(message); this.fields = fields; }
 }
-export default function OpportunityEditor({ kind, initial, onSave, onCancel, demo = false, getToken }: {
+export default function OpportunityEditor({ kind, initial, onSave, onCancel, demo = false, getToken, reviewFirst = false }: {
   kind: OpportunityKind;
   initial?: OpportunityRecord;
   onSave: (data: Record<string, unknown>, status: OpportunityStatus) => Promise<void>;
   onCancel: () => void;
   demo?: boolean;
   getToken?: () => Promise<string>;
+  /** The organization's first free listing is reviewed by IOPPS before it goes live. */
+  reviewFirst?: boolean;
 }) {
   const event = kind === "events";
   const [form, setForm] = useState<Record<string, unknown>>(() => ({ category: event ? "Other" : "Scholarship", eventType: "Other", delivery: "in_person", deadlineType: "unknown", ...normalizeOpportunityInput(initial || {}), ...(initial && !event ? { deadlineType: scholarshipDeadlineType(initial) } : {}) }));
@@ -142,8 +144,8 @@ export default function OpportunityEditor({ kind, initial, onSave, onCancel, dem
         <p className="mt-3 break-words text-sm">{val("delivery") === "online" ? "Online" : [val("venue"), val("city"), val("province"), val("location")].filter(Boolean).join(", ")}</p>
         <p className="mt-3 break-words text-sm">{event ? val("rsvpLink") : val("applicationUrl") || val("applicationInstructions")}</p>
         <p className="mt-2 break-words text-sm">{[val("contactName"), val("contactEmail"), val("contactPhone")].filter(Boolean).join(" · ")}</p>
-        <p className="mt-4 border-t border-teal-200 pt-4 text-sm">Publishing makes this information visible to everyone on IOPPS.</p>
-        <button type="button" className={`${opportunityPrimary} mt-4 w-full sm:w-auto`} onClick={() => void save("active")}>{demo ? "Publish in demo" : initial?.status === "active" ? "Publish changes" : "Publish listing"}</button>
+        <p className="mt-4 border-t border-teal-200 pt-4 text-sm">{reviewFirst && initial?.status !== "active" ? "IOPPS reviews an organization’s first free listing before it appears publicly. It stays private until approved; after that, your listings publish right away." : "Publishing makes this information visible to everyone on IOPPS."}</p>
+        <button type="button" className={`${opportunityPrimary} mt-4 w-full sm:w-auto`} onClick={() => void save("active")}>{demo ? "Publish in demo" : initial?.status === "active" ? "Publish changes" : reviewFirst ? "Submit for review" : "Publish listing"}</button>
       </section>}
       <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:flex-wrap">
         <button type="button" className={opportunityButton} onClick={onCancel}>Back to listings</button>
