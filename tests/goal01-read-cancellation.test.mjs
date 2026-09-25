@@ -27,9 +27,9 @@ for(const kind of ['member','subscriptions']){
 test('plans component aborts owned read and ignores late completion',async()=>{
  let cleanup,signal,resolve;const writes=[];
  const {default:Page}=sourceModule('src/app/org/plans/page.tsx',{mocks:{
-  react:{useEffect:fn=>cleanup=fn(),useState:()=>[undefined,v=>writes.push(v)]},
+  react:{use:value=>value,useEffect:fn=>cleanup=fn(),useState:()=>[undefined,v=>writes.push(v)]},'@/lib/auth-redirect':{safeAuthRedirect:()=>null},
   'next/link':{default:()=>null},'@/components/ProtectedRoute':{default:()=>null},'@/components/NavBar':{default:()=>null},'@/components/PricingTabs':{default:()=>null},
   '@/lib/auth-context':{useAuth:()=>({user:{uid:'fictional-a'}})},'@/lib/firestore/subscriptions':{getOrgSubscriptions:(_uid,s)=>{signal=s;return new Promise(r=>resolve=r);}},'@/lib/pricing':{isSubscriptionPlanId:()=>true},
  }});
- const content=Page().props.children.props.children[1];content.type();assert.ok(signal instanceof AbortSignal,'component owns cancellation signal');cleanup();assert.equal(signal.aborted,true);resolve([{status:'active',plan:'fictional-plan'}]);await tick();assert.deepEqual(writes,[]);
+ const content=Page({searchParams:{}}).props.children.props.children[1];content.type(content.props);assert.ok(signal instanceof AbortSignal,'component owns cancellation signal');cleanup();assert.equal(signal.aborted,true);resolve([{status:'active',plan:'fictional-plan'}]);await tick();assert.deepEqual(writes,[]);
 });

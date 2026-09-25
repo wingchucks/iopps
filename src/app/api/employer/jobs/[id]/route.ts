@@ -38,6 +38,9 @@ interface EmployerJobInput {
   responsibilities?: string[];
   benefits?: string[];
   badges?: string[];
+  indigenousPreference?: boolean;
+  indigenousPreferenceLevel?: string;
+  communityTags?: string[];
   status?: JobStatus;
   featured?: boolean;
   requiresResume?: boolean;
@@ -246,6 +249,10 @@ export async function PUT(
         responsibilities: normalizeStringArray(body.responsibilities),
         benefits: normalizeStringArray(body.benefits),
         badges: normalizeStringArray(body.badges),
+        // Same preference fields the create route accepts, so a resumed draft keeps later edits.
+        indigenousPreference: typeof body.indigenousPreference === "boolean" ? body.indigenousPreference : undefined,
+        indigenousPreferenceLevel: typeof body.indigenousPreferenceLevel === "string" ? body.indigenousPreferenceLevel.trim() : undefined,
+        communityTags: normalizeStringArray(body.communityTags),
         featured: requestedFeatured,
         status: requestedStatus,
         active: requestedStatus === "active",
@@ -263,7 +270,7 @@ export async function PUT(
       });
     });
 
-    return NextResponse.json({ success: true, featuredSummary: nextFeaturedSummary });
+    return NextResponse.json({ success: true, jobId: id, featuredSummary: nextFeaturedSummary });
   } catch (error) {
     const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Failed to update job.";

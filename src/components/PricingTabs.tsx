@@ -169,18 +169,23 @@ function FreeCard({
 export default function PricingTabs({
   variant = "public",
   currentPlan,
+  redirect,
 }: {
   variant?: "public" | "org";
   currentPlan?: string;
+  /** Local page to return to after checkout (for example, a saved job draft). */
+  redirect?: string | null;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("Annual Plans");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  const orgCheckoutHref = (plan: string) =>
+    `/org/checkout?${new URLSearchParams(redirect ? { plan, redirect } : { plan })}`;
   const subHref = (plan: string) =>
-    variant === "org" ? `/org/checkout?plan=${plan}` : authIntentHref("/org/signup", new URLSearchParams({ plan }));
+    variant === "org" ? orgCheckoutHref(plan) : authIntentHref("/org/signup", new URLSearchParams({ plan }));
   const subCta = variant === "org" ? "Select Plan" : "Get Started";
   const postHref = (plan: string) =>
-    variant === "org" ? `/org/checkout?plan=${plan}` : authIntentHref("/org/signup", new URLSearchParams({ plan }));
+    variant === "org" ? orgCheckoutHref(plan) : authIntentHref("/org/signup", new URLSearchParams({ plan }));
   const postCta = variant === "org" ? "Post Now" : "Get Started";
   const freeHref = variant === "org" ? "/org/dashboard" : "/signup?type=employer";
   const freeSuffix = variant === "org" ? "" : " \u2014 It's Free";
