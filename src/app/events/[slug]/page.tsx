@@ -15,7 +15,6 @@ import {
   getRSVP,
   setRSVP,
   removeRSVP,
-  getEventRSVPCount,
   type RSVPStatus,
 } from "@/lib/firestore/rsvps";
 import { useAuth } from "@/lib/auth-context";
@@ -29,6 +28,7 @@ import { buildLoginRedirectHref, displayAmount, displayLocation } from "@/lib/ut
 // Unified type for rendering — covers fields from both Event and Post
 type EventData = {
   id: string;
+  goingCount?: number;
   title: string;
   slug?: string;
   description?: string;
@@ -106,7 +106,8 @@ function EventDetailContent() {
         if (!response.ok && response.status !== 404) throw new Error("The event could not load. Please try again.");
         const data = response.ok ? (await response.json()).event as EventData : null;
         if (data && user) {
-          const [rsvp, count, savedItem] = await Promise.all([getRSVP(user.uid, data.id).catch(() => null), getEventRSVPCount(data.id).catch(() => 0), isPostSaved(user.uid, data.id).catch(() => false)]);
+          const count = typeof data.goingCount === "number" ? data.goingCount : 0;
+          const [rsvp, savedItem] = await Promise.all([getRSVP(user.uid, data.id).catch(() => null), isPostSaved(user.uid, data.id).catch(() => false)]);
           if (live) { setRsvpStatus(rsvp?.status || null); setGoingCount(count); setSaved(savedItem); }
         }
         if (live) setEvent(data);
