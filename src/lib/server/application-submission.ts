@@ -4,7 +4,12 @@ import { validateApplicationSubmission } from "../application-validation.ts";
 import { buildApplicationDeliveryDocId } from "../application-notification-delivery.ts";
 import { buildApplicationProfileSnapshot } from "../application-snapshot.ts";
 
-export async function submitApplication(db: Firestore, uid: string, input: Record<string, unknown>, verifyDocuments: () => Promise<void> = async () => {}) {
+export interface ApplicantIdentity {
+  /** Email from the verified ID token; preferred over the stored profile email. */
+  email?: string | null;
+}
+
+export async function submitApplication(db: Firestore, uid: string, input: Record<string, unknown>, verifyDocuments: () => Promise<void> = async () => {}, identity: ApplicantIdentity = {}) {
   const postId = typeof input.postId === "string" ? input.postId : "";
   if (!postId || postId.includes("/") || postId.length > 300) throw new Error("Invalid job identifier.");
   const id = buildApplicationDeliveryDocId(uid, postId);
@@ -21,6 +26,13 @@ export async function submitApplication(db: Firestore, uid: string, input: Recor
     const importedJob = await transaction.get(db.collection("jobs").doc(postId));
     const job = importedJob.exists ? importedJob : post;
     if (!job.exists) throw new Error("This job is no longer accepting applications.");
+    // The applicant identity shown to employers comes from the stored profile and
+    // verified sign-in email, never from client-supplied snapshot fields.
+    const [memberDoc, userDoc] = await Promise.all([
+      transaction.get(db.collection("members").doc(uid)),
+      transaction.get(db.collection("users").doc(uid)),
+    ]);
+    const storedProfile = { ...(userDoc.exists ? userDoc.data() : {}), ...(memberDoc.exists ? memberDoc.data() : {}) };
     const record = job.data()!;
     const error = validateApplicationSubmission(record, input);
     if (error) throw new Error(error);
@@ -34,8 +46,10 @@ export async function submitApplication(db: Firestore, uid: string, input: Recor
       resumeUrl: typeof input.resumeUrl === "string" ? input.resumeUrl : "",
       resumeType: input.resumeType === "profile" ? "profile" : "file",
       resumeFileName: typeof input.resumeFileName === "string" ? input.resumeFileName.slice(0, 255) : null,
-      profileSnapshot: input.profileSnapshot && typeof input.profileSnapshot === "object"
-        ? buildApplicationProfileSnapshot(input.profileSnapshot, now.toDate().toISOString()) : null,
+      profileSnapshot: buildApplicationProfileSnapshot(
+        { ...storedProfile, email: identity.email || (typeof storedProfile.email === "string" ? storedProfile.email : "") },
+        now.toDate().toISOString(),
+      ),
       coverLetter: typeof input.coverLetter === "string" ? input.coverLetter.trim().slice(0, 20000) : "",
       references: typeof input.references === "string" ? input.references.trim().slice(0, 10000) : "",
       appliedAt: now, updatedAt: now,

@@ -43,6 +43,9 @@ test("hidden content helpers exclude deleted posts and inactive scholarships", (
   assert.equal(isHiddenContentStatus("deleted"), true);
   assert.equal(isPublicPostVisible({ status: "deleted" }), false);
   assert.equal(isPublicPostVisible({ status: "active" }), true);
+  assert.equal(isPublicPostVisible({ status: "pending" }), false);
+  assert.equal(isPublicPostVisible({ status: " Rejected " }), false);
+  assert.equal(isPublicPostVisible({}), true);
   assert.equal(isPublicScholarshipVisible({ active: false, status: "active" }), false);
   assert.equal(isPublicScholarshipVisible({ active: true, status: "deleted" }), false);
   assert.equal(isPublicScholarshipVisible({ active: true, status: "published" }), true);

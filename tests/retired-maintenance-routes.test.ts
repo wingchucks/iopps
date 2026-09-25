@@ -90,3 +90,39 @@ test("retired events POST rejects every credential without opening the database 
     }
   }
 });
+
+test("retired scholarships PATCH rejects every credential without opening the database or reading input", async () => {
+  for (const configuredSecret of [undefined, "fictional-cron-secret"]) {
+    const exports: { PATCH?: (request: Request) => Promise<Response> } = {};
+    const source = readFileSync("src/app/api/scholarships/route.ts", "utf8");
+    vm.runInNewContext(
+      ts.transpileModule(source, {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+      }).outputText,
+      {
+        exports,
+        Response,
+        process: { env: { CRON_SECRET: configuredSecret } },
+        require: (id: string) => {
+          if (id === "next/server") return { NextResponse: { json: Response.json } };
+          if (id === "@/lib/server/public-opportunities") return { getPublicOpportunities: async () => [] };
+          throw new Error(`Retired PATCH must not load a service: ${id}`);
+        },
+        fetch: () => { throw new Error("Retired route must not make network requests"); },
+      },
+    );
+    assert.equal(typeof exports.PATCH, "function");
+    for (const headers of credentials) {
+      const request = new Request("https://example.invalid/api/scholarships", {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ fromStatus: "rejected", status: "active" }),
+      });
+      request.json = async () => { throw new Error("Retired route must not process mutation input"); };
+      const response = await exports.PATCH!(request);
+      assert.equal(response.status, 410);
+      assert.equal(response.headers.get("cache-control"), "no-store");
+      assert.equal((await response.json()).code, "ENDPOINT_RETIRED");
+    }
+  }
+});

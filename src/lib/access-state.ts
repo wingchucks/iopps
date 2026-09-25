@@ -32,9 +32,12 @@ export function isHiddenContentStatus(value: unknown): boolean {
   return HIDDEN_CONTENT_STATUSES.has(normalizeAccessStatus(value));
 }
 
+// Community submissions stay private until an administrator approves them.
+const UNREVIEWED_POST_STATUSES = new Set(["pending", "rejected"]);
+
 export function isPublicPostVisible(value: unknown): boolean {
   const record = recordFrom(value);
-  return !isHiddenContentStatus(record.status);
+  return !isHiddenContentStatus(record.status) && !UNREVIEWED_POST_STATUSES.has(normalizeAccessStatus(record.status));
 }
 
 export function isPublicScholarshipVisible(value: unknown): boolean {

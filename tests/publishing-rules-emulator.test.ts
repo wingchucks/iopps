@@ -42,12 +42,12 @@ test('publishing rules: clients cannot bypass server publishing or featured enti
         await assert.rejects(deleteDoc(target), denied);
       }
     });
-    await t.test('community stories and spotlights remain compatible without promotion fields', async () => {
+    await t.test('community stories and spotlights cannot be published directly by clients', async () => {
       for (const type of ['story', 'spotlight']) {
         const data = { type, title: 'Fictional community post', description: 'Content', authorUid: uid, authorName: 'Fixture', authorPhoto: '/fixture.png', featuredImage: '/fixture.png', status: 'active', createdAt: new Date(), order: Date.now() };
-        await setDoc(ref('posts', type), data);
+        await assert.rejects(setDoc(ref('posts', type), data), denied);
+        await assert.rejects(setDoc(ref('posts', `${type}-pending`), { ...data, status: 'pending' }), denied);
         await assert.rejects(setDoc(ref('posts', `${type}-featured`), { ...data, featured: true }), denied);
-        await assert.rejects(setDoc(ref('posts', `${type}-org`), { ...data, orgId: 'victim' }), denied);
         await assert.rejects(setDoc(ref('posts', `${type}-author`), { ...data, authorUid: 'victim' }), denied);
       }
     });

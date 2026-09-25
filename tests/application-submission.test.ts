@@ -28,3 +28,23 @@ test('transactional submission derives employer, validates requirements, and ret
  records.set('jobs/mirrored',{status:'closed'});
  await assert.rejects(submitApplication(db,'candidate',{postId:'mirrored'}),/no longer accepting/);
 });
+
+test('employer-facing applicant snapshot comes from the stored profile and verified email, not the request', async()=>{
+ const {submitApplication}=await import(new URL('../src/lib/server/application-submission.ts',import.meta.url).href);
+ const records=new Map<string,any>([
+  ['posts/role',{type:'job',title:'Role',orgId:'real-org',status:'active'}],
+  ['members/candidate',{displayName:'Stored Name',email:'stale@example.invalid',headline:'Stored headline',skills:['Stored',7],education:[{school:'Real U',degree:'BA',field:'History',year:2020,injected:{nested:true}}]}],
+ ]);
+ const db={collection:(c:string)=>({doc:(id:string)=>({path:`${c}/${id}`})}),runTransaction:async(fn:(transaction:any)=>Promise<any>)=>fn({get:async(ref:any)=>({exists:records.has(ref.path),data:()=>records.get(ref.path)}),create:(ref:any,data:any)=>{records.set(ref.path,data);}})};
+ const forged={displayName:'Forged Executive',email:'someone.else@example.invalid',headline:'CEO',education:[{school:'Fake',role:'admin'}]};
+ const {application}=await submitApplication(db,'candidate',{postId:'role',profileSnapshot:forged},async()=>{},{email:'verified@example.invalid'});
+ const snapshot=application.profileSnapshot;
+ assert.equal(snapshot.displayName,'Stored Name');
+ assert.equal(snapshot.email,'verified@example.invalid');
+ assert.equal(snapshot.headline,'Stored headline');
+ assert.deepEqual(snapshot.skills,['Stored']);
+ assert.deepEqual(snapshot.education,[{school:'Real U',degree:'BA',field:'History',year:2020}]);
+ assert.ok(!JSON.stringify(snapshot).includes('Forged')&&!JSON.stringify(snapshot).includes('someone.else'));
+ const {application:noProfile}=await submitApplication(db,'newcomer',{postId:'role'},async()=>{},{email:'newcomer@example.invalid'});
+ assert.equal(noProfile.profileSnapshot.email,'newcomer@example.invalid');
+});

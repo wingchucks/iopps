@@ -120,10 +120,4 @@ export async function getUserRSVPs(userId: string): Promise<RSVP[]> {
 
   return resolved.filter((rsvp): rsvp is RSVP => Boolean(rsvp));
 }
-
-export async function getEventRSVPCount(postId: string): Promise<number> {
-  const snap = await getDocs(
-    query(col, where("postId", "==", postId), where("status", "==", "going"))
-  );
-  return snap.size;
-}
+// Event "going" counts are served by /api/events/[id]; RSVPs are private to their owner.

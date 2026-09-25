@@ -135,10 +135,21 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Saved items: users can read/write their own saved items only
+    // Saved items: one owner-only policy. Current records use userId; older records
+    // used uid. Every owner field must stay the caller's, so a save cannot be reassigned.
+    function savedItemOwner(data) {
+      return data.get('userId', data.get('uid', null));
+    }
+    function keepsSavedItemOwner() {
+      return request.resource.data.get('userId', request.auth.uid) == request.auth.uid
+        && request.resource.data.get('uid', request.auth.uid) == request.auth.uid
+        && savedItemOwner(request.resource.data) == request.auth.uid;
+    }
     match /saved_items/{itemId} {
-      allow read, write: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow get, delete: if isSignedIn() && savedItemOwner(resource.data) == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && keepsSavedItemOwner();
+      allow update: if isSignedIn() && savedItemOwner(resource.data) == request.auth.uid && keepsSavedItemOwner();
     }
 
     // Full applications contain private employer notes and delivery metadata.
@@ -147,17 +158,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Organization posts use server routes. The only client-create exception is
-    // the existing community story/spotlight payload, without paid/org fields.
+    // All posts, including community stories and spotlights, use server routes.
+    // Community submissions are held for review before they can appear publicly.
     match /posts/{postId} {
       allow read: if false; // Public API excludes unpublished records.
-      allow create: if isSignedIn()
-        && request.resource.data.keys().hasOnly(['type', 'title', 'description',
-          'authorUid', 'authorName', 'authorPhoto', 'featuredImage', 'status', 'createdAt', 'order'])
-        && request.resource.data.type in ['story', 'spotlight']
-        && request.resource.data.authorUid == request.auth.uid
-        && request.resource.data.status == 'active';
-      allow update, delete: if false;
+      allow write: if false;
     }
 
     match /organizations/{orgId} {
@@ -226,13 +231,6 @@ service cloud.firestore {
       allow delete: if false; // Destructive actions require the verified owner API.
     }
 
-    // Saved items: users can read/write their own saves
-    match /saved_items/{itemId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
     // Applications are defined above near public content collections.
     // Keep this duplicate match intentionally narrow to avoid broad org-owner reads.
     match /applications/{appId} {
@@ -287,9 +285,14 @@ service cloud.firestore {
 
     // Event RSVPs: authenticated users can read (for count queries),
     // users can create/update/delete their own RSVPs
+    // RSVPs are private to their owner (IDs are "<uid>_<eventId>"). Public going
+    // counts come from the event API, never from reading other members' RSVPs.
     match /event_rsvps/{rsvpId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && rsvpId.matches(request.auth.uid + '_.+')
+        && (resource == null || resource.data.userId == request.auth.uid);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid
+        && rsvpId.matches(request.auth.uid + '_.+');
       allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
