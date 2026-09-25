@@ -125,6 +125,17 @@ export async function fetchOracleItems(feedUrl: string, fetcher: Fetcher = fetch
 }
 
 /** Match historical Dayforce /apply links to current detail URLs without matching different employers. */
+/**
+ * Feeds list multi-location postings in varying order ("Toronto; Calgary" one
+ * day, "Calgary; Toronto" the next). The same set compares equal; a single
+ * location is returned unchanged, so its import identity does not change.
+ */
+export function canonicalLocationSet(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const parts = value.normalize("NFC").split(";").map(part => part.replace(/\s+/gu, " ").trim()).filter(Boolean);
+  return [...new Set(parts)].sort().join("; ");
+}
+
 export function feedJobKey(value: unknown): string {
   if (typeof value !== "string" || !value) return "";
   try {
