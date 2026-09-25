@@ -30,15 +30,19 @@ export const PROFILE_LIST_LIMITS: Record<string, { items: number; length: number
   interests: LIST_LIMIT, targetRoles: LIST_LIMIT, skills: { items: 1000, length: 300 }, jobTypes: LIST_LIMIT,
 };
 
-/** Returns the first profile field that exceeds its limit, or null. */
+/** Returns the first profile field that exceeds its limit or has the wrong shape, or null. */
 export function profileFieldLimitError(input: Record<string, unknown>): string | null {
+  // Absent and null values are allowed (null clears a field); any other shape
+  // must match the field type so objects/arrays cannot bypass the caps.
   for (const [key, max] of Object.entries(PROFILE_TEXT_LIMITS)) {
     const value = input[key];
-    if (typeof value === "string" && value.length > max) return key;
+    if (value == null) continue;
+    if (typeof value !== "string" || value.length > max) return key;
   }
   for (const [key, { items, length }] of Object.entries(PROFILE_LIST_LIMITS)) {
     const value = input[key];
-    if (Array.isArray(value) && (value.length > items || value.some(item => typeof item === "string" && item.length > length))) return key;
+    if (value == null) continue;
+    if (!Array.isArray(value) || value.length > items || value.some(item => typeof item !== "string" || item.length > length)) return key;
   }
   const education = input.education;
   if (Array.isArray(education) && (education.length > 100 || JSON.stringify(education).length > 100000)) return "education";

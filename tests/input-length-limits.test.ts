@@ -25,6 +25,15 @@ test('profile caps reject abusive sizes', () => {
   assert.equal(profileFieldLimitError({ openToWork: true, salaryRange: { min: 1, max: 2 } }), null);
 });
 
+test('profile caps reject other shapes for capped text and list fields', () => {
+  assert.equal(profileFieldLimitError({ bio: { value: 'x'.repeat(250000) } }), 'bio');
+  assert.equal(profileFieldLimitError({ bio: ['x'.repeat(250000)] }), 'bio');
+  assert.equal(profileFieldLimitError({ displayName: 42 }), 'displayName');
+  assert.equal(profileFieldLimitError({ interests: 'jobs' }), 'interests');
+  assert.equal(profileFieldLimitError({ skills: [{ name: 'x'.repeat(250000) }] }), 'skills');
+  assert.equal(profileFieldLimitError({ bio: null, resumeUrl: null, interests: null }), null);
+});
+
 test('job limits accept normal postings and reject oversized titles, descriptions and fields', () => {
   assert.equal(jobInputLimitError({ title: 'Band Office Administrator (Cree language an asset)', description: 'Duties include…'.repeat(200), location: 'Regina, SK' }), null);
   assert.equal(jobInputLimitError({ title: 'x'.repeat(JOB_TITLE_MAX) }), null);
