@@ -83,6 +83,9 @@ test('profile wizard: accessible selection, explained requirements and profile-o
   const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
   async function load(overrides = {}, candidate = profile) {
     const record = { ...job, ...overrides }; records.set('jobs/fixture-role', record);
+    // The server builds the employer-facing snapshot from the stored member profile.
+    if (candidate) records.set(`members/${candidate.uid}`, candidate);
+    else records.delete(`members/${profile.uid}`);
     fixture = { job: record, profile: candidate };
     await page.goto(base); await page.getByRole('heading', { name: 'Resume', exact: true }).waitFor();
   }
