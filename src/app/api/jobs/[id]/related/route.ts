@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
+import { findJobRecordAnyState } from "@/lib/server/job-record-lookup";
+import { listingState } from "@/lib/listing-lifecycle";
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 import { isPublicJobVisible } from "@/lib/public-jobs";
 import { mergePublicJobRecords } from "@/lib/public-job-merge";
@@ -79,7 +81,12 @@ export async function GET(
     const { id } = await params;
     const db = getAdminDb();
 
-    const found = await findPublicJobDocument(db, id);
+    let found = await findPublicJobDocument(db, id);
+    if (!found) {
+      // A closed job's page still offers open alternatives.
+      const record = await findJobRecordAnyState(db, id);
+      if (record && listingState(record.data) === "closed") found = { id: record.id, source: record.source, routeSlug: "" };
+    }
     if (!found) {
       return withPublicDetailCache(
         NextResponse.json({ employerJobs: [], similarJobs: [] }),

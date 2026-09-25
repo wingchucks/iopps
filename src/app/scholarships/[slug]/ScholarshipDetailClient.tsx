@@ -161,7 +161,9 @@ function ScholarshipDetailContent() {
   const sourceLabel = getSourceLabel(ownerMeta?.ownerType || (org?.type === "school" ? "school" : undefined), fundingTypeLabel({ ...scholarship }));
   const orgLink = org ? ownerHref : null;
   const isPremium = org?.tier === "premium";
-  const intakeClosed = isJobRecordExpired({...scholarship});
+  // The API marks an explicitly closed listing; a passed deadline also closes the intake.
+  const intakeClosed = (scholarship as { intakeClosed?: unknown }).intakeClosed === true || isJobRecordExpired({...scholarship});
+  const closedOn = (scholarship as { closedOn?: unknown }).closedOn;
   const closingSoon = !intakeClosed && isClosingSoon(scholarship.deadline);
   const amountLabel = displayAmount(scholarship.amount) || "Funding varies";
   const scholarshipApplicationHref = normalizeExternalHref(scholarship.applicationUrl);
@@ -190,6 +192,17 @@ function ScholarshipDetailContent() {
       >
         &#8592; Back to Scholarships
       </Link>
+
+      {intakeClosed && (
+        <div role="status" className="mb-5 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--amber, #d97706)", background: "var(--amber-soft, rgba(217,119,6,.12))" }}>
+          <p className="m-0 font-bold text-text">
+            {closingLabel(scholarship.deadline, closedOn)} Applications for this intake are closed.
+          </p>
+          <p className="m-0 mt-1 text-sm text-text-sec">
+            Many scholarships recur each year; check with the provider for the next intake, or <Link href="/scholarships" className="text-teal underline underline-offset-4">browse open scholarships</Link>.
+          </p>
+        </div>
+      )}
 
       <div
         className="rounded-2xl mb-6 relative overflow-hidden"
@@ -556,4 +569,12 @@ function ScholarshipDetailContent() {
       </div>
     </div>
   );
+}
+
+function closingLabel(deadline: unknown, closedOn: unknown): string {
+  if (typeof closedOn === "string") {
+    const date = new Date(closedOn);
+    if (Number.isFinite(date.getTime())) return `This intake closed on ${date.toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric", timeZone: "America/Regina" })}.`;
+  }
+  return typeof deadline === "string" && deadline.trim() ? `This intake closed on ${deadline.trim()}.` : "This intake is closed.";
 }
