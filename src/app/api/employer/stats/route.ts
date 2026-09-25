@@ -58,7 +58,8 @@ export async function GET(req: NextRequest) {
       applications += appsSnap.size;
     }
 
-    // Count profile views from subcollection
+    // Count profile views from subcollection. An aggregate count costs one read
+    // per 1,000 views instead of reading every view document.
     let profileViews = 0;
     try {
       const viewsSnap = await adminDb
@@ -66,8 +67,9 @@ export async function GET(req: NextRequest) {
         .doc(orgId)
         .collection("views")
         .where("type", "==", "profile")
+        .count()
         .get();
-      profileViews = viewsSnap.size;
+      profileViews = viewsSnap.data().count;
     } catch {
       // subcollection may not exist yet
     }

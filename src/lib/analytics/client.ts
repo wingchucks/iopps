@@ -35,3 +35,17 @@ export function trackAnalyticsEvent(
     });
   })().catch(() => undefined);
 }
+
+export function trackOrganizationProfileView(orgId: string): void {
+  if (typeof window === "undefined") return;
+  void (async () => {
+    const appCheckToken = await getAppCheckTokenValue();
+    if (!appCheckToken) return;
+    await fetch("/api/employer/views", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Firebase-AppCheck": appCheckToken },
+      body: JSON.stringify({ orgId, type: "profile" }),
+      keepalive: true,
+    });
+  })().catch(() => undefined);
+}
