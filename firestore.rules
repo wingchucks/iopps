@@ -38,14 +38,43 @@ service cloud.firestore {
       return salary == null || (salary is map && salary.get('min', null) is number && salary.get('max', null) is number
         && salary.min >= 0 && salary.max >= salary.min && salary.max <= 1000000000);
     }
+    // Abuse-level caps on fields being written (not UX limits); unchanged legacy values stay valid.
+    // Keep aligned with PROFILE_TEXT_LIMITS / PROFILE_LIST_LIMITS in src/lib/profile-fields.ts.
+    // Null clears a field; any other value must be a string within the cap.
+    function fitsText(changed, field, max) {
+      return !changed.hasAny([field]) || request.resource.data.get(field, null) == null
+        || (request.resource.data[field] is string && request.resource.data[field].size() <= max);
+    }
+    // Rules cannot check each item, so cap the item count and the joined length
+    // (items x per-item length); join() also rejects non-string items.
+    function fitsList(changed, field, items, length) {
+      return !changed.hasAny([field]) || request.resource.data.get(field, null) == null
+        || (request.resource.data[field] is list && request.resource.data[field].size() <= items
+          && request.resource.data[field].join('').size() <= items * length);
+    }
+    function withinProfileLimits(changed) {
+      return fitsText(changed, 'displayName', 200) && fitsText(changed, 'name', 200)
+        && fitsText(changed, 'pronouns', 5000) && fitsText(changed, 'band', 5000) && fitsText(changed, 'title', 5000)
+        && fitsText(changed, 'headline', 5000) && fitsText(changed, 'community', 5000) && fitsText(changed, 'location', 5000)
+        && fitsText(changed, 'nation', 5000) && fitsText(changed, 'territory', 5000) && fitsText(changed, 'languages', 5000)
+        && fitsText(changed, 'preferredLocation', 5000) && fitsText(changed, 'industry', 5000)
+        && fitsText(changed, 'experienceLevel', 5000) && fitsText(changed, 'workPreference', 5000)
+        && fitsText(changed, 'bio', 20000) && fitsText(changed, 'skillsText', 20000) && fitsText(changed, 'resumeFileName', 1000)
+        && fitsText(changed, 'photoURL', 4096) && fitsText(changed, 'resumeUrl', 4096) && fitsText(changed, 'resumeURL', 4096)
+        && fitsList(changed, 'interests', 200, 300) && fitsList(changed, 'targetRoles', 200, 300)
+        && fitsList(changed, 'skills', 1000, 300) && fitsList(changed, 'jobTypes', 200, 300)
+        && (!changed.hasAny(['education']) || request.resource.data.get('education', null) == null
+          || (request.resource.data.education is list && request.resource.data.education.size() <= 100));
+    }
     function safeProfileCreate() {
       let data = request.resource.data;
-      return validSalaryRange() && data.keys().hasOnly(profileFields().concat(['uid', 'email', 'joinedAt', 'createdAt', 'role']))
+      return validSalaryRange() && withinProfileLimits(data.keys()) && data.keys().hasOnly(profileFields().concat(['uid', 'email', 'joinedAt', 'createdAt', 'role']))
         && data.get('uid', request.auth.uid) == request.auth.uid
         && data.get('role', 'community') in ['community', 'member'];
     }
     function safeProfileUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileFields())
+        && withinProfileLimits(request.resource.data.diff(resource.data).affectedKeys())
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['salaryRange']) || validSalaryRange());
     }
     // Platform privileges come from signed claims, never an editable profile role.

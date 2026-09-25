@@ -5,7 +5,7 @@ import { getAuth } from "firebase-admin/auth";
 import { getApps } from "firebase-admin/app";
 import { verifyAuthToken } from "@/lib/api-auth";
 import { salaryRangeError } from "@/lib/salary-range";
-import { personalProfileUpdates } from "@/lib/profile-fields";
+import { personalProfileUpdates, profileFieldLimitError } from "@/lib/profile-fields";
 import { sendAdminNewSignup } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -38,6 +38,8 @@ export async function PATCH(req: NextRequest) {
     if (salaryError) return NextResponse.json({ error: salaryError }, { status: 400 });
     const signupRole = input.signupRole;
     const data = personalProfileUpdates(input);
+    const tooLong = profileFieldLimitError(data);
+    if (tooLong) return NextResponse.json({ error: "This profile field is too long.", field: tooLong }, { status: 400 });
 
     const db = getAdminDb();
     const isNew = data.onboardingComplete === true;

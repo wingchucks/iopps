@@ -61,6 +61,7 @@ function harness(page, initial = null, count = 0) {
       return { success: true, decodedToken: { uid: user.uid, name: user.displayName }, viewerEmail: user.email, userData: {} };
     } },
     '@/lib/access-state': load('src/lib/access-state.ts', {}),
+    '@/lib/profile-fields': load('src/lib/profile-fields.ts', {}),
     '@/lib/firebase-admin': { getAdminDb: () => adminDb },
     'firebase-admin/firestore': { FieldValue: { serverTimestamp: () => 'fictional-time' } },
   });

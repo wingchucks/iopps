@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 
 import { getUserAccessBlockReason } from '../src/lib/access-state.ts';
+import { profileFieldLimitError } from '../src/lib/profile-fields.ts';
 import { setupDestination, setupCompletionDestination } from '../src/app/setup/destination.ts';
 function load(file, deps, extra = '', globals = {}) {
  const exports = {};
@@ -24,7 +25,7 @@ function api({blocked=false, intent, fail=false, initial={privateField:'keep',ro
  const route=load('src/app/api/profile/setup/route.ts',{
   'next/server':{NextResponse:{json:Response.json}},
   '@/lib/api-auth':{verifyAuthToken:async req=>blocked||!req.headers.get('authorization')?{success:false,response:Response.json({error:'Unauthorized'},{status:blocked?403:401})}:{success:true,decodedToken:{uid:'owner',name:'Owner'},viewerEmail:'owner@example.invalid',userData:docs.users}},
-  '@/lib/access-state':{getUserAccessBlockReason},
+  '@/lib/access-state':{getUserAccessBlockReason},'@/lib/profile-fields':{profileFieldLimitError},
   '@/lib/firebase-admin':{getAdminDb:()=>db},'firebase-admin/firestore':{FieldValue:{serverTimestamp:()=> 'server-time'}},
  });
  return {docs,writes,run:(body=profile,auth=true)=>route.POST(new Request('https://example.invalid/api/profile/setup',{method:'POST',headers:auth?{authorization:'Bearer fictional'}:{},body:JSON.stringify(body)}))};

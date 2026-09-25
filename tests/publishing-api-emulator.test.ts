@@ -9,6 +9,7 @@ import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as entitlements from '../src/lib/server/featured-job-entitlements.ts';
 import * as hiringDetails from "../src/lib/job-hiring-details.ts";
+import * as jobInputLimits from "../src/lib/server/job-input-limits.ts";
 import * as school from '../src/lib/school-visibility.ts';
 import * as paidPublication from '../src/lib/server/paid-job-publication.ts';
 import * as paidReader from '../src/lib/server/paid-job-publication-reader.ts';
@@ -55,6 +56,7 @@ async function harness(t: any) {
         if (id === '@/lib/organization-profile') return {normalizeOrganizationRecord:(value:unknown)=>value};
         if (id === '@/lib/school-visibility') return school;
         if (id === '@/lib/job-hiring-details') return hiringDetails;
+        if (id === '@/lib/server/job-input-limits') return jobInputLimits;
         if (id === '@/lib/email') return { sendAdminContentPosted: async () => {} };
         throw new Error(id);
       },
