@@ -189,7 +189,7 @@ function CareerSettingsContent() {
               Open to Work
             </h3>
             <p className="text-sm text-text-muted m-0">
-              Display a badge on your profile showing you&apos;re available
+              Adds an Open to Work badge to your own IOPPS profile page. Your profile is private: employers don&apos;t see this badge or these preferences. They see only the details you send when you apply.
             </p>
           </div>
           <button
@@ -269,9 +269,12 @@ function CareerSettingsContent() {
       {/* Salary Range */}
       <Card className="mb-4">
         <div className="p-4">
-          <h3 className="text-[15px] font-bold text-text mb-3">
+          <h3 className="text-[15px] font-bold text-text mb-1">
             Salary Range
           </h3>
+          <p id="salary-range-help" className="text-sm text-text-muted mb-3">
+            Yearly pay in Canadian dollars (CAD). For an hourly rate, multiply it by your usual yearly hours.
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-muted">
@@ -280,7 +283,8 @@ function CareerSettingsContent() {
               <input
                 type="number"
                 value={salaryMin}
-                aria-label="Minimum salary"
+                aria-label="Minimum yearly salary in CAD"
+                aria-describedby="salary-range-help"
                 onChange={(e) => setSalaryMin(e.target.value)}
                 className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                 placeholder="Min"
@@ -293,7 +297,8 @@ function CareerSettingsContent() {
               <input
                 type="number"
                 value={salaryMax}
-                aria-label="Maximum salary"
+                aria-label="Maximum yearly salary in CAD"
+                aria-describedby="salary-range-help"
                 onChange={(e) => setSalaryMax(e.target.value)}
                 className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                 placeholder="Max"

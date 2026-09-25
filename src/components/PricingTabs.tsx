@@ -351,7 +351,7 @@ export default function PricingTabs({
               },
               {
                 q: "Are events free?",
-                a: "Yes! Community events are always free to post and attend on IOPPS.",
+                a: "Listing a community event on IOPPS is free. Organizers set any admission or registration fees, so check each event’s details before you go.",
               },
               {
                 q: "Is creating a business profile free?",

@@ -31,7 +31,7 @@ const memberSettingsLinks = [
     href: "/settings/account",
     icon: "\u{1F464}",
     title: "Account",
-    desc: "Update your display name, email, and manage your account",
+    desc: "Update your display name and password, and manage your account. Your sign-in email can’t be changed here.",
   },
 ];
 
@@ -64,7 +64,7 @@ const employerSettingsLinks = [
     href: "/settings/account",
     icon: "\u{1F464}",
     title: "Account",
-    desc: "Update your display name, email, password, and account security",
+    desc: "Update your display name and password, and manage account security. Your sign-in email can’t be changed here.",
   },
 ];
 
