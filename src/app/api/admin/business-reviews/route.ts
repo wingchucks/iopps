@@ -3,15 +3,35 @@ import { FieldPath } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { EmployerApiError } from "@/lib/server/employer-auth";
-import { LISTING_REVIEW_STATUSES, businessListingIssues, getBusinessListingReview } from "@/lib/business-listing-review";
+import { EXISTING_LISTING_REVIEW, LISTING_REVIEW_STATUSES, businessListingIssues, businessLocationIssue, getBusinessListingReview } from "@/lib/business-listing-review";
+import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
+import { isSchoolOrganization } from "@/lib/school-visibility";
 import { listingReviewPayload, recordReviewChange, reviewError } from "@/lib/server/business-listing-review";
 
 export const dynamic = "force-dynamic";
+
+/** Public directory listings whose location is missing, outside Canada or needs a person to check. */
+async function locationReviewListings() {
+  const db = getAdminDb();
+  // The same candidates as the public directory in /api/organizations.
+  const snapshots = await Promise.all((["onboardingComplete", "verified"] as const).map(field => db.collection("organizations").where(field, "==", true).get())
+    .concat(db.collection("organizations").where("status", "==", "approved").get()));
+  const docs = [...new Map(snapshots.flatMap(snapshot => snapshot.docs).map(doc => [doc.id, doc])).values()];
+  const missing = businessLocationIssue(null);
+  return docs
+    .filter(doc => { const org = normalizeOrganizationRecord({ ...doc.data(), id: doc.id } as Record<string, unknown>); return !isSchoolOrganization(org) && isOrganizationPubliclyVisible(org); })
+    .map(doc => listingReviewPayload(doc.id, doc.data()))
+    .filter(item => item.locationIssue || item.warnings.length)
+    // Locations that look wrong come before ones that are simply missing.
+    .sort((a, b) => Number(a.locationIssue === missing) - Number(b.locationIssue === missing) || String(a.org.name ?? "").localeCompare(String(b.org.name ?? "")));
+}
+
 export async function GET(req: NextRequest) {
   const auth = await verifyAdminToken(req);
   if (!auth.success) return auth.response;
   try {
     const status = req.nextUrl.searchParams.get("status") || "pending";
+    if (status === "location") return NextResponse.json({ listings: await locationReviewListings(), nextCursor: null });
     if (!LISTING_REVIEW_STATUSES.some(value => value === status)) throw new EmployerApiError(400, "Unknown review status.");
     let query = getAdminDb().collection("organizations").where("directoryReview.status", "==", status).orderBy(FieldPath.documentId()).limit(26);
     const cursor = req.nextUrl.searchParams.get("cursor");
@@ -38,7 +58,8 @@ export async function POST(req: NextRequest) {
       const snapshot = await tx.get(db.collection("organizations").doc(orgId));
       if (!snapshot.exists) throw new EmployerApiError(404, "Listing not found.");
       const data = snapshot.data()!;
-      const current = getBusinessListingReview(data);
+      // A public listing from before directory review can be sent back for changes, never re-approved here.
+      const current = getBusinessListingReview(data) ?? (action !== "approve" && isOrganizationPubliclyVisible(data) ? EXISTING_LISTING_REVIEW : null);
       if (!current || current.revision !== revision || body.status !== current.status || !(current.status === "pending" || (current.status === "approved" && action !== "approve"))) throw new EmployerApiError(409, "This listing has changed or was already reviewed. Refresh the queue before deciding.");
       if (action === "approve") {
         if (current.submittedRevision !== revision) throw new EmployerApiError(409, "The submitted profile changed. Ask the owner to resubmit.");
