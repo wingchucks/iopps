@@ -1,4 +1,5 @@
 import { provinceCode } from "./canadian-provinces";
+import { isPlausibleEmail } from "./public-organization";
 
 export const LISTING_REVIEW_STATUSES = ["draft", "pending", "changes_requested", "approved", "rejected"] as const;
 export type ListingReviewStatus = typeof LISTING_REVIEW_STATUSES[number];
@@ -49,7 +50,7 @@ export function businessListingIssues(org: RecordData): string[] {
   if (!location || !text(location.city) || !provinceCode(location.province)) issues.push("Add your city and a Canadian province or territory.");
   // Only the opt-in public email counts; the private account email is never shown.
   if (!text(org.publicContactEmail) && !text(org.phone) && !text(org.website)) issues.push("Add a public email, phone number or website.");
-  if (text(org.publicContactEmail) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text(org.publicContactEmail))) issues.push("Check your public email address.");
+  if (text(org.publicContactEmail) && !isPlausibleEmail(text(org.publicContactEmail))) issues.push("Check your public email address.");
   const urls = [org.website, org.logoUrl || org.logo, org.bannerUrl, ...Object.values((org.socialLinks as RecordData) || {}),
     ...(Array.isArray(org.gallery) ? org.gallery : []), ...(Array.isArray(org.videos) ? org.videos : [])];
   if (urls.some(value => {

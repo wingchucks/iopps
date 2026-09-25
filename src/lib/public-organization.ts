@@ -10,7 +10,18 @@ const PUBLIC_ORGANIZATION_FIELDS = [
   "programs", "keyStudyAreas", "areasOfStudy", "previewHighlights", "careersUrl", "studentCount", "graduationRate", "employmentRate", "profileMode",
 ] as const;
 
-const PUBLIC_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/**
+ * Linear-time plausibility check (no backtracking regex): one "@" with text
+ * before it, a domain containing an inner ".", no whitespace, at most 254 chars.
+ */
+export function isPlausibleEmail(value: string): boolean {
+  if (!value || value.length > 254 || /\s/.test(value)) return false;
+  const at = value.indexOf("@");
+  if (at <= 0 || at !== value.lastIndexOf("@")) return false;
+  const domain = value.slice(at + 1);
+  const dot = domain.lastIndexOf(".");
+  return dot > 0 && dot < domain.length - 1;
+}
 
 /**
  * The only email an organization shows publicly: the owner's explicit, opt-in
@@ -19,11 +30,11 @@ const PUBLIC_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export function publicContactEmailOf(record: Record<string, unknown>): string | null {
   const value = typeof record.publicContactEmail === "string" ? record.publicContactEmail.trim() : "";
-  return value && PUBLIC_EMAIL_PATTERN.test(value) ? value : null;
+  return value && isPlausibleEmail(value) ? value : null;
 }
 
 export function isPublicContactEmailValid(value: string): boolean {
-  return PUBLIC_EMAIL_PATTERN.test(value.trim());
+  return isPlausibleEmail(value.trim());
 }
 
 export function toPublicOrganization(record: Record<string, unknown>): Record<string, unknown> {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { toPublicOrganization } from "../src/lib/public-organization.ts";
+import { isPlausibleEmail, toPublicOrganization } from "../src/lib/public-organization.ts";
 import { CANADIAN_PROVINCES, provinceCode } from "../src/lib/canadian-provinces.ts";
 import { normalizeOrganizationProfilePatch } from "../src/lib/organization-profile.ts";
 
@@ -18,6 +18,14 @@ test("the public contact email is opt-in: blank or invalid shows none, the accou
   // Ordinary addresses with any letters, digits and dots are accepted.
   assert.equal(toPublicOrganization({ name: "Fictional", publicContactEmail: "admissions.services2@schools.example.ca" }).contactEmail, "admissions.services2@schools.example.ca");
   assert.equal("contactEmail" in toPublicOrganization({ name: "Fictional", publicContactEmail: "missing-at.example.ca" }), false);
+});
+
+test("public email check is linear and matches the previous rules", () => {
+  for (const good of ["a@b.ca", "first.last+tag@sub.example.ca", "admissions@schools.example.ca"]) assert.equal(isPlausibleEmail(good), true, good);
+  for (const bad of ["", "no-at.example.ca", "@example.ca", "a@b", "a@.ca", "a@b.", "a@@b.ca", "a b@c.ca", "a@b.ca ", `${"x".repeat(250)}@b.ca`]) assert.equal(isPlausibleEmail(bad), false, bad);
+  const started = Date.now();
+  assert.equal(isPlausibleEmail(`!@!.${"!.".repeat(200000)}`), false);
+  assert.ok(Date.now() - started < 200, "adversarial input is rejected quickly");
 });
 
 test("all provinces and territories match full names and existing abbreviations", () => {

@@ -26,7 +26,15 @@
  */
 import { pathToFileURL } from "node:url";
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Same linear check as isPlausibleEmail in src/lib/public-organization.ts.
+function plausibleEmail(value) {
+  if (!value || value.length > 254 || /\s/.test(value)) return false;
+  const at = value.indexOf("@");
+  if (at <= 0 || at !== value.lastIndexOf("@")) return false;
+  const domain = value.slice(at + 1);
+  const dot = domain.lastIndexOf(".");
+  return dot > 0 && dot < domain.length - 1;
+}
 
 /**
  * Decides the public email for one legacy record. Returns null when the record
@@ -35,7 +43,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function publicContactMigration(record, ownerSignInEmails) {
   if (Object.prototype.hasOwnProperty.call(record, "publicContactEmail")) return null;
   const legacy = typeof record.contactEmail === "string" ? record.contactEmail.trim() : "";
-  if (!legacy || !EMAIL.test(legacy)) return { publicContactEmail: "", reason: "no-valid-email" };
+  if (!legacy || !plausibleEmail(legacy)) return { publicContactEmail: "", reason: "no-valid-email" };
   if (ownerSignInEmails.has(legacy.toLowerCase())) return { publicContactEmail: "", reason: "copy-of-sign-in-email" };
   return { publicContactEmail: legacy, reason: "kept-deliberate-email" };
 }
