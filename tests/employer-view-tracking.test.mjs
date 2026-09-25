@@ -2,12 +2,30 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {sourceModule} from './helpers/security-fixtures.mjs';
 
-function load({attested = true, existing = ['organizations/fictional-org']} = {}) {
+function load({attested = true, existing = ['organizations/fictional-org'], failCollection} = {}) {
  const writes = [], reads = [];
- const db = {collection(name){return {doc(id){reads.push(`${name}/${id}`);return {
-  get:async()=>({exists:existing.includes(`${name}/${id}`)}),
-  collection:sub=>({add:async data=>{writes.push({path:`${name}/${id}/${sub}`,data});}}),
- };}};}};
+ const rejectWrite = path => {
+  if (path.endsWith(`/${failCollection}`)) throw new Error('Fictional write failure');
+ };
+ const db = {
+  batch(){
+   const staged = [];
+   return {
+    set(ref, data){staged.push({path:ref.path,data});},
+    async commit(){
+     for (const write of staged) rejectWrite(write.path);
+     writes.push(...staged);
+    },
+   };
+  },
+  collection(name){return {doc(id){reads.push(`${name}/${id}`);return {
+   get:async()=>({exists:existing.includes(`${name}/${id}`)}),
+   collection:sub=>({
+    doc:()=>({path:`${name}/${id}/${sub}`}),
+    add:async data=>{const path=`${name}/${id}/${sub}`;rejectWrite(path);writes.push({path,data});},
+   }),
+  };}};},
+ };
  const {POST} = sourceModule('src/app/api/employer/views/route.ts',{mocks:{
   'next/server':{NextResponse:{json:Response.json}},
   '@/lib/firebase-admin':{adminDb:db},
@@ -16,6 +34,15 @@ function load({attested = true, existing = ['organizations/fictional-org']} = {}
  }});
  const send = body => POST(new Request('http://localhost/api/employer/views',{method:'POST',headers:{'Content-Type':'application/json'},body:typeof body==='string'?body:JSON.stringify(body)}));
  return {send, writes, reads};
+}
+
+for (const failCollection of ['views', 'activity']) {
+ test(`a failed ${failCollection} write leaves neither profile-view record persisted`, async()=>{
+  const {send, writes} = load({failCollection});
+  const response = await send({orgId:'fictional-org',type:'profile'});
+  assert.equal(response.status,500);
+  assert.deepEqual(writes,[], 'count and activity must commit together or neither persists');
+ });
 }
 
 test('profile views require an attested browser before any database access', async()=>{

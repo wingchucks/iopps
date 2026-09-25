@@ -39,14 +39,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
-    await Promise.all([
-      orgRef.collection("views").add({ type: "profile", timestamp: FieldValue.serverTimestamp() }),
-      orgRef.collection("activity").add({
-        type: "profile_view",
-        message: "Someone viewed your organization profile",
-        timestamp: FieldValue.serverTimestamp(),
-      }),
-    ]);
+    const batch = adminDb.batch();
+    batch.set(orgRef.collection("views").doc(), {
+      type: "profile",
+      timestamp: FieldValue.serverTimestamp(),
+    });
+    batch.set(orgRef.collection("activity").doc(), {
+      type: "profile_view",
+      message: "Someone viewed your organization profile",
+      timestamp: FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
