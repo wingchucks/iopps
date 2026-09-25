@@ -13,6 +13,7 @@ import {
 import { preparePaidPublication, readPaidFeaturedSummary } from "@/lib/server/paid-job-publication-reader";
 import { firestorePublicationReader } from "@/lib/server/paid-job-publication-firestore";
 import { PublicationError } from "@/lib/server/paid-job-publication";
+import { jobInputLimitError } from "@/lib/server/job-input-limits";
 
 export const runtime = "nodejs";
 
@@ -161,6 +162,10 @@ export async function PUT(
     const context = await requireEmployerPublishingContext(req);
     const { id } = await params;
     const body = (await req.json()) as EmployerJobInput;
+    const tooLong = jobInputLimitError(body as Record<string, unknown>);
+    if (tooLong) {
+      return NextResponse.json({ error: `The job ${tooLong} is too long.`, field: tooLong }, { status: 400 });
+    }
     const db = getAdminDb();
     const employerRef = db.collection("employers").doc(context.employerId);
 

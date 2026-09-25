@@ -5,13 +5,13 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import * as salaryRange from '../src/lib/salary-range.ts';
-import { personalProfileUpdates } from "../src/lib/profile-fields.ts";
+import { personalProfileUpdates, profileFieldLimitError } from "../src/lib/profile-fields.ts";
 
 test('profile API cannot bypass protected organization linkage fields',async()=>{
  let saved:Record<string,unknown>={};const exports:any={};
  vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/profile/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,console,require:(id:string)=>{
   if(id==='@/lib/api-auth')return {verifyAuthToken:async()=>({success:true,decodedToken:{uid:'candidate'}})};
-  if(id==='@/lib/profile-fields')return {personalProfileUpdates};
+  if(id==='@/lib/profile-fields')return {personalProfileUpdates,profileFieldLimitError};
   if(id==='@/lib/salary-range')return salaryRange;
   if(id==='next/server')return {NextResponse:{json:(body:unknown,init?:ResponseInit)=>Response.json(body,init)}};
   if(id==='@/lib/account-labels')return {ANONYMOUS_MEMBER_NAME:'Member'};

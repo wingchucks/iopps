@@ -38,14 +38,31 @@ service cloud.firestore {
       return salary == null || (salary is map && salary.get('min', null) is number && salary.get('max', null) is number
         && salary.min >= 0 && salary.max >= salary.min && salary.max <= 1000000000);
     }
+    // Abuse-level caps on fields being written (not UX limits); unchanged legacy values stay valid.
+    // Keep aligned with PROFILE_TEXT_LIMITS / PROFILE_LIST_LIMITS in src/lib/profile-fields.ts.
+    function fitsLimit(changed, field, max) {
+      return !changed.hasAny([field]) || request.resource.data.get(field, '').size() <= max;
+    }
+    function withinProfileLimits(changed) {
+      return fitsLimit(changed, 'displayName', 200) && fitsLimit(changed, 'name', 200)
+        && fitsLimit(changed, 'pronouns', 5000) && fitsLimit(changed, 'band', 5000) && fitsLimit(changed, 'title', 5000)
+        && fitsLimit(changed, 'headline', 5000) && fitsLimit(changed, 'community', 5000) && fitsLimit(changed, 'location', 5000)
+        && fitsLimit(changed, 'nation', 5000) && fitsLimit(changed, 'territory', 5000) && fitsLimit(changed, 'languages', 5000)
+        && fitsLimit(changed, 'preferredLocation', 5000) && fitsLimit(changed, 'industry', 5000)
+        && fitsLimit(changed, 'bio', 20000) && fitsLimit(changed, 'skillsText', 20000) && fitsLimit(changed, 'resumeFileName', 1000)
+        && fitsLimit(changed, 'photoURL', 4096) && fitsLimit(changed, 'resumeUrl', 4096) && fitsLimit(changed, 'resumeURL', 4096)
+        && fitsLimit(changed, 'interests', 200) && fitsLimit(changed, 'targetRoles', 200) && fitsLimit(changed, 'skills', 1000)
+        && fitsLimit(changed, 'jobTypes', 200) && fitsLimit(changed, 'education', 100);
+    }
     function safeProfileCreate() {
       let data = request.resource.data;
-      return validSalaryRange() && data.keys().hasOnly(profileFields().concat(['uid', 'email', 'joinedAt', 'createdAt', 'role']))
+      return validSalaryRange() && withinProfileLimits(data.keys()) && data.keys().hasOnly(profileFields().concat(['uid', 'email', 'joinedAt', 'createdAt', 'role']))
         && data.get('uid', request.auth.uid) == request.auth.uid
         && data.get('role', 'community') in ['community', 'member'];
     }
     function safeProfileUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileFields())
+        && withinProfileLimits(request.resource.data.diff(resource.data).affectedKeys())
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['salaryRange']) || validSalaryRange());
     }
     // Platform privileges come from signed claims, never an editable profile role.

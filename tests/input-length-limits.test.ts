@@ -1,0 +1,35 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { profileFieldLimitError, PROFILE_TEXT_LIMITS } from '../src/lib/profile-fields.ts';
+import { jobInputLimitError, JOB_DESCRIPTION_MAX, JOB_TITLE_MAX } from '../src/lib/server/job-input-limits.ts';
+
+test('profile caps accept realistic and established long profiles, including syllabics', () => {
+  const realistic = { displayName: 'ᐊᒥᐦᑯᐤ Éloïse Cardinal-Laplante', headline: 'Administrative Assistant | Treaty 6', bio: 'Tânisi! '.repeat(600), skillsText: 'Excel, Cree Translation', interests: ['jobs', 'events'], skills: ['Excel'], education: [{ school: 'First Nations University', degree: 'BA', field: 'Indigenous Studies', year: 2020 }] };
+  assert.equal(profileFieldLimitError(realistic), null);
+  // Established values the setup flow must keep accepting (round 5, L1).
+  const established = { community: 'c'.repeat(301), location: 'l'.repeat(301), nation: 'n'.repeat(301), territory: 't'.repeat(301), languages: 'l'.repeat(1001), headline: 'h'.repeat(301), skillsText: 'Skill, '.repeat(400), bio: 'b'.repeat(6000), interests: Array.from({ length: 51 }, (_, i) => `legacy-${i}-` + 'i'.repeat(101)) };
+  assert.equal(profileFieldLimitError(established), null);
+  assert.equal(profileFieldLimitError({ bio: 'x'.repeat(PROFILE_TEXT_LIMITS.bio) }), null);
+});
+
+test('profile caps reject abusive sizes', () => {
+  assert.equal(profileFieldLimitError({ bio: 'x'.repeat(PROFILE_TEXT_LIMITS.bio + 1) }), 'bio');
+  assert.equal(profileFieldLimitError({ bio: 'x'.repeat(250000) }), 'bio');
+  assert.equal(profileFieldLimitError({ displayName: 'ᐊ'.repeat(20000) }), 'displayName');
+  assert.equal(profileFieldLimitError({ headline: 'x'.repeat(50000) }), 'headline');
+  assert.equal(profileFieldLimitError({ interests: Array(201).fill('jobs') }), 'interests');
+  assert.equal(profileFieldLimitError({ skills: ['x'.repeat(301)] }), 'skills');
+  assert.equal(profileFieldLimitError({ skills: Array(1001).fill('x') }), 'skills');
+  assert.equal(profileFieldLimitError({ skills: Array(400).fill('Skill') }), null);
+  assert.equal(profileFieldLimitError({ education: Array(101).fill({ school: 'x' }) }), 'education');
+  assert.equal(profileFieldLimitError({ openToWork: true, salaryRange: { min: 1, max: 2 } }), null);
+});
+
+test('job limits accept normal postings and reject oversized titles, descriptions and fields', () => {
+  assert.equal(jobInputLimitError({ title: 'Band Office Administrator (Cree language an asset)', description: 'Duties include…'.repeat(200), location: 'Regina, SK' }), null);
+  assert.equal(jobInputLimitError({ title: 'x'.repeat(JOB_TITLE_MAX) }), null);
+  assert.equal(jobInputLimitError({ title: 'x'.repeat(JOB_TITLE_MAX + 1) }), 'title');
+  assert.equal(jobInputLimitError({ title: 'Role', description: 'x'.repeat(JOB_DESCRIPTION_MAX + 1) }), 'description');
+  assert.equal(jobInputLimitError({ title: 'Role', salary: 'x'.repeat(5001) }), 'salary');
+  assert.equal(jobInputLimitError({ title: 'Role', status: 'active', featured: true }), null);
+});

@@ -14,6 +14,7 @@ import {
 import { preparePaidPublication } from "@/lib/server/paid-job-publication-reader";
 import { firestorePublicationReader } from "@/lib/server/paid-job-publication-firestore";
 import { PublicationError } from "@/lib/server/paid-job-publication";
+import { jobInputLimitError } from "@/lib/server/job-input-limits";
 import { isSchoolOrganization } from "@/lib/school-visibility";
 import { sendAdminContentPosted } from "@/lib/email";
 
@@ -242,6 +243,10 @@ export async function POST(req: NextRequest) {
 
     if (!title) {
       return NextResponse.json({ error: "Job title is required." }, { status: 400 });
+    }
+    const tooLong = jobInputLimitError(body as Record<string, unknown>);
+    if (tooLong) {
+      return NextResponse.json({ error: `The job ${tooLong} is too long.`, field: tooLong }, { status: 400 });
     }
 
     const db = getAdminDb();

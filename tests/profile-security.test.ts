@@ -5,14 +5,14 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import * as salaryRange from '../src/lib/salary-range.ts';
-import { personalProfileUpdates } from '../src/lib/profile-fields.ts';
+import { personalProfileUpdates, profileFieldLimitError } from '../src/lib/profile-fields.ts';
 test('profile API cannot bypass rules to forge organization ownership or admin flags',async()=>{
  let authorized = true;
  const writes:any[]=[];const exports:any={};const mocks:Record<string,unknown>={
  'next/server':{NextResponse:{json:(b:unknown,i?:ResponseInit)=>Response.json(b,i)}},
  '@/lib/account-labels':{ANONYMOUS_MEMBER_NAME:'Member'},
  '@/lib/api-auth':{verifyAuthToken:async()=>authorized?{success:true,decodedToken:{uid:'candidate'}}:{success:false,response:Response.json({error:'Unauthorized'},{status:401})}},
- '@/lib/profile-fields':{personalProfileUpdates},
+ '@/lib/profile-fields':{personalProfileUpdates,profileFieldLimitError},
  '@/lib/salary-range':salaryRange,
  '@/lib/firebase-admin':{getAdminDb:()=>({collection:()=>({doc:()=>({get:async()=>({data:()=>({})}),set:async(data:unknown)=>writes.push(data)})})})},
  'firebase-admin/auth':{getAuth:()=>({verifyIdToken:async()=>({uid:'candidate'})})},

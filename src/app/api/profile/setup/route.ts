@@ -3,6 +3,7 @@ import { verifyAuthToken } from "@/lib/api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { getUserAccessBlockReason } from "@/lib/access-state";
+import { profileFieldLimitError } from "@/lib/profile-fields";
 
 export const runtime = "nodejs";
 const headers = { "Cache-Control": "no-store" };
@@ -43,6 +44,11 @@ export async function POST(req: NextRequest) {
     data.targetRoles = [...new Set(input.targetRoles)];
   }
   data.skills = input.skillsText.split(",").map((value: string) => value.trim()).filter(Boolean);
+  // Generous caps only; realistic existing profiles stay valid.
+  const tooLong = profileFieldLimitError(data);
+  if (tooLong) {
+    return NextResponse.json({ error: `Shorten ${tooLong}.`, field: tooLong }, { status: 400, headers });
+  }
   try {
     const uid = access.decodedToken.uid;
     const db = getAdminDb();
