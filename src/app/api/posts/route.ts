@@ -113,7 +113,8 @@ export async function POST(req: NextRequest) {
       ...(typeof body.featuredImage === "string" && body.featuredImage.trim()
         ? { featuredImage: body.featuredImage.trim() }
         : {}),
-      status: "active",
+      // Community submissions stay private until an administrator approves them.
+      status: "pending",
       createdAt: FieldValue.serverTimestamp(),
       order: Date.now(),
     };
@@ -123,11 +124,11 @@ export async function POST(req: NextRequest) {
     sendAdminContentPosted({
       contentType: "community post",
       title,
-      status: "active",
+      status: "pending",
       authorName,
       authorEmail: decoded.email || (userData.email as string) || (memberData.email as string) || null,
       id,
-      urlPath: "/feed",
+      urlPath: "/admin/posts",
     }).catch((error) => {
       console.error("[api/posts][POST] Admin content email failed:", error);
     });
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
         title,
         description,
         type: requestedType,
-        status: "active",
+        status: "pending",
       },
       { status: 201 },
     );

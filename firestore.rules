@@ -147,17 +147,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Organization posts use server routes. The only client-create exception is
-    // the existing community story/spotlight payload, without paid/org fields.
+    // All posts, including community stories and spotlights, use server routes.
+    // Community submissions are held for review before they can appear publicly.
     match /posts/{postId} {
       allow read: if false; // Public API excludes unpublished records.
-      allow create: if isSignedIn()
-        && request.resource.data.keys().hasOnly(['type', 'title', 'description',
-          'authorUid', 'authorName', 'authorPhoto', 'featuredImage', 'status', 'createdAt', 'order'])
-        && request.resource.data.type in ['story', 'spotlight']
-        && request.resource.data.authorUid == request.auth.uid
-        && request.resource.data.status == 'active';
-      allow update, delete: if false;
+      allow write: if false;
     }
 
     match /organizations/{orgId} {
