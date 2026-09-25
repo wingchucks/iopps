@@ -30,7 +30,10 @@ export interface Organization {
   businessIdentity?: BusinessIdentity;
   capabilities?: string[];
   contactName?: string;
+  /** Private account contact: IOPPS uses it to reach the organization; never shown publicly. */
   contactEmail?: string;
+  /** Opt-in email shown on the public profile; blank shows no email. */
+  publicContactEmail?: string;
   logo?: string;
   logoUrl?: string;
   bannerUrl?: string;

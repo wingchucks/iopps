@@ -5,9 +5,19 @@ import { CANADIAN_PROVINCES, provinceCode } from "../src/lib/canadian-provinces.
 import { normalizeOrganizationProfilePatch } from "../src/lib/organization-profile.ts";
 
 test("public directory records retain profile details and exclude account-only information", () => {
-  const publicFields = { id: "sample", name: "Fictional business", businessIdentity: "indigenous", nation: "Example community", treatyTerritory: "Treaty 6", location: { city: "Saskatoon", province: "SK" }, services: ["Design"], contactEmail: "public@example.invalid", partnerTier: "standard", promotionWeight: 10 };
-  const result = toPublicOrganization({ ...publicFields, ownerId: "private-owner", stripeCustomerId: "private-customer", stripeSubscriptionId: "private-subscription", emailTemplates: { offer: "Private content" }, billingEmail: "billing@example.invalid", internalNotes: "Private note", futurePrivateField: "Must not appear", capabilities: ["post_jobs"], plan: "internal-plan" });
-  assert.deepEqual(result, publicFields);
+  const publicFields = { id: "sample", name: "Fictional business", businessIdentity: "indigenous", nation: "Example community", treatyTerritory: "Treaty 6", location: { city: "Saskatoon", province: "SK" }, services: ["Design"], partnerTier: "standard", promotionWeight: 10 };
+  const result = toPublicOrganization({ ...publicFields, publicContactEmail: "public@example.invalid", contactEmail: "owner-sign-in@example.invalid", ownerId: "private-owner", stripeCustomerId: "private-customer", stripeSubscriptionId: "private-subscription", emailTemplates: { offer: "Private content" }, billingEmail: "billing@example.invalid", internalNotes: "Private note", futurePrivateField: "Must not appear", capabilities: ["post_jobs"], plan: "internal-plan" });
+  assert.deepEqual(result, { ...publicFields, contactEmail: "public@example.invalid" });
+});
+
+test("the public contact email is opt-in: blank or invalid shows none, the account email never", () => {
+  assert.equal("contactEmail" in toPublicOrganization({ name: "Fictional", contactEmail: "owner@example.invalid" }), false);
+  assert.equal("contactEmail" in toPublicOrganization({ name: "Fictional", contactEmail: "owner@example.invalid", publicContactEmail: "" }), false);
+  assert.equal("contactEmail" in toPublicOrganization({ name: "Fictional", publicContactEmail: "not an email" }), false);
+  assert.equal(toPublicOrganization({ name: "Fictional", publicContactEmail: " team@example.invalid " }).contactEmail, "team@example.invalid");
+  // Ordinary addresses with any letters, digits and dots are accepted.
+  assert.equal(toPublicOrganization({ name: "Fictional", publicContactEmail: "admissions.services2@schools.example.ca" }).contactEmail, "admissions.services2@schools.example.ca");
+  assert.equal("contactEmail" in toPublicOrganization({ name: "Fictional", publicContactEmail: "missing-at.example.ca" }), false);
 });
 
 test("all provinces and territories match full names and existing abbreviations", () => {

@@ -49,7 +49,10 @@ export interface DashboardProfileForm {
   province: string;
   address: string;
   website: string;
-  contactEmail: string;
+  /** Opt-in email shown on the public profile; blank shows none. */
+  publicContactEmail: string;
+  /** Private account contact, shown only to the owner as a suggestion. */
+  accountContactEmail?: string;
   phone: string;
   linkedin: string;
   instagram: string;
@@ -257,7 +260,7 @@ export default function CanonicalEditProfileTab({
   const saveContact = () => saveProfile({
     address: profileForm.address,
     website: profileForm.website,
-    contactEmail: profileForm.contactEmail,
+    publicContactEmail: profileForm.publicContactEmail.trim(),
     phone: profileForm.phone,
     socialLinks: {
       linkedin: profileForm.linkedin,
@@ -685,8 +688,17 @@ export default function CanonicalEditProfileTab({
               <input id="business-field-10" style={inputStyle} value={profileForm.address} onChange={(event) => setProfileForm((prev) => ({ ...prev, address: event.target.value }))} placeholder="123 Main St, Regina, SK" />
             </div>
             <div className="mb-5">
-              <label style={labelStyle} htmlFor="business-field-11">Public contact email</label>
-              <input id="business-field-11" type="email" style={inputStyle} value={profileForm.contactEmail} onChange={(event) => setProfileForm((prev) => ({ ...prev, contactEmail: event.target.value }))} />
+              <label style={labelStyle} htmlFor="business-field-11">Public contact email (optional)</label>
+              <input id="business-field-11" type="email" style={inputStyle} value={profileForm.publicContactEmail} aria-describedby="business-field-11-help" onChange={(event) => setProfileForm((prev) => ({ ...prev, publicContactEmail: event.target.value }))} />
+              <p id="business-field-11-help" className="mt-1.5 text-xs" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                Shown on your public profile exactly as entered. Leave blank to show no email. IOPPS contacts you privately{profileForm.accountContactEmail ? ` at ${profileForm.accountContactEmail}` : ""}.
+              </p>
+              {!profileForm.publicContactEmail.trim() && profileForm.accountContactEmail && (
+                <button type="button" className="mt-2 text-xs font-semibold underline" style={{ color: "var(--teal, #14b8a6)", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                  onClick={() => setProfileForm((prev) => ({ ...prev, publicContactEmail: prev.accountContactEmail || "" }))}>
+                  Use my account email publicly
+                </button>
+              )}
             </div>
             <div className="mb-5">
               <label style={labelStyle} htmlFor="business-field-12">Phone</label>
