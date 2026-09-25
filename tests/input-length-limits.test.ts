@@ -42,3 +42,17 @@ test('job limits accept normal postings and reject oversized titles, description
   assert.equal(jobInputLimitError({ title: 'Role', salary: 'x'.repeat(5001) }), 'salary');
   assert.equal(jobInputLimitError({ title: 'Role', status: 'active', featured: true }), null);
 });
+
+test('job limits cover persisted list fields and the salary range object', () => {
+  const normal = { title: 'Role', responsibilities: ['Answer phones', 'Book meetings'], qualifications: ['Grade 12'], benefits: ['Dental'], communityTags: ['Treaty 6'], badges: ['Remote'], salaryRange: { min: 50000, max: 60000, period: 'year', currency: 'CAD', display: '$50,000 - $60,000' } };
+  assert.equal(jobInputLimitError(normal), null);
+  assert.equal(jobInputLimitError({ title: 'Role', responsibilities: ['x'.repeat(5001)] }), 'responsibilities');
+  assert.equal(jobInputLimitError({ title: 'Role', qualifications: Array(201).fill('x') }), 'qualifications');
+  assert.equal(jobInputLimitError({ title: 'Role', benefits: Array(10).fill('x'.repeat(4000)) }), 'benefits');
+  assert.equal(jobInputLimitError({ title: 'Role', badges: ['x'.repeat(250000)] }), 'badges');
+  assert.equal(jobInputLimitError({ title: 'Role', communityTags: Array(1000).fill('t') }), 'communityTags');
+  assert.equal(jobInputLimitError({ title: 'Role', salaryRange: { min: 1, notes: 'x'.repeat(250000) } }), 'salaryRange');
+  assert.equal(jobInputLimitError({ title: 'Role', salaryRange: { min: 1, nested: { huge: 'x' } } }), 'salaryRange');
+  assert.equal(jobInputLimitError({ title: 'Role', salaryRange: ['x'.repeat(250000)] }), 'salaryRange');
+  assert.equal(jobInputLimitError({ title: 'Role', salaryRange: undefined }), null);
+});
