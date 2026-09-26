@@ -21,8 +21,11 @@ test("guided signup preselects the entrepreneur path without misclassifying gene
 
   assert.match(signup, /useSearchParams/);
   assert.match(signup, /intent\) === "indigenous-business"/);
-  assert.match(signup, /(?:entrepreneurIntent \|\| searchParams\.get\("type"\) === "employer")\) \? "organization" : ""/);
-  assert.match(signup, /(?:entrepreneurIntent \|\| searchParams\.get\("type"\) === "employer")\) \? "employer" : ""/);
+  // Every organization entry point (entrepreneur, employer, hiring, organization tasks) preselects
+  // the same way; a generic signup starts with no role.
+  assert.match(signup, /const explicitOrganization = [^;]*searchParams\.get\("type"\) === "employer"[^;]*entrepreneurIntent[^;]*organizationTask !== null;/);
+  assert.match(signup, /useState<Role>\(explicitOrganization \? "organization" : ""\)/);
+  assert.match(signup, /useState<OrgType>\(explicitOrganization \? "employer" : ""\)/);
   assert.match(signup, /useState<BusinessIdentity>\("not_specified"\)/);
   assert.match(signup, /Indigenous Entrepreneur Signup/);
   assert.match(signup, /Your free business profile and directory listing/);

@@ -30,6 +30,7 @@ export async function POST(req: Request) {
 
     if (!school && !readiness.isReady) {
       const labels: Record<string, string> = {
+        name: "add your organization name",
         logo: "upload a logo",
         description: "add a description",
         contact: "add a public contact method",

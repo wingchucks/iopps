@@ -347,27 +347,8 @@ function OrgOnboardingContent() {
   const handleComplete = async () => {
     try {
       setSubmitError("");
-      if (orgType !== "school") {
-        const readiness = getBusinessProfileReadiness({
-          type: orgType,
-          logoUrl: logoPreview,
-          description,
-          publicContactEmail,
-          phone,
-          website,
-        }, { workspace: true });
-
-        if (!readiness.isReady) {
-          const messages: Record<string, string> = {
-            logo: "upload your logo",
-            description: "add a description",
-            contact: "add a public contact method",
-          };
-          throw new Error(
-            `Before finishing setup, please ${readiness.missingFields.map((field) => messages[field] || field).join(", ")}.`
-          );
-        }
-      }
+      // Posting needs only the organization name and type set at signup. Logo, description and
+      // public contact are optional here; the business directory listing asks for them.
       await saveStepProgress();
       if (!user) return;
       const idToken = await user.getIdToken();
@@ -407,6 +388,7 @@ function OrgOnboardingContent() {
 
   const progressPct = ((step + 1) / STEPS.length) * 100;
   const requiredFieldLabels: Record<string, string> = {
+    name: "add your organization name",
     logo: "upload your logo",
     description: "add a description",
     contact: "add a public contact method",
