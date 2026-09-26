@@ -7,7 +7,7 @@ import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
 import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
 import { normalizeHiringDetails, type HiringDetails } from "@/lib/job-hiring-details";
 import { confirmSavedJob, type JobSaveConfirmation } from "@/lib/job-save-confirmation";
-import { useState, useEffect } from "react";
+import { createContext, useContext, useId, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
@@ -269,6 +269,22 @@ function SectionHeader({
   );
 }
 
+// The control inside a FormField takes its label, required state, hint and error from here,
+// so assistive technology announces them together.
+const FieldContext = createContext<{ id?: string; describedBy?: string; invalid?: boolean; required?: boolean }>({});
+
+const fieldLabelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: 13,
+  fontWeight: 600,
+  marginBottom: 6,
+  color: "var(--text)",
+};
+
+function RequiredMark() {
+  return <><span aria-hidden="true" style={{ color: "var(--teal)", marginLeft: 3 }}>*</span><span className="sr-only"> (required)</span></>;
+}
+
 function FormField({
   label,
   required,
@@ -282,35 +298,32 @@ function FormField({
   error?: string;
   children: React.ReactNode;
 }) {
+  const id = useId();
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
   return (
     <div style={{ marginBottom: 16 }}>
-      <label
-        style={{
-          display: "block",
-          fontSize: 13,
-          fontWeight: 600,
-          marginBottom: 6,
-          color: "var(--text)",
-        }}
-      >
+      <label htmlFor={id} style={fieldLabelStyle}>
         {label}
-        {required && (
-          <span style={{ color: "var(--teal)", marginLeft: 3 }}>*</span>
-        )}
+        {required && <RequiredMark />}
       </label>
-      {children}
+      <FieldContext.Provider value={{ id, describedBy, invalid: Boolean(error), required }}>{children}</FieldContext.Provider>
       {hint && !error && (
-        <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+        <p id={`${id}-hint`} style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
           {hint}
         </p>
       )}
       {error && (
-        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#DC2626" }}>
+        <p id={`${id}-error`} style={{ margin: "4px 0 0", fontSize: 12, color: "#DC2626" }}>
           {error}
         </p>
       )}
     </div>
   );
+}
+
+function useFieldProps() {
+  const field = useContext(FieldContext);
+  return { id: field.id, "aria-describedby": field.describedBy, "aria-invalid": field.invalid || undefined, "aria-required": field.required || undefined };
 }
 
 const inputStyle: React.CSSProperties = {
@@ -336,8 +349,10 @@ function TextInput({
   placeholder?: string;
   type?: string;
 }) {
+  const field = useFieldProps();
   return (
     <input
+      {...field}
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -358,8 +373,10 @@ function TextArea({
   placeholder?: string;
   rows?: number;
 }) {
+  const field = useFieldProps();
   return (
     <textarea
+      {...field}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
@@ -373,14 +390,20 @@ function Select({
   value,
   onChange,
   children,
+  label,
 }: {
   value: string;
   onChange: (v: string) => void;
   children: React.ReactNode;
+  /** Accessible name when the select is not inside a FormField. */
+  label?: string;
 }) {
+  const field = useFieldProps();
   return (
     <div style={{ position: "relative" }}>
       <select
+        {...field}
+        aria-label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         style={{
@@ -507,6 +530,7 @@ function ListBuilder({
   placeholder?: string;
 }) {
   const [draft, setDraft] = useState("");
+  const id = useId();
 
   const add = () => {
     const val = draft.trim();
@@ -516,18 +540,11 @@ function ListBuilder({
   };
 
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label
-        style={{
-          display: "block",
-          fontSize: 13,
-          fontWeight: 600,
-          marginBottom: 6,
-          color: "var(--text)",
-        }}
-      >
+    <div style={{ marginBottom: 16 }} role="group" aria-labelledby={`${id}-label`}>
+      <label id={`${id}-label`} htmlFor={id} style={fieldLabelStyle}>
         {label}
       </label>
+      <p id={`${id}-help`} className="sr-only">Type one item and press Enter or choose Add. {items.length} added so far.</p>
       {items.length > 0 && (
         <ul
           style={{
@@ -577,6 +594,8 @@ function ListBuilder({
       )}
       <div style={{ display: "flex", gap: 8 }}>
         <input
+          id={id}
+          aria-describedby={`${id}-help`}
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -604,7 +623,7 @@ function ListBuilder({
             whiteSpace: "nowrap",
           }}
         >
-          + Add
+          + Add<span className="sr-only"> to {label}</span>
         </button>
       </div>
     </div>
@@ -742,6 +761,7 @@ export default function NewJobWizardPage() {
     if (!form.title.trim()) e.title = "Title is required";
     if (!form.category) e.category = "Category is required";
     if (!form.locationProvince) e.location = "Select a province, territory, or multiple-province option";
+    if (form.salaryMin && form.salaryMax && Number(form.salaryMin) > Number(form.salaryMax)) e.salary = "The minimum salary can’t be more than the maximum.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -754,8 +774,11 @@ export default function NewJobWizardPage() {
   };
 
   const goNext = () => {
-    if (step === 0 && !validateStep0()) return;
-    if (step === 1 && !validateStep1()) return;
+    if ((step === 0 && !validateStep0()) || (step === 1 && !validateStep1())) {
+      // Take keyboard and screen-reader users straight to the first field that needs attention.
+      window.requestAnimationFrame(() => document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
+      return;
+    }
     setErrors({});
     setStep((s) => (typeof s === "number" ? ((s + 1) as WizardStep) : s));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1129,36 +1152,38 @@ export default function NewJobWizardPage() {
                     {errors.location && <p role="alert" className="text-red-500 text-sm mb-4">{errors.location}</p>}
 
                     {/* Salary */}
-                    <div style={{ marginBottom: 16 }}>
-                      <label
-                        style={{
-                          display: "block",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          marginBottom: 6,
-                          color: "var(--text)",
-                        }}
-                      >
+                    <fieldset style={{ marginBottom: 16, border: "none", padding: 0, minWidth: 0 }} aria-describedby="salary-range-help">
+                      <legend style={{ ...fieldLabelStyle, padding: 0 }}>
                         Salary Range
-                      </label>
+                      </legend>
+                      <p id="salary-range-help" style={{ margin: "0 0 6px", fontSize: 12, color: "var(--text-muted)" }}>Optional. Amounts in Canadian dollars (CAD) for the pay period you choose.</p>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 140px", gap: 8 }}>
                         <input
                           type="number"
+                          min={0}
                           value={form.salaryMin}
                           onChange={(e) => set("salaryMin", e.target.value)}
                           placeholder="Min"
+                          aria-label="Minimum salary (CAD)"
+                          aria-invalid={errors.salary ? true : undefined}
+                          aria-describedby={errors.salary ? "salary-range-error" : undefined}
                           style={inputStyle}
                         />
                         <input
                           type="number"
+                          min={0}
                           value={form.salaryMax}
                           onChange={(e) => set("salaryMax", e.target.value)}
                           placeholder="Max"
+                          aria-label="Maximum salary (CAD)"
+                          aria-invalid={errors.salary ? true : undefined}
+                          aria-describedby={errors.salary ? "salary-range-error" : undefined}
                           style={inputStyle}
                         />
                         <Select
                           value={form.salaryPeriod}
                           onChange={(v) => set("salaryPeriod", v)}
+                          label="Pay period"
                         >
                           <option>Annual</option>
                           <option>Monthly</option>
@@ -1166,7 +1191,8 @@ export default function NewJobWizardPage() {
                           <option>Contract</option>
                         </Select>
                       </div>
-                    </div>
+                      {errors.salary && <p id="salary-range-error" role="alert" style={{ margin: "4px 0 0", fontSize: 12, color: "#DC2626" }}>{errors.salary}</p>}
+                    </fieldset>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                       <ClosingDateField value={form.closingDate} onChange={v => set("closingDate", v)} />
