@@ -13,6 +13,7 @@ import { hasOrganizationIndigenousIdentity } from "@/lib/organization-profile";
 import ProvinceSelect from "@/components/ProvinceSelect";
 import { matchesCanadianLocation } from "@/lib/canadian-provinces";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
+import { rememberDirectoryPosition, restoreDirectoryScroll } from "@/lib/directory-return";
 
 export default function BusinessesPage() {
   return (
@@ -54,6 +55,8 @@ function BusinessesPageContent() {
     void load();
     return () => { cancelled = true; };
   }, [attempt]);
+  // Returning from a business profile restores the scroll position of the same search.
+  useEffect(() => { if (!loading) restoreDirectoryScroll("businesses"); }, [loading]);
 
   const businesses = useMemo(() => (
     orgs.filter((org) => org.ownerType !== "school" && org.type !== "school" && org.partnerTier !== "school")
@@ -235,7 +238,7 @@ function BusinessCard({ org }: { org: Organization }) {
   const surfaceTags = [...new Set([...ensureTagsArray(org.services), ...ensureTagsArray(org.tags)])].slice(0, 3);
 
   return (
-    <Link href={`/org/${org.slug || org.id}`} className="no-underline">
+    <Link href={`/org/${org.slug || org.id}`} onClick={() => rememberDirectoryPosition("businesses")} className="no-underline">
       <Card
         className="journey-business-card h-full transition-shadow hover:shadow-lg"
         style={isPremium ? { borderColor: "rgba(251,191,36,.28)", boxShadow: "0 20px 34px -28px rgba(251,191,36,.45)" } : undefined}

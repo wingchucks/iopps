@@ -13,6 +13,7 @@ import type { Job } from "@/lib/firestore/jobs";
 import { formatOrganizationHoursDay, hasOrganizationIndigenousIdentity, shouldDisplayFoundedYear } from "@/lib/organization-profile";
 import { displayAmount, displayLocation } from "@/lib/utils";
 import { trackOrganizationProfileView } from "@/lib/analytics/client";
+import { directoryReturnHref } from "@/lib/directory-return";
 
 // ── Types for opportunities ──
 interface LinkedItem { href?: string; }
@@ -98,6 +99,9 @@ function OrgProfileContent() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  // "Back to Businesses" returns to the same search, filters and page.
+  const [backHref, setBackHref] = useState("/businesses");
+  useEffect(() => { setBackHref(directoryReturnHref("businesses")); }, []);
   const requestKey = JSON.stringify([slug, user?.uid, authLoading, loadAttempt]);
   const currentKey = useRef(requestKey);
   currentKey.current = requestKey;
@@ -260,7 +264,7 @@ function OrgProfileContent() {
       </aside>}
       {/* Back Link */}
       <div className="px-4 pt-4">
-        <Link href="/businesses" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal">
+        <Link href={backHref} className="inline-flex items-center gap-1.5 text-[13px] text-text-muted no-underline transition-colors hover:text-teal">
           &#8592; Back to Businesses
         </Link>
       </div>
