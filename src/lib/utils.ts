@@ -11,9 +11,12 @@ export function displayLocation(loc: unknown): string {
   return String(loc);
 }
 
+// Amounts with cents show both digits ("$31.10", never "$31.1").
+const money = (value: number) => `$${value.toLocaleString("en-CA", { minimumFractionDigits: Number.isInteger(value) ? 0 : 2, maximumFractionDigits: 2 })}`;
+
 function formatAmountScalar(value: string | number): string {
   if (typeof value === "number") {
-    return `$${value.toLocaleString("en-CA", { maximumFractionDigits: 2 })}`;
+    return money(value);
   }
 
   const trimmed = value.trim();
@@ -21,7 +24,7 @@ function formatAmountScalar(value: string | number): string {
   if (/^[+-]?\d+(?:[.,]\d+)?$/.test(trimmed)) {
     const numeric = Number(trimmed.replace(/,/g, ""));
     if (!Number.isNaN(numeric)) {
-      return `$${numeric.toLocaleString("en-CA", { maximumFractionDigits: 2 })}`;
+      return money(numeric);
     }
   }
   return trimmed;

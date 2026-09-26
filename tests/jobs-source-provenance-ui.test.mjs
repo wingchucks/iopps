@@ -27,12 +27,12 @@ test('direct/manual/unknown origins retain existing labels even with supplied me
     const list=renderListing([record],'All');
     assert.match(list,/Pay not listed/);
     assert.match(list,/See listing for closing details/);
-    for (const html of [list,renderDetail(record)]) assert.doesNotMatch(html,/not imported|Check original posting/);
+    for (const html of [list,renderDetail(record)]) assert.doesNotMatch(html,/see original posting|Check original posting/);
   }
   for (const render of [record=>renderListing([record],'All'),renderDetail]) {
-    assert.doesNotMatch(render({...imported,sourceMetadata:undefined}),/not imported/);
+    assert.doesNotMatch(render({...imported,sourceMetadata:undefined}),/see original posting/);
     // Availability in raw aliases does not guarantee a displayable canonical value.
-    assert.match(render({...imported,sourceMetadata:{salary:'available',closingDate:'available',employmentType:'available'}}),/not imported/);
+    assert.match(render({...imported,sourceMetadata:{salary:'available',closingDate:'available',employmentType:'available'}}),/see original posting/);
   }
 });
 
@@ -42,8 +42,8 @@ test('alias-only public records give guidance in actual consumers without guessi
     for (const closingAlias of [{deadline:'2099-10-03'},{applicationDeadline:'10/03/2099, 12:00 AM'}]) {
       const record=publicContentRecord({...imported,salaryRange,...closingAlias});
       for (const html of [renderListing([record],'All'),renderDetail(record)]) {
-        assert.match(html,/Pay not imported/);
-        assert.match(html,/Closing details not imported/);
+        assert.match(html,/Pay: see original posting/);
+        assert.match(html,/Closing date: see original posting/);
         assert.match(html,/Check original posting/);
         assert.doesNotMatch(html,/CAD|USD|\$25|25 to 30|2099|12:00|Closes /);
       }
@@ -58,7 +58,7 @@ test('canonical imported text wins over conflicting aliases without borrowing cu
     for (const html of [renderListing([record],'All'),renderDetail(record)]) {
       assert.match(html,/25 to 30, terms unspecified/);
       assert.match(html,/Closes/);
-      assert.doesNotMatch(html,/not imported|Check original posting|CAD|USD|90,000|100,000|\/ year|2099|2097/);
+      assert.doesNotMatch(html,/see original posting|Check original posting|CAD|USD|90,000|100,000|\/ year|2099|2097/);
     }
   }
 });
@@ -68,7 +68,7 @@ test('detail numeric imported pay without explicit text is not formatted with gu
   for (const salary of [25,{min:25,max:30},'',null]) {
     const record=publicContentRecord({...imported,salary});
     const html=renderDetail(record);
-    assert.match(html,/Pay not imported/);
+    assert.match(html,/Pay: see original posting/);
     assert.match(html,/Check original posting/);
     assert.doesNotMatch(html,/CAD|USD|\$25|\$30/);
   }
@@ -78,7 +78,7 @@ test('actual consumers preserve supplied values and never manufacture missing so
   const record={...imported,salary:'$65,100 - $84,600',closingDate:'2027-10-03',employmentType:'Full time'};
   for (const html of [renderListing([record],'All'),renderDetail(record)]) {
     assert.ok(html.includes('$65,100 - $84,600'));
-    assert.doesNotMatch(html,/not imported|CAD|USD|per year/);
+    assert.doesNotMatch(html,/see original posting|CAD|USD|per year/);
     assert.match(html,/Closes/);
   }
   for (const html of [renderListing([imported],'All'),renderDetail(imported)]) {
@@ -97,16 +97,17 @@ test('source links reject unsafe URLs, fall back safely and keep labels without 
   }
   const record={...imported,externalUrl:undefined};
   for (const html of [renderListing([record],'All'),renderDetail(record)]) {
-    assert.match(html,/Pay not imported/);
-    assert.match(html,/Closing details not imported/);
-    assert.doesNotMatch(html,/Check original posting/);
+    // Without a safe source link, say the detail is not listed rather than pointing nowhere.
+    assert.match(html,/Pay not listed/);
+    assert.match(html,/Closing date not listed/);
+    assert.doesNotMatch(html,/see original posting|Check original posting/);
   }
 });
 
 test('actual detail exposes missing import metadata while preserving full-source excerpt warning',()=>{
   const html=renderDetail(imported);
-  assert.match(html,/Pay not imported/);
-  assert.match(html,/Closing details not imported/);
+  assert.match(html,/Pay: see original posting/);
+  assert.match(html,/Closing date: see original posting/);
   assert.match(html,/href="https:\/\/employer.example\/jobs\/original"[^>]*>Check original posting/);
   assert.match(html,/may be an excerpt/);
   assert.match(html,/Read full details at source/);
@@ -115,8 +116,8 @@ test('actual detail exposes missing import metadata while preserving full-source
 
 test('actual discovery card identifies missing imported pay and closing details with a source link',()=>{
   const html=renderListing([imported],'All');
-  assert.match(html,/Pay not imported/);
-  assert.match(html,/Closing details not imported/);
+  assert.match(html,/Pay: see original posting/);
+  assert.match(html,/Closing date: see original posting/);
   assert.match(html,/href="https:\/\/employer.example\/jobs\/original"[^>]*>Check original posting/);
   assert.doesNotMatch(html,/Pay not listed|See listing for closing details/);
   assert.doesNotMatch(html,/<a\b[^>]*>(?:(?!<\/a>)[\s\S])*<a\b/,'source must not be a nested link');
