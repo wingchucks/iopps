@@ -4,6 +4,7 @@ import React, { Suspense, useState, useCallback, useRef, useEffect } from "react
 import { readSignupDraft, saveSignupDraft, clearSignupDraft, SIGNUP_DRAFT_TTL } from "@/lib/signup-draft";
 import { decodeEmployerDraft, encodeEmployerDraft, employerDraftKey } from "@/lib/employer-draft";
 import { authIntentHref, postSignupDestination, signupPasswordError } from "@/lib/auth-redirect";
+import { ORGANIZATION_TASK_MESSAGE, organizationTaskFor } from "@/lib/signup-task";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { authErrorMessage } from "@/lib/auth-errors";
@@ -58,14 +59,17 @@ function UnifiedSignupContent() {
   const orgDestination = postSignupDestination(searchParams, "/org/dashboard");
   const intent = "intent";
   const entrepreneurIntent = searchParams.get(intent) === "indigenous-business";
-  const explicitOrganization = searchParams.get("resume") === "organization" || searchParams.get("type") === "employer" || entrepreneurIntent;
+  // Every organization entry point starts the same way: "Share an event", "Post a job", a chosen
+  // plan or an organization page all preselect an organization account and say why.
+  const organizationTask = organizationTaskFor(searchParams.get("redirect"));
+  const explicitOrganization = searchParams.get("resume") === "organization" || searchParams.get("type") === "employer" || entrepreneurIntent || searchParams.get(intent) === "hiring" || organizationTask !== null;
   const { signUp, signInWithGoogle, user, loading: authLoading, sendVerificationEmail, reloadUser } = useAuth();
 
   const [step, setStep] = useState(1);
   const formStartedAtRef = useRef(Date.now());
-  const [role, setRole] = useState<Role>(searchParams.get("resume") === "organization" ? "organization" : (entrepreneurIntent || searchParams.get("type") === "employer") ? "organization" : "");
+  const [role, setRole] = useState<Role>(explicitOrganization ? "organization" : "");
   const [websiteTrap, setWebsiteTrap] = useState("");
-  const [orgType, setOrgType] = useState<OrgType>(searchParams.get("resume") === "organization" ? "employer" : (entrepreneurIntent || searchParams.get("type") === "employer") ? "employer" : "");
+  const [orgType, setOrgType] = useState<OrgType>(explicitOrganization ? "employer" : "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   // C-5: field-level validation errors keyed by input id (name, email, password, confirmPassword)
@@ -109,7 +113,7 @@ function UnifiedSignupContent() {
   const [empServices, setEmpServices] = useState("");
   const [empProvince, setEmpProvince] = useState("");
   const [empCity, setEmpCity] = useState("");
-  const [capabilities, setCapabilities] = useState<string[]>(searchParams.get("intent") === "hiring" ? ["post_jobs"] : ["list_business"]);
+  const [capabilities, setCapabilities] = useState<string[]>(searchParams.get("intent") === "hiring" || organizationTask === "job" ? ["post_jobs"] : ["list_business"]);
   const [empLogoFile, setEmpLogoFile] = useState<File | null>(null);
   const [empBannerFile, setEmpBannerFile] = useState<File | null>(null);
 
@@ -432,7 +436,8 @@ function UnifiedSignupContent() {
     if (!user.emailVerified) { goTo(3); setError("Verify your email before creating your organization."); return; }
     const contactError = organizationContactEmailError(email || user.email);
     if (contactError) { setError(contactError); return; }
-    if (!orgName.trim() || !empDescription.trim() || !empServices.trim()) { goTo(10); setError("Enter your organization name, description and services before continuing."); return; }
+    // Posting needs only a name; a business directory listing (the entrepreneur path) needs its story.
+    if (!orgName.trim() || (entrepreneurIntent && (!empDescription.trim() || !empServices.trim()))) { goTo(10); setError(entrepreneurIntent ? "Enter your business name, description and services before continuing." : "Enter your organization name before continuing."); return; }
     const operationUser = user;
     const generation = ++operationOwner.current.generation;
     const isCurrent = () => operationOwner.current.uid === operationUser.uid && operationOwner.current.generation === generation;
@@ -540,6 +545,7 @@ function UnifiedSignupContent() {
           {entrepreneurIntent && (
             <InfoBanner icon="🪶"><strong style={{ color: CSS.text }}>Indigenous Entrepreneur Signup</strong><br />Your free business profile and directory listing starts here.</InfoBanner>
           )}
+          {!entrepreneurIntent && organizationTask && <InfoBanner icon="🏢">{ORGANIZATION_TASK_MESSAGE[organizationTask]}</InfoBanner>}
           <StepHeader eyebrow={entrepreneurIntent ? "Free Business Profile" : "Getting Started"} title={entrepreneurIntent ? "Create your" : "What kind of"} highlight={entrepreneurIntent ? "Business Profile" : "account do you need?"} desc={entrepreneurIntent ? "Help customers discover your work with a free business profile. First, choose who you’re joining as." : "Are you signing up for yourself or on behalf of an organization?"} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <RoleCard icon="👤" label="Individual" desc="For people looking for jobs, training, scholarships, events, or professional connections." selected={role === "community"} onClick={() => { setRole("community"); setOrgType(""); }} />
@@ -731,8 +737,9 @@ function UnifiedSignupContent() {
           <StepHeader eyebrow={entrepreneurIntent ? "Business Profile — 1 of 3" : "Organization Setup — 1 of 3"} title="About your" highlight={entrepreneurIntent ? "Business" : "Organization"} desc={entrepreneurIntent ? "Share the essentials customers need to discover your business." : "Tell us about your business."} />
           <div style={{ display: "grid", gap: 20 }}>
             <FormInput label={entrepreneurIntent ? "Business Name" : "Organization Name"} required placeholder="e.g., Northern Resources Inc." value={orgName} onChange={e => setOrgName(e.target.value)} />
-            <FormTextarea label="Short Business Description" required placeholder="Tell people what your business does and who you serve." maxLength={600} value={empDescription} onChange={e => setEmpDescription(e.target.value)} />
-            <FormInput label="Products or Services (comma-separated)" required maxLength={500} placeholder="e.g., Catering, Consulting, Handmade goods" value={empServices} onChange={e => setEmpServices(e.target.value)} />
+            {!entrepreneurIntent && <InfoBanner icon="✅">Only your organization name is needed to post jobs, events and scholarships. A description, services and logo can be added now or later; they’re needed to appear in the business directory.</InfoBanner>}
+            <FormTextarea label={entrepreneurIntent ? "Short Business Description" : "Short Business Description (optional)"} required={entrepreneurIntent} placeholder="Tell people what your business does and who you serve." maxLength={600} value={empDescription} onChange={e => setEmpDescription(e.target.value)} />
+            <FormInput label={entrepreneurIntent ? "Products or Services (comma-separated)" : "Products or Services (comma-separated, optional)"} required={entrepreneurIntent} maxLength={500} placeholder="e.g., Catering, Consulting, Handmade goods" value={empServices} onChange={e => setEmpServices(e.target.value)} />
             <FormInput label="Website" type="url" maxLength={300} placeholder="https://www.yourbusiness.ca" value={empWebsite} onChange={e => setEmpWebsite(e.target.value)} />
             <div>
               <div style={{ fontSize: 13, fontWeight: 500, color: CSS.textMuted, marginBottom: 8 }}>How should we represent your business?</div>
@@ -770,7 +777,7 @@ function UnifiedSignupContent() {
               Indigenous and non-Indigenous organizations can start with a free profile. All job postings require a paid posting credit or an eligible annual plan. Standard is {SUBSCRIPTION_PLANS.tier1.priceLabel} CAD/year for 15 postings; Premium is {SUBSCRIPTION_PLANS.tier2.priceLabel} CAD/year for unlimited postings. Single job postings are also available.
             </InfoBanner>
           </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(3)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(11)} disabled={!orgName.trim() || !empDescription.trim() || !empServices.trim() || (entrepreneurIntent && (!empCity.trim() || !empProvince))}>Continue →</BtnPrimary></div>
+          <div style={{ display: "flex", gap: 12, marginTop: 32 }}><BtnGhost onClick={() => goTo(3)}>← Back</BtnGhost><BtnPrimary onClick={() => goTo(11)} disabled={!orgName.trim() || (entrepreneurIntent && (!empDescription.trim() || !empServices.trim() || !empCity.trim() || !empProvince))}>Continue →</BtnPrimary></div>
         </div>)}
 
         {/* STEP 11: Employer Brand */}
@@ -789,8 +796,8 @@ function UnifiedSignupContent() {
           <ReviewSection icon="🏢" title="Organization Summary" onEdit={() => goTo(10)}>
             <ReviewRow label="Name" value={orgName} />
             <ReviewRow label="Business Identity" value={BUSINESS_IDENTITY_OPTIONS.find(option => option.value === businessIdentity)?.label || "Not set"} />
-            <ReviewRow label="Description" value={empDescription} />
-            <ReviewRow label="Products or Services" value={empServices} />
+            <ReviewRow label="Description" value={empDescription || "Not set"} />
+            <ReviewRow label="Products or Services" value={empServices || "Not set"} />
             <ReviewRow label="Website" value={empWebsite || "Not set"} />
             <ReviewRow label="Location" value={[empCity, empProvince].filter(Boolean).join(", ") || "Not set"} />
             <ReviewRow label="Capabilities" value={<div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-end" }}>{capabilities.map(id => { const c = EMPLOYER_CAPABILITIES.find(x => x.id === id); return <span key={id} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: CSS.accentLight, color: CSS.accent, fontWeight: 500 }}>{c?.label || id}</span>; })}</div>} />

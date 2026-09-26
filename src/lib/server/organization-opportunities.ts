@@ -58,7 +58,10 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
     if (!["draft", "active", "closed"].includes(status)) throw new EmployerApiError(400, "Choose draft, active or closed.");
     if (status === "active") {
       if (!context.emailVerified) throw new EmployerApiError(403, "Verify your email before publishing. You can save a draft now.");
-      if (![context.organizationData, context.employerData, context.userData, context.memberData].some(data => data.onboardingComplete === true)) throw new EmployerApiError(403, "Complete your organization setup before publishing. You can save a draft now.");
+      // The same rule as hasCompletedEmployerOnboarding: a named, typed organization, or a completed legacy setup.
+      const { name: orgNameForPublishing, type: orgTypeForPublishing } = context.organizationData;
+      const namedOrganization = typeof orgNameForPublishing === "string" && orgNameForPublishing.trim() !== "" && typeof orgTypeForPublishing === "string" && orgTypeForPublishing.trim() !== "";
+      if (!namedOrganization && ![context.organizationData, context.employerData, context.userData, context.memberData].some(data => data.onboardingComplete === true)) throw new EmployerApiError(403, "Add your organization name before publishing. You can save a draft now.");
     }
     const requestId = typeof body.requestId === "string" ? body.requestId : "";
     if (!editing && !/^[a-zA-Z0-9-]{16,100}$/.test(requestId)) throw new EmployerApiError(400, "A request ID is required to prevent duplicate listings.");

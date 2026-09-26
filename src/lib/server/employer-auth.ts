@@ -160,7 +160,14 @@ export async function requireEmployerContext(
   };
 }
 
-function hasCompletedEmployerOnboarding(context: EmployerContext): boolean {
+/**
+ * Posting jobs, events or scholarships needs a verified email (checked by callers) plus an
+ * organization name and type. Logo, description and public contact can follow; the public
+ * business directory listing asks for them. A completed legacy onboarding still counts.
+ */
+export function hasCompletedEmployerOnboarding(context: EmployerContext): boolean {
+  const org = context.organizationData;
+  if (typeof org.name === "string" && org.name.trim() && typeof org.type === "string" && org.type.trim()) return true;
   return (
     context.organizationData.onboardingComplete === true ||
     context.employerData.onboardingComplete === true ||

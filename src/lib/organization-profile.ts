@@ -289,6 +289,7 @@ export function getOrganizationBusinessIdentity(org: { businessIdentity?: string
 }
 
 export function getBusinessProfileReadiness(org: {
+  name?: unknown;
   type?: unknown;
   ownerType?: unknown;
   partnerTier?: unknown;
@@ -320,10 +321,16 @@ export function getBusinessProfileReadiness(org: {
     normalizeString(org.website)
   );
 
-  if (!hasLogo && !options.workspace) missingFields.push("logo");
+  // The dashboard and posting jobs, events or scholarships need only an organization name
+  // (with a verified email and type, checked elsewhere). Logo, description and public contact
+  // are prompts there; the public business directory listing still requires them.
+  if (options.workspace) {
+    if (!normalizeString(org.name)) missingFields.push("name");
+    return { isReady: missingFields.length === 0, missingFields };
+  }
+  if (!hasLogo) missingFields.push("logo");
   if (!hasStory) missingFields.push("description");
-  // Publishing needs no public contact; the directory listing does.
-  if (!hasContactMethod && !options.workspace) missingFields.push("contact");
+  if (!hasContactMethod) missingFields.push("contact");
 
   return {
     isReady: missingFields.length === 0,
