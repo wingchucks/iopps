@@ -411,12 +411,15 @@ export default function JobEditPage() {
                   {/* Title */}
                   <div>
                     <label
+                      htmlFor="edit-job-title"
                       className="block text-sm font-semibold mb-1.5"
                       style={{ color: "var(--text)" }}
                     >
-                      Title *
+                      Title <span aria-hidden="true">*</span><span className="sr-only">(required)</span>
                     </label>
                     <input
+                      id="edit-job-title"
+                      aria-required="true"
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
@@ -429,12 +432,14 @@ export default function JobEditPage() {
                   {/* Description */}
                   <div>
                     <label
+                      htmlFor="edit-job-description"
                       className="block text-sm font-semibold mb-1.5"
                       style={{ color: "var(--text)" }}
                     >
                       Description
                     </label>
                     <textarea
+                      id="edit-job-description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Describe the role, team, and expectations..."
@@ -449,12 +454,14 @@ export default function JobEditPage() {
                   {/* Employment Type */}
                   <div>
                     <label
+                      htmlFor="edit-job-employment-type"
                       className="block text-sm font-semibold mb-1.5"
                       style={{ color: "var(--text)" }}
                     >
                       Employment Type
                     </label>
                     <select
+                      id="edit-job-employment-type"
                       value={employmentType}
                       onChange={(e) => setEmploymentType(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl text-sm cursor-pointer"
@@ -513,6 +520,7 @@ export default function JobEditPage() {
                   {/* Requirements */}
                   <div>
                     <label
+                      htmlFor="edit-job-requirement"
                       className="block text-sm font-semibold mb-1.5"
                       style={{ color: "var(--text)" }}
                     >
@@ -520,6 +528,7 @@ export default function JobEditPage() {
                     </label>
                     <div className="flex gap-2 mb-2">
                       <input
+                        id="edit-job-requirement"
                         type="text"
                         value={requirementInput}
                         onChange={(e) => setRequirementInput(e.target.value)}
@@ -577,6 +586,7 @@ export default function JobEditPage() {
                   {/* Skills */}
                   <div>
                     <label
+                      htmlFor="edit-job-skill"
                       className="block text-sm font-semibold mb-1.5"
                       style={{ color: "var(--text)" }}
                     >
@@ -584,6 +594,7 @@ export default function JobEditPage() {
                     </label>
                     <div className="flex gap-2 mb-2">
                       <input
+                        id="edit-job-skill"
                         type="text"
                         value={skillInput}
                         onChange={(e) => setSkillInput(e.target.value)}
@@ -683,13 +694,13 @@ export default function JobEditPage() {
                   </label> : <p className="text-sm text-text-muted">{post?.publication ? `Purchased listing duration: ${post.publication.durationDays} days. Editing does not extend the expiry.` : 'Standard listings run for 30 days. Publishing requires a paid credit or annual-plan allowance.'}</p>}
 
                   {/* Status */}
-                  <div>
-                    <label
-                      className="block text-sm font-semibold mb-2"
+                  <fieldset className="m-0 min-w-0 border-0 p-0">
+                    <legend
+                      className="block text-sm font-semibold mb-2 p-0"
                       style={{ color: "var(--text)" }}
                     >
                       Status
-                    </label>
+                    </legend>
                     <div className="flex gap-4">
                       {(["draft", "active", "closed"] as PostStatus[]).map(
                         (s) => (
@@ -715,7 +726,7 @@ export default function JobEditPage() {
                         )
                       )}
                     </div>
-                  </div>
+                  </fieldset>
 
                   {/* Action buttons */}
                   <div className="flex flex-wrap gap-3 pt-3 border-t" style={{ borderColor: "var(--border)" }}>
