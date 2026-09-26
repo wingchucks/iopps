@@ -8,10 +8,13 @@ import * as runtime from 'react/jsx-runtime';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { sourceModule } from './helpers/security-fixtures.mjs';
 const {mergePublicJobRecords}=sourceModule('src/lib/public-job-merge.ts');
+// The related cards format place and pay with the same helpers as the job page.
+const {displayJobLocation,importedSalaryLabel}=sourceModule('src/lib/job-import-labels.ts');
+const {displayAmount}=sourceModule('src/lib/utils.ts');
 const page=fs.readFileSync('src/app/jobs/[slug]/JobDetailClient.tsx','utf8');
 const exports={};
 vm.runInNewContext(ts.transpileModule('export '+page.slice(page.indexOf('function RelatedJobList(')),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{
- exports,require:id=>{assert.equal(id,'react/jsx-runtime');return runtime;},mergePublicJobRecords,
+ exports,require:id=>{assert.equal(id,'react/jsx-runtime');return runtime;},mergePublicJobRecords,displayJobLocation,importedSalaryLabel,displayAmount,
  Link:({children,href})=>React.createElement('a',{href},children),Card:({children})=>React.createElement('div',{},children),resolveApplicationDestination:()=>({label:'Apply'}),
 });
 const shared={title:'Advisor',employerId:'org',employerName:'Example',location:'Town',description:'Full source description',closingDate:'2099-01-01',active:true,status:'active'};
