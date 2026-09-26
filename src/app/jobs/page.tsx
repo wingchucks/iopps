@@ -10,6 +10,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { importedSalaryLabel, jobImportLabels } from "@/lib/job-import-labels";
+import { rememberDirectoryPosition, restoreDirectoryScroll } from "@/lib/directory-return";
 import OpportunityHeader from "@/components/OpportunityHeader";
 import Card from "@/components/Card";
 import EmployerLogo from "@/components/EmployerLogo";
@@ -220,6 +221,8 @@ function JobsPageContent() {
     // Readiness is independent of the jobs request, so loading never blocks typing.
     setSearchReady(true);
   }, []);
+  // Returning from a job restores the scroll position of the same search.
+  useEffect(() => { if (!loading) restoreDirectoryScroll("jobs"); }, [loading]);
   const inputSurfaceStyle = {
     border: "1px solid var(--border)",
     background: "var(--card)",
@@ -443,7 +446,7 @@ function JobsPageContent() {
                 const posted = daysAgo(job);
                 return (
                   <div key={job.id}>
-                  <Link href={getJobHref(job)} className="job-rich-card no-underline">
+                  <Link href={getJobHref(job)} onClick={() => rememberDirectoryPosition("jobs")} className="job-rich-card no-underline">
                     <div className="job-brand-panel"><EmployerLogo name={employerName} src={employerLogo(job, brands)} /><span className="job-brand-name">{employerName}</span></div>
                     <div className="job-rich-content">
                       <div className="job-card-kicker"><span>{jobArea(job) || "Career opportunity"}</span>{job.featured && <span className="job-chip">Featured</span>}</div>
