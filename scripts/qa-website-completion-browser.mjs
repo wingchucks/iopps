@@ -347,6 +347,10 @@ try {
   for(const website of ['javascript:alert(1)','www.example.invalid']){const r=await api('PUT','/api/employer/profile',token,{website});assert.equal(r.status,400,JSON.stringify(r.data));assert.match(r.data.error,/https:\/\//);}
   assert.equal((await api('PUT','/api/employer/profile',token,{socialLinks:{instagram:'data:text/html,x'}})).status,400);
   assert.equal((await db.doc('organizations/'+state.aUid).get()).data().website,before);
+  // A legacy value the owner is not editing must not block saving other fields.
+  await db.doc('organizations/'+state.aUid).update({website:'www.legacy-example.invalid'});
+  assert.equal((await api('PUT','/api/employer/profile',token,{website:'www.legacy-example.invalid',phone:'306-555-0100'})).status,200);
+  assert.equal((await api('PUT','/api/employer/profile',token,{website:before})).status,200);
   assert.equal((await api('PUT','/api/employer/profile',token,{businessIdentity:'indigenous',contactEmail:'cafe-'+run+'@example.invalid'})).status,200);
  });
  await check('BIZ-04','Listing is submitted for review from the dashboard and stays out of the directory until approved',async()=>{

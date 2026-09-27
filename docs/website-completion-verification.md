@@ -19,8 +19,9 @@ Vercel automatic deployment is disabled for this branch in `vercel.json`.
   settings (career, privacy) alongside organization settings. Personal Applications
   and Saved pages link back to the personal profile. The workspace follows the page;
   no stored selection is ever used for authorization.
-- **Organization profile links.** Saving a website, logo, banner, social or gallery
-  link that is not a complete `http(s)://` address is refused with a clear message.
+- **Organization profile links.** Saving a new or changed website, logo, banner,
+  social or gallery link that is not a complete `http(s)://` address is refused with
+  a clear message. Unchanged legacy values do not block edits to other fields.
 - **University/program posting retired.** `/api/programs`, `/api/schools` and
   `/api/schools/[slug]` return 410. The public pages already redirected. School
   dashboards show past program records read-only. A stale school signup draft now
