@@ -707,8 +707,8 @@ function SchoolOverviewTab({
 
   const actionCards = [
     {
-      title: "Manage Programs",
-      description: "Review your active school programs and the opportunities attached to them.",
+      title: "Past Programs",
+      description: "Program listings are no longer offered. Earlier program records are kept here, read-only.",
       accent: ACCENT,
       bg: `rgba(${ACCENT_RGB},0.08)`,
       action: () => setActiveTab("Programs"),
@@ -911,18 +911,19 @@ function ProgramsTab({ programs, formatTimestamp }: {
   return (
     <>
       <div className="flex items-center justify-between mb-5 gap-3">
-        <h2 className="text-xl font-extrabold tracking-tight text-text">Programs</h2>
+        <h2 className="text-xl font-extrabold tracking-tight text-text">Past Programs</h2>
         <span className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: `rgba(${ACCENT_RGB},0.08)`, color: ACCENT }}>
           {programs.length} total
         </span>
       </div>
+      <p className="mb-4 text-sm" style={{ color: "var(--text-muted)" }}>Read-only. Program listings are no longer offered, and these records are not shown publicly.</p>
       {programs.length === 0 ? (
         <DashCard>
           <div className="text-center py-12">
             <p className="text-4xl mb-3 opacity-30">🎓</p>
-            <p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No school programs yet</p>
+            <p className="text-sm mb-2" style={{ color: "var(--text-sec)" }}>No past program records</p>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Programs linked to your school will appear here once they are published through the IOPPS program workflow.
+              Program listings are no longer offered on IOPPS. Your school can still post jobs, events and scholarships.
             </p>
           </div>
         </DashCard>

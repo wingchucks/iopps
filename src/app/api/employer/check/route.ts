@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
         orgRole: context.orgRole,
       },
       organizationType: school ? "school" : "business",
+      organizationName: typeof org.name === "string" ? org.name : "",
       profileReady: readiness.isReady,
       missingProfileFields: readiness.missingFields,
       userRole: (context.userData.role as string | undefined) || null,

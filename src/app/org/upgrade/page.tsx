@@ -90,7 +90,7 @@ function OrgUpgradeContent() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-teal/10 text-teal text-2xl mb-4">🏢</div>
           <h1 className="text-2xl font-extrabold text-text">Set Up Your Organization</h1>
-          <p className="text-text-sec mt-1">Convert your community account to an organization page</p>
+          <p className="text-text-sec mt-1">Add an organization workspace to the account you already use. Your personal profile, résumé and job applications stay yours and keep working.</p>
         </div>
 
         {/* Progress */}

@@ -9,7 +9,6 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
-import { getMemberProfile } from "@/lib/firestore/members";
 import {
   getSavedItems,
   removeOwnSavedRecords,
@@ -118,12 +117,6 @@ function SavedContent() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("All");
   const [removing, setRemoving] = useState<string | null>(null);
-  const [hasOrg, setHasOrg] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    getMemberProfile(user.uid).then((p) => { if (p?.orgId) setHasOrg(true); });
-  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -191,10 +184,10 @@ function SavedContent() {
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Back link */}
       <Link
-        href={hasOrg ? "/org/dashboard" : "/profile"}
+        href="/profile"
         className="inline-flex items-center gap-1 text-sm text-text-muted no-underline hover:text-teal mb-4"
       >
-        &#8592; {hasOrg ? "Back to Dashboard" : "Back to Profile"}
+        &#8592; Back to Profile
       </Link>
 
       {/* Page header */}

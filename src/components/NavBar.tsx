@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { useAccountContext } from "@/lib/useAccountContext";
-import { getAccountProfileHref, getAccountProfileLabel } from "@/lib/account-navigation";
+import { describeWorkspace, getOrganizationWorkspaceLinks, getWorkspaceForPath, PERSONAL_PROFILE_HREF, CREATE_ORGANIZATION_HREF } from "@/lib/account-navigation";
 import {
   getAppExploreNavItems,
   getBrandHref,
@@ -40,7 +40,7 @@ export default function NavBar() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const { theme, toggle } = useTheme();
-  const { hasOrg, isAdmin, orgId, orgSlug, orgName, orgType } = useAccountContext();
+  const { hasOrg, isAdmin, isEmployer, loading: accountLoading, orgId, orgSlug, orgName, orgType } = useAccountContext();
   const isAuthenticated = Boolean(user);
   const brandHref = getBrandHref(isAuthenticated);
   const desktopNavItems = getDesktopTopNavItems({ isAuthenticated });
@@ -52,9 +52,13 @@ export default function NavBar() {
   const mobileUtilityLinks = isAuthenticated ? getMemberUtilityNavItems() : [];
   const publicAuthLinks = getPublicAuthNavItems();
   const displayName = user?.displayName || user?.email || "Account";
-  const profileHref = getAccountProfileHref({ hasOrg, orgId, orgSlug, orgType });
-  const profileLabel = getAccountProfileLabel({ hasOrg, orgType });
-  const profileSubLabel = hasOrg ? orgName || displayName : user?.email || displayName;
+  // The personal profile is always reachable; an organization is an extra workspace.
+  const organizationWorkspace = getOrganizationWorkspaceLinks({ hasOrg, orgId, orgSlug, orgName, orgType });
+  const workspace = getWorkspaceForPath(pathname);
+  const showCreateOrganization = !accountLoading && !hasOrg && !isEmployer && !isAdmin;
+  const profileHref = PERSONAL_PROFILE_HREF;
+  const profileLabel = "My Profile";
+  const profileSubLabel = describeWorkspace(workspace, organizationWorkspace);
 
   const handleSignOut = async () => {
     setMenuOpen(false);
@@ -245,7 +249,7 @@ export default function NavBar() {
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
                   </svg>
                 </Link>
-                <AccountAvatarMenu key={user?.uid} name={displayName} src={user?.photoURL} profileHref={profileHref} profileLabel={profileLabel} onSignOut={handleSignOut} />
+                <AccountAvatarMenu key={user?.uid} name={displayName} src={user?.photoURL} organization={organizationWorkspace} workspace={workspace} showCreateOrganization={showCreateOrganization} onSignOut={handleSignOut} />
               </>
             ) : (
               !authLoading && publicAuthLinks.map((link) => (
@@ -282,7 +286,7 @@ export default function NavBar() {
             )}
 
             {isAuthenticated && (
-              <AccountAvatarMenu key={user?.uid} name={displayName} src={user?.photoURL} size={32} profileHref={profileHref} profileLabel={profileLabel} onSignOut={handleSignOut} />
+              <AccountAvatarMenu key={user?.uid} name={displayName} src={user?.photoURL} size={32} organization={organizationWorkspace} workspace={workspace} showCreateOrganization={showCreateOrganization} onSignOut={handleSignOut} />
             )}
 
             <button
@@ -493,6 +497,31 @@ export default function NavBar() {
                             <span>{profileLabel}</span>
                             <span style={{ color: "rgba(255,255,255,.32)" }}>&#8594;</span>
                           </Link>
+
+                          {organizationWorkspace ? (
+                            <Link
+                              href={organizationWorkspace.dashboardHref}
+                              onClick={() => setMenuOpen(false)}
+                              className="brand-button flex items-center justify-between gap-3 rounded-[18px] px-4 py-3 text-sm font-semibold no-underline transition-all hover:bg-white/8"
+                              style={{ color: "var(--button-gradient-soft-text)", background: "var(--button-gradient-soft)" }}
+                            >
+                              <span className="min-w-0">
+                                <span className="block">Organization Dashboard</span>
+                                <span className="block truncate text-xs font-normal text-white/55">{organizationWorkspace.name}</span>
+                              </span>
+                              <span style={{ color: "rgba(255,255,255,.32)" }}>&#8594;</span>
+                            </Link>
+                          ) : showCreateOrganization && (
+                            <Link
+                              href={CREATE_ORGANIZATION_HREF}
+                              onClick={() => setMenuOpen(false)}
+                              className="brand-button flex items-center justify-between rounded-[18px] px-4 py-3 text-sm font-semibold no-underline transition-all hover:bg-white/8"
+                              style={{ color: "var(--button-gradient-soft-text)", background: "var(--button-gradient-soft)" }}
+                            >
+                              <span>Create an Organization</span>
+                              <span style={{ color: "rgba(255,255,255,.32)" }}>&#8594;</span>
+                            </Link>
+                          )}
 
                           <button
                             onClick={handleSignOut}

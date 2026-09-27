@@ -343,7 +343,7 @@ function SetupWizard() {
       <div className="flex-1 bg-bg flex items-start lg:items-center justify-center px-6 py-10 lg:py-8 overflow-y-auto">
         <div className="w-full" style={{ maxWidth: 480 }}>
           <div className="flex justify-end mb-4">
-            <AccountAvatarMenu name={displayName} src={user.photoURL} profileHref="/profile" onSignOut={() => router.push("/logout")} />
+            <AccountAvatarMenu name={displayName} src={user.photoURL} onSignOut={() => router.push("/logout")} />
           </div>
 
           {/* Mobile step indicator */}

@@ -7,6 +7,8 @@ import {
   evaluateEmployerSignupProtection,
   getSignupClientIp,
 } from "@/lib/server/signup-protection";
+import { newBusinessListingReview } from "@/lib/business-listing-review";
+import { conflictingOrganizationLink, ORGANIZATION_LINK_CONFLICT, parseLocationText } from "@/lib/server/personal-workspace";
 
 export const runtime = "nodejs";
 
@@ -45,11 +47,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
-  // Check they're not already an employer
-  const userDoc = await adminDb.collection("users").doc(uid).get();
+  // Check they're not already an employer or a member of another organization.
+  // Creating a workspace must never move someone out of an existing team.
+  const [userDoc, memberDoc] = await adminDb.getAll(
+    adminDb.collection("users").doc(uid),
+    adminDb.collection("members").doc(uid),
+  );
   const userData = userDoc.data();
   if (userData?.role === "employer") {
     return NextResponse.json({ error: "Account is already an employer" }, { status: 400 });
+  }
+  if (conflictingOrganizationLink(uid, userData, memberDoc.data())) {
+    return NextResponse.json({ code: "ORGANIZATION_LINK_CONFLICT", error: ORGANIZATION_LINK_CONFLICT }, { status: 409 });
   }
 
   let body: {
@@ -67,17 +76,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, type, website, location, description } = body;
+  const type = typeof body.type === "string" ? body.type.trim().slice(0, 40) : "";
+  const name = typeof body.name === "string" ? body.name.trim().slice(0, 200) : "";
   if (type === "school") return NextResponse.json({ error: "School promotion is no longer available. Choose a business or organization account for jobs and community opportunities." }, { status: 400 });
   if (!name || !type) {
     return NextResponse.json({ error: "Missing required fields: name, type" }, { status: 400 });
   }
+  const websiteInput = typeof body.website === "string" ? body.website.trim().slice(0, 500) : "";
+  let website = "";
+  if (websiteInput) {
+    try {
+      const url = new URL(websiteInput);
+      if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("Unsupported protocol");
+      website = url.toString();
+    } catch {
+      return NextResponse.json({ code: "INVALID_WEBSITE", error: "Enter a complete website address that starts with https:// or http://." }, { status: 400 });
+    }
+  }
+  const location = parseLocationText(body.location);
+  const description = typeof body.description === "string" ? body.description.trim().slice(0, 600) : "";
+  const contactName = typeof userData?.displayName === "string" && userData.displayName.trim() ? userData.displayName.trim() : name;
 
   const protection = await evaluateEmployerSignupProtection(adminDb, {
     uid,
     kind: "employer_upgrade",
     name,
-    contactName: userData?.displayName || name,
+    contactName,
     contactEmail: email,
     website,
     description,
@@ -102,22 +126,25 @@ export async function POST(req: NextRequest) {
   try {
     const batch = adminDb.batch();
 
-    // 1. Create organizations doc
-    batch.set(adminDb.collection("organizations").doc(uid), {
+    // 1. Create organizations doc. create() never overwrites an existing
+    // organization, and a new business listing starts in directory review
+    // exactly like one created through organization signup.
+    batch.create(adminDb.collection("organizations").doc(uid), {
       id: uid,
       employerId: uid,
       name,
-      contactName: userData?.displayName || name,
+      contactName,
       contactEmail: email,
       slug,
       type,
-      website: website || "",
-      location: location || "",
-      description: description || "",
+      website,
+      ...(location ? { location } : {}),
+      description,
       plan: "free",
       emailVerified,
       onboardingComplete: false,
       status: signupStatus,
+      directoryReview: newBusinessListingReview(),
       verified: false,
       ...(emailVerified ? { approvedAt: now } : {}),
       openJobs: 0,
@@ -126,23 +153,25 @@ export async function POST(req: NextRequest) {
     });
 
     // 2. Create employers doc
-    batch.set(adminDb.collection("employers").doc(uid), {
+    batch.create(adminDb.collection("employers").doc(uid), {
       id: uid,
       uid,
       email,
-      contactName: userData?.displayName || name,
+      contactName,
       contactEmail: email,
+      name,
       orgName: name,
       slug,
       type,
-      website: website || "",
-      location: location || "",
-      description: description || "",
+      website,
+      ...(location ? { location } : {}),
+      description,
       plan: "free",
       subscriptionTier: "free",
       emailVerified,
       onboardingComplete: false,
       status: signupStatus,
+      directoryReview: newBusinessListingReview(),
       verified: false,
       ...(emailVerified ? { approvedAt: now } : {}),
       openJobs: 0,
@@ -150,10 +179,12 @@ export async function POST(req: NextRequest) {
       updatedAt: now,
     });
 
-    // 3. Update users doc — flip role
+    // 3. Update users doc — flip role. Personal profile fields are untouched.
     batch.set(adminDb.collection("users").doc(uid), {
       role: "employer",
       employerId: uid,
+      orgId: uid,
+      orgRole: "owner",
       emailVerified,
       updatedAt: now,
     }, { merge: true });
@@ -172,11 +203,15 @@ export async function POST(req: NextRequest) {
     await adminAuth.setCustomUserClaims(uid, { role: "employer", employerId: uid });
 
     // Send welcome email (non-blocking)
-    sendEmployerWelcome({ orgName: name, email, contactName: name }).catch(() => {});
-    sendAdminNewSignup({ name, email, orgName: name, type: "upgrade", uid }).catch(() => {});
+    sendEmployerWelcome({ orgName: name, email, contactName }).catch(() => {});
+    sendAdminNewSignup({ name: contactName, email, orgName: name, type: "upgrade", uid }).catch(() => {});
 
-    return NextResponse.json({ success: true, slug });
+    return NextResponse.json({ success: true, orgId: uid, slug });
   } catch (err) {
+    // ALREADY_EXISTS: an organization record for this account was created elsewhere.
+    if (err && typeof err === "object" && "code" in err && err.code === 6) {
+      return NextResponse.json({ error: "An organization already exists for this account. Open your organization dashboard to continue." }, { status: 409 });
+    }
     console.error("employer/upgrade error:", err);
     return NextResponse.json({ error: "Failed to upgrade account" }, { status: 500 });
   }

@@ -410,7 +410,7 @@ try {
         ['/org/dashboard/templates', 'QA active dashboard job'],
         ['/org/dashboard?tab=Edit%20Profile&section=Identity', 'Identity'],
       ] : role === 'school' ? [
-        ['/org/dashboard', 'QA Dashboard School'], ['/org/dashboard?tab=Programs', 'No school programs yet'],
+        ['/org/dashboard', 'QA Dashboard School'], ['/org/dashboard?tab=Programs', 'No past program records'],
         ['/org/dashboard?tab=Student%20Inquiries', 'No student inquiries yet'],
       ] : role === 'admin' ? [
         ['/admin', 'Admin Dashboard'], ['/admin/jobs', 'QA active dashboard job'], ['/admin/employers', 'QA Dashboard Organization'],

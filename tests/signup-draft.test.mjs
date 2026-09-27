@@ -63,7 +63,7 @@ test('role and step reload within thirty minutes without extending expiry', () =
   for (const fields of [
     { role: '', orgType: '', step: 1 }, { role: 'community', orgType: '', step: 2 },
     { role: 'organization', orgType: '', step: 1 },
-    ...['employer', 'school'].map(orgType => ({ role: 'organization', orgType, step: 2 })),
+    { role: 'organization', orgType: 'employer', step: 2 },
   ]) {
     f.saveSignupDraft(fields, expiresAt, now);
     assert.deepEqual(JSON.parse(JSON.stringify(f.readSignupDraft(expiresAt - 1))), { version: 2, expiresAt, ...fields });
@@ -72,6 +72,14 @@ test('role and step reload within thirty minutes without extending expiry', () =
     assert.equal(f.readSignupDraft(expiresAt), null);
     assert.equal(f.data.has(f.SIGNUP_DRAFT_KEY), false);
   }
+});
+test('a retired school signup draft is discarded so signup restarts at the role choice', () => {
+  const f = fixture(), now = 1000, expiresAt = now + f.SIGNUP_DRAFT_TTL;
+  f.saveSignupDraft({ role: 'organization', orgType: 'school', step: 2 }, expiresAt, now);
+  assert.equal(f.data.has(f.SIGNUP_DRAFT_KEY), false);
+  f.data.set(f.SIGNUP_DRAFT_KEY, JSON.stringify({ version: 2, expiresAt, role: 'organization', orgType: 'school', step: 2 }));
+  assert.equal(f.readSignupDraft(now), null);
+  assert.equal(f.data.has(f.SIGNUP_DRAFT_KEY), false);
 });
 test('storage denial is nonfatal and clearing removes only the signup draft', () => {
   const denied = fixture(true);
