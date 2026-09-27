@@ -448,6 +448,7 @@ try {
  await check('JOB-07','The organization reviews the applicant, résumé and cover letter and updates the status',async()=>{
   need(state.bApp,'application to organization job');await a.goto(server.base+'/org/dashboard/applications');
   const name='QA Fictional applicant-b';await expect(a.getByText(name).first()).toBeVisible({timeout:30000});
+  await expect(a.getByText(/^Applied: /).first()).toBeVisible();await expect(a.getByText(/Applied: \d{4}-\d{2}-\d{2}T/)).toHaveCount(0);
   const resume=a.getByRole('link',{name:'View Resume'}).first();await expect(resume).toHaveAttribute('href',/application-documents/);
   await a.getByText('View application details').first().click();await expect(a.getByText(state.coverB).first()).toBeVisible();
   await a.getByLabel('Application status for '+name).first().selectOption('reviewing');
