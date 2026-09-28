@@ -112,7 +112,7 @@ function opportunityStore() {
       { id: 'event-hidden-route', slug: 'hidden-route', title: 'PRIVATE CANARY', type: 'event', status: 'active', startDate: '2099-06-12' },
       { id: 'event-post-only', slug: 'post-only', title: 'Independent event', type: 'event', status: 'active', startDate: '2099-06-12' },
     ],
-    organizations: [{ id: 'owner', name: 'Fictional Organization', slug: 'original-owner', type: 'employer' }, ...Array.from({ length: 300 }, (_, i) => ({ id: `foreign-${i}`, name: `Unrelated ${i}`, type: 'employer' }))],
+    organizations: [{ id: 'owner', name: 'Fictional Organization', slug: 'original-owner', type: 'employer', onboardingComplete: true, logoUrl: 'https://cdn.example.test/logo.png', description: 'Fictional public profile.', website: 'https://example.test' },...Array.from({ length: 300 }, (_, i) => ({ id: `foreign-${i}`, name: `Unrelated ${i}`, type: 'employer' }))],
   };
   const indexes: string[] = [], fetched: string[] = [];
   const snapshot = (name: string, id: string, fields?: string[]) => {
