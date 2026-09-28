@@ -696,10 +696,10 @@ function ProfileContent() {
                       ACTIVITY
                     </p>
                     <div className="grid grid-cols-3 gap-3 text-center">
-                      <div>
+                      <Link href="/applications" className="no-underline hover:opacity-80 transition-opacity">
                         <p className="text-xl font-extrabold text-text mb-0">{apps.length}</p>
                         <p className="text-[11px] text-text-muted m-0">Applications</p>
-                      </div>
+                      </Link>
                       <Link href="/saved" className="no-underline hover:opacity-80 transition-opacity">
                         <p className="text-xl font-extrabold text-text mb-0">{savedCount}</p>
                         <p className="text-[11px] text-text-muted m-0">Saved</p>
@@ -783,7 +783,7 @@ function ProfileContent() {
                           SALARY RANGE
                         </p>
                         <p className="text-sm text-text m-0">
-                          ${profile.salaryRange.min.toLocaleString()} &ndash; ${profile.salaryRange.max.toLocaleString()}
+                          ${profile.salaryRange.min.toLocaleString("en-CA")} &ndash; ${profile.salaryRange.max.toLocaleString("en-CA")} CAD per year
                         </p>
                       </div>
                     )}
@@ -877,12 +877,11 @@ function ProfileContent() {
                   <div style={{ padding: 24 }} className="text-center">
                     <p className="text-3xl mb-2">&#128188;</p>
                     <p className="text-sm text-text-muted">
-                      No applications yet. Browse the{" "}
-                      <Link href="/feed" className="text-teal font-semibold no-underline hover:underline">
-                        feed
-                      </Link>{" "}
-                      to find job opportunities.
+                      No applications yet. When you apply for a job on IOPPS, you can follow it here.
                     </p>
+                    <Link href="/jobs" className="mt-4 inline-flex min-h-11 items-center rounded-xl button-gradient px-5 py-2.5 text-sm font-bold text-white no-underline">
+                      Browse jobs
+                    </Link>
                   </div>
                 </Card>
               ) : (

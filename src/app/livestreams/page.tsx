@@ -8,7 +8,7 @@ import AppShell from "@/components/AppShell";
 import Footer from "@/components/Footer";
 import YouTubePlayer from "@/components/YouTubePlayer";
 import { useLivestreamFeed } from "@/hooks/useLivestreamFeed";
-import { LIVESTREAM_INQUIRY_URL, YOUTUBE_CHANNEL_URL, YOUTUBE_LIVE_URL, videoDate, videoExcerpt, videoUrl, videoViews, type LivestreamVideo } from "@/lib/livestreams";
+import { LIVESTREAM_INQUIRY_URL, YOUTUBE_CHANNEL_URL, YOUTUBE_LIVE_URL, replayParts, videoDate, videoExcerpt, videoUrl, videoViews, type LivestreamVideo } from "@/lib/livestreams";
 import styles from "./livestreams.module.css";
 
 function PlayIcon() {
@@ -32,6 +32,9 @@ function LivestreamExperience() {
   const isUpcoming = featured?.liveBroadcastContent === "upcoming";
   const replays = data?.recent.filter(video => `${video.title} ${video.description}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) ?? [];
   const warning = error ?? data?.warning;
+  // Numbered across all replays so a search never renumbers them.
+  const parts = replayParts(data?.recent ?? []);
+  const partLabel = (id: string) => { const part = parts.get(id); return part ? ` · Part ${part.part} of ${part.of}` : ""; };
 
   function chooseVideo(id: string) {
     const url = new URL(window.location.href);
@@ -86,7 +89,7 @@ function LivestreamExperience() {
                   </div>
                 </div>}
               <div className={styles.videoInfo}>
-                <p className={styles.meta}>{isUpcoming ? videoDate(featured.scheduledStart, true) : videoDate(featured.actualStart ?? featured.publishedAt)}{!isUpcoming && videoViews(featured.viewCount) ? ` · ${videoViews(featured.viewCount)}` : ""}</p>
+                <p className={styles.meta}>{isUpcoming ? videoDate(featured.scheduledStart, true) : `${videoDate(featured.actualStart ?? featured.publishedAt, true)}${partLabel(featured.id)}`}{!isUpcoming && videoViews(featured.viewCount) ? ` · ${videoViews(featured.viewCount)}` : ""}</p>
                 <h2>{featured.title}</h2>
                 {featured.description && <p className={styles.description}>{videoExcerpt(featured.description)}</p>}
                 <div className={styles.videoActions}>
@@ -129,7 +132,7 @@ function LivestreamExperience() {
         <p className={styles.resultCount} aria-live="polite">{replays.length} {query.trim() ? "matching" : "recent"} {replays.length === 1 ? "replay" : "replays"}</p>
         <div className={styles.replayGrid}>{replays.map(video => <button key={video.id} onClick={() => chooseVideo(video.id)} className={`${styles.replayCard} ${featured?.id === video.id ? styles.selected : ""}`} aria-pressed={featured?.id === video.id}>
           <span className={styles.replayImage}><Thumbnail video={video} sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 33vw" /><span className={styles.playCircle}><PlayIcon /></span><span className={styles.imageLabel}>{featured?.id === video.id ? "IN THE PLAYER" : "REPLAY"}</span></span>
-          <span className={styles.replayInfo}><span className={styles.meta}>{videoDate(video.actualStart ?? video.publishedAt)}</span><strong>{video.title}</strong><span className={styles.cardBottom}><span>{videoViews(video.viewCount) || "IOPPS coverage"}</span><span aria-hidden="true">↗</span></span></span>
+          <span className={styles.replayInfo}><span className={styles.meta}>{videoDate(video.actualStart ?? video.publishedAt, true)}{partLabel(video.id)}</span><strong>{video.title}</strong><span className={styles.cardBottom}><span>{videoViews(video.viewCount) || "IOPPS coverage"}</span><span aria-hidden="true">↗</span></span></span>
         </button>)}</div>
       </> : <div className={styles.noResults} role="status"><h3>{query.trim() ? "No replays match that search." : error ? "Replays couldn’t load right now." : "More stories are coming."}</h3><p>{query.trim() ? "Try an event or community name, or explore all recent replays." : "Visit IOPPS on YouTube to explore the full video library."}</p>{query.trim() ? <button onClick={() => setQuery("")} className={styles.lightButton}>Clear search</button> : error ? <button onClick={refresh} className={styles.lightButton} disabled={loading}>Try again</button> : null}</div>}
       <a className={styles.archiveLink} href={`${YOUTUBE_CHANNEL_URL}/streams`} target="_blank" rel="noopener noreferrer">Explore the full archive on YouTube <span aria-hidden="true">↗</span></a>

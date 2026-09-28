@@ -202,18 +202,14 @@ function ApplicationsContent() {
             <p className="text-3xl mb-2">&#128203;</p>
             <p className="text-sm text-text-muted">
               {filter === "all"
-                ? "No applications yet. Browse the "
-                : `No ${statusConfig[filter as ApplicationStatus]?.label.toLowerCase()} applications. `}
-              {filter === "all" && (
-                <Link
-                  href="/feed"
-                  className="text-teal font-semibold no-underline hover:underline"
-                >
-                  feed
-                </Link>
-              )}
-              {filter === "all" && " to find opportunities."}
+                ? "No applications yet. When you apply for a job on IOPPS, you can follow it here."
+                : `No ${statusConfig[filter as ApplicationStatus]?.label.toLowerCase()} applications.`}
             </p>
+            {filter === "all" && (
+              <Link href="/jobs" className="mt-4 inline-flex min-h-11 items-center rounded-xl button-gradient px-5 py-2.5 text-sm font-bold text-white no-underline">
+                Browse jobs
+              </Link>
+            )}
           </div>
         </Card>
       ) : (

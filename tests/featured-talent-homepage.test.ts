@@ -31,7 +31,9 @@ test("homepage section now supports Indigenous businesses", () => {
   assert.match(home, /href="\/signup\?intent=indigenous-business"/);
   assert.match(home, /Discover Indigenous businesses/);
   assert.match(home, /href="\/businesses\?type=Indigenous"/);
-  assert.match(home, /href="\/funding"/);
+  // No empty destination: funding points to the support programs that exist today.
+  assert.match(home, /href="\/businesses#business-support"/);
+  assert.doesNotMatch(home, /href="\/funding"/);
 });
 
 test("Indigenous Business Spotlight gives the real signup path and precise free offer", () => {
