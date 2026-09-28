@@ -7,6 +7,7 @@ import ApplicationDetails from "@/components/ApplicationDetails";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
+import { formatDate as formatSharedDate } from "@/lib/format-date";
 import { useAuth } from "@/lib/auth-context";
 import type { MemberProfile } from "@/lib/firestore/members";
 import type { Post } from "@/lib/firestore/posts";
@@ -241,12 +242,13 @@ export default function OrgApplicationsPage() {
     }
   };
 
+  // The employer API sends serialized timestamps (ISO strings), not Firestore objects.
   const formatDate = (ts: unknown): string => {
     if (!ts) return "N/A";
     if (typeof ts === "object" && ts !== null && "toDate" in ts) {
       return (ts as { toDate: () => Date }).toDate().toLocaleDateString();
     }
-    return String(ts);
+    return formatSharedDate(ts);
   };
 
   const totalApps = groups.reduce((sum, g) => sum + g.applications.length, 0);

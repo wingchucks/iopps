@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { useAccountContext } from "@/lib/useAccountContext";
-import { getAccountProfileHref, getAccountProfileLabel } from "@/lib/account-navigation";
+import { describeWorkspace, getOrganizationWorkspaceLinks, getWorkspaceForPath, PERSONAL_PROFILE_HREF, CREATE_ORGANIZATION_HREF } from "@/lib/account-navigation";
 import {
   getBrandHref,
   getMemberUtilityNavItems,
@@ -192,16 +192,20 @@ export default function IconRailSidebar() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const { theme, toggle } = useTheme();
-  const { hasOrg, isAdmin, orgId, orgSlug, orgName, orgType } = useAccountContext();
+  const { hasOrg, isAdmin, isEmployer, loading: accountLoading, orgId, orgSlug, orgName, orgType } = useAccountContext();
   const isAuthenticated = Boolean(user);
   const navItems = getRailNavItems({ isAuthenticated, hasOrg, isAdmin });
   const utilityItems = isAuthenticated ? getMemberUtilityNavItems() : [];
   const publicAuthItems = getPublicAuthNavItems();
   const brandHref = getBrandHref(isAuthenticated);
   const displayName = user?.displayName || user?.email || "Account";
-  const profileHref = getAccountProfileHref({ hasOrg, orgId, orgSlug, orgType });
-  const profileLabel = getAccountProfileLabel({ hasOrg, orgType });
-  const profileSubLabel = hasOrg ? orgName || displayName : user?.email || displayName;
+  // The personal profile is always reachable; an organization is an extra workspace.
+  const organizationWorkspace = getOrganizationWorkspaceLinks({ hasOrg, orgId, orgSlug, orgName, orgType });
+  const workspace = getWorkspaceForPath(pathname);
+  const showCreateOrganization = !accountLoading && !hasOrg && !isEmployer && !isAdmin;
+  const profileHref = PERSONAL_PROFILE_HREF;
+  const profileLabel = "My Profile";
+  const profileSubLabel = describeWorkspace(workspace, organizationWorkspace);
 
   const handleSignOut = async () => {
     await signOut();
@@ -431,6 +435,16 @@ export default function IconRailSidebar() {
             );
           })}
 
+          {isAuthenticated && (organizationWorkspace || showCreateOrganization) && (
+            <Link
+              href={organizationWorkspace ? organizationWorkspace.dashboardHref : CREATE_ORGANIZATION_HREF}
+              className="mx-1 block truncate rounded-lg px-3.5 py-1.5 text-xs font-semibold no-underline"
+              style={{ color: "var(--teal)" }}
+              data-nav-workspace="true"
+            >
+              {organizationWorkspace ? `Organization: ${organizationWorkspace.name}` : "+ Create an organization"}
+            </Link>
+          )}
           {isAuthenticated ? (
             <div className="flex items-center gap-3 rounded-xl px-3.5 py-2" data-nav-profile="true">
               <Link href={profileHref} className="shrink-0 no-underline">

@@ -13,9 +13,10 @@ export function readSignupDraft(now = Date.now()): StoredDraft | null {
     const raw = sessionStorage.getItem(SIGNUP_DRAFT_KEY);
     if (raw === null) return null;
     const draft = JSON.parse(raw);
+    // A retired school draft is discarded, so signup restarts at the role choice.
     if (!draft || draft.version !== 2 || !Number.isFinite(draft.expiresAt) || draft.expiresAt <= now || draft.expiresAt > now + SIGNUP_DRAFT_TTL ||
       Object.keys(draft).some(key => !["version", "expiresAt", "role", "orgType", "step"].includes(key)) ||
-      !["", "community", "organization"].includes(draft.role) || !["", "employer", "school"].includes(draft.orgType) ||
+      !["", "community", "organization"].includes(draft.role) || !["", "employer"].includes(draft.orgType) ||
       ![1, 2].includes(draft.step) ||
       (draft.role !== "organization" && draft.orgType !== "") || (draft.step === 2 && (!draft.role || (draft.role === "organization" && !draft.orgType)))) {
       clearSignupDraft(); return null;
@@ -29,7 +30,8 @@ export function clearSignupDraft() {
 export function saveSignupDraft(draft: SignupDraft, expiresAt: number, now = Date.now()) {
   // Select literal enum values: untrusted strings never reach the storage sink.
   const role = draft?.role === "community" ? "community" : draft?.role === "organization" ? "organization" : draft?.role === "" ? "" : null;
-  const orgType = draft?.orgType === "employer" ? "employer" : draft?.orgType === "school" ? "school" : draft?.orgType === "" ? "" : null;
+  // School signup is retired: a stale school draft restarts at the role choice.
+  const orgType = draft?.orgType === "employer" ? "employer" : draft?.orgType === "" ? "" : null;
   const step = draft?.step === 1 ? 1 : draft?.step === 2 ? 2 : null;
   if (!Number.isFinite(expiresAt) || !Number.isFinite(now) || expiresAt <= now || expiresAt > now + SIGNUP_DRAFT_TTL ||
     role === null || orgType === null || step === null ||

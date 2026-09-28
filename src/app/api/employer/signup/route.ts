@@ -9,6 +9,7 @@ import {
   evaluateEmployerSignupProtection,
   getSignupClientIp,
 } from "@/lib/server/signup-protection";
+import { conflictingOrganizationLink, ORGANIZATION_LINK_CONFLICT, personalIdentityDefaults } from "@/lib/server/personal-workspace";
 
 export const runtime = "nodejs";
 
@@ -168,6 +169,13 @@ export async function POST(req: NextRequest) {
   }
 
   if (type === "school") return NextResponse.json({ error: "School listings are no longer offered. Contact IOPPS for help with an existing account." }, { status: 400 });
+  const [existingUser, existingMember] = await adminDb.getAll(
+    adminDb.collection("users").doc(uid),
+    adminDb.collection("members").doc(uid),
+  );
+  if (conflictingOrganizationLink(uid, existingUser.data(), existingMember.data())) {
+    return NextResponse.json({ code: "ORGANIZATION_LINK_CONFLICT", error: ORGANIZATION_LINK_CONFLICT }, { status: 409 });
+  }
   const normalizedContactEmail = contactEmail.trim().toLowerCase();
   const confirmationEmail = (accountEmail || normalizedContactEmail).trim().toLowerCase();
   const website = cleanHttpUrl(body.website);
@@ -267,27 +275,27 @@ export async function POST(req: NextRequest) {
       updatedAt: now,
     });
 
-    // 3. users/{uid} — set employer role (merge to keep existing fields)
+    // 3. users/{uid} — set employer role (merge to keep existing fields).
+    // The person's own name and sign-in email are theirs, not the organization's.
     batch.set(adminDb.collection("users").doc(uid), {
       role: "employer",
       orgRole: "owner",
       employerId: uid,
       orgId: uid,
-      displayName: contactName,
-      email: normalizedContactEmail,
+      ...personalIdentityDefaults(existingUser.data(), { displayName: contactName, email: accountEmail || normalizedContactEmail }),
       emailVerified,
       updatedAt: now,
     }, { merge: true });
 
-    // 4. members/{uid} — org membership + talent search filter
+    // 4. members/{uid} — org membership + talent search filter. The member
+    // profile stays the individual's own profile (used for applications and team lists).
     batch.set(adminDb.collection("members").doc(uid), {
-      displayName: name,
-      email: normalizedContactEmail,
+      ...personalIdentityDefaults(existingMember.data(), { displayName: contactName, email: accountEmail || normalizedContactEmail }),
       orgId: uid,
       orgRole: "owner",
       role: "employer",
       emailVerified,
-      createdAt: now,
+      ...(existingMember.exists ? {} : { createdAt: now }),
       updatedAt: now,
     }, { merge: true });
 

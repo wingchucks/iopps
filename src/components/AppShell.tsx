@@ -5,6 +5,7 @@ import OpportunityHeader from "./OpportunityHeader";
 import Footer from "./Footer";
 import NavBar from "./NavBar";
 import IconRailSidebar from "./IconRailSidebar";
+import OrgWorkspaceBanner from "./OrgWorkspaceBanner";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const opportunityFlow =
@@ -17,7 +18,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <>
         <OpportunityHeader />
-        <div data-main-content tabIndex={-1} className="op-account-surface">{children}</div>
+        <div data-main-content tabIndex={-1} className="op-account-surface"><OrgWorkspaceBanner />{children}</div>
         {["/businesses", "/scholarships", "/events"].includes(pathname) && <Footer />}
       </>
     );
@@ -32,7 +33,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <IconRailSidebar />
       </Suspense>
       {/* Content area — offset for the fixed sidebar on desktop */}
-      <div data-main-content tabIndex={-1} className="lg:pl-[240px] min-w-0 overflow-x-hidden">{children}</div>
+      <div data-main-content tabIndex={-1} className="lg:pl-[240px] min-w-0 overflow-x-hidden"><OrgWorkspaceBanner />{children}</div>
     </>
   );
 }

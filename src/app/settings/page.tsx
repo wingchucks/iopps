@@ -35,7 +35,8 @@ const memberSettingsLinks = [
   },
 ];
 
-const employerSettingsLinks = [
+// Organization settings are an extra workspace; they never replace personal settings.
+const organizationSettingsLinks = [
   {
     href: "/org/dashboard?tab=Edit%20Profile&section=Identity",
     icon: "\u{1F3E2}",
@@ -54,22 +55,11 @@ const employerSettingsLinks = [
     title: "Team Access",
     desc: "Manage teammates and who can access your organization dashboard",
   },
-  {
-    href: "/settings/notifications",
-    icon: "\u{1F514}",
-    title: "Notifications",
-    desc: "Manage employer alerts for applications, messages, and posting activity",
-  },
-  {
-    href: "/settings/account",
-    icon: "\u{1F464}",
-    title: "Account",
-    desc: "Update your display name and password, and manage account security. Your sign-in email can’t be changed here.",
-  },
 ];
 
 export default function SettingsPage() {
-  const { loading, hasOrg, isEmployer } = useAccountContext();
+  const { loading, hasOrg, isEmployer, isAdmin, orgName } = useAccountContext();
+  const showOrganization = hasOrg || isEmployer;
 
   return (
     <ProtectedRoute>
@@ -81,22 +71,23 @@ export default function SettingsPage() {
           ) : (
             <>
           <Link
-            href={isEmployer ? "/org/dashboard" : hasOrg ? "/org/dashboard" : "/profile"}
+            href="/profile"
             className="text-sm text-teal font-semibold no-underline hover:underline mb-4 inline-block"
           >
-            &larr; {isEmployer || hasOrg ? "Back to Dashboard" : "Back to Profile"}
+            &larr; Back to Profile
           </Link>
           <h1 className="text-2xl font-extrabold text-text mb-1">
-            {isEmployer ? "Employer Settings" : "Settings"}
+            Settings
           </h1>
           <p className="text-sm text-text-muted mb-6">
-            {isEmployer
-              ? "Manage your organization profile, plan, account access, and employer notifications."
+            {showOrganization
+              ? "Your personal settings and your organization workspace use the same sign-in."
               : "Manage your privacy, notifications, and account preferences."}
           </p>
 
+          {showOrganization && <h2 className="text-sm font-bold uppercase tracking-wide text-text-muted mb-2">Personal</h2>}
           <div className="flex flex-col gap-3">
-            {(isEmployer ? employerSettingsLinks : memberSettingsLinks).map(({ href, icon, title, desc }) => (
+            {memberSettingsLinks.map(({ href, icon, title, desc }) => (
               <Link key={href} href={href} className="no-underline">
                 <Card
                   className="hover:border-teal/30 transition-colors"
@@ -115,8 +106,28 @@ export default function SettingsPage() {
               </Link>
             ))}
 
-            {/* Upgrade to Org — only for community members */}
-            {!hasOrg && !isEmployer && (
+            {showOrganization && (
+              <>
+                <h2 className="text-sm font-bold uppercase tracking-wide text-text-muted mt-4 mb-0">Organization{orgName ? ` · ${orgName}` : ""}</h2>
+                {organizationSettingsLinks.map(({ href, icon, title, desc }) => (
+                  <Link key={href} href={href} className="no-underline">
+                    <Card className="hover:border-teal/30 transition-colors">
+                      <div className="flex items-center gap-4 p-4">
+                        <span className="text-2xl">{icon}</span>
+                        <div className="flex-1">
+                          <h3 className="text-[15px] font-bold text-text mb-0.5">{title}</h3>
+                          <p className="text-sm text-text-muted m-0">{desc}</p>
+                        </div>
+                        <span className="text-text-muted text-lg">&rsaquo;</span>
+                      </div>
+                    </Card>
+                  </Link>
+                ))}
+              </>
+            )}
+
+            {/* Add an organization workspace — only for accounts without one */}
+            {!hasOrg && !isEmployer && !isAdmin && (
               <Link href="/org/upgrade" className="no-underline">
                 <Card className="hover:border-teal/30 transition-colors border-dashed">
                   <div className="flex items-center gap-4 p-4">

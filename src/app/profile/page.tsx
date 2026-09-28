@@ -127,11 +127,8 @@ function ProfileContent() {
       try {
         const data = await getMemberProfile(user.uid, controller.signal);
         if (!isCurrent()) return;
-        // Redirect org users to the org dashboard profile
-        if (data?.orgId) {
-          router.replace("/org/dashboard?tab=Edit%20Profile&section=Identity");
-          return;
-        }
+        // Organization owners and team members keep their own personal profile here;
+        // the organization profile is edited from the organization dashboard.
         setProfile(data);
         if (data) {
           // Older/partially completed members can omit these optional fields.

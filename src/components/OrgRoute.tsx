@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { MemberProfile } from "@/lib/firestore/members";
+import { OrgWorkspaceContext } from "@/lib/org-workspace-context";
 
 interface OrgRouteProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
   const [checking, setChecking] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [profile, setProfile] = useState<MemberProfile | null>(null);
+  const [organizationName, setOrganizationName] = useState("");
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const requestKey = JSON.stringify([user?.uid, requiredRole, attempt, loading]);
@@ -90,6 +92,7 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
             }
 
             setProfile(memberProfile);
+            setOrganizationName(typeof data.organizationName === "string" ? data.organizationName : "");
             setAuthorized(true);
             return;
           }
@@ -160,5 +163,5 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
   if (error) return <section className="p-8"><p role="alert">{error}</p><button type="button" onClick={() => setAttempt(value => value + 1)}>Retry workspace</button> <a href="mailto:support@iopps.ca">Contact support</a></section>;
   if (!user || !authorized || !profile || profile.uid !== user.uid) return null;
 
-  return <>{children}</>;
+  return <OrgWorkspaceContext.Provider value={{ name: organizationName || "your organization" }}>{children}</OrgWorkspaceContext.Provider>;
 }

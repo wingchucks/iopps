@@ -22,7 +22,7 @@ const stubs={'react':React,'react/jsx-runtime':jsx,
 'next/image':{default:({alt,width,height})=>React.createElement('img',{alt,width,height})},
 'next/navigation':{usePathname:()=>location.pathname},
 '@/lib/auth-context':{useAuth:()=>({user:null,loading:false})},
-'./NavBar':{default:()=>null},'./IconRailSidebar':{default:()=>null}};
+'./NavBar':{default:()=>null},'./IconRailSidebar':{default:()=>null},'./OrgWorkspaceBanner':{default:()=>null}};
 const load=fn=>{const exports={};fn(id=>{if(!(id in stubs))throw Error('Unapproved import '+id);return stubs[id]},exports);return exports};
 ${modules.map(name => `stubs['./${name}']=load(function(require,exports){${compile(`src/components/${name}.tsx`)}});`).join('\n')}
 const Component=location.pathname==='/'?stubs['./OpportunityHeader'].default:stubs['./AppShell'].default;
