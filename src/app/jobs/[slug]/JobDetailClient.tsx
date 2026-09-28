@@ -1,7 +1,7 @@
 "use client";
 import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
 import JobDescription from "@/components/jobs/JobDescription";
-import { importedSalaryLabel, jobImportLabels } from "@/lib/job-import-labels";
+import { displayJobLocation, importedSalaryLabel, jobImportLabels, payPeriodMissing } from "@/lib/job-import-labels";
 
 import { Suspense, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ShareButton from "@/components/ShareButton";
-import { buildLoginRedirectHref, displayAmount, displayLocation } from "@/lib/utils";
+import { buildLoginRedirectHref, displayAmount } from "@/lib/utils";
 import { resolveApplicationDestination } from "@/lib/application-destination";
 import { trackJobFunnelEvent } from "@/lib/job-funnel-analytics";
 import { jobDetailDates } from "@/lib/job-detail-dates";
@@ -159,7 +159,9 @@ function JobDetailContent() {
   const imported = jobImportLabels(job, { pay: Boolean(salaryLabel), closing: Boolean(closingDate) });
   const missingPay = !salaryLabel && imported.pay;
   const missingClosing = !closingDate && imported.closing;
-  const locationLabel = displayLocation(job.location);
+  // Only an amount is known; the period is never guessed from its size.
+  const periodNote = salaryLabel && payPeriodMissing(salaryLabel) ? "Pay period not stated" : "";
+  const locationLabel = displayJobLocation(job.location);
 
   const applicationAction = destination.kind === "unavailable" ? (
     <button className="journey-apply-button" disabled>Application link unavailable</button>
@@ -221,7 +223,7 @@ function JobDetailContent() {
 
             <div className="flex flex-wrap gap-3 text-sm text-text-sec">
               {locationLabel && <span>📍 {locationLabel}</span>}
-              {salaryLabel && <span>💰 {salaryLabel}</span>}
+              {salaryLabel && <span>💰 {salaryLabel}{periodNote && <span className="text-text-muted"> ({periodNote.toLowerCase()})</span>}</span>}
               {closingDate && <span>📅 Closes: {closingDate}</span>}
               {missingPay && <span>{missingPay}</span>}
               {missingClosing && <span>{missingClosing}</span>}
@@ -359,7 +361,7 @@ function JobDetailContent() {
                   {salaryLabel && (
                     <div className="flex justify-between">
                       <span className="text-xs text-text-muted">Salary</span>
-                      <span className="text-xs font-semibold text-text">{salaryLabel}</span>
+                      <span className="text-right text-xs font-semibold text-text">{salaryLabel}{periodNote && <span className="block font-normal text-text-muted">{periodNote}</span>}</span>
                     </div>
                   )}
                   {locationLabel && (
@@ -447,6 +449,8 @@ function RelatedJobList({ title, jobs }: { title: string; jobs: RelatedJob[] }) 
           const href = `/jobs/${job.id}`;
           const employer = job.employerName || job.orgName || "";
           const applicationLabel = resolveApplicationDestination(job, job.id).label;
+          const place = displayJobLocation(job.location);
+          const pay = typeof job.salary === "number" ? displayAmount(job.salary) : importedSalaryLabel(job.salary);
           return (
             <Link key={job.id} href={href} className="no-underline">
               <Card className="hover:-translate-y-0.5 transition-transform">
@@ -456,11 +460,11 @@ function RelatedJobList({ title, jobs }: { title: string; jobs: RelatedJob[] }) 
                     <p className="text-xs text-teal font-semibold m-0">{employer}</p>
                   )}
                   <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted mt-1">
-                    {job.location && <span>📍 {job.location}</span>}
+                    {place && <span>📍 {place}</span>}
                     {(job.jobType || job.employmentType) && (
                       <span>· {job.jobType || job.employmentType}</span>
                     )}
-                    {job.salary && <span>· {job.salary}</span>}
+                    {pay && <span>· {pay}</span>}
                   </div>
                   <p className="text-[11px] font-semibold text-text-muted mt-1 m-0">
                     {applicationLabel}
