@@ -5,6 +5,7 @@ import { displayJobLocation, importedSalaryLabel, jobImportLabels, payPeriodMiss
 
 import { Suspense, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { directoryReturnHref } from "@/lib/directory-return";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import EmployerLogo from "@/components/EmployerLogo";
@@ -181,6 +182,11 @@ function JobDetailContent() {
       {/* Back link */}
       <Link
         href="/jobs"
+        onClick={event => {
+          // Return to the same search, filters, sort and page the visitor came from.
+          const href = directoryReturnHref("jobs");
+          if (href !== "/jobs") { event.preventDefault(); router.push(href); }
+        }}
         className="inline-flex items-center gap-1 text-sm text-text-muted no-underline hover:text-teal mb-4"
       >
         ← Back to Jobs
