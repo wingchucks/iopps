@@ -266,8 +266,12 @@ export function getMemberExploreNavItems(options?: {
 }): NavItem[] {
   const items = buildNavItems(MEMBER_EXPLORE_KEYS, "member");
 
-  // Organizations manage applicants from the dashboard; individuals track what they sent.
-  items.push(buildNavItems([options?.hasOrg ? "dashboard" : "applications"], "member")[0]);
+  // Every member keeps personal applications; organization owners also get their dashboard.
+  items.push(buildNavItems(["applications"], "member")[0]);
+
+  if (options?.hasOrg) {
+    items.push(buildNavItems(["dashboard"], "member")[0]);
+  }
 
   if (options?.isAdmin) {
     items.push(buildNavItems(["admin"], "member")[0]);

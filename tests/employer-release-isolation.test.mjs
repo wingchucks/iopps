@@ -27,6 +27,7 @@ test('candidate preview disabled with prior settings and crons unchanged',()=>{
     'fix/paid-job-pricing-20260924': false,
     'fix/audit-four-bugs-20260924': false,
     'fix/website-completion-20260927': false,
+    'fix/nav-my-applications-for-owners': false,
      },
    },
    crons: [

@@ -39,7 +39,20 @@ test("member explore nav includes jobs/events and appends org/admin links when a
   assert(keys.includes("events"));
   assert(keys.includes("dashboard"));
   assert(keys.includes("admin"));
-  assert(!keys.includes("applications"), "organizations manage applicants from the dashboard");
+  assert(keys.includes("applications"), "organization owners keep their personal applications");
+  assert.deepEqual(keys.slice(-3), ["applications", "dashboard", "admin"]);
+  const applications = memberItems.find((item) => item.key === "applications");
+  assert.equal(applications?.href, "/applications");
+  assert.equal(applications?.label, "My Applications");
+});
+
+test("organization owners without admin access get My Applications before Dashboard", () => {
+  const items = getAppExploreNavItems({ isAuthenticated: true, hasOrg: true });
+  const keys = items.map((item) => item.key);
+  assert.deepEqual(keys.slice(-2), ["applications", "dashboard"]);
+  assert.equal(keys.filter((key) => key === "applications").length, 1);
+  assert.equal(keys.filter((key) => key === "dashboard").length, 1);
+  assert(!keys.includes("admin"));
 });
 
 test("signed-in members keep all five destinations; individuals get My Applications", () => {

@@ -22,6 +22,7 @@ test('release branch disables automatic Vercel deployment without disabling mast
     'fix/paid-job-pricing-20260924': false,
     'fix/audit-four-bugs-20260924': false,
     'fix/website-completion-20260927': false,
+    'fix/nav-my-applications-for-owners': false,
   });
   assert.deepEqual(config.crons, [
     { path: '/api/cron/sync-feeds', schedule: '0 8 * * *' },
