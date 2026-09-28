@@ -78,6 +78,21 @@ function getSlug(postId: string, postType: string): string {
   return postId;
 }
 
+/** A removed listing keeps its saved title but no longer links to a dead page. */
+function MaybeLink({ href, enabled, className, style, children }: { href: string; enabled: boolean; className?: string; style?: React.CSSProperties; children: React.ReactNode }) {
+  return enabled
+    ? <Link href={href} className={className} style={style}>{children}</Link>
+    : <div className={className} style={style}>{children}</div>;
+}
+
+function similarHref(item: SavedAliasGroup): string {
+  const query = new URLSearchParams({ q: item.postTitle || "" }).toString();
+  if (item.postType === "job") return `/jobs?${query}`;
+  if (item.postType === "scholarship") return `/scholarships?${query}`;
+  if (item.postType === "event") return "/events";
+  return "/feed";
+}
+
 function getDetailLink(item: SavedAliasGroup): string {
   if (item.destination) return item.destination;
   const cfg = typeConfig[item.postType];
@@ -119,6 +134,8 @@ function SavedContent() {
   const [activeTab, setActiveTab] = useState<Tab>("All");
   const [removing, setRemoving] = useState<string | null>(null);
   const [hasOrg, setHasOrg] = useState(false);
+  // open / closed / unavailable per saved postId, so closed or removed listings are marked, not dead ends.
+  const [statuses, setStatuses] = useState<Record<string, "open" | "closed" | "unavailable">>({});
 
   useEffect(() => {
     if (!user) return;
@@ -135,6 +152,15 @@ function SavedContent() {
         setItems(records);
         try { const resolved = await loadSavedJobAliases(records.filter(r => r.postType === "job").map(r => r.postId)); if (active) setAliases(resolved); }
         catch { /* Keep original saves removable when alias service is unavailable. */ }
+        try {
+          const token = await user.getIdToken();
+          const res = await fetch("/api/saved/status", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ items: records.slice(0, 100).map(r => ({ postId: r.postId, postType: r.postType })) }),
+          });
+          if (res.ok && active) setStatuses(((await res.json()) as { statuses?: Record<string, "open" | "closed" | "unavailable"> }).statuses || {});
+        } catch { /* Without statuses, saved items still open normally. */ }
       })
       .catch((err) => console.error("Failed to load saved items:", err))
       .finally(() => { if (active) setLoading(false); });
@@ -272,6 +298,8 @@ function SavedContent() {
             };
             const link = getDetailLink(item);
             const isRemoving = removing === item.postId;
+            const state = statuses[item.postId] ?? item.records.map(record => statuses[record.postId]).find(Boolean);
+            const unavailable = state === "unavailable";
 
             return (
               <Card key={item.id} className="hover:border-teal transition-colors">
@@ -280,8 +308,9 @@ function SavedContent() {
                   className="flex items-center gap-3 sm:gap-4"
                 >
                   {/* Icon */}
-                  <Link
+                  <MaybeLink
                     href={link}
+                    enabled={!unavailable}
                     className="flex items-center justify-center rounded-xl flex-shrink-0 no-underline"
                     style={{
                       width: 48,
@@ -290,11 +319,12 @@ function SavedContent() {
                     }}
                   >
                     <span className="text-xl">{cfg.icon}</span>
-                  </Link>
+                  </MaybeLink>
 
                   {/* Info */}
-                  <Link
+                  <MaybeLink
                     href={link}
+                    enabled={!unavailable}
                     className="flex-1 min-w-0 no-underline"
                   >
                     <p className="text-sm font-bold text-text mb-0.5 truncate">
@@ -307,6 +337,12 @@ function SavedContent() {
                         bg={cfg.bg}
                         small
                       />
+                      {state === "closed" && (
+                        <Badge text={item.postType === "event" ? "Ended" : "Closed"} color="var(--amber, #b45309)" bg="var(--amber-soft, rgba(217,119,6,.12))" small />
+                      )}
+                      {unavailable && (
+                        <Badge text="No longer available" color="var(--text-muted)" bg="rgba(128,128,128,.12)" small />
+                      )}
                       {item.postOrgName && (
                         <span className="text-xs text-text-muted">
                           {item.postOrgName}
@@ -318,10 +354,17 @@ function SavedContent() {
                         </span>
                       )}
                     </div>
-                  </Link>
+                    {unavailable && (
+                      <p className="text-xs text-text-muted mt-1 mb-0">
+                        This listing was removed.{" "}
+                        <Link href={similarHref(item)} className="text-teal font-semibold underline underline-offset-2">Find similar</Link>
+                      </p>
+                    )}
+                  </MaybeLink>
 
                   {/* Remove button */}
                   <button
+                    aria-label={`Remove ${item.postTitle} from saved`}
                     onClick={() => handleRemove(item)}
                     disabled={isRemoving}
                     className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-xl border-none cursor-pointer transition-all hover:bg-red/10"

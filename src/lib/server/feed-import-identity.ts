@@ -1,7 +1,7 @@
 import { cleanupWriteAllowed } from "./job-cleanup-guards.ts";
 import { jobCategoryPatch } from "../job-taxonomy";
 import { createHash } from "node:crypto";
-import { feedJobKey } from "./feed-source";
+import { canonicalLocationSet, feedJobKey } from "./feed-source";
 import type { Firestore } from "firebase-admin/firestore";
 import {preparePaidPublication} from './paid-job-publication-reader';
 import {firestorePublicationReader} from './paid-job-publication-firestore';
@@ -22,7 +22,7 @@ function dateIdentity(value: unknown): string {
 /** No lowercasing of opaque IDs or URLs. Feed namespace and intake remain distinct. */
 export function feedImportIdentity(job: Job): string {
   const source = label(job.externalId) || label(job.externalUrl);
-  const fields = [label(job.feedId), label(job.employerId), label(job.title), label(job.location), source,
+  const fields = [label(job.feedId), label(job.employerId), label(job.title), canonicalLocationSet(job.location), source,
     label(job.requisitionId), dateIdentity(job.publishedAt || job.postedAt)];
   if (fields.slice(0, 5).some(value => !value)) throw new Error("Import identity is incomplete");
   return createHash("sha256").update(JSON.stringify(fields)).digest("hex");
@@ -81,7 +81,8 @@ export function importedJobCandidateSelector<T extends { data(): Job }>(docs: T[
 export function sameImportedIntake(existing: Job, incoming: Job): boolean {
   if (existing.feedId && incoming.feedId && existing.feedId !== incoming.feedId) return false;
   if (existing.externalId && incoming.externalId && existing.externalId !== incoming.externalId) return false;
-  if (label(existing.location) !== label(incoming.location)) return false;
+  // The same locations in a different order are the same intake; a different set is not.
+  if (canonicalLocationSet(existing.location) !== canonicalLocationSet(incoming.location)) return false;
   const oldDate = dateIdentity(existing.publishedAt || existing.postedAt);
   const newDate = dateIdentity(incoming.publishedAt || incoming.postedAt);
   if (oldDate && newDate && oldDate !== newDate) return false;

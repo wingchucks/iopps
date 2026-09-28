@@ -40,7 +40,7 @@ try {
     await page.getByRole('button',{name:'Continue →',exact:true}).click();
     await page.getByPlaceholder('Describe the role, team, and what a typical day looks like...').fill('Fictional local-only paid publishing acceptance.');
     await page.getByRole('button',{name:'Continue →',exact:true}).click();
-    await page.getByRole('button',{name:/Save.*Draft/i}).click();
+    await page.getByRole('button',{name:'Save as Draft',exact:true}).click();
     await expect.poll(async()=>(await db.collection('jobs').where('employerId','==',uid).where('title','==',title).get()).size).toBe(1);
     const doc=(await db.collection('jobs').where('employerId','==',uid).where('title','==',title).get()).docs[0];remember(doc.ref);remember(db.doc('posts/'+doc.id));assert.equal(doc.data().status,'draft');return doc.ref;
    }

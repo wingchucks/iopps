@@ -139,6 +139,29 @@ for (const kind of ['events','scholarships']) test(`#11 #12 ${kind} count, posti
   assert.equal(links.length,2);
   for(const link of links) assert.ok(text(link).includes(title));
 });
+for (const deadline of ['all', 'closed']) test(`scholarship ${deadline} browsing preserves eligibility groups and closed-intake filtering`,()=>{
+  let cursor=0;
+  const items = ['eligible','unstated'].flatMap(group => ['open','closed'].map(state => ({
+    id:`${group}-${state}`, title:`Fictional ${group} ${state} award`, category:'Scholarship',
+    deadline:state==='closed'?'2000-01-01':'2099-01-01',
+    ...(group==='eligible'?{eligibilityRegions:['SK']}:{}),
+  })));
+  const directory=load('src/components/opportunities/OpportunityDirectory.tsx',[],{
+    react:{...React,useEffect:()=>{},useMemo:fn=>fn(),useState:value=>[cursor++===1?{kind:'scholarships',attempt:0,items,error:''}:value,()=>{}]},
+    '@/components/AppShell':{default:({children})=>children},
+    '@/components/DirectoryPagination':{default:()=>null,useDirectoryFilter:(key,value)=>[key==='province'?'SK':key==='deadline'?deadline:value,()=>{}],useDirectoryFilterActions:()=>()=>{},useDirectoryPagination:rows=>({page:1,pageItems:rows,totalPages:1,setPage:()=>{}})},
+  }).default;
+  const tree=nodes(directory({kind:'scholarships'}));
+  const hrefs=new Set(tree.filter(n=>n.type==='a').map(n=>n.props.href));
+  const expected=deadline==='closed'?'closed':'open';
+  const excluded=deadline==='closed'?'open':'closed';
+  for(const group of ['eligible','unstated']) {
+    assert.ok(hrefs.has(`/scholarships/${group}-${expected}`));
+    assert.ok(!hrefs.has(`/scholarships/${group}-${excluded}`));
+  }
+  assert.ok(text(tree).includes('1 more listing doesn’t'));
+});
+
 test('#8 taxonomy matches explicit canonical categories and employment labels only',()=>{
   const {jobArea,matchesEmploymentType}=load('src/lib/job-discovery.ts');
   assert.equal(jobArea({category:'Health & Wellness'}),'Health & Wellness');

@@ -9,7 +9,8 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
-import { importedSalaryLabel, jobImportLabels } from "@/lib/job-import-labels";
+import { displayJobLocation, importedSalaryLabel, jobImportLabels } from "@/lib/job-import-labels";
+import { rememberDirectoryPosition, restoreDirectoryScroll } from "@/lib/directory-return";
 import OpportunityHeader from "@/components/OpportunityHeader";
 import Card from "@/components/Card";
 import EmployerLogo from "@/components/EmployerLogo";
@@ -220,6 +221,8 @@ function JobsPageContent() {
     // Readiness is independent of the jobs request, so loading never blocks typing.
     setSearchReady(true);
   }, []);
+  // Returning from a job restores the scroll position of the same search.
+  useEffect(() => { if (!loading) restoreDirectoryScroll("jobs"); }, [loading]);
   const inputSurfaceStyle = {
     border: "1px solid var(--border)",
     background: "var(--card)",
@@ -443,12 +446,12 @@ function JobsPageContent() {
                 const posted = daysAgo(job);
                 return (
                   <div key={job.id}>
-                  <Link href={getJobHref(job)} className="job-rich-card no-underline">
+                  <Link href={getJobHref(job)} onClick={() => rememberDirectoryPosition("jobs")} className="job-rich-card no-underline">
                     <div className="job-brand-panel"><EmployerLogo name={employerName} src={employerLogo(job, brands)} /><span className="job-brand-name">{employerName}</span></div>
                     <div className="job-rich-content">
                       <div className="job-card-kicker"><span>{jobArea(job) || "Career opportunity"}</span>{job.featured && <span className="job-chip">Featured</span>}</div>
                       <h3>{job.title}</h3>
-                      <div className="job-facts"><span>{job.location || "Location not listed"}</span>{(job.employmentType || job.jobType) && <span>{job.employmentType || job.jobType}</span>}{job.workLocation && <span>{job.workLocation}</span>}</div>
+                      <div className="job-facts"><span>{displayJobLocation(job.location) || "Location not listed"}</span>{(job.employmentType || job.jobType) && <span>{job.employmentType || job.jobType}</span>}{job.workLocation && <span>{job.workLocation}</span>}</div>
                       <p className="job-summary">{summary || "Explore this opportunity and review the employer’s application details."}</p>
                       <div className="job-facts job-benefits">{job.willTrain && <span className="job-chip">Training provided</span>}{job.indigenousPreference && <span className="job-chip">Indigenous preference stated</span>}{job.benefits?.slice(0,2).map(benefit => <span className="job-chip" key={benefit}>{benefit}</span>)}</div>
                       <div className="job-card-bottom"><div><strong>{payLabel || imported.pay || "Pay not listed"}</strong><span>{closingDate ? `Closes ${new Date(closingDate).toLocaleDateString("en-CA", {month:"short",day:"numeric",timeZone:"UTC"})}` : imported.closing || "See listing for closing details"}</span></div><span className="job-view">View opportunity <span aria-hidden="true">↗</span></span></div>

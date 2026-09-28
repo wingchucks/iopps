@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
+import { findJobRecordAnyState } from "@/lib/server/job-record-lookup";
+import { listingState } from "@/lib/listing-lifecycle";
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 import { isPublicJobVisible } from "@/lib/public-jobs";
-import { mergePublicJobRecords } from "@/lib/public-job-merge";
+import { mergePublicJobRecords, publicJobIdentityKey } from "@/lib/public-job-merge";
 import { withPublicDetailCache } from "@/lib/server/public-detail-cache";
 
 export const runtime = "nodejs";
@@ -79,7 +81,12 @@ export async function GET(
     const { id } = await params;
     const db = getAdminDb();
 
-    const found = await findPublicJobDocument(db, id);
+    let found = await findPublicJobDocument(db, id);
+    if (!found) {
+      // A closed job's page still offers open alternatives.
+      const record = await findJobRecordAnyState(db, id);
+      if (record && listingState(record.data) === "closed") found = { id: record.id, source: record.source, routeSlug: "" };
+    }
     if (!found) {
       return withPublicDetailCache(
         NextResponse.json({ employerJobs: [], similarJobs: [] }),
@@ -104,6 +111,10 @@ export async function GET(
       (typeof current.category === "string" ? current.category : "") ||
       (typeof current.department === "string" ? current.department : "");
     const currentCity = firstLocationSegment(current.location);
+    // Another record of the same vacancy (for example a feed re-import) is not a recommendation.
+    const currentKey = publicJobIdentityKey({ ...current, id: currentDoc.id });
+    const isCopyOfCurrent = (d: FirebaseFirestore.QueryDocumentSnapshot) =>
+      !currentKey.startsWith("id:") && publicJobIdentityKey({ ...d.data(), id: d.id }) === currentKey;
 
     const MAX_EACH = 6;
 
@@ -117,6 +128,7 @@ export async function GET(
         .get();
       for (const d of snap.docs) {
         if (d.id === currentDoc.id) continue;
+        if (isCopyOfCurrent(d)) continue;
         if (!isPublicJobVisible(d.data())) continue;
         employerResults.push(normalizeJob(d));
         if (employerResults.length >= MAX_EACH) break;
@@ -130,6 +142,7 @@ export async function GET(
         .get();
       for (const d of snap.docs) {
         if (d.id === currentDoc.id) continue;
+        if (isCopyOfCurrent(d)) continue;
         if (!isPublicJobVisible(d.data())) continue;
         employerResults.push(normalizeJob(d));
         if (employerResults.length >= MAX_EACH) break;
@@ -152,6 +165,7 @@ export async function GET(
         .get();
       for (const d of snap.docs) {
         if (similarSeen.has(d.id)) continue;
+        if (isCopyOfCurrent(d)) continue;
         if (!isPublicJobVisible(d.data())) continue;
         similarResults.push(normalizeJob(d));
         similarSeen.add(d.id);
@@ -163,6 +177,7 @@ export async function GET(
       const snap = await db.collection("jobs").limit(80).get();
       for (const d of snap.docs) {
         if (similarSeen.has(d.id)) continue;
+        if (isCopyOfCurrent(d)) continue;
         if (!isPublicJobVisible(d.data())) continue;
         const data = d.data();
         if (firstLocationSegment(data.location) !== currentCity) continue;
