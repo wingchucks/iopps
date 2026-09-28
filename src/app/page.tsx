@@ -119,7 +119,7 @@ export default async function Home() {
       <section className="entrepreneurship op-wrap" aria-labelledby="business-heading">
         <div className="entrepreneurship-intro">
           <h2 id="business-heading">Indigenous Entrepreneurship</h2>
-          <p>Discover Indigenous businesses, showcase your own, and explore funding opportunities.</p>
+          <p>Discover Indigenous businesses, showcase your own, and find funding and business support.</p>
         </div>
         <div className="entrepreneurship-options">
           <Link className="entrepreneurship-card" href="/businesses?type=Indigenous">
@@ -134,11 +134,12 @@ export default async function Home() {
             <p>Sign up to share your story and showcase what you do.</p>
             <span className="entrepreneurship-action">Sign up &amp; create your page</span>
           </Link>
-          <Link className="entrepreneurship-card entrepreneurship-funding" href="/funding">
+          {/* IOPPS has no business funding listings yet; point to the support programs that exist. */}
+          <Link className="entrepreneurship-card entrepreneurship-funding" href="/businesses#business-support">
             <svg className="entrepreneurship-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 5h20l9 9v29H10zM30 5v10h9M17 23h15M17 30h15M17 37h9" /></svg>
-            <h3>Find grants &amp; funding</h3>
-            <p>Explore funding opportunities and program details on IOPPS.</p>
-            <span className="entrepreneurship-action">Browse funding <span aria-hidden="true">→</span></span>
+            <h3>Funding &amp; business support</h3>
+            <p>Financing, grants and advice from programs for Indigenous entrepreneurs.</p>
+            <span className="entrepreneurship-action">See support programs <span aria-hidden="true">→</span></span>
           </Link>
         </div>
       </section>

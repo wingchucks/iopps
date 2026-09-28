@@ -4,7 +4,7 @@ import { useState } from "react";
 import { authIntentHref } from "@/lib/auth-redirect";
 import Link from "next/link";
 import Card from "@/components/Card";
-import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
+import { ONE_TIME_PLANS, PRICE_TAX_NOTE, SUBSCRIPTION_PLANS } from "@/lib/pricing";
 
 const tabs = ["Annual Plans", "Single Job Posts", "Conferences", "Businesses"] as const;
 type Tab = (typeof tabs)[number];
@@ -79,10 +79,11 @@ function PlanCard({
         )}
 
         <h3 className="text-lg font-bold text-text mb-1">{title}</h3>
-        <div className="flex items-baseline gap-1 mb-4">
+        <div className="flex items-baseline gap-1">
           <span className="text-3xl font-extrabold text-text">{price}</span>
           <span className="text-sm text-text-muted">{period}</span>
         </div>
+        <p className="text-xs font-semibold text-text-muted mb-4 mt-1">{PRICE_TAX_NOTE}</p>
 
         <ul className="list-none p-0 m-0 flex flex-col gap-3 mb-6 flex-1">
           {features.map((f) => (
@@ -169,18 +170,23 @@ function FreeCard({
 export default function PricingTabs({
   variant = "public",
   currentPlan,
+  redirect,
 }: {
   variant?: "public" | "org";
   currentPlan?: string;
+  /** Local page to return to after checkout (for example, a saved job draft). */
+  redirect?: string | null;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("Annual Plans");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  const orgCheckoutHref = (plan: string) =>
+    `/org/checkout?${new URLSearchParams(redirect ? { plan, redirect } : { plan })}`;
   const subHref = (plan: string) =>
-    variant === "org" ? `/org/checkout?plan=${plan}` : authIntentHref("/org/signup", new URLSearchParams({ plan }));
+    variant === "org" ? orgCheckoutHref(plan) : authIntentHref("/org/signup", new URLSearchParams({ plan }));
   const subCta = variant === "org" ? "Select Plan" : "Get Started";
   const postHref = (plan: string) =>
-    variant === "org" ? `/org/checkout?plan=${plan}` : authIntentHref("/org/signup", new URLSearchParams({ plan }));
+    variant === "org" ? orgCheckoutHref(plan) : authIntentHref("/org/signup", new URLSearchParams({ plan }));
   const postCta = variant === "org" ? "Post Now" : "Get Started";
   const freeHref = variant === "org" ? "/org/dashboard" : "/signup?type=employer";
   const freeSuffix = variant === "org" ? "" : " \u2014 It's Free";
@@ -351,7 +357,7 @@ export default function PricingTabs({
               },
               {
                 q: "Are events free?",
-                a: "Yes! Community events are always free to post and attend on IOPPS.",
+                a: "Listing a community event on IOPPS is free. Organizers set any admission or registration fees, so check each event’s details before you go.",
               },
               {
                 q: "Is creating a business profile free?",

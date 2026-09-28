@@ -5,7 +5,7 @@ import { isOrganizationPubliclyVisible } from "../src/lib/organization-profile.t
 import { buildPartnersPayload } from "../src/lib/server/partners-payload.ts";
 import { toPublicOrganization } from "../src/lib/public-organization.ts";
 
-const complete = { name: "Fictional organization", status: "approved", emailVerified: true, onboardingComplete: true, verified: true, logoUrl: "https://example.invalid/logo.png", description: "Community event planning", contactEmail: "hello@example.invalid", location: { city: "Saskatoon", province: "SK" } };
+const complete = { name: "Fictional organization", status: "approved", emailVerified: true, onboardingComplete: true, verified: true, logoUrl: "https://example.invalid/logo.png", description: "Community event planning", contactEmail: "account@example.invalid", publicContactEmail: "hello@example.invalid", location: { city: "Saskatoon", province: "SK" } };
 test("new listing review overrides account approval, email confirmation and a paid plan", () => {
   for (const status of ["draft", "pending", "changes_requested", "rejected"]) {
     const org = { ...complete, directoryReview: { status, revision: 2, approvedRevision: 2 }, subscription: { tier: "premium", status: "active", amountPaid: 2500, paymentId: "pi_example", subscriptionEnd: "2099-12-31" } };
@@ -32,4 +32,14 @@ test("completeness does not require Indigenous identity; private feedback never 
   assert.ok(businessListingIssues({ ...complete, location: { city: "Saskatoon", province: "Wrong" } }).length);
   assert.ok(businessListingIssues({ ...complete, website: "javascript:alert(1)" }).length);
   assert.equal("directoryReview" in toPublicOrganization({ ...complete, directoryReview: { feedback: "Private feedback" } }), false);
+});
+
+test("only the opt-in public email counts as a public contact method or appears publicly", () => {
+  const { publicContactEmail: _public, ...accountOnly } = complete;
+  void _public;
+  assert.deepEqual(businessListingIssues(accountOnly), ["Add a public email, phone number or website."]);
+  assert.deepEqual(businessListingIssues({ ...complete, publicContactEmail: "not-an-email" }), ["Check your public email address."]);
+  assert.equal(toPublicOrganization(complete).contactEmail, "hello@example.invalid");
+  assert.equal("contactEmail" in toPublicOrganization(accountOnly), false, "the private account email is never published");
+  assert.equal(isOrganizationPubliclyVisible(accountOnly), true, "hiding the account email does not remove an existing listing");
 });

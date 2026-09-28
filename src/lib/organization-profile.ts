@@ -1,5 +1,6 @@
 import { locationProvinceCodes, provinceCode } from "./canadian-provinces";
 import { businessListingReviewAllowsPublic } from "./business-listing-review";
+import { publicContactEmailOf } from "./public-organization";
 
 export interface OrganizationLocation {
   city: string;
@@ -288,6 +289,7 @@ export function getOrganizationBusinessIdentity(org: { businessIdentity?: string
 }
 
 export function getBusinessProfileReadiness(org: {
+  name?: unknown;
   type?: unknown;
   ownerType?: unknown;
   partnerTier?: unknown;
@@ -296,7 +298,7 @@ export function getBusinessProfileReadiness(org: {
   logoUrl?: unknown;
   description?: unknown;
   tagline?: unknown;
-  contactEmail?: unknown;
+  publicContactEmail?: unknown;
   phone?: unknown;
   website?: unknown;
 }, options: { workspace?: boolean } = {}): BusinessProfileReadiness {
@@ -312,15 +314,24 @@ export function getBusinessProfileReadiness(org: {
   const missingFields: string[] = [];
   const hasLogo = Boolean(normalizeOptionalString(org.logoUrl) || normalizeOptionalString(org.logo));
   const hasStory = Boolean(normalizeString(org.description) || normalizeString(org.tagline));
+  // Only public contact methods count; the private account email never does.
   const hasContactMethod = Boolean(
-    normalizeString(org.contactEmail) ||
+    publicContactEmailOf(org as Record<string, unknown>) ||
     normalizeString(org.phone) ||
     normalizeString(org.website)
   );
 
-  if (!hasLogo && !options.workspace) missingFields.push("logo");
+  // The dashboard and posting jobs, events or scholarships need only an organization name
+  // (with a verified email and type, checked elsewhere). Logo, description and public contact
+  // are prompts there; the public business directory listing still requires them.
+  if (options.workspace) {
+    if (!normalizeString(org.name)) missingFields.push("name");
+    return { isReady: missingFields.length === 0, missingFields };
+  }
+  if (!hasLogo) missingFields.push("logo");
   if (!hasStory) missingFields.push("description");
-  if (!hasContactMethod) missingFields.push("contact");
+  // Publishing needs no public contact; the directory listing does.
+  if (!hasContactMethod && !options.workspace) missingFields.push("contact");
 
   return {
     isReady: missingFields.length === 0,
@@ -363,7 +374,11 @@ export function isOrganizationPubliclyVisible(org: {
 
   if (!accepted) return false;
 
-  return getBusinessProfileReadiness(org).isReady;
+  const readiness = getBusinessProfileReadiness(org);
+  if (readiness.isReady) return true;
+  // Making public email opt-in must not take listings out of the directory: an
+  // account email still counts as a contact method here (it is not displayed).
+  return readiness.missingFields.length === 1 && readiness.missingFields[0] === "contact" && Boolean(normalizeString(org.contactEmail));
 }
 
 export function hasOrganizationVisibilityBlock(org: {
@@ -514,7 +529,7 @@ export function normalizeOrganizationProfilePatch(body: Record<string, unknown>)
     "address",
     "website",
     "phone",
-    "contactEmail",
+    "publicContactEmail",
     "nation",
     "treatyTerritory",
     "communityAffiliation",

@@ -341,17 +341,19 @@ export async function generateScholarshipMetadata(slug: string): Promise<Metadat
   if (!scholarship) return fallbackMetadata("Scholarship Opportunity", "View scholarship details on IOPPS.ca.", `/scholarships/${slug}`);
   const title = field(scholarship, "title", "name") || "Scholarship Opportunity";
   const provider = field(scholarship, "provider", "organization", "orgName");
-  return buildListingMetadata({
+  const metadata = buildListingMetadata({
     title: provider ? `${title} — ${provider}` : title,
     description: truncate(stripHtml(field(scholarship, "description", "eligibility")) || `${title} on IOPPS.ca.`),
     path: `/scholarships/${slug}`,
     type: "article",
   });
+  // A closed intake keeps its page for visitors and bookmarks but is not indexed.
+  return scholarship.intakeClosed ? { ...metadata, robots: { index: false, follow: true } } : metadata;
 }
 
 export async function generateScholarshipJsonLd(slug: string): Promise<JsonLd | null> {
   const scholarship = await opportunityForMetadata("scholarships", slug);
-  if (!scholarship) return null;
+  if (!scholarship || scholarship.intakeClosed) return null;
   return {
     "@context": "https://schema.org",
     "@type": "MonetaryGrant",

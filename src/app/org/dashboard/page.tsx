@@ -157,7 +157,7 @@ function OrgDashboardContent() {
     province: "",
     address: "",
     website: "",
-    contactEmail: "",
+    publicContactEmail: "",
     phone: "",
     linkedin: "",
     instagram: "",
@@ -250,7 +250,8 @@ function OrgDashboardContent() {
           province: o.location?.province || "",
           address: o.address || "",
           website: o.website || "",
-          contactEmail: o.contactEmail || "",
+          publicContactEmail: o.publicContactEmail || "",
+          accountContactEmail: o.contactEmail || "",
           phone: o.phone || "",
           linkedin: o.socialLinks?.linkedin || "",
           instagram: o.socialLinks?.instagram || "",
@@ -397,7 +398,7 @@ function OrgDashboardContent() {
         label: "Contact",
         done: Boolean(
           profileForm.website.trim() ||
-          profileForm.contactEmail.trim() ||
+          profileForm.publicContactEmail.trim() ||
           profileForm.phone.trim() ||
           profileForm.address.trim()
         ),

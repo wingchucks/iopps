@@ -118,6 +118,13 @@ const NAV_ITEM_DEFINITIONS = {
     icon: "tag",
     priority: 130,
   },
+  applications: {
+    key: "applications",
+    label: "My Applications",
+    href: "/applications",
+    icon: "briefcase",
+    priority: 135,
+  },
   saved: {
     key: "saved",
     label: "Saved",
@@ -191,14 +198,16 @@ const LANDING_INLINE_KEYS: NavigationKey[] = [
   "pricing",
 ];
 
+// Signed-in members keep all five destinations: Jobs, Indigenous Businesses, IOPPS Live,
+// Scholarships and Events.
 const MEMBER_EXPLORE_KEYS: NavigationKey[] = [
   "home",
   "live",
   "jobs",
   "events",
+  "scholarships",
   "search",
   "partners",
-
   "businesses",
 ];
 
@@ -207,6 +216,7 @@ const MEMBER_DESKTOP_TOP_KEYS: NavigationKey[] = [
   "live",
   "jobs",
   "events",
+  "scholarships",
   "partners",
   "businesses",
 ];
@@ -256,9 +266,8 @@ export function getMemberExploreNavItems(options?: {
 }): NavItem[] {
   const items = buildNavItems(MEMBER_EXPLORE_KEYS, "member");
 
-  if (options?.hasOrg) {
-    items.push(buildNavItems(["dashboard"], "member")[0]);
-  }
+  // Organizations manage applicants from the dashboard; individuals track what they sent.
+  items.push(buildNavItems([options?.hasOrg ? "dashboard" : "applications"], "member")[0]);
 
   if (options?.isAdmin) {
     items.push(buildNavItems(["admin"], "member")[0]);

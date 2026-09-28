@@ -60,8 +60,8 @@ async function checkRemediationSettings(page, width) {
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
     if (route === '/settings/career') {
       const before = (await db.doc(`members/${accounts.member.uid}`).get()).data().salaryRange;
-      await page.getByLabel('Minimum salary', { exact: true }).fill('90000');
-      await page.getByLabel('Maximum salary', { exact: true }).fill('50000');
+      await page.getByLabel('Minimum yearly salary in CAD', { exact: true }).fill('90000');
+      await page.getByLabel('Maximum yearly salary in CAD', { exact: true }).fill('50000');
       await page.getByRole('button', { name: 'Save Career Preferences', exact: true }).click();
       await page.getByText('Minimum salary cannot exceed maximum salary.', { exact: true }).waitFor();
       assert.deepEqual((await db.doc(`members/${accounts.member.uid}`).get()).data().salaryRange, before);
