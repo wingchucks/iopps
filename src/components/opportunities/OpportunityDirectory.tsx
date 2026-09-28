@@ -14,6 +14,8 @@ import { eligibilityLabel, eligibleInProvince, scholarshipEligibility } from "@/
 type DirectoryFilters = { search: string; category: string; events: boolean; dateFilter: string; deadlineFilter: string };
 
 function matchesOtherFilters(item: OpportunityRecord, { search, category, events, dateFilter, deadlineFilter }: DirectoryFilters): boolean {
+  // Apply the closed-intake rule to both eligible and unstated-location groups.
+  if (!events && deadlineFilter !== "closed" && (item.intakeClosed === true || isJobRecordExpired(item))) return false;
   const text = [item.title, item.orgName, item.description, item.eligibility, item.category, item.city, item.province, displayLocation(item.location)].join(" ").toLowerCase();
   return (!search.trim() || text.includes(search.trim().toLowerCase())) && (!category || (events ? normalizeEventTypeLabel(String(item.eventType || item.category || "Other")) : fundingTypeLabel(item)) === category) && (events ? matchesEventDate(item, dateFilter) : matchesFundingDeadline(item, deadlineFilter));
 }

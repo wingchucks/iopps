@@ -32,7 +32,7 @@ function compile(source) {
 export function renderDescription(job) {
   const jsx = page.split('{/* Description */}')[1].split('<HiringDetailsSummary')[0];
   const imports = page.split('\n').filter(line => line.includes('from "@/components/jobs/')).join('\n');
-  const Component = compile(`${imports}\nexport default function Fixture({job}) { const normalizedApplicationHref=null; const shouldUseInternalApply=true; const applicationLinkProps={}; return <>${jsx}</>; }`).default;
+  const Component = compile(`${imports}\nexport default function Fixture({job}) { const closed=null; const normalizedApplicationHref=null; const shouldUseInternalApply=true; const applicationLinkProps={}; return <>${jsx}</>; }`).default;
   return renderToString(React.createElement(Component, { job }));
 }
 function inspect(html) {
@@ -46,7 +46,7 @@ function renderMetadata(job, salaryLabel = '$25', closingDate = 'Sep 30, 2026') 
   const jsx = page.slice(start, page.indexOf('</div>', start) + 6);
   const imports = page.split('\n').filter(line => /from "@\/lib\/(job-detail-dates|job-import-labels)"/.test(line)).join('\n');
   const labels = page.slice(page.indexOf('  const imported = jobImportLabels('), page.indexOf('  const locationLabel ='));
-  const C = compile(`${imports}\nexport default function Fixture({job, salaryLabel, closingDate}) { const locationLabel='Saskatoon, SK'; ${labels} return (${jsx}); }`).default;
+  const C = compile(`${imports}\nexport default function Fixture({job, salaryLabel, closingDate}) { const closed=null; const locationLabel='Saskatoon, SK'; ${labels} return (${jsx}); }`).default;
   return renderToString(React.createElement(C, { job, salaryLabel, closingDate }));
 }
 test('baseline metadata JSX renders literal spaces in SSR', () => {

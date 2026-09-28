@@ -92,7 +92,8 @@ async function fetchScholarships(): Promise<FeedItem[]> {
       subtitle: scholarship.deadline ? `Deadline: ${scholarship.deadline}` : String(scholarship.eligibility || ""),
       detail: displayAmount(scholarship.amount) || displayAmount(scholarship.value),
       badge: (scholarship.category as string) || (scholarship.type as string) || "",
-      href: (scholarship.applicationUrl as string) || (scholarship.url as string) || "/scholarships",
+      // The scholarship's own page shows eligibility, intake status and the right application route.
+      href: `/scholarships/${encodeURIComponent(String(scholarship.slug || scholarship.id || ""))}`,
       createdAt: (scholarship.createdAt as string) || "",
       featured: Boolean(scholarship.featured),
     }));
@@ -189,7 +190,7 @@ function getCtaLabel(type: FeedItemType): string {
 
   if (type === "event") return "View Details";
 
-  return "Apply Now";
+  return "View Scholarship";
 }
 
 function FeedCard({ item }: { item: FeedItem }) {
