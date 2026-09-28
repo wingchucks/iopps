@@ -22,5 +22,8 @@ export function normalizeJobDiscoveryMetadata<T extends MetadataJob>(job: T): T 
   const period = /\bhourly\b/i.test(before) || /^\s*(?:per\s+hour|\/\s*h(?:ou)?r)\b/i.test(after) ? "Hourly"
     : /\bannual(?:ly)?\b/i.test(before) || /^\s*(?:per\s+(?:year|annum)|annually|\/\s*year)\b/i.test(after) ? "Annual" : "";
   const suffix = period === "Hourly" ? " / hour" : period === "Annual" ? " / year" : "";
-  return { ...normalized, salary: `$${min.toLocaleString("en-CA")}–$${max.toLocaleString("en-CA")}${suffix}`, salaryRange: { ...range, min, max, ...(period ? { period } : {}) }, salaryMetadataSource: "explicit-description" };
+  // Show cents on both ends when either has them: "$31.10–$38.87", never "$31.1".
+  const cents = !Number.isInteger(min) || !Number.isInteger(max);
+  const money = (value: number) => `$${value.toLocaleString("en-CA", { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: 2 })}`;
+  return { ...normalized, salary: `${money(min)}–${money(max)}${suffix}`, salaryRange: { ...range, min, max, ...(period ? { period } : {}) }, salaryMetadataSource: "explicit-description" };
 }

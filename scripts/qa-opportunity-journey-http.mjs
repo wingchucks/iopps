@@ -14,7 +14,8 @@ async function identity(suffix, verified = true, role = 'owner') {
   await auth.createUser({ uid, email: uid + '@example.invalid', emailVerified: verified });
   for (const collection of ['users', 'members', 'organizations', 'employers']) {
     const path = `${collection}/${uid}`; documents.add(path);
-    await db.doc(path).set({ orgId: uid, employerId: uid, role: 'employer', orgRole: role, name: 'Fictional community organization', onboardingComplete: true, status: 'active' });
+    // This journey covers publishing; the first-listing review is covered by first-listing-review-emulator.
+    await db.doc(path).set({ orgId: uid, employerId: uid, role: 'employer', orgRole: role, name: 'Fictional community organization', onboardingComplete: true, status: 'active', freeListingApprovedAt: 'fixture' });
   }
   const response = await fetch('http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=fictional-emulator-key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: await auth.createCustomToken(uid), returnSecureToken: true }) });
   assert.equal(response.status, 200); return { uid, token: (await response.json()).idToken };

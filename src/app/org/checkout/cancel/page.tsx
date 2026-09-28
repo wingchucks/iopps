@@ -6,7 +6,7 @@ import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
-import { authIntentHref } from "@/lib/auth-redirect";
+import { authIntentHref, safeAuthRedirect } from "@/lib/auth-redirect";
 
 export default function CheckoutCancelPage({
   searchParams,
@@ -15,6 +15,7 @@ export default function CheckoutCancelPage({
 }) {
   const params = use(searchParams);
   const router = useRouter();
+  const redirect = safeAuthRedirect(params.redirect || null);
 
   return (
     <ProtectedRoute>
@@ -61,6 +62,14 @@ export default function CheckoutCancelPage({
                 >
                   Try Again
                 </button>
+                {redirect && (
+                  <Link
+                    href={redirect}
+                    className="text-sm font-semibold text-teal no-underline hover:underline"
+                  >
+                    {redirect.startsWith("/org/dashboard/jobs/") ? "Return to your saved job posting" : "Return to where you left off"}
+                  </Link>
+                )}
                 <Link
                   href="/org/plans"
                   className="text-sm text-teal no-underline hover:underline"

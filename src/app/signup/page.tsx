@@ -11,6 +11,7 @@ import { organizationSetupError, organizationContactEmailError } from "@/lib/org
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAppCheckTokenValue, storage } from "@/lib/firebase";
 import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
+import SelectedOfferSummary from "@/components/pricing/SelectedOfferSummary";
 import {
   BackgroundMesh, TopBar, ProgressBar, StepDots,
   FormInput, FormSelect, FormTextarea, CheckboxItem, UploadZone,
@@ -531,6 +532,8 @@ function UnifiedSignupContent() {
           />
         </div>
         <StepDots labels={labels} current={current} />
+        {/* The offer chosen before signup stays visible until checkout (school steps 8-9 choose it themselves). */}
+        {step !== 8 && step !== 9 && <SelectedOfferSummary planId={selectedPlan} />}
 
         {(signupNotice || deliveryNotice) && <div role="status" style={{ marginBottom: 24 }}>{signupNotice} {deliveryNotice} <a href={authIntentHref("/login", searchParams)}>Sign in</a></div>}
         {error && <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: CSS.error }}>{error}</div>}

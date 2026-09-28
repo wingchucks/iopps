@@ -57,14 +57,14 @@ test('baseline metadata JSX renders literal spaces in SSR', () => {
   assert.ok(text.includes('📅 Closes: Sep 30, 2026'));
   assert.ok(text.includes('Originally posted: 2026-09-17'));
   assert.ok(text.includes('Added to IOPPS: 2026-09-19'));
-  assert.doesNotMatch(text, /not imported|Check original posting/);
+  assert.doesNotMatch(text, /see original posting|Check original posting/);
   metadataHtml = html;
   console.log('Metadata SSR:', html);
 });
 test('metadata JSX uses real import labels for missing pay and closing details', () => {
   const { text, tags } = inspect(renderMetadata({ source: 'feed', sourceMetadata: { salary: 'not-imported', closingDate: 'not-imported' }, externalUrl: 'https://source.example/job' }, '', ''));
-  assert.ok(text.includes('Pay not imported'));
-  assert.ok(text.includes('Closing details not imported'));
+  assert.ok(text.includes('Pay: see original posting'));
+  assert.ok(text.includes('Closing date: see original posting'));
   assert.ok(text.includes('Check original posting (opens in a new tab)'));
   const link = tags.find(tag => tag.name === 'a');
   assert.equal(link.attrs.href, 'https://source.example/job');
