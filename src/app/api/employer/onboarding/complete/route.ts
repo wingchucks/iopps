@@ -20,16 +20,11 @@ export async function POST(req: Request) {
       );
     }
 
+    // Account emails never stand in for a public contact method.
     const normalizedOrg = normalizeOrganizationRecord({
       id: context.orgId,
       ...context.organizationData,
-      contactEmail:
-        context.organizationData.contactEmail ||
-        context.employerData.contactEmail ||
-        context.employerData.email ||
-        context.userData.email ||
-        context.memberData.email,
-    });
+    } as Record<string, unknown>);
     const school = isSchoolOrganization(normalizedOrg);
     const readiness = getBusinessProfileReadiness(normalizedOrg, { workspace: true });
 

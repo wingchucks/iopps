@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { normalizeOrganizationProfilePatch } from "@/lib/organization-profile";
+import { isPublicContactEmailValid } from "@/lib/public-organization";
 import { buildSchoolVisibilityPatch, isSchoolOrganization } from "@/lib/school-visibility";
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 import { reviewAfterProfileEdit } from "@/lib/business-listing-review";
@@ -14,6 +15,10 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { updates, touchedFields } = normalizeOrganizationProfilePatch(body as Record<string, unknown>);
     if (!touchedFields.length) throw new EmployerApiError(400, "No valid fields to update.");
+    // Blank hides the public email; anything else must be a real address.
+    if (typeof updates.publicContactEmail === "string" && updates.publicContactEmail && !isPublicContactEmailValid(updates.publicContactEmail)) {
+      throw new EmployerApiError(400, "Enter a valid public contact email, or leave it blank to show no email.");
+    }
     const db = getAdminDb();
     const result = await db.runTransaction(async tx => {
       const ref = db.collection("organizations").doc(context.orgId);

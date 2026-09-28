@@ -216,6 +216,8 @@ export async function POST(req: NextRequest) {
       type,
       contactName,
       contactEmail: normalizedContactEmail,
+      // Private account contact above; the public email is opt-in and starts blank.
+      publicContactEmail: "",
       slug,
       businessIdentity,
       ...(website ? { website } : {}),
@@ -245,6 +247,7 @@ export async function POST(req: NextRequest) {
       businessIdentity,
       contactName,
       contactEmail: normalizedContactEmail,
+      publicContactEmail: "",
       ...(website ? { website } : {}),
       ...(description ? { description } : {}),
       ...(services.length > 0 ? { services } : {}),

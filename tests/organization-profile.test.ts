@@ -280,12 +280,23 @@ test("getBusinessProfileReadiness requires logo, story, and contact for business
       type: "business",
       logoUrl: "https://cdn.example.com/logo.png",
       description: "Emergency response services for northern communities.",
-      contactEmail: "team@example.com",
+      publicContactEmail: "team@example.com",
     }),
     {
       isReady: true,
       missingFields: [],
     },
+  );
+
+  // The private account email is not a public contact method.
+  assert.deepEqual(
+    getBusinessProfileReadiness({
+      type: "business",
+      logoUrl: "https://cdn.example.com/logo.png",
+      description: "Emergency response services for northern communities.",
+      contactEmail: "owner-sign-in@example.com",
+    } as Record<string, unknown>).missingFields,
+    ["contact"],
   );
 });
 

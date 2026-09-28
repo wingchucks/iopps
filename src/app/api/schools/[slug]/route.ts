@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildPublicJobRouteSlugMap, isPublicJobVisible } from "@/lib/public-jobs";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
+import { toPublicOrganization } from "@/lib/public-organization";
 import { displayAmount } from "@/lib/utils";
 import {
   deriveOwnerType,
@@ -182,8 +183,10 @@ export async function GET(
     );
 
     return NextResponse.json({
+      // Same public projection as organization profiles: no account contact,
+      // billing or internal fields.
       org: {
-        ...school,
+        ...toPublicOrganization(school),
         ownerType: "school",
       },
       programs,
