@@ -131,7 +131,7 @@ try {
  await page.goto(server.base+'/org/dashboard/jobs/new');await page.getByPlaceholder('e.g. Senior Software Developer').fill('Fictional QA Community Coordinator');await page.locator('select').filter({has:page.getByRole('option',{name:'Administration',exact:true})}).selectOption('Administration');await page.getByLabel('Province / territory',{exact:false}).selectOption('SK');
  await page.getByRole('button',{name:'Continue →',exact:true}).click();await page.getByPlaceholder('Describe the role, team, and what a typical day looks like...').fill('A fictional local-only role for employer acceptance. No real applications are accepted.');await page.getByRole('button',{name:'Continue →',exact:true}).click();
  await shot('job-review');
- await page.getByRole('button',{name:/Save.*Draft/i}).click();
+ await page.getByRole('button',{name:'Save as Draft',exact:true}).click();
  await expect.poll(async()=>{const jobs=await db.collection('jobs').where('employerId','==',owner.uid).get();return jobs.size;}).toBe(1);
  const jobDoc=(await db.collection('jobs').where('employerId','==',owner.uid).get()).docs[0];remember(jobDoc.ref);remember(db.doc('posts/'+jobDoc.id));assert.equal(jobDoc.data().status,'draft');await record('desktop-draft-job-persisted',{jobId:jobDoc.id});
  await db.doc('employers/'+owner.uid).update({standardPostCredits:1});
