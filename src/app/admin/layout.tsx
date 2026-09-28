@@ -228,6 +228,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Users", href: "/admin/users", icon: "\u2603" },
       { label: "Businesses & Schools", href: "/admin/employers", icon: "\u2616" },
       { label: "Business listing reviews", href: "/admin/business-reviews", icon: "✓", adminOnly: true },
+      { label: "First listing reviews", href: "/admin/opportunity-reviews", icon: "✓", adminOnly: true },
       { label: "Verification", href: "/admin/verification", icon: "\u2713" },
     ],
   },

@@ -7,11 +7,24 @@ import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
 import HiringDetailsSummary from "@/components/employer/HiringDetailsSummary";
 import { normalizeHiringDetails, type HiringDetails } from "@/lib/job-hiring-details";
 import { confirmSavedJob, type JobSaveConfirmation } from "@/lib/job-save-confirmation";
-import { useState, useEffect } from "react";
+import { createContext, useContext, useId, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OrgRoute from "@/components/OrgRoute";
 import AppShell from "@/components/AppShell";
 import FeaturedJobControl, { type FeaturedJobSummary } from "@/components/FeaturedJobControl";
+import { describePublishing, type PublishingSummary } from "@/lib/job-publishing-summary";
+import {
+  JOB_WIZARD_RESUME_PARAM,
+  clearJobWizardSnapshot,
+  draftPurchaseHref,
+  isDraftId,
+  jobWizardResumePath,
+  readJobWizardSnapshot,
+  saveJobWizardSnapshot,
+  savedDraftEditPath,
+  sessionStorageOrNull,
+  type DraftPurchase,
+} from "@/lib/job-wizard-resume";
 import { useAuth } from "@/lib/auth-context";
 import type { MemberProfile } from "@/lib/firestore/members";
 import type { Organization } from "@/lib/firestore/organizations";
@@ -119,6 +132,48 @@ function formatSalary(min: string, max: string, period: string): string {
   return `Up to ${fmt(hi)} / ${period}`;
 }
 
+/** Request body shared by create (POST) and update of a saved draft (PUT). */
+function buildJobRequest(form: FormState, status: "active" | "draft", slug?: string) {
+  return {
+    title: form.title,
+    ...(slug ? { slug } : {}),
+    department: form.department || undefined,
+    category: form.category,
+    employmentType: form.employmentType,
+    workLocation: form.workLocation,
+    location: form.location,
+    salary: formatSalary(form.salaryMin, form.salaryMax, form.salaryPeriod),
+    salaryRange: {
+      min: form.salaryMin ? Number(form.salaryMin) : undefined,
+      max: form.salaryMax ? Number(form.salaryMax) : undefined,
+      period: form.salaryPeriod,
+      currency: "CAD",
+    },
+    closingDate: form.closingDate || undefined,
+    externalApplyUrl: form.externalApplyUrl || undefined,
+    description: form.description,
+    responsibilities: form.responsibilities,
+    qualifications: form.qualifications,
+    benefits: form.benefits,
+    indigenousPreference: form.indigenousPreferenceLevel !== "" && form.indigenousPreferenceLevel !== "open",
+    indigenousPreferenceLevel: form.indigenousPreferenceLevel || undefined,
+    communityTags: form.communityTags,
+    hiringDetails: normalizeHiringDetails(form.hiringDetails),
+    willTrain: form.hiringDetails.willTrain,
+    driversLicense: form.hiringDetails.driversLicense,
+    featured: form.featured,
+    durationDays: form.featured ? Number(form.durationDays) : 30,
+    requiresResume: form.requiresResume,
+    requiresCoverLetter: form.requiresCoverLetter,
+    requiresReferences: form.requiresReferences,
+    status,
+  };
+}
+
+function newJobSlug(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now().toString(36);
+}
+
 /* ------------------------------------------------------------------ */
 /*  Micro-components (local to wizard)                                 */
 /* ------------------------------------------------------------------ */
@@ -214,6 +269,22 @@ function SectionHeader({
   );
 }
 
+// The control inside a FormField takes its label, required state, hint and error from here,
+// so assistive technology announces them together.
+const FieldContext = createContext<{ id?: string; describedBy?: string; invalid?: boolean; required?: boolean }>({});
+
+const fieldLabelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: 13,
+  fontWeight: 600,
+  marginBottom: 6,
+  color: "var(--text)",
+};
+
+function RequiredMark() {
+  return <><span aria-hidden="true" style={{ color: "var(--teal)", marginLeft: 3 }}>*</span><span className="sr-only"> (required)</span></>;
+}
+
 function FormField({
   label,
   required,
@@ -227,35 +298,32 @@ function FormField({
   error?: string;
   children: React.ReactNode;
 }) {
+  const id = useId();
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
   return (
     <div style={{ marginBottom: 16 }}>
-      <label
-        style={{
-          display: "block",
-          fontSize: 13,
-          fontWeight: 600,
-          marginBottom: 6,
-          color: "var(--text)",
-        }}
-      >
+      <label htmlFor={id} style={fieldLabelStyle}>
         {label}
-        {required && (
-          <span style={{ color: "var(--teal)", marginLeft: 3 }}>*</span>
-        )}
+        {required && <RequiredMark />}
       </label>
-      {children}
+      <FieldContext.Provider value={{ id, describedBy, invalid: Boolean(error), required }}>{children}</FieldContext.Provider>
       {hint && !error && (
-        <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+        <p id={`${id}-hint`} style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
           {hint}
         </p>
       )}
       {error && (
-        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#DC2626" }}>
+        <p id={`${id}-error`} style={{ margin: "4px 0 0", fontSize: 12, color: "#DC2626" }}>
           {error}
         </p>
       )}
     </div>
   );
+}
+
+function useFieldProps() {
+  const field = useContext(FieldContext);
+  return { id: field.id, "aria-describedby": field.describedBy, "aria-invalid": field.invalid || undefined, "aria-required": field.required || undefined };
 }
 
 const inputStyle: React.CSSProperties = {
@@ -281,8 +349,10 @@ function TextInput({
   placeholder?: string;
   type?: string;
 }) {
+  const field = useFieldProps();
   return (
     <input
+      {...field}
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -303,8 +373,10 @@ function TextArea({
   placeholder?: string;
   rows?: number;
 }) {
+  const field = useFieldProps();
   return (
     <textarea
+      {...field}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
@@ -318,14 +390,20 @@ function Select({
   value,
   onChange,
   children,
+  label,
 }: {
   value: string;
   onChange: (v: string) => void;
   children: React.ReactNode;
+  /** Accessible name when the select is not inside a FormField. */
+  label?: string;
 }) {
+  const field = useFieldProps();
   return (
     <div style={{ position: "relative" }}>
       <select
+        {...field}
+        aria-label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         style={{
@@ -452,6 +530,7 @@ function ListBuilder({
   placeholder?: string;
 }) {
   const [draft, setDraft] = useState("");
+  const id = useId();
 
   const add = () => {
     const val = draft.trim();
@@ -461,18 +540,11 @@ function ListBuilder({
   };
 
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label
-        style={{
-          display: "block",
-          fontSize: 13,
-          fontWeight: 600,
-          marginBottom: 6,
-          color: "var(--text)",
-        }}
-      >
+    <div style={{ marginBottom: 16 }} role="group" aria-labelledby={`${id}-label`}>
+      <label id={`${id}-label`} htmlFor={id} style={fieldLabelStyle}>
         {label}
       </label>
+      <p id={`${id}-help`} className="sr-only">Type one item and press Enter or choose Add. {items.length} added so far.</p>
       {items.length > 0 && (
         <ul
           style={{
@@ -522,6 +594,8 @@ function ListBuilder({
       )}
       <div style={{ display: "flex", gap: 8 }}>
         <input
+          id={id}
+          aria-describedby={`${id}-help`}
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -549,7 +623,7 @@ function ListBuilder({
             whiteSpace: "nowrap",
           }}
         >
-          + Add
+          + Add<span className="sr-only"> to {label}</span>
         </button>
       </div>
     </div>
@@ -614,21 +688,47 @@ export default function NewJobWizardPage() {
   const [featuredSummary, setFeaturedSummary] = useState<FeaturedJobSummary | null>(null);
   const [submitError, setSubmitError] = useState("");
   const [confirmation, setConfirmation] = useState<JobSaveConfirmation | null>(null);
+  // Server draft this wizard saved (before checkout); later saves update it instead of creating a new job.
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [publishingSummary, setPublishingSummary] = useState<PublishingSummary | null>(null);
+  const [resumeNotice, setResumeNotice] = useState("");
+  const [checkingSummary, setCheckingSummary] = useState(false);
 
-  // Load org & profile
+  const loadDashboard = async () => {
+    if (!user) return null;
+    const idToken = await user.getIdToken();
+    const res = await fetch("/api/employer/dashboard", {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    setFeaturedSummary((data.featuredSummary as FeaturedJobSummary | null) ?? null);
+    setPublishingSummary((data.publishingSummary as PublishingSummary | null) ?? null);
+    return data;
+  };
+
+  // Load org & profile, then resume a draft saved before checkout (Back, cancel or payment return).
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const idToken = await user.getIdToken();
-        const res = await fetch("/api/employer/dashboard", {
-          headers: { Authorization: `Bearer ${idToken}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
+        const data = await loadDashboard();
+        if (data) {
           setProfile(data.profile as MemberProfile);
           setOrg(data.org as Organization);
-          setFeaturedSummary((data.featuredSummary as FeaturedJobSummary | null) ?? null);
+          const resumeId = new URLSearchParams(window.location.search).get(JOB_WIZARD_RESUME_PARAM);
+          if (isDraftId(resumeId)) {
+            const snapshot = readJobWizardSnapshot<FormState>(sessionStorageOrNull(), user.uid, resumeId);
+            if (!snapshot) {
+              // Another tab or device: the saved server draft is the source of truth.
+              router.replace(savedDraftEditPath(resumeId));
+              return;
+            }
+            setForm({ ...emptyForm, ...snapshot.form, hiringDetails: normalizeHiringDetails(snapshot.form.hiringDetails ?? {}) });
+            setStep(snapshot.step);
+            setDraftId(resumeId);
+            setResumeNotice("Your job is saved as a draft. You're back where you left off.");
+          }
           setLoading(false);
           return;
         }
@@ -638,7 +738,18 @@ export default function NewJobWizardPage() {
       }
       setLoading(false);
     })();
+    // loadDashboard only depends on user; running once per signed-in user is intended.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const checkSummaryAgain = async () => {
+    setCheckingSummary(true);
+    try {
+      await loadDashboard();
+    } finally {
+      setCheckingSummary(false);
+    }
+  };
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -650,6 +761,7 @@ export default function NewJobWizardPage() {
     if (!form.title.trim()) e.title = "Title is required";
     if (!form.category) e.category = "Category is required";
     if (!form.locationProvince) e.location = "Select a province, territory, or multiple-province option";
+    if (form.salaryMin && form.salaryMax && Number(form.salaryMin) > Number(form.salaryMax)) e.salary = "The minimum salary can’t be more than the maximum.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -662,8 +774,11 @@ export default function NewJobWizardPage() {
   };
 
   const goNext = () => {
-    if (step === 0 && !validateStep0()) return;
-    if (step === 1 && !validateStep1()) return;
+    if ((step === 0 && !validateStep0()) || (step === 1 && !validateStep1())) {
+      // Take keyboard and screen-reader users straight to the first field that needs attention.
+      window.requestAnimationFrame(() => document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
+      return;
+    }
     setErrors({});
     setStep((s) => (typeof s === "number" ? ((s + 1) as WizardStep) : s));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -683,59 +798,8 @@ export default function NewJobWizardPage() {
     setSubmitError("");
     setSaving(true);
     try {
-      const salary = formatSalary(form.salaryMin, form.salaryMax, form.salaryPeriod);
-      const slug =
-        form.title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "") +
-        "-" +
-        Date.now().toString(36);
-
       const idToken = await user.getIdToken();
-      const response = await fetch("/api/employer/jobs", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: form.title,
-          slug,
-          department: form.department || undefined,
-          category: form.category,
-        employmentType: form.employmentType,
-        workLocation: form.workLocation,
-        location: form.location,
-        salary,
-        salaryRange: {
-          min: form.salaryMin ? Number(form.salaryMin) : undefined,
-          max: form.salaryMax ? Number(form.salaryMax) : undefined,
-          period: form.salaryPeriod,
-          currency: "CAD",
-        },
-        closingDate: form.closingDate || undefined,
-        externalApplyUrl: form.externalApplyUrl || undefined,
-        description: form.description,
-        responsibilities: form.responsibilities,
-        qualifications: form.qualifications,
-        benefits: form.benefits,
-        indigenousPreference: form.indigenousPreferenceLevel !== "" && form.indigenousPreferenceLevel !== "open",
-        indigenousPreferenceLevel: form.indigenousPreferenceLevel || undefined,
-        communityTags: form.communityTags,
-        hiringDetails: normalizeHiringDetails(form.hiringDetails),
-        willTrain: form.hiringDetails.willTrain,
-        driversLicense: form.hiringDetails.driversLicense,
-        featured: form.featured,
-        durationDays: form.featured ? Number(form.durationDays) : 30,
-        requiresResume: form.requiresResume,
-          requiresCoverLetter: form.requiresCoverLetter,
-          requiresReferences: form.requiresReferences,
-          status,
-        }),
-      });
-
-      const result = await response.json().catch(() => ({}));
+      const { response, result } = await sendJob(status, idToken);
       if (!response.ok) {
         setSubmitError(
           typeof result.error === "string" ? result.error : "Failed to create job. Please try again."
@@ -750,7 +814,11 @@ export default function NewJobWizardPage() {
         setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
       }
 
-      setConfirmation(await confirmSavedJob(result.jobId, (url) => fetch(url, { headers: { Authorization: `Bearer ${idToken}` } })));
+      clearJobWizardSnapshot(sessionStorageOrNull(), user.uid);
+      window.history.replaceState(null, "", "/org/dashboard/jobs/new");
+      setResumeNotice("");
+      const savedJobId = typeof result.jobId === "string" ? result.jobId : draftId ?? "";
+      setConfirmation(await confirmSavedJob(savedJobId, (url) => fetch(url, { headers: { Authorization: `Bearer ${idToken}` } })));
       setStep("success");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -760,6 +828,55 @@ export default function NewJobWizardPage() {
       setSaving(false);
     }
   };
+
+  /** Creates the job, or updates the draft this wizard already saved. */
+  const sendJob = async (status: "active" | "draft", idToken: string) => {
+    const response = await fetch(draftId ? `/api/employer/jobs/${encodeURIComponent(draftId)}` : "/api/employer/jobs", {
+      method: draftId ? "PUT" : "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(buildJobRequest(form, status, draftId ? undefined : newJobSlug(form.title))),
+    });
+    const result = await response.json().catch(() => ({}));
+    return { response, result: result as Record<string, unknown> };
+  };
+
+  /** Saves the job as a draft before leaving for checkout or plans, so every return path resumes it. */
+  const leaveForPurchase = async (purchase: DraftPurchase) => {
+    if (!profile?.orgId || !user) { setSubmitError("Your organization session isn’t ready. Please reload and try again."); return; }
+    if (!form.title.trim()) {
+      setStep(0);
+      setErrors({ title: "Add a job title so your draft can be saved before checkout" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (!isValidClosingDate(form.closingDate)) { setSubmitError("Enter a valid closing date or clear it before checkout."); return; }
+    setSubmitError("");
+    setSaving(true);
+    try {
+      const idToken = await user.getIdToken();
+      const { response, result } = await sendJob("draft", idToken);
+      const savedId = draftId ?? result.jobId;
+      if (!response.ok || !isDraftId(savedId)) {
+        setSubmitError(typeof result.error === "string" ? `${result.error} Checkout was not opened.` : "Your draft couldn’t be saved, so checkout was not opened. Please try again.");
+        return;
+      }
+      setDraftId(savedId);
+      saveJobWizardSnapshot(sessionStorageOrNull(), user.uid, { draftId: savedId, step: typeof step === "number" ? step : 2, form, savedAt: Date.now() });
+      // Browser Back from checkout now lands on this saved draft instead of an empty wizard.
+      window.history.replaceState(null, "", jobWizardResumePath(savedId));
+      router.push(draftPurchaseHref(purchase, savedId));
+    } catch (err) {
+      console.error("Failed to save draft before checkout:", err);
+      setSubmitError("Your draft couldn’t be saved, so checkout was not opened. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const publishing = describePublishing(publishingSummary, form.featured);
 
   /* ---- Render ---- */
   const cardStyle: React.CSSProperties = {
@@ -865,6 +982,9 @@ export default function NewJobWizardPage() {
                       setForm(emptyForm);
                       setStep(0);
                       setErrors({});
+                      // A new posting must never update the job just saved.
+                      setDraftId(null);
+                      void loadDashboard().catch(() => {});
                     }}
                     style={{
                       padding: "12px 24px",
@@ -942,6 +1062,24 @@ export default function NewJobWizardPage() {
 
                 <ProgressBar step={typeof step === "number" ? step : 0} />
 
+                {resumeNotice && (
+                  <div
+                    role="status"
+                    style={{
+                      marginBottom: 18,
+                      padding: "12px 14px",
+                      borderRadius: 12,
+                      border: "1px solid rgba(13,148,136,.3)",
+                      background: "rgba(13,148,136,.08)",
+                      color: "var(--text)",
+                      fontSize: 13,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {resumeNotice}
+                  </div>
+                )}
+
                 {/* ============ STEP 0: JOB DETAILS ============ */}
                 {step === 0 && (
                   <div style={cardStyle}>
@@ -1014,36 +1152,38 @@ export default function NewJobWizardPage() {
                     {errors.location && <p role="alert" className="text-red-500 text-sm mb-4">{errors.location}</p>}
 
                     {/* Salary */}
-                    <div style={{ marginBottom: 16 }}>
-                      <label
-                        style={{
-                          display: "block",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          marginBottom: 6,
-                          color: "var(--text)",
-                        }}
-                      >
+                    <fieldset style={{ marginBottom: 16, border: "none", padding: 0, minWidth: 0 }} aria-describedby="salary-range-help">
+                      <legend style={{ ...fieldLabelStyle, padding: 0 }}>
                         Salary Range
-                      </label>
+                      </legend>
+                      <p id="salary-range-help" style={{ margin: "0 0 6px", fontSize: 12, color: "var(--text-muted)" }}>Optional. Amounts in Canadian dollars (CAD) for the pay period you choose.</p>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 140px", gap: 8 }}>
                         <input
                           type="number"
+                          min={0}
                           value={form.salaryMin}
                           onChange={(e) => set("salaryMin", e.target.value)}
                           placeholder="Min"
+                          aria-label="Minimum salary (CAD)"
+                          aria-invalid={errors.salary ? true : undefined}
+                          aria-describedby={errors.salary ? "salary-range-error" : undefined}
                           style={inputStyle}
                         />
                         <input
                           type="number"
+                          min={0}
                           value={form.salaryMax}
                           onChange={(e) => set("salaryMax", e.target.value)}
                           placeholder="Max"
+                          aria-label="Maximum salary (CAD)"
+                          aria-invalid={errors.salary ? true : undefined}
+                          aria-describedby={errors.salary ? "salary-range-error" : undefined}
                           style={inputStyle}
                         />
                         <Select
                           value={form.salaryPeriod}
                           onChange={(v) => set("salaryPeriod", v)}
+                          label="Pay period"
                         >
                           <option>Annual</option>
                           <option>Monthly</option>
@@ -1051,7 +1191,8 @@ export default function NewJobWizardPage() {
                           <option>Contract</option>
                         </Select>
                       </div>
-                    </div>
+                      {errors.salary && <p id="salary-range-error" role="alert" style={{ margin: "4px 0 0", fontSize: 12, color: "#DC2626" }}>{errors.salary}</p>}
+                    </fieldset>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                       <ClosingDateField value={form.closingDate} onChange={v => set("closingDate", v)} />
@@ -1168,6 +1309,7 @@ export default function NewJobWizardPage() {
                           summary={featuredSummary}
                           checked={form.featured}
                           onChange={(value) => set("featured", value)}
+                          onPurchase={(purchase) => void leaveForPurchase(purchase)}
                         />
                         {form.featured ? <label htmlFor="featured-duration">Featured listing duration (days, up to 45)
                           <input id="featured-duration" type="number" min={1} max={45} step={1} value={form.durationDays} onChange={event => set("durationDays", event.target.value)} className="w-full rounded-xl border p-3" />
@@ -1481,9 +1623,44 @@ export default function NewJobWizardPage() {
                   </div>
                 )}
 
+                {/* ============ PUBLISHING SUMMARY ============ */}
+                {step === 2 && publishing && (
+                  <section aria-label="Publishing summary" style={{ ...cardStyle, marginTop: 20 }}>
+                    <SectionHeader icon={publishing.covered ? "💳" : "🧾"} title="What happens when you publish" />
+                    <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
+                      {publishing.headline}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>
+                      {publishing.detail}
+                      {publishing.covered ? " Paid jobs go live on the IOPPS job board right away." : ""}
+                    </p>
+                    {!publishing.covered && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 14 }}>
+                        {publishing.purchasePlan && (
+                          <button type="button" className="brand-button" disabled={saving} onClick={() => void leaveForPurchase(publishing.purchasePlan!)}
+                            style={{ padding: "10px 16px", borderRadius: 10, border: "none", background: "var(--button-gradient)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: saving ? "wait" : "pointer" }}>
+                            {saving ? "Saving draft..." : publishing.purchasePlan === "featured-post" ? "Save draft & buy featured post" : "Save draft & buy standard post"}
+                          </button>
+                        )}
+                        {publishing.purchasePlan && (
+                          <button type="button" className="brand-button" disabled={saving} onClick={() => void leaveForPurchase("plans")}
+                            style={{ padding: "10px 16px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", fontSize: 14, fontWeight: 600, cursor: saving ? "wait" : "pointer" }}>
+                            See annual plans
+                          </button>
+                        )}
+                        <button type="button" disabled={checkingSummary} onClick={() => void checkSummaryAgain()}
+                          style={{ padding: "10px 16px", borderRadius: 10, border: "1px solid var(--border)", background: "transparent", color: "var(--text)", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                          {checkingSummary ? "Checking..." : "I just paid: check again"}
+                        </button>
+                      </div>
+                    )}
+                  </section>
+                )}
+
                 {/* ============ NAV BUTTONS ============ */}
                 {submitError && (
                   <div
+                    role="alert"
                     style={{
                       marginTop: 18,
                       padding: "12px 14px",
@@ -1543,23 +1720,26 @@ export default function NewJobWizardPage() {
                       >
                         {saving ? "Saving..." : "Save as Draft"}
                       </button>
-                      <button className="brand-button"
-                        onClick={() => handleSave("active")}
-                        disabled={saving}
-                        style={{
-                          padding: "12px 24px",
-                          borderRadius: 10,
-                          border: "none",
-                          background: "var(--button-gradient)",
-                          color: "#fff",
-                          fontSize: 14,
-                          fontWeight: 600,
-                          cursor: saving ? "default" : "pointer",
-                          opacity: saving ? 0.5 : 1,
-                        }}
-                      >
-                        {saving ? "Publishing..." : "Publish Job"}
-                      </button>
+                      {/* Without a credit or plan allowance, the summary above offers purchase instead. */}
+                      {(!publishing || publishing.covered) && (
+                        <button className="brand-button"
+                          onClick={() => handleSave("active")}
+                          disabled={saving}
+                          style={{
+                            padding: "12px 24px",
+                            borderRadius: 10,
+                            border: "none",
+                            background: "var(--button-gradient)",
+                            color: "#fff",
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: saving ? "default" : "pointer",
+                            opacity: saving ? 0.5 : 1,
+                          }}
+                        >
+                          {saving ? "Publishing..." : "Publish Job"}
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <button className="brand-button"

@@ -14,6 +14,7 @@ import ProvinceSelect from "@/components/ProvinceSelect";
 import { matchesCanadianLocation } from "@/lib/canadian-provinces";
 import { displayLocation, ensureTagsArray } from "@/lib/utils";
 import { rememberDirectoryPosition, restoreDirectoryScroll } from "@/lib/directory-return";
+import { descriptionSnippet } from "@/lib/description-snippet";
 
 export default function BusinessesPage() {
   return (
@@ -229,7 +230,8 @@ function BusinessesPageContent() {
 function BusinessCard({ org }: { org: Organization }) {
   const location = displayLocation(org.location);
   const isPremium = org.partnerTier === "premium";
-  const summary = org.tagline || org.description;
+  // The whole card is one link, so its text is also what screen readers announce: keep it short.
+  const summary = descriptionSnippet(String(org.tagline || org.description || "").replace(/\s+/g, " ").trim(), 200);
   const trustSignals = [
     org.verified ? "Verified" : "",
     hasOrganizationIndigenousIdentity(org) ? "Indigenous-owned or led" : "",
