@@ -109,6 +109,8 @@ export async function POST(req: NextRequest) {
       name,
       contactName: userData?.displayName || name,
       contactEmail: email,
+      // Private account contact; the public email is opt-in and starts blank.
+      publicContactEmail: "",
       slug,
       type,
       website: website || "",
@@ -132,6 +134,7 @@ export async function POST(req: NextRequest) {
       email,
       contactName: userData?.displayName || name,
       contactEmail: email,
+      publicContactEmail: "",
       orgName: name,
       slug,
       type,

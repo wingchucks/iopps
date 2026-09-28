@@ -8,6 +8,7 @@ import ts from 'typescript';
 import * as expiration from '../src/lib/server/job-expiration.ts';
 import * as visibility from '../src/lib/public-job-merge.ts';
 import * as ownership from '../src/lib/server/public-ownership.ts';
+import * as scholarshipProvider from '../src/lib/server/scholarship-provider.ts';
 import * as freshness from '../src/lib/listing-freshness.ts';
 import * as publicJobs from '../src/lib/public-jobs.ts';
 import * as jobSlugs from '../src/lib/server/job-slugs.ts';
@@ -21,6 +22,8 @@ import * as opportunityLookups from '../src/lib/server/opportunity-lookups.ts';
 import * as jobDocuments from '../src/lib/server/public-job-documents.ts';
 import * as editorialImportGuard from '../src/lib/server/editorial-import-guard.ts';
 import * as cleanupGuards from '../src/lib/server/job-cleanup-guards.ts';
+import * as listingLifecycle from '../src/lib/listing-lifecycle.ts';
+import * as jobRecordLookup from '../src/lib/server/job-record-lookup.ts';
 const nativeRequire = createRequire(import.meta.url);
 function jobFixture(jobs: Array<Record<string, any>>, posts: Array<Record<string, any>> = []) {
   const records: Record<string, Array<Record<string, any>>> = { jobs, posts };
@@ -48,6 +51,9 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
     '@/lib/server/job-expiration': expiration,
     '@/lib/server/editorial-import-guard': editorialImportGuard,
     '@/lib/server/job-cleanup-guards': cleanupGuards,
+    '@/lib/listing-lifecycle': listingLifecycle,
+    '@/lib/server/job-record-lookup': jobRecordLookup,
+    '@/lib/server/job-slugs': jobSlugs,
     '@/lib/public-job-merge': visibility,
     '@/lib/listing-freshness': freshness,
     '@/lib/job-metadata': metadata,
@@ -57,6 +63,7 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
     '@/lib/event-directory-dedupe': eventDedupe,
     '@/lib/opportunity-posting': opportunityPosting,
     './opportunity-lookups': opportunityLookups,
+    '@/lib/server/scholarship-provider': scholarshipProvider,
     './public-job-documents': jobDocuments,
     '@/lib/server/public-job-documents': jobDocuments,
     ...mocks,
@@ -83,7 +90,10 @@ test('job detail rechecks fresh full data before hydration or any write', async 
     '@/lib/utils':{normalizeApplyUrlFields:(r:unknown)=>r},
   });
   const response = await route.GET(new Request('https://example.test/api/jobs/past'), {params:Promise.resolve({id:'past'})});
-  assert.equal(response.status,404);
+  // Agreed 2026-09-25: an expired job keeps its page, marked closed and not indexed.
+  assert.equal(response.status,200);
+  assert.equal(response.headers.get('x-robots-tag'),'noindex');
+  assert.deepEqual((await response.json()).closed,{closedOn:'2026-08-28T12:00:00.000Z'});
   assert.equal(writes,0);
   assert.equal(hydrations,0);
 });

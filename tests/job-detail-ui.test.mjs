@@ -32,7 +32,7 @@ function compile(source) {
 export function renderDescription(job) {
   const jsx = page.split('{/* Description */}')[1].split('<HiringDetailsSummary')[0];
   const imports = page.split('\n').filter(line => line.includes('from "@/components/jobs/')).join('\n');
-  const Component = compile(`${imports}\nexport default function Fixture({job}) { const normalizedApplicationHref=null; const shouldUseInternalApply=true; const applicationLinkProps={}; return <>${jsx}</>; }`).default;
+  const Component = compile(`${imports}\nexport default function Fixture({job}) { const closed=null; const normalizedApplicationHref=null; const shouldUseInternalApply=true; const applicationLinkProps={}; return <>${jsx}</>; }`).default;
   return renderToString(React.createElement(Component, { job }));
 }
 function inspect(html) {
@@ -46,7 +46,7 @@ function renderMetadata(job, salaryLabel = '$25', closingDate = 'Sep 30, 2026') 
   const jsx = page.slice(start, page.indexOf('</div>', start) + 6);
   const imports = page.split('\n').filter(line => /from "@\/lib\/(job-detail-dates|job-import-labels)"/.test(line)).join('\n');
   const labels = page.slice(page.indexOf('  const imported = jobImportLabels('), page.indexOf('  const locationLabel ='));
-  const C = compile(`${imports}\nexport default function Fixture({job, salaryLabel, closingDate}) { const locationLabel='Saskatoon, SK'; ${labels} return (${jsx}); }`).default;
+  const C = compile(`${imports}\nexport default function Fixture({job, salaryLabel, closingDate}) { const closed=null; const locationLabel='Saskatoon, SK'; ${labels} return (${jsx}); }`).default;
   return renderToString(React.createElement(C, { job, salaryLabel, closingDate }));
 }
 test('baseline metadata JSX renders literal spaces in SSR', () => {
@@ -57,14 +57,14 @@ test('baseline metadata JSX renders literal spaces in SSR', () => {
   assert.ok(text.includes('📅 Closes: Sep 30, 2026'));
   assert.ok(text.includes('Originally posted: 2026-09-17'));
   assert.ok(text.includes('Added to IOPPS: 2026-09-19'));
-  assert.doesNotMatch(text, /not imported|Check original posting/);
+  assert.doesNotMatch(text, /see original posting|Check original posting/);
   metadataHtml = html;
   console.log('Metadata SSR:', html);
 });
 test('metadata JSX uses real import labels for missing pay and closing details', () => {
   const { text, tags } = inspect(renderMetadata({ source: 'feed', sourceMetadata: { salary: 'not-imported', closingDate: 'not-imported' }, externalUrl: 'https://source.example/job' }, '', ''));
-  assert.ok(text.includes('Pay not imported'));
-  assert.ok(text.includes('Closing details not imported'));
+  assert.ok(text.includes('Pay: see original posting'));
+  assert.ok(text.includes('Closing date: see original posting'));
   assert.ok(text.includes('Check original posting (opens in a new tab)'));
   const link = tags.find(tag => tag.name === 'a');
   assert.equal(link.attrs.href, 'https://source.example/job');
