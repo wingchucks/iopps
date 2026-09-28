@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { readPaidFeaturedSummary } from "@/lib/server/paid-job-publication-reader";
+import { readPaidPublishingSummaries } from "@/lib/server/paid-job-publication-reader";
 import { firestorePublicationReader } from "@/lib/server/paid-job-publication-firestore";
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 import { normalizeOrganizationRecord } from "@/lib/organization-profile";
@@ -200,7 +200,7 @@ export async function GET(req: NextRequest) {
     }
 
     const summaryNow = new Date();
-    const featuredSummary = await adminDb.runTransaction(tx => readPaidFeaturedSummary(firestorePublicationReader(adminDb,tx), {employerId,organizationId:context.orgId,now:summaryNow}));
+    const { featuredSummary, publishingSummary } = await adminDb.runTransaction(tx => readPaidPublishingSummaries(firestorePublicationReader(adminDb,tx), {employerId,organizationId:context.orgId,now:summaryNow}));
 
     return NextResponse.json({
       org: orgData,
@@ -210,6 +210,7 @@ export async function GET(req: NextRequest) {
       schoolPrograms,
       studentInquiries,
       featuredSummary,
+      publishingSummary,
       profile: {
         uid,
         email: userData.email,

@@ -676,6 +676,7 @@ export default function JobEditPage() {
                     checked={featured}
                     onChange={setFeatured}
                     disabled={isImported}
+                    returnTo={`/org/dashboard/jobs/${encodeURIComponent(postId)}/edit`}
                   />
                   {featured && !post?.publication && post?.status === 'draft' ? <label htmlFor="featured-duration">Featured listing duration (days, up to 45)
                     <input id="featured-duration" type="number" min={1} max={45} step={1} value={durationDays} onChange={event => setDurationDays(event.target.value)} disabled={isImported} className="w-full rounded-xl border p-3" />
