@@ -398,7 +398,7 @@ try {
   await a.getByPlaceholder('Describe the role, team, and what a typical day looks like...').fill('Fictional barista role used only for isolated website QA. Serve coffee and bannock.');
   await a.getByRole('button',{name:'Continue →',exact:true}).click();await expect(a.getByText('This is how candidates will see your posting',{exact:true})).toBeVisible();
   await expect(a.getByText(state.jobTitle).first()).toBeVisible();await shot(a,'JOB-01-preview');
-  await a.getByRole('button',{name:/Save.*Draft/i}).click();
+  await a.getByRole('button',{name:'Save as Draft',exact:true}).click();
   await expect.poll(async()=>(await db.collection('jobs').where('employerId','==',state.aUid).where('title','==',state.jobTitle).get()).size,{timeout:30000}).toBe(1);
   const job=(await db.collection('jobs').where('employerId','==',state.aUid).where('title','==',state.jobTitle).get()).docs[0];state.jobId=job.id;
   assert.equal(job.data().status,'draft');assert.equal((await api('GET','/api/jobs/'+state.jobId)).status,404);
