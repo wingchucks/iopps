@@ -17,6 +17,17 @@ interface FeaturedJobControlProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  /** Called instead of navigating, so an unsaved job can be saved before checkout. */
+  onPurchase?: (purchase: "featured-post" | "plans") => void;
+  /** Local page to return to after checkout or plan selection. */
+  returnTo?: string;
+}
+
+function purchaseHref(purchase: "featured-post" | "plans", returnTo?: string): string {
+  const params = new URLSearchParams(purchase === "plans" ? {} : { plan: purchase });
+  if (returnTo) params.set("redirect", returnTo);
+  const query = params.toString();
+  return `${purchase === "plans" ? "/org/plans" : "/org/checkout"}${query ? `?${query}` : ""}`;
 }
 
 const PLAN_LABELS: Record<string, string> = {
@@ -31,6 +42,8 @@ export default function FeaturedJobControl({
   checked,
   onChange,
   disabled = false,
+  onPurchase,
+  returnTo,
 }: FeaturedJobControlProps) {
   const planLabel = PLAN_LABELS[summary?.plan || "free"] || "Free";
   const hasCapacity = Boolean(summary?.canFeatureJobs);
@@ -171,45 +184,76 @@ export default function FeaturedJobControl({
               }}
             >
               {summary.plan !== "premium" && summary.plan !== "school" && (
-                <Link className="brand-button"
-                  href="/org/plans"
+                <PurchaseAction
+                  purchase="plans"
+                  onPurchase={onPurchase}
+                  returnTo={returnTo}
+                  className="brand-button"
                   style={{
-                    textDecoration: "none",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "9px 14px",
-                    borderRadius: 10,
                     background: "var(--button-gradient-soft)",
                     color: "var(--button-gradient-soft-text)",
-                    fontSize: 13,
-                    fontWeight: 700,
                   }}
                 >
                   Upgrade plan
-                </Link>
+                </PurchaseAction>
               )}
-              <Link
-                href="/org/checkout?plan=featured-post"
+              <PurchaseAction
+                purchase="featured-post"
+                onPurchase={onPurchase}
+                returnTo={returnTo}
                 style={{
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "9px 14px",
-                  borderRadius: 10,
                   background: "rgba(245,158,11,.12)",
                   color: "#F59E0B",
-                  fontSize: 13,
-                  fontWeight: 700,
                 }}
               >
                 Buy featured credit
-              </Link>
+              </PurchaseAction>
             </div>
           )}
         </>
       )}
     </div>
+  );
+}
+
+const purchaseActionStyle: React.CSSProperties = {
+  textDecoration: "none",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "9px 14px",
+  borderRadius: 10,
+  border: "none",
+  cursor: "pointer",
+  fontSize: 13,
+  fontWeight: 700,
+};
+
+function PurchaseAction({
+  purchase,
+  onPurchase,
+  returnTo,
+  className,
+  style,
+  children,
+}: {
+  purchase: "featured-post" | "plans";
+  onPurchase?: (purchase: "featured-post" | "plans") => void;
+  returnTo?: string;
+  className?: string;
+  style: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  if (onPurchase) {
+    return (
+      <button type="button" className={className} onClick={() => onPurchase(purchase)} style={{ ...purchaseActionStyle, ...style }}>
+        {children}
+      </button>
+    );
+  }
+  return (
+    <Link className={className} href={purchaseHref(purchase, returnTo)} style={{ ...purchaseActionStyle, ...style }}>
+      {children}
+    </Link>
   );
 }

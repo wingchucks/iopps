@@ -330,7 +330,8 @@ export function getBusinessProfileReadiness(org: {
   }
   if (!hasLogo) missingFields.push("logo");
   if (!hasStory) missingFields.push("description");
-  if (!hasContactMethod) missingFields.push("contact");
+  // Publishing needs no public contact; the directory listing does.
+  if (!hasContactMethod && !options.workspace) missingFields.push("contact");
 
   return {
     isReady: missingFields.length === 0,

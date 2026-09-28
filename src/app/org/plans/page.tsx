@@ -1,26 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavBar from "@/components/NavBar";
 import PricingTabs from "@/components/PricingTabs";
 import { useAuth } from "@/lib/auth-context";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 import { getOrgSubscriptions } from "@/lib/firestore/subscriptions";
 import { isSubscriptionPlanId } from "@/lib/pricing";
 
-export default function PlansPage() {
+export default function PlansPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string }>;
+}) {
+  const params = use(searchParams);
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-bg">
         <NavBar />
-        <PlansContent />
+        <PlansContent redirect={safeAuthRedirect(params.redirect || null)} />
       </div>
     </ProtectedRoute>
   );
 }
 
-function PlansContent() {
+function PlansContent({ redirect }: { redirect: string | null }) {
   const { user } = useAuth();
   const [currentPlan, setCurrentPlan] = useState<string | undefined>();
 
@@ -43,10 +49,10 @@ function PlansContent() {
     <div className="max-w-[900px] mx-auto px-4 py-6 md:px-10 md:py-8">
       {/* Back link */}
       <Link
-        href="/org/dashboard"
+        href={redirect || "/org/dashboard"}
         className="inline-flex items-center gap-1 text-sm text-text-muted no-underline hover:text-teal mb-4"
       >
-        &#8592; Back to Dashboard
+        &#8592; {redirect ? "Back to your job posting" : "Back to Dashboard"}
       </Link>
 
       {/* Header */}
@@ -59,7 +65,7 @@ function PlansContent() {
         </p>
       </div>
 
-      <PricingTabs variant="org" currentPlan={currentPlan} />
+      <PricingTabs variant="org" currentPlan={currentPlan} redirect={redirect} />
     </div>
   );
 }
