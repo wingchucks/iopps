@@ -27,6 +27,10 @@ interface ScholarshipOwnerMeta {
   partnerTier?: "standard" | "premium" | "school";
   partnerLabel?: string;
   partnerBadgeLabel?: string;
+  /** A curating account that shared another provider's award. */
+  listedByName?: string;
+  listedBySlug?: string;
+  listedByType?: "school" | "business" | "organization" | "unknown";
 }
 
 function isClosingSoon(deadline?: string): boolean {
@@ -84,7 +88,9 @@ function ScholarshipDetailContent() {
     async function load() {
       try {
         const [data, all] = await Promise.all([getScholarshipBySlug(slug), getScholarships().catch(() => [])]);
-        const [organization, savedItem] = await Promise.all([data?.orgId ? getPublicOrganization(data.orgId).catch(() => null) : null, data && user ? isPostSaved(user.uid, data.id).catch(() => false) : false]);
+        // Only the named provider's public profile; never the account that posted a curated listing.
+        const providerSlug = (data as ScholarshipOwnerMeta | null)?.ownerSlug;
+        const [organization, savedItem] = await Promise.all([providerSlug ? getPublicOrganization(providerSlug).catch(() => null) : null, data && user ? isPostSaved(user.uid, data.id).catch(() => false) : false]);
         if (live) { setScholarship(data); setOwnerMeta(data as ScholarshipOwnerMeta); setOrg(organization); setSaved(savedItem); setRelated(all.filter(item => item.id !== data?.id && !isJobRecordExpired({ ...item })).slice(0, 3)); }
       } catch (error) { if (live) setLoadError(error instanceof Error ? error.message : "This opportunity could not load."); }
       finally { if (live) setLoading(false); }
@@ -160,6 +166,9 @@ function ScholarshipDetailContent() {
   const ownerName = ownerMeta?.ownerName || scholarship.orgName || org?.name || "";
   const sourceLabel = getSourceLabel(ownerMeta?.ownerType || (org?.type === "school" ? "school" : undefined), fundingTypeLabel({ ...scholarship }));
   const orgLink = org ? ownerHref : null;
+  const orgTitle = org?.shortName || org?.name || ownerName;
+  const listedBy = ownerMeta?.listedByName?.trim() || "";
+  const listedByHref = listedBy && ownerMeta?.listedBySlug ? `${ownerMeta.listedByType === "school" ? "/schools" : "/org"}/${encodeURIComponent(ownerMeta.listedBySlug)}` : null;
   const isPremium = org?.tier === "premium";
   const intakeClosed = isJobRecordExpired({...scholarship});
   const closingSoon = !intakeClosed && isClosingSoon(scholarship.deadline);
@@ -376,9 +385,9 @@ function ScholarshipDetailContent() {
             </>
           )}
 
-          {org && (
+          {org?.description && (
             <>
-              <h3 className="text-lg font-bold text-text mb-2">About {org.shortName}</h3>
+              <h3 className="text-lg font-bold text-text mb-2">About {orgTitle}</h3>
               <p className="text-sm text-text-sec leading-relaxed mb-6">{org.description}</p>
             </>
           )}
@@ -488,10 +497,16 @@ function ScholarshipDetailContent() {
                       <span className="text-xs font-semibold text-text">{displayLocation(scholarship.location)}</span>
                     </div>
                   )}
-                  {scholarship.orgName && (
-                    <div className="flex justify-between">
-                      <span className="text-xs text-text-muted">Awarded by</span>
-                      <span className="text-xs font-semibold text-text">{ownerName}</span>
+                  <div className="flex justify-between gap-3">
+                    <span className="shrink-0 text-xs text-text-muted">Awarded by</span>
+                    <span className="min-w-0 break-words text-right text-xs font-semibold text-text">{ownerName || "Not stated; see the official page"}</span>
+                  </div>
+                  {listedBy && (
+                    <div className="flex justify-between gap-3">
+                      <span className="shrink-0 text-xs text-text-muted">Listed on IOPPS by</span>
+                      {listedByHref
+                        ? <Link href={listedByHref} className="min-w-0 break-words text-right text-xs font-semibold text-teal no-underline hover:underline">{listedBy}</Link>
+                        : <span className="min-w-0 break-words text-right text-xs font-semibold text-text">{listedBy}</span>}
                     </div>
                   )}
                   <div className="flex justify-between">
@@ -515,14 +530,14 @@ function ScholarshipDetailContent() {
                 <p className="text-xs font-bold text-text-muted mb-3 tracking-[1px]">ABOUT THE ORGANIZATION</p>
                 <div className="flex gap-2.5 items-center mb-2.5">
                   <Avatar
-                    name={org?.shortName || ownerName}
+                    name={orgTitle}
                     size={36}
                     gradient={isPremium ? "linear-gradient(135deg, var(--navy), var(--teal))" : undefined}
                   />
                   <div>
-                    <p className="text-sm font-bold text-text m-0">{org?.shortName || ownerName}</p>
+                    <p className="text-sm font-bold text-text m-0">{orgTitle}</p>
                     <p className="text-[11px] text-text-muted m-0">
-                      {org ? (
+                      {typeof org?.openJobs === "number" ? (
                         <>
                           {org.openJobs} open roles
                           {org.employees && <> &bull; {org.employees} employees</>}

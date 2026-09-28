@@ -2,15 +2,18 @@ import { FieldValue } from "firebase-admin/firestore";
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { EmployerApiError } from "@/lib/server/employer-auth";
-import { getBusinessListingReview, businessListingIssues, type BusinessListingReview } from "@/lib/business-listing-review";
+import { getBusinessListingReview, businessListingIssues, businessLocationIssue, businessLocationWarning, type BusinessListingReview } from "@/lib/business-listing-review";
 import { toPublicOrganization } from "@/lib/public-organization";
 import { isOrganizationPubliclyVisible } from "@/lib/organization-profile";
 
 export function listingReviewPayload(id: string, data: Record<string, unknown>) {
+  const locationWarning = businessLocationWarning(data.location);
   return {
     org: toPublicOrganization({ ...data, id }),
     review: getBusinessListingReview(data),
     issues: businessListingIssues(data),
+    locationIssue: businessLocationIssue(data.location),
+    warnings: locationWarning ? [locationWarning] : [],
     isPublic: isOrganizationPubliclyVisible(data),
     emailVerified: data.emailVerified === true,
   };

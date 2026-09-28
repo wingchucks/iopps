@@ -4,8 +4,9 @@ import { isJobRecordExpired } from "@/lib/listing-freshness";
 import { isPublicEventVisible, normalizePublicEvent } from "@/lib/public-events";
 import { OPPORTUNITY_TEXT_FIELDS, OPPORTUNITY_ARRAY_FIELDS, normalizeOpportunityInput, safeOpportunityUrl, plainOpportunityText, type OpportunityKind } from "@/lib/opportunity-posting";
 import { displayAmount } from "@/lib/utils";
-import { deriveOwnerType, matchesOrgName, serialize, withPublicOwnership, type JsonRecord } from "@/lib/server/public-ownership";
+import { deriveOwnerType, serialize, withPublicOwnership, type JsonRecord } from "@/lib/server/public-ownership";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
+import { resolveScholarshipProvider } from "@/lib/server/scholarship-provider";
 import { opportunityAliases, loadOpportunityMatches, loadPublicOpportunityCandidates, loadRelatedOpportunityOrganizations } from "./opportunity-lookups";
 import type { Firestore } from "firebase-admin/firestore";
 
@@ -48,9 +49,11 @@ function publicItems(primary: JsonRecord[], posts: JsonRecord[], kind: Opportuni
     .filter((record): record is JsonRecord => record !== null);
 }
 function scholarshipOwner(record: JsonRecord, organizations: JsonRecord[]): JsonRecord {
-  const linked = organizations.find(org => org.id === record.orgId || matchesOrgName(record.orgName, String(org.name || "")));
-  const promoted = linked ? withPartnerPromotion(linked) : null;
-  return { ...withPublicOwnership(record, { contentType: "scholarship", ownerType: deriveOwnerType(linked), ownerId: String(record.orgId || linked?.id || ""), ownerName: String(record.orgName || ""), ownerSlug: String(linked?.slug || record.orgId || "") }),
+  // owner* describes the provider named on the listing; a curating account is listedBy*.
+  const { provider, profile, listedBy } = resolveScholarshipProvider(record, organizations);
+  const promoted = profile ? withPartnerPromotion(profile) : null;
+  return { ...withPublicOwnership(record, { contentType: "scholarship", ownerType: deriveOwnerType(provider), ownerId: String(profile?.id || ""), ownerName: String(record.orgName || ""), ownerSlug: String(profile?.slug || profile?.id || "") }),
+    listedByName: listedBy ? String(listedBy.name).trim() : "", listedBySlug: listedBy ? String(listedBy.slug || listedBy.id) : "", listedByType: listedBy ? deriveOwnerType(listedBy) : "unknown",
     isPartner: !!promoted?.isPartner, partnerTier: promoted?.partnerTier || null, partnerBadgeLabel: promoted?.partnerBadgeLabel || null };
 }
 export async function getPublicOpportunities(kind: OpportunityKind, combineDuplicates = true, db: Firestore = getAdminDb()): Promise<JsonRecord[]> {

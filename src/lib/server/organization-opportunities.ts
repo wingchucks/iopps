@@ -1,16 +1,33 @@
 import { createHash } from "node:crypto";
+import { FieldValue } from "firebase-admin/firestore";
 import { NextResponse } from "next/server";
 import { sendAdminContentPosted } from "@/lib/email";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
+import { EmployerApiError, requireEmployerContext, type EmployerContext } from "@/lib/server/employer-auth";
 import { serialize } from "@/lib/server/public-ownership";
+import { isOrganizationPubliclyVisible } from "@/lib/organization-profile";
 import { validateOpportunity, type OpportunityKind, type OpportunityStatus } from "@/lib/opportunity-posting";
 
 const noStore = { "Cache-Control": "private, no-store" };
 // This collection is denied by the existing default-deny rules. Draft contents
 // never enter a publicly readable collection, even before updated rules deploy.
-const PRIVATE_COLLECTION = "organizationOpportunityDrafts";
+export const PRIVATE_COLLECTION = "organizationOpportunityDrafts";
 type Owner = { orgId: string; employerId: string };
+
+/**
+ * An organization's first free event or scholarship waits for an IOPPS review; after one
+ * approval, later ones publish immediately. Organizations IOPPS already knows publish at once:
+ * a verified account, a public directory listing, or any event or scholarship it already
+ * published (every public record here was published at some point; drafts stay private).
+ */
+export async function publishesWithoutReview(db: FirebaseFirestore.Firestore, context: EmployerContext): Promise<boolean> {
+  const org = context.organizationData;
+  if (org.freeListingApprovedAt || org.verified === true || isOrganizationPubliclyVisible(org)) return true;
+  const ownerIds = [...new Set([context.orgId, context.employerId])];
+  const published = await Promise.all((["events", "scholarships"] as const).flatMap(kind =>
+    (["orgId", "employerId"] as const).map(field => db.collection(kind).where(field, "in", ownerIds).limit(1).get())));
+  return published.some(snapshot => !snapshot.empty);
+}
 function belongsToOrganization(record: Record<string, unknown>, owner: Owner) {
   // A canonical orgId takes precedence over a stale legacy employer link.
   return [owner.orgId, owner.employerId].includes(String(record.orgId || record.employerId || ""));
@@ -44,7 +61,7 @@ export async function listOrganizationOpportunities(req: Request, kind: Opportun
       records.set(id, { ...data, id, revision: Number(data.revision) || 0 });
     }));
     const items = [...records.values()].filter(item => item.title).sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
-    return NextResponse.json({ [kind]: items }, { headers: noStore });
+    return NextResponse.json({ [kind]: items, reviewFirst: !(await publishesWithoutReview(db, context)) }, { headers: noStore });
   } catch (error) { return failure(error); }
 }
 export async function saveOrganizationOpportunity(req: Request, kind: OpportunityKind, editing = false) {
@@ -65,6 +82,7 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
     const id = editing ? String(body.id || "") : createHash("sha256").update(`${context.orgId}:${kind}:${requestId}`).digest("hex").slice(0, 28);
     if (!/^[^/]{1,200}$/.test(id)) throw new EmployerApiError(400, "Choose a valid listing.");
     const db = getAdminDb(), publicRef = db.collection(kind).doc(id), draftRef = db.collection(PRIVATE_COLLECTION).doc(`${kind}-${id}`);
+    const reviewFirst = status === "active" && !(await publishesWithoutReview(db, context));
     const result = await db.runTransaction(async tx => {
       const [publicDoc, privateDoc] = await Promise.all([tx.get(publicRef), tx.get(draftRef)]);
       const previous = (privateDoc.exists ? privateDoc.data() : publicDoc.data()) || {};
@@ -80,11 +98,14 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
       const orgName = String(context.organizationData.name || context.employerData.organizationName || context.employerData.name || "");
       const slug = String(previous.slug || `${String(validation.data.title || "listing").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 65)}-${id.slice(-8)}`);
       const now = new Date().toISOString();
+      // A first free listing is held privately for review instead of going live.
+      const stored = reviewFirst ? "pending" : status;
       const record = { ...validation.data, id, kind, slug, orgId: context.orgId, employerId: context.employerId, orgName,
         ...(kind === "events" ? { organizerName: orgName } : { organization: orgName }),
-        status, active: status === "active", revision: (Number(previous.revision) || 0) + 1,
-        createdAt: previous.createdAt || now, updatedAt: now, firstPublishedAt: previous.firstPublishedAt || (status === "active" ? now : null), order: previous.order || Date.now() };
-      if (status === "active") {
+        status: stored, active: stored === "active", revision: (Number(previous.revision) || 0) + 1,
+        createdAt: previous.createdAt || now, updatedAt: now, firstPublishedAt: previous.firstPublishedAt || (stored === "active" ? now : null), order: previous.order || Date.now(),
+        ...(stored === "pending" ? { reviewRequestedAt: previous.status === "pending" && previous.reviewRequestedAt ? previous.reviewRequestedAt : now, reviewFeedback: null } : {}) };
+      if (stored === "active") {
         tx.set(publicRef, record);
         tx.delete(draftRef);
       } else {
@@ -92,9 +113,11 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
         // A tombstone prevents an old feed copy from resurfacing after unpublishing.
         // Only routing and ownership remain public; the draft itself is private.
         // A brand-new draft has no public record at all, including no title-derived slug.
-        if (publicDoc.exists) tx.set(publicRef, { id, slug, orgId: context.orgId, employerId: context.employerId, status, active: false, revision: record.revision, updatedAt: now });
+        if (publicDoc.exists) tx.set(publicRef, { id, slug, orgId: context.orgId, employerId: context.employerId, status: stored, active: false, revision: record.revision, updatedAt: now });
       }
-      return { record, firstPublication: status === "active" && !previous.firstPublishedAt && (!exists || previous.status === "draft") };
+      const reviewRequested = stored === "pending" && previous.status !== "pending";
+      if (reviewRequested) tx.set(db.collection("adminNotifications").doc(), { title: `${kind === "events" ? "Event" : "Scholarship"} ready for review`, message: `${orgName || "An organization"} submitted its first free listing, "${String((record as Record<string, unknown>).title || "Untitled")}". It stays private until approved.`, type: "info", read: false, orgId: context.orgId, link: "/admin/opportunity-reviews", createdAt: FieldValue.serverTimestamp() });
+      return { record, reviewRequested, firstPublication: stored === "active" && !previous.firstPublishedAt && (!exists || ["draft", "pending", "changes_requested"].includes(String(previous.status))) };
     });
     if (result.errors) return NextResponse.json({ error: "Please check the highlighted fields.", fields: result.errors }, { status: 422, headers: noStore });
     // Retain the existing administrator notification, once on first publication.
@@ -108,6 +131,16 @@ export async function saveOrganizationOpportunity(req: Request, kind: Opportunit
         authorEmail: String(context.userData.email || context.memberData.email || context.employerData.contactEmail || "") || null,
         id: String(record.id), urlPath: `/${kind}/${record.slug || record.id}`,
       }).catch(error => console.error("Opportunity publication notification:", error));
+    }
+    if (result.reviewRequested && result.record) {
+      const record = result.record as Record<string, unknown>;
+      sendAdminContentPosted({
+        contentType: kind === "events" ? "event" : "scholarship",
+        title: String(record.title || "Opportunity"), status: "waiting for review", orgName: String(record.orgName || ""),
+        authorName: String(context.userData.displayName || context.memberData.displayName || "") || null,
+        authorEmail: String(context.userData.email || context.memberData.email || context.employerData.contactEmail || "") || null,
+        id: String(record.id), urlPath: "/admin/opportunity-reviews",
+      }).catch(error => console.error("Opportunity review notification:", error));
     }
     return NextResponse.json(serialize(result.record), { status: editing || result.duplicate ? 200 : 201, headers: noStore });
   } catch (error) { return failure(error); }
