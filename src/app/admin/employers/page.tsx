@@ -351,6 +351,69 @@ export default function AdminEmployersPage() {
     }
   };
 
+  const handleGrantCredits = async (employer: AdminEmployerRow) => {
+    const currentUser = user;
+    if (!currentUser) return;
+
+    const input = window.prompt(
+      `Grant job posting credits to ${employer.displayName}?\nEach credit pays for one job publication. Current balance: ${employer.postingCredits ?? 0}.`,
+      "1",
+    );
+    if (input === null) return;
+    const credits = Number.parseInt(input.trim(), 10);
+    if (!Number.isSafeInteger(credits) || credits < 1 || credits > 100) {
+      toast.error("Enter a whole number from 1 to 100.");
+      return;
+    }
+    if (
+      !window.confirm(
+        `Grant ${credits} job posting credit(s) to ${employer.displayName} for free?`,
+      )
+    ) {
+      return;
+    }
+
+    setActionLoading(employer.id);
+
+    try {
+      const token = await currentUser!.getIdToken();
+      const res = await fetch("/api/admin/employers/credits", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ employerId: employer.id, credits }),
+      });
+
+      if (!res.ok) {
+        let detail = `Failed to grant credits (${res.status})`;
+        try {
+          const data = (await res.json()) as { error?: unknown };
+          if (data && typeof data.error === "string" && data.error.trim()) {
+            detail = data.error;
+          }
+        } catch {
+          // Keep the generic detail when the body is not JSON.
+        }
+        throw new Error(detail);
+      }
+
+      const data = (await res.json()) as { balance?: number };
+      toast.success(
+        `${credits} credit(s) granted to ${employer.displayName} (balance: ${data.balance ?? "?"})`,
+      );
+      await fetchEmployers();
+    } catch (err) {
+      console.error("Error granting credits:", err);
+      toast.error(
+        err instanceof Error ? err.message : `Failed to grant credits to ${employer.displayName}`,
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleReject = async (reason: string) => {
     const currentUser = user;
     if (!currentUser || !rejectModal.employerId) return;
@@ -617,6 +680,17 @@ export default function AdminEmployersPage() {
                       Reject
                     </button>
                   )}
+                  {employer.status === "approved" && (
+                    <button
+                      type="button"
+                      onClick={() => handleGrantCredits(employer)}
+                      disabled={actionLoading === employer.id}
+                      title={`Posting credit balance: ${employer.postingCredits ?? 0}`}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-accent/10 px-3 py-2 text-xs font-medium text-accent transition-colors hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Grant credit ({employer.postingCredits ?? 0})
+                    </button>
+                  )}
                 </div>
               ),
             },
@@ -672,6 +746,17 @@ export default function AdminEmployersPage() {
                   >
                     <XIcon className="h-3.5 w-3.5" />
                     Reject
+                  </button>
+                )}
+                {employer.status === "approved" && (
+                  <button
+                    type="button"
+                    onClick={() => handleGrantCredits(employer)}
+                    disabled={actionLoading === employer.id}
+                    title={`Posting credit balance: ${employer.postingCredits ?? 0}`}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-accent/10 px-3 py-2 text-xs font-medium text-accent transition-colors hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Grant credit ({employer.postingCredits ?? 0})
                   </button>
                 )}
                 <Link

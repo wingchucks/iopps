@@ -1,0 +1,19 @@
+{
+  "status": "fail",
+  "message": "browserType.launch: Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome\nRun \"npx playwright install chrome\"",
+  "requests": [],
+  "nativeDialogs": [],
+  "errors": [],
+  "jobs": [
+    {
+      "id": "fictional-job",
+      "title": "Fictional Cafe Assistant",
+      "status": "draft"
+    },
+    {
+      "id": "other-job",
+      "title": "Untouched Listing",
+      "status": "draft"
+    }
+  ]
+}
