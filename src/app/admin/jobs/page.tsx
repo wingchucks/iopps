@@ -208,6 +208,8 @@ export default function AdminJobsPage() {
     if (!user) return;
 
     const newStatus: JobStatus = job.status === "active" ? "inactive" : "active";
+    const verb = newStatus === "active" ? "activate" : "deactivate";
+    setError(null);
 
     try {
       const token = await user.getIdToken();
@@ -220,12 +222,28 @@ export default function AdminJobsPage() {
         body: JSON.stringify({ jobId: job.id, action: newStatus === "active" ? "activate" : "deactivate" }),
       });
 
-      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      if (!res.ok) {
+        // Surface the API's reason instead of failing silently: the admin
+        // needs to know WHY an activation was rejected (e.g. the job record
+        // is missing data the activation transaction requires).
+        let detail = `API returned ${res.status}`;
+        try {
+          const data = (await res.json()) as { error?: unknown };
+          if (data && typeof data.error === "string" && data.error.trim()) {
+            detail = data.error;
+          }
+        } catch {
+          // Keep the generic detail when the body is not JSON.
+        }
+        throw new Error(detail);
+      }
 
       // Read back lifecycle/expiry fields before offering a public link.
       await fetchJobs();
     } catch (err) {
       console.error("Failed to toggle job status:", err);
+      const reason = err instanceof Error ? err.message : "Please try again.";
+      setError(`Could not ${verb} "${job.title}": ${reason}`);
     }
   };
 
@@ -256,8 +274,14 @@ export default function AdminJobsPage() {
   const filteredJobs = searchQuery
     ? jobs.filter(
         (j) =>
-          j.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          j.employerName.toLowerCase().includes(searchQuery.toLowerCase()),
+          // Guard against records missing these fields (e.g. drafts with no
+          // linked employer): an undefined value used to crash the page.
+          String(j.title ?? "")
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          String(j.employerName ?? "")
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()),
       )
     : jobs;
 
