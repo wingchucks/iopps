@@ -5,50 +5,37 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 
-interface FakeDoc {
-  exists: boolean;
-  data: () => any;
-}
-
 function makeDb() {
   const employers = new Map<string, any>([
-    ['kitsaki', { displayName: 'Kitsaki Management Limited Partnership', standardPostCredits: 0 }],
+    ['kitsaki', { displayName: 'Fictional Employer', standardPostCredits: 0 }],
     ['no-balance-field', { displayName: 'No Balance Co' }],
   ]);
+  const receipts = new Map<string, any>();
   const auditLogs: any[] = [];
-  const applyUpdate = (store: Map<string, any>, id: string, patch: any) => {
-    const current = store.get(id) ?? {};
-    const next = { ...current };
-    for (const [key, value] of Object.entries(patch)) {
-      if (value && typeof value === 'object' && '__increment' in (value as any)) {
-        const base = typeof next[key] === 'number' ? next[key] : 0;
-        next[key] = base + (value as any).__increment;
-      } else {
-        next[key] = value;
-      }
-    }
-    store.set(id, next);
-  };
+  let failCommit = false, queue = Promise.resolve();
   const db = {
-    collection: (name: string) => {
-      if (name === 'employers') {
-        return {
-          doc: (id: string) => ({
-            get: async (): Promise<FakeDoc> => ({
-              exists: employers.has(id),
-              data: () => employers.get(id),
-            }),
-            update: async (patch: any) => applyUpdate(employers, id, patch),
-          }),
+    collection: (name: string) => ({ doc: (id: string) => ({ name, id }) }),
+    runTransaction: (fn: any) => {
+      const pending = queue.then(async () => {
+        const writes: any[] = [];
+        const tx = {
+          get: async (ref: any) => { const data = (ref.name === 'employers' ? employers : receipts).get(ref.id); return { exists: !!data, data: () => data }; },
+          update: (ref: any, data: any) => writes.push({ ref, data }),
+          create: (ref: any, data: any) => writes.push({ ref, data }),
         };
-      }
-      if (name === 'auditLogs') {
-        return { add: async (entry: any) => { auditLogs.push(entry); return { id: 'audit-1' }; } };
-      }
-      throw new Error(`unexpected collection ${name}`);
+        const result = await fn(tx);
+        if (failCommit) throw new Error('synthetic commit failure');
+        for (const {ref,data} of writes) {
+          if (ref.name === 'employers') employers.set(ref.id, { ...employers.get(ref.id), ...data });
+          else { receipts.set(ref.id, data); auditLogs.push(data); }
+        }
+        return result;
+      });
+      queue = pending.then(() => undefined, () => undefined);
+      return pending;
     },
   };
-  return { db, employers, auditLogs };
+  return { db, employers, auditLogs, fail: (value: boolean) => { failCommit = value; } };
 }
 
 function loadRoute(db: any) {
@@ -85,7 +72,7 @@ const post = (exports: any, body: unknown) =>
   exports.POST(
     new Request('http://127.0.0.1/api/admin/employers/credits', {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify({ requestId: crypto.randomUUID(), ...(body as object) }),
     }),
   );
 
@@ -102,7 +89,7 @@ test('admin can grant posting credits to an employer', async () => {
   assert.equal(employers.get('kitsaki').standardPostCredits, 1);
   assert.equal(auditLogs.length, 1);
   assert.equal(auditLogs[0].type, 'credit_grant');
-  assert.match(auditLogs[0].message, /kitsaki/i);
+  assert.match(auditLogs[0].message, /Fictional Employer/);
 });
 
 test('grant treats a missing balance as zero and accumulates', async () => {
@@ -134,4 +121,40 @@ test('grant rejects bad input and unknown employers', async () => {
 
   const missing = await post(exports, { employerId: 'ghost', credits: 1 });
   assert.equal(missing.status, 404);
+});
+
+
+test('failed atomic commit changes neither balance nor audit; retry grants once', async () => {
+  const h = makeDb(), route = loadRoute(h.db), body = { employerId: 'kitsaki', credits: 1, requestId: crypto.randomUUID() };
+  h.fail(true);
+  assert.equal((await post(route, body)).status, 500);
+  assert.equal(h.employers.get('kitsaki').standardPostCredits, 0);
+  assert.equal(h.auditLogs.length, 0);
+  h.fail(false);
+  assert.equal((await post(route, body)).status, 200);
+  assert.equal(h.employers.get('kitsaki').standardPostCredits, 1);
+  assert.equal(h.auditLogs.length, 1);
+});
+
+test('response-loss retry and concurrent duplicate requests grant only once', async () => {
+  const h = makeDb(), route = loadRoute(h.db), body = { employerId: 'kitsaki', credits: 20, requestId: crypto.randomUUID() };
+  const responses = await Promise.all([post(route, body), post(route, body), post(route, body)]);
+  for (const response of responses) assert.equal((await response.json()).balance, 20);
+  assert.equal(h.employers.get('kitsaki').standardPostCredits, 20);
+  assert.equal(h.auditLogs.length, 1);
+  assert.equal((await post(route, { ...body, credits: 1 })).status, 409);
+});
+
+test('independent concurrent grants return accurate serialized balances', async () => {
+  const h = makeDb(), route = loadRoute(h.db);
+  const results = await Promise.all([post(route, { employerId: 'kitsaki', credits: 2 }), post(route, { employerId: 'kitsaki', credits: 3 })]);
+  assert.deepEqual(await Promise.all(results.map(async r => (await r.json()).balance)), [2, 5]);
+  assert.equal(h.employers.get('kitsaki').standardPostCredits, 5);
+  assert.equal(h.auditLogs.length, 2);
+});
+
+test('missing or unsafe retry IDs are refused before mutation', async () => {
+  const h = makeDb(), route = loadRoute(h.db);
+  for (const requestId of [undefined, '', '../bad', 'x']) assert.equal((await post(route, { employerId: 'kitsaki', credits: 1, requestId })).status, 400);
+  assert.equal(h.employers.get('kitsaki').standardPostCredits, 0);
 });

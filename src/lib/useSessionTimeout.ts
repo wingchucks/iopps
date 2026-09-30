@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./auth-context";
+import { auth } from "./firebase";
 
 const TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 const ACTIVITY_EVENTS = ["mousedown", "keydown", "scroll", "touchstart"] as const;
@@ -14,13 +15,15 @@ export function useSessionTimeout() {
 
   const handleTimeout = useCallback(async () => {
     try {
-      await fetch("/api/auth/session", { method: "DELETE" });
-      await signOut();
+      if (!user || auth.currentUser !== user) return;
+      await signOut(user.uid);
+      if (auth.currentUser) return;
     } catch {
-      // Best effort
+      // A failed deletion must not announce a completed sign-out.
+      return;
     }
     router.replace("/login?reason=timeout");
-  }, [signOut, router]);
+  }, [user, signOut, router]);
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);

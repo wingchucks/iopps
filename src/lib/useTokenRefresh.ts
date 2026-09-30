@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useAuth } from "./auth-context";
+import { useAuth, syncSessionCookie } from "./auth-context";
 import { auth } from "./firebase";
 
 const REFRESH_INTERVAL_MS = 55 * 60 * 1000; // 55 minutes
@@ -17,12 +17,7 @@ export function useTokenRefresh() {
       try {
         const currentUser = auth.currentUser;
         if (!currentUser) return;
-        const idToken = await currentUser.getIdToken(true); // force refresh
-        await fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        });
+        await syncSessionCookie(currentUser, { forceRefresh: true });
       } catch {
         // Token refresh failed — will be caught by middleware on next navigation
       }

@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 interface GrantCreditsBody {
   employerId?: unknown;
   credits?: unknown;
+  requestId?: unknown;
 }
 
 // A single grant is capped so a typo cannot mint an unbounded balance.
@@ -69,51 +70,39 @@ export async function POST(request: NextRequest) {
     }
     const credits = body.credits;
 
-    const employerRef = adminDb.collection("employers").doc(employerId);
-    const employerSnap = await employerRef.get();
-    if (!employerSnap.exists) {
-      return NextResponse.json({ error: "Employer not found" }, { status: 404 });
+    const requestId = typeof body.requestId === "string" ? body.requestId : "";
+    if (!/^[a-zA-Z0-9_-]{16,80}$/.test(requestId)) {
+      return NextResponse.json({ error: "A valid requestId is required" }, { status: 400 });
     }
-
-    const beforeRaw = employerSnap.data()?.standardPostCredits;
-    const before =
-      typeof beforeRaw === "number" && Number.isSafeInteger(beforeRaw) && beforeRaw >= 0
-        ? beforeRaw
-        : 0;
-
-    await employerRef.update({
-      standardPostCredits: FieldValue.increment(credits),
-      updatedAt: FieldValue.serverTimestamp(),
+    const grantedBy = auth.viewerEmail || "admin";
+    const employerRef = adminDb.collection("employers").doc(employerId);
+    const auditRef = adminDb.collection("auditLogs").doc(`credit_grant_${requestId}`);
+    const result = await adminDb.runTransaction(async (tx) => {
+      const receipt = await tx.get(auditRef);
+      if (receipt.exists) {
+        const previous = receipt.data()!;
+        if (previous.employerId !== employerId || previous.credits !== credits || previous.grantedBy !== grantedBy) {
+          return { error: "This requestId was already used for a different grant", status: 409 };
+        }
+        return { success: true, employerId, granted: credits, balance: previous.balance };
+      }
+      const employerSnap = await tx.get(employerRef);
+      if (!employerSnap.exists) return { error: "Employer not found", status: 404 };
+      const data = employerSnap.data()!;
+      const beforeRaw = data.standardPostCredits;
+      const before = typeof beforeRaw === "number" && Number.isSafeInteger(beforeRaw) && beforeRaw >= 0 ? beforeRaw : 0;
+      const balance = before + credits;
+      if (!Number.isSafeInteger(balance)) return { error: "Credit balance exceeds the supported limit", status: 409 };
+      const employerName = data.displayName || data.name || employerId;
+      tx.update(employerRef, { standardPostCredits: balance, updatedAt: FieldValue.serverTimestamp() });
+      tx.create(auditRef, {
+        type: "credit_grant",
+        message: `${grantedBy} granted ${credits} job posting credit(s) to ${employerName} (balance: ${before} -> ${balance})`,
+        createdAt: FieldValue.serverTimestamp(), employerId, credits, balance, grantedBy,
+      });
+      return { success: true, employerId, granted: credits, balance };
     });
-
-    const balance = before + credits;
-    const employerName =
-      (typeof employerSnap.data()?.displayName === "string" &&
-        employerSnap.data()?.displayName) ||
-      (typeof employerSnap.data()?.name === "string" &&
-        employerSnap.data()?.name) ||
-      employerId;
-    const grantedBy =
-      typeof auth.viewerEmail === "string" && auth.viewerEmail
-        ? auth.viewerEmail
-        : "admin";
-
-    await adminDb.collection("auditLogs").add({
-      type: "credit_grant",
-      message: `${grantedBy} granted ${credits} job posting credit(s) to ${employerName} (balance: ${before} → ${balance})`,
-      createdAt: FieldValue.serverTimestamp(),
-      employerId,
-      credits,
-      balance,
-      grantedBy,
-    });
-
-    return NextResponse.json({
-      success: true,
-      employerId,
-      granted: credits,
-      balance,
-    });
+    return NextResponse.json(result, { status: "status" in result ? result.status : 200 });
   } catch (error) {
     console.error("[POST /api/admin/employers/credits] Error:", error);
     return NextResponse.json(
