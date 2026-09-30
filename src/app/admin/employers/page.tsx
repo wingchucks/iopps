@@ -243,8 +243,126 @@ function RejectModal({
   );
 }
 
-export default function AdminEmployersPage() {
-  const { user } = useAuth();
+function GrantCreditModal({
+  isOpen,
+  employerName,
+  balance,
+  onClose,
+  onConfirm,
+  loading,
+}: {
+  isOpen: boolean;
+  employerName: string;
+  balance: number;
+  onClose: () => void;
+  onConfirm: (credits: number) => void;
+  loading: boolean;
+}) {
+  const [credits, setCredits] = useState("1");
+
+  const handleClose = useCallback(() => {
+    setCredits("1");
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") handleClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [handleClose, isOpen]);
+
+  if (!isOpen) return null;
+
+  const parsed = Number.parseInt(credits.trim(), 10);
+  const valid = Number.isSafeInteger(parsed) && parsed >= 1 && parsed <= 100;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/65"
+        onClick={handleClose}
+        aria-label="Close modal"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Grant credits to ${employerName}`}
+        className="relative z-10 w-full max-w-md rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6 shadow-2xl"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Grant posting credits</h2>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              Give <span className="font-medium text-foreground">{employerName}</span> free job
+              posting credits. Each credit pays for one job publication. Current balance:{" "}
+              <span className="font-medium text-foreground">{balance}</span>.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--muted)] hover:text-foreground"
+            aria-label="Close"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+
+        <label className="block text-sm font-medium text-foreground" htmlFor="grant-credits">
+          Number of credits (1–100)
+        </label>
+        <input
+          id="grant-credits"
+          type="number"
+          min={1}
+          max={100}
+          step={1}
+          value={credits}
+          onChange={(event) => setCredits(event.target.value)}
+          className="mt-2 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-foreground placeholder:text-[var(--text-muted)] focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
+          autoFocus
+        />
+
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="rounded-xl border border-[var(--card-border)] button-gradient-soft px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--card-border-hover)] hover:text-foreground"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(parsed)}
+            disabled={!valid || loading}
+            className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading && (
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            )}
+            Grant credits
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminEmployersPage() {  const { user } = useAuth();
   const searchParams = useSearchParams();
   const initialStatus = (searchParams.get("status") as EmployerStatus | null) || "all";
   const initialType = (searchParams.get("type") as EmployerTypeFilter | null) || "all";
@@ -263,6 +381,13 @@ export default function AdminEmployersPage() {
     employerId: string;
     employerName: string;
   }>({ open: false, employerId: "", employerName: "" });
+
+  const [grantModal, setGrantModal] = useState<{
+    open: boolean;
+    employerId: string;
+    employerName: string;
+    balance: number;
+  }>({ open: false, employerId: "", employerName: "", balance: 0 });
 
   const statusTabs = useMemo<AdminFilterOption[]>(
     () => [
@@ -351,29 +476,13 @@ export default function AdminEmployersPage() {
     }
   };
 
-  const handleGrantCredits = async (employer: AdminEmployerRow) => {
+  const handleConfirmGrant = async (credits: number) => {
     const currentUser = user;
-    if (!currentUser) return;
+    if (!currentUser || !grantModal.employerId) return;
+    const employerId = grantModal.employerId;
+    const employerName = grantModal.employerName;
 
-    const input = window.prompt(
-      `Grant job posting credits to ${employer.displayName}?\nEach credit pays for one job publication. Current balance: ${employer.postingCredits ?? 0}.`,
-      "1",
-    );
-    if (input === null) return;
-    const credits = Number.parseInt(input.trim(), 10);
-    if (!Number.isSafeInteger(credits) || credits < 1 || credits > 100) {
-      toast.error("Enter a whole number from 1 to 100.");
-      return;
-    }
-    if (
-      !window.confirm(
-        `Grant ${credits} job posting credit(s) to ${employer.displayName} for free?`,
-      )
-    ) {
-      return;
-    }
-
-    setActionLoading(employer.id);
+    setActionLoading(employerId);
 
     try {
       const token = await currentUser!.getIdToken();
@@ -383,7 +492,7 @@ export default function AdminEmployersPage() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ employerId: employer.id, credits }),
+        body: JSON.stringify({ employerId, credits }),
       });
 
       if (!res.ok) {
@@ -401,13 +510,14 @@ export default function AdminEmployersPage() {
 
       const data = (await res.json()) as { balance?: number };
       toast.success(
-        `${credits} credit(s) granted to ${employer.displayName} (balance: ${data.balance ?? "?"})`,
+        `${credits} credit(s) granted to ${employerName} (balance: ${data.balance ?? "?"})`,
       );
+      setGrantModal({ open: false, employerId: "", employerName: "", balance: 0 });
       await fetchEmployers();
     } catch (err) {
       console.error("Error granting credits:", err);
       toast.error(
-        err instanceof Error ? err.message : `Failed to grant credits to ${employer.displayName}`,
+        err instanceof Error ? err.message : `Failed to grant credits to ${employerName}`,
       );
     } finally {
       setActionLoading(null);
@@ -683,7 +793,14 @@ export default function AdminEmployersPage() {
                   {employer.status === "approved" && (
                     <button
                       type="button"
-                      onClick={() => handleGrantCredits(employer)}
+                      onClick={() =>
+                        setGrantModal({
+                          open: true,
+                          employerId: employer.id,
+                          employerName: employer.displayName,
+                          balance: employer.postingCredits ?? 0,
+                        })
+                      }
                       disabled={actionLoading === employer.id}
                       title={`Posting credit balance: ${employer.postingCredits ?? 0}`}
                       className="inline-flex items-center gap-1.5 rounded-xl bg-accent/10 px-3 py-2 text-xs font-medium text-accent transition-colors hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-50"
@@ -751,7 +868,14 @@ export default function AdminEmployersPage() {
                 {employer.status === "approved" && (
                   <button
                     type="button"
-                    onClick={() => handleGrantCredits(employer)}
+                    onClick={() =>
+                        setGrantModal({
+                          open: true,
+                          employerId: employer.id,
+                          employerName: employer.displayName,
+                          balance: employer.postingCredits ?? 0,
+                        })
+                      }
                     disabled={actionLoading === employer.id}
                     title={`Posting credit balance: ${employer.postingCredits ?? 0}`}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-accent/10 px-3 py-2 text-xs font-medium text-accent transition-colors hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-50"
@@ -786,6 +910,15 @@ export default function AdminEmployersPage() {
         onClose={() => setRejectModal({ open: false, employerId: "", employerName: "" })}
         onConfirm={handleReject}
         loading={actionLoading === rejectModal.employerId}
+      />
+
+      <GrantCreditModal
+        isOpen={grantModal.open}
+        employerName={grantModal.employerName}
+        balance={grantModal.balance}
+        onClose={() => setGrantModal({ open: false, employerId: "", employerName: "", balance: 0 })}
+        onConfirm={handleConfirmGrant}
+        loading={actionLoading === grantModal.employerId}
       />
     </div>
   );
