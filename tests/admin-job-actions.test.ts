@@ -39,3 +39,18 @@ test('admin activate/deactivate synchronize both publication fields', async () =
     assert.equal(updates.at(-1).status, status);
   }
 });
+
+test('admin jobs UI surfaces activation failures instead of failing silently', () => {
+  const source = readFileSync('src/app/admin/jobs/page.tsx', 'utf8');
+  // The API's rejection reason must reach the admin via the error banner,
+  // not disappear into console.error.
+  assert.match(source, /data\.error/);
+  assert.match(source, /Could not \$\{verb\}/);
+  assert.match(source, /setError\(`Could not/);
+});
+
+test('admin jobs search tolerates records missing title/employer fields', () => {
+  const source = readFileSync('src/app/admin/jobs/page.tsx', 'utf8');
+  // Drafts with no linked employer previously crashed the page on search.
+  assert.match(source, /j\.employerName \?\? ""/);
+});

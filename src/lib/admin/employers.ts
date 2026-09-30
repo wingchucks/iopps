@@ -123,6 +123,13 @@ function resolveVerificationSummary(record: UnknownRecord): string | undefined {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
+function resolvePostingCredits(record: UnknownRecord): number {
+  const value = record.standardPostCredits;
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+    ? value
+    : 0;
+}
+
 export function normalizeAdminEmployerRow(
   value: unknown,
   fallbackId = "",
@@ -156,6 +163,7 @@ export function normalizeAdminEmployerRow(
     publicHref: getPublicHref(record, id, slug, accountType),
     planLabel: resolvePlanLabel(record),
     verificationSummary: resolveVerificationSummary(record),
+    postingCredits: resolvePostingCredits(record),
   };
 }
 

@@ -20,6 +20,8 @@ export interface AdminEmployerRow {
   publicHref: string;
   planLabel?: string;
   verificationSummary?: string;
+  /** Current paid job-posting credit balance (standardPostCredits). */
+  postingCredits?: number;
 }
 
 export interface AdminCounts {
