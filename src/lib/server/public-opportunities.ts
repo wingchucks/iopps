@@ -30,8 +30,18 @@ export function publicOpportunityRecord(raw: JsonRecord, kind: OpportunityKind):
   record.orgId = raw.orgId || raw.employerId || "";
   const originalLocation = String(normalized.location || "").trim();
   const locationParts = originalLocation ? [originalLocation] : [];
+  // Imported city/venue fields can already contain a full comma-separated label.
+  // Compare its individual parts so "Vancouver, BC" is not appended twice.
+  const tokens = (value: string) => value.toLowerCase().split(/[,;]\s*/).map(part => part.trim()).filter(Boolean);
   for (const value of [raw.venue, raw.city, raw.province]) {
-    if (typeof value === "string" && value.trim() && !locationParts.some(part => part.toLowerCase().split(/[,;]\s*/).includes(value.trim().toLowerCase()))) locationParts.push(value.trim());
+    if (typeof value !== "string") continue;
+    const label = value.trim();
+    const candidate = tokens(label);
+    const present = locationParts.some(part => {
+      const existing = tokens(part);
+      return existing.some((_, start) => candidate.every((token, offset) => existing[start + offset] === token));
+    });
+    if (candidate.length && !present) locationParts.push(label);
   }
   record.location = raw.delivery === "online" ? "Online" : locationParts.join(", ");
   for (const key of ["description", "eligibility", "applicationInstructions"]) if (record[key]) record[key] = plainOpportunityText(record[key]);
