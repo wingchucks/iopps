@@ -9,7 +9,7 @@ test("event projection removes repeated full city/province labels and keeps venu
   assert.equal(record?.location, "Vancouver, BC, Convention Centre");
   assert.equal(record?.startDate, base.startDate);
   assert.equal(record?.endDate, base.endDate);
-  assert.equal(publicOpportunityRecord({ ...base, location: "Victoria, BC, Victoria", city: "Victoria", province: "bc" }, "events")?.location, "Victoria, BC");
+  assert.equal(publicOpportunityRecord({ ...base, location: "Victoria, BC", city: "Victoria, BC", province: "bc" }, "events")?.location, "Victoria, BC");
 });
 
 test("event projection handles structured legacy location and online events", () => {
@@ -18,7 +18,14 @@ test("event projection handles structured legacy location and online events", ()
 });
 
 test("location normalization preserves distinct places and publication boundaries", () => {
-  assert.equal(publicOpportunityRecord({ ...base, location: "Victoria; Vancouver; BC" }, "events")?.location, "Victoria, Vancouver, BC");
+  assert.equal(publicOpportunityRecord({ ...base, location: "Victoria; Vancouver; BC" }, "events")?.location, "Victoria; Vancouver; BC");
   assert.equal(publicOpportunityRecord({ ...base, status: "draft", location: "Victoria, Victoria" }, "events"), null);
   assert.equal(publicOpportunityRecord({ ...base, active: false, location: "Victoria, Victoria" }, "events"), null);
+});
+
+test("original repeated names and multi-site separators remain intact", () => {
+  assert.equal(publicOpportunityRecord({ ...base, location: "Québec, Québec", city: "Québec", province: "Québec" }, "events")?.location, "Québec, Québec");
+  const location = "City Hall, Regina, SK; Community Centre, Saskatoon, SK";
+  assert.equal(publicOpportunityRecord({ ...base, location, province: "SK" }, "events")?.location, location);
+  assert.equal(publicOpportunityRecord({ ...base, location: "North Vancouver, BC", city: "Vancouver, BC" }, "events")?.location, "North Vancouver, BC, Vancouver, BC");
 });
