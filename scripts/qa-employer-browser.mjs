@@ -6,7 +6,7 @@ import os from 'node:os';
 import {chromium,expect} from '@playwright/test';
 import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getAuth} from 'firebase-admin/auth';
-import {getFirestore} from 'firebase-admin/firestore';
+import {getFirestore,FieldPath} from 'firebase-admin/firestore';
 import {startIsolatedQaServer} from './local-qa-server.mjs';
 import {signOutFromFeed} from './qa-browser-auth.mjs';
 import {restoreSignupSecurityLimits} from './qa-signup-security-fixture.mjs';
@@ -173,6 +173,41 @@ try {
  await expect(page.getByPlaceholder('e.g. Muskoday First Nation').or(page.getByPlaceholder('e.g. MLT Aikins LLP'))).toBeVisible();
  await expect(page.getByRole('button',{name:'Post a Job',exact:true})).toHaveCount(0);await record('held-organization-authorization-cross-tab-signout-switch-denies-stale-workspace');await authTab.close();
  await page.goto(server.base+'/employers/for-business');await page.waitForURL(u=>u.pathname==='/for-employers');await record('business-entry-alias');
+ // Read-only admin reporting UI checks with owned fictional demo records.
+ const reportingAdmin=await fictionalUser('reporting-admin');
+ await auth.setCustomUserClaims(reportingAdmin.uid,{admin:true,role:'admin'});
+ await remember(db.doc('users/'+reportingAdmin.uid)).set({role:'admin',status:'active',displayName:'Fictional reporting admin'}, {merge:true});
+ for(const [suffix,status] of [['active','active'],['trial','trialing']]) await remember(db.doc('employers/'+prefix+'-report-'+suffix)).set({name:'Fictional duplicate plan',plan:'premium',subscriptionStatus:status,createdAt:new Date()});
+ await remember(db.doc('schoolProgramPayments/'+prefix+'-unknown-payment')).set({schoolName:'Fictional school',paidAt:new Date()});
+ for(let index=0;index<115;index++) await remember(db.doc('jobs/'+prefix+'-report-job-'+index)).set({title:'Fictional reporting '+String(index).padStart(3,'0'),employerName:'Fictional reporting organization',active:index%2===0,createdAt:new Date(Date.now()-index*1000)});
+ context=await contextFor();page=await context.newPage();await loginTab(page,reportingAdmin.email);
+ const reportingToken=await tokenFor(reportingAdmin.uid);
+ await page.goto(server.base+'/admin/payments');await page.getByRole('heading',{name:'Plan & Payment Records',exact:true}).waitFor();
+ await expect(page.getByText('Verified cash revenue',{exact:true})).toBeVisible();await expect(page.getByText('Verified MRR',{exact:true})).toBeVisible();
+ assert.ok(!(await page.locator('body').innerText()).includes('Month-over-month trend'));
+ const planData=await request('GET','/api/admin/payments',reportingToken);assert.equal(planData.status,200);assert.equal(planData.data.summary.totalRevenue,null);assert.equal(planData.data.summary.monthlyRevenue,null);assert.ok(planData.data.summary.trialPlanRecords>=1);
+ await shot('admin-plan-records');await record('admin-plan-records-do-not-claim-revenue-or-growth');
+ const firstJobs=await request('GET','/api/admin/jobs?limit=20',reportingToken);const secondJobs=await request('GET','/api/admin/jobs?limit=20&cursor='+encodeURIComponent(firstJobs.data.nextCursor),reportingToken);
+ assert.ok(firstJobs.data.total>=115);
+ const expectedPage=async cursor=>{let query=db.collection('jobs').orderBy(FieldPath.documentId()).limit(20);if(cursor)query=query.startAfter(cursor);const snapshot=await query.get();return snapshot.docs.filter(doc=>doc.data().status!=='deleted'&&!doc.data().deletedAt).map(doc=>doc.id);};
+ assert.equal(firstJobs.data.scannedRecords,20);assert.equal(secondJobs.data.scannedRecords,20);
+ assert.deepEqual(firstJobs.data.jobs.map(job=>job.id),await expectedPage());assert.deepEqual(secondJobs.data.jobs.map(job=>job.id),await expectedPage(firstJobs.data.nextCursor));
+ assert.ok(firstJobs.data.jobs.length>0&&secondJobs.data.jobs.length>0);assert.equal(new Set([...firstJobs.data.jobs,...secondJobs.data.jobs].map(job=>job.id)).size,firstJobs.data.jobs.length+secondJobs.data.jobs.length);
+ await page.goto(server.base+'/admin/jobs');await expect(page.getByText('Stored flag matches (including deleted)',{exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Next',exact:true})).toBeEnabled();
+ await Promise.all([page.waitForResponse(response=>response.url().includes('/api/admin/jobs?')&&new URL(response.url()).searchParams.get('cursor')===firstJobs.data.nextCursor&&response.status()===200),page.getByRole('button',{name:'Next',exact:true}).click()]);
+ await expect(page.getByText(secondJobs.data.jobs[0].title,{exact:true})).toBeVisible();await shot('admin-jobs-page-two');await record('admin-jobs-global-filter-count-and-distinct-server-pages');
+ await page.goto(server.base+'/admin/reports');await expect(page.getByText('Verified cash revenue: Unavailable',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'90 Days',exact:true}).click();await expect(page.getByText('Monthly user records — 6 calendar months (UTC)',{exact:true})).toBeVisible();
+ await expect(page.getByText('Stored application records in selected range',{exact:true})).toBeVisible();await shot('admin-record-report-scopes');await record('admin-report-ranges-timestamp-coverage-and-unavailable-revenue');
+ await page.goto(server.base+'/admin/employers');await expect(page.getByText(/Counts, filters and search apply only to this loaded set/)).toBeVisible();await record('admin-employer-directory-labels-latest-loaded-scope');
+ await page.setViewportSize({width:390,height:844});
+ for(const route of ['/admin/payments','/admin/jobs','/admin/reports']){
+  await page.goto(server.base+route);await expect(page.getByText(route==='/admin/payments'?'Verified cash revenue':route==='/admin/jobs'?'Stored flag matches (including deleted)':'Verified cash revenue: Unavailable',{exact:true})).toBeVisible();
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),true,'admin reporting mobile document fits '+route);
+  await shot('admin-reporting-mobile-'+route.split('/').at(-1));
+ }
+ await record('admin-reporting-mobile-read-only-pages');
  assert.deepEqual(errors,[]);
 } catch(error) {if(page&&!page.isClosed()){await shot('failure');await signupState('failure-state');await fs.writeFile(path.join(output,'browser-failure.json'),JSON.stringify({error:error.stack,url:page.url().split('?')[0],text:await page.locator('body').innerText(),checks,errors},null,2));}throw error;
 } finally {

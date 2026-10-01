@@ -16,18 +16,17 @@ interface ReportData {
   totalJobs: number;
   userGrowth: { month: string; count: number }[];
   employerGrowth: { month: string; count: number }[];
-  applicationsCount: number;
-  savedJobsCount: number;
-  topJobs: { id: string; title: string; views: number; applications: number }[];
-  topEvents: { id: string; title: string; engagement: number }[];
+  applicationsCount: number | null;
+  savedJobsCount: number | null;
+  topJobs: { id: string; title: string; views: number | null; applications: number | null }[];
+  topEvents: { id: string; title: string; engagement: number | null }[];
   topNations: { name: string; count: number }[];
   treatyAreas: { name: string; count: number }[];
-  revenue: {
-    subscriptionRevenue: number;
-    oneTimePayments: number;
-    activeSubscriptions: number;
-  };
+  revenue: {subscriptionRevenue: null; oneTimePayments: null; activeSubscriptions: null; available: false};
+  scope: {range: string; from: string | null; through: string; timeZone: string; chartMonths: number; chartFrom: string; undatedUsers: number; undatedJobs: number; undatedApplications: number | null; undatedSavedJobs: number | null};
 }
+
+function formatReportDate(value: string) { return new Date(value).toLocaleDateString("en-CA", {timeZone: "UTC"}); }
 
 type RangeOption = "7" | "30" | "90" | "all";
 
@@ -204,6 +203,7 @@ export default function ReportsPage() {
       if (!res.ok) throw new Error();
       setData(await res.json());
     } catch {
+      setData(null);
       toast.error("Failed to load reports");
     } finally {
       setLoading(false);
@@ -274,23 +274,26 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      <p className="text-sm text-[var(--text-muted)]">Selected-range counts use stored creation dates in UTC, through {formatReportDate(data.scope.through)}. They are record counts, not unique customer or conversion totals. Active employer-role users and current-month signups are independent of the selected range; employer-role users are not posting organizations.</p>
+      <p className="text-sm text-[var(--text-muted)]">Missing or invalid creation dates: {data.scope.undatedUsers} user records; {data.scope.undatedJobs} job records; {data.scope.undatedApplications ?? "unavailable"} application records; {data.scope.undatedSavedJobs ?? "unavailable"} saved-job records. These records are included in All Time and excluded from dated ranges. External applications are not counted.</p>
       {/* Summary Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Users" value={data.totalUsers} />
-        <StatCard label="New This Month" value={data.newThisMonth} accent />
-        <StatCard label="Active Employers" value={data.activeEmployers} />
-        <StatCard label="Total Jobs" value={data.totalJobs} />
+        <StatCard label="User records in selected range" value={data.totalUsers} />
+        <StatCard label="User records this UTC month" value={data.newThisMonth} accent />
+        <StatCard label="Active employer-role users (current)" value={data.activeEmployers} />
+        <StatCard label="Job records in selected range" value={data.totalJobs} />
       </div>
 
+      <p className="text-sm text-[var(--text-muted)]">Charts begin {formatReportDate(data.scope.chartFrom)}; the current UTC month is partial. Charts use a separate calendar-month window.</p>
       {/* Growth Charts */}
       <div className="grid gap-4 lg:grid-cols-2">
         <BarChart
-          title="User Signups"
+          title={`Monthly user records — ${data.scope.chartMonths} calendar months (UTC)`}
           data={data.userGrowth.map((g) => ({ label: g.month, count: g.count }))}
           color="bg-blue-500"
         />
         <BarChart
-          title="Employer Registrations"
+          title={`Monthly employer-role user records — ${data.scope.chartMonths} calendar months (UTC)`}
           data={data.employerGrowth.map((g) => ({ label: g.month, count: g.count }))}
           color="bg-amber-500"
         />
@@ -306,8 +309,8 @@ export default function ReportsPage() {
             </svg>
           </div>
           <div>
-            <p className="text-sm text-[var(--text-muted)]">Job Applications</p>
-            <p className="text-2xl font-bold">{data.applicationsCount.toLocaleString()}</p>
+            <p className="text-sm text-[var(--text-muted)]">Stored application records in selected range</p>
+            <p className="text-2xl font-bold">{data.applicationsCount?.toLocaleString() ?? "Unavailable"}</p>
           </div>
         </div>
         <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5 flex items-center gap-4">
@@ -317,8 +320,8 @@ export default function ReportsPage() {
             </svg>
           </div>
           <div>
-            <p className="text-sm text-[var(--text-muted)]">Saved Jobs</p>
-            <p className="text-2xl font-bold">{data.savedJobsCount.toLocaleString()}</p>
+            <p className="text-sm text-[var(--text-muted)]">Stored saved-job records in selected range</p>
+            <p className="text-2xl font-bold">{data.savedJobsCount?.toLocaleString() ?? "Unavailable"}</p>
           </div>
         </div>
       </div>
@@ -326,7 +329,7 @@ export default function ReportsPage() {
       {/* Content Performance */}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5 space-y-3">
-          <h2 className="text-lg font-semibold">Top 5 Jobs by Views</h2>
+          <h2 className="text-lg font-semibold">Top 5 Jobs by Stored Views (all time)</h2>
           {data.topJobs.map((j, i) => (
             <div key={j.id} className="flex items-center justify-between text-sm">
               <span className="truncate">
@@ -334,7 +337,7 @@ export default function ReportsPage() {
                 {j.title}
               </span>
               <span className="text-[var(--text-muted)] whitespace-nowrap ml-2">
-                {j.views} views &middot; {j.applications} apps
+                {j.views ?? "Unavailable"} stored views &middot; {j.applications ?? "Unavailable"} stored applications
               </span>
             </div>
           ))}
@@ -342,14 +345,14 @@ export default function ReportsPage() {
         </div>
 
         <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5 space-y-3">
-          <h2 className="text-lg font-semibold">Top 5 Events</h2>
+          <h2 className="text-lg font-semibold">Top 5 Events by Stored Engagement (all time)</h2>
           {data.topEvents.map((e, i) => (
             <div key={e.id} className="flex items-center justify-between text-sm">
               <span className="truncate">
                 <span className="text-[var(--text-muted)] mr-2">{i + 1}.</span>
                 {e.title}
               </span>
-              <span className="text-[var(--text-muted)] whitespace-nowrap ml-2">{e.engagement} interactions</span>
+              <span className="text-[var(--text-muted)] whitespace-nowrap ml-2">{e.engagement ?? "Unavailable"} stored interactions</span>
             </div>
           ))}
           {data.topEvents.length === 0 && <p className="text-sm text-[var(--text-muted)]">No data yet.</p>}
@@ -359,7 +362,7 @@ export default function ReportsPage() {
       {/* Demographics */}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5 space-y-3">
-          <h2 className="text-lg font-semibold">Top 10 Nations</h2>
+          <h2 className="text-lg font-semibold">Top 10 Nations (all stored profiles)</h2>
           {data.topNations.map((n) => (
             <HorizontalBar key={n.name} label={n.name} value={n.count} max={maxNation} color="bg-teal-500" />
           ))}
@@ -367,7 +370,7 @@ export default function ReportsPage() {
         </div>
 
         <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5 space-y-3">
-          <h2 className="text-lg font-semibold">Treaty Area Distribution</h2>
+          <h2 className="text-lg font-semibold">Treaty Area Distribution (all stored profiles)</h2>
           {data.treatyAreas.map((t) => (
             <HorizontalBar key={t.name} label={t.name} value={t.count} max={maxTreaty} color="bg-emerald-500" />
           ))}
@@ -375,29 +378,10 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Revenue Summary */}
       <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5 space-y-4">
-        <h2 className="text-lg font-semibold">Revenue Summary</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border border-[var(--card-border)] bg-white/[0.02] p-4">
-            <p className="text-sm text-[var(--text-muted)]">Subscription Revenue</p>
-            <p className="mt-1 text-2xl font-bold text-green-400">
-              ${data.revenue.subscriptionRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-          </div>
-          <div className="rounded-lg border border-[var(--card-border)] bg-white/[0.02] p-4">
-            <p className="text-sm text-[var(--text-muted)]">One-Time Payments</p>
-            <p className="mt-1 text-2xl font-bold text-green-400">
-              ${data.revenue.oneTimePayments.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-          </div>
-          <div className="rounded-lg border border-[var(--card-border)] bg-white/[0.02] p-4">
-            <p className="text-sm text-[var(--text-muted)]">Active Subscriptions</p>
-            <p className="mt-1 text-2xl font-bold text-amber-500">
-              {data.revenue.activeSubscriptions.toLocaleString()}
-            </p>
-          </div>
-        </div>
+        <h2 className="text-lg font-semibold">Verified cash revenue: Unavailable</h2>
+        <p className="text-sm text-[var(--text-muted)]">This report has no reconciled payment receipt totals. Plan assignments, trials and credits are not revenue. Stored application records do not include applications completed on external employer sites.</p>
+        <a href="/admin/payments" className="text-accent underline">Inspect stored plan and payment records</a>
       </div>
     </div>
   );

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { activateAdminJob } from "@/lib/server/admin-job-lifecycle";
 import { adminDb } from "@/lib/firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, FieldPath } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
+
+import { recordedAmount } from "@/lib/admin/reporting";
 
 export const dynamic = "force-dynamic";
 
@@ -51,36 +53,40 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const status = searchParams.get("status") as JobStatusFilter | null;
 
-    let query = adminDb
-      .collection("jobs")
-      .orderBy("createdAt", "desc")
-      .limit(100);
-
-    if (status) {
-      if (status !== "active" && status !== "inactive") {
-        return NextResponse.json(
-          { error: "Invalid status filter. Must be: active or inactive" },
-          { status: 400 }
-        );
-      }
-
-      const isActive = status === "active";
-
-      query = adminDb
-        .collection("jobs")
-        .where("active", "==", isActive)
-        .orderBy("createdAt", "desc")
-        .limit(100);
+    if (status && status !== "active" && status !== "inactive") {
+      return NextResponse.json({ error: "Invalid status filter. Must be: active or inactive" }, { status: 400 });
     }
-
-    const snapshot = await query.get();
-    const jobs = snapshot.docs.filter(doc => doc.data().status !== 'deleted' && !doc.data().deletedAt).map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      publiclyVisible: isPublicJobRecordVisible(doc.data()),
-    }));
-
-    return NextResponse.json({ jobs });
+    const limit = Number(searchParams.get("limit") ?? "20");
+    const cursor = searchParams.get("cursor");
+    const legacyPage = searchParams.get("page");
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || (legacyPage !== null && legacyPage !== "1") || (cursor !== null && (!cursor || cursor.length > 1500 || cursor.includes("/")))) {
+      return NextResponse.json({ error: "limit must be 1–100; use a valid document-ID cursor for subsequent pages" }, { status: 400 });
+    }
+    // Document-ID order includes undated legacy records without scanning the
+    // complete inventory or mixing Firestore and ISO timestamp sort semantics.
+    let inventory: FirebaseFirestore.Query = adminDb.collection("jobs");
+    if (status) inventory = inventory.where("active", "==", status === "active");
+    let query = inventory.orderBy(FieldPath.documentId()).limit(limit + 1);
+    if (cursor) query = query.startAfter(cursor);
+    const [count, snapshot] = await Promise.all([inventory.count().get(), query.get()]);
+    const scanned = snapshot.docs.slice(0, limit);
+    const hasNext = snapshot.docs.length > limit;
+    const jobs = scanned.filter(doc => doc.data().status !== "deleted" && !doc.data().deletedAt).map(doc => {
+      const record = doc.data();
+      return {
+        ...record, id: doc.id,
+        recordStatus: record.status,
+        applications: recordedAmount(record.applicationCount ?? record.applications),
+        status: record.active === true ? "active" : record.active === false ? "inactive" : "unknown",
+        publiclyVisible: isPublicJobRecordVisible(record),
+      };
+    });
+    return NextResponse.json({
+      jobs, total: count.data().count, limit,
+      nextCursor: hasNext ? scanned.at(-1)!.id : null,
+      scannedRecords: scanned.length,
+      scope: "Aggregate stored records matching the enabled-flag filter, including retained soft-deleted records. Deleted rows are hidden; pages scan bounded records in document-ID order, including undated records.",
+    });
   } catch (error) {
     console.error("[GET /api/admin/jobs] Error:", error);
     return NextResponse.json(

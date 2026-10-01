@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Card, CardContent, Badge, Skeleton } from "@/components/ui";
@@ -10,8 +10,8 @@ import { formatDate } from "@/lib/format-date";
 // Types
 // ---------------------------------------------------------------------------
 
-type JobStatus = "active" | "inactive";
-type TabFilter = "all" | JobStatus;
+type JobStatus = "active" | "inactive" | "unknown";
+type TabFilter = "all" | "active" | "inactive";
 
 interface AdminJob extends Record<string, unknown> {
   id: string;
@@ -21,13 +21,15 @@ interface AdminJob extends Record<string, unknown> {
   status: JobStatus;
   active?: boolean;
   publiclyVisible: boolean;
-  applications: number;
+  applications: number | null;
   postedAt: string;
 }
 
 interface JobsApiResponse {
   jobs: AdminJob[];
   total: number;
+  nextCursor: string | null;
+  scannedRecords: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -44,8 +46,9 @@ const STATUS_BADGE: Record<
   JobStatus,
   { label: string; variant: "success" | "default" }
 > = {
-  active: { label: "Active", variant: "success" },
-  inactive: { label: "Inactive", variant: "default" },
+  active: { label: "Enabled", variant: "success" },
+  inactive: { label: "Disabled", variant: "default" },
+  unknown: { label: "Unknown", variant: "default" },
 };
 
 const PAGE_SIZE = 20;
@@ -158,13 +161,19 @@ export default function AdminJobsPage() {
 
   // Pagination
   const [page, setPage] = useState(1);
+  const [pageCursors, setPageCursors] = useState<string[]>([""]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [scannedRecords, setScannedRecords] = useState(0);
 
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<AdminJob | null>(null);
 
+  const requestSequence = useRef(0);
+
   // Fetch jobs from API
   const fetchJobs = useCallback(async () => {
     if (!user) return;
+    const sequence = ++requestSequence.current;
     setLoading(true);
     setError(null);
 
@@ -172,7 +181,7 @@ export default function AdminJobsPage() {
       const token = await user.getIdToken();
       const params = new URLSearchParams();
       if (activeTab !== "all") params.set("status", activeTab);
-      params.set("page", String(page));
+      if (pageCursors[page - 1]) params.set("cursor", pageCursors[page - 1]);
       params.set("limit", String(PAGE_SIZE));
 
       const res = await fetch(`/api/admin/jobs?${params.toString()}`, {
@@ -182,17 +191,23 @@ export default function AdminJobsPage() {
       if (!res.ok) throw new Error(`API returned ${res.status}`);
 
       const data: JobsApiResponse = await res.json();
+      if (sequence !== requestSequence.current) return;
       setJobs(data.jobs ?? []);
-      setTotal(data.total ?? 0);
+      setTotal(data.total);
+      setNextCursor(data.nextCursor);
+      setScannedRecords(data.scannedRecords);
     } catch (err) {
+      if (sequence !== requestSequence.current) return;
       console.error("Failed to fetch jobs:", err);
       setError("Failed to load jobs. Please try again.");
       setJobs([]);
       setTotal(0);
+      setNextCursor(null);
+      setScannedRecords(0);
     } finally {
-      setLoading(false);
+      if (sequence === requestSequence.current) setLoading(false);
     }
-  }, [user, activeTab, page]);
+  }, [user, activeTab, page, pageCursors]);
 
   useEffect(() => {
     fetchJobs();
@@ -201,6 +216,7 @@ export default function AdminJobsPage() {
   // Reset to page 1 on filter change
   useEffect(() => {
     setPage(1);
+    setPageCursors([""]);
   }, [activeTab]);
 
   // Toggle job status
@@ -261,8 +277,7 @@ export default function AdminJobsPage() {
 
       if (!res.ok) throw new Error(`API returned ${res.status}`);
 
-      setJobs((prev) => prev.filter((j) => j.id !== deleteTarget.id));
-      setTotal((prev) => prev - 1);
+      await fetchJobs();
     } catch (err) {
       console.error("Failed to delete job:", err);
     } finally {
@@ -288,9 +303,6 @@ export default function AdminJobsPage() {
   const activeCount = jobs.filter((j) => j.status === "active").length;
   const inactiveCount = jobs.filter((j) => j.status === "inactive").length;
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
   return (
     <div className="min-h-screen bg-background">
@@ -301,16 +313,16 @@ export default function AdminJobsPage() {
             Jobs Management
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Monitor and manage all job postings across the platform.
+            Totals count stored records matching the flag filter, including retained deleted records. Deleted rows are hidden. Pages scan up to 20 records in record-ID order, including undated records. Status counts and search apply to this page; missing flags show Unknown only in All. Enabled does not imply publicly visible.
           </p>
         </div>
 
         {/* Stats Row */}
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Total Jobs" value={total} loading={loading} />
-          <StatCard label="Active Jobs" value={activeCount} loading={loading} />
+          <StatCard label="Stored flag matches (including deleted)" value={total} loading={loading} />
+          <StatCard label="Enabled on this page" value={activeCount} loading={loading} />
           <StatCard
-            label="Inactive Jobs"
+            label="Disabled on this page"
             value={inactiveCount}
             loading={loading}
           />
@@ -326,7 +338,7 @@ export default function AdminJobsPage() {
                   <button
                     key={tab.value}
                     type="button"
-                    onClick={() => setActiveTab(tab.value)}
+                    onClick={() => { setPage(1); setPageCursors([""]); setActiveTab(tab.value); }}
                     className={[
                       "flex-shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-all duration-200",
                       activeTab === tab.value
@@ -358,7 +370,7 @@ export default function AdminJobsPage() {
                 </svg>
                 <input
                   type="search"
-                  placeholder="Search by title or employer..."
+                  placeholder="Search this page by title or employer..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-lg border border-input-border bg-input py-2 pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted transition-colors focus:border-input-focus focus:outline-none sm:w-72"
@@ -432,7 +444,7 @@ export default function AdminJobsPage() {
                           Status
                         </th>
                         <th className="hidden pb-3 pr-4 font-medium text-text-muted md:table-cell">
-                          Applications
+                          Stored applications
                         </th>
                         <th className="hidden pb-3 pr-4 font-medium text-text-muted lg:table-cell">
                           Posted
@@ -466,7 +478,7 @@ export default function AdminJobsPage() {
                               </Badge>
                             </td>
                             <td className="hidden py-4 pr-4 text-text-secondary md:table-cell">
-                              {job.applications}
+                              {job.applications ?? "Unavailable"}
                             </td>
                             <td className="hidden py-4 pr-4 text-text-secondary lg:table-cell">
                               {formatDate(job.postedAt)}
@@ -580,16 +592,17 @@ export default function AdminJobsPage() {
                   </table>
                 </div>
 
-                {/* Pagination */}
-                <div className="flex items-center justify-between pt-4 border-t border-[var(--card-border)]">
-                  <p className="text-sm text-[var(--text-muted)]">Showing {rangeStart}-{rangeEnd} of {total}</p>
-                  <div className="flex gap-2">
-                    <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] button-gradient-soft hover:bg-accent/10 disabled:opacity-40">Previous</button>
-                    <span className="text-sm px-3 py-1.5">{page} / {totalPages}</span>
-                    <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] button-gradient-soft hover:bg-accent/10 disabled:opacity-40">Next</button>
-                  </div>
-                </div>
               </>
+            )}
+            {!loading && !error && (
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[var(--card-border)]">
+                <p className="text-sm text-[var(--text-muted)]">{scannedRecords} stored records scanned; {filteredJobs.length} visible after deletion and page search filters.</p>
+                <div className="flex gap-2">
+                  <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] button-gradient-soft hover:bg-accent/10 disabled:opacity-40">Previous</button>
+                  <span className="text-sm px-3 py-1.5">Page {page}</span>
+                  <button disabled={!nextCursor} onClick={() => { if (nextCursor) { setPageCursors(prior => [...prior.slice(0, page), nextCursor]); setPage(p => p + 1); } }} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] button-gradient-soft hover:bg-accent/10 disabled:opacity-40">Next</button>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>

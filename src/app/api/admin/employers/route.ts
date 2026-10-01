@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
       businesses: normalizedEmployers.filter((employer) => employer.accountType === "business").length,
     };
 
-    return NextResponse.json({ employers, summary });
+    return NextResponse.json({ employers, summary, scope: { limit: 100, counts: "loaded latest records with createdAt", globalTotal: null } });
   } catch (error) {
     console.error("[GET /api/admin/employers] Error:", error);
     return NextResponse.json(
