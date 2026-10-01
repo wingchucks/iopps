@@ -199,7 +199,7 @@ try {
  await expect(page.getByText(secondJobs.data.jobs[0].title,{exact:true})).toBeVisible();await shot('admin-jobs-page-two');await record('admin-jobs-global-filter-count-and-distinct-server-pages');
  await page.goto(server.base+'/admin/reports');await expect(page.getByText('Verified cash revenue: Unavailable',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'90 Days',exact:true}).click();await expect(page.getByText('Monthly user records — 6 calendar months (UTC)',{exact:true})).toBeVisible();
- await expect(page.getByText('Stored application records in selected range',{exact:true})).toBeVisible();await shot('admin-record-report-scopes');await record('admin-report-ranges-timestamp-coverage-and-unavailable-revenue');
+ await expect(page.getByText('Stored applications by submission date in selected range',{exact:true})).toBeVisible();await shot('admin-record-report-scopes');await record('admin-report-ranges-timestamp-coverage-and-unavailable-revenue');
  await page.goto(server.base+'/admin/employers');await expect(page.getByText(/Counts, filters and search apply only to this loaded set/)).toBeVisible();await record('admin-employer-directory-labels-latest-loaded-scope');
  await page.setViewportSize({width:390,height:844});
  for(const route of ['/admin/payments','/admin/jobs','/admin/reports']){
