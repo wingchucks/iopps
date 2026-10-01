@@ -136,6 +136,7 @@ function OrgOnboardingContent() {
   const [enrollmentStatus, setEnrollmentStatus] = useState("");
 
   // Step 1 — Identity
+  const [organizationName, setOrganizationName] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [description, setDescription] = useState("");
@@ -188,6 +189,7 @@ function OrgOnboardingContent() {
         router.replace(postSignupDestination(searchParams, "/org/plans"));
         return;
       }
+      setOrganizationName(org.name || "");
       // Populate fields from saved data
       if (org.type) setOrgType(org.type);
       if (org.logoUrl || org.logo) setLogoPreview(org.logoUrl || org.logo || null);
@@ -232,7 +234,7 @@ function OrgOnboardingContent() {
     const nextRequiredFields = (params.get("required") || "")
       .split(",")
       .map((field) => field.trim())
-      .filter((field) => field === "description" || field === "contact");
+      .filter((field) => field === "name" || field === "description" || field === "contact");
 
     setRequiredFields(nextRequiredFields);
     setProfileIncomplete(
@@ -285,7 +287,8 @@ function OrgOnboardingContent() {
         setLogoFile(null);
       }
 
-      const data: Record<string, unknown> = {};
+      if (!organizationName.trim()) throw new Error("Organization name is required.");
+      const data: Record<string, unknown> = { name: organizationName.trim() };
 
       // Always save everything so far
       if (logoUrl) data.logoUrl = logoUrl;
@@ -466,6 +469,10 @@ function OrgOnboardingContent() {
           {/* Step 1 — Identity */}
           {step === 0 && (
             <div className="space-y-5">
+              <label className="block">
+                <span className="text-sm font-semibold text-text-sec mb-1.5 block">Organization name</span>
+                <input value={organizationName} onChange={e => setOrganizationName(e.target.value)} required className={inputClass} />
+              </label>
               <div>
                 <span className="text-sm font-semibold text-text-sec mb-2 block">Organization Logo (optional for workspace)</span>
                 <div className="flex items-center gap-4">

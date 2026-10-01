@@ -33,7 +33,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<UserCredential>;
   signUp: (name: string, email: string, password: string, nextPath?: string) => Promise<SignupOutcome>;
   signInWithGoogle: () => Promise<UserCredential>;
-  signOut: () => Promise<void>;
+  signOut: (expectedUid?: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   sendVerificationEmail: (nextPath?: string, expectedUid?: string) => Promise<boolean>;
   reloadUser: (expectedUid?: string) => Promise<boolean>;
@@ -63,7 +63,7 @@ async function fetchWithTimeout(
 
 /** One writer per document; Web Locks extend ordering to other same-origin tabs. */
 let sessionWrites: Promise<unknown> = Promise.resolve();
-function syncSessionCookie(user: User | null, options?: { forceRefresh?: boolean }): Promise<boolean> {
+export function syncSessionCookie(user: User | null, options?: { forceRefresh?: boolean }): Promise<boolean> {
   const write = () => writeSessionCookie(user, options);
   const pending = sessionWrites.then(async () => {
     if (typeof navigator !== "undefined" && navigator.locks) {
@@ -238,7 +238,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return cred;
   };
 
-  const signOut = async () => {
+  const signOut = async (expectedUid?: string) => {
+    if (expectedUid && auth.currentUser?.uid !== expectedUid) return;
     // Clear SDK persistence first. A late POST must settle before the final DELETE;
     // callers must not announce success or navigate until both stores are cleared.
     await firebaseSignOut(auth);

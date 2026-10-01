@@ -387,7 +387,8 @@ export default function AdminEmployersPage() {  const { user } = useAuth();
     employerId: string;
     employerName: string;
     balance: number;
-  }>({ open: false, employerId: "", employerName: "", balance: 0 });
+    requestId: string;
+  }>({ open: false, employerId: "", employerName: "", balance: 0, requestId: "" });
 
   const statusTabs = useMemo<AdminFilterOption[]>(
     () => [
@@ -492,7 +493,7 @@ export default function AdminEmployersPage() {  const { user } = useAuth();
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ employerId, credits }),
+        body: JSON.stringify({ employerId, credits, requestId: grantModal.requestId }),
       });
 
       if (!res.ok) {
@@ -512,7 +513,7 @@ export default function AdminEmployersPage() {  const { user } = useAuth();
       toast.success(
         `${credits} credit(s) granted to ${employerName} (balance: ${data.balance ?? "?"})`,
       );
-      setGrantModal({ open: false, employerId: "", employerName: "", balance: 0 });
+      setGrantModal({ open: false, employerId: "", employerName: "", balance: 0, requestId: "" });
       await fetchEmployers();
     } catch (err) {
       console.error("Error granting credits:", err);
@@ -799,6 +800,7 @@ export default function AdminEmployersPage() {  const { user } = useAuth();
                           employerId: employer.id,
                           employerName: employer.displayName,
                           balance: employer.postingCredits ?? 0,
+                          requestId: crypto.randomUUID(),
                         })
                       }
                       disabled={actionLoading === employer.id}
@@ -874,6 +876,7 @@ export default function AdminEmployersPage() {  const { user } = useAuth();
                           employerId: employer.id,
                           employerName: employer.displayName,
                           balance: employer.postingCredits ?? 0,
+                          requestId: crypto.randomUUID(),
                         })
                       }
                     disabled={actionLoading === employer.id}
@@ -912,14 +915,14 @@ export default function AdminEmployersPage() {  const { user } = useAuth();
         loading={actionLoading === rejectModal.employerId}
       />
 
-      <GrantCreditModal
+      {grantModal.open && <GrantCreditModal
         isOpen={grantModal.open}
         employerName={grantModal.employerName}
         balance={grantModal.balance}
-        onClose={() => setGrantModal({ open: false, employerId: "", employerName: "", balance: 0 })}
+        onClose={() => setGrantModal({ open: false, employerId: "", employerName: "", balance: 0, requestId: "" })}
         onConfirm={handleConfirmGrant}
         loading={actionLoading === grantModal.employerId}
-      />
+      />}
     </div>
   );
 }

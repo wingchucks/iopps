@@ -58,7 +58,7 @@ async function newPage(width=1440){
  (state.pages||=[]).push(page);return page;
 }
 async function closePage(page){state.pages=state.pages.filter(p=>p!==page);await page.context().close();}
-async function login(page,email,pass=password){
+async function login(page,email,pass=(email===state.aEmail?state.aPassword:undefined)||password){
  await page.goto(server.base+'/login');await page.getByLabel('Email address',{exact:true}).fill(email);await page.getByLabel('Password',{exact:true}).fill(pass);
  await page.getByRole('button',{name:'Sign In',exact:true}).click();await page.waitForURL(url=>url.pathname!=='/login',{timeout:30000});
  await expect.poll(async()=>(await page.context().cookies()).some(c=>c.name==='__session'&&!!c.value)).toBe(true);
@@ -87,7 +87,7 @@ async function fixtureOrganization(label){
  const owner=await fixtureUser(label,{profile:{role:'employer',orgId:null,orgRole:'owner'}});
  const uid=owner.uid,name=`QA Fictional ${label} Org ${run}`;
  for(const collection of ['users','members'])await db.doc(`${collection}/${uid}`).set({role:'employer',orgId:uid,employerId:uid,orgRole:'owner'},{merge:true});
- const org={id:uid,employerId:uid,name,slug:`qa-fictional-${label}-${run}`,type:'employer',description:'A fictional emulator-only organization used for website QA.',contactEmail:owner.email,website:'https://example.invalid',location:{city:'Regina',province:'SK'},status:'approved',emailVerified:true,onboardingComplete:true,plan:'free',subscriptionTier:'free',standardPostCredits:0,featuredPostCredits:0};
+ const org={createdAt:new Date(),id:uid,employerId:uid,name,slug:`qa-fictional-${label}-${run}`,type:'employer',description:'A fictional emulator-only organization used for website QA.',contactEmail:owner.email,website:'https://example.invalid',location:{city:'Regina',province:'SK'},status:'approved',emailVerified:true,onboardingComplete:true,plan:'free',subscriptionTier:'free',standardPostCredits:0,featuredPostCredits:0};
  for(const collection of ['organizations','employers'])await db.doc(`${collection}/${uid}`).set(org);
  await auth.setCustomUserClaims(uid,{role:'employer',employerId:uid});
  return {...owner,orgName:name};
@@ -152,13 +152,21 @@ try {
   assert.equal((await api('GET','/api/applications')).status,401);
   await login(a,state.aEmail);await a.goto(server.base+'/profile');await expect(a.getByRole('button',{name:'Edit Profile',exact:true})).toBeVisible();
  });
- await check('ACC-04','Account recovery sends a password-reset code for the existing account',async()=>{
+ await check('ACC-04','Password recovery completes through a usable form and the new password signs in',async()=>{
   const page=await newPage(1440);
   try{
    await page.goto(server.base+'/forgot-password');await page.locator('input[type=email]').fill(state.aEmail);await page.locator('button[type=submit]').click();
-   await page.getByText(/Check your|sent|inbox/i).first().waitFor();
+   await page.getByRole('heading',{name:'Check your email',exact:true}).waitFor();
    const codes=await(await fetch('http://127.0.0.1:9099/emulator/v1/projects/demo-iopps-preview/oobCodes')).json();
-   assert.ok(codes.oobCodes.some(c=>c.email===state.aEmail&&c.requestType==='PASSWORD_RESET'));
+   const code=codes.oobCodes.filter(c=>c.email===state.aEmail&&c.requestType==='PASSWORD_RESET').at(-1);assert.ok(code);
+   const resetUrl=new URL(server.base+'/auth/action');resetUrl.searchParams.set('mode','resetPassword');resetUrl.searchParams.set('oobCode',code.oobCode);
+   await page.goto(resetUrl.href);await page.getByRole('heading',{name:'Choose a new password',exact:true}).waitFor();
+   await page.getByLabel('New password',{exact:true}).fill('Fictional-reset-2026!');await page.getByLabel('Confirm new password',{exact:true}).fill('Fictional-reset-2026!');
+   await page.getByRole('button',{name:'Update password',exact:true}).click();await page.getByRole('heading',{name:'Password updated',exact:true}).waitFor();
+   state.aPassword='Fictional-reset-2026!';await login(page,state.aEmail);await page.goto(server.base+'/profile');await expect(page.getByRole('button',{name:'Edit Profile',exact:true})).toBeVisible();
+   await shot(page,'ACC-04-reset-complete');
+   // Reset invalidates earlier sessions; explicitly sign the original journey tab back in.
+   await login(a,state.aEmail);
   }finally{await closePage(page);}
  });
 
@@ -594,6 +602,44 @@ try {
  });
 
  // ── IOPPS Live regression (no live broadcast in isolated QA) ─────────────
+ await check('ADM-01','Admin grants commit one audit and one balance change, including concurrent retries; ordinary users cannot grant',async()=>{
+  state.d=await fixtureOrganization('credit-recipient');
+  const token=await tokenFor(state.admin.uid),body={employerId:state.d.uid,credits:2,requestId:crypto.randomUUID()};
+  assert.equal((await api('POST','/api/admin/employers/credits',undefined,body)).status,401);
+  assert.equal((await api('POST','/api/admin/employers/credits',await tokenFor(state.c.uid),body)).status,403);
+  const results=await Promise.all([api('POST','/api/admin/employers/credits',token,body),api('POST','/api/admin/employers/credits',token,body)]);
+  for(const result of results){assert.equal(result.status,200);assert.equal(result.data.balance,2);}
+  assert.equal((await db.doc('employers/'+state.d.uid).get()).data().standardPostCredits,2);
+  assert.equal((await db.collection('auditLogs').where('employerId','==',state.d.uid).where('type','==','credit_grant').get()).size,1);
+  assert.equal((await api('POST','/api/admin/employers/credits',token,{...body,credits:3})).status,409);
+ });
+ await check('ADM-02','Grant dialog resets to one after granting twenty to another employer',async()=>{
+  need(state.admin,'admin fixture');const page=await newPage();
+  try{
+   await login(page,state.admin.email);await page.goto(server.base+'/admin/employers');
+   await page.getByRole('row').filter({hasText:state.d.orgName}).getByRole('button',{name:/Grant credit/}).click();
+   const dialog=page.getByRole('dialog',{name:/Grant credits/});await dialog.getByRole('spinbutton').fill('20');
+   await dialog.getByRole('button',{name:'Grant credits',exact:true}).click();await expect(dialog).toHaveCount(0);
+   await page.getByRole('row').filter({hasText:state.c.orgName}).getByRole('button',{name:/Grant credit/}).click();
+   await expect(page.getByRole('dialog').getByRole('spinbutton')).toHaveValue('1');await page.getByRole('dialog').getByRole('button',{name:'Cancel',exact:true}).click();
+   assert.equal((await db.doc('employers/'+state.d.uid).get()).data().standardPostCredits,22);await shot(page,'ADM-02-dialog-reset');
+  }finally{await closePage(page);}
+ });
+ await check('BIZ-08','Blank name save is refused; an already missing name is repaired through onboarding',async()=>{
+  const token=await tokenFor(state.d.uid),before=(await db.doc('organizations/'+state.d.uid).get()).data().name;
+  assert.equal((await api('PUT','/api/employer/profile',token,{name:'   '})).status,400);
+  assert.equal((await db.doc('organizations/'+state.d.uid).get()).data().name,before);
+  for(const collection of ['organizations','employers'])await db.doc(collection+'/'+state.d.uid).update({name:'',onboardingComplete:false});
+  const page=await newPage();
+  try{
+   await login(page,state.d.email);await page.goto(server.base+'/org/onboarding');await page.getByLabel('Organization name',{exact:true}).fill('QA Repaired '+run);
+   for(let step=0;step<3;step++)await page.getByRole('button',{name:'Next',exact:true}).click();
+   await page.getByRole('button',{name:/Finish|Complete/}).click();await page.waitForURL(url=>url.pathname==='/org/plans');
+   assert.equal((await db.doc('organizations/'+state.d.uid).get()).data().name,'QA Repaired '+run);
+   assert.equal((await db.doc('organizations/'+state.d.uid).get()).data().onboardingComplete,true);await shot(page,'BIZ-08-name-repaired');
+  }finally{await closePage(page);}
+ });
+
  await check('LIVE-01','IOPPS Live opens and stays usable at desktop and phone widths (offline state; no live stream observable)',async()=>{
   const evidence={};
   for(const width of [1440,390]){const page=await newPage(width);
@@ -610,7 +656,7 @@ try {
   try{
    await login(phone,state.aEmail);
    for(const route of ['/jobs','/jobs/'+state.cJob2,'/events','/scholarships','/businesses','/profile','/profile/resume','/applications','/settings','/org/dashboard','/org/dashboard/jobs','/org/dashboard/applications','/org/dashboard/events','/org/dashboard/scholarships','/org/'+(state.orgSlug||'')]){
-    await phone.goto(server.base+route);await phone.waitForLoadState('networkidle').catch(()=>{});await phone.waitForTimeout(500);fits[route]=await noHorizontalOverflow(phone);
+    await phone.goto(server.base+route);await phone.waitForLoadState('networkidle',{timeout:1500}).catch(()=>{});await phone.waitForTimeout(500);fits[route]=await noHorizontalOverflow(phone);
     await shot(phone,'MOB-01'+route.replaceAll('/','_'));
    }
   }finally{await closePage(phone);}

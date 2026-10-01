@@ -21,15 +21,20 @@ function isUnsafeLink(value: unknown): boolean {
   }
 }
 
+function normalizeLink(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function firstInvalidProfileLink(updates: Record<string, unknown>, stored: Record<string, unknown>): string | null {
   const labels: Record<string, string> = { website: "website", logoUrl: "logo", bannerUrl: "banner image" };
   for (const [field, label] of Object.entries(labels)) {
-    if (updates[field] !== stored[field] && isUnsafeLink(updates[field])) return label;
+    const previous = field === "logoUrl" ? stored.logoUrl || stored.logo : stored[field];
+    if (normalizeLink(updates[field]) !== normalizeLink(previous) && isUnsafeLink(updates[field])) return label;
   }
   const social = updates.socialLinks, storedSocial = (stored.socialLinks || {}) as Record<string, unknown>;
-  if (social && typeof social === "object" && Object.entries(social as Record<string, unknown>).some(([key, value]) => value !== storedSocial[key] && isUnsafeLink(value))) return "social profile links";
-  const storedGallery = Array.isArray(stored.gallery) ? stored.gallery : [];
-  if (Array.isArray(updates.gallery) && updates.gallery.some(value => !storedGallery.includes(value) && isUnsafeLink(value))) return "gallery images";
+  if (social && typeof social === "object" && Object.entries(social as Record<string, unknown>).some(([key, value]) => normalizeLink(value) !== normalizeLink(storedSocial[key]) && isUnsafeLink(value))) return "social profile links";
+  const storedGallery = Array.isArray(stored.gallery) ? stored.gallery.map(normalizeLink) : [];
+  if (Array.isArray(updates.gallery) && updates.gallery.some(value => !storedGallery.includes(normalizeLink(value)) && isUnsafeLink(value))) return "gallery images";
   return null;
 }
 
@@ -40,6 +45,7 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { updates, touchedFields } = normalizeOrganizationProfilePatch(body as Record<string, unknown>);
     if (!touchedFields.length) throw new EmployerApiError(400, "No valid fields to update.");
+    if (Object.hasOwn(updates, "name") && !updates.name) throw new EmployerApiError(400, "Organization name is required.");
     // Blank hides the public email; anything else must be a real address.
     if (typeof updates.publicContactEmail === "string" && updates.publicContactEmail && !isPublicContactEmailValid(updates.publicContactEmail)) {
       throw new EmployerApiError(400, "Enter a valid public contact email, or leave it blank to show no email.");
