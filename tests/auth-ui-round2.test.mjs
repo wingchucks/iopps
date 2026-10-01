@@ -13,6 +13,7 @@ function load(file, mocks = {}) {
   const loaded = { exports: {} };
   vm.runInNewContext(code, { module: loaded, exports: loaded.exports, URL, URLSearchParams, setTimeout, clearTimeout, process: { env: {} }, ...mocks.__globals, require: id => {
     if (id in mocks) return mocks[id];
+    if (id === './password-reset-error') return load('src/app/auth/action/password-reset-error.ts', mocks);
     if (id.startsWith('@/')) return load('src/' + id.slice(2) + '.ts', mocks);
     return require(id);
   } });
@@ -84,6 +85,29 @@ test('reset action validates code before presenting a form and restricts continu
   await assert.rejects(validateResetAction(new URLSearchParams('mode=resetPassword&oobCode=fictional'), async () => { throw Error('expired'); }));
   assert.equal(resetContinuePath('https://iopps.ca/jobs/one?save=1', 'https://iopps.ca'), '/login?redirect=%2Fjobs%2Fone%3Fsave%3D1');
   for (const value of ['https://evil.invalid/', '//evil.invalid', '/auth/action', '/login?redirect=//evil.invalid', '/\\\\evil.invalid']) assert.equal(resetContinuePath(value, 'https://iopps.ca'), '/login');
+});
+
+test('reset form displays provider-specific failures and retains entered values for retry', async () => {
+  const values = ['FictionalPassword123!', 'FictionalPassword123!', false, ''];
+  let cursor = 0;
+  const { PasswordResetView } = load('src/app/auth/action/ActionContent.tsx', {
+    react: { useState: () => { const index = cursor++; return [values[index], value => { values[index] = value; }]; } },
+    './verification-action': load('src/app/auth/action/verification-action.ts'), '@/lib/firebase': { auth: {} }, 'firebase/auth': {},
+  });
+  for (const [code, expected] of [['auth/network-request-failed', /connection and try again/], ['auth/expired-action-code', /new reset link/], ['auth/weak-password', /password requirements/]]) {
+    cursor = 0;
+    const view = PasswordResetView({ state: 'ready', continuePath: '/login', onSubmit: async password => {
+      assert.equal(password, 'FictionalPassword123!');
+      throw { code, message: 'private provider diagnostic' };
+    } });
+    const form = view.props.children.props.children.find(child => child?.type === 'form');
+    await form.props.onSubmit({ preventDefault() {} });
+    assert.match(values[3], expected);
+    assert.doesNotMatch(values[3], /private provider diagnostic/);
+    assert.equal(values[0], 'FictionalPassword123!');
+    assert.equal(values[1], 'FictionalPassword123!');
+    assert.equal(values[2], false);
+  }
 });
 
 test('every installed Firebase Auth error code and unknown code has safe friendly output (existing behavior)', async t => {
