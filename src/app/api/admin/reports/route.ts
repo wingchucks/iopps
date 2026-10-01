@@ -51,8 +51,9 @@ export async function GET(request: NextRequest) {
     let undatedSavedJobs: number | null = null;
     try {
       const records = (await adminDb.collection("applications").get()).docs.map(doc => doc.data());
-      applicationsCount = count(records);
-      undatedApplications = undated(records);
+      const submissionDates = records.map(record => reportingTimestamp(record.appliedAt));
+      applicationsCount = cutoff === null ? records.length : submissionDates.filter(date => date !== null && date >= cutoff && date <= now.getTime()).length;
+      undatedApplications = submissionDates.filter(date => date === null).length;
     } catch { /* A failed read is unavailable, never a measured zero. */ }
     try {
       const records = (await adminDb.collection("savedJobs").get()).docs.map(doc => doc.data());
