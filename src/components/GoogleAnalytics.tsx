@@ -30,7 +30,9 @@ export default function GoogleAnalytics() {
     strategy="afterInteractive"
     onReady={() => {
       window.dataLayer = window.dataLayer || [];
-      window.gtag = window.gtag || ((...args: unknown[]) => { window.dataLayer!.push(args); });
+      // Google processes gtag commands as Arguments objects, not plain arrays.
+      // eslint-disable-next-line prefer-rest-params -- Required by the Google tag queue protocol.
+      window.gtag = window.gtag || function () { window.dataLayer!.push(arguments); };
       window.gtag("js", new Date());
       window.gtag("set", { page_location: "https://www.iopps.ca/", page_title: "IOPPS", page_referrer: "" });
       window.gtag("config", GA_MEASUREMENT_ID, { send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false });
