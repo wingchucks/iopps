@@ -274,8 +274,8 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <p className="text-sm text-[var(--text-muted)]">Selected-range counts use stored creation dates in UTC, through {formatReportDate(data.scope.through)}. They are record counts, not unique customer or conversion totals. Active employer-role users and current-month signups are independent of the selected range; employer-role users are not posting organizations.</p>
-      <p className="text-sm text-[var(--text-muted)]">Missing or invalid creation dates: {data.scope.undatedUsers} user records; {data.scope.undatedJobs} job records; {data.scope.undatedApplications ?? "unavailable"} application records; {data.scope.undatedSavedJobs ?? "unavailable"} saved-job records. These records are included in All Time and excluded from dated ranges. External applications are not counted.</p>
+      <p className="text-sm text-[var(--text-muted)]">Selected-range application counts use stored appliedAt submission dates; other counts use stored creation dates in UTC, through {formatReportDate(data.scope.through)}. They are record counts, not unique customer or conversion totals. Active employer-role users and current-month signups are independent of the selected range; employer-role users are not posting organizations.</p>
+      <p className="text-sm text-[var(--text-muted)]">Missing or invalid creation dates: {data.scope.undatedUsers} user records; {data.scope.undatedJobs} job records; {data.scope.undatedSavedJobs ?? "unavailable"} saved-job records. Missing or invalid application submission dates (appliedAt): {data.scope.undatedApplications ?? "unavailable"} application records. These records are included in All Time and excluded from dated ranges. External applications are not counted.</p>
       {/* Summary Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="User records in selected range" value={data.totalUsers} />
@@ -309,7 +309,7 @@ export default function ReportsPage() {
             </svg>
           </div>
           <div>
-            <p className="text-sm text-[var(--text-muted)]">Stored application records in selected range</p>
+            <p className="text-sm text-[var(--text-muted)]">Stored applications by submission date in selected range</p>
             <p className="text-2xl font-bold">{data.applicationsCount?.toLocaleString() ?? "Unavailable"}</p>
           </div>
         </div>

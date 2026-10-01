@@ -131,7 +131,7 @@ test("reports include native and serialized timestamps consistently without inve
   const route = load("src/app/api/admin/reports/route.ts", {
     users: [{createdAt: new Date(recent).toISOString()}, {createdAt: {toDate: () => new Date(recent)}, role: "employer", status: "active"}, {createdAt: {_seconds: recent / 1000}}, {createdAt: "invalid"}, {}, {createdAt: new Date(now + 86400000).toISOString()}],
     jobs: [{createdAt: {seconds: recent / 1000}}, {createdAt: new Date(now - 100 * 86400000).toISOString()}, {}],
-    applications: [{createdAt: {seconds: recent / 1000}}, {}],
+    applications: [{appliedAt: {seconds: recent / 1000}}, {}],
     savedJobs: [],
   });
   const data = await (await route.get("range=90")).json();
@@ -173,4 +173,27 @@ test("date normalization rejects invalid and missing values; monetary fields are
   assert.equal(reporting.reportingTimestamp({seconds: now / 1000}), now);
   assert.equal(reporting.recordedAmount(0), 0);
   for (const value of [undefined, null, "50", -1, NaN, Infinity]) assert.equal(reporting.recordedAmount(value), null);
+});
+
+
+test("applications use canonical submission dates without guessing creation-date fallbacks", async () => {
+  const day = 86400000;
+  const route = load("src/app/api/admin/reports/route.ts", {applications: [
+    {appliedAt: {toDate: () => new Date(now - day)}, createdAt: "invalid"},
+    {appliedAt: {seconds: (now - 10 * day) / 1000}},
+    {appliedAt: {_seconds: (now - 45 * day) / 1000}},
+    {appliedAt: new Date(now - 100 * day).toISOString()},
+    {appliedAt: "invalid", createdAt: new Date(now - day).toISOString()},
+    {createdAt: new Date(now - day).toISOString()},
+    {appliedAt: null},
+    {appliedAt: new Date(now + day).toISOString()},
+    {appliedAt: {toDate: () => {throw Error("invalid timestamp");}}},
+    {appliedAt: {seconds: (now - 7 * day) / 1000}},
+    {appliedAt: now},
+  ]});
+  for (const [range, expected] of [["7", 3], ["30", 4], ["90", 5], ["all", 11]] as const) {
+    const data = await (await route.get(`range=${range}`)).json();
+    assert.equal(data.applicationsCount, expected, range);
+    assert.equal(data.scope.undatedApplications, 4);
+  }
 });
