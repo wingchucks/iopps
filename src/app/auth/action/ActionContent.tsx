@@ -5,6 +5,7 @@ import Link from "next/link";
 import { applyActionCode, checkActionCode, verifyPasswordResetCode, confirmPasswordReset } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { completeVerificationAction, verificationContinuePath, validateResetAction, resetContinuePath } from "./verification-action";
+import { passwordResetErrorMessage } from "./password-reset-error";
 
 type State = "loading" | "success" | "error";
 type ResetState = State | "ready";
@@ -43,7 +44,7 @@ export function PasswordResetView({ state, continuePath, onSubmit }: { state: Re
         if (password !== confirmation) { setError("Your passwords do not match."); return; }
         setBusy(true); setError("");
         try { await onSubmit(password); setPassword(""); setConfirmation(""); }
-        catch { setError("We couldn’t update your password. Use a stronger password or request a new reset link."); }
+        catch (error) { setError(passwordResetErrorMessage(error)); }
         finally { setBusy(false); }
       }}>
         <label htmlFor="new-password" className="block mb-2 font-semibold">New password</label>
