@@ -39,14 +39,15 @@ interface OneTimePayment {
 }
 
 interface Summary {
-  monthlyRevenue: number;
-  totalRevenue: number;
-  growthPercent: number;
-  activeSubscriptions: number;
-  expiredSubscriptions: number;
-  oneTimePayments: number;
-  schoolProgramPayments: number;
-  schoolProgramRevenue: number;
+  monthlyRevenue: null;
+  totalRevenue: null;
+  growthPercent: null;
+  activePlanRecords: number;
+  trialPlanRecords: number;
+  linkedPlanRecords: number;
+  otherPlanRecords: number;
+  oneTimePaymentRecords: number;
+  schoolProgramPaymentRecords: number | null;
 }
 
 type Tab = "active" | "expired" | "onetime" | "school-program";
@@ -140,93 +141,33 @@ export default function PaymentsPage() {
 
   const tabs = useMemo<AdminFilterOption[]>(
     () => [
-      { label: "Active subscriptions", value: "active", count: active.length },
-      { label: "Expired", value: "expired", count: expired.length },
-      { label: "One-time", value: "onetime", count: oneTime.length },
+      { label: "Active plans / trials", value: "active", count: active.length },
+      { label: "Other statuses", value: "expired", count: expired.length },
+      { label: "Job payment metadata", value: "onetime", count: oneTime.length },
       { label: "School program", value: "school-program", count: schoolProgram.length },
     ],
     [active.length, expired.length, oneTime.length, schoolProgram.length],
   );
 
   const statItems = [
-    {
-      label: "MRR",
-      value: `$${(summary?.monthlyRevenue ?? 0).toLocaleString("en-CA", { minimumFractionDigits: 0 })}`,
-      helper: "Recurring subscription revenue this month",
-      tone: "success" as const,
-      icon: (
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-          <line x1="12" y1="1" x2="12" y2="23" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </svg>
-      ),
-    },
-    {
-      label: "Total revenue",
-      value: `$${(summary?.totalRevenue ?? 0).toLocaleString("en-CA", { minimumFractionDigits: 0 })}`,
-      helper: "Subscriptions plus one-time payments",
-      icon: (
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-          <polyline points="17 6 23 6 23 12" />
-        </svg>
-      ),
-    },
-    {
-      label: "Growth",
-      value:
-        summary?.growthPercent !== undefined
-          ? `${summary.growthPercent >= 0 ? "+" : ""}${summary.growthPercent.toFixed(1)}%`
-          : "--",
-      helper: "Month-over-month trend",
-      tone: (summary?.growthPercent ?? 0) >= 0 ? ("success" as const) : ("danger" as const),
-      icon: (
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-          <path d="M18 15l-6-6-6 6" />
-        </svg>
-      ),
-    },
-    {
-      label: "Active subscriptions",
-      value: summary?.activeSubscriptions ?? 0,
-      helper: "Currently paying subscription accounts",
-      tone: "info" as const,
-      icon: (
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-        </svg>
-      ),
-    },
+    { label: "Verified cash revenue", value: "Unavailable", helper: "No reconciled payment receipt totals are connected to this report." },
+    { label: "Verified MRR", value: "Unavailable", helper: "Stored plan assignments do not establish recurring paid revenue." },
+    { label: "Active plan records", value: summary?.activePlanRecords ?? "Unavailable", helper: "Employer records marked active; not verified paying customers." },
+    { label: "Trial plan records", value: summary?.trialPlanRecords ?? "Unavailable", helper: "Trial entitlements; not cash revenue." },
   ];
-
   const secondaryStats = [
-    {
-      label: "Expired / lapsed",
-      value: summary?.expiredSubscriptions ?? 0,
-      classes: "border-error/20 bg-error/5 text-error",
-      helper: "Accounts to follow up for renewal",
-    },
-    {
-      label: "One-time payments",
-      value: summary?.oneTimePayments ?? 0,
-      classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground",
-      helper: "Completed non-subscription payments",
-    },
-    {
-      label: "School program revenue",
-      value: `$${(summary?.schoolProgramRevenue ?? 0).toLocaleString("en-CA")}`,
-      classes: "border-warning/20 bg-warning/5 text-warning",
-      helper: `${summary?.schoolProgramPayments ?? 0} payments at the school-program rate`,
-    },
+    { label: "Other plan records", value: summary?.otherPlanRecords ?? "Unavailable", classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground", helper: "Other stored statuses, including unknown; not necessarily expired." },
+    { label: "Stripe-linked plan records", value: summary?.linkedPlanRecords ?? "Unavailable", classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground", helper: "Active/trial records with a subscription ID; linkage is not payment verification." },
+    { label: "Job payment metadata records", value: summary?.oneTimePaymentRecords ?? "Unavailable", classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground", helper: "Loaded from up to 200 job records with payment metadata; not a complete receipt ledger." },
+    { label: "School payment metadata records", value: summary?.schoolProgramPaymentRecords ?? "Unavailable", classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground", helper: "Up to 200 stored records; amounts and payment status are unverified." },
   ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <AdminPageHeader
         eyebrow="Commerce"
-        title="Payments & Revenue"
-        description="Track subscription health, inspect one-time purchases, and follow up on expired accounts without leaving the admin area."
+        title="Plan & Payment Records"
+        description="Stored employer plan assignments and payment metadata. Records may duplicate an organization and do not establish paid customers, cash receipts or month-over-month growth."
       />
 
       {loading ? (
@@ -259,8 +200,8 @@ export default function PaymentsPage() {
 
           {tab === "active" && (
             <TableShell
-              title="Active subscriptions"
-              description="Current annual plans that are billing successfully."
+              title="Active plans and trials"
+              description="Employer entitlement records marked active or trialing. Neither status nor a Stripe ID verifies billing or a payment receipt."
             >
               <table className="w-full text-sm">
                 <thead>
@@ -312,8 +253,8 @@ export default function PaymentsPage() {
                     <tr>
                       <td colSpan={6} className="px-4 py-8">
                         <AdminEmptyState
-                          title="No active subscriptions"
-                          description="There are currently no active subscription records to display."
+                          title="No active or trial plan records"
+                          description="No active or trial employer plan records were found."
                         />
                       </td>
                     </tr>
@@ -325,8 +266,8 @@ export default function PaymentsPage() {
 
           {tab === "expired" && (
             <TableShell
-              title="Expired subscriptions"
-              description="Lapsed accounts that may need a renewal follow-up."
+              title="Other plan statuses"
+              description="Stored plan records outside active/trialing, including unknown statuses. Do not infer expiry or billing failure from this grouping."
             >
               <table className="w-full text-sm">
                 <thead>
@@ -405,8 +346,8 @@ export default function PaymentsPage() {
                     <tr>
                       <td colSpan={6} className="px-4 py-8">
                         <AdminEmptyState
-                          title="No expired subscriptions"
-                          description="All tracked subscriptions are currently active."
+                          title="No other plan records"
+                          description="No employer plan records outside active/trialing were found."
                         />
                       </td>
                     </tr>
@@ -418,8 +359,8 @@ export default function PaymentsPage() {
 
           {tab === "onetime" && (
             <TableShell
-              title="One-time payments"
-              description="Completed standalone purchases such as job posts."
+              title="Job payment metadata"
+              description="Payment fields on up to 200 job records, not reconciled receipts. Missing amounts and statuses remain unknown."
             >
               <table className="w-full text-sm">
                 <thead>
@@ -427,7 +368,7 @@ export default function PaymentsPage() {
                     <th className="px-4 py-3">Job Title</th>
                     <th className="px-4 py-3">Employer</th>
                     <th className="px-4 py-3">Type</th>
-                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Stored amount</th>
                     <th className="px-4 py-3">Paid</th>
                     <th className="px-4 py-3">Status</th>
                   </tr>
@@ -442,7 +383,7 @@ export default function PaymentsPage() {
                       <td className="px-4 py-3 text-[var(--text-secondary)]">{payment.employer}</td>
                       <td className="px-4 py-3 text-[var(--text-secondary)]">{payment.paymentType}</td>
                       <td className="px-4 py-3 text-foreground">
-                        {payment.amount ? `$${payment.amount.toLocaleString()}` : "--"}
+                        {payment.amount === null ? "Unavailable" : `$${payment.amount.toLocaleString()}`}
                       </td>
                       <td className="px-4 py-3 text-[var(--text-secondary)]">{formatDate(payment.paidAt)}</td>
                       <td className="px-4 py-3">
@@ -456,8 +397,8 @@ export default function PaymentsPage() {
                     <tr>
                       <td colSpan={6} className="px-4 py-8">
                         <AdminEmptyState
-                          title="No one-time payments"
-                          description="No completed standalone payments were found."
+                          title="No job payment metadata records"
+                          description="No matching records were loaded. This does not establish zero paid purchases."
                         />
                       </td>
                     </tr>
@@ -469,15 +410,15 @@ export default function PaymentsPage() {
 
           {tab === "school-program" && (
             <TableShell
-              title="School program payments"
-              description="Program-level payments from schools and participants."
+              title="School payment metadata"
+              description="Up to 200 stored school payment records. Amounts and statuses are unverified; missing amounts remain unavailable."
             >
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
                     <th className="px-4 py-3">Student / Participant</th>
                     <th className="px-4 py-3">School</th>
-                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Stored amount</th>
                     <th className="px-4 py-3">Paid</th>
                     <th className="px-4 py-3">Status</th>
                   </tr>
@@ -491,7 +432,7 @@ export default function PaymentsPage() {
                       <td className="px-4 py-3 font-medium text-foreground">{payment.title}</td>
                       <td className="px-4 py-3 text-[var(--text-secondary)]">{payment.employer}</td>
                       <td className="px-4 py-3 font-medium text-warning">
-                        ${(payment.amount ?? 50).toLocaleString()}
+                        {payment.amount === null ? "Unavailable" : `$${payment.amount.toLocaleString()}`}
                       </td>
                       <td className="px-4 py-3 text-[var(--text-secondary)]">{formatDate(payment.paidAt)}</td>
                       <td className="px-4 py-3">
@@ -505,8 +446,8 @@ export default function PaymentsPage() {
                     <tr>
                       <td colSpan={5} className="px-4 py-8">
                         <AdminEmptyState
-                          title="No school program payments"
-                          description="There are no school program payments to show right now."
+                          title={summary?.schoolProgramPaymentRecords === null ? "School records unavailable" : "No school payment metadata records"}
+                          description="No receipt totals can be inferred from this table."
                         />
                       </td>
                     </tr>

@@ -588,7 +588,7 @@ export default function AdminEmployersPage() {  const { user } = useAuth();
     {
       label: "Pending review",
       value: summary.pending,
-      helper: "Accounts still waiting for approval",
+      helper: "Pending in the loaded set",
       tone: "warning" as const,
       href: "/admin/employers?status=pending",
       icon: <CheckIcon className="h-5 w-5" />,
@@ -596,14 +596,14 @@ export default function AdminEmployersPage() {  const { user } = useAuth();
     {
       label: "Approved accounts",
       value: summary.approved,
-      helper: "Currently approved businesses and schools",
+      helper: "Approved in the loaded set",
       tone: "success" as const,
       icon: <CheckIcon className="h-5 w-5" />,
     },
     {
       label: "Schools",
       value: summary.schools,
-      helper: "School accounts in the directory pipeline",
+      helper: "Schools in the loaded set",
       tone: "info" as const,
       icon: (
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -616,7 +616,7 @@ export default function AdminEmployersPage() {  const { user } = useAuth();
     {
       label: "Businesses",
       value: summary.businesses,
-      helper: "Business accounts in the directory pipeline",
+      helper: "Businesses in the loaded set",
       icon: (
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
@@ -634,7 +634,7 @@ export default function AdminEmployersPage() {  const { user } = useAuth();
         description="Review signups, verify which accounts are schools versus businesses, and approve or reject applicants with enough context to act quickly."
         meta={
           <p className="text-sm text-[var(--text-muted)]">
-            Queue size: <span className="font-semibold text-foreground">{summary.total}</span> total accounts
+            Loaded: <span className="font-semibold text-foreground">{summary.total}</span> of the latest 100 records with a creation date. Counts, filters and search apply only to this loaded set.
           </p>
         }
       />

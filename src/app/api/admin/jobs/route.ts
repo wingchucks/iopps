@@ -5,6 +5,8 @@ import { FieldValue } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
 
+import { adminJobPage, recordedAmount } from "@/lib/admin/reporting";
+
 export const dynamic = "force-dynamic";
 
 // ---------------------------------------------------------------------------
@@ -51,36 +53,30 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const status = searchParams.get("status") as JobStatusFilter | null;
 
-    let query = adminDb
-      .collection("jobs")
-      .orderBy("createdAt", "desc")
-      .limit(100);
-
-    if (status) {
-      if (status !== "active" && status !== "inactive") {
-        return NextResponse.json(
-          { error: "Invalid status filter. Must be: active or inactive" },
-          { status: 400 }
-        );
-      }
-
-      const isActive = status === "active";
-
-      query = adminDb
-        .collection("jobs")
-        .where("active", "==", isActive)
-        .orderBy("createdAt", "desc")
-        .limit(100);
+    if (status && status !== "active" && status !== "inactive") {
+      return NextResponse.json({ error: "Invalid status filter. Must be: active or inactive" }, { status: 400 });
     }
-
-    const snapshot = await query.get();
-    const jobs = snapshot.docs.filter(doc => doc.data().status !== 'deleted' && !doc.data().deletedAt).map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      publiclyVisible: isPublicJobRecordVisible(doc.data()),
-    }));
-
-    return NextResponse.json({ jobs });
+    const page = Number(searchParams.get("page") ?? "1");
+    const limit = Number(searchParams.get("limit") ?? "20");
+    if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+      return NextResponse.json({ error: "page must be a positive integer and limit must be 1–100" }, { status: 400 });
+    }
+    // Legacy records mix ISO strings, Firestore timestamps and missing dates.
+    // Read the current admin inventory before filtering/counting and paging;
+    // orderBy would silently omit undated records and truncate the total.
+    const snapshot = await adminDb.collection("jobs").get();
+    const result = adminJobPage(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })), status, page, limit);
+    return NextResponse.json({
+      ...result,
+      jobs: result.jobs.map(record => ({
+        ...record,
+        recordStatus: record.status,
+        applications: recordedAmount(record.applicationCount ?? record.applications),
+        status: record.active === true ? "active" : record.active === false ? "inactive" : "unknown",
+        publiclyVisible: isPublicJobRecordVisible(record),
+      })),
+      scope: "Non-deleted job records matching the status filter across all pages; active means the stored enabled flag, not public visibility.",
+    });
   } catch (error) {
     console.error("[GET /api/admin/jobs] Error:", error);
     return NextResponse.json(

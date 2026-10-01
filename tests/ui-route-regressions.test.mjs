@@ -59,9 +59,9 @@ test('legacy employer bookmarks preserve tab, checkout selection and repeated qu
 test('admin job links reflect native expiry timestamps before JSON serialization', async () => {
   const { Timestamp } = require('firebase-admin/firestore');
   const records = [
-    { id: 'expired', active: true, status: 'active', expiresAt: Timestamp.fromDate(new Date('2000-01-01')) },
-    { id: 'current', active: true, status: 'active', expiresAt: Timestamp.fromDate(new Date('2099-01-01')) },
-    { id: 'draft', active: false, status: 'draft' },
+    { id: 'expired', createdAt: '2026-03-03', active: true, status: 'active', expiresAt: Timestamp.fromDate(new Date('2000-01-01')) },
+    { id: 'current', createdAt: '2026-03-02', active: true, status: 'active', expiresAt: Timestamp.fromDate(new Date('2099-01-01')) },
+    { id: 'draft', createdAt: '2026-03-01', active: false, status: 'draft' },
   ];
   const query = { orderBy: () => query, limit: () => query, get: async () => ({ docs: records.map(record => ({ id: record.id, data: () => record })) }) };
   const { GET } = load('src/app/api/admin/jobs/route.ts', {

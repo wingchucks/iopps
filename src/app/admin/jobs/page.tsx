@@ -10,8 +10,8 @@ import { formatDate } from "@/lib/format-date";
 // Types
 // ---------------------------------------------------------------------------
 
-type JobStatus = "active" | "inactive";
-type TabFilter = "all" | JobStatus;
+type JobStatus = "active" | "inactive" | "unknown";
+type TabFilter = "all" | "active" | "inactive";
 
 interface AdminJob extends Record<string, unknown> {
   id: string;
@@ -21,13 +21,14 @@ interface AdminJob extends Record<string, unknown> {
   status: JobStatus;
   active?: boolean;
   publiclyVisible: boolean;
-  applications: number;
+  applications: number | null;
   postedAt: string;
 }
 
 interface JobsApiResponse {
   jobs: AdminJob[];
   total: number;
+  page: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -44,8 +45,9 @@ const STATUS_BADGE: Record<
   JobStatus,
   { label: string; variant: "success" | "default" }
 > = {
-  active: { label: "Active", variant: "success" },
-  inactive: { label: "Inactive", variant: "default" },
+  active: { label: "Enabled", variant: "success" },
+  inactive: { label: "Disabled", variant: "default" },
+  unknown: { label: "Unknown", variant: "default" },
 };
 
 const PAGE_SIZE = 20;
@@ -183,7 +185,8 @@ export default function AdminJobsPage() {
 
       const data: JobsApiResponse = await res.json();
       setJobs(data.jobs ?? []);
-      setTotal(data.total ?? 0);
+      setTotal(data.total);
+      setPage(data.page);
     } catch (err) {
       console.error("Failed to fetch jobs:", err);
       setError("Failed to load jobs. Please try again.");
@@ -261,8 +264,7 @@ export default function AdminJobsPage() {
 
       if (!res.ok) throw new Error(`API returned ${res.status}`);
 
-      setJobs((prev) => prev.filter((j) => j.id !== deleteTarget.id));
-      setTotal((prev) => prev - 1);
+      await fetchJobs();
     } catch (err) {
       console.error("Failed to delete job:", err);
     } finally {
@@ -288,7 +290,7 @@ export default function AdminJobsPage() {
   const activeCount = jobs.filter((j) => j.status === "active").length;
   const inactiveCount = jobs.filter((j) => j.status === "inactive").length;
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
@@ -301,16 +303,16 @@ export default function AdminJobsPage() {
             Jobs Management
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Monitor and manage all job postings across the platform.
+            Non-deleted stored job records across the platform. Status counts and search apply to the loaded page; enabled does not imply publicly visible. Missing flags show Unknown and are included only in All.
           </p>
         </div>
 
         {/* Stats Row */}
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Total Jobs" value={total} loading={loading} />
-          <StatCard label="Active Jobs" value={activeCount} loading={loading} />
+          <StatCard label="Matching records (all pages)" value={total} loading={loading} />
+          <StatCard label="Enabled on this page" value={activeCount} loading={loading} />
           <StatCard
-            label="Inactive Jobs"
+            label="Disabled on this page"
             value={inactiveCount}
             loading={loading}
           />
@@ -326,7 +328,7 @@ export default function AdminJobsPage() {
                   <button
                     key={tab.value}
                     type="button"
-                    onClick={() => setActiveTab(tab.value)}
+                    onClick={() => { setPage(1); setActiveTab(tab.value); }}
                     className={[
                       "flex-shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-all duration-200",
                       activeTab === tab.value
@@ -358,7 +360,7 @@ export default function AdminJobsPage() {
                 </svg>
                 <input
                   type="search"
-                  placeholder="Search by title or employer..."
+                  placeholder="Search this page by title or employer..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-lg border border-input-border bg-input py-2 pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted transition-colors focus:border-input-focus focus:outline-none sm:w-72"
@@ -432,7 +434,7 @@ export default function AdminJobsPage() {
                           Status
                         </th>
                         <th className="hidden pb-3 pr-4 font-medium text-text-muted md:table-cell">
-                          Applications
+                          Stored applications
                         </th>
                         <th className="hidden pb-3 pr-4 font-medium text-text-muted lg:table-cell">
                           Posted
@@ -466,7 +468,7 @@ export default function AdminJobsPage() {
                               </Badge>
                             </td>
                             <td className="hidden py-4 pr-4 text-text-secondary md:table-cell">
-                              {job.applications}
+                              {job.applications ?? "Unavailable"}
                             </td>
                             <td className="hidden py-4 pr-4 text-text-secondary lg:table-cell">
                               {formatDate(job.postedAt)}
@@ -582,7 +584,7 @@ export default function AdminJobsPage() {
 
                 {/* Pagination */}
                 <div className="flex items-center justify-between pt-4 border-t border-[var(--card-border)]">
-                  <p className="text-sm text-[var(--text-muted)]">Showing {rangeStart}-{rangeEnd} of {total}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Records {rangeStart}-{rangeEnd} of {total} matching the status filter; {filteredJobs.length} shown after page search</p>
                   <div className="flex gap-2">
                     <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] button-gradient-soft hover:bg-accent/10 disabled:opacity-40">Previous</button>
                     <span className="text-sm px-3 py-1.5">{page} / {totalPages}</span>
