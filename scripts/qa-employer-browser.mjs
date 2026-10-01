@@ -187,11 +187,11 @@ try {
  assert.ok(!(await page.locator('body').innerText()).includes('Month-over-month trend'));
  const planData=await request('GET','/api/admin/payments',reportingToken);assert.equal(planData.status,200);assert.equal(planData.data.summary.totalRevenue,null);assert.equal(planData.data.summary.monthlyRevenue,null);assert.ok(planData.data.summary.trialPlanRecords>=1);
  await shot('admin-plan-records');await record('admin-plan-records-do-not-claim-revenue-or-growth');
- const firstJobs=await request('GET','/api/admin/jobs?page=1&limit=20',reportingToken),secondJobs=await request('GET','/api/admin/jobs?page=2&limit=20',reportingToken);
+ const firstJobs=await request('GET','/api/admin/jobs?limit=20',reportingToken);const secondJobs=await request('GET','/api/admin/jobs?limit=20&cursor='+encodeURIComponent(firstJobs.data.nextCursor),reportingToken);
  assert.ok(firstJobs.data.total>=115);assert.equal(firstJobs.data.jobs.length,20);assert.equal(secondJobs.data.jobs.length,20);assert.equal(new Set([...firstJobs.data.jobs,...secondJobs.data.jobs].map(job=>job.id)).size,40);
- await page.goto(server.base+'/admin/jobs');await expect(page.getByText('Matching records (all pages)',{exact:true})).toBeVisible();
+ await page.goto(server.base+'/admin/jobs');await expect(page.getByText('Stored flag matches (including deleted)',{exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:'Next',exact:true})).toBeEnabled();
- await Promise.all([page.waitForResponse(response=>response.url().includes('/api/admin/jobs?')&&new URL(response.url()).searchParams.get('page')==='2'&&response.status()===200),page.getByRole('button',{name:'Next',exact:true}).click()]);
+ await Promise.all([page.waitForResponse(response=>response.url().includes('/api/admin/jobs?')&&new URL(response.url()).searchParams.get('cursor')===firstJobs.data.nextCursor&&response.status()===200),page.getByRole('button',{name:'Next',exact:true}).click()]);
  await expect(page.getByText(secondJobs.data.jobs[0].title,{exact:true})).toBeVisible();await shot('admin-jobs-page-two');await record('admin-jobs-global-filter-count-and-distinct-server-pages');
  await page.goto(server.base+'/admin/reports');await expect(page.getByText('Verified cash revenue: Unavailable',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'90 Days',exact:true}).click();await expect(page.getByText('Monthly user records — 6 calendar months (UTC)',{exact:true})).toBeVisible();
@@ -199,7 +199,7 @@ try {
  await page.goto(server.base+'/admin/employers');await expect(page.getByText(/Counts, filters and search apply only to this loaded set/)).toBeVisible();await record('admin-employer-directory-labels-latest-loaded-scope');
  await page.setViewportSize({width:390,height:844});
  for(const route of ['/admin/payments','/admin/jobs','/admin/reports']){
-  await page.goto(server.base+route);await expect(page.getByText(route==='/admin/payments'?'Verified cash revenue':route==='/admin/jobs'?'Matching records (all pages)':'Verified cash revenue: Unavailable',{exact:true})).toBeVisible();
+  await page.goto(server.base+route);await expect(page.getByText(route==='/admin/payments'?'Verified cash revenue':route==='/admin/jobs'?'Stored flag matches (including deleted)':'Verified cash revenue: Unavailable',{exact:true})).toBeVisible();
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),true,'admin reporting mobile document fits '+route);
   await shot('admin-reporting-mobile-'+route.split('/').at(-1));
  }

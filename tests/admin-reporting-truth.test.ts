@@ -11,15 +11,22 @@ const now = Date.parse("2026-10-01T12:00:00Z");
 class ReportDate extends Date { constructor(value: any = now) {super(value);} }
 function load(route: string, collections: Record<string, Record<string, unknown>[]>, options: {fail?: string; authorized?: boolean} = {}) {
   const reads: string[] = [];
+  const documentReadSizes: number[] = [];
   const adminDb = {collection: (name: string) => {
     let limit = Infinity;
+    let after: string | null = null;
+    const filters: Array<[string, string, unknown]> = [];
+    const rows = () => (collections[name] || []).filter(record => filters.every(([field, op, value]) => op === "==" ? record[field] === value : true));
     const query = {
-      where: () => query, orderBy: () => query,
+      where: (field: string, op: string, value: unknown) => {filters.push([field, op, value]); return query;}, orderBy: () => query,
+      startAfter: (id: string) => {after = id; return query;},
+      count: () => ({get: async () => ({data: () => ({count: rows().length})})}),
       limit: (value: number) => {limit = value; return query;},
       get: async () => {
         reads.push(name);
         if (name === options.fail) throw Error("Fictional read failure");
-        const docs = (collections[name] || []).slice(0, limit).map((record, index) => ({id: String(record.id ?? index), data: () => record}));
+        const docs = rows().map((record, index) => ({id: String(record.id ?? index), data: () => record})).sort((a,b) => a.id.localeCompare(b.id)).filter(doc => !after || doc.id > after).slice(0, limit);
+        documentReadSizes.push(docs.length);
         return {docs, size: docs.length};
       },
     };
@@ -34,11 +41,11 @@ function load(route: string, collections: Record<string, Record<string, unknown>
     "@/lib/pricing": {normalizePaidTier},
     "@/lib/public-job-merge": {isPublicJobRecordVisible: (record: Record<string, unknown>) => record.active === true},
     "@/lib/server/admin-job-lifecycle": {},
-    "firebase-admin/firestore": {},
+    "firebase-admin/firestore": {FieldPath: {documentId: () => "__name__"}},
   };
   const code = ts.transpileModule(readFileSync(route, "utf8"), {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022}}).outputText;
   vm.runInNewContext(code, {exports, console: {error: () => {}}, Date: ReportDate, require: (name: string) => {assert.ok(name in mocks, name); return mocks[name];}});
-  return {reads, get: (query = "") => exports.GET({nextUrl: new URL(`https://example.invalid/api/admin?${query}`)})};
+  return {reads, documentReadSizes, get: (query = "") => exports.GET({nextUrl: new URL(`https://example.invalid/api/admin?${query}`)})};
 }
 
 test("plan assignments, trials and Stripe IDs are not revenue or growth", async () => {
@@ -74,35 +81,49 @@ test("failed school metadata read is unavailable, not zero payments", async () =
   assert.equal(data.scope.schoolProgramAvailable, false);
 });
 
-test("jobs paginate beyond 100 records with matching counts and no deleted rows", async () => {
-  const jobs = Array.from({length: 115}, (_, i) => ({id: `job${i}`, active: i % 2 === 0, createdAt: new Date(now - i * 1000).toISOString()}));
-  const route = load("src/app/api/admin/jobs/route.ts", {jobs: [...jobs, {id: "undated", active: false}, {id: "removed", status: "deleted"}, {id: "removed2", deletedAt: "fictional"}]});
-  const first = await (await route.get("page=1&limit=20")).json();
-  const second = await (await route.get("page=2&limit=20")).json();
-  assert.equal(first.total, 116);
-  assert.equal(first.totalPages, 6);
+test("jobs use bounded cursor pages and explicit aggregate stored counts", async () => {
+  const jobs = Array.from({length: 115}, (_, i) => ({id: `job${String(i).padStart(3, "0")}`, active: i % 2 === 0, createdAt: new Date(now - i * 1000).toISOString()}));
+  const route = load("src/app/api/admin/jobs/route.ts", {jobs: [...jobs, {id: "undated", active: false}, {id: "removed", active: true, status: "deleted"}, {id: "removed2", active: false, deletedAt: "fictional"}]});
+  const first = await (await route.get("limit=20")).json();
+  const second = await (await route.get(`limit=20&cursor=${first.nextCursor}`)).json();
+  assert.equal(first.total, 118, "aggregate counts include retained deleted records and are labeled accordingly");
+  assert.match(first.scope, /including retained soft-deleted/);
   assert.equal(first.jobs.length, 20);
   assert.equal(second.jobs.length, 20);
   assert.equal(new Set([...first.jobs, ...second.jobs].map(row => row.id)).size, 40);
-  const last = await (await route.get("page=99&limit=20")).json();
-  assert.equal(last.page, 6);
-  assert.equal(last.jobs.length, 16);
-  assert.equal(last.jobs.at(-1).id, "undated");
-  const active = await (await route.get("status=active&limit=100")).json();
-  assert.equal(active.total, 58);
-  assert.ok(active.jobs.every(row => row.active === true && row.status === "active"));
+  const seen = new Set<string>();
+  let cursor: string | null = null;
+  do {
+    const data = await (await route.get(`limit=20${cursor ? `&cursor=${cursor}` : ""}`)).json();
+    for (const row of data.jobs) {assert.ok(!seen.has(row.id)); seen.add(row.id);}
+    cursor = data.nextCursor;
+  } while (cursor);
+  assert.equal(seen.size, 116);
+  assert.ok(seen.has("undated"));
+  assert.ok(!seen.has("removed") && !seen.has("removed2"));
+  assert.ok(route.documentReadSizes.every(size => size <= 21), "at most one bounded page plus lookahead is read");
   const unknown = await (await load("src/app/api/admin/jobs/route.ts", {jobs: [{id: "legacy", status: "active"}]}).get()).json();
-  assert.equal(unknown.jobs[0].status, "unknown", "missing enabled flag is not a disabled record");
+  assert.equal(unknown.jobs[0].status, "unknown");
+  const active = await (await route.get("status=active&limit=100")).json();
+  assert.equal(active.total, 59);
+  assert.equal(active.jobs.length, 58);
+  assert.ok(active.jobs.every(row => row.active === true && row.status === "active"));
   const inactive = await (await route.get("status=inactive&limit=100")).json();
-  assert.equal(inactive.total, 58);
-  for (const query of ["page=0", "page=1.5", "limit=101", "limit=no", "status=draft"]) assert.equal((await route.get(query)).status, 400);
+  assert.equal(inactive.total, 59);
+  for (const query of ["page=0", "page=2", "limit=101", "limit=no", "status=draft", "cursor=a/b"]) assert.equal((await route.get(query)).status, 400);
 });
 
-test("empty jobs page has a valid page denominator", async () => {
-  const data = await (await load("src/app/api/admin/jobs/route.ts", {}).get()).json();
-  assert.equal(data.total, 0);
-  assert.equal(data.page, 1);
-  assert.equal(data.totalPages, 1);
+test("empty or deleted-only cursor pages retain correct navigation", async () => {
+  const empty = await (await load("src/app/api/admin/jobs/route.ts", {}).get()).json();
+  assert.equal(empty.total, 0);
+  assert.equal(empty.nextCursor, null);
+  const route = load("src/app/api/admin/jobs/route.ts", {jobs: [{id: "a", status: "deleted"}, {id: "b", active: true}]});
+  const first = await (await route.get("limit=1")).json();
+  assert.equal(first.jobs.length, 0);
+  assert.equal(first.nextCursor, "a", "a hidden row must not strand later visible records");
+  const second = await (await route.get("limit=1&cursor=a")).json();
+  assert.equal(second.jobs[0].id, "b");
+  assert.equal(second.nextCursor, null);
 });
 
 test("reports include native and serialized timestamps consistently without inventing legacy dates", async () => {

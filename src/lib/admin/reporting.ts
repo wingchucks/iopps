@@ -24,18 +24,3 @@ export function createdInPeriod(record: Record<string, unknown>, cutoff: number 
   const date = reportingTimestamp(record.createdAt);
   return date !== null && date >= cutoff && date <= now;
 }
-
-export function adminJobPage(
-  records: Array<Record<string, unknown> & {id: string}>,
-  status: "active" | "inactive" | null,
-  requestedPage: number,
-  limit: number,
-) {
-  const eligible = records.filter(record => record.status !== "deleted" && !record.deletedAt);
-  const matching = eligible.filter(record => !status || (status === "active" ? record.active === true : record.active === false));
-  matching.sort((a, b) => (reportingTimestamp(b.createdAt) ?? -Infinity) - (reportingTimestamp(a.createdAt) ?? -Infinity) || a.id.localeCompare(b.id));
-  const total = matching.length;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const page = Math.min(requestedPage, totalPages);
-  return {jobs: matching.slice((page - 1) * limit, page * limit), total, page, limit, totalPages};
-}
