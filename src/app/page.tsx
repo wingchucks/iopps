@@ -12,10 +12,13 @@ import LandingLivePreview from "@/components/landing/LandingLivePreview";
 import Footer from "@/components/Footer";
 
 import { getCachedLatestJobs, getCachedPartners } from "@/lib/server/public-page-cache";
+import { publicReadOr } from "@/lib/public-read-timeout";
 
 export const runtime = "nodejs";
 
 export const dynamic = "force-dynamic";
+
+export const maxDuration = 30;
 
 export const metadata = {
   title: "IOPPS — Empowering Indigenous Success",
@@ -24,7 +27,11 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const [jobs, partners] = await Promise.all([getCachedLatestJobs(), getCachedPartners()]);
+  // A failed read renders the fallback below; the cache keeps its last good value.
+  const [jobs, partners] = await Promise.all([
+    publicReadOr("Homepage jobs", getCachedLatestJobs(), []),
+    publicReadOr("Homepage partners", getCachedPartners(), []),
+  ]);
 
   return (
     <div className="op-site journey-home">

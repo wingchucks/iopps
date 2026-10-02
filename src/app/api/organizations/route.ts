@@ -12,6 +12,11 @@ import { isSchoolOrganization } from "@/lib/school-visibility";
 export const runtime = "nodejs";
 export const revalidate = 60;
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
+
+// Public directory data, requested on every job page for employer logos: share
+// one response per minute at the CDN instead of re-reading every public job.
+const PUBLIC_DIRECTORY_CACHE = { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" };
 
 function serialize(value: unknown): unknown {
   if (value === null || value === undefined) return value;
@@ -46,7 +51,7 @@ export async function GET(req: Request) {
       const { jobs, posts } = await loadPublicOrganizationsJobDocuments(db, records);
       const publicJobs = mergePublicJobRecords(jobs.map(doc => ({ ...doc.data(), id: doc.id, active: doc.data()!.active === true })), posts.map(doc => ({ ...doc.data(), id: doc.id })));
       const { partners } = buildPartnersPayload(withAuthoritativeJobCounts(records, publicJobs));
-      return NextResponse.json({ orgs: partners });
+      return NextResponse.json({ orgs: partners }, { headers: PUBLIC_DIRECTORY_CACHE });
     }
 
     // Search / general: orgs that completed onboarding, are verified, or have been accepted
@@ -78,7 +83,7 @@ export async function GET(req: Request) {
 
     const { jobs, posts } = await loadPublicOrganizationsJobDocuments(db, orgs);
     const publicJobs = mergePublicJobRecords(jobs.map(doc => ({ ...doc.data(), id: doc.id, active: doc.data()!.active === true })), posts.map(doc => ({ ...doc.data(), id: doc.id })));
-    return NextResponse.json({ orgs: withAuthoritativeJobCounts(orgs, publicJobs).map(toPublicOrganization) });
+    return NextResponse.json({ orgs: withAuthoritativeJobCounts(orgs, publicJobs).map(toPublicOrganization) }, { headers: PUBLIC_DIRECTORY_CACHE });
   } catch (err) {
     console.error("[api/organizations] Error:", err);
     return NextResponse.json({ error: "Failed to load organizations" }, { status: 500 });

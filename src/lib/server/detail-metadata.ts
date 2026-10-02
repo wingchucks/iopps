@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { getPublicOpportunity } from "@/lib/server/public-opportunities";
 import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
+import { loadCachedPublicJobRouteIndex } from "@/lib/public-job-route-cache";
 import { isOrganizationPubliclyVisible } from "@/lib/organization-profile";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
 import { resolvePublicOrganization } from "@/lib/server/public-organization-resolver";
@@ -114,7 +115,7 @@ export function fallbackMetadata(title: string, description: string, path = "/")
 
 const jobForMetadata = cache(async (slug: string) => {
   const db = getAdminDb();
-  const match = await findPublicJobDocument(db, slug);
+  const match = await findPublicJobDocument(db, slug, loadCachedPublicJobRouteIndex);
   if (!match) return null;
   const doc = await db.collection(match.source).doc(match.id).get();
   const job = doc.exists ? serializeForCache({ ...doc.data(), id: doc.id }) as Record<string, unknown> : null;

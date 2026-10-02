@@ -30,6 +30,9 @@ function jobFixture(jobs: Array<Record<string, any>>, posts: Array<Record<string
   const snapshot = (row: Record<string, any>) => ({ id: row.id, exists: true, data: () => row });
   const query = (collection: string, filters: Array<[string, unknown]> = []) => ({
     where: (field: string, _operator: string, value: unknown) => query(collection, [...filters, [field, value]]),
+    // Field masks and bounds do not change which records match these fixtures.
+    select: () => query(collection, filters),
+    limit: () => query(collection, filters),
     get: async () => {
       assert.ok(filters.length, 'Public job reads must be scoped');
       return { docs: records[collection].filter(row => filters.every(([field, value]) => row[field] === value)).map(snapshot) };
@@ -66,6 +69,8 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
     '@/lib/server/scholarship-provider': scholarshipProvider,
     './public-job-documents': jobDocuments,
     '@/lib/server/public-job-documents': jobDocuments,
+    // Routes pass the shared index to the routing module, which these tests replace.
+    '@/lib/public-job-route-cache': { loadCachedPublicJobRouteIndex: () => { throw new Error('Mocked routing never reads the shared route index'); } },
     ...mocks,
   };
   vm.runInNewContext(source, {exports, require:(id: string) => {
