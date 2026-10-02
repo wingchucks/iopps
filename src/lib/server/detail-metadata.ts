@@ -2,6 +2,8 @@
 import { jobPostingDate } from "@/lib/job-detail-dates";
 import type { Metadata } from "next";
 import { cache } from "react";
+import { isPublicPostVisible } from "@/lib/access-state";
+import { formatListingDay } from "@/lib/listing-freshness";
 import { getPublicOpportunity } from "@/lib/server/public-opportunities";
 import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
 import { loadCachedPublicJobRouteIndex } from "@/lib/public-job-route-cache";
@@ -123,6 +125,17 @@ const jobForMetadata = cache(async (slug: string) => {
 });
 const orgForMetadata = cache(async (slug: string) => resolvePublicOrganization(getAdminDb(), slug));
 
+/**
+ * An application deadline is "Closing <day>"; a paid listing's expiry is only how
+ * long it stays listed. Days are shown in the Saskatchewan time zone expiry uses.
+ */
+function listingDateFact(job: Record<string, unknown>): string {
+  const deadline = field(job, "closingDate", "deadline", "applicationDeadline");
+  if (deadline) return `Closing ${formatListingDay(deadline, "long")}`;
+  const expiresAt = field(job, "expiresAt");
+  return expiresAt ? `Listed until ${formatListingDay(expiresAt, "long")}` : "";
+}
+
 export async function generateJobMetadata(slug: string): Promise<Metadata> {
   const job = await jobForMetadata(slug);
   if (!job || !isPublicJobRecordVisible(job)) {
@@ -131,8 +144,7 @@ export async function generateJobMetadata(slug: string): Promise<Metadata> {
   const title = field(job, "title") || "Job Opportunity";
   const employer = field(job, "employerName", "orgName", "companyName", "company", "organization");
   const location = field(job, "location", "locationProvince");
-  const closingDate = field(job, "closingDate", "deadline", "expiresAt");
-  const facts = [employer, location, closingDate ? `Closing ${closingDate}` : ""].filter(Boolean).join(" · ");
+  const facts = [employer, location, listingDateFact(job)].filter(Boolean).join(" · ");
   const description = truncate(
     facts
       ? `${title} · ${facts}. ${stripHtml(clean(job.description))}`
@@ -165,14 +177,8 @@ export async function generateJobJsonLd(slug: string): Promise<JsonLd | null> {
 
 export async function generateEventMetadata(slug: string): Promise<Metadata> {
   const event = await opportunityForMetadata("events", slug);
-  if (!event) {
-    return buildListingMetadata({
-      title: "Event",
-      description: "View event details, schedule, and RSVP for this Indigenous community gathering, pow wow, or career fair on IOPPS.ca.",
-      path: `/events/${slug}`,
-      type: "article",
-    });
-  }
+  // Missing, unpublished and ended events are not indexed (no soft 404s).
+  if (!event) return fallbackMetadata("Event", "This event is not currently available.", `/events/${slug}`);
   const title = field(event, "title") || "Event";
   const dates = field(event, "dates", "date", "startDate");
   const location = field(event, "location", "venue");
@@ -282,10 +288,39 @@ export async function generateTrainingJsonLd(slug: string): Promise<JsonLd | nul
   });
 }
 
+const STORY_TYPES = new Set(["story", "spotlight"]);
+
+function isDocumentId(value: string): boolean {
+  return value.length > 0 && value.length <= 700 && !value.includes("/") && value !== "." && value !== "..";
+}
+
+/**
+ * The post the story page shows: the first of story-<slug>, spotlight-<slug> and
+ * <slug> (ID or slug) that /api/posts would return, i.e. that passes the same
+ * public visibility; and only story or spotlight posts describe a story.
+ */
+const storyForMetadata = cache(async (slug: string): Promise<Record<string, unknown> | null> => {
+  try {
+    const db = getAdminDb();
+    for (const id of [`story-${slug}`, `spotlight-${slug}`, slug]) {
+      const [direct, bySlug] = await Promise.all([
+        isDocumentId(id) ? db.collection("posts").doc(id).get() : Promise.resolve(null),
+        db.collection("posts").where("slug", "==", id).limit(10).get(),
+      ]);
+      const documents = [...(direct?.exists ? [direct] : []), ...bySlug.docs];
+      const post = documents
+        .map(doc => serializeForCache({ ...(doc.data() || {}), id: doc.id }) as Record<string, unknown>)
+        .find(record => isPublicPostVisible(record));
+      if (post) return STORY_TYPES.has(String(post.type)) ? post : null;
+    }
+  } catch (error) {
+    console.error("[story-metadata] Story lookup failed:", error);
+  }
+  return null;
+});
+
 export async function generateStoryMetadata(slug: string): Promise<Metadata> {
-  const story = await findFirst(["posts"], slug) ||
-    await findFirst(["posts"], `story-${slug}`) ||
-    await findFirst(["posts"], `spotlight-${slug}`);
+  const story = await storyForMetadata(slug);
   if (!story) return fallbackMetadata("Story", "Read this story on IOPPS.ca.", `/stories/${slug}`);
   const title = field(story, "title", "headline") || "IOPPS Story";
   return buildListingMetadata({
@@ -298,9 +333,7 @@ export async function generateStoryMetadata(slug: string): Promise<Metadata> {
 }
 
 export async function generateStoryJsonLd(slug: string): Promise<JsonLd | null> {
-  const story = await findFirst(["posts"], slug) ||
-    await findFirst(["posts"], `story-${slug}`) ||
-    await findFirst(["posts"], `spotlight-${slug}`);
+  const story = await storyForMetadata(slug);
   if (!story) return null;
   return {
     "@context": "https://schema.org",
