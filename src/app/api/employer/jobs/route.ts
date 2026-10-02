@@ -212,6 +212,8 @@ export async function GET(req: NextRequest) {
           status: d.status || "active",
           active: d.active ?? true,
           featured: Boolean(d.featured),
+          // A featured draft without a publication still needs its duration chosen.
+          publication: d.publication ? { durationDays: (d.publication as { durationDays?: unknown }).durationDays ?? null } : null,
           closingDate: d.closingDate || null,
           createdAt: d.createdAt || null,
           applicationCount,

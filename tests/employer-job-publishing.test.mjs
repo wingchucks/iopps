@@ -246,3 +246,19 @@ test('a cache refresh outside a Next.js request never fails the saved job change
   assert.equal(warnings.length, 1);
   assert.match(readFileSync('src/lib/server/public-page-cache.ts', 'utf8'), new RegExp(`tags: \\["${cache.PUBLIC_JOBS_CACHE_TAG}"\\]`), 'the tag the public job caches use');
 });
+
+test('job detail tells the editor whether this account can buy credits (owner only, as checkout requires)', async () => {
+  const job = { job: draftJob() };
+  assert.equal((await (await jobRoutes({ jobs: job }).get('job')).json()).canPurchase, true);
+  const admin = owner({ uid: 'teammate', orgRole: 'admin' });
+  assert.equal((await (await jobRoutes({ context: admin, jobs: job }).get('job')).json()).canPurchase, false);
+});
+
+test('the jobs list says which featured drafts still need a duration', async () => {
+  const rows = [
+    { id: 'needs-duration', data: { title: 'Featured draft', status: 'draft', featured: true } },
+    { id: 'published-before', data: { title: 'Featured', status: 'draft', featured: true, publication: { durationDays: 17, funding: 'featured_credit' } } },
+  ];
+  const body = await (await jobRoutes({ rows }).list()).json();
+  assert.deepEqual(body.jobs.map(job => [job.id, job.publication]), [['needs-duration', null], ['published-before', { durationDays: 17 }]]);
+});

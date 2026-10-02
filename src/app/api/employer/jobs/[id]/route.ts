@@ -164,6 +164,8 @@ export async function GET(
       job: serialize({ id, ...job.data, _source: job.source }),
       readOnly: !isEditableEmployerJob(job.source, job.data, context.uid),
       featuredSummary,
+      // Mirrors the checkout rule: only the organization's owner account can buy credits or plans.
+      canPurchase: context.uid === context.orgId && context.orgRole === "owner",
     });
   } catch (error) {
     return failureResponse(error, "[api/employer/jobs/:id][GET]", "Failed to load job.");

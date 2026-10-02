@@ -10,7 +10,17 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import OrgDashboardNav from "@/components/OrgDashboardNav";
 import Avatar from "@/components/Avatar";
+import ClosingDateField from "@/components/employer/ClosingDateField";
 import { buildEmployerJobDuplicate } from "@/lib/employer-job-duplicate";
+import { closesByEndOfToday, isClosingDateBeforeToday, isValidClosingDate } from "@/lib/job-closing-date";
+import { formatListingDay } from "@/lib/listing-freshness";
+import {
+  isSessionErrorCode,
+  isSessionFailure,
+  readEmployerRequestFailure,
+  sessionExpiredLoginHref,
+  type EmployerRequestFailure,
+} from "@/lib/employer-api-errors";
 
 /* ─── types ─── */
 type JobStatus = "active" | "draft" | "closed";
@@ -26,7 +36,12 @@ interface Job {
   createdAt?: unknown;
   orgName?: string;
   orgId?: string;
+  closingDate?: string | null;
+  featured?: boolean;
+  publication?: { durationDays?: number | null } | null;
 }
+
+type ActionResult = { ok: true } | { ok: false; failure: EmployerRequestFailure };
 
 /* ─── helpers ─── */
 function formatDate(ts: unknown): string {
@@ -122,15 +137,80 @@ function JobActionDialog({ job, action, onConfirm, onCancel }: {
   );
 }
 
+/** Publishing with a closing date of today or earlier would close the job by tonight: ask for a new one. */
+function PublishDateDialog({ job, onConfirm, onCancel }: {
+  job: Job;
+  onConfirm: (closingDate: string) => Promise<string | null>;
+  onCancel: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const pending = useRef(false);
+  const [closingDate, setClosingDate] = useState(job.closingDate || "");
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState("");
+  useEffect(() => {
+    const element = dialog.current;
+    const trigger = document.activeElement;
+    element?.showModal();
+    return () => {
+      element?.close();
+      if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus();
+    };
+  }, []);
+  const ready = isValidClosingDate(closingDate.trim()) && !isClosingDateBeforeToday(closingDate);
+  async function confirmPublish() {
+    if (pending.current || !ready) return;
+    pending.current = true;
+    setBusy(true);
+    setFailure("");
+    try {
+      const problem = await onConfirm(closingDate.trim());
+      if (problem) setFailure(problem);
+      else onCancel();
+    } catch {
+      setFailure("We couldn’t publish this job. Please try again.");
+    } finally {
+      pending.current = false;
+      setBusy(false);
+    }
+  }
+  const reopening = job.status === "closed";
+  return (
+    <dialog ref={dialog} aria-labelledby="publish-date-title" aria-describedby="publish-date-description"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border p-6 backdrop:bg-black/50"
+      style={{ background: "var(--card)", color: "var(--text)", borderColor: "var(--border)" }}
+      onCancel={event => { event.preventDefault(); if (!pending.current) onCancel(); }}>
+      <h2 id="publish-date-title" className="text-lg font-bold mb-2">{reopening ? "Reopen with a new closing date" : "Check the closing date"}</h2>
+      <p id="publish-date-description" className="text-sm mb-4">
+        &quot;{job.title}&quot; stops accepting applications {job.closingDate ? `on ${formatListingDay(job.closingDate) ?? job.closingDate}` : "soon"}. Choose today or a later date, or clear the date to keep it open until you close it.
+      </p>
+      <ClosingDateField value={closingDate} onChange={setClosingDate} publishing />
+      {failure && <p role="alert" className="text-sm mt-3">{failure}</p>}
+      {busy && <p role="status" className="text-sm mt-3">Publishing…</p>}
+      <div className="flex gap-3 justify-end mt-5">
+        <button type="button" disabled={busy} onClick={onCancel}
+          className="min-h-11 px-4 rounded-xl border disabled:opacity-50">Cancel</button>
+        <button type="button" disabled={busy || !ready} onClick={confirmPublish}
+          className="brand-button min-h-11 px-4 rounded-xl font-semibold disabled:opacity-50">
+          {reopening ? "Reopen job" : "Publish job"}
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
 /* ─── main page ─── */
 export default function OrgDashboardJobsPage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { showToast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; signIn: boolean } | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<{ job: Job; action: "delete" | "close"; uid: string } | null>(null);
+  const [publishDate, setPublishDate] = useState<{ job: Job; uid: string } | null>(null);
+  // Why the last publish attempt for a job was refused, shown with that job.
+  const [notice, setNotice] = useState<{ jobId: string; message: string } | null>(null);
   const [orgName, setOrgName] = useState("");
   const [orgSlug, setOrgSlug] = useState<string | undefined>();
   const [orgLogo, setOrgLogo] = useState<string | undefined>();
@@ -138,17 +218,19 @@ export default function OrgDashboardJobsPage() {
   const [orgPlan, setOrgPlan] = useState<string | null>(null);
   const [orgTier, setOrgTier] = useState<string | null>(null);
 
-  const fetchJobs = useCallback(async () => {
+  const fetchJobs = useCallback(async (forceRefresh = false) => {
     if (!user) return;
     try {
       setError(null);
-      const token = await user.getIdToken();
+      // A retry asks Firebase for a fresh ID token instead of resending the cached one.
+      const token = await user.getIdToken(forceRefresh);
       const res = await fetch("/api/employer/jobs", {
         headers: { Authorization: "Bearer " + token },
       });
       if (!res.ok) {
-        const msg = await res.text().catch(() => "Failed to load jobs");
-        throw new Error(msg);
+        const failure = await readEmployerRequestFailure(res, "We couldn’t load your jobs. Please try again.");
+        setError({ message: failure.message, signIn: isSessionFailure(failure) });
+        return;
       }
       const data = await res.json();
       setJobs(data.jobs || []);
@@ -160,11 +242,22 @@ export default function OrgDashboardJobsPage() {
       if (data.orgTier !== undefined) setOrgTier(data.orgTier);
     } catch (err) {
       console.error("Failed to fetch jobs:", err);
-      setError(err instanceof Error ? err.message : "Failed to load jobs");
+      setError(isSessionErrorCode(err)
+        ? { message: "Your session has expired. Sign in again to continue.", signIn: true }
+        : { message: "We couldn’t load your jobs. Check your connection and try again.", signIn: false });
     } finally {
       setLoading(false);
     }
   }, [user]);
+
+  const signInAgain = async () => {
+    try {
+      await signOut(user?.uid);
+    } catch {
+      // Sign-in still replaces the stale session.
+    }
+    window.location.assign(sessionExpiredLoginHref("/org/dashboard/jobs"));
+  };
 
   useEffect(() => {
     fetchJobs();
@@ -175,8 +268,8 @@ export default function OrgDashboardJobsPage() {
     jobId: string,
     method: "PUT" | "DELETE",
     body?: Record<string, unknown>
-  ) => {
-    if (!user) return;
+  ): Promise<ActionResult> => {
+    if (!user) return { ok: false, failure: { status: 401, message: "Your session has expired. Sign in again to continue.", code: null } };
     setActionLoading(jobId);
     try {
       const token = await user.getIdToken();
@@ -189,54 +282,82 @@ export default function OrgDashboardJobsPage() {
         ...(body ? { body: JSON.stringify(body) } : {}),
       });
       if (!res.ok) {
-        const msg = await res.text().catch(() => "Action failed");
-        throw new Error(msg);
+        const failure = await readEmployerRequestFailure(res, "We couldn’t update this job. Please try again.");
+        if (isSessionFailure(failure)) setError({ message: failure.message, signIn: true });
+        return { ok: false, failure };
       }
-      return res;
+      return { ok: true };
     } catch (err) {
       console.error(`Action ${method} failed for ${jobId}:`, err);
-      showToast(err instanceof Error ? err.message : "Action failed", "error");
-      return null;
+      return { ok: false, failure: { status: 0, message: "We couldn’t reach IOPPS. Check your connection and try again.", code: null } };
     } finally {
       setActionLoading(null);
     }
   };
 
+  /** Publishes a draft or reopens a closed job; returns why it was refused, if it was. */
+  const publishJob = async (job: Job, closingDate?: string): Promise<string | null> => {
+    const result = await apiAction(job.id, "PUT", closingDate === undefined ? { status: "active" } : { status: "active", closingDate });
+    if (!result.ok) {
+      // Payment, approval, closing-date and placement refusals stay next to the job with a way to fix them.
+      if (result.failure.status >= 400 && result.failure.status < 500 && !isSessionFailure(result.failure)) setNotice({ jobId: job.id, message: result.failure.message });
+      else showToast(result.failure.message, "error");
+      return result.failure.message;
+    }
+    setNotice(null);
+    setJobs((prev) =>
+      prev.map((j) => (j.id === job.id ? { ...j, status: "active", ...(closingDate === undefined ? {} : { closingDate }) } : j))
+    );
+    showToast(job.status === "closed" ? "Job reopened" : "Job activated", "success");
+    return null;
+  };
+
   const handleToggleStatus = async (job: Job) => {
     const current = job.status || "active";
-    const newStatus: JobStatus = current === "active" ? "draft" : "active";
-    const res = await apiAction(job.id, "PUT", { status: newStatus });
-    if (res) {
-      setJobs((prev) =>
-        prev.map((j) => (j.id === job.id ? { ...j, status: newStatus } : j))
-      );
-      showToast(
-        newStatus === "active" ? "Job activated" : "Job deactivated",
-        "success"
-      );
+    if (current !== "active") {
+      // A job that would close by tonight is hidden right away; ask for a new closing date first.
+      if (job.closingDate && closesByEndOfToday(job.closingDate)) {
+        if (user) setPublishDate({ job, uid: user.uid });
+        return;
+      }
+      await publishJob(job);
+      return;
     }
+    const result = await apiAction(job.id, "PUT", { status: "draft" });
+    if (!result.ok) {
+      showToast(result.failure.message, "error");
+      return;
+    }
+    setJobs((prev) =>
+      prev.map((j) => (j.id === job.id ? { ...j, status: "draft" } : j))
+    );
+    showToast("Job deactivated", "success");
   };
 
   const handleClosePosition = async (job: Job) => {
-    const res = await apiAction(job.id, "PUT", { status: "closed" });
-    if (res) {
+    const result = await apiAction(job.id, "PUT", { status: "closed" });
+    if (result.ok) {
       setJobs((prev) =>
         prev.map((j) =>
           j.id === job.id ? { ...j, status: "closed" as JobStatus } : j
         )
       );
       showToast("Position closed", "success");
+    } else {
+      showToast(result.failure.message, "error");
     }
-    return Boolean(res);
+    return result.ok;
   };
 
   const handleDelete = async (job: Job) => {
-    const res = await apiAction(job.id, "DELETE");
-    if (res) {
+    const result = await apiAction(job.id, "DELETE");
+    if (result.ok) {
       setJobs((prev) => prev.filter((j) => j.id !== job.id));
       showToast("Job deleted", "success");
+    } else {
+      showToast(result.failure.message, "error");
     }
-    return Boolean(res);
+    return result.ok;
   };
 
   const handleDuplicate = async (job: Job) => {
@@ -290,12 +411,16 @@ export default function OrgDashboardJobsPage() {
             ) : error ? (
               <Card className="p-8 text-center">
                 <p
+                  role="alert"
                   className="text-sm font-semibold mb-4"
                   style={{ color: "#DC2626" }}
                 >
-                  {error}
+                  {error.message}
                 </p>
-                <Button onClick={fetchJobs}>Retry</Button>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {error.signIn && <Button primary onClick={() => void signInAgain()}>Sign in again</Button>}
+                  <Button onClick={() => void fetchJobs(true)}>Retry</Button>
+                </div>
               </Card>
             ) : (
               <>
@@ -436,6 +561,8 @@ export default function OrgDashboardJobsPage() {
                       const isDisabled = actionLoading === job.id;
                       const currentStatus = job.status || "active";
                       const appCount = getAppCount(job);
+                      // A featured job that was never published needs its listing duration chosen in the editor.
+                      const needsDuration = currentStatus !== "active" && Boolean(job.featured) && !job.publication;
 
                       return (
                         <Card
@@ -508,7 +635,15 @@ export default function OrgDashboardJobsPage() {
                               >
                                 Edit
                               </Link>
-                              {currentStatus !== "closed" && (
+                              {needsDuration && (
+                                <Link
+                                  href={`/org/dashboard/jobs/${job.id}/edit`}
+                                  className="button-gradient-soft px-3 py-1.5 rounded-lg no-underline text-xs font-semibold transition-all hover:opacity-80"
+                                >
+                                  Choose duration to publish
+                                </Link>
+                              )}
+                              {currentStatus !== "closed" && !needsDuration && (
                                 <button
                                   onClick={() => handleToggleStatus(job)}
                                   disabled={isDisabled}
@@ -543,7 +678,7 @@ export default function OrgDashboardJobsPage() {
                                   Close Position
                                 </button>
                               )}
-                              {currentStatus === "closed" && (
+                              {currentStatus === "closed" && !needsDuration && (
                                 <button
                                   onClick={() => handleToggleStatus(job)}
                                   disabled={isDisabled}
@@ -574,6 +709,14 @@ export default function OrgDashboardJobsPage() {
                               </button>
                             </div>
                           </div>
+                          {notice?.jobId === job.id && (
+                            <p role="alert" className="mt-3 text-sm" style={{ color: "var(--text)" }}>
+                              {notice.message}{" "}
+                              <Link href={`/org/dashboard/jobs/${job.id}/edit`} className="font-semibold underline">
+                                Open the job to fix and publish
+                              </Link>
+                            </p>
+                          )}
                         </Card>
                       );
                     })}
@@ -583,6 +726,11 @@ export default function OrgDashboardJobsPage() {
             )}
           </div>
         </div>
+        {publishDate && publishDate.uid === user?.uid && (
+          <PublishDateDialog job={publishDate.job}
+            onCancel={() => setPublishDate(null)}
+            onConfirm={closingDate => publishJob(publishDate.job, closingDate)} />
+        )}
         {confirmation && confirmation.uid === user?.uid && (
           <JobActionDialog job={confirmation.job} action={confirmation.action}
             onCancel={() => setConfirmation(null)}
