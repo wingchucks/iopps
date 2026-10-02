@@ -15,6 +15,8 @@ import {
   type FirestoreError,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { notifyNewMessage, type MessageNotificationResult } from "../message-notification-retry";
 
 export interface Conversation {
   id: string;
@@ -106,7 +108,7 @@ export async function sendMessage(
   senderId: string,
   text: string,
   recipientId: string
-): Promise<void> {
+): Promise<{ messageId: string; notification: Promise<MessageNotificationResult> }> {
   const msgId = `${conversationId}_${Date.now()}`;
   await setDoc(doc(db, "messages", msgId), {
     conversationId,
@@ -122,16 +124,12 @@ export async function sendMessage(
     unreadBy: recipientId,
   });
 
-  // Queue email notification for the recipient
-  try {
-    const user = auth.currentUser;
-    if (user) {
-      const response = await fetch("/api/messages/notify", { method: "POST", headers: { Authorization: `Bearer ${await user.getIdToken()}`, "Content-Type": "application/json" }, body: JSON.stringify({ messageId: msgId }) });
-      if (!response.ok) throw new Error("Unable to queue message notification");
-    }
-  } catch (err) {
-    console.error("Failed to queue message notification email:", err);
-  }
+  // The saved chat returns immediately; email retries never resend or undo it.
+  const notification = notifyNewMessage(msgId, senderId, {
+    currentUser: () => auth.currentUser,
+    subscribe: listener => onAuthStateChanged(auth, listener),
+  }).catch((): MessageNotificationResult => ({ state: "failed" }));
+  return { messageId: msgId, notification };
 }
 
 // Mark conversation as read
