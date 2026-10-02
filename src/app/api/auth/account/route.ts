@@ -8,6 +8,8 @@ import { accountDestination } from "@/lib/sign-in-destination";
 
 export const runtime = "nodejs";
 const headers = { "Cache-Control": "no-store" };
+const ORGANIZATION_UNAVAILABLE_NOTICE =
+  "Your organization's workspace is no longer available, so you are signed in to your personal profile. Contact support@iopps.ca if you think this is a mistake.";
 
 export async function GET(req: NextRequest) {
   const authorization = req.headers.get("authorization");
@@ -19,10 +21,12 @@ export async function GET(req: NextRequest) {
     const decoded = await getAdminAuth().verifyIdToken(authorization.slice(7));
     const { userData } = await assertUserCanAccessApp(decoded);
     const member = await getAdminDb().collection("members").doc(decoded.uid).get();
-    const memberData = member.data() || {};
-    const admin = decoded.admin === true || [decoded.role, userData.role, memberData.role]
-      .some(role => role === "admin" || role === "moderator");
+    // Only accounts the admin APIs accept (verifyAdminToken) are sent to /admin.
+    // Moderators have no admin tools; they use their own or their organization's workspace.
+    const admin = (decoded.admin === true || decoded.role === "admin") &&
+      (userData.claimsValidAfter === undefined || userData.role === "admin");
     let organization;
+    let organizationUnavailable = false;
 
     if (!admin) {
       try {
@@ -38,14 +42,16 @@ export async function GET(req: NextRequest) {
           missingProfileFields: readiness.missingFields,
         };
       } catch (error) {
-        if (!(error instanceof EmployerApiError && error.status === 403 && error.message === "Not an employer")) {
-          throw error;
-        }
+        // A 403 means no usable organization: none at all, or one an administrator
+        // disabled or removed. The person's own profile stays available either way.
+        if (!(error instanceof EmployerApiError && error.status === 403)) throw error;
+        organizationUnavailable = error.message !== "Not an employer";
       }
     }
 
     return NextResponse.json({
-      destination: accountDestination({ admin, hasMemberProfile: member.exists, setupComplete: userData.setupComplete === true, signupIntent: userData.signupIntent, organization }),
+      destination: accountDestination({ admin, hasMemberProfile: member.exists, setupComplete: userData.setupComplete === true, signupIntent: userData.signupIntent, organization, organizationUnavailable }),
+      ...(organizationUnavailable ? { notice: ORGANIZATION_UNAVAILABLE_NOTICE } : {}),
     }, { headers });
   } catch (error) {
     if (error instanceof AccountAccessError || error instanceof EmployerApiError) {

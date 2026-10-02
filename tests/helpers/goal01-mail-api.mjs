@@ -45,10 +45,14 @@ export function mailApiHarness({auth,db,app,base,prefix}) {
       assert.equal((await res.json())[reset?'accepted':'sent'],true);
     }
     assert.equal(deliveries.length,before+3);
-    assert.equal((await post('rate-denial')).status,429);assert.equal(deliveries.length,before+3);
-    for(const target of owned)assert.equal((await db.doc(target).get()).data().count,3);
+    // A busy reset address answers like any other address and sends nothing; verification is per signed-in UID and returns 429.
+    const limited=await post(reset?'busy-address':'rate-denial');assert.equal(limited.status,reset?200:429);
+    if(reset)assert.deepEqual(await limited.json(),{accepted:true});
+    assert.equal(deliveries.length,before+3);
+    const counterValues=reset?[3,4]:[3,3];
+    for(const [index,target] of owned.entries())assert.equal((await db.doc(target).get()).data().count,counterValues[index]);
     const mail=deliveries.at(-1);assert.equal(mail.to,email);assert.deepEqual(diagnostics,[]);
-    audit.push({uid,kind,label:'readback',counterValues:[3,3],deliveredToTransport:3,realProvider:false});
+    audit.push({uid,kind,label:'readback',counterValues,deliveredToTransport:3,realProvider:false});
     return mail;
   }
   return {exercise,diagnostics,audit,async cleanup(){

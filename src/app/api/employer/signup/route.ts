@@ -4,12 +4,15 @@ import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendEmployerWelcome, sendAdminNewSignup } from "@/lib/email";
 import { buildEmailVerificationContinueUrl } from "@/lib/auth-verification-email";
+import { verifyAuthToken } from "@/lib/api-auth";
 import { verifyAppCheckFromRequest } from "@/lib/server/app-check";
 import {
   evaluateEmployerSignupProtection,
   getSignupClientIp,
 } from "@/lib/server/signup-protection";
 import { conflictingOrganizationLink, ORGANIZATION_LINK_CONFLICT, personalIdentityDefaults } from "@/lib/server/personal-workspace";
+import { organizationOwnerClaims, platformRoleOf } from "@/lib/server/admin-user-role";
+import { availableOrganizationSlug } from "@/lib/server/public-organization-resolver";
 
 export const runtime = "nodejs";
 
@@ -116,18 +119,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ code: "SECURITY_CHECK_FAILED", error: "Security check failed. Please refresh the page and try again." }, { status: 403 });
   }
 
-  let uid: string;
-  let accountEmail: string | undefined;
-  let emailVerified = false;
-  try {
-    const token = authHeader.split("Bearer ")[1];
-    const decoded = await adminAuth.verifyIdToken(token);
-    uid = decoded.uid;
-    accountEmail = decoded.email;
-    emailVerified = decoded.email_verified === true;
-  } catch {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-  }
+  // Revoked sessions and suspended, disabled or closed accounts cannot create,
+  // repair or relink an organization, or change their role.
+  const access = await verifyAuthToken(req, { checkRevoked: true });
+  if (!access.success) return access.response;
+  const decoded = access.decodedToken;
+  const uid = decoded.uid;
+  const accountEmail = decoded.email;
+  const emailVerified = decoded.email_verified === true;
 
   // Retrying a completed signup must not reset a profile, plan, credits or role.
   // Check before spam protection, which is intended only for new signups.
@@ -206,118 +205,136 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ code: protection.code, error: protection.message }, { status: protection.status });
   }
 
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .substring(0, 60);
-
   const now = FieldValue.serverTimestamp();
   const signupStatus = emailVerified ? "approved" : "pending";
+  const db = adminDb;
+  const organizationRef = db.collection("organizations").doc(uid);
+  const employerRef = db.collection("employers").doc(uid);
+  const userRef = db.collection("users").doc(uid);
+  const memberRef = db.collection("members").doc(uid);
 
   try {
-    const batch = adminDb.batch();
+    const { customClaims } = await adminAuth.getUser(uid);
+    const created = await db.runTransaction(async tx => {
+      const [user, member, organization, employer] = await tx.getAll(userRef, memberRef, organizationRef, employerRef);
+      if (organization.exists || employer.exists) return { conflict: "exists" } as const;
+      if (conflictingOrganizationLink(uid, user.data(), member.data())) return { conflict: "link" } as const;
+      // Signing up an organization adds a workspace; it never replaces a
+      // platform role (admin or moderator), which stays in role and claims.
+      const platformRole = platformRoleOf(decoded, customClaims, user.data(), member.data());
+      const slug = await availableOrganizationSlug(tx, db, name, uid);
 
-    // 1. organizations/{uid}
-    batch.create(adminDb.collection("organizations").doc(uid), {
-      name,
-      type,
-      contactName,
-      contactEmail: normalizedContactEmail,
-      // Private account contact above; the public email is opt-in and starts blank.
-      publicContactEmail: "",
-      slug,
-      businessIdentity,
-      ...(website ? { website } : {}),
-      ...(description ? { description } : {}),
-      ...(services.length > 0 ? { services } : {}),
-      ...(location ? { location } : {}),
-      ...(capabilities.length > 0 ? { capabilities } : {}),
-      ...(logoUrl ? { logoUrl, logo: logoUrl } : {}),
-      ...(bannerUrl ? { bannerUrl } : {}),
-      onboardingComplete: profileSubmitted,
-      plan: null,
-      status: signupStatus,
-      ...(type !== "school" ? { directoryReview: newBusinessListingReview() } : {}),
-      emailVerified,
-      verified: false,
-      ...(emailVerified ? { approvedAt: now } : {}),
-      createdAt: now,
-      updatedAt: now,
+      // 1. organizations/{uid}
+      tx.create(organizationRef, {
+        name,
+        type,
+        contactName,
+        contactEmail: normalizedContactEmail,
+        // Private account contact above; the public email is opt-in and starts blank.
+        publicContactEmail: "",
+        slug,
+        businessIdentity,
+        ...(website ? { website } : {}),
+        ...(description ? { description } : {}),
+        ...(services.length > 0 ? { services } : {}),
+        ...(location ? { location } : {}),
+        ...(capabilities.length > 0 ? { capabilities } : {}),
+        ...(logoUrl ? { logoUrl, logo: logoUrl } : {}),
+        ...(bannerUrl ? { bannerUrl } : {}),
+        onboardingComplete: profileSubmitted,
+        plan: null,
+        status: signupStatus,
+        ...(type !== "school" ? { directoryReview: newBusinessListingReview() } : {}),
+        emailVerified,
+        verified: false,
+        ...(emailVerified ? { approvedAt: now } : {}),
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      // 2. employers/{uid}
+      tx.create(employerRef, {
+        id: uid,
+        name,
+        slug,
+        type,
+        businessIdentity,
+        contactName,
+        contactEmail: normalizedContactEmail,
+        publicContactEmail: "",
+        ...(website ? { website } : {}),
+        ...(description ? { description } : {}),
+        ...(services.length > 0 ? { services } : {}),
+        ...(location ? { location } : {}),
+        ...(capabilities.length > 0 ? { capabilities } : {}),
+        ...(logoUrl ? { logoUrl, logo: logoUrl } : {}),
+        ...(bannerUrl ? { bannerUrl } : {}),
+        plan: "free",
+        subscriptionTier: "free",
+        status: signupStatus,
+        ...(type !== "school" ? { directoryReview: newBusinessListingReview() } : {}),
+        emailVerified,
+        verified: false,
+        onboardingComplete: profileSubmitted,
+        ...(emailVerified ? { approvedAt: now } : {}),
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      // 3. users/{uid} — set employer role (merge to keep existing fields) unless
+      // the account holds a platform role. The person's own name and sign-in
+      // email are theirs, not the organization's.
+      tx.set(userRef, {
+        ...(platformRole ? {} : { role: "employer" }),
+        orgRole: "owner",
+        employerId: uid,
+        orgId: uid,
+        ...personalIdentityDefaults(user.data(), { displayName: contactName, email: accountEmail || normalizedContactEmail }),
+        emailVerified,
+        updatedAt: now,
+      }, { merge: true });
+
+      // 4. members/{uid} — org membership + talent search filter. The member
+      // profile stays the individual's own profile (used for applications and team lists).
+      tx.set(memberRef, {
+        ...personalIdentityDefaults(member.data(), { displayName: contactName, email: accountEmail || normalizedContactEmail }),
+        orgId: uid,
+        orgRole: "owner",
+        ...(platformRole ? {} : { role: "employer" }),
+        emailVerified,
+        ...(member.exists ? {} : { createdAt: now }),
+        updatedAt: now,
+      }, { merge: true });
+
+      // 5. Admin bell notification so new employer signups are visible in the dashboard
+      tx.set(db.collection("adminNotifications").doc(), {
+        title: "New employer signup",
+        message: `${name} registered an employer account${emailVerified ? "." : " and needs email confirmation."}`,
+        type: "success",
+        read: false,
+        employerId: uid,
+        orgId: uid,
+        orgName: name,
+        contactName,
+        contactEmail: normalizedContactEmail,
+        emailVerified,
+        createdAt: now,
+      });
+
+      return { slug };
     });
+    if ("conflict" in created) {
+      if (created.conflict === "link") return NextResponse.json({ code: "ORGANIZATION_LINK_CONFLICT", error: ORGANIZATION_LINK_CONFLICT }, { status: 409 });
+      // A concurrent signup finished first; answer as its retry would.
+      const existing = await existingSignupResponse(uid);
+      if (existing) return existing;
+      throw new Error("Organization records changed during signup");
+    }
+    const { slug } = created;
 
-    // 2. employers/{uid}
-    batch.create(adminDb.collection("employers").doc(uid), {
-      id: uid,
-      name,
-      slug,
-      type,
-      businessIdentity,
-      contactName,
-      contactEmail: normalizedContactEmail,
-      publicContactEmail: "",
-      ...(website ? { website } : {}),
-      ...(description ? { description } : {}),
-      ...(services.length > 0 ? { services } : {}),
-      ...(location ? { location } : {}),
-      ...(capabilities.length > 0 ? { capabilities } : {}),
-      ...(logoUrl ? { logoUrl, logo: logoUrl } : {}),
-      ...(bannerUrl ? { bannerUrl } : {}),
-      plan: "free",
-      subscriptionTier: "free",
-      status: signupStatus,
-      ...(type !== "school" ? { directoryReview: newBusinessListingReview() } : {}),
-      emailVerified,
-      verified: false,
-      onboardingComplete: profileSubmitted,
-      ...(emailVerified ? { approvedAt: now } : {}),
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    // 3. users/{uid} — set employer role (merge to keep existing fields).
-    // The person's own name and sign-in email are theirs, not the organization's.
-    batch.set(adminDb.collection("users").doc(uid), {
-      role: "employer",
-      orgRole: "owner",
-      employerId: uid,
-      orgId: uid,
-      ...personalIdentityDefaults(existingUser.data(), { displayName: contactName, email: accountEmail || normalizedContactEmail }),
-      emailVerified,
-      updatedAt: now,
-    }, { merge: true });
-
-    // 4. members/{uid} — org membership + talent search filter. The member
-    // profile stays the individual's own profile (used for applications and team lists).
-    batch.set(adminDb.collection("members").doc(uid), {
-      ...personalIdentityDefaults(existingMember.data(), { displayName: contactName, email: accountEmail || normalizedContactEmail }),
-      orgId: uid,
-      orgRole: "owner",
-      role: "employer",
-      emailVerified,
-      ...(existingMember.exists ? {} : { createdAt: now }),
-      updatedAt: now,
-    }, { merge: true });
-
-    // 5. Admin bell notification so new employer signups are visible in the dashboard
-    batch.set(adminDb.collection("adminNotifications").doc(), {
-      title: "New employer signup",
-      message: `${name} registered an employer account${emailVerified ? "." : " and needs email confirmation."}`,
-      type: "success",
-      read: false,
-      employerId: uid,
-      orgId: uid,
-      orgName: name,
-      contactName,
-      contactEmail: normalizedContactEmail,
-      emailVerified,
-      createdAt: now,
-    });
-
-    await batch.commit();
-
-    // Set custom claims so auth token reflects employer role
-    await adminAuth.setCustomUserClaims(uid, { role: "employer", employerId: uid });
+    // Merge into the current claims so the token reflects the organization;
+    // replacing them would drop admin access.
+    await adminAuth.setCustomUserClaims(uid, organizationOwnerClaims(customClaims, uid));
 
     let verificationLink: string | null = null;
     if (!emailVerified) {

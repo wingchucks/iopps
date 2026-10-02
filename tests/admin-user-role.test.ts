@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Partial SDK test doubles for authorization and failure ordering. */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { changeAdminUserRole } from "../src/lib/server/admin-user-role.ts";
+import { changeAdminUserRole, organizationOwnerClaims, platformRoleOf } from "../src/lib/server/admin-user-role.ts";
 import { POST, DELETE } from "../src/app/api/admin/create-test-account/route.ts";
 
 function fixture(options: { owner?: boolean; revokeFails?: boolean; memberExists?: boolean } = {}) {
@@ -60,4 +60,15 @@ test("a revocation failure leaves a server-owned freshness marker and never repo
 test("retired test account mutations always return gone and need no configured credentials", async () => {
   assert.equal((await POST()).status, 410);
   assert.equal((await DELETE()).status, 410);
+});
+
+test("organization ownership adds employer claims without replacing platform claims", () => {
+  assert.deepEqual(organizationOwnerClaims({ admin: true, role: "admin", orgId: "stale-org" }, "org"), { admin: true, role: "admin", employerId: "org" });
+  assert.deepEqual(organizationOwnerClaims({ admin: true }, "org"), { admin: true, employerId: "org" });
+  assert.deepEqual(organizationOwnerClaims({ role: "moderator" }, "org"), { role: "moderator", employerId: "org" });
+  assert.deepEqual(organizationOwnerClaims(undefined, "org"), { role: "employer", employerId: "org" });
+  assert.deepEqual(organizationOwnerClaims({ role: "community", feature: "preserve", orgRole: "member", employer: true }, "org"), { role: "employer", feature: "preserve", employerId: "org" });
+  assert.equal(platformRoleOf({ role: "community" }, { admin: true }), "admin");
+  assert.equal(platformRoleOf(null, undefined, { role: "moderator" }), "moderator");
+  assert.equal(platformRoleOf({ role: "employer" }, { role: "super_admin" }), null);
 });

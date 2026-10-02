@@ -68,12 +68,8 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
             const organizationType = data.organizationType as string | undefined;
             const profileReady = data.profileReady !== false;
 
-            const userRole = data.userRole as string | undefined;
-            if (userRole === "admin" || userRole === "moderator") {
-              router.replace("/admin");
-              return;
-            }
-
+            // Staff who belong to an organization use its workspace like any member;
+            // the server authorized this account for the organization above.
             if (organizationType !== "school" && !profileReady) {
               router.replace(buildOnboardingRedirect(data.missingProfileFields));
               return;
@@ -98,6 +94,11 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
           }
         }
 
+        if (res.status === 403) {
+          // An administrator disabled or removed the organization; retrying cannot help.
+          setError("This organization's workspace is no longer available. Your personal profile is still available. Contact support@iopps.ca if you think this is a mistake.");
+          return;
+        }
         // Not an employer/org member
         if (!res.ok) throw new Error("Organization access check unavailable");
         router.replace("/org/upgrade");

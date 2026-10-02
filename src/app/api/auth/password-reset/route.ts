@@ -15,13 +15,17 @@ export async function POST(req: NextRequest) {
   if (!process.env.RESEND_API_KEY) return NextResponse.json({ error: "Password recovery is temporarily unavailable. Please try again later." }, { status: 503 });
   try {
     const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
-    if (!await reservePasswordReset(getAdminDb(), email, ip)) return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
-    try {
-      const resetLink = await getAdminAuth().generatePasswordResetLink(email, { url: "https://www.iopps.ca/login", handleCodeInApp: false });
-      await sendAccountPasswordResetEmail(email, buildBrandedPasswordResetLink("https://iopps.ca", resetLink));
-    } catch (error) {
-      // Account existence and provider failure must never become an email lookup oracle.
-      if ((error as { code?: string }).code !== "auth/user-not-found") console.error("[password-reset] Delivery unavailable");
+    const reservation = await reservePasswordReset(getAdminDb(), email, ip);
+    if (reservation === "rate_limited") return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
+    // A busy address gets the same answer as every other address; only delivery is skipped.
+    if (reservation === "send") {
+      try {
+        const resetLink = await getAdminAuth().generatePasswordResetLink(email, { url: "https://www.iopps.ca/login", handleCodeInApp: false });
+        await sendAccountPasswordResetEmail(email, buildBrandedPasswordResetLink("https://iopps.ca", resetLink));
+      } catch (error) {
+        // Account existence and provider failure must never become an email lookup oracle.
+        if ((error as { code?: string }).code !== "auth/user-not-found") console.error("[password-reset] Delivery unavailable");
+      }
     }
     return NextResponse.json({ accepted: true }, { headers: { "Cache-Control": "no-store" } });
   } catch {

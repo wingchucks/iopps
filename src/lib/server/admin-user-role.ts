@@ -3,6 +3,27 @@ import type { Firestore } from "firebase-admin/firestore";
 import { isSuperAdminEmail } from "./super-admin";
 
 type RoleAuth = Pick<Auth, "getUser" | "setCustomUserClaims" | "revokeRefreshTokens">;
+type RoleSource = Record<string, unknown> | null | undefined;
+
+/** The platform role (admin or moderator) granted by any of these claims or account records. */
+export function platformRoleOf(...sources: RoleSource[]): "admin" | "moderator" | null {
+  if (sources.some(source => source?.admin === true || source?.role === "admin")) return "admin";
+  return sources.some(source => source?.role === "moderator") ? "moderator" : null;
+}
+
+/**
+ * Claims for an account that now owns organization `orgId`. Organization setup
+ * adds a workspace: platform claims (admin, moderator and any other claim) are
+ * kept and only stale organization links are replaced, because
+ * setCustomUserClaims overwrites every claim it is not given.
+ */
+export function organizationOwnerClaims(current: RoleSource, orgId: string): Record<string, unknown> {
+  const claims: Record<string, unknown> = { ...current };
+  for (const key of ["orgId", "orgRole", "employer"]) delete claims[key];
+  claims.employerId = orgId;
+  if (!platformRoleOf(claims)) claims.role = "employer";
+  return claims;
+}
 
 /** Keep role authority in signed claims; profile fields are only display mirrors. */
 export async function changeAdminUserRole(
