@@ -1,8 +1,7 @@
 import { OutboundFetchError, safeOutboundFetch } from "@/lib/server/safe-outbound-fetch";
 import { NextRequest, NextResponse } from "next/server";
 import { getStorage } from "firebase-admin/storage";
-import { verifyAuthToken } from "@/lib/api-auth";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 import {
   PROFILE_MEDIA_MAX_BYTES,
   buildProfileMediaStoragePath,
@@ -14,8 +13,6 @@ import {
 } from "@/lib/profile-media";
 
 export const runtime = "nodejs";
-
-type LegacyUploadType = "logo" | "banner";
 
 interface OrgAccessContext {
   uid: string;
@@ -50,22 +47,30 @@ function getBucketName(): string {
   return bucketName;
 }
 
-async function resolveOrgAccess(uid: string): Promise<OrgAccessContext> {
-  const db = getAdminDb();
-  const memberSnap = await db.collection("members").doc(uid).get();
-  const memberOrgId = memberSnap.exists ? memberSnap.data()?.orgId : null;
-
-  if (memberOrgId) {
-    return { uid, orgId: memberOrgId };
+/**
+ * Organization images are public brand assets: only an owner or admin of an
+ * organization that still has access (verified, unrevoked session; not disabled,
+ * deleted or archived) may change them.
+ */
+async function resolveOrgAccess(request: NextRequest): Promise<OrgAccessContext> {
+  const context = await requireEmployerContext(request);
+  if (!["owner", "admin"].includes(context.orgRole)) {
+    throw new UploadRouteError(403, "An organization owner or admin can change organization images.");
   }
+  return { uid: context.uid, orgId: context.orgId };
+}
 
-  const userSnap = await db.collection("users").doc(uid).get();
-  const employerId = userSnap.exists ? userSnap.data()?.employerId : null;
-  if (employerId) {
-    return { uid, orgId: employerId };
-  }
+// The bytes, not the client's declared type or file name, decide what is stored.
+// SVG and every other non-raster format is refused.
+const IMAGE_SIGNATURES: Array<{ type: string; matches: (bytes: Buffer) => boolean }> = [
+  { type: "image/jpeg", matches: b => b.length > 2 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  { type: "image/png", matches: b => b.length > 7 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) },
+  { type: "image/webp", matches: b => b.length > 11 && b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WEBP" },
+  { type: "image/gif", matches: b => b.length > 5 && ["GIF87a", "GIF89a"].includes(b.subarray(0, 6).toString("ascii")) },
+];
 
-  throw new UploadRouteError(403, "Not an organization member");
+function detectImageType(bytes: Buffer): string | null {
+  return IMAGE_SIGNATURES.find(signature => signature.matches(bytes))?.type ?? null;
 }
 
 function parseProfileMediaSlot(value: unknown): ProfileMediaSlot {
@@ -74,14 +79,6 @@ function parseProfileMediaSlot(value: unknown): ProfileMediaSlot {
   }
 
   throw new UploadRouteError(400, "Invalid media slot");
-}
-
-function parseLegacyUploadType(value: unknown): LegacyUploadType {
-  if (value === "logo" || value === "banner") {
-    return value;
-  }
-
-  throw new UploadRouteError(400, "Invalid type");
 }
 
 function validateUploadedImage(contentType: string, size: number) {
@@ -216,12 +213,16 @@ async function handleLocalUpload(request: NextRequest, access: OrgAccessContext)
   validateUploadedImage(file.type, file.size);
 
   const buffer = Buffer.from(await file.arrayBuffer());
+  const contentType = detectImageType(buffer);
+  if (!contentType) {
+    throw new UploadRouteError(400, "The file content is not a JPEG, PNG, WebP or GIF image");
+  }
   const payload = await persistProfileMedia({
     orgId: access.orgId,
     uid: access.uid,
     slot,
     buffer,
-    contentType: file.type,
+    contentType,
     size: buffer.byteLength,
     originalName: file.name,
     source: "local",
@@ -316,33 +317,19 @@ async function handleGoogleDriveImport(body: Record<string, unknown>, access: Or
   return NextResponse.json(payload);
 }
 
-async function handleLegacySignedUpload(body: Record<string, unknown>, access: OrgAccessContext) {
-  const type = parseLegacyUploadType(body.type);
-  const contentType = typeof body.contentType === "string" ? body.contentType : "";
-
-  if (!contentType.startsWith("image/")) {
-    throw new UploadRouteError(400, "Must be an image");
-  }
-
-  const bucket = getStorage().bucket(getBucketName());
-  const path = type === "logo" ? `org-logos/${access.orgId}` : `org-banners/${access.orgId}`;
-  const blob = bucket.file(path);
-
-  const [signedUrl] = await blob.getSignedUrl({
-    version: "v4",
-    action: "write",
-    expires: Date.now() + 10 * 60 * 1000,
-    contentType,
-  });
-
-  return NextResponse.json({ signedUrl, path, orgId: access.orgId });
-}
+// The former signed-URL flow let a browser write any image type, of any size, over
+// the live org-logos/{orgId} and org-banners/{orgId} objects. Nothing calls it now:
+// the dashboard posts the file here, and signup uploads go through Storage rules.
+const LEGACY_UPLOAD_RETIRED = {
+  error: "This upload method has been retired. Upload the image from your organization profile instead.",
+  code: "ENDPOINT_RETIRED",
+};
 
 function respondWithRouteError(error: unknown) {
   if (error instanceof OutboundFetchError) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
-  if (error instanceof UploadRouteError) {
+  if (error instanceof UploadRouteError || error instanceof EmployerApiError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
 
@@ -352,11 +339,8 @@ function respondWithRouteError(error: unknown) {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await verifyAuthToken(request);
-  if (!auth.success) return auth.response;
-
   try {
-    const access = await resolveOrgAccess(auth.decodedToken.uid);
+    const access = await resolveOrgAccess(request);
     const contentType = request.headers.get("content-type") || "";
 
     if (contentType.includes("multipart/form-data")) {
@@ -372,31 +356,12 @@ export async function POST(request: NextRequest) {
       return await handleLinkImport(body, access);
     }
 
-    return await handleLegacySignedUpload(body, access);
+    return NextResponse.json(LEGACY_UPLOAD_RETIRED, { status: 410 });
   } catch (error) {
     return respondWithRouteError(error);
   }
 }
 
-export async function PUT(request: NextRequest) {
-  const auth = await verifyAuthToken(request);
-  if (!auth.success) return auth.response;
-
-  try {
-    const access = await resolveOrgAccess(auth.decodedToken.uid);
-    const body = (await request.json()) as Record<string, unknown>;
-    const type = parseLegacyUploadType(body.type);
-
-    const bucket = getStorage().bucket(getBucketName());
-    const path = type === "logo" ? `org-logos/${access.orgId}` : `org-banners/${access.orgId}`;
-    const blob = bucket.file(path);
-
-    await blob.makePublic();
-
-    return NextResponse.json({
-      url: `https://storage.googleapis.com/${bucket.name}/${path}`,
-    });
-  } catch (error) {
-    return respondWithRouteError(error);
-  }
+export async function PUT() {
+  return NextResponse.json(LEGACY_UPLOAD_RETIRED, { status: 410 });
 }

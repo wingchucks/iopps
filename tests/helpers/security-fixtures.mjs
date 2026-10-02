@@ -129,20 +129,27 @@ export function offlineNetwork({ answer = () => [{ address: '8.8.8.8', family: 4
   };
 }
 
-export function uploadRoute(network, { authenticated = true, member = true } = {}) {
-  const saved = [];
+class FixtureEmployerApiError extends Error { constructor(status, message) { super(message); this.status = status; } }
+
+export function uploadRoute(network, { authenticated = true, member = true, orgRole = 'owner', denied } = {}) {
+  const saved = [], signed = [];
   const route = sourceModule('src/app/api/org/upload/route.ts', {
     ...network,
     mocks: {
       ...network.mocks,
       'next/server': { NextResponse: { json: Response.json } },
-      '@/lib/api-auth': { verifyAuthToken: async () => authenticated ? { success: true, decodedToken: { uid: 'fixture-user' } } : { success: false, response: Response.json({}, { status: 401 }) } },
-      '@/lib/firebase-admin': { getAdminDb: () => ({ collection: () => ({ doc: () => ({ get: async () => ({ exists: member, data: () => ({ orgId: 'fixture-org' }) }) }) }) }) },
-      'firebase-admin/storage': { getStorage: () => ({ bucket: () => ({ name: 'demo-security', file: path => ({ save: async (body, options) => saved.push({ path, body, options }), makePublic: async () => {} }) }) }) },
+      '@/lib/server/employer-auth': { EmployerApiError: FixtureEmployerApiError, requireEmployerContext: async () => {
+        if (!authenticated) throw new FixtureEmployerApiError(401, 'Sign in to continue.');
+        if (!member) throw new FixtureEmployerApiError(403, 'Not an employer');
+        if (denied) throw new FixtureEmployerApiError(403, denied);
+        return { uid: 'fixture-user', orgId: 'fixture-org', orgRole };
+      } },
+      'firebase-admin/storage': { getStorage: () => ({ bucket: () => ({ name: 'demo-security', file: path => ({ save: async (body, options) => saved.push({ path, body, options }), makePublic: async () => {}, getSignedUrl: async () => { signed.push(path); return ['https://signed.fixture.test']; } }) }) }) },
     },
   });
   return {
-    saved,
+    saved, signed,
     post(body) { return route.POST(new Request('https://fixture.test/api/org/upload', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })); },
+    send(request) { return route[request.method](request); },
   };
 }
