@@ -40,7 +40,9 @@ test('review P2 API: mixed formats have matching jobs, organization detail, dire
  assert.deepEqual(jobs.jobs.map(row => row.id), ['a']);
  assert.equal(jobs.jobs[0].description, 'Manage the branch.');
  assert.deepEqual(detail.jobs.map(row => row.id), ['a']);
- assert.equal(detail.jobs[0].description, rows[0].description);
+ // Organization profiles return the same public projection as /api/jobs.
+ assert.equal(detail.jobs[0].description, jobs.jobs[0].description);
+ assert.equal(detail.jobs[0].descriptionFormat, 'plain-text');
  for (const records of [directory.orgs, partners.partners, partnerDirectory.orgs]) {
   assert.equal(records.length, 1);
   assert.equal(records[0].openJobs, 1);
