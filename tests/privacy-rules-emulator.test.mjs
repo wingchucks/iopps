@@ -5,7 +5,7 @@ import { getAuth as adminAuth } from 'firebase-admin/auth';
 import { getFirestore as adminFirestore } from 'firebase-admin/firestore';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator, doc, getDocFromServer, setDoc, updateDoc, deleteDoc, terminate } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator, doc, getDocFromServer, setDoc, updateDoc, deleteDoc, serverTimestamp, terminate } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator, ref, uploadBytes, getBytes, deleteObject } from 'firebase/storage';
 
 const denied = error => error.code === 'permission-denied';
@@ -86,9 +86,9 @@ test('database privacy boundaries apply to direct client requests, including sig
       await seed('conversations', conversation, { participants: [applicant.uid, employer.uid], unreadBy: applicant.uid });
       await assert.rejects(getDocFromServer(doc(outsider.db, 'conversations', conversation)), denied);
       await assert.rejects(updateDoc(doc(applicant.db, 'conversations', conversation), { participants: [applicant.uid, outsider.uid] }), denied);
-      await assert.rejects(setDoc(doc(outsider.db, 'messages', prefix), { conversationId: conversation, senderId: outsider.uid, text: 'Injected' }), denied);
+      await assert.rejects(setDoc(doc(outsider.db, 'messages', prefix), { conversationId: conversation, senderId: outsider.uid, text: 'Injected', createdAt: serverTimestamp() }), denied);
       paths.add(`messages/${prefix}`);
-      await setDoc(doc(applicant.db, 'messages', prefix), { conversationId: conversation, senderId: applicant.uid, text: 'Fictional test message' });
+      await setDoc(doc(applicant.db, 'messages', prefix), { conversationId: conversation, senderId: applicant.uid, text: 'Fictional test message', createdAt: serverTimestamp() });
       assert.equal((await getDocFromServer(doc(employer.db, 'messages', prefix))).exists(), true);
       await assert.rejects(setDoc(doc(outsider.db, 'mail', prefix), { to: 'arbitrary@example.invalid', message: { text: 'Bypass' } }), denied);
     });

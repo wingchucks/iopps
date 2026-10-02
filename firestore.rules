@@ -276,31 +276,59 @@ service cloud.firestore {
         && request.resource.data['read'] is bool;
     }
 
-    // Existing conversations: participants can read/update; creation is retired.
-    // Allow get for non-existent docs (existence check before create).
-    // Allow list when querying by unreadBy (used for unread count badge).
-    match /conversations/{convId} {
-      allow get: if isSignedIn() && (
-        !exists(/databases/$(database)/documents/conversations/$(convId)) ||
-        request.auth.uid in resource.data.participants
-      );
-      allow list: if isSignedIn() && (
-        request.auth.uid in resource.data.participants
-      );
-      allow create: if false; // Existing conversations only; no forged peer-lookup grants.
-      allow update: if isSignedIn() &&
-        request.auth.uid in resource.data.participants &&
-        request.resource.data.participants == resource.data.participants;
+    // ── Private messaging (src/lib/firestore/messages.ts) ──
+    // Settings → Privacy "Allow Direct Messages" (member_settings.allowDirectMessages).
+    function acceptsDirectMessages(uid) {
+      return !exists(/databases/$(database)/documents/member_settings/$(uid))
+        || get(/databases/$(database)/documents/member_settings/$(uid)).data.get('allowDirectMessages', true) != false;
+    }
+    // Conversations are two-person; the client marks the first other participant unread.
+    function canMessage(participants) {
+      let others = participants.removeAll([request.auth.uid]);
+      return request.auth.uid in participants && (others.size() == 0 || acceptsDirectMessages(others[0]));
+    }
+    // Keep aligned with MESSAGE_TEXT_MAX in src/lib/firestore/messages.ts.
+    function validNewMessage() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['conversationId', 'senderId', 'text', 'createdAt'])
+        && data.senderId == request.auth.uid && data.conversationId is string
+        && data.text is string && data.text.size() > 0 && data.text.size() <= 5000
+        && data.createdAt == request.time;
+    }
+    // A reader clears only their own unread marker.
+    function clearsOwnUnreadMarker() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['unreadBy'])
+        && request.resource.data.get('unreadBy', '') == ''
+        && resource.data.get('unreadBy', '') in [request.auth.uid, ''];
+    }
+    // A sender stamps their own preview (80 characters plus an ellipsis) at the
+    // server time and marks the other participant unread.
+    function sendsOwnPreview() {
+      let stamped = request.resource.data;
+      let others = resource.data.participants.removeAll([request.auth.uid]);
+      return stamped.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'lastMessageAt', 'lastSenderId', 'unreadBy'])
+        && stamped.lastSenderId == request.auth.uid
+        && stamped.lastMessage is string && stamped.lastMessage.size() > 0 && stamped.lastMessage.size() <= 81
+        && stamped.lastMessageAt == request.time
+        && ((others.size() == 0 && stamped.unreadBy == '')
+          || (others.size() > 0 && stamped.unreadBy == others[0] && acceptsDirectMessages(others[0])));
     }
 
-    // Messages: only conversation participants can read,
-    // authenticated users can create messages in their conversations
+    // Existing conversations: participants only (missing documents are not
+    // disclosed); creation is retired and participants never change.
+    match /conversations/{convId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if false; // Existing conversations only; no forged peer-lookup grants.
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants
+        && (clearsOwnUnreadMarker() || sendsOwnPreview());
+    }
+
+    // Messages: participants read; senders add plain-text messages at the server time.
     match /messages/{msgId} {
       allow read: if isSignedIn() &&
         request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
-      allow create: if isSignedIn() &&
-        request.resource.data.senderId == request.auth.uid &&
-        request.auth.uid in get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants;
+      allow create: if isSignedIn() && validNewMessage()
+        && canMessage(get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants);
     }
 
     // Member settings: users can read/write their own settings
