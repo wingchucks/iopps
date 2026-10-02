@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { buildAccountVerificationEmailContent } from "@/lib/auth-verification-email";
+import { BILLING_SUPPORT_EMAIL, formatBillingDate } from "@/lib/pricing";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -426,6 +427,70 @@ export async function sendSubscriptionConfirmation(opts: {
     return { success: true };
   } catch (err) {
     console.error("[email] Subscription confirmation failed:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
+/**
+ * A same-tier annual renewal paid during the current term. It does not start at payment, so
+ * instead of "now active" it states the new term's dates on the Saskatchewan billing calendar.
+ */
+export async function sendSubscriptionRenewalConfirmation(opts: {
+  email: string;
+  contactName: string;
+  orgName: string;
+  planName: string;
+  amount: number;
+  gst: number;
+  startsAt: Date;
+  endsAt: Date;
+}): Promise<{ success: boolean; error?: string }> {
+  if (!resend) return { success: false, error: "Email not configured" };
+
+  const total = opts.amount + opts.gst;
+  const starts = formatBillingDate(opts.startsAt);
+  const ends = formatBillingDate(opts.endsAt);
+  const html = emailWrapper(`
+    <h2 style="${STYLES.h2}">Renewal Confirmed ✅</h2>
+    <p style="${STYLES.text}">
+      Thank you, ${escapeHtml(opts.contactName)}! Your <strong>${escapeHtml(opts.planName)}</strong> plan
+      for <strong>${escapeHtml(opts.orgName)}</strong> is renewed for another year, from
+      <strong>${starts}</strong> to <strong>${ends}</strong>.
+    </p>
+    <p style="${STYLES.text}">
+      Your current term is not shortened. Your plan continues as it is until the new term starts.
+    </p>
+    <div style="background:#f9fafb;border-radius:12px;padding:20px;margin:20px 0;">
+      <table style="width:100%;font-size:14px;color:#374151;">
+        <tr><td>Plan</td><td style="text-align:right;font-weight:700">${escapeHtml(opts.planName)}</td></tr>
+        <tr><td>New term starts</td><td style="text-align:right">${starts}</td></tr>
+        <tr><td>New term ends</td><td style="text-align:right">${ends}</td></tr>
+        <tr><td>Amount</td><td style="text-align:right">$${opts.amount.toFixed(2)} CAD</td></tr>
+        <tr><td>GST (5%)</td><td style="text-align:right">$${opts.gst.toFixed(2)} CAD</td></tr>
+        <tr style="border-top:1px solid #e5e7eb"><td style="font-weight:700;padding-top:8px">Total paid</td><td style="text-align:right;font-weight:700;padding-top:8px">$${total.toFixed(2)} CAD</td></tr>
+      </table>
+    </div>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${SITE_URL}/org/dashboard" style="${STYLES.button}">
+        Go to Dashboard
+      </a>
+    </div>
+    <hr style="${STYLES.divider}">
+    <p style="${STYLES.muted}">
+      Dates are in Saskatchewan time. Questions? Contact us at ${BILLING_SUPPORT_EMAIL}
+    </p>
+  `);
+
+  try {
+    await sendCheckedEmail({
+      from: FROM_EMAIL,
+      to: opts.email,
+      subject: `IOPPS Renewal Confirmed — ${opts.planName} Plan from ${starts}`,
+      html,
+    });
+    return { success: true };
+  } catch (err) {
+    console.error("[email] Subscription renewal confirmation failed:", err);
     return { success: false, error: String(err) };
   }
 }

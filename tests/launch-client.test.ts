@@ -6,5 +6,5 @@ test('client permits writes only after an active uncached launch status',async()
 });
 test('application guard precedes direct upload and application submission work',()=>{
  const s=readFileSync('src/app/jobs/[slug]/apply/page.tsx','utf8');
- for(const name of ['const handleFileSelect','const handleSubmit']){const f=s.slice(s.indexOf(name));const guard=f.indexOf('await assertLaunchAvailable()');assert.ok(guard>=0);assert.ok(guard<f.indexOf('await uploadBytes'));}
+ for(const [name,work] of [['const handleFileSelect','await uploadBytes'],['const handleSubmit','fetch("/api/applications"']]){const f=s.slice(s.indexOf(name));const guard=f.indexOf('await assertLaunchAvailable()');assert.ok(guard>=0);assert.ok(guard<f.indexOf(work),work);}
 });

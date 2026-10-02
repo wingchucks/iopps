@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthToken } from "@/lib/api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
 
-import { submitApplication } from "@/lib/server/application-submission";
+import { submitApplication, type ApplicationResumeSource } from "@/lib/server/application-submission";
 import { archiveApplicationResume } from "@/lib/server/application-document-archive";
 import { applicationReceiptRecord } from "@/lib/application-receipt";
 import { getStorage } from "firebase-admin/storage";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 export const runtime = "nodejs";
+
+const SAVED_RESUME_UNAVAILABLE = "Your saved resume could not be attached. Upload a resume for this application, or replace the one on your profile and try again.";
 
 export async function POST(request: NextRequest) {
   const auth = await verifyAuthToken(request);
@@ -17,21 +19,31 @@ export async function POST(request: NextRequest) {
     if (Number(request.headers.get("content-length") || 0) > 100000) return NextResponse.json({ error: "Application too large" }, { status: 413 });
     const input = await request.json();
     if (!input || typeof input !== "object" || Array.isArray(input)) return NextResponse.json({error:"Invalid application"}, {status:400});
-    let archive: Promise<string> | undefined;
-    const originalResumeUrl = input.resumeUrl;
-    const verifyDocuments = async () => {
+    const archives = new Map<string, Promise<string>>();
+    const verifyDocuments = async (resume: ApplicationResumeSource) => {
     // This callback runs only for a new submission, before archive/transaction writes.
     // Keep authenticated immutable retries and receipt/withdrawal access available.
     if (auth.decodedToken.firebase?.sign_in_provider === "password" && auth.decodedToken.email_verified !== true) {
       throw emailVerificationRequired;
     }
-    if (input.resumeUrl) {
-      const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
-      if (!bucketName) throw new Error("Storage is not configured");
-      const bucket = getStorage().bucket(bucketName);
-      // Reuse the same copy across transaction retries, never re-read a mutable source.
-      archive ??= archiveApplicationResume(bucket, originalResumeUrl, auth.decodedToken.uid, process.env.FIREBASE_STORAGE_EMULATOR_HOST);
-      input.resumeUrl = await archive;
+    if (!resume.resumeUrl) return "";
+    const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+    if (!bucketName) throw new Error("Storage is not configured");
+    const bucket = getStorage().bucket(bucketName);
+    // The server copies the applicant's own upload or saved profile resume (resumes/{uid}/ only,
+    // size and type limits) with the Admin SDK, so no browser download and no bucket CORS.
+    // Reuse one copy per source across transaction retries, never re-read a mutable source.
+    let archive = archives.get(resume.resumeUrl);
+    if (!archive) {
+      archive = archiveApplicationResume(bucket, resume.resumeUrl, auth.decodedToken.uid, process.env.FIREBASE_STORAGE_EMULATOR_HOST);
+      archives.set(resume.resumeUrl, archive);
+    }
+    try {
+      return await archive;
+    } catch (error) {
+      // A saved resume that is missing, not the applicant's own, or outside the upload limits.
+      if (resume.resumeType === "profile" && error instanceof Error && /^Invalid resume/.test(error.message)) throw new Error(SAVED_RESUME_UNAVAILABLE);
+      throw error;
     }
     };
     // viewerEmail is read from the current Auth user, so an email change made
@@ -45,7 +57,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: emailVerificationRequired.message, code: "auth/email-not-verified" }, { status: 403 });
     }
     const message = error instanceof Error ? error.message : "Unable to submit application.";
-    const safe = /^(A resume|A cover letter|References are|This job|Apply using|Invalid (job|resume)|Application ownership)/.test(message);
+    const safe = /^(A resume|A cover letter|References are|This job|Apply using|Invalid (job|resume)|Application ownership|Your saved resume)/.test(message);
     return NextResponse.json({error: safe ? message : "Unable to submit application. Please try again."}, {status:safe ? 422 : 503});
   }
 }

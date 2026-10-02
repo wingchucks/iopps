@@ -15,3 +15,10 @@ test('archives a pinned owned generation with a fresh private token, never an ed
  assert.ok(copy.opts.metadata.firebaseStorageDownloadTokens);
  await assert.rejects(archiveApplicationResume(bucket,original,'other'),/ownership/);
 });
+test('a deleted source is an invalid resume to replace; other Storage failures still propagate',async()=>{
+ const failing=(error:unknown):any=>({name:'demo.test',file:()=>({getMetadata:async()=>{throw error;},copy:async()=>{throw new Error('no copy expected');}})});
+ const source='https://firebasestorage.googleapis.com/v0/b/demo.test/o/resumes%2Fowner%2Fcv.pdf?alt=media&token=original';
+ await assert.rejects(archiveApplicationResume(failing(Object.assign(new Error('No such object'),{code:404})),source,'owner'),/^Error: Invalid resume file\.$/);
+ const outage=Object.assign(new Error('Service unavailable'),{code:503});
+ await assert.rejects(archiveApplicationResume(failing(outage),source,'owner'),error=>error===outage);
+});

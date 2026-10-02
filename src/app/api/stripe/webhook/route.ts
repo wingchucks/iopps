@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { FieldValue, type DocumentReference, type Firestore } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { sendAdminPaymentNotification, sendSubscriptionConfirmation } from "@/lib/email";
+import { sendAdminPaymentNotification, sendSubscriptionConfirmation, sendSubscriptionRenewalConfirmation } from "@/lib/email";
 import { addOneCalendarYear, formatBillingDate } from "@/lib/pricing";
 import { PublicationError, publicationDate } from "@/lib/server/paid-job-publication";
 import { renewalChain, resolvePaidPublicationTerm } from "@/lib/server/paid-job-term";
@@ -342,10 +342,16 @@ export async function POST(req: NextRequest) {
       const adminPlanName = revokedKind ? `${planName} — ${revokedKind} before fulfillment; nothing granted`
         : renewal ? `${planName} — renewal starting ${formatBillingDate(renewal.startsAt)}${renewal.tier !== tier ? ` after the current ${TIER_TITLES[renewal.tier] || renewal.tier} term (plan change needs review)` : ""}`
           : planName;
+      // The confirmation says the plan "is now active"; a scheduled renewal is not active yet, so
+      // it gets its own confirmation with the new term's dates. A different-tier payment queued
+      // during a term waits for the owner's review (flagged in the admin notification).
+      const customerConfirmation = !tier || revokedKind || !notification.email ? null
+        : !renewal ? () => sendSubscriptionConfirmation(notification)
+          : renewal.tier === tier ? () => sendSubscriptionRenewalConfirmation({ ...notification, startsAt: renewal.startsAt, endsAt: renewal.expiresAt })
+            : null;
       await Promise.allSettled([
         Promise.resolve().then(() => sendAdminPaymentNotification({ ...notification, planName: adminPlanName, orgId })),
-        // The confirmation says the plan "is now active"; a scheduled renewal is not active yet.
-        ...(tier && !renewal && !revokedKind && notification.email ? [Promise.resolve().then(() => sendSubscriptionConfirmation(notification))] : []),
+        ...(customerConfirmation ? [Promise.resolve().then(customerConfirmation)] : []),
       ]);
     } catch (err) {
       console.error("[stripe/webhook] Failed to process payment:", err instanceof Error ? err.name : "Error");

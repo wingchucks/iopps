@@ -22,6 +22,7 @@ import * as actionLinks from '../src/lib/auth-verification-email.ts';
 import * as schoolVisibility from '../src/lib/school-visibility.ts';
 import * as jobDetailDates from '../src/lib/job-detail-dates.ts';
 import * as accessState from '../src/lib/access-state.ts';
+import * as pricing from '../src/lib/pricing.ts';
 import * as businessReview from '../src/lib/business-listing-review.ts';
 import * as listingFreshness from '../src/lib/listing-freshness.ts';
 import * as contentRecord from '../src/lib/server/public-content-record.ts';
@@ -246,6 +247,8 @@ test('reset email uses IOPPS branding, escapes its link and rejects provider non
   const email = load('src/lib/email.ts', {
     resend: { Resend: class { emails = { send: async message => { sent.push(message); return result; } }; } },
     '@/lib/auth-verification-email': {},
+    // Billing emails format term dates with the shared Saskatchewan-calendar helper.
+    '@/lib/pricing': pricing,
   }, { process: { env: { RESEND_API_KEY: 'fictional-unit-key' } } });
   await email.sendAccountPasswordResetEmail('qa@example.invalid', 'https://example.invalid/?a=1&b="quoted"');
   assert.equal(sent[0].from, 'IOPPS <notifications@iopps.ca>'); assert.equal(sent[0].subject, 'Reset your IOPPS password');
