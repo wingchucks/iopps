@@ -104,3 +104,15 @@ export function getOrganizationAccessBlockReason(value: unknown): string | null 
 export function isOrganizationAccessBlocked(value: unknown): boolean {
   return getOrganizationAccessBlockReason(value) !== null;
 }
+
+// An account IOPPS rejected keeps its workspace and private drafts so it can fix
+// its details and ask for another review, but nothing new goes public meanwhile.
+const PUBLISHING_BLOCKED_ORGANIZATION_STATUSES = new Set(["rejected"]);
+
+export const ORGANIZATION_NOT_APPROVED_MESSAGE =
+  "IOPPS hasn't approved this organization account, so it can't publish listings. You can still save drafts. Contact support@iopps.ca to update your details and request another review.";
+
+export function getOrganizationPublishingBlockReason(value: unknown): string | null {
+  const status = normalizeAccessStatus(recordFrom(value).status);
+  return PUBLISHING_BLOCKED_ORGANIZATION_STATUSES.has(status) ? ORGANIZATION_NOT_APPROVED_MESSAGE : null;
+}
