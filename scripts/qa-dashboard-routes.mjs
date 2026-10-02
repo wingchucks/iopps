@@ -197,7 +197,8 @@ async function checkLegacyMessages(page, width) {
   await expect(composer).toHaveValue('Draft for Beta');
   const notified = page.waitForResponse(response => new URL(response.url()).pathname === '/api/messages/notify');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
-  assert.equal((await notified).status(), 200);
+  assert.equal(process.env.RESEND_API_KEY, undefined);
+  assert.equal((await notified).status(), 503); // Chat still succeeds; isolated mail has no credentials.
   await expect(composer).toHaveValue('');
   const sent = await db.collection('messages').where('conversationId', '==', b).get();
   const mine = sent.docs.filter(doc => doc.data().senderId === self);

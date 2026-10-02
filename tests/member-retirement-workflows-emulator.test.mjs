@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { initializeApp as initializeAdmin, deleteApp as deleteAdmin } from 'firebase-admin/app';
 import { getAuth as adminAuth } from 'firebase-admin/auth';
-import { getFirestore as adminFirestore } from 'firebase-admin/firestore';
+import { getFirestore as adminFirestore, Timestamp } from 'firebase-admin/firestore';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator, doc, updateDoc } from 'firebase/firestore';
@@ -55,7 +55,7 @@ test('retirement preserves authenticated applicant fallback, private peer identi
       assert.deepEqual((await db.doc(`applications/${prefix}-legacy`).get()).data(), legacy);
     });
     await seed('conversations', prefix, { participants: [employer.uid, applicant.uid], unreadBy: applicant.uid });
-    await seed('messages', prefix, { conversationId: prefix, senderId: employer.uid, text: 'Private message fixture' });
+    await seed('messages', prefix, { conversationId: prefix, senderId: employer.uid, text: 'Private message fixture', createdAt: Timestamp.now() });
     await t.test('actual ID tokens scope the minimal peer projection to existing participants', async () => {
       const response = await peer.GET(request(`/api/messages/peer?conversationId=${prefix}&uid=${outsider.uid}`, employer));
       assert.equal(response.status, 200);
@@ -80,12 +80,14 @@ test('retirement preserves authenticated applicant fallback, private peer identi
       assert.equal((await db.doc(`messages/${prefix}`).get()).data().text, 'Private message fixture');
     });
     await t.test('notification recipient comes from conversation plus Auth, with one emulator-only mail receipt on retries', async () => {
+      assert.equal(process.env.RESEND_API_KEY, undefined, 'This fixture must never contact a real mail provider');
       paths.add(`mail/message-${prefix}`);
       assert.equal((await notify.POST(request('/api/messages/notify', outsider, { messageId: prefix }))).status, 404);
-      for (let i = 0; i < 2; i++) assert.equal((await notify.POST(request('/api/messages/notify', employer, { messageId: prefix, recipientId: outsider.uid, email: 'forged@example.invalid' }))).status, 200);
+      for (let i = 0; i < 2; i++) assert.equal((await notify.POST(request('/api/messages/notify', employer, { messageId: prefix, recipientId: outsider.uid, email: 'forged@example.invalid' }))).status, 503);
       const receipt = (await db.doc(`mail/message-${prefix}`).get()).data();
       assert.equal(receipt.to, applicant.uid + '@example.invalid');
-      assert.equal(receipt.status, 'pending');
+      assert.equal(receipt.status, 'failed');
+      assert.equal(receipt.managedBy, 'message-resend-v1');
       assert.equal((await db.collection('mail').where('to', '==', receipt.to).get()).size, 1);
     });
   } finally {
