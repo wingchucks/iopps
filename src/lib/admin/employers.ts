@@ -1,3 +1,5 @@
+import { COMPLIMENTARY_ACCESS_LABEL } from "@/lib/pricing";
+import { isComplimentarySubscription } from "@/lib/server/partner-subscription";
 import type { AdminEmployerRow, AdminEmployerStatus } from "./view-types";
 
 type UnknownRecord = Record<string, unknown>;
@@ -7,6 +9,8 @@ const PLAN_TIER_LABELS = {
   premium: "Premium - $2,500/yr",
   school: "School Tier - $5,500/yr",
 } as const;
+
+const PLAN_TIER_TITLES = { standard: "Standard", premium: "Premium", school: "School" } as const;
 
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -109,7 +113,11 @@ function resolvePlanLabel(record: UnknownRecord): string | undefined {
     text(record.subscriptionTier) || text(record.plan) || text(record.partnerTier),
   );
 
-  return normalizedTier ? PLAN_TIER_LABELS[normalizedTier] : undefined;
+  if (!normalizedTier) return undefined;
+  // A $0 admin or Hermes grant is not the paid plan: it never funds job postings.
+  return isComplimentarySubscription(record)
+    ? `${PLAN_TIER_TITLES[normalizedTier]} · ${COMPLIMENTARY_ACCESS_LABEL}`
+    : PLAN_TIER_LABELS[normalizedTier];
 }
 
 function resolveVerificationSummary(record: UnknownRecord): string | undefined {
