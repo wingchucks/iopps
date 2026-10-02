@@ -5,7 +5,8 @@ import {readFileSync} from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
 import * as reporting from "../src/lib/admin/reporting.ts";
-import {normalizePaidTier} from "../src/lib/pricing.ts";
+import * as pricing from "../src/lib/pricing.ts";
+import * as partnerSubscription from "../src/lib/server/partner-subscription.ts";
 
 const now = Date.parse("2026-10-01T12:00:00Z");
 class ReportDate extends Date { constructor(value: any = now) {super(value);} }
@@ -38,7 +39,8 @@ function load(route: string, collections: Record<string, Record<string, unknown>
     "@/lib/api-auth": {verifyAdminToken: async () => options.authorized === false ? {success: false, response: Response.json({error: "Unauthorized"}, {status: 401})} : {success: true}},
     "@/lib/firebase-admin": {adminDb},
     "@/lib/admin/reporting": reporting,
-    "@/lib/pricing": {normalizePaidTier},
+    "@/lib/pricing": pricing,
+    "@/lib/server/partner-subscription": partnerSubscription,
     "@/lib/public-job-merge": {isPublicJobRecordVisible: (record: Record<string, unknown>) => record.active === true},
     "@/lib/server/admin-job-lifecycle": {},
     "firebase-admin/firestore": {FieldPath: {documentId: () => "__name__"}},
@@ -56,7 +58,10 @@ test("plan assignments, trials and Stripe IDs are not revenue or growth", async 
       {id: "c", plan: "standard", subscriptionStatus: "active", stripeSubscriptionId: "sub_fictional"},
       {id: "d", plan: "school", subscriptionStatus: "unknown"},
     ],
-    jobs: [{paymentType: "standard_credit"}, {paymentType: "one-time", paymentAmount: 0}],
+    subscriptions: [
+      {id: "r1", orgId: "c", plan: "standard-post", billingCycle: "one-time", status: "active"},
+      {id: "r2", orgId: "c", plan: "featured-post", billingCycle: "one-time", status: "refunded", totalAmount: 0},
+    ],
     schoolProgramPayments: [{}],
   });
   const data = await (await route.get()).json();
@@ -67,11 +72,37 @@ test("plan assignments, trials and Stripe IDs are not revenue or growth", async 
   assert.equal(data.summary.trialPlanRecords, 1);
   assert.equal(data.summary.linkedPlanRecords, 1);
   assert.equal(data.active.length, 3, "do not silently deduplicate or mutate plan records");
-  assert.equal(data.oneTime[0].amount, null);
-  assert.equal(data.oneTime[0].status, "unknown");
-  assert.equal(data.oneTime[1].amount, 0, "a recorded zero is distinct from missing data");
+  const byId = Object.fromEntries(data.oneTime.map((row: any) => [row.id, row]));
+  assert.equal(byId.r1.amount, null);
+  assert.equal(byId.r1.title, "Standard Job Post");
+  assert.equal(byId.r2.amount, 0, "a recorded zero is distinct from missing data");
+  assert.equal(byId.r2.status, "refunded");
   assert.equal(data.schoolProgram[0].amount, null, "never invent a $50 receipt");
-  assert.equal(data.scope.jobPaymentMetadataLimit, 200);
+  assert.equal(data.scope.oneTimeReceiptLimit, 1000);
+});
+
+test("payments report reads the real term fields, lists one-time Stripe receipts and skips free accounts", async () => {
+  const route = load("src/app/api/admin/payments/route.ts", {
+    employers: [
+      {id: "paid", name: "Paid org", plan: "premium", subscriptionStatus: "active", subscriptionStart: {seconds: Date.parse("2026-03-01T00:00:00Z") / 1000}, subscriptionEnd: "2027-03-01T00:00:00.000Z"},
+      {id: "grant", name: "Granted org", plan: "premium", subscriptionStatus: "active", subscription: {tier: "premium", paymentId: "admin-grant-tier2", amountPaid: 0}},
+      {id: "free", name: "Free signup", plan: "free", subscriptionTier: "free"},
+      {id: "lapsed", name: "Lapsed org", plan: "free", subscriptionTier: "free", subscriptionStatus: "expired", subscriptionEnd: "2026-01-01T00:00:00.000Z", subscription: {tier: "free", status: "expired"}},
+    ],
+    subscriptions: [
+      {id: "cs_1", orgId: "paid", plan: "featured-post", billingCycle: "one-time", status: "active", totalAmount: 210, createdAt: "2026-09-01T00:00:00.000Z"},
+      {id: "cs_old", orgId: "lapsed", employerId: "lapsed", plan: "tier1", billingCycle: "annual", status: "expired", amount: 1250, expiresAt: "2026-01-01T00:00:00.000Z"},
+    ],
+  });
+  const data = await (await route.get()).json();
+  const paid = data.active.find((row: any) => row.id === "paid");
+  assert.equal(paid.subscriptionStartDate, "2026-03-01T00:00:00.000Z");
+  assert.equal(paid.subscriptionEndDate, "2027-03-01T00:00:00.000Z");
+  assert.equal(data.active.find((row: any) => row.id === "grant").complimentary, true);
+  assert.equal(data.summary.complimentaryPlanRecords, 1);
+  assert.deepEqual(data.expired.map((row: any) => [row.id, row.plan]), [["lapsed", "standard"]], "free signups are not plan records; lapsed customers keep their last plan");
+  assert.equal(data.summary.otherPlanRecords, 1);
+  assert.deepEqual(data.oneTime.map((row: any) => [row.id, row.employer, row.amount, row.title]), [["cs_1", "Paid org", 210, "Featured Job Post"]]);
 });
 
 test("failed school metadata read is unavailable, not zero payments", async () => {
