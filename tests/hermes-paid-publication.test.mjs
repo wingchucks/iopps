@@ -43,7 +43,8 @@ test('paid review rejects changed account evidence and elapsed reviewed lifetime
  const g=fixture();await assert.rejects(()=>resolveHermesPaidPublication(g.reader,g.document,false,new Date('2026-11-01'),review.state),/expired|elapsed/i);
 });
 test('paid review rejects unpaid drafts and preserves actual historical active listings',async()=>{
- const f=fixture();f.document.data.employerId='missing';await assert.rejects(()=>resolveHermesPaidPublication(f.reader,f.document,false,at),/account/i);
+ // An employer without a billing document has no credits or plan: approval needs payment.
+ const f=fixture();f.document.data.employerId='missing';await assert.rejects(()=>resolveHermesPaidPublication(f.reader,f.document,false,at),e=>e.code==='payment_required');
  const g=fixture();g.document.data={employerId:'owner',status:'active',active:true,featured:false};
  const result=await resolveHermesPaidPublication(g.reader,g.document,false,at);
  assert.equal(result.state.funding,'existing_legacy');assert.deepEqual(result.employerPatch,{});
