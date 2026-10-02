@@ -7,8 +7,7 @@ import NavBar from "@/components/NavBar";
 import PricingTabs from "@/components/PricingTabs";
 import { useAuth } from "@/lib/auth-context";
 import { safeAuthRedirect } from "@/lib/auth-redirect";
-import { getOrgSubscriptions } from "@/lib/firestore/subscriptions";
-import { isSubscriptionPlanId } from "@/lib/pricing";
+import type { BillingOverview } from "@/lib/pricing";
 
 export default function PlansPage({
   searchParams,
@@ -26,22 +25,24 @@ export default function PlansPage({
   );
 }
 
+const PLAN_ID_BY_TIER = { standard: "tier1", premium: "tier2", school: "tier3" } as const;
+
 function PlansContent({ redirect }: { redirect: string | null }) {
   const { user } = useAuth();
-  const [currentPlan, setCurrentPlan] = useState<string | undefined>();
+  const [billing, setBilling] = useState<BillingOverview | undefined>();
 
   useEffect(() => {
     if (!user) return;
     const controller = new AbortController();
-    getOrgSubscriptions(user.uid, controller.signal)
-      .then((subs) => {
-        if (controller.signal.aborted) return;
-        const active = subs.find(
-          (s) => (s.status === "active" || s.status === "pending") && isSubscriptionPlanId(s.plan)
-        );
-        if (active) setCurrentPlan(active.plan);
-      })
-      .catch(() => {});
+    // The same server check checkout enforces, so a blocked annual purchase is never offered.
+    (async () => {
+      const token = await user.getIdToken();
+      if (controller.signal.aborted) return;
+      const response = await fetch("/api/stripe/checkout", { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
+      if (!response.ok) return;
+      const data = await response.json() as { billing?: BillingOverview };
+      if (!controller.signal.aborted && data.billing) setBilling(data.billing);
+    })().catch(() => {});
     return () => controller.abort();
   }, [user]);
 
@@ -65,7 +66,13 @@ function PlansContent({ redirect }: { redirect: string | null }) {
         </p>
       </div>
 
-      <PricingTabs variant="org" currentPlan={currentPlan} redirect={redirect} />
+      <PricingTabs
+        variant="org"
+        currentPlan={billing?.paidTerm ? PLAN_ID_BY_TIER[billing.paidTerm.tier] : undefined}
+        annualPlans={billing?.annualPlans}
+        canPurchase={billing?.canPurchase ?? true}
+        redirect={redirect}
+      />
     </div>
   );
 }
