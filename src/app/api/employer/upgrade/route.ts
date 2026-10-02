@@ -10,6 +10,7 @@ import {
 } from "@/lib/server/signup-protection";
 import { newBusinessListingReview } from "@/lib/business-listing-review";
 import { conflictingOrganizationLink, ORGANIZATION_LINK_CONFLICT, parseLocationText } from "@/lib/server/personal-workspace";
+import { availableOrganizationSlug } from "@/lib/server/public-organization-resolver";
 
 export const runtime = "nodejs";
 
@@ -111,93 +112,103 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ code: protection.code, error: protection.message }, { status: protection.status });
   }
 
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .substring(0, 60);
-
   const now = FieldValue.serverTimestamp();
   const signupStatus = emailVerified ? "approved" : "pending";
+  const db = adminDb;
+  const organizationRef = db.collection("organizations").doc(uid);
+  const employerRef = db.collection("employers").doc(uid);
+  const userRef = db.collection("users").doc(uid);
+  const memberRef = db.collection("members").doc(uid);
 
   try {
-    const batch = adminDb.batch();
+    const created = await db.runTransaction(async tx => {
+      const [user, member, organization, employer] = await tx.getAll(userRef, memberRef, organizationRef, employerRef);
+      if (organization.exists || employer.exists) return { conflict: "exists" } as const;
+      if (conflictingOrganizationLink(uid, user.data(), member.data())) return { conflict: "link" } as const;
+      const slug = await availableOrganizationSlug(tx, db, name, uid);
 
-    // 1. Create organizations doc. create() never overwrites an existing
-    // organization, and a new business listing starts in directory review
-    // exactly like one created through organization signup.
-    batch.create(adminDb.collection("organizations").doc(uid), {
-      id: uid,
-      employerId: uid,
-      name,
-      contactName,
-      contactEmail: email,
-      // Private account contact; the public email is opt-in and starts blank.
-      publicContactEmail: "",
-      slug,
-      type,
-      website,
-      ...(location ? { location } : {}),
-      description,
-      plan: "free",
-      emailVerified,
-      onboardingComplete: false,
-      status: signupStatus,
-      directoryReview: newBusinessListingReview(),
-      verified: false,
-      ...(emailVerified ? { approvedAt: now } : {}),
-      openJobs: 0,
-      createdAt: now,
-      updatedAt: now,
+      // 1. Create organizations doc. create() never overwrites an existing
+      // organization, and a new business listing starts in directory review
+      // exactly like one created through organization signup.
+      tx.create(organizationRef, {
+        id: uid,
+        employerId: uid,
+        name,
+        contactName,
+        contactEmail: email,
+        // Private account contact; the public email is opt-in and starts blank.
+        publicContactEmail: "",
+        slug,
+        type,
+        website,
+        ...(location ? { location } : {}),
+        description,
+        plan: "free",
+        emailVerified,
+        onboardingComplete: false,
+        status: signupStatus,
+        directoryReview: newBusinessListingReview(),
+        verified: false,
+        ...(emailVerified ? { approvedAt: now } : {}),
+        openJobs: 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      // 2. Create employers doc
+      tx.create(employerRef, {
+        id: uid,
+        uid,
+        email,
+        contactName,
+        contactEmail: email,
+        name,
+        publicContactEmail: "",
+        orgName: name,
+        slug,
+        type,
+        website,
+        ...(location ? { location } : {}),
+        description,
+        plan: "free",
+        subscriptionTier: "free",
+        emailVerified,
+        onboardingComplete: false,
+        status: signupStatus,
+        directoryReview: newBusinessListingReview(),
+        verified: false,
+        ...(emailVerified ? { approvedAt: now } : {}),
+        openJobs: 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      // 3. Update users doc — flip role. Personal profile fields are untouched.
+      tx.set(userRef, {
+        role: "employer",
+        employerId: uid,
+        orgId: uid,
+        orgRole: "owner",
+        emailVerified,
+        updatedAt: now,
+      }, { merge: true });
+
+      // 4. Update members doc
+      tx.set(memberRef, {
+        orgId: uid,
+        orgRole: "owner",
+        emailVerified,
+        updatedAt: now,
+      }, { merge: true });
+
+      return { slug };
     });
-
-    // 2. Create employers doc
-    batch.create(adminDb.collection("employers").doc(uid), {
-      id: uid,
-      uid,
-      email,
-      contactName,
-      contactEmail: email,
-      name,
-      publicContactEmail: "",
-      orgName: name,
-      slug,
-      type,
-      website,
-      ...(location ? { location } : {}),
-      description,
-      plan: "free",
-      subscriptionTier: "free",
-      emailVerified,
-      onboardingComplete: false,
-      status: signupStatus,
-      directoryReview: newBusinessListingReview(),
-      verified: false,
-      ...(emailVerified ? { approvedAt: now } : {}),
-      openJobs: 0,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    // 3. Update users doc — flip role. Personal profile fields are untouched.
-    batch.set(adminDb.collection("users").doc(uid), {
-      role: "employer",
-      employerId: uid,
-      orgId: uid,
-      orgRole: "owner",
-      emailVerified,
-      updatedAt: now,
-    }, { merge: true });
-
-    // 4. Update members doc
-    batch.set(adminDb.collection("members").doc(uid), {
-      orgId: uid,
-      orgRole: "owner",
-      emailVerified,
-      updatedAt: now,
-    }, { merge: true });
-
-    await batch.commit();
+    if ("conflict" in created) {
+      return created.conflict === "link"
+        ? NextResponse.json({ code: "ORGANIZATION_LINK_CONFLICT", error: ORGANIZATION_LINK_CONFLICT }, { status: 409 })
+        : NextResponse.json({ error: "An organization already exists for this account. Open your organization dashboard to continue." }, { status: 409 });
+    }
+    const { slug } = created;
 
     // Set Firebase Auth custom claims
     await adminAuth.setCustomUserClaims(uid, { role: "employer", employerId: uid });

@@ -120,3 +120,41 @@ test('suspended, admin-disabled, closed and revoked accounts cannot create or re
     }
   }
 });
+
+test('organizations with the same name get distinct slugs that never collide with legacy records or redirects', async () => {
+  const uids = ['first', 'second', 'third', 'fourth', 'fifth'];
+  const db = memoryFirestore({
+    ...Object.fromEntries(uids.map(uid => [`users/${uid}`, { status: 'active' }])),
+    'employers/legacy-aurora': { name: 'Aurora', slug: 'aurora' },
+    'org-slug-redirects/merged-name': { to: 'fictional-target' },
+  });
+  const routes = load(db, memoryAuth(Object.fromEntries(uids.map(uid => [uid, identity(uid)]))));
+  const slugs = [];
+  for (const [kind, uid, name] of [['signup', 'first', 'Northern Lights'], ['signup', 'second', 'Northern Lights'], ['upgrade', 'third', 'Northern  Lights!'], ['upgrade', 'fourth', 'Aurora'], ['signup', 'fifth', 'Merged Name']]) {
+    const response = await create(routes, kind, uid, name);
+    assert.equal(response.status, 200, await response.clone().text());
+    slugs.push((await response.json()).slug);
+  }
+  assert.deepEqual(slugs, ['northern-lights', 'northern-lights-2', 'northern-lights-3', 'aurora-2', 'merged-name-2']);
+  for (const [uid, slug] of [['second', 'northern-lights-2'], ['third', 'northern-lights-3']]) {
+    assert.equal(db.docs.get(`organizations/${uid}`).slug, slug);
+    assert.equal(db.docs.get(`employers/${uid}`).slug, slug);
+  }
+});
+
+test('slug lookups prefer the public, oldest organization regardless of document order', async () => {
+  const listed = { type: 'business', status: 'approved', onboardingComplete: true, description: 'Fictional organization', logoUrl: 'https://example.invalid/logo.png', website: 'https://example.invalid' };
+  const db = memoryFirestore({
+    'organizations/a-newcomer': { ...listed, name: 'Shared (newcomer)', slug: 'shared-name', status: 'pending', onboardingComplete: false, directoryReview: { status: 'draft', revision: 1 }, createdAt: '2026-09-01T00:00:00.000Z' },
+    'organizations/m-original': { ...listed, name: 'Shared (original)', slug: 'shared-name', createdAt: '2024-01-01T00:00:00.000Z' },
+    'organizations/z-later': { ...listed, name: 'Shared (later)', slug: 'shared-name', createdAt: '2025-01-01T00:00:00.000Z' },
+    'organizations/b-private': { ...listed, name: 'Private (newer)', slug: 'private-name', publicVisibility: 'private', createdAt: '2026-01-01T00:00:00.000Z' },
+    'organizations/c-private': { ...listed, name: 'Private (older)', slug: 'private-name', publicVisibility: 'private', createdAt: '2025-01-01T00:00:00.000Z' },
+    'employers/a-disabled': { ...listed, name: 'Legacy (disabled)', slug: 'legacy-shared', status: 'disabled' },
+    'employers/b-listed': { ...listed, name: 'Legacy (listed)', slug: 'legacy-shared' },
+  });
+  const { resolvePublicOrganization } = sourceModule('src/lib/server/public-organization-resolver.ts');
+  assert.equal((await resolvePublicOrganization(db, 'shared-name')).id, 'm-original');
+  assert.equal((await resolvePublicOrganization(db, 'private-name')).id, 'c-private', 'without a public match the choice is still stable');
+  assert.equal((await resolvePublicOrganization(db, 'legacy-shared')).id, 'b-listed');
+});

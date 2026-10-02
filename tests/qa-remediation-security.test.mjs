@@ -257,7 +257,7 @@ test('organization metadata resolves the canonical record and immediately drops 
   const db = { collection: name => ({ doc: id => ({ get: async () => snapshot(`${name}/${id}`) }), where: (field, _op, value) => ({ limit: () => ({ get: async () => {
     const docs = [...rows].filter(([path, record]) => path.startsWith(name + '/') && record[field] === value).map(([path]) => snapshot(path)); return { empty: docs.length === 0, docs };
   } }) }) }) };
-  const resolver = load('src/lib/server/public-organization-resolver.ts', { '@/lib/organization-profile': organization, '@/lib/server/subscription-state': subscription });
+  const resolver = load('src/lib/server/public-organization-resolver.ts', { '@/lib/organization-profile': organization, '@/lib/server/subscription-state': subscription, '@/lib/access-state': accessState, '@/lib/school-visibility': schoolVisibility });
   const metadata = load('src/lib/server/detail-metadata.ts', {
     '@/lib/job-detail-dates': jobDetailDates,
     react: { cache: fn => fn }, '@/lib/firebase-admin': { getAdminDb: () => db }, '@/lib/server/public-opportunities': {},
