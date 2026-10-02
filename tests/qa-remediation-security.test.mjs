@@ -187,25 +187,35 @@ test('cleanup deletes no uploads if the legacy ownership query fails', async () 
   assert.deepEqual(reads.map(read => read.field), ['userId', 'memberId']);
 });
 
-test('password-reset rate reservations enforce independent email/IP windows without storing raw identities', async () => {
+test('password-reset reservations suppress busy addresses silently, limit networks and never store raw identities', async () => {
   const stored = new Map();
   const db = { collection: () => ({ doc: id => id }), runTransaction: async action => action({
     getAll: async (...refs) => refs.map(ref => ({ data: () => stored.get(ref) })), set: (ref, data) => stored.set(ref, data),
   }) };
-  for (let i = 0; i < 3; i++) assert.equal(await reservePasswordReset(db, 'Qa@Example.invalid', '127.0.0.9', 1000), true);
-  assert.equal(await reservePasswordReset(db, 'qa@example.invalid', '127.0.0.8', 1000), false);
-  for (let i = 0; i < 7; i++) assert.equal(await reservePasswordReset(db, `different${i}@example.invalid`, '127.0.0.9', 1000), true);
-  assert.equal(await reservePasswordReset(db, 'last@example.invalid', '127.0.0.9', 1000), false);
-  assert.equal(await reservePasswordReset(db, 'qa@example.invalid', '127.0.0.9', 86402000), true);
+  const minute = 60000, hour = 60 * minute;
+  for (let i = 0; i < 3; i++) assert.equal(await reservePasswordReset(db, 'Qa@Example.invalid', '127.0.0.9', 1000 + i * minute), 'send');
+  // A fourth request for the address, from anyone, is answered like every other address but not delivered.
+  assert.equal(await reservePasswordReset(db, 'qa@example.invalid', '127.0.0.8', 1000 + 5 * minute), 'suppress');
+  for (let i = 0; i < 6; i++) assert.equal(await reservePasswordReset(db, 'qa@example.invalid', `127.0.1.${i}`, 1000 + 50 * minute), 'suppress');
+  // Suppressed requests never extend the window: the owner can recover within an hour of the last delivered link.
+  assert.equal(await reservePasswordReset(db, 'qa@example.invalid', '127.0.0.7', 1000 + hour), 'send');
+  assert.equal(await reservePasswordReset(db, 'qa@example.invalid', '127.0.0.7', 1000 + hour + 1), 'suppress');
+  assert.equal(await reservePasswordReset(db, 'qa@example.invalid', '127.0.0.7', 1000 + hour + 2 * minute), 'send');
+  // The network quota counts every attempt and denies before touching the address quota.
+  for (let i = 0; i < 7; i++) assert.equal(await reservePasswordReset(db, `different${i}@example.invalid`, '127.0.0.9', 1000 + 3 * minute), 'send');
+  const before = JSON.stringify([...stored]);
+  assert.equal(await reservePasswordReset(db, 'last@example.invalid', '127.0.0.9', 1000 + 3 * minute), 'rate_limited');
+  assert.equal(JSON.stringify([...stored]), before, 'a denied network reserves nothing');
+  assert.equal(await reservePasswordReset(db, 'last@example.invalid', '127.0.0.9', 1000 + 34 * minute), 'send');
   assert.ok(!JSON.stringify([...stored]).includes('@') && !JSON.stringify([...stored]).includes('127.0.0.9'));
 });
 
 test('password reset checks origin, App Check, input and limits; absent users and delivery failure share one response', async () => {
-  let origin = true, appCheck = true, allowed = true, failure = '', generated = 0, sent = 0;
+  let origin = true, appCheck = true, reservation = 'send', failure = '', generated = 0, sent = 0;
   const route = load('src/app/api/auth/password-reset/route.ts', {
     'next/server': { NextResponse: Response }, '@/lib/csrf': { validateOrigin: () => origin },
     '@/lib/server/app-check': { verifyAppCheckFromRequest: async () => appCheck },
-    '@/lib/server/password-reset-limit': { reservePasswordReset: async () => allowed },
+    '@/lib/server/password-reset-limit': { reservePasswordReset: async () => reservation },
     '@/lib/auth-verification-email': actionLinks,
     '@/lib/firebase-admin': { getAdminDb: () => ({}), getAdminAuth: () => ({ generatePasswordResetLink: async (email, settings) => {
       generated++; assert.equal(email, 'qa@example.invalid'); assert.equal(settings.url, 'https://www.iopps.ca/login');
@@ -217,12 +227,16 @@ test('password reset checks origin, App Check, input and limits; absent users an
   const call = (email = 'QA@example.invalid') => route.POST(new Request('https://www.iopps.ca/api/auth/password-reset', { method: 'POST', body: JSON.stringify({ email }), headers: { 'x-forwarded-for': '127.0.0.1' } }));
   origin = false; assert.equal((await call()).status, 403); origin = true;
   appCheck = false; assert.equal((await call()).status, 403); appCheck = true;
-  assert.equal((await call('invalid')).status, 400); allowed = false; assert.equal((await call()).status, 429); allowed = true;
+  assert.equal((await call('invalid')).status, 400); reservation = 'rate_limited'; assert.equal((await call()).status, 429); reservation = 'send';
   assert.equal(generated, 0);
   const success = await call(); assert.equal(success.status, 200); assert.equal(sent, 1);
   const expected = await success.json();
   for (failure of ['missing', 'provider']) { const response = await call(); assert.equal(response.status, 200); assert.deepEqual(await response.json(), expected); }
   assert.equal(sent, 2, 'unknown accounts never trigger outgoing email');
+  // A busy address answers exactly like any other address and neither issues nor sends a link.
+  failure = ''; reservation = 'suppress';
+  const suppressed = await call(); assert.equal(suppressed.status, 200); assert.equal(suppressed.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await suppressed.json(), expected); assert.equal(generated, 3); assert.equal(sent, 2);
 });
 
 test('reset email uses IOPPS branding, escapes its link and rejects provider non-acceptance', async () => {
