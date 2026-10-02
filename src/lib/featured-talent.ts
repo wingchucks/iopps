@@ -45,6 +45,11 @@ export const featuredTalentProfiles: FeaturedTalentProfile[] = [
   },
 ];
 
+/** Profiles that may be shown publicly; a deactivated profile is never built or served. */
+export function getActiveFeaturedTalentProfiles(): FeaturedTalentProfile[] {
+  return featuredTalentProfiles.filter((profile) => profile.isActive);
+}
+
 export function getFeaturedTalentProfile(slug: string) {
-  return featuredTalentProfiles.find((profile) => profile.slug === slug) ?? null;
+  return getActiveFeaturedTalentProfiles().find((profile) => profile.slug === slug) ?? null;
 }
