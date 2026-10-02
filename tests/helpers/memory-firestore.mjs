@@ -6,6 +6,7 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 const DELETE = FieldValue.delete();
+const SERVER_TIME = FieldValue.serverTimestamp();
 const isDelete = value => value instanceof FieldValue && value.isEqual(DELETE);
 // Plain maps from any realm (route code runs in a VM context): their prototype is an Object.prototype.
 const plain = value => {
@@ -14,7 +15,9 @@ const plain = value => {
   return proto === null || Object.getPrototypeOf(proto) === null;
 };
 
-function store(value) {
+function store(value, previous) {
+  if (value instanceof FieldValue && value.isEqual(SERVER_TIME)) return Timestamp.now();
+  if (value instanceof FieldValue && value.constructor.name === 'NumericIncrementTransform') return (typeof previous === 'number' ? previous : 0) + value.operand;
   if (value instanceof Date) return Timestamp.fromDate(value);
   if (Array.isArray(value)) return value.map(store);
   if (plain(value)) return Object.fromEntries(Object.entries(value).filter(([, v]) => !isDelete(v)).map(([k, v]) => [k, store(v)]));
@@ -32,7 +35,7 @@ function deepMerge(target, patch) {
   for (const [key, value] of Object.entries(patch)) {
     if (isDelete(value)) delete result[key];
     else if (plain(value) && plain(result[key])) result[key] = deepMerge(result[key], value);
-    else result[key] = store(value);
+    else result[key] = store(value, result[key]);
   }
   return result;
 }
@@ -55,7 +58,7 @@ export function memoryFirestore(seed = {}) {
       id, ref: docRef(path), exists: data !== undefined,
       data: () => (data === undefined ? undefined : clone(data)),
       get: field => (data === undefined ? undefined : clone(data[field])),
-      updateTime: data === undefined ? undefined : { toDate: () => new Date(Date.UTC(2026, 0, 1) + updated.get(path)) },
+      updateTime: data === undefined ? undefined : Timestamp.fromMillis(Date.UTC(2026, 0, 1) + updated.get(path)),
     };
   }
   function docRef(path) {
@@ -102,7 +105,7 @@ export function memoryFirestore(seed = {}) {
         const parts = key.split('.');
         let holder = next;
         for (const part of parts.slice(0, -1)) holder = holder[part] = plain(holder[part]) ? holder[part] : {};
-        if (isDelete(value)) delete holder[parts.at(-1)]; else holder[parts.at(-1)] = store(value);
+        if (isDelete(value)) delete holder[parts.at(-1)]; else holder[parts.at(-1)] = store(value, holder[parts.at(-1)]);
       }
       docs.set(write.path, next);
     } else if (write.type === 'set') {
@@ -112,7 +115,7 @@ export function memoryFirestore(seed = {}) {
         const next = clone(current ?? {});
         for (const field of options.mergeFields) {
           if (field.includes('.')) throw new Error('Nested mergeFields are not supported by this double');
-          if (isDelete(write.data[field])) delete next[field]; else next[field] = store(write.data[field]);
+          if (isDelete(write.data[field])) delete next[field]; else next[field] = store(write.data[field], next[field]);
         }
         docs.set(write.path, next);
       } else docs.set(write.path, store(write.data));
