@@ -143,8 +143,10 @@ export async function updateCareerPreferences(
   const error = salaryRangeError(data.salaryRange);
   if (error) throw new Error(error);
   // Keep the Profile page's skills text describing the same skills, so saving that
-  // page (which derives skills from the text) cannot drop skills added here.
-  const skillsText = data.skills === undefined ? {} : { skillsText: data.skills.join(", ") };
+  // page (which derives skills from the text) cannot drop skills added here. 20000 is
+  // the skillsText cap in profile-fields.ts and firestore.rules.
+  const joined = data.skills?.join(", ");
+  const skillsText = joined !== undefined && joined.length <= 20000 ? { skillsText: joined } : {};
   await updateDoc(doc(db, "members", uid), {
     ...data,
     ...skillsText,

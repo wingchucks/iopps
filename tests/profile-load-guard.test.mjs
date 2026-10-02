@@ -200,3 +200,13 @@ test('career skills save their Profile text and comma-separated entries become s
   await button(profile.render(), 'Save Changes').props.onClick();
   assert.deepEqual(profile.stored().skills, ['Excel', 'Cree Translation', 'Writing', 'Editing']);
 });
+
+test('career saves never write skills text beyond the stored profile limit', async () => {
+  const many = Array.from({ length: 80 }, (_, index) => `${index}-${'s'.repeat(290)}`);
+  const h = harness('career', { ...fullProfile, skills: many, skillsText: 'Excel' });
+  await h.flush();
+  await button(h.render(), 'Save Career Preferences').props.onClick();
+  assert.equal(h.writes.length, 1);
+  assert.equal(Object.hasOwn(h.writes[0], 'skillsText'), false, 'over 20000 characters is left for the member to trim');
+  assert.equal(h.stored().skills.length, 80);
+});
