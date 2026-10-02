@@ -16,6 +16,11 @@ test('organization readiness routes to completion, while school and admin routin
   assert.equal(accountDestination({hasMemberProfile:false,organization:{authorized:true,organizationType:'school',profileReady:false}}),'/org/dashboard');
   assert.equal(accountDestination({admin:true,hasMemberProfile:false}),'/admin');
 });
+test('an organization that can no longer be used never resumes organization signup', () => {
+  assert.equal(accountDestination({hasMemberProfile:true,signupIntent:'organization',organizationUnavailable:true}),'/feed');
+  assert.equal(accountDestination({hasMemberProfile:false,signupIntent:'organization',organizationUnavailable:true}),'/setup');
+  assert.equal(accountDestination({hasMemberProfile:true,signupIntent:'organization'}),'/signup?resume=organization&type=employer');
+});
 test('partial applicant updates report saved and failed IDs without losing completed changes', async () => {
   const result=await updateApplicationBatch(['a','b','c'],async id=>{if(id==='b')throw new Error('offline');});
   assert.deepEqual(result,{saved:['a','c'],failed:['b']});

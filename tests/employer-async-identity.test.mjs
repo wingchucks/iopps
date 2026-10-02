@@ -137,6 +137,11 @@ for(const userRole of ['moderator','admin'])test('OrgRoute keeps '+userRole+' st
  h.requests[0].resolve({ok:true,json:async()=>({authorized:true,profile:{uid:'A',orgRole:'owner'},profileReady:true,userRole})});await h.settle();
  assert.ok(h.text().includes('SECRET_CHILD'));assert.deepEqual(h.routes,[]);
 });
+test('OrgRoute explains a disabled organization instead of offering a pointless retry',async()=>{
+ const h=harness('src/components/OrgRoute.tsx',user('A'));h.render();await h.settle();
+ h.requests[0].resolve({ok:false,status:403,json:async()=>({authorized:false,error:'Organization access has been removed.'})});await h.settle();
+ assert.match(h.text(),/workspace is no longer available/);assert.ok(!h.text().includes('SECRET_CHILD'));assert.deepEqual(h.routes,[]);
+});
 test('OrgRoute binds role and retry generations, including reversed completion',async()=>{
  const h=harness('src/components/OrgRoute.tsx',user('A'));h.render();await h.settle();h.setProps({requiredRole:'owner'});await h.settle();h.requests[1].reject(new Error('offline'));await h.settle();
  h.nodes().find(n=>n.type==='button').props.onClick();h.render();await h.settle();h.requests[2].resolve(response('A',false));await h.settle();h.requests[0].resolve(response('A'));await h.settle();assert.ok(!h.text().includes('SECRET_CHILD'));

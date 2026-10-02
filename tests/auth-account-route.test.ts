@@ -9,14 +9,14 @@ import { normalizeOrganizationRecord, getBusinessProfileReadiness } from '../src
 import { isSchoolOrganization } from '../src/lib/school-visibility.ts';
 class AccountAccessError extends Error { status=403; }
 class EmployerApiError extends Error { status:number; constructor(status:number,message:string){super(message);this.status=status;} }
-function load({member=false,organization=false,blocked=false,unavailable=false}={}) {
+function load({member=false,organization=false,blocked=false,unavailable=false,organizationError=null as Error|null,userData={} as Record<string,unknown>}={}) {
   const exports:any={}; let checks=0;
   vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/auth/account/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
     exports,URLSearchParams,console:{error(){}},require:(id:string)=>{
       if(id==='next/server')return {NextResponse:{json:Response.json}};
       if(id==='@/lib/firebase-admin')return {getAdminAuth:()=>({verifyIdToken:async(token:string)=>{checks++;assert.equal(token,'test-token');return {uid:'fictional'};}}),getAdminDb:()=>({collection:()=>({doc:()=>({get:async()=>{if(unavailable)throw new Error('offline');return {exists:member,data:()=>({})};}})})})};
-      if(id==='@/lib/server/account-access')return {AccountAccessError,assertUserCanAccessApp:async()=>{if(blocked)throw new AccountAccessError('Account unavailable');return {userData:{}};}};
-      if(id==='@/lib/server/employer-auth')return {EmployerApiError,requireEmployerContext:async()=>{if(!organization)throw new EmployerApiError(403,'Not an employer');return {organizationData:{type:'employer',name:'Fictional',description:'A sample',logoUrl:'https://example.test/logo.png',contactEmail:'qa@example.test'},employerData:{}};}};
+      if(id==='@/lib/server/account-access')return {AccountAccessError,assertUserCanAccessApp:async()=>{if(blocked)throw new AccountAccessError('Account unavailable');return {userData};}};
+      if(id==='@/lib/server/employer-auth')return {EmployerApiError,requireEmployerContext:async()=>{if(organizationError)throw organizationError;if(!organization)throw new EmployerApiError(403,'Not an employer');return {organizationData:{type:'employer',name:'Fictional',description:'A sample',logoUrl:'https://example.test/logo.png',contactEmail:'qa@example.test'},employerData:{}};}};
       if(id==='@/lib/organization-profile')return {normalizeOrganizationRecord,getBusinessProfileReadiness};
       if(id==='@/lib/school-visibility')return {isSchoolOrganization};
       if(id==='@/lib/sign-in-destination')return {accountDestination};
@@ -36,4 +36,16 @@ test('blocked or unavailable accounts never silently become a new-account setup'
   assert.equal((await load({unavailable:true}).run()).status,503);
   assert.deepEqual(await (await load({member:true}).run()).json(),{destination:'/feed'});
   assert.deepEqual(await (await load().run()).json(),{destination:'/setup'});
+});
+test('members of a disabled organization finish signing in to their personal profile with a notice',async()=>{
+  const removed=()=>new EmployerApiError(403,'Organization access has been removed.');
+  for(const [options,destination] of [[{member:true},'/feed'],[{},'/setup'],[{member:true,userData:{signupIntent:'organization'}},'/feed']] as const){
+    const response=await load({...options,organizationError:removed()}).run();
+    assert.equal(response.status,200);
+    const body=await response.json();
+    assert.equal(body.destination,destination,'never resumes organization signup for a removed organization');
+    assert.match(body.notice,/organization's workspace is no longer available/);
+  }
+  assert.deepEqual(await (await load({member:true}).run()).json(),{destination:'/feed'},'no notice without an organization');
+  assert.equal((await load({organizationError:new EmployerApiError(401,'Invalid session')}).run()).status,401);
 });

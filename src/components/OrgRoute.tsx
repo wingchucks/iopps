@@ -94,6 +94,11 @@ export default function OrgRoute({ children, requiredRole }: OrgRouteProps) {
           }
         }
 
+        if (res.status === 403) {
+          // An administrator disabled or removed the organization; retrying cannot help.
+          setError("This organization's workspace is no longer available. Your personal profile is still available. Contact support@iopps.ca if you think this is a mistake.");
+          return;
+        }
         // Not an employer/org member
         if (!res.ok) throw new Error("Organization access check unavailable");
         router.replace("/org/upgrade");
