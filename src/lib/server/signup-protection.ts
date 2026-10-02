@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { isDisposableOrganizationContact } from "../organization-contact-email";
+import { isIpLiteral } from "../public-ip";
 import type { Firestore, Transaction } from "firebase-admin/firestore";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -198,12 +199,17 @@ async function applyRateLimit(
   });
 }
 
+// Vercel sets these from the connecting address and overwrites any client-sent
+// value. Headers it passes through unchanged (cf-connecting-ip, true-client-ip,
+// forwarded) are chosen by the caller and must never select a rate-limit bucket.
+const TRUSTED_CLIENT_IP_HEADERS = ["x-vercel-forwarded-for", "x-real-ip", "x-forwarded-for"] as const;
+
 export function getSignupClientIp(req: Request): string | null {
-  return (
-    req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-real-ip") ||
-    req.headers.get("x-forwarded-for")
-  );
+  for (const header of TRUSTED_CLIENT_IP_HEADERS) {
+    const ip = req.headers.get(header)?.split(",")[0]?.trim();
+    if (ip && isIpLiteral(ip)) return ip;
+  }
+  return null;
 }
 
 export async function evaluateEmployerSignupProtection(
