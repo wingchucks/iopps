@@ -78,6 +78,17 @@ const channelLabels = {
   inApp: "In-App",
 };
 
+// Quiet hours are checked on the server, so save the zone the times were chosen in.
+type QuietHours = NotificationPreferences["quietHours"] & { timeZone?: string };
+
+function deviceTimeZone(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export default function NotificationSettingsPage() {
   return (
     <ProtectedRoute>
@@ -118,9 +129,11 @@ function NotificationContent() {
     if (!user || !prefs || prefsOwner !== user.uid) return;
     setSaving(true);
     try {
+      const timeZone = deviceTimeZone();
+      const quietHours: QuietHours = timeZone ? { ...prefs.quietHours, timeZone } : prefs.quietHours;
       await updateNotificationPreferences(user.uid, {
         categories: prefs.categories,
-        quietHours: prefs.quietHours,
+        quietHours,
       });
       showToast("Notification preferences saved");
     } catch (err) {
@@ -324,6 +337,11 @@ function NotificationContent() {
                 />
               </label>
             </div>
+          )}
+          {prefs.quietHours.enabled && (
+            <p className="text-xs text-text-muted mt-3 mb-0">
+              Times use the {deviceTimeZone() || (prefs.quietHours as QuietHours).timeZone || "America/Regina"} time zone.
+            </p>
           )}
         </div>
       </Card>
