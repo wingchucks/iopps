@@ -208,20 +208,34 @@ async function checkLegacyMessages(page, width) {
   assert.equal((await db.collection('messages').where('conversationId', '==', a).get()).size, 1);
   // Delay only the owned loopback notification request; real Firestore writes
   // and the actual sendMessage/React handler still execute unchanged.
-  let releaseNotify, notifyStarted = false;
+  let releaseNotify, notifyStarted = false, retryAttempts = 0, retriedMessageId;
   const held = new Promise(resolve => { releaseNotify = resolve; });
   const notifyUrl = base + '/api/messages/notify';
-  const holdNotify = async route => { notifyStarted = true; await held; await route.continue(); };
+  const holdNotify = async route => {
+    const id = route.request().postDataJSON().messageId;
+    if (id === mine[0].id) return route.continue(); // Earlier message has its own bounded retries.
+    retriedMessageId ??= id;
+    assert.equal(id, retriedMessageId);
+    retryAttempts++;
+    if (retryAttempts === 1) {
+      notifyStarted = true; await held;
+      return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Fictional transient notification failure' }) });
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, notification: 'accepted' }) });
+  };
   await page.route(notifyUrl, holdNotify);
   try {
     await composer.fill('Delayed Beta send');
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await expect.poll(() => notifyStarted).toBe(true);
-    await expect(page.getByRole('button', { name: '...', exact: true })).toBeDisabled();
+    await expect(composer).toHaveValue(''); // Chat save is independent from the delayed notification.
     await composer.fill('Newer unsent Beta draft');
+    await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
     const completed = page.waitForResponse(response => response.url() === notifyUrl);
     releaseNotify();
-    assert.equal((await completed).status(), 503); // Delayed notification also has no isolated provider credentials.
+    assert.equal((await completed).status(), 503); // Simulated transient failure precedes the same-ID retry.
+    await expect.poll(() => retryAttempts).toBe(2);
+    await expect(page.getByText('Delayed Beta send', { exact: true }).locator('..').getByRole('status')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
     await expect(composer).toHaveValue('Newer unsent Beta draft');
     const after = await db.collection('messages').where('conversationId', '==', b).get();
@@ -229,7 +243,7 @@ async function checkLegacyMessages(page, width) {
     for (const doc of mineAfter) documents.push(doc.ref, db.doc(`mail/message-${doc.id}`));
     assert.deepEqual(mineAfter.map(doc => doc.data().text).sort(), ['Delayed Beta send', 'Draft for Beta']);
     assert.equal((await db.collection('messages').where('conversationId', '==', a).get()).size, 1);
-    interactionChecks.push({ check: 'pending-send-preserves-newer-same-thread-draft', width, passed: true });
+    interactionChecks.push({ check: 'notification-retry-same-message-preserves-newer-draft-without-resending-chat', width, passed: true });
   } finally {
     releaseNotify();
     await page.unroute(notifyUrl, holdNotify);

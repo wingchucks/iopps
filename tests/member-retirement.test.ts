@@ -155,6 +155,8 @@ test("chat client requests only the existing conversation projection", async () 
   let requestUrl = "";
   const mod = load("src/lib/firestore/messages.ts", {
     "firebase/firestore": { collection: () => ({}) },
+    "firebase/auth": { onAuthStateChanged: () => { throw new Error("Peer lookup must not subscribe for delivery"); } },
+    "../message-notification-retry": { notifyNewMessage: () => { throw new Error("Peer lookup must not send a notification"); } },
     "../firebase": { auth: { currentUser: { getIdToken: async () => "fictional-token" } }, db: {} },
   }, { fetch: async (url: string, options: RequestInit) => {
     requestUrl = url;

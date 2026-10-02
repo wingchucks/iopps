@@ -26,7 +26,7 @@ function harness(sendResult = () => Promise.resolve()) {
       onConversations: (_uid, callback, error) => { inbox = callback; inboxListeners.push({ snapshot: callback, error }); return () => {}; },
       onMessages: (id, snapshot, error) => { messageListeners.push({ id, snapshot, error }); return () => {}; }, markConversationRead: id => { read.push(id); },
       getConversationPeer: async () => null,
-      sendMessage: async (...args) => { sent.push(args); await sendResult(); },
+      sendMessage: async (...args) => { sent.push(args); return await sendResult(); },
     },
   };
   const exports = {};
@@ -171,4 +171,43 @@ for (const newer of [false, true]) test(`failed deferred send retains ${newer ? 
   assert.equal(h.input().props.value, newer ? 'next unsent' : 'first');
   assert.equal(h.errors.length, 1);
   assert.deepEqual(h.sent, [['a', 'self', 'first', 'peer-a']]);
+});
+
+test('email attempts do not hold the composer or resend chat; terminal failure is attached to saved message', async () => {
+  let resolve;
+  const notification = new Promise(done => { resolve = done; });
+  const h = harness(() => ({ messageId: 'saved', notification })); h.render(); h.snapshot(rows);
+  h.type('saved text'); await h.send();
+  assert.equal(h.input().props.value, '');
+  h.messageSnapshot([{ id: 'saved', senderId: 'self', text: 'saved text' }]);
+  assert.match(h.text(), /Email notification pending/);
+  h.type('next draft');
+  resolve({ state: 'failed' }); await notification; await Promise.resolve(); h.render();
+  assert.match(h.text(), /Message sent\. Email notification could not be confirmed/);
+  assert.equal(h.input().props.value, 'next draft');
+  assert.equal(h.sent.length, 1);
+});
+
+test('accepted/skipped email clears pending without claiming inbox delivery', async () => {
+  for (const state of ['accepted', 'skipped']) {
+    let resolve;
+    const notification = new Promise(done => { resolve = done; });
+    const h = harness(() => ({ messageId: 'saved', notification })); h.render(); h.snapshot(rows);
+    h.type('saved text'); await h.send(); h.messageSnapshot([{ id: 'saved', senderId: 'self', text: 'saved text' }]);
+    resolve({ state }); await notification; await Promise.resolve(); h.render();
+    assert.doesNotMatch(h.text(), /Email notification pending|could not be confirmed|delivered/);
+  }
+});
+
+test('late email status cannot appear after logout/account change or same-account return', async () => {
+  let resolve;
+  const notification = new Promise(done => { resolve = done; });
+  const h = harness(() => ({ messageId: 'saved', notification })); h.render(); h.snapshot(rows);
+  h.type('saved text'); await h.send();
+  h.user('second'); h.snapshot(rows.map(r => ({ ...r, participants: ['second', ...r.participants.slice(1)] })));
+  h.messageSnapshot([{ id: 'saved', senderId: 'second', text: 'Different account message' }]);
+  resolve({ state: 'failed' }); await notification; await Promise.resolve(); h.render();
+  assert.doesNotMatch(h.text(), /could not be confirmed|Email notification pending/);
+  h.user('self'); h.snapshot(rows); h.messageSnapshot([{ id: 'saved', senderId: 'self', text: 'saved text' }]);
+  assert.doesNotMatch(h.text(), /could not be confirmed|Email notification pending/);
 });

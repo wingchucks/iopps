@@ -59,6 +59,8 @@ function MessagesContent() {
   const [loading, setLoading] = useState(true);
   const [inboxFailed, setInboxFailed] = useState(false);
   const [inboxRetry, setInboxRetry] = useState(0);
+  const [notificationStates, setNotificationStates] = useState<Record<string, "pending" | "failed">>({});
+  const notificationEpoch = useRef(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const consumedRecipients = useRef(new Set<string>());
@@ -67,6 +69,11 @@ function MessagesContent() {
   const viewer = useRef(user?.uid);
   viewer.current = user?.uid;
   useEffect(() => { setActiveConvId(null); }, [user?.uid]);
+  useEffect(() => {
+    notificationEpoch.current += 1;
+    setNotificationStates({});
+    return () => { notificationEpoch.current += 1; };
+  }, [user?.uid]);
 
   // Legacy recipient links can open only a conversation already in this inbox.
   const toParam = searchParams?.get("to");
@@ -146,12 +153,26 @@ function MessagesContent() {
     const recipientId = conv.participants.find((p) => p !== user.uid) || "";
 
     setSending(true);
+    const senderId = user.uid;
+    const epoch = notificationEpoch.current;
     try {
-      await sendMessage(activeConvId, user.uid, newMessage.trim(), recipientId);
+      const saved = await sendMessage(activeConvId, senderId, newMessage.trim(), recipientId);
       // Clear only the submitted draft, never text typed while the send awaited.
       setDrafts(previous => previous[draftKey] === newMessage
         ? { ...previous, [draftKey]: "" }
         : previous);
+      if (saved?.notification && viewer.current === senderId && notificationEpoch.current === epoch) {
+        setNotificationStates(previous => ({ ...previous, [saved.messageId]: "pending" }));
+        void saved.notification.then(result => {
+          if (viewer.current !== senderId || notificationEpoch.current !== epoch) return;
+          setNotificationStates(previous => {
+            const next = { ...previous };
+            if (result.state === "failed") next[saved.messageId] = "failed";
+            else delete next[saved.messageId];
+            return next;
+          });
+        });
+      }
       // Real-time listeners will auto-update messages and conversations
     } catch (err) {
       console.error("Failed to send:", err);
@@ -365,6 +386,8 @@ function MessagesContent() {
                             >
                               {formatMsgTime(msg.createdAt)}
                             </p>
+                            {isMine && notificationStates[msg.id] === "pending" && <p role="status" className="text-xs mt-2">Message sent. Email notification pending.</p>}
+                            {isMine && notificationStates[msg.id] === "failed" && <p role="alert" className="text-xs mt-2">Message sent. Email notification could not be confirmed.</p>}
                           </div>
                         </div>
                       );
