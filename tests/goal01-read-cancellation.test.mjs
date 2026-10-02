@@ -25,11 +25,14 @@ for(const kind of ['member','subscriptions']){
 }
 
 test('plans component aborts owned read and ignores late completion',async()=>{
- let cleanup,signal,resolve;const writes=[];
+ let cleanup,signal,resolve,requested;const writes=[];
  const {default:Page}=sourceModule('src/app/org/plans/page.tsx',{mocks:{
   react:{use:value=>value,useEffect:fn=>cleanup=fn(),useState:()=>[undefined,v=>writes.push(v)]},'@/lib/auth-redirect':{safeAuthRedirect:()=>null},
   'next/link':{default:()=>null},'@/components/ProtectedRoute':{default:()=>null},'@/components/NavBar':{default:()=>null},'@/components/PricingTabs':{default:()=>null},
-  '@/lib/auth-context':{useAuth:()=>({user:{uid:'fictional-a'}})},'@/lib/firestore/subscriptions':{getOrgSubscriptions:(_uid,s)=>{signal=s;return new Promise(r=>resolve=r);}},'@/lib/pricing':{isSubscriptionPlanId:()=>true},
- }});
- const content=Page({searchParams:{}}).props.children.props.children[1];content.type(content.props);assert.ok(signal instanceof AbortSignal,'component owns cancellation signal');cleanup();assert.equal(signal.aborted,true);resolve([{status:'active',plan:'fictional-plan'}]);await tick();assert.deepEqual(writes,[]);
+  '@/lib/auth-context':{useAuth:()=>({user:{uid:'fictional-a',getIdToken:async()=>'fictional-token'}})},
+ },globals:{fetch:(url,init)=>{requested=[url,init.headers.Authorization];signal=init.signal;return new Promise(r=>resolve=r);}}});
+ const content=Page({searchParams:{}}).props.children.props.children[1];content.type(content.props);await tick();
+ assert.deepEqual(requested,['/api/stripe/checkout','Bearer fictional-token'],'reads the server purchase policy checkout enforces');
+ assert.ok(signal instanceof AbortSignal,'component owns cancellation signal');cleanup();assert.equal(signal.aborted,true);
+ resolve({ok:true,json:async()=>({billing:{plan:'premium',annualPlans:{}}})});await tick();assert.deepEqual(writes,[]);
 });

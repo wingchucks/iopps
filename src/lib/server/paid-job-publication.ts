@@ -1,3 +1,4 @@
+import { isJobRecordExpired } from '../listing-freshness.ts';
 type Data = Record<string, unknown>;
 export interface PaidPublicationInput {
   employer: Data;
@@ -9,6 +10,12 @@ export interface PaidPublicationInput {
   includedFeaturedUsed: number;
   // Only a transaction-read, receipt-backed resolver may supply this value.
   paidTerm: null | { id: string; tier: 'standard' | 'premium' | 'school'; startsAt: Date; endsAt: Date };
+  /**
+   * Paid annual terms whose receipts still stand (not refunded or disputed), read in the same
+   * transaction. A listing funded by one of them stays editable until its own paid expiry even
+   * after a later term became current; it never gains a longer lifetime.
+   */
+  fundedTermIds?: readonly string[];
 }
 export class PublicationError extends Error {
   code: string;
@@ -59,17 +66,20 @@ export function decidePaidPublication(input: PaidPublicationInput): {jobPatch: D
     ) deny('reconciliation_required', 'Publication history requires reconciliation.');
     if (expiresAt <= now) deny('expired_publication', 'This posting has expired. Create a new paid posting.');
     const isSubscription = String(old.funding).endsWith('_subscription');
-    if (isSubscription && (!term || old.termId !== term.id)) deny('expired_subscription', 'This posting is covered by an expired or changed annual term. Create a new paid posting.');
+    const currentTerm = isSubscription && term !== null && old.termId === term.id;
+    // A renewal or replacement does not withdraw what the earlier paid term already funded.
+    const supersededTerm = isSubscription && !currentTerm && typeof old.termId === 'string' && (input.fundedTermIds ?? []).includes(old.termId);
+    if (isSubscription && !currentTerm && !supersededTerm) deny('expired_subscription', 'This posting is covered by an expired or changed annual term. Create a new paid posting.');
     if (featured && old.funding !== 'featured_credit' && current?.featuredEntitlement !== 'included_slot') {
       deny('new_posting_required', 'To change to featured placement, create a new featured posting.');
     }
     if (featured && current?.featuredEntitlement === 'included_slot') {
-      const deadline = publicationDate(current.closingDate);
-      const alreadyActive = current.status === 'active' && current.active !== false && current.featured === true && (!deadline || deadline > now);
+      // Same occupancy rule as slot counting: a listing holds its slot through its last public day.
+      const alreadyActive = current.status === 'active' && current.active !== false && current.featured === true && !isJobRecordExpired(current, now);
       if (!alreadyActive && input.includedFeaturedUsed >= slots) deny('featured_capacity', 'No included featured slot is available.');
     }
     if (input.durationDays !== undefined && input.durationDays !== old.durationDays) deny('immutable_duration', 'A published listing duration cannot be changed.');
-    const boundedExpiry = isSubscription && term!.endsAt < expiresAt ? term!.endsAt : expiresAt;
+    const boundedExpiry = currentTerm && term!.endsAt < expiresAt ? term!.endsAt : expiresAt;
     return {jobPatch: {expiresAt: boundedExpiry, ...(boundedExpiry < expiresAt ? {publication: {...old, expiresAt: boundedExpiry}} : {})}, employerPatch: {}};
   }
   // Preserve live pre-policy records, including owner-seeded imports. Do not assign

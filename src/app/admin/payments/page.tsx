@@ -25,6 +25,8 @@ interface Subscription {
   subscriptionStatus: string;
   subscriptionStartDate: string | null;
   subscriptionEndDate: string | null;
+  /** $0 admin or Hermes access: shown, but never a paying customer. */
+  complimentary?: boolean;
   email: string | null;
 }
 
@@ -45,6 +47,7 @@ interface Summary {
   activePlanRecords: number;
   trialPlanRecords: number;
   linkedPlanRecords: number;
+  complimentaryPlanRecords?: number;
   otherPlanRecords: number;
   oneTimePaymentRecords: number;
   schoolProgramPaymentRecords: number | null;
@@ -143,7 +146,7 @@ export default function PaymentsPage() {
     () => [
       { label: "Active plans / trials", value: "active", count: active.length },
       { label: "Other statuses", value: "expired", count: expired.length },
-      { label: "Job payment metadata", value: "onetime", count: oneTime.length },
+      { label: "One-time purchases", value: "onetime", count: oneTime.length },
       { label: "School program", value: "school-program", count: schoolProgram.length },
     ],
     [active.length, expired.length, oneTime.length, schoolProgram.length],
@@ -152,13 +155,13 @@ export default function PaymentsPage() {
   const statItems = [
     { label: "Verified cash revenue", value: "Unavailable", helper: "No reconciled payment receipt totals are connected to this report." },
     { label: "Verified MRR", value: "Unavailable", helper: "Stored plan assignments do not establish recurring paid revenue." },
-    { label: "Active plan records", value: summary?.activePlanRecords ?? "Unavailable", helper: "Employer records marked active; not verified paying customers." },
+    { label: "Active plan records", value: summary?.activePlanRecords ?? "Unavailable", helper: `Employer records marked active${summary?.complimentaryPlanRecords ? `, including ${summary.complimentaryPlanRecords} complimentary` : ""}; not verified paying customers.` },
     { label: "Trial plan records", value: summary?.trialPlanRecords ?? "Unavailable", helper: "Trial entitlements; not cash revenue." },
   ];
   const secondaryStats = [
-    { label: "Other plan records", value: summary?.otherPlanRecords ?? "Unavailable", classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground", helper: "Other stored statuses, including unknown; not necessarily expired." },
+    { label: "Other plan records", value: summary?.otherPlanRecords ?? "Unavailable", classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground", helper: "Paid or lapsed plan records outside active/trialing; accounts that never had a plan are excluded." },
     { label: "Stripe-linked plan records", value: summary?.linkedPlanRecords ?? "Unavailable", classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground", helper: "Active/trial records with a subscription ID; linkage is not payment verification." },
-    { label: "Job payment metadata records", value: summary?.oneTimePaymentRecords ?? "Unavailable", classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground", helper: "Loaded from up to 200 job records with payment metadata; not a complete receipt ledger." },
+    { label: "One-time purchase receipts", value: summary?.oneTimePaymentRecords ?? "Unavailable", classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground", helper: "Stripe receipts for single job postings (up to 1,000 loaded); statuses show refunds and disputes." },
     { label: "School payment metadata records", value: summary?.schoolProgramPaymentRecords ?? "Unavailable", classes: "border-[var(--card-border)] bg-[var(--card-bg)] text-foreground", helper: "Up to 200 stored records; amounts and payment status are unverified." },
   ];
 
@@ -230,6 +233,11 @@ export default function PaymentsPage() {
                           <span className={cn("inline-block rounded-full px-2 py-0.5 text-xs font-medium", presentation.color)}>
                             {presentation.label}
                           </span>
+                          {subscription.complimentary && (
+                            <span className="ml-2 inline-block rounded-full bg-[var(--muted)] px-2 py-0.5 text-xs font-medium text-[var(--text-secondary)]">
+                              Complimentary
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <span className="inline-flex items-center gap-1.5 text-success">
@@ -359,16 +367,16 @@ export default function PaymentsPage() {
 
           {tab === "onetime" && (
             <TableShell
-              title="Job payment metadata"
-              description="Payment fields on up to 200 job records, not reconciled receipts. Missing amounts and statuses remain unknown."
+              title="One-time purchases"
+              description="Stripe receipts for single job postings and program posts, newest first. Totals include GST; refunded or disputed purchases keep their status. Not reconciled against Stripe payouts."
             >
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[var(--card-border)] text-left text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                    <th className="px-4 py-3">Job Title</th>
+                    <th className="px-4 py-3">Purchase</th>
                     <th className="px-4 py-3">Employer</th>
                     <th className="px-4 py-3">Type</th>
-                    <th className="px-4 py-3">Stored amount</th>
+                    <th className="px-4 py-3">Total</th>
                     <th className="px-4 py-3">Paid</th>
                     <th className="px-4 py-3">Status</th>
                   </tr>
@@ -387,7 +395,10 @@ export default function PaymentsPage() {
                       </td>
                       <td className="px-4 py-3 text-[var(--text-secondary)]">{formatDate(payment.paidAt)}</td>
                       <td className="px-4 py-3">
-                        <span className="inline-block rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                        <span className={cn(
+                          "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+                          payment.status === "refunded" || payment.status === "disputed" ? "bg-error/10 text-error" : "bg-success/10 text-success",
+                        )}>
                           {payment.status}
                         </span>
                       </td>
@@ -397,8 +408,8 @@ export default function PaymentsPage() {
                     <tr>
                       <td colSpan={6} className="px-4 py-8">
                         <AdminEmptyState
-                          title="No job payment metadata records"
-                          description="No matching records were loaded. This does not establish zero paid purchases."
+                          title="No one-time purchase receipts"
+                          description="No one-time purchase receipts were loaded."
                         />
                       </td>
                     </tr>

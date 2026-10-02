@@ -17,6 +17,8 @@ export interface SubscriptionOverrideBody {
   totalAmount?: number;
   billingCycle?: "annual" | "one-time";
   createSubscriptionRecord?: boolean;
+  /** Explicit reconciliation: postings already used in a paid Standard term. */
+  jobPostingUsed?: number;
 }
 
 const PLAN_ID_TO_TIER: Record<PlanId, "standard" | "premium" | "school"> = {

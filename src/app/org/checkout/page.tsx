@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, useEffect, use } from "react";
 import { safeAuthRedirect } from "@/lib/auth-redirect";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import { useAuth } from "@/lib/auth-context";
-import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS, isPlanAvailableForPurchase, type BillingPlanId } from "@/lib/pricing";
+import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS, formatBillingDate, isPlanAvailableForPurchase, type AnnualPurchaseOption, type BillingOverview, type BillingPlanId } from "@/lib/pricing";
 
 /* ── Plan configuration ── */
 interface PlanConfig {
@@ -57,9 +57,28 @@ function CheckoutContent({ planKey, redirect }: { planKey: string; redirect: str
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [annualOption, setAnnualOption] = useState<AnnualPurchaseOption | null>(null);
+  const isAnnual = plan?.billingCycle === "annual";
+
+  // An annual purchase never replaces or shortens a paid term: show what this purchase will do.
+  useEffect(() => {
+    if (!user || !isAnnual || (planKey !== "tier1" && planKey !== "tier2")) return;
+    const controller = new AbortController();
+    (async () => {
+      const token = await user.getIdToken();
+      if (controller.signal.aborted) return;
+      const response = await fetch("/api/stripe/checkout", { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
+      if (!response.ok) return;
+      const data = await response.json() as { billing?: BillingOverview };
+      const option = data.billing?.annualPlans?.[planKey];
+      if (!controller.signal.aborted && option) setAnnualOption(option);
+    })().catch(() => {});
+    return () => controller.abort();
+  }, [user, isAnnual, planKey]);
+  const blocked = annualOption && !annualOption.available ? annualOption : null;
 
   async function handleCheckout() {
-    if (!user || submitting || !plan) return;
+    if (!user || submitting || !plan || blocked) return;
 
     setSubmitting(true);
     setError(null);
@@ -140,8 +159,19 @@ function CheckoutContent({ planKey, redirect }: { planKey: string; redirect: str
           <p className="text-xs text-text-muted mb-5">
             {plan.billingCycle === "one-time"
               ? "One-time payment"
-              : `Billed ${plan.billingCycle}`}
+              : annualOption?.kind === "renewal" && annualOption.startsAt && annualOption.endsAt
+                ? `Billed annually · renewal term ${formatBillingDate(annualOption.startsAt)} to ${formatBillingDate(annualOption.endsAt)}`
+                : `Billed ${plan.billingCycle} · one year from payment`}
           </p>
+
+          {(blocked || annualOption?.kind === "renewal") && (
+            <div
+              className="rounded-xl px-4 py-3 text-sm mb-4"
+              style={{ background: "var(--teal-soft)", color: "var(--text)", border: "1px solid var(--border)" }}
+            >
+              {blocked ? blocked.message : annualOption?.message}
+            </div>
+          )}
 
           {/* Error message */}
           {error && (
@@ -161,11 +191,11 @@ function CheckoutContent({ planKey, redirect }: { planKey: string; redirect: str
           <button
             type="button"
             onClick={handleCheckout}
-            disabled={submitting}
+            disabled={submitting || Boolean(blocked)}
             className="brand-button w-full py-3.5 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ background: "var(--button-gradient)", color: "#fff" }}
           >
-            {submitting ? "Redirecting to payment..." : "Proceed to Payment"}
+            {blocked ? (blocked.label ?? "Not available") : submitting ? "Redirecting to payment..." : "Proceed to Payment"}
           </button>
 
           <p className="text-xs text-text-muted text-center mt-3">

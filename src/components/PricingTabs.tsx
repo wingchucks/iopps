@@ -4,7 +4,7 @@ import { useState } from "react";
 import { authIntentHref } from "@/lib/auth-redirect";
 import Link from "next/link";
 import Card from "@/components/Card";
-import { ONE_TIME_PLANS, PRICE_TAX_NOTE, SUBSCRIPTION_PLANS } from "@/lib/pricing";
+import { BILLING_SUPPORT_EMAIL, ONE_TIME_PLANS, PRICE_TAX_NOTE, SUBSCRIPTION_PLANS, type AnnualPurchaseOption } from "@/lib/pricing";
 
 const tabs = ["Annual Plans", "Single Job Posts", "Conferences", "Businesses"] as const;
 type Tab = (typeof tabs)[number];
@@ -27,6 +27,12 @@ function Check() {
   );
 }
 
+interface BlockedPurchase {
+  label: string;
+  message: string | null;
+  contact?: boolean;
+}
+
 function PlanCard({
   title,
   price,
@@ -37,6 +43,9 @@ function PlanCard({
   badge,
   gold,
   current,
+  purchasable,
+  blocked,
+  note,
 }: {
   title: string;
   price: string;
@@ -47,6 +56,11 @@ function PlanCard({
   badge?: string;
   gold?: boolean;
   current?: boolean;
+  /** The current plan can still be bought (a renewal in its last 60 days). */
+  purchasable?: boolean;
+  /** Checkout would refuse this purchase now; explain instead of offering it. */
+  blocked?: BlockedPurchase;
+  note?: string | null;
 }) {
   return (
     <Card gold={gold} className="relative flex flex-col">
@@ -94,7 +108,23 @@ function PlanCard({
           ))}
         </ul>
 
-        {current ? (
+        {blocked ? (
+          <div className="flex flex-col gap-2">
+            <button
+              className="w-full py-3 rounded-xl font-semibold text-base"
+              style={{ background: "var(--border)", color: "var(--text-sec)", border: "none" }}
+              disabled
+            >
+              {blocked.label}
+            </button>
+            {blocked.message && <p className="m-0 text-xs text-text-muted">{blocked.message}</p>}
+            {blocked.contact && (
+              <a href={`mailto:${BILLING_SUPPORT_EMAIL}?subject=${encodeURIComponent("Change my IOPPS plan")}`} className="text-xs font-semibold" style={{ color: "var(--teal)" }}>
+                Contact us to change plans
+              </a>
+            )}
+          </div>
+        ) : current && !purchasable ? (
           <button
             className="w-full py-3 rounded-xl font-semibold text-base"
             style={{ background: "var(--border)", color: "var(--text-sec)", border: "none" }}
@@ -103,14 +133,17 @@ function PlanCard({
             Active
           </button>
         ) : (
-          <Link href={href} className="no-underline">
-            <button
-              className="brand-button w-full py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
-              style={{ background: gold ? "var(--button-gradient)" : "var(--button-gradient)", color: "#fff" }}
-            >
-              {cta}
-            </button>
-          </Link>
+          <div className="flex flex-col gap-2">
+            <Link href={href} className="no-underline">
+              <button
+                className="brand-button w-full py-3 rounded-xl border-none font-semibold text-base cursor-pointer transition-all hover:opacity-90"
+                style={{ background: gold ? "var(--button-gradient)" : "var(--button-gradient)", color: "#fff" }}
+              >
+                {cta}
+              </button>
+            </Link>
+            {note && <p className="m-0 text-xs text-text-muted">{note}</p>}
+          </div>
         )}
       </div>
     </Card>
@@ -171,11 +204,17 @@ export default function PricingTabs({
   variant = "public",
   currentPlan,
   redirect,
+  annualPlans,
+  canPurchase = true,
 }: {
   variant?: "public" | "org";
   currentPlan?: string;
   /** Local page to return to after checkout (for example, a saved job draft). */
   redirect?: string | null;
+  /** Server-computed annual purchase options (GET /api/stripe/checkout); never offer what checkout refuses. */
+  annualPlans?: Partial<Record<"tier1" | "tier2", AnnualPurchaseOption>>;
+  /** Only the organization owner can buy plans. */
+  canPurchase?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("Annual Plans");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -190,6 +229,20 @@ export default function PricingTabs({
   const postCta = variant === "org" ? "Post Now" : "Get Started";
   const freeHref = variant === "org" ? "/org/dashboard" : "/signup?type=employer";
   const freeSuffix = variant === "org" ? "" : " \u2014 It's Free";
+  const annual = (planId: "tier1" | "tier2") => {
+    const option = variant === "org" ? annualPlans?.[planId] : undefined;
+    const current = currentPlan === planId || option?.reason === "current_plan" || option?.kind === "renewal";
+    const blocked: BlockedPurchase | undefined = option && !option.available
+      ? { label: option.label ?? "Not available", message: option.message, contact: option.reason === "plan_change" }
+      : variant === "org" && !canPurchase
+        ? { label: "Owner purchases only", message: "Ask your organization owner to purchase plans." }
+        : undefined;
+    return {
+      current, blocked, purchasable: option?.kind === "renewal",
+      cta: option?.kind === "renewal" ? "Renew for another year" : subCta,
+      note: option?.kind === "renewal" ? option.message : null,
+    };
+  };
 
   return (
     <>
@@ -223,9 +276,8 @@ export default function PricingTabs({
             price={SUBSCRIPTION_PLANS.tier1.priceLabel}
             period={SUBSCRIPTION_PLANS.tier1.periodLabel}
             features={SUBSCRIPTION_PLANS.tier1.features}
-            cta={subCta}
             href={subHref("tier1")}
-            current={currentPlan === "tier1"}
+            {...annual("tier1")}
           />
           <PlanCard
             title={SUBSCRIPTION_PLANS.tier2.title}
@@ -234,9 +286,8 @@ export default function PricingTabs({
             badge={SUBSCRIPTION_PLANS.tier2.badge}
             gold
             features={SUBSCRIPTION_PLANS.tier2.features}
-            cta={subCta}
             href={subHref("tier2")}
-            current={currentPlan === "tier2"}
+            {...annual("tier2")}
           />
         </div>
       )}
@@ -354,6 +405,10 @@ export default function PricingTabs({
               {
                 q: "What happens when my subscription expires?",
                 a: "When your subscription ends, the listings covered by that subscription are archived. Your data is preserved. Contact IOPPS if you need help reviewing or restoring a listing.",
+              },
+              {
+                q: "Can I renew early or change plans mid-term?",
+                a: "You can renew the same plan during the last 60 days of your term; the new year starts when your current term ends, so no time is lost. Annual plans are not prorated, so contact us to change plans mid-term.",
               },
               {
                 q: "Are events free?",

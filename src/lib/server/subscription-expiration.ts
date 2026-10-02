@@ -1,4 +1,5 @@
-import type { Firestore } from 'firebase-admin/firestore';
+import { FieldValue, type Firestore } from 'firebase-admin/firestore';
+import { annualReceiptTerm } from './paid-job-term.ts';
 
 export function resolveSubscriptionExpirationTargets(subscription: {
   employerId?: unknown;
@@ -34,6 +35,26 @@ export function buildExpiredSubscriptionAccessPatch(now: Date) {
       status: "expired",
     },
     updatedAt: now,
+  };
+}
+
+/** A refund or chargeback ends the annual term it funded now (merged like an expiry). */
+export function buildEndedSubscriptionAccessPatch(now: Date, reason: "refunded" | "disputed") {
+  const expired = buildExpiredSubscriptionAccessPatch(now);
+  return {
+    ...expired,
+    subscriptionEnd: now,
+    subscription: { ...expired.subscription, subscriptionEnd: now, endedAt: now, endedReason: reason },
+  };
+}
+
+/** Projection for a paid renewal that has taken over from the term it renewed. */
+export function buildRenewalAccessPatch(renewal: { id: string; tier: string; startsAt: Date; endsAt: Date }, now: Date) {
+  return {
+    plan: renewal.tier, subscriptionTier: renewal.tier, subscriptionStatus: "active",
+    subscriptionStart: renewal.startsAt, billingStartAt: renewal.startsAt, subscriptionEnd: renewal.endsAt, updatedAt: now,
+    bonusAccessGrantedAt: FieldValue.delete(), bonusAccessEndsAt: FieldValue.delete(), bonusAccessReason: FieldValue.delete(),
+    subscription: { tier: renewal.tier, status: "active", billingStartAt: renewal.startsAt, subscriptionEnd: renewal.endsAt, termId: renewal.id },
   };
 }
 
@@ -74,8 +95,19 @@ export async function expireSubscriptionAtomically(db: Firestore, id: string, no
       if (!Number.isFinite(end)) throw new Error('Subscription expiry requires reconciliation');
       return end > now.getTime();
     });
+    // A paid renewal bought before this term ended starts exactly at its end: it now
+    // becomes the projected current term (replacing the map, like paid fulfillment).
+    const renewals = postPlans.has(data.plan) ? [] : active.docs
+      .filter(doc => doc.id !== id && doc.data().renewalOf === id && subscriptionMatchesExpirationTargets(doc.data(),targets))
+      .map(doc => annualReceiptTerm({id:doc.id,data:doc.data()},targets.employerId))
+      .filter(term => term !== null && term.startsAt.getTime() === expiry && term.startsAt <= now && term.endsAt > now);
+    if (renewals.length > 1) throw new Error('Overlapping annual renewals require reconciliation');
     tx.update(ref,{status:'expired',expiredAt:now});
-    if (!hasOther && !postPlans.has(data.plan)) {
+    if (renewals[0]) {
+      const patch = buildRenewalAccessPatch(renewals[0], now);
+      tx.set(employerRef,patch,{mergeFields:Object.keys(patch)});
+      if (organization.exists) tx.set(organizationRef,patch,{mergeFields:Object.keys(patch)});
+    } else if (!hasOther && !postPlans.has(data.plan)) {
       const patch = buildExpiredSubscriptionAccessPatch(now);
       tx.set(employerRef,patch,{merge:true});
       if (organization.exists) tx.set(organizationRef,{...patch,plan:null},{merge:true});

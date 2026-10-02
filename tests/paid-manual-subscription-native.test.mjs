@@ -41,10 +41,21 @@ const receipt=(h,overrides={})=>({orgId:h.id,plan:'tier1',status:'active',billin
 async function rejectsUnchanged(h,body,status=409){const before=await h.read();const result=await h.send(body);assert.equal(result.status,status,await result.text());assert.deepEqual(await h.read(),before);}
 
 test('paid pricing manual existing receipt keeps identity and never guesses missing quota', {skip:!enabled},async t=>{
+ // A receipt-backed term without its own counter is applied without writing a guessed number:
+ // publication counts that term's own listings. A corrupt counter for the term needs an explicit one.
+ for(const usage of [undefined,{termId:'other',used:3}]) await t.test(JSON.stringify(usage ?? null),async t=>{
+  const h=await harness(t);const id=`legacy-${h.id}`;await h.db.doc(`subscriptions/${id}`).set(receipt(h));
+  if(usage)await h.emp.update({jobPostingUsage:usage});
+  assert.equal((await h.send({...h.body,createSubscriptionRecord:false})).status,200);
+  const state=await h.read();assert.equal(state.employer.subscription.termId,id);assert.deepEqual(state.employer.jobPostingUsage,usage);
+ });
+ for(const used of [-1,1.5]) await t.test('corrupt '+used,async t=>{
+  const h=await harness(t);const id=`legacy-${h.id}`;await h.db.doc(`subscriptions/${id}`).set(receipt(h));
+  await h.emp.update({jobPostingUsage:{termId:id,used}});await rejectsUnchanged(h,h.body);
+  await rejectsUnchanged(h,{...h.body,jobPostingUsed:-2},400);
+  assert.equal((await h.send({...h.body,jobPostingUsed:4})).status,200);assert.deepEqual((await h.read()).employer.jobPostingUsage,{termId:id,used:4});
+ });
  const h=await harness(t);const id=`legacy-${h.id}`;await h.db.doc(`subscriptions/${id}`).set(receipt(h));
- for(const usage of [undefined,{termId:id,used:-1},{termId:'other',used:3},{termId:id,used:1.5}]){
-   if(usage)await h.emp.update({jobPostingUsage:usage});await rejectsUnchanged(h,h.body);
- }
  await h.emp.update({jobPostingUsage:{termId:id,used:18}});
  assert.equal((await h.send({...h.body,createSubscriptionRecord:false})).status,200);
  const state=await h.read();assert.equal(state.receipts.length,1);assert.equal(state.employer.subscription.termId,id);assert.equal(state.employer.jobPostingUsage.used,18);
