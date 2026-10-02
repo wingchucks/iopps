@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import * as pricing from '../src/lib/pricing.ts';
 
 // Actual email modules with a fictional provider transport. No network or credentials.
 function compile(file) {
@@ -17,6 +18,8 @@ function loadEmail() {
     require: id => {
       if (id === 'resend') return { Resend: class { emails = { send: async message => { sent.push(message); return { data: { id: 'fictional-id' } }; } }; } };
       if (id === '@/lib/auth-verification-email') return { buildAccountVerificationEmailContent: () => '' };
+      // Billing emails format term dates with the shared Saskatchewan-calendar helper.
+      if (id === '@/lib/pricing') return pricing;
       throw new Error(`Unexpected dependency: ${id}`);
     },
   });
@@ -31,6 +34,7 @@ function loadTemplates() {
 const LINK = '<a href="https://evil.example">Approve pending payout</a>';
 const IMAGE = '<img src=x onerror="alert(1)">';
 const HEADER = 'Fictional Name\r\nBcc: victim@example.invalid';
+const TERM = { startsAt: new Date('2027-10-03T03:00:00.000Z'), endsAt: new Date('2028-10-03T03:00:00.000Z') };
 const anchors = html => [...html.matchAll(/<a\s[^>]*href="([^"]*)"/g)].map(match => match[1]);
 
 function assertInert(html) {
@@ -55,15 +59,22 @@ test('admin new-signup email renders a user-chosen name as text, not a clickable
   assert.ok(sent[1].html.includes('&lt;img src=x onerror=&quot;alert(1)&quot;&gt;'));
 });
 
-test('employer welcome and subscription confirmation escape names, plans and links', async () => {
+test('employer welcome, subscription and renewal confirmations escape names, plans and links', async () => {
   const { email, sent } = loadEmail();
   await email.sendEmployerWelcome({ email: 'owner@example.invalid', contactName: LINK, orgName: IMAGE, verificationLink: 'https://www.iopps.ca/auth/action?mode=verifyEmail&oobCode=fictional"><b>' });
   await email.sendSubscriptionConfirmation({ email: 'owner@example.invalid', contactName: LINK, orgName: IMAGE, planName: '<script>alert(1)</script>', amount: 100, gst: 5 });
+  await email.sendSubscriptionRenewalConfirmation({ email: 'owner@example.invalid', contactName: LINK, orgName: IMAGE, planName: '<script>alert(1)</script>', amount: 100, gst: 5, ...TERM });
+  assert.equal(sent.length, 3);
   for (const message of sent) assertInert(message.html);
   assert.ok(sent[0].html.includes('href="https://www.iopps.ca/auth/action?mode=verifyEmail&amp;oobCode=fictional&quot;&gt;&lt;b&gt;"'));
-  assert.doesNotMatch(sent[1].html, /<script>/);
-  assert.ok(sent[1].html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
-  assert.ok(sent[1].html.includes('$105.00 CAD'));
+  for (const message of sent.slice(1)) {
+    assert.doesNotMatch(message.html, /<script>/);
+    assert.ok(message.html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
+    assert.ok(message.html.includes('&lt;a href=&quot;https://evil.example&quot;&gt;Approve pending payout&lt;/a&gt;'));
+    assert.ok(message.html.includes('&lt;img src=x onerror=&quot;alert(1)&quot;&gt;'));
+    assert.ok(message.html.includes('$105.00 CAD'));
+    assert.deepEqual(anchors(message.html), ['https://www.iopps.ca/org/dashboard', 'https://www.iopps.ca']);
+  }
 });
 
 test('every subject is a single header line while ordinary subjects stay exact', async () => {
@@ -76,12 +87,14 @@ test('every subject is a single header line while ordinary subjects stay exact',
   await email.sendAdminContentPosted({ contentType: 'job', title: HEADER });
   await email.sendAdminPaymentNotification({ orgName: HEADER, contactName: 'Owner', email: 'owner@example.invalid', planName: 'Plan', amount: 1, gst: 0 });
   await email.sendMessageNotification({ to: 'member@example.invalid', subject: `New message from ${HEADER}`, html: 'Fictional' }, 'message-fictional');
-  assert.equal(sent.length, 8);
+  await email.sendSubscriptionRenewalConfirmation({ email: 'owner@example.invalid', contactName: 'Owner', orgName: 'Org', planName: HEADER, amount: 1, gst: 0, ...TERM });
+  assert.equal(sent.length, 9);
   for (const message of sent) {
     assert.doesNotMatch(message.subject, /[\r\n]/);
     assert.match(message.subject, /Fictional Name Bcc: victim@example\.invalid|Role X-Injected: yes/);
   }
   assert.equal(sent[0].subject, '🙋 New Member: Fictional Name Bcc: victim@example.invalid');
+  assert.equal(sent[8].subject, 'IOPPS Renewal Confirmed — Fictional Name Bcc: victim@example.invalid Plan from October 2, 2027');
   const plain = loadEmail();
   await plain.email.sendAccountPasswordResetEmail('member@example.invalid', 'https://example.invalid/reset');
   assert.equal(plain.sent[0].subject, 'Reset your IOPPS password');

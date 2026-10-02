@@ -70,7 +70,7 @@ async function harness(t: any) {
       if (id === '@/lib/server/subscription-expiration') return expirationModule;
       if (id === '@/lib/email') {
         const send = async (p: any) => { sends.push(p); if (rejectEmails) throw new Error('Fictional email failure'); };
-        return { sendAdminPaymentNotification: send, sendSubscriptionConfirmation: send };
+        return { sendAdminPaymentNotification: send, sendSubscriptionConfirmation: send, sendSubscriptionRenewalConfirmation: send };
       }
       throw new Error(`Unexpected import: ${id}`);
     },

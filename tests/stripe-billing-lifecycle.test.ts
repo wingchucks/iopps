@@ -16,6 +16,8 @@ const secret = 'whsec_fictional_lifecycle_only';
 function harness(seed: Record<string, unknown> = {}) {
   const memory = memoryFirestore({ 'employers/org1': { name: 'Fictional org', contactEmail: 'fixture@example.invalid' }, 'organizations/org1': { name: 'Fictional org' }, ...seed });
   const sends: any[] = [];
+  const failingEmails = new Set<string>();
+  const email = (kind: string) => async (p: any) => { sends.push([kind, p]); if (failingEmails.has(kind)) throw new Error('Fictional email failure'); };
   const exports: any = {};
   vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/stripe/webhook/route.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
     exports, Date, Promise, console: { log() {}, error() {} },
@@ -25,7 +27,7 @@ function harness(seed: Record<string, unknown> = {}) {
         stripe: { default: Stripe }, 'firebase-admin/firestore': { FieldValue }, 'next/server': { NextResponse: { json: Response.json } },
         '@/lib/firebase-admin': { getAdminDb: () => memory.db }, '@/lib/pricing': pricing,
         '@/lib/server/paid-job-publication': publication, '@/lib/server/paid-job-term': term, '@/lib/server/subscription-expiration': expiration,
-        '@/lib/email': { sendAdminPaymentNotification: async (p: any) => { sends.push(['admin', p]); }, sendSubscriptionConfirmation: async (p: any) => { sends.push(['customer', p]); } },
+        '@/lib/email': { sendAdminPaymentNotification: email('admin'), sendSubscriptionConfirmation: email('customer'), sendSubscriptionRenewalConfirmation: email('renewal') },
       };
       if (!Object.hasOwn(modules, id)) throw new Error(`Unexpected import: ${id}`);
       return modules[id];
@@ -53,7 +55,8 @@ function harness(seed: Record<string, unknown> = {}) {
   }
   const receipts = () => memory.paths('subscriptions/').map(path => ({ id: path.split('/')[1], data: memory.read(path) as any }));
   const resolveAt = (at: Date) => term.resolvePaidPublicationTerm({ employerId: 'org1', employer: memory.read('employers/org1') as any, receipts: receipts(), now: at });
-  return { memory, sends, checkout, charge, send, receipts, resolveAt, employer: () => memory.read('employers/org1') as any, organization: () => memory.read('organizations/org1') as any };
+  return { memory, sends, checkout, charge, send, receipts, resolveAt, failEmail: (kind: string) => failingEmails.add(kind),
+    employer: () => memory.read('employers/org1') as any, organization: () => memory.read('organizations/org1') as any };
 }
 const paidTerm = (startsAt: Date, overrides: any = {}) => ({
   plan: 'premium', subscriptionTier: 'premium', subscriptionStatus: 'active', subscriptionStart: startsAt, billingStartAt: startsAt, subscriptionEnd: pricing.addOneCalendarYear(startsAt),
@@ -78,7 +81,7 @@ test('a first annual purchase runs exactly one calendar year from payment, in Sa
 
 test('renewing during the current paid term starts the new year when the current term ends', async () => {
   const startsAt = new Date(Date.now() - 330 * 86400000);
-  const h = harness({ 'employers/org1': { name: 'Fictional org', ...paidTerm(startsAt) }, 'organizations/org1': { name: 'Fictional org', ...paidTerm(startsAt) }, 'subscriptions/cs_current': currentReceipt(startsAt) });
+  const h = harness({ 'employers/org1': { name: 'Fictional org', contactEmail: 'fixture@example.invalid', ...paidTerm(startsAt) }, 'organizations/org1': { name: 'Fictional org', ...paidTerm(startsAt) }, 'subscriptions/cs_current': currentReceipt(startsAt) });
   const before = h.employer();
   assert.equal((await h.send(h.checkout('tier2'))).status, 200);
   const renewal = h.receipts().find(r => r.id !== 'cs_current')!;
@@ -89,7 +92,7 @@ test('renewing during the current paid term starts the new year when the current
   assert.deepEqual(h.employer(), before, 'the projection keeps describing the current term');
   assert.equal(h.resolveAt(new Date())?.id, 'cs_current');
   assert.equal(h.resolveAt(currentEnd)?.id, renewal.id, 'the renewal takes over at the boundary');
-  assert.deepEqual(h.sends.map(([kind]) => kind), ['admin'], 'no "now active" confirmation for a term that starts later');
+  assert.deepEqual(h.sends.map(([kind]) => kind), ['admin', 'renewal'], 'a renewal confirmation, never the "now active" one, for a term that starts later');
   assert.match(h.sends[0][1].planName, /renewal starting/);
   // A second paid renewal (race) chains after the first rather than overlapping it.
   assert.equal((await h.send(h.checkout('tier2'))).status, 200);
@@ -102,6 +105,57 @@ test('renewing during the current paid term starts the new year when the current
   assert.equal(h.organization().subscription.termId, renewal.id);
   assert.equal(h.employer().plan, 'premium');
   assert.equal((h.memory.read('subscriptions/cs_current') as any).status, 'expired');
+});
+
+test('a paid renewal is confirmed to the customer once, with the new term, by the delivery that fulfilled it', async () => {
+  const startsAt = new Date(Date.now() - 330 * 86400000);
+  const h = harness({ 'employers/org1': { name: 'Fictional org', contactName: 'Fictional owner', contactEmail: 'owner@example.invalid', ...paidTerm(startsAt) }, 'subscriptions/cs_current': currentReceipt(startsAt) });
+  const purchase = h.checkout('tier2');
+  assert.equal((await h.send(purchase)).status, 200);
+  const currentEnd = pricing.addOneCalendarYear(startsAt);
+  const confirmations = () => h.sends.filter(([kind]) => kind === 'renewal').map(([, payload]) => payload);
+  assert.equal(confirmations().length, 1);
+  const [confirmation] = confirmations();
+  assert.deepEqual({ ...confirmation, startsAt: confirmation.startsAt.getTime(), endsAt: confirmation.endsAt.getTime() }, {
+    email: 'owner@example.invalid', contactName: 'Fictional owner', orgName: 'Fictional org', planName: 'Premium', amount: 2500, gst: 125,
+    startsAt: currentEnd.getTime(), endsAt: pricing.addOneCalendarYear(currentEnd).getTime(),
+  });
+  assert.ok(!h.sends.some(([kind]) => kind === 'customer'), 'never the "now active" confirmation');
+  // Stripe redelivers the event, or sends async success for the same session: neither repeats the email.
+  assert.equal((await (await h.send(purchase)).json()).duplicate, true);
+  const asyncSuccess = h.checkout('tier2', { id: purchase.data.object.id, type: 'checkout.session.async_payment_succeeded', paymentIntent: purchase.data.object.payment_intent });
+  assert.equal((await (await h.send(asyncSuccess)).json()).duplicate, true);
+  assert.equal(confirmations().length, 1);
+  assert.equal(h.sends.length, 2);
+});
+
+test('a failed renewal confirmation neither fails nor repeats the committed renewal', async () => {
+  const startsAt = new Date(Date.now() - 330 * 86400000);
+  const h = harness({ 'employers/org1': { name: 'Fictional org', contactEmail: 'owner@example.invalid', ...paidTerm(startsAt) }, 'subscriptions/cs_current': currentReceipt(startsAt) });
+  h.failEmail('renewal');
+  const purchase = h.checkout('tier2');
+  assert.equal((await h.send(purchase)).status, 200);
+  assert.equal(h.receipts().find(r => r.id === purchase.data.object.id)?.data.renewalOf, 'cs_current');
+  assert.equal((h.memory.read(`stripeWebhookEvents/${purchase.id}`) as any).outcome, 'renewal_scheduled');
+  assert.equal((await h.send(purchase)).status, 200);
+  assert.deepEqual(h.sends.map(([kind]) => kind), ['admin', 'renewal'], 'attempted once; a redelivery never retries it');
+});
+
+test('a plan change queued for review and a renewal refunded before fulfillment get no customer confirmation', async () => {
+  const startsAt = new Date(Date.now() - 330 * 86400000);
+  const seed = { 'employers/org1': { name: 'Fictional org', contactEmail: 'owner@example.invalid', ...paidTerm(startsAt) }, 'subscriptions/cs_current': currentReceipt(startsAt) };
+  const change = harness(seed);
+  assert.equal((await change.send(change.checkout('tier1'))).status, 200);
+  assert.equal(change.receipts().find(r => r.id !== 'cs_current')!.data.reviewRequired, 'plan_change_during_term');
+  assert.deepEqual(change.sends.map(([kind]) => kind), ['admin']);
+  assert.match(change.sends[0][1].planName, /plan change needs review/);
+  const refunded = harness(seed);
+  assert.equal((await (await refunded.send(refunded.charge('charge.refunded', 'pi_early_renewal'))).json()).outcome, 'unmatched');
+  assert.equal((await refunded.send(refunded.checkout('tier2', { paymentIntent: 'pi_early_renewal' }))).status, 200);
+  const early = refunded.receipts().find(r => r.id !== 'cs_current')!.data;
+  assert.deepEqual([early.renewalOf, early.status], ['cs_current', 'refunded']);
+  assert.deepEqual(refunded.sends.map(([kind]) => kind), ['admin']);
+  assert.match(refunded.sends[0][1].planName, /nothing granted/);
 });
 
 test('a different-tier payment that slips past checkout is queued and flagged, never downgrading mid-term', async () => {
