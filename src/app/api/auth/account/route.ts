@@ -42,9 +42,11 @@ export async function GET(req: NextRequest) {
           missingProfileFields: readiness.missingFields,
         };
       } catch (error) {
-        // A 403 means no usable organization: none at all, or one an administrator
-        // disabled or removed. The person's own profile stays available either way.
-        if (!(error instanceof EmployerApiError && error.status === 403)) throw error;
+        // A 403 without a code means no usable organization: none at all, or one an
+        // administrator disabled or removed. The person's own profile stays available either way.
+        // Account-level denials (disabled, deleted or suspended accounts) carry a code and are
+        // reported as errors instead of being routed around.
+        if (!(error instanceof EmployerApiError && error.status === 403 && !error.code)) throw error;
         organizationUnavailable = error.message !== "Not an employer";
       }
     }
