@@ -110,12 +110,12 @@ test('identity-bound inactivity logout cannot sign out a replacement account', a
 
 
 test('stale inactivity timer neither deletes the cookie nor redirects a replacement account',async()=>{
- const h=fixture();let timer;const routes=[];const exports={};
+ const h=fixture();let timer,clock=Date.now();const routes=[];const exports={};
  vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/useSessionTimeout.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
-  exports,setTimeout:fn=>{timer=fn;return 1;},clearTimeout(){},window:{addEventListener(){},removeEventListener(){}},
+  exports,Date:{now:()=>clock},setTimeout:fn=>{timer=fn;return 1;},clearTimeout(){},window:{addEventListener(){},removeEventListener(){}},
   fetch:()=>{throw Error('Timeout must not independently delete the cookie');},
   require:id=>id==='react'?{useEffect:fn=>fn(),useRef:value=>({current:value}),useCallback:fn=>fn}:id==='next/navigation'?{useRouter:()=>({replace:url=>routes.push(url)})}:id==='./firebase'?{auth:h.auth}:{useAuth:()=>({user:h.auth.currentUser,signOut:h.api.signOut})},
  });
- exports.useSessionTimeout();const b=h.user('individual-b');const switched=h.emit(b);await timer();await drain(h);await switched;
+ exports.useSessionTimeout();const b=h.user('individual-b');const switched=h.emit(b);clock+=31*60*1000;await timer();await drain(h);await switched;
  assert.equal(h.auth.currentUser,b);assert.equal(h.cookie,'individual-b');assert.deepEqual(routes,[]);
 });
