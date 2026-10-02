@@ -4,6 +4,7 @@ import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendEmployerWelcome, sendAdminNewSignup } from "@/lib/email";
 import { buildEmailVerificationContinueUrl } from "@/lib/auth-verification-email";
+import { verifyAuthToken } from "@/lib/api-auth";
 import { verifyAppCheckFromRequest } from "@/lib/server/app-check";
 import {
   evaluateEmployerSignupProtection,
@@ -116,18 +117,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ code: "SECURITY_CHECK_FAILED", error: "Security check failed. Please refresh the page and try again." }, { status: 403 });
   }
 
-  let uid: string;
-  let accountEmail: string | undefined;
-  let emailVerified = false;
-  try {
-    const token = authHeader.split("Bearer ")[1];
-    const decoded = await adminAuth.verifyIdToken(token);
-    uid = decoded.uid;
-    accountEmail = decoded.email;
-    emailVerified = decoded.email_verified === true;
-  } catch {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-  }
+  // Revoked sessions and suspended, disabled or closed accounts cannot create,
+  // repair or relink an organization, or change their role.
+  const access = await verifyAuthToken(req, { checkRevoked: true });
+  if (!access.success) return access.response;
+  const decoded = access.decodedToken;
+  const uid = decoded.uid;
+  const accountEmail = decoded.email;
+  const emailVerified = decoded.email_verified === true;
 
   // Retrying a completed signup must not reset a profile, plan, credits or role.
   // Check before spam protection, which is intended only for new signups.

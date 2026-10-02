@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendEmployerWelcome, sendAdminNewSignup } from "@/lib/email";
+import { verifyAuthToken } from "@/lib/api-auth";
 import { verifyAppCheckFromRequest } from "@/lib/server/app-check";
 import {
   evaluateEmployerSignupProtection,
@@ -34,18 +35,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ code: "SECURITY_CHECK_FAILED", error: "Security check failed. Please refresh the page and try again." }, { status: 403 });
   }
 
-  let uid: string;
-  let email: string;
-  let emailVerified = false;
-  try {
-    const token = authHeader.split("Bearer ")[1];
-    const decoded = await adminAuth.verifyIdToken(token);
-    uid = decoded.uid;
-    email = decoded.email || "";
-    emailVerified = decoded.email_verified === true;
-  } catch {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-  }
+  // Revoked sessions and suspended, disabled or closed accounts cannot create
+  // an organization or change their role.
+  const access = await verifyAuthToken(req, { checkRevoked: true });
+  if (!access.success) return access.response;
+  const decoded = access.decodedToken;
+  const uid = decoded.uid;
+  const email = decoded.email || "";
+  const emailVerified = decoded.email_verified === true;
 
   // Check they're not already an employer or a member of another organization.
   // Creating a workspace must never move someone out of an existing team.
