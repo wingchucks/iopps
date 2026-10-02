@@ -207,3 +207,16 @@ test('partial refunds and charges without a payment intent are acknowledged with
   assert.equal(h.employer().standardPostCredits, 1);
   assert.equal(h.receipts()[0].data.status, 'active');
 });
+
+test('refunding a term that already lapsed records the refund without rewriting account history', async () => {
+  const startsAt = new Date(Date.now() - 400 * 86400000);
+  const endedAt = pricing.addOneCalendarYear(startsAt);
+  const lapsed = { plan: 'free', subscriptionTier: 'free', subscriptionStatus: 'expired', subscriptionStart: startsAt, subscriptionEnd: endedAt,
+    subscription: { tier: 'free', status: 'expired', billingStartAt: startsAt, subscriptionEnd: endedAt, termId: 'cs_current' } };
+  const h = harness({ 'employers/org1': { name: 'Fictional org', ...lapsed }, 'subscriptions/cs_current': currentReceipt(startsAt, { status: 'expired' }) });
+  const before = h.employer();
+  assert.equal((await (await h.send(h.charge('charge.refunded', 'pi_current'))).json()).outcome, 'revoked');
+  assert.equal((h.memory.read('subscriptions/cs_current') as any).status, 'refunded');
+  assert.equal((h.memory.read('subscriptions/cs_current') as any).revocation.termEnded, false);
+  assert.deepEqual(h.employer(), before);
+});

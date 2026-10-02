@@ -111,7 +111,9 @@ async function revokePayment(db: Firestore, event: Stripe.Event, kind: Revocatio
       let current: ReturnType<typeof resolvePaidPublicationTerm> = null;
       try { current = resolvePaidPublicationTerm(termInput); } catch (error) { if (!(error instanceof PublicationError)) throw error; }
       const nested = (employer.subscription && typeof employer.subscription === "object" ? employer.subscription : {}) as Record<string, unknown>;
-      if (current?.id === receiptDoc.id || nested.termId === receiptDoc.id) {
+      // The projection may still name this term while its evidence is ambiguous; a lapsed term is history.
+      const projectedCurrent = nested.termId === receiptDoc.id && nested.status === "active" && (publicationDate(nested.subscriptionEnd)?.getTime() ?? 0) > now.getTime();
+      if (current?.id === receiptDoc.id || projectedCurrent) {
         termEnded = true;
         const organizationId = typeof receipt.organizationId === "string" && receipt.organizationId ? receipt.organizationId : employerId;
         if (!safeDocumentId(organizationId)) throw new Error("Receipt organization requires reconciliation");
