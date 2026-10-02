@@ -285,7 +285,7 @@ function ProfileContent() {
               type="file"
               accept="image/*"
               onChange={handlePhotoUpload}
-              className="hidden"
+              className="sr-only"
             />
           </div>
 
