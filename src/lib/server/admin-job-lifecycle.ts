@@ -49,10 +49,11 @@ async function activateAdminJobOnce(db: Firestore, jobId: string, options: {feat
     try {
       paid=await preparePaidPublication(firestorePublicationReader(db,tx),{
         employerId:owner,organizationId,jobId,current:data,status:options.feature && data.status!=='active' ? 'draft' : 'active',featured:options.feature || data.featured===true,
-        durationDays:data.listingDurationDays,now:publicationNow,
+        durationDays:data.listingDurationDays,now:publicationNow,writesResolvedEmployerDocument:true,
       });
     } catch(error) { if(error instanceof PublicationError)return error.message;throw error; }
-    tx.set(db.collection('employers').doc(owner),{...paid.employerPatch,updatedAt:FieldValue.serverTimestamp()},{merge:true});
+    // Usage lives on the resolved billing document (employers/{owner}, else employers/{organizationId}).
+    tx.set(db.collection('employers').doc(paid.employerDocumentId),{...paid.employerPatch,updatedAt:FieldValue.serverTimestamp()},{merge:true});
     const patch: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
       ...(options.feature ? {featured:true} : {active:true,status:'active'}),
       ...(options.restore ? {archived:false} : {}),updatedAt:FieldValue.serverTimestamp(),...paid.jobPatch,

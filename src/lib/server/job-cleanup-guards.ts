@@ -68,11 +68,11 @@ export async function updateImportedJobWithEditorialGuard(db: Firestore, ref: Do
         const owner=String(current.employerId ?? '');
         const paid=await preparePaidPublication(firestorePublicationReader(db,tx),{
           employerId:owner,organizationId:String(current.orgId ?? current.organizationId ?? owner),jobId:ref.id,
-          current,status:'active',featured:current.featured===true,now:publicationNow,
+          current,status:'active',featured:current.featured===true,now:publicationNow,writesResolvedEmployerDocument:true,
         });
         // A refresh must never fund a second publication.
         if(Object.keys(paid.employerPatch).length)throw new PublicationError('reconciliation_required','Import refresh cannot consume a new posting entitlement.');
-        tx.set(db.collection('employers').doc(owner),{updatedAt:publicationNow},{merge:true});
+        tx.set(db.collection('employers').doc(paid.employerDocumentId),{updatedAt:publicationNow},{merge:true});
         Object.assign(patch,paid.jobPatch);
       }
     }
