@@ -6,7 +6,7 @@ import ts from 'typescript';
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function fixture() {
-  const requests = [], states = [], effects = [];
+  const requests = [], states = [], effects = [], marks = [];
   let listener, cookie = null;
   const user = uid => ({uid, getIdToken: async () => uid});
   const auth = {currentUser: user('employer-a')};
@@ -19,12 +19,14 @@ function fixture() {
     '@/lib/signup-draft': {clearSignupDraft() {}},
     '@/lib/auth-errors': {authErrorMessage: () => 'error'},
     '@/lib/auth-verification-email': {},
-    'firebase/auth': {onAuthStateChanged: (_auth, fn) => {listener=fn; return () => {};}, signOut: async () => {void emit(null);}, signInWithEmailAndPassword: async () => ({user: auth.currentUser})},
+    'firebase/auth': {onAuthStateChanged: (_auth, fn) => {listener=fn; return () => {};}, signOut: async () => {void emit(null);}, signInWithEmailAndPassword: async () => ({user: auth.currentUser}),
+      GoogleAuthProvider: class { setCustomParameters() {} }, signInWithPopup: async () => ({user: auth.currentUser})},
+    '@/lib/sign-in-notice': {markSignIn: uid => marks.push({uid, sessionRequests: requests.length})},
   };
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(process.env.ROUND6_AUTH_BASELINE || 'src/lib/auth-context.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,{exports,require:id=>{assert.ok(id in modules,id);return modules[id];},setTimeout,clearTimeout,AbortController,console,process:{env:{}},fetch:async (_url, init)=>new Promise(resolve=>requests.push({method:init.method,uid:init.body?JSON.parse(init.body).idToken:null,release(ok=true){if(this.released)return;this.released=true;if(ok)cookie=init.method==='POST'?this.uid:null;resolve({ok});}}))});
   const api=exports.AuthProvider({children:null}).value;
   const dispose=effects[0]();
-  return {api,auth,user,requests,states,emit,dispose,sync:exports.syncSessionCookie,get cookie(){return cookie;}};
+  return {api,auth,user,requests,states,emit,dispose,marks,sync:exports.syncSessionCookie,get cookie(){return cookie;}};
 }
 async function drain(h) {for(let i=0;i<12;i++){for(const r of h.requests.splice(0))r.release();await tick();}}
 
@@ -69,6 +71,17 @@ test('superseded same-UID callbacks cannot publish after an anonymous boundary',
   const published=h.states.filter(v=>v===a).length;
   await drain(h);await Promise.all([anonymous,newer]);
   assert.equal(published,0,'generation, not UID equality alone, owns publication');
+});
+
+test('explicit password and Google sign-ins mark the account before its session is written; restored sessions do not', async () => {
+  for (const method of ['signIn', 'signInWithGoogle']) {
+    const h=fixture();
+    const pending=h.api[method]('fictional@example.invalid','fictional');await tick();
+    assert.deepEqual(h.marks,[{uid:'employer-a',sessionRequests:0}],method+' marks before the session POST, so before pages can look the account up');
+    await drain(h);await pending;
+  }
+  const restored=fixture();const published=restored.emit(restored.auth.currentUser);await drain(restored);await published;
+  assert.deepEqual(restored.marks,[],'a restored session never shows a sign-in notice again');
 });
 
 

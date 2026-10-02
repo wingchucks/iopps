@@ -11,8 +11,8 @@ import * as authErrors from '../src/lib/auth-errors.ts';
 // Firebase, navigation and transport stay offline; destination validation is real.
 function loginHarness({ query = '', resolveAccount } = {}) {
   const cells = [], pendingEffects = [], cleanups = new Map();
-  const requests = [], navigations = [];
-  const account = { getIdToken: async () => 'fictional-id-token' };
+  const requests = [], navigations = [], notices = [];
+  const account = { uid: 'fictional-member', getIdToken: async () => 'fictional-id-token' };
   let cursor = 0, finishAuthentication;
   const authenticate = () => new Promise(resolve => { finishAuthentication = () => resolve({ user: account }); });
   const auth = { user: null, loading: false, signIn: authenticate, signInWithGoogle: authenticate,
@@ -62,12 +62,14 @@ function loginHarness({ query = '', resolveAccount } = {}) {
       if (id === '@/lib/auth-context') return { useAuth: () => auth };
       if (id === '@/lib/auth-redirect') return authIntent;
       if (id === '@/lib/auth-errors') return authErrors;
+      // Records what the page hands over; the notice store itself is tested in sign-in-notice.test.mjs.
+      if (id === '@/lib/sign-in-notice') return { rememberSignInNotice: (uid, data) => notices.push({ uid, notice: data.notice }) };
       throw new Error(`Unexpected form dependency: ${id}`);
     },
   });
   const Form = exports.default().props.children.type;
   return {
-    auth, account, requests, navigations,
+    auth, account, requests, navigations, notices,
     finishAuthentication: () => finishAuthentication(),
     render: () => { cursor = 0; return Form(); },
     flushEffects: () => { for (const run of pendingEffects.splice(0)) run(); },
@@ -135,4 +137,24 @@ test('an unmounted or signed-out form cannot finish a pending redirect', async (
     assert.deepEqual(h.navigations, []);
     h.unmount();
   }
+});
+
+test('sign-in hands the account lookup notice to the notice store for that account without changing the destination', async () => {
+  const notice = 'Your organization\'s workspace is no longer available, so you are signed in to your personal profile.';
+  for (const provider of ['password', 'Google']) {
+    const h = loginHarness({ query: 'redirect=%2Fjobs%2Fexample', resolveAccount: async () => ({ ok: true, json: async () => ({ destination: '/feed', notice }) }) });
+    const tree = h.render(); h.flushEffects();
+    const action = provider === 'password'
+      ? nodes(tree).find(node => node.type === 'form').props.onSubmit({ preventDefault() {} })
+      : button(tree, 'Continue with Google').props.onClick();
+    h.auth.user = h.account; h.render(); h.flushEffects();
+    h.finishAuthentication(); await action; await settle();
+    assert.deepEqual(h.navigations, ['/jobs/example'], 'routing is unchanged');
+    assert.deepEqual(h.notices, [{ uid: 'fictional-member', notice }]);
+    h.unmount();
+  }
+  const failed = loginHarness({ resolveAccount: async () => ({ ok: false, json: async () => ({ error: 'Fictional failure', notice }) }) });
+  failed.auth.user = failed.account; failed.render(); failed.flushEffects(); await settle();
+  assert.deepEqual(failed.notices, [], 'a failed lookup keeps nothing, so a retry can still show the notice');
+  failed.unmount();
 });

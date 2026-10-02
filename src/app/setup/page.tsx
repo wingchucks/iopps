@@ -4,6 +4,7 @@ import { Suspense, useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setupDestination, setupCompletionDestination } from "./destination";
 import { useAuth } from "@/lib/auth-context";
+import { rememberSignInNotice } from "@/lib/sign-in-notice";
 import { getMemberProfile, updateMemberProfile } from "@/lib/firestore/members";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
@@ -76,6 +77,8 @@ function SetupAccess() {
           photoRepair = !!member?.photoURL && member.photoURL !== loadingUser.photoURL;
         }
         const destination = setupDestination(data.destination, searchParams, false, photoRepair);
+        // Signing up with Google into an existing account lands here, not on /login.
+        rememberSignInNotice(user.uid, data);
         if (destination) router.replace(destination);
         else setReadyUid(user.uid);
       } catch {

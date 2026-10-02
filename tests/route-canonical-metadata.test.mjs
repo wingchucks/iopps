@@ -11,7 +11,7 @@ const page = (file, names = []) => sourceModule(file, { mocks: {
 const json = value => JSON.parse(JSON.stringify(value));
 
 test('only the homepage declares the homepage canonical URL and share card', () => {
-  const root = page('src/app/layout.tsx', ['@/components/SkipToContent', '@/components/AuthErrorBoundary', '@/components/SessionManager', '@/components/OrganizationSetupReminder', '@/components/AnalyticsTracker', '@/components/GoogleAnalytics', '@/lib/auth-context', '@/lib/theme-context', '@/lib/toast-context']).metadata;
+  const root = page('src/app/layout.tsx', ['@/components/SkipToContent', '@/components/AuthErrorBoundary', '@/components/SessionManager', '@/components/SignInNotice', '@/components/OrganizationSetupReminder', '@/components/AnalyticsTracker', '@/components/GoogleAnalytics', '@/lib/auth-context', '@/lib/theme-context', '@/lib/toast-context']).metadata;
   // Inherited by every route: only site-wide defaults, never a URL or the homepage title.
   assert.equal(root.alternates, undefined);
   assert.equal(root.openGraph.url, undefined);

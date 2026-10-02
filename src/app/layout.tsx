@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/lib/theme-context";
 import { ToastProvider } from "@/lib/toast-context";
 import AuthErrorBoundary from "@/components/AuthErrorBoundary";
 import SessionManager from "@/components/SessionManager";
+import SignInNotice from "@/components/SignInNotice";
 import OrganizationSetupReminder from "@/components/OrganizationSetupReminder";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
@@ -83,6 +84,7 @@ export default function RootLayout({
             <ToastProvider>
                 <AuthErrorBoundary>
                   <SessionManager />
+                  <SignInNotice />
                   <AnalyticsTracker />
                   <GoogleAnalytics />
                   <main id="main-content"><OrganizationSetupReminder />{children}</main>

@@ -18,6 +18,7 @@ import { buildEmailVerificationContinueUrl } from "@/lib/auth-verification-email
 import { auth, getAppCheckTokenValue } from "./firebase";
 import { authErrorMessage } from "@/lib/auth-errors";
 import { clearSignupDraft } from "@/lib/signup-draft";
+import { markSignIn } from "@/lib/sign-in-notice";
 
 export interface SignupOutcome {
   user: User;
@@ -204,6 +205,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
+    // Before the session is ready, so before the account is published to the pages that look
+    // it up: only an explicit sign-in shows the lookup's sign-in notice (see SignInNotice).
+    markSignIn(cred.user.uid);
     const sessionReady = await ensureSessionCookie(cred.user);
     if (!sessionReady) {
       if (auth.currentUser === cred.user) await firebaseSignOut(auth).catch(() => {});
@@ -230,6 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     const cred = await signInWithPopup(auth, provider);
+    markSignIn(cred.user.uid);
     const sessionReady = await ensureSessionCookie(cred.user);
     if (!sessionReady) {
       if (auth.currentUser === cred.user) await firebaseSignOut(auth).catch(() => {});
