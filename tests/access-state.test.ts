@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   getOrganizationAccessBlockReason,
+  getOrganizationPublishingBlockReason,
   getUserAccessBlockReason,
   isHiddenContentStatus,
   isPublicPostVisible,
@@ -49,4 +50,13 @@ test("hidden content helpers exclude deleted posts and inactive scholarships", (
   assert.equal(isPublicScholarshipVisible({ active: false, status: "active" }), false);
   assert.equal(isPublicScholarshipVisible({ active: true, status: "deleted" }), false);
   assert.equal(isPublicScholarshipVisible({ active: true, status: "published" }), true);
+});
+
+test("a rejected organization keeps workspace access but cannot publish", () => {
+  assert.equal(getOrganizationAccessBlockReason({ status: "rejected" }), null);
+  assert.match(getOrganizationPublishingBlockReason({ status: " Rejected " }) ?? "", /can still save drafts/);
+  for (const status of ["approved", "pending", "", undefined]) {
+    assert.equal(getOrganizationPublishingBlockReason({ status }), null, String(status));
+  }
+  assert.equal(getOrganizationPublishingBlockReason(null), null);
 });

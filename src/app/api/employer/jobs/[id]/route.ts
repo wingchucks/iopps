@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   EmployerApiError,
+  assertOrganizationCanPublish,
   requireEmployerContext,
   requireEmployerPublishingContext,
 } from "@/lib/server/employer-auth";
@@ -215,6 +216,8 @@ export async function PUT(
       }
       const requestedStatus = normalizeStatus(body.status ?? current.data.status);
       const requestedFeatured = typeof body.featured === "boolean" ? body.featured : Boolean(current.data.featured);
+      // Refuse publishing before any payment logic runs; drafts and closing stay available.
+      if (requestedStatus === "active") assertOrganizationCanPublish(context);
       const paid = await preparePaidPublication(firestorePublicationReader(db, transaction), {
         employerId: context.employerId, organizationId: context.orgId, jobId: id,
         current: current.data, status: requestedStatus, featured: requestedFeatured,

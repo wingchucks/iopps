@@ -5,6 +5,7 @@ import { FieldValue, type Firestore, type Transaction } from "firebase-admin/fir
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   EmployerApiError,
+  assertOrganizationCanPublish,
   requireEmployerContext,
   requireEmployerPublishingContext,
 } from "@/lib/server/employer-auth";
@@ -261,6 +262,9 @@ export async function POST(req: NextRequest) {
       orgName: (context.organizationData.name as string) || (context.employerData.name as string) || (context.employerData.orgName as string),
       orgShort: (context.organizationData.shortName as string) || (context.organizationData.short as string) || undefined,
     });
+
+    // Refuse publishing before any payment logic runs; drafts are always allowed.
+    if (status === "active") assertOrganizationCanPublish(context);
 
     let nextFeaturedSummary = null;
     const publicationNow = new Date();

@@ -5,7 +5,7 @@ import {
   hasLinkedOrganization,
   resolveLinkedOrganizationId,
 } from "@/lib/account-state";
-import { getOrganizationAccessBlockReason } from "@/lib/access-state";
+import { getOrganizationAccessBlockReason, getOrganizationPublishingBlockReason } from "@/lib/access-state";
 import { AccountAccessError, assertUserCanAccessApp, type AccountAccessDeps } from "@/lib/server/account-access";
 
 export class EmployerApiError extends Error {
@@ -220,4 +220,32 @@ export async function requireEmployerPublishingContext(
   }
 
   return context;
+}
+
+function organizationPublishingBlockReason(context: EmployerContext): string | null {
+  return getOrganizationPublishingBlockReason(context.organizationData) ??
+    getOrganizationPublishingBlockReason(context.employerData);
+}
+
+/** Publishing (not draft saving) is refused while IOPPS has rejected the organization. */
+export function assertOrganizationCanPublish(context: EmployerContext): void {
+  const reason = organizationPublishingBlockReason(context);
+  if (reason) throw new EmployerApiError(403, reason, "organization_not_approved");
+}
+
+/**
+ * For handlers that resolve their own employer context (events, scholarships):
+ * answers a publish request from a rejected organization with 403 before the
+ * handler runs. Drafts, other requests and authentication failures are left to
+ * the handler, which reports them exactly as before.
+ */
+export async function rejectUnapprovedPublishing(req: Request, deps: EmployerContextDeps = {}): Promise<Response | null> {
+  const body: unknown = await req.clone().json().catch(() => null);
+  if (!body || typeof body !== "object" || (body as Record<string, unknown>).status !== "active") return null;
+  let context: EmployerContext;
+  try { context = await requireEmployerContext(req, deps); } catch { return null; }
+  const reason = organizationPublishingBlockReason(context);
+  return reason
+    ? Response.json({ error: reason, code: "organization_not_approved" }, { status: 403, headers: { "Cache-Control": "private, no-store" } })
+    : null;
 }

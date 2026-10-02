@@ -47,7 +47,7 @@ async function harness(t: any) {
         if (id === '@/lib/server/admin-job-lifecycle') return {activateAdminJob};
         if (id === '@/lib/server/employer-auth') {
           const authorize = async (req: Request) => { if (!req.headers.has('authorization')) throw new EmployerApiError(401, 'Unauthorized'); context.employerData=(await employer.get()).data() ?? {}; return context; };
-          return { EmployerApiError, requireEmployerContext: authorize, requireEmployerPublishingContext: authorize };
+          return { EmployerApiError, requireEmployerContext: authorize, requireEmployerPublishingContext: authorize, assertOrganizationCanPublish: () => {} };
         }
         if (id === '@/lib/server/featured-job-entitlements') return entitlements;
         if (id === '@/lib/server/paid-job-publication') return paidPublication;
