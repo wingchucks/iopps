@@ -158,7 +158,8 @@ export async function getUnreadConversationCount(
 // Listen to conversations for a user in real time
 export function onConversations(
   userId: string,
-  callback: (convs: Conversation[]) => void
+  callback: (convs: Conversation[]) => void,
+  onError?: (error: FirestoreError) => void
 ): () => void {
   const q = query(
     convCol,
@@ -167,7 +168,7 @@ export function onConversations(
   );
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Conversation));
-  });
+  }, onError);
 }
 
 // Listen to messages in a conversation in real time

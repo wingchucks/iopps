@@ -128,6 +128,15 @@ test('Chrome: source access and actual CSS preserve detail text and metadata spa
   }
   const details = tab.locator('.journey-role-description');
   assert.equal(await details.textContent(), description);
+  // Long descriptions now use a native disclosure before the source link.
+  // Verify its keyboard interaction before measuring the expanded content.
+  await tab.keyboard.press('Tab');
+  const disclosure = tab.locator('summary');
+  assert.equal(await disclosure.evaluate(el => el === document.activeElement), true);
+  assert.equal(await tab.locator('details').evaluate(el => el.open), false);
+  await tab.keyboard.press('Enter');
+  assert.equal(await tab.locator('details').evaluate(el => el.open), true);
+  await details.waitFor({ state: 'visible' });
   const geometry = await details.evaluate(el => ({ clientHeight: el.clientHeight, scrollHeight: el.scrollHeight, overflow: getComputedStyle(el).overflow, clamp: getComputedStyle(el).webkitLineClamp }));
   assert.equal(geometry.clientHeight, geometry.scrollHeight);
   assert.equal(geometry.clamp, 'none');

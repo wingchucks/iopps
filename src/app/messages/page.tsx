@@ -20,6 +20,7 @@ import Card from "@/components/Card";
 import Avatar from "@/components/Avatar";
 
 const EMPTY_MESSAGES: Message[] = [];
+const EMPTY_CONVERSATIONS: Conversation[] = [];
 
 export default function MessagesPage() {
   return (
@@ -36,7 +37,7 @@ export default function MessagesPage() {
 function MessagesContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [inboxConversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [messageState, setMessageState] = useState<{
     key: string;
@@ -56,26 +57,36 @@ function MessagesContent() {
   const setNewMessage = (text: string) => setDrafts(previous => ({ ...previous, [draftKey]: text }));
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [inboxFailed, setInboxFailed] = useState(false);
+  const [inboxRetry, setInboxRetry] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const consumedRecipients = useRef(new Set<string>());
   const [inboxOwner, setInboxOwner] = useState<string | null>(null);
+  const conversations = inboxOwner === user?.uid ? inboxConversations : EMPTY_CONVERSATIONS;
+  const viewer = useRef(user?.uid);
+  viewer.current = user?.uid;
+  useEffect(() => { setActiveConvId(null); }, [user?.uid]);
 
   // Legacy recipient links can open only a conversation already in this inbox.
   const toParam = searchParams?.get("to");
   useEffect(() => {
-    if (!user || !toParam || inboxOwner !== user.uid) return;
+    if (!user || !toParam || inboxOwner !== user.uid || inboxFailed || loading) return;
     const key = JSON.stringify([user.uid, toParam]);
     if (consumedRecipients.current.has(key)) return;
     consumedRecipients.current.add(key);
     const existing = conversations.find(c => c.participants.includes(toParam));
     if (existing) setActiveConvId(existing.id);
-  }, [user, toParam, conversations, inboxOwner]);
+  }, [user, toParam, conversations, inboxOwner, inboxFailed, loading]);
 
   // Real-time conversations listener
   useEffect(() => {
     if (!user) return;
-    const unsub = onConversations(user.uid, async (convs) => {
+    let active = true;
+    setInboxOwner(null); setConversations([]); setProfiles({}); setLoading(true); setInboxFailed(false);
+    const current = () => active && viewer.current === user.uid;
+    const unsub = onConversations(user.uid, (convs) => {
+      if (!current()) return;
       setConversations(convs);
       setInboxOwner(user.uid);
       setLoading(false);
@@ -84,13 +95,17 @@ function MessagesContent() {
       Promise.all(convs.map(async c => {
         try { return await getConversationPeer(c.id); } catch { return null; }
       })).then(peers => {
+        if (!current()) return;
         const next: Record<string, ConversationPeer> = {};
         for (const peer of peers) if (peer) next[peer.uid] = peer;
         setProfiles(next);
       });
+    }, error => {
+      console.error("Failed to load conversations:", error);
+      if (current()) { setInboxOwner(user.uid); setInboxFailed(true); setLoading(false); }
     });
-    return unsub;
-  }, [user]);
+    return () => { active = false; unsub(); };
+  }, [user, inboxRetry]);
 
   // Real-time messages listener for active conversation
   useEffect(() => {
@@ -102,13 +117,17 @@ function MessagesContent() {
       console.error("Failed to load messages:", error);
       if (active) setMessageState({ key: messageKey, messages: [], failed: true });
     });
-    // Mark as read when opening a conversation
-    const conv = conversations.find((c) => c.id === activeConvId);
-    if (conv?.unreadBy === user.uid) {
-      markConversationRead(activeConvId);
-    }
     return () => { active = false; unsub(); };
   }, [activeConvId, user, messageKey]);
+
+  // Incoming messages in the open conversation must also clear its unread badge.
+  useEffect(() => {
+    if (!user || !activeConvId) return;
+    const conv = conversations.find((c) => c.id === activeConvId && c.participants.includes(user.uid));
+    if (conv?.unreadBy === user.uid) {
+      Promise.resolve(markConversationRead(activeConvId)).catch(error => console.error("Failed to mark conversation read:", error));
+    }
+  }, [activeConvId, user, conversations]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -181,7 +200,7 @@ function MessagesContent() {
 
           {/* Conversation list */}
           <div className="flex-1 overflow-y-auto">
-            {loading ? (
+            {inboxFailed && inboxOwner === user?.uid ? <div role="alert" className="p-4"><p>Conversations could not be loaded. Please try again.</p><button className="text-teal mt-2" onClick={() => setInboxRetry(value => value + 1)}>Retry</button></div> : loading || inboxOwner !== user?.uid ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="h-16 rounded-xl skeleton" />

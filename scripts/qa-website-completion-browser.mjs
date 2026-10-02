@@ -640,6 +640,57 @@ try {
   }finally{await closePage(page);}
  });
 
+ await check('NOT-01','Older unread notifications remain discoverable, totals include history, read state persists, and Messages is reachable on desktop and phone',async()=>{
+  need(state.aUid,'individual account');
+  for(let i=0;i<25;i++)await db.doc(`notifications/${prefix}-history-${i}`).set({userId:state.aUid,type:'system',title:`QA notification ${i}`,body:'Fictional notification history',read:i!==24,createdAt:new Date(Date.now()-i*60000)});
+  const page=await newPage(1440);
+  try{
+   await login(page,state.aEmail);await page.goto(server.base+'/notifications');
+   await expect(page.getByRole('link',{name:'Messages',exact:true})).toBeVisible();
+   await expect(page.getByRole('button',{name:/Unread.*1/})).toBeVisible();
+   await expect(page.getByText('QA notification 24',{exact:true})).toHaveCount(0);
+   await page.getByRole('button',{name:/Unread.*1/}).click();
+   await expect(page.getByText(/No unread notifications in the loaded history/)).toBeVisible();
+   await page.getByRole('button',{name:'Load older notifications',exact:true}).click();
+   await expect(page.getByText('QA notification 24',{exact:true})).toBeVisible();await shot(page,'NOT-01-older-unread');
+   await page.getByRole('button',{name:'Mark all as read',exact:true}).click();
+   await expect.poll(async()=>(await db.collection('notifications').where('userId','==',state.aUid).where('read','==',false).get()).size).toBe(0);
+   await page.reload();await page.getByRole('button',{name:'Unread',exact:true}).click();await expect(page.getByText('No unread notifications',{exact:true})).toBeVisible();
+   await page.getByRole('link',{name:'Messages',exact:true}).click();await page.waitForURL(url=>url.pathname==='/messages');
+   await page.goBack();await page.waitForURL(url=>url.pathname==='/notifications');
+   await page.goForward();await page.waitForURL(url=>url.pathname==='/messages');
+  }finally{await closePage(page);}
+  const phone=await newPage(390);
+  try{await login(phone,state.aEmail);await phone.goto(server.base+'/notifications');await phone.getByRole('button',{name:'Toggle navigation menu',exact:true}).click();
+   await shot(phone,'NOT-01-phone-menu');await expect(phone.getByRole('dialog',{name:'Navigation menu'}).getByRole('link',{name:/^Messages/})).toBeVisible();
+   await phone.getByRole('dialog',{name:'Navigation menu'}).getByRole('link',{name:/^Messages/}).click();await phone.waitForURL(url=>url.pathname==='/messages');assert.ok(await noHorizontalOverflow(phone));await shot(phone,'NOT-01-phone-messages');
+  }finally{await closePage(phone);}
+ });
+
+ await check('NOT-02','Linked notifications mark read and navigate through keyboard Enter and pointer activation',async()=>{
+  need(state.aUid,'individual account');const page=await newPage();
+  const records=[['keyboard','QA keyboard notification'],['pointer','QA pointer notification'],['bell-keyboard','QA bell keyboard notification']];
+  for(const [kind,title] of records)await db.doc(`notifications/${prefix}-${kind}`).set({userId:state.aUid,type:'system',title,body:'Fictional activation check',link:'/profile',read:false,createdAt:new Date()});
+  try{await login(page,state.aEmail);
+   for(const [kind,title] of records.slice(0,2)){await page.goto(server.base+'/notifications');const link=page.getByRole('link',{name:new RegExp(title)});await expect(link).toBeVisible();
+    if(kind==='keyboard'){await link.focus();await page.keyboard.press('Enter');}else await link.click();
+    await page.waitForURL(url=>url.pathname==='/profile');await expect.poll(async()=>(await db.doc(`notifications/${prefix}-${kind}`).get()).data().read).toBe(true);
+   }
+   await page.setViewportSize({width:900,height:1000});await page.goto(server.base+'/feed');await page.getByRole('button',{name:/^Notifications/}).click();
+   const bellLink=page.getByRole('link',{name:/QA bell keyboard notification/});await expect(bellLink).toBeVisible();await bellLink.focus();await page.keyboard.press('Enter');
+   await page.waitForURL(url=>url.pathname==='/profile');await expect.poll(async()=>(await db.doc(`notifications/${prefix}-bell-keyboard`).get()).data().read).toBe(true);
+  }finally{await closePage(page);}
+ });
+
+ await check('APP-05','Receipt-read failure offers retry without false Job Not Found; retry restores the existing receipt',async()=>{
+  const page=await newPage();
+  try{await login(page,state.aEmail);let fail=true;
+   await page.route('**/api/applications?**',route=>fail?route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Fictional temporary outage'})}):route.continue());
+   await page.goto(server.base+`/jobs/${state.cJob1}/apply`);await expect(page.getByRole('heading',{name:'Application details could not be loaded',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Job Not Found',exact:true})).toHaveCount(0);await shot(page,'APP-05-read-failure');
+   fail=false;await page.getByRole('button',{name:'Retry',exact:true}).click();await expect(page.getByRole('heading',{name:'Application saved',exact:true})).toBeVisible();await shot(page,'APP-05-recovered-receipt');
+  }finally{await closePage(page);}
+ });
+
  await check('LIVE-01','IOPPS Live opens and stays usable at desktop and phone widths (offline state; no live stream observable)',async()=>{
   const evidence={};
   for(const width of [1440,390]){const page=await newPage(width);

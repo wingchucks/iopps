@@ -6,15 +6,20 @@ const resend = process.env.RESEND_API_KEY
   : null;
 
 // Resend can resolve with an error response instead of rejecting the promise.
-async function sendCheckedEmail(options: Parameters<Resend["emails"]["send"]>[0]) {
+async function sendCheckedEmail(options: Parameters<Resend["emails"]["send"]>[0], deliveryOptions?: Parameters<Resend["emails"]["send"]>[1]) {
   if (!resend) throw new Error("Email not configured");
-  const result = await resend.emails.send(options);
+  const result = await resend.emails.send(options, deliveryOptions);
   if (result.error) throw new Error(result.error.message);
   if (!result.data?.id) throw new Error("Email provider did not confirm acceptance");
   return result.data;
 }
 
 const FROM_EMAIL = "IOPPS <notifications@iopps.ca>";
+
+// Provider acceptance is not proof of delivery to the recipient's inbox.
+export async function sendMessageNotification(payload: { to: string; subject: string; html: string }, idempotencyKey: string) {
+  return sendCheckedEmail({ from: FROM_EMAIL, ...payload }, { idempotencyKey });
+}
 const DEFAULT_ADMIN_EMAIL = "nathan.arias@iopps.ca";
 const ADMIN_EMAILS = (process.env.ADMIN_NOTIFICATION_EMAILS || process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL)
   .split(",")

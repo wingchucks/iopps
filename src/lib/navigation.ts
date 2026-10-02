@@ -14,6 +14,7 @@ export type NavigationIconName =
   | "handshake"
   | "bookmark"
   | "bell"
+  | "messages"
   | "settings"
   | "dashboard"
   | "tag";
@@ -132,6 +133,13 @@ const NAV_ITEM_DEFINITIONS = {
     icon: "bookmark",
     priority: 140,
   },
+  messages: {
+    key: "messages",
+    label: "Messages",
+    href: "/messages",
+    icon: "messages",
+    priority: 145,
+  },
   notifications: {
     key: "notifications",
     label: "Notifications",
@@ -221,7 +229,7 @@ const MEMBER_DESKTOP_TOP_KEYS: NavigationKey[] = [
   "businesses",
 ];
 
-const MEMBER_UTILITY_KEYS: NavigationKey[] = ["saved", "notifications", "settings"];
+const MEMBER_UTILITY_KEYS: NavigationKey[] = ["saved", "messages", "notifications", "settings"];
 const PUBLIC_AUTH_KEYS: NavigationKey[] = ["login", "signup"];
 
 function resolveHref(href: NavHref, audience: NavigationAudience): string {

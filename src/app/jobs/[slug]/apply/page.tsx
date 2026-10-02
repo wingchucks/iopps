@@ -60,6 +60,10 @@ function ApplyWizard() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const [loadedFor, setLoadedFor] = useState("");
+  const loadIdentity = `${user?.uid || ""}:${slug}`;
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [alreadyApplied, setAlreadyApplied] = useState(false);
@@ -79,6 +83,9 @@ function ApplyWizard() {
   const [references, setReferences] = useState("");
 
   useEffect(() => {
+    let active = true;
+    setLoadedFor(loadIdentity);
+    setLoading(true); setLoadFailed(false); setPost(null); setReceipt(null); setAlreadyApplied(false);
     async function load() {
       try {
         if (user) {
@@ -87,6 +94,7 @@ function ApplyWizard() {
           const response = await fetch(`/api/applications?postId=${encodeURIComponent(savedPostId)}`, {headers:{Authorization:`Bearer ${token}`},cache:"no-store"});
           if (!response.ok) throw new Error("Unable to check your existing application. Please reload.");
           const saved = await response.json();
+          if (!active) return;
           if (saved.application) {
             setReceipt(buildApplicationReceipt(saved.application));
             setAlreadyApplied(true);
@@ -100,6 +108,7 @@ function ApplyWizard() {
         if (!postData) {
           // Fall back to jobs collection via API
           const res = await fetch(`/api/jobs/${slug}`);
+          if (!res.ok && res.status !== 404) throw new Error("Unable to load this job. Please try again.");
           if (res.ok) {
             const data = await res.json();
             if (data.job) {
@@ -121,6 +130,7 @@ function ApplyWizard() {
             }
           }
         }
+        if (!active) return;
         if (postData) {
           const record = postData as unknown as Record<string, unknown>;
           const destination = resolveApplicationDestination(postData, slug);
@@ -132,9 +142,10 @@ function ApplyWizard() {
         }
         setPost(postData);
         if (postData) trackJobFunnelEvent("application_start", { jobId: postData.id });
-        if (user) setProfile(await getMemberProfile(user.uid));
+        if (user) { const nextProfile = await getMemberProfile(user.uid); if (!active) return; setProfile(nextProfile); }
         if (postData && user) {
           const application = await getApplicantReceipt(postData.id);
+          if (!active) return;
           if (application) {
             setAlreadyApplied(true);
             setReceipt(buildApplicationReceipt(application));
@@ -142,12 +153,14 @@ function ApplyWizard() {
         }
       } catch (err) {
         console.error("Failed to load job:", err);
+        if (active) setLoadFailed(true);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
     load();
-  }, [slug, user, router, showToast]);
+    return () => { active = false; };
+  }, [slug, user, router, showToast, retry, loadIdentity]);
 
   const handleFileSelect = async (file: File) => {
     if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -324,7 +337,7 @@ function ApplyWizard() {
   })();
   const canAdvance = () => !nextRequirement;
 
-  if (loading) {
+  if (loading || loadedFor !== loadIdentity) {
     return (
       <div className="max-w-[640px] mx-auto px-4 py-8">
         <div className="skeleton h-4 w-32 rounded mb-6" />
@@ -333,6 +346,8 @@ function ApplyWizard() {
       </div>
     );
   }
+
+  if (loadFailed) return <section className="max-w-[640px] mx-auto px-4 py-8" role="alert"><h1 className="text-xl font-bold mb-2">Application details could not be loaded</h1><p className="mb-4">We could not verify your existing application or load this job. Please try again before applying.</p><Button onClick={() => { setLoading(true); setRetry(value => value + 1); }}>Retry</Button><Link href={`/jobs/${slug}`} className="block mt-4 text-teal">Back to Job</Link></section>;
 
   if (receipt) {
     return <section className="max-w-[640px] mx-auto px-4 py-16" aria-live="polite">

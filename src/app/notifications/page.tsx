@@ -1,15 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
 import { useCurrentTime } from "@/lib/use-current-time";
-import {
-  onNotifications,
-  markAsRead,
-  markAllAsRead,
-  type Notification,
-} from "@/lib/firestore/notifications";
+import { useNotifications } from "@/lib/use-notifications";
+import type { Notification } from "@/lib/firestore/notifications";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
@@ -39,37 +34,12 @@ export default function NotificationsPage() {
 const filterTabs = ["All", "Unread"] as const;
 
 function NotificationsContent() {
-  const { user } = useAuth();
   const now = useCurrentTime();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [pageSize, setPageSize] = useState(20);
   const [activeTab, setActiveTab] = useState<string>("All");
-
-  useEffect(() => {
-    if (!user) return;
-    const unsub = onNotifications(user.uid, (data) => {
-      setNotifications(data);
-      setLoading(false);
-    });
-    return unsub;
-  }, [user]);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const handleMarkAllRead = async () => {
-    if (!user) return;
-    await markAllAsRead(user.uid);
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const handleClick = async (n: Notification) => {
-    if (!n.read) {
-      await markAsRead(n.id);
-      setNotifications((prev) =>
-        prev.map((item) => (item.id === n.id ? { ...item, read: true } : item))
-      );
-    }
-  };
+  const { notifications, loading, error, unreadCount, actionError, busy, retry, markRead } = useNotifications(pageSize);
+  const handleMarkAllRead = () => markRead();
+  const handleClick = (notification: Notification) => markRead(notification);
 
   const formatDate = (ts: unknown) => {
     if (!ts || typeof ts !== "object") return "";
@@ -91,8 +61,8 @@ function NotificationsContent() {
     <div className="max-w-[700px] mx-auto px-4 py-6 md:px-10 md:py-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-extrabold text-text">Notifications</h2>
-        {unreadCount > 0 && (
-          <Button small onClick={handleMarkAllRead}>
+        {unreadCount !== null && unreadCount > 0 && (
+          <Button small disabled={busy} onClick={handleMarkAllRead}>
             Mark all as read
           </Button>
         )}
@@ -113,7 +83,7 @@ function NotificationsContent() {
               }}
             >
               {tab}
-              {tab === "Unread" && unreadCount > 0 && (
+              {tab === "Unread" && unreadCount !== null && unreadCount > 0 && (
                 <span className="ml-1.5 text-xs opacity-70">({unreadCount})</span>
               )}
             </button>
@@ -121,7 +91,8 @@ function NotificationsContent() {
         </div>
       )}
 
-      {loading ? (
+      {actionError && <p role="alert" className="text-red mb-4">{actionError}</p>}
+      {error ? <Card style={{ padding: 24 }}><p role="alert">{error}</p><Button onClick={retry}>Retry</Button></Card> : loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-20 rounded-xl skeleton" />
@@ -141,7 +112,7 @@ function NotificationsContent() {
             const content = (
               <Card
                 key={n.id}
-                onClick={() => handleClick(n)}
+                onClick={n.link ? undefined : () => handleClick(n)}
                 className={n.link ? "" : "cursor-pointer"}
               >
                 <div
@@ -183,6 +154,8 @@ function NotificationsContent() {
           })}
         </div>
       )}
+      {!loading && !error && activeTab === "Unread" && !notifications.some(n => !n.read) && notifications.length > 0 && <p className="text-text-muted my-4">{unreadCount === 0 ? "No unread notifications" : "No unread notifications in the loaded history. Load older notifications to check more."}</p>}
+      {!loading && !error && notifications.length >= pageSize && <div className="mt-4"><p className="text-sm text-text-muted mb-2">Showing the latest {notifications.length} notifications.</p><Button onClick={() => setPageSize(value => value + 20)}>Load older notifications</Button></div>}
     </div>
   );
 }

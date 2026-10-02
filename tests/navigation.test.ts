@@ -75,7 +75,7 @@ test("brand and auth links use public-friendly destinations", () => {
   );
   assert.deepEqual(
     utilityItems.map((item) => item.key),
-    ["saved", "notifications", "settings"],
+    ["saved", "messages", "notifications", "settings"],
   );
   assert.equal(getBrandHref(false), "/");
   assert.equal(getBrandHref(true), "/feed");

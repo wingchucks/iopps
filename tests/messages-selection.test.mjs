@@ -10,6 +10,7 @@ function harness(sendResult = () => Promise.resolve()) {
   const slots = [], pending = [], sent = [], read = [], errors = [];
   let cursor = 0, inbox, tree, query = 'peer-a';
   const messageListeners = [];
+  const inboxListeners = [];
   let user = { uid: 'self' };
   const react = {
     useState(initial) { const i = cursor++; slots[i] ??= { value: initial }; return [slots[i].value, value => { slots[i].value = typeof value === 'function' ? value(slots[i].value) : value; }]; },
@@ -22,7 +23,7 @@ function harness(sendResult = () => Promise.resolve()) {
     'next/navigation': { useSearchParams: () => new URLSearchParams(query ? { to: query } : {}) },
     '@/lib/auth-context': { useAuth: () => ({ user }) },
     '@/lib/firestore/messages': {
-      onConversations: (_uid, callback) => { inbox = callback; return () => {}; },
+      onConversations: (_uid, callback, error) => { inbox = callback; inboxListeners.push({ snapshot: callback, error }); return () => {}; },
       onMessages: (id, snapshot, error) => { messageListeners.push({ id, snapshot, error }); return () => {}; }, markConversationRead: id => { read.push(id); },
       getConversationPeer: async () => null,
       sendMessage: async (...args) => { sent.push(args); await sendResult(); },
@@ -50,6 +51,7 @@ function harness(sendResult = () => Promise.resolve()) {
     query: value => { query = value; render(); },
     user: uid => { user = { uid }; render(); },
     messageListeners,
+    inboxListeners,
     messageSnapshot: rows => { messageListeners.at(-1).snapshot(rows); render(); },
     messageError: () => { messageListeners.at(-1).error(new Error('fictional missing index')); render(); },
     text: () => JSON.stringify(tree),
@@ -60,6 +62,26 @@ const rows = [
   { id: 'a', participants: ['self', 'peer-a'], lastMessage: 'Thread Alpha' },
   { id: 'b', participants: ['self', 'peer-b'], lastMessage: 'Thread Beta', unreadBy: 'self' },
 ];
+
+test('inbox failure is retryable and delayed snapshots from another account are ignored', () => {
+  const h = harness(); h.render(); h.inboxListeners[0].error(new Error('fictional denied')); h.render();
+  assert.match(h.text(), /Conversations could not be loaded/); assert.doesNotMatch(h.text(), /No conversations yet/);
+  h.retry(); h.snapshot(rows); const old = h.inboxListeners.at(-1);
+  h.user('second'); old.snapshot(rows.map(row => ({ ...row, lastMessage: 'Previous account private preview' }))); h.render();
+  assert.doesNotMatch(h.text(), /Previous account private preview|Thread Alpha|Thread Beta/);
+  h.snapshot([{ id: 'second', participants: ['second', 'peer'], lastMessage: 'Own second-account preview' }]);
+  assert.match(h.text(), /Own second-account preview/);
+});
+
+test('incoming unread state in the selected conversation marks it read without resetting its listener or draft', () => {
+  const h = harness(); h.render(); h.snapshot(rows); h.select('Thread Beta'); h.type('keep this draft');
+  h.snapshot(rows.map(row => ({ ...row, unreadBy: '' })));
+  const subscriptions = h.messageListeners.length;
+  h.snapshot(rows.map(row => row.id === 'b' ? { ...row, unreadBy: 'self', lastMessage: 'Incoming fixture' } : row));
+  assert.equal(h.read.filter(id => id === 'b').length, 2);
+  assert.equal(h.messageListeners.length, subscriptions);
+  assert.equal(h.input().props.value, 'keep this draft');
+});
 
 test('message listener loading and failure never claim an empty history; retry resubscribes', () => {
   const h = harness(); h.render(); h.snapshot(rows);

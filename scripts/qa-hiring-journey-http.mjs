@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { initializeApp as initializeAdmin, deleteApp as deleteAdmin } from 'firebase-admin/app';
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getStorage as getAdminStorage } from 'firebase-admin/storage';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithCustomToken } from 'firebase/auth';
@@ -238,12 +238,14 @@ try {
   passed('Team roles are organization-scoped; ordinary members cannot review applications and removed teammates lose access');
   const conversationId = prefix + '-conversation', messageId = prefix + '-message';
   await db.doc(`conversations/${conversationId}`).set({ participants: [candidateId, employerId] });
-  await db.doc(`messages/${messageId}`).set({ conversationId, senderId: candidateId, text: 'Isolated fictional message' });
+  await db.doc(`messages/${messageId}`).set({ conversationId, senderId: candidateId, text: 'Isolated fictional message', createdAt: Timestamp.now() });
   assert.equal((await request('POST', '/api/messages/notify', secondToken, { messageId })).status, 404);
-  assert.equal((await request('POST', '/api/messages/notify', candidateToken, { messageId, to: 'forged@example.invalid' })).status, 200);
-  assert.equal((await request('POST', '/api/messages/notify', candidateToken, { messageId })).status, 200);
+  assert.equal(process.env.RESEND_API_KEY, undefined);
+  assert.equal((await request('POST', '/api/messages/notify', candidateToken, { messageId, to: 'forged@example.invalid' })).status, 503);
+  assert.equal((await request('POST', '/api/messages/notify', candidateToken, { messageId })).status, 503);
   assert.equal((await db.doc(`mail/message-${messageId}`).get()).data().to, employerId + '@example.invalid');
-  passed('Message notifications use the existing conversation and verified recipient, with no arbitrary mail payloads or duplicates');
+  assert.equal((await db.doc(`mail/message-${messageId}`).get()).data().status, 'failed');
+  passed('Message notifications use the verified recipient and one receipt; absent provider credentials fail truthfully without undoing chat');
   await Promise.all(directoryIds.map(uid => db.doc(`members/${uid}`).set({ displayName: 'Fictional directory member', resumeUrl: 'PRIVATE_DIRECTORY_RESUME' })));
   const firstPage = await request('GET', '/api/members?cursor=' + prefix + '-page-', employerToken);
   assert.equal(firstPage.status, 200);
