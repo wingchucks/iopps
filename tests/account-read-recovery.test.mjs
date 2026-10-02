@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 
-function fixture(path, supplied = {}, hook = false) {
+function fixture(path, supplied = {}, hook = false, directComponent = false) {
   const slots = [], pending = [], subscriptions = [], writes = [];
   let cursor = 0, user = { uid: 'qa-a', getIdToken: async () => 'fictional-token' }, value, implementation;
   const react = {
@@ -30,9 +30,9 @@ function fixture(path, supplied = {}, hook = false) {
   const imports = { ...defaults, ...supplied }, exports = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(path, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-  }).outputText, { exports, console: { error() {} }, URLSearchParams, window: { location: { search: '' } }, fetch: supplied.fetch || (async () => ({ ok: true, json: async () => ({}) })), require: id => imports[id] || { default: id } });
+  }).outputText, { exports, console: { error() {} }, URLSearchParams, document: { addEventListener() {}, removeEventListener() {} }, window: { location: { search: '' } }, fetch: supplied.fetch || (async () => ({ ok: true, json: async () => ({}) })), require: id => imports[id] || { default: id } });
   const nodes = tree => !tree || typeof tree !== 'object' ? [] : Array.isArray(tree) ? tree.flatMap(nodes) : [tree, ...nodes(tree.props?.children)];
-  implementation = hook ? exports.useNotifications : nodes(exports.default()).find(n => typeof n.type === 'function').type;
+  implementation = hook ? exports.useNotifications : directComponent ? exports.default : nodes(exports.default()).find(n => typeof n.type === 'function').type;
   const render = (size = 20) => {
     for (let i = 0; i < 12; i++) { cursor = 0; value = implementation(size); if (!pending.length) return value; for (const effect of pending.splice(0)) effect(); }
     throw new Error('Effects did not settle');
@@ -63,6 +63,22 @@ test('linked notification activation handles keyboard Enter once on the anchor; 
   const unlinked = h.nodes().find(node => node.type === '@/components/Card' && JSON.stringify(node.props.children).includes('Unlinked fixture'));
   await unlinked.props.onClick();
   assert.deepEqual(marked, ['qa-linked', 'qa-unlinked']);
+});
+
+test('notification bell linked rows also mark read on keyboard anchor activation without a duplicate descendant handler', async () => {
+  const marked = [];
+  const row = { id: 'qa-bell', userId: 'qa-a', read: false, title: 'Bell fixture', link: '/profile' };
+  const h = fixture('src/components/NotificationBell.tsx', {
+    '@/lib/use-current-time': { useCurrentTime: () => 0 },
+    '@/lib/use-notifications': { useNotifications: () => ({ notifications: [row], loading: false, error: '', unreadCount: 1, actionError: '', busy: false, retry() {}, markRead: async notification => { marked.push(notification.id); return true; } }) },
+  }, false, true);
+  h.render(); h.nodes().find(node => node.type === 'button' && node.props['aria-label']?.startsWith('Notifications')).props.onClick(); h.render();
+  const anchor = h.nodes().find(node => node.type === 'next/link' && node.props.href === '/profile');
+  assert.equal(typeof anchor.props.onClick, 'function');
+  assert.equal(anchor.props.children.props.onClick, undefined);
+  await anchor.props.onClick({ detail: 0 }); h.render();
+  assert.deepEqual(marked, ['qa-bell']);
+  assert.equal(h.nodes().some(node => node.type === 'next/link' && node.props.href === '/profile'), false, 'Successful activation closes the preview');
 });
 
 test('25-record history: unread older than recent 20 still contributes to total; larger window returns it', () => {

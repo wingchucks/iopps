@@ -99,7 +99,7 @@ export default function NotificationBell() {
               const inner = (
                 <div
                   key={n.id}
-                  onClick={() => handleClickNotification(n)}
+                  onClick={n.link ? undefined : () => handleClickNotification(n)}
                   className="flex gap-3 items-start cursor-pointer transition-colors hover:bg-bg"
                   style={{
                     padding: "12px 16px",
@@ -127,7 +127,7 @@ export default function NotificationBell() {
                 </div>
               );
               return n.link ? (
-                <Link key={n.id} href={n.link} className="no-underline">
+                <Link key={n.id} href={n.link} className="no-underline" onClick={() => handleClickNotification(n)}>
                   {inner}
                 </Link>
               ) : (

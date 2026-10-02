@@ -669,13 +669,16 @@ try {
 
  await check('NOT-02','Linked notifications mark read and navigate through keyboard Enter and pointer activation',async()=>{
   need(state.aUid,'individual account');const page=await newPage();
-  const records=[['keyboard','QA keyboard notification'],['pointer','QA pointer notification']];
+  const records=[['keyboard','QA keyboard notification'],['pointer','QA pointer notification'],['bell-keyboard','QA bell keyboard notification']];
   for(const [kind,title] of records)await db.doc(`notifications/${prefix}-${kind}`).set({userId:state.aUid,type:'system',title,body:'Fictional activation check',link:'/profile',read:false,createdAt:new Date()});
   try{await login(page,state.aEmail);
-   for(const [kind,title] of records){await page.goto(server.base+'/notifications');const link=page.getByRole('link',{name:new RegExp(title)});await expect(link).toBeVisible();
+   for(const [kind,title] of records.slice(0,2)){await page.goto(server.base+'/notifications');const link=page.getByRole('link',{name:new RegExp(title)});await expect(link).toBeVisible();
     if(kind==='keyboard'){await link.focus();await page.keyboard.press('Enter');}else await link.click();
     await page.waitForURL(url=>url.pathname==='/profile');await expect.poll(async()=>(await db.doc(`notifications/${prefix}-${kind}`).get()).data().read).toBe(true);
    }
+   await page.setViewportSize({width:900,height:1000});await page.goto(server.base+'/feed');await page.getByRole('button',{name:/^Notifications/}).click();
+   const bellLink=page.getByRole('link',{name:/QA bell keyboard notification/});await expect(bellLink).toBeVisible();await bellLink.focus();await page.keyboard.press('Enter');
+   await page.waitForURL(url=>url.pathname==='/profile');await expect.poll(async()=>(await db.doc(`notifications/${prefix}-bell-keyboard`).get()).data().read).toBe(true);
   }finally{await closePage(page);}
  });
 
