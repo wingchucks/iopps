@@ -411,8 +411,8 @@ service cloud.firestore {
         resource.data.reporterId == request.auth.uid ||
         isAdmin()
       );
-      allow create: if isSignedIn() &&
-        request.resource.data.reporterId == request.auth.uid;
+      // Reports are submitted through POST /api/reports, which writes contentFlags.
+      allow create: if false;
       allow update: if isAdmin();
     }
 
