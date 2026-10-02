@@ -191,6 +191,14 @@ test('activating or reopening a job keeps its stored closing date unless a new o
   }
 });
 
+test('the admin draft notification links to the admin jobs page, not the employer editor', async () => {
+  const h = jobRoutes();
+  await h.post({ title: 'Fictional coordinator', slug: 'draft-notice', status: 'draft' });
+  await h.post({ title: 'Fictional coordinator', slug: 'live-notice', status: 'active' });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(h.calls.emails.map(email => email.urlPath), ['/admin/jobs?search=Fictional+coordinator', '/jobs/live-notice']);
+});
+
 test('expected payment and placement denials are JSON with a code and logged as warnings, not errors', async () => {
   for (const [code, status] of [['payment_required', 402], ['invalid_duration', 409]]) {
     const h = jobRoutes({ jobs: { job: draftJob({ featured: true }) }, paid: () => { throw new paidPublication.PublicationError(code, 'Denied for the fixture.'); } });

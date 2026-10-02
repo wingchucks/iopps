@@ -325,7 +325,8 @@ export async function POST(req: NextRequest) {
       authorName: (context.userData.displayName as string) || (context.memberData.displayName as string) || null,
       authorEmail: (context.userData.email as string) || (context.memberData.email as string) || (context.employerData.contactEmail as string) || null,
       id: baseSlug,
-      urlPath: status === "active" ? `/jobs/${baseSlug}` : `/org/dashboard/jobs/${baseSlug}/edit`,
+      // The employer editor is closed to admins of other organizations; drafts are reviewed in admin Jobs.
+      urlPath: status === "active" ? `/jobs/${baseSlug}` : `/admin/jobs?${new URLSearchParams({ search: title })}`,
     }).catch((error) => {
       console.error("[api/employer/jobs][POST] Admin content email failed:", error);
     });
