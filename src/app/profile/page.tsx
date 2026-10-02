@@ -57,6 +57,16 @@ function profileSaveError(error: unknown): ProfileSaveError {
   return { message: `${message} Your edits are still here.` };
 }
 
+// `skills` is what employers receive; Career Preferences edits it directly. Show those
+// chips in the editable text whenever the stored text no longer describes them.
+function editableSkillsText(profile: Pick<MemberProfile, "skills" | "skillsText">): string {
+  const text = typeof profile.skillsText === "string" ? profile.skillsText : "";
+  if (!Array.isArray(profile.skills)) return text;
+  const skills = profile.skills.filter((skill): skill is string => typeof skill === "string");
+  const parsed = text.split(",").map((skill) => skill.trim()).filter(Boolean);
+  return parsed.length === skills.length && parsed.every((skill, index) => skill === skills[index]) ? text : skills.join(", ");
+}
+
 const appStatusConfig: Record<
   ApplicationStatus,
   { label: string; color: string; bg: string }
@@ -117,6 +127,9 @@ function ProfileContent() {
   const [apps, setApps] = useState<Application[]>([]);
   const [savedCount, setSavedCount] = useState(0);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
+  // A failed or timed-out read leaves the form blank; saving it would erase the profile.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -124,6 +137,7 @@ function ProfileContent() {
     const isCurrent = () => !controller.signal.aborted && auth.currentUser === user;
     const loadProfile = async () => {
       if (!isCurrent()) return;
+      let profileLoaded = false;
       try {
         const data = await getMemberProfile(user.uid, controller.signal);
         if (!isCurrent()) return;
@@ -140,9 +154,10 @@ function ProfileContent() {
           setTerritory(data.territory || "");
           setLanguages(data.languages || "");
           setHeadline(data.headline || "");
-          setSkillsText(data.skillsText || "");
+          setSkillsText(editableSkillsText(data));
           setEditInterests(data.interests || []);
         }
+        profileLoaded = true;
         // Load own activity stats and RSVPs
         const [userApps, saved, userRsvps] = await Promise.all([
           getApplications(user.uid),
@@ -156,20 +171,30 @@ function ProfileContent() {
         setRsvps(userRsvps);
 
       } catch (err) {
-        if (isCurrent()) console.error("Failed to load profile:", err);
+        if (isCurrent()) {
+          console.error("Failed to load profile:", err);
+          // Activity stats can fail on their own; only a missing profile read blocks editing.
+          if (!profileLoaded) setLoadFailed(true);
+        }
       } finally {
         if (isCurrent()) setLoading(false);
       }
     };
     void loadProfile();
     return () => controller.abort();
-  }, [router, user]);
+  }, [router, user, loadAttempt]);
+
+  const retryLoad = () => {
+    setLoadFailed(false);
+    setLoading(true);
+    setLoadAttempt((attempt) => attempt + 1);
+  };
 
   const displayName = profile?.displayName || user?.displayName || user?.email?.split("@")[0] || "User";
   const email = profile?.email || user?.email || "";
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || loadFailed) return;
     setSaving(true);
     setSaveError(null);
     try {
@@ -329,11 +354,12 @@ function ProfileContent() {
           <div className="flex gap-2.5 mt-2 sm:mt-0">
             <Button className="brand-button"
               small
+              disabled={loadFailed}
               onClick={() => {
                 if (editing) {
                   setEditing(false);
                   setEditSection(null);
-                } else {
+                } else if (!loadFailed) {
                   setEditing(true);
                   setEditSection("identity");
                 }
@@ -360,7 +386,19 @@ function ProfileContent() {
 
       {/* Content */}
       <div className="px-4 py-6 md:px-12">
-        {editing ? (
+        {loadFailed ? (
+          <Card>
+            <div role="alert" style={{ padding: 24 }}>
+              <h3 className="text-lg font-bold text-text mb-1">Your profile could not be loaded</h3>
+              <p className="text-sm text-text-muted mb-4">
+                Editing is paused so your saved profile is not replaced with blank fields. Check your connection and try again.
+              </p>
+              <Button small onClick={retryLoad}>
+                Try again
+              </Button>
+            </div>
+          </Card>
+        ) : editing ? (
           /* -- Edit Mode (Accordion Sections) -- */
           <div>
             <h3 className="text-lg font-bold text-text mb-4">Edit Profile</h3>

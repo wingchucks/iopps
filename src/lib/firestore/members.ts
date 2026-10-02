@@ -142,8 +142,12 @@ export async function updateCareerPreferences(
 ): Promise<void> {
   const error = salaryRangeError(data.salaryRange);
   if (error) throw new Error(error);
+  // Keep the Profile page's skills text describing the same skills, so saving that
+  // page (which derives skills from the text) cannot drop skills added here.
+  const skillsText = data.skills === undefined ? {} : { skillsText: data.skills.join(", ") };
   await updateDoc(doc(db, "members", uid), {
     ...data,
+    ...skillsText,
     updatedAt: serverTimestamp(),
   });
 }
