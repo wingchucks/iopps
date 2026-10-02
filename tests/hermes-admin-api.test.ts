@@ -83,7 +83,7 @@ function apiDeps(): HermesAdminApiDeps {
           status: "approved",
           verified: true,
           subscriptionTier: "premium",
-          unlimitedJobPostings: true,
+          unlimitedJobPostings: false,
           subscriptionStart: normalized.subscriptionStart,
           subscriptionEnd: normalized.subscriptionEnd,
         },
@@ -107,6 +107,9 @@ test("signed Hermes review returns one opaque, no-store review response", async 
   assert.equal(payload.ok, true);
   assert.match(payload.reviewToken, /^[A-Za-z0-9_-]{43}$/);
   assert.deepEqual(Object.keys(payload).sort(), ["current", "desired", "ok", "reviewToken", "target"]);
+  // The response keeps its shape; a complimentary grant honestly reports no unlimited postings.
+  assert.equal(payload.desired.unlimitedJobPostings, false);
+  assert.equal(payload.current.unlimitedJobPostings, false);
 });
 
 test("signed Hermes apply requires the exact envelope and returns only verified state", async () => {
@@ -129,6 +132,7 @@ test("signed Hermes apply requires the exact envelope and returns only verified 
   const payload = await response.json();
   assert.deepEqual(Object.keys(payload).sort(), ["committedAt", "ok", "status", "verified"]);
   assert.equal(payload.status, "applied");
+  assert.equal(payload.verified.unlimitedJobPostings, false);
   assert.equal(JSON.stringify(payload).includes(reviewPayload.reviewToken), false);
 
   const invalid = await handleHermesEmployerApplyRequest(
@@ -160,7 +164,7 @@ test("Hermes apply returns a completed deterministic idempotent result before st
     status: "approved",
     verified: true,
     subscriptionTier: "premium",
-    unlimitedJobPostings: true,
+    unlimitedJobPostings: false,
     subscriptionStart: command.subscriptionStart,
     subscriptionEnd: command.subscriptionEnd,
   };

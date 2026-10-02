@@ -83,6 +83,10 @@ For a job-targeted employer grant, use the same apply envelope and repeat the ex
 
 All responses use `Cache-Control: no-store` and omit internal exception details.
 
+### Complimentary grants do not include job postings
+
+Every employer grant applied through this API is complimentary Premium/tier2 access at $0. Complimentary Premium grants do not include job postings or featured job slots; only a paid Premium term includes unlimited job postings. The `unlimitedJobPostings` field in the `current`, `desired`, and `verified` projections keeps its name and type and is `true` only when the account has a paid Premium term. It is always `false` in the desired and verified projections of a Hermes grant: that is the expected, verified result, not a failure. To let an organization post jobs for free, an administrator gives it job posting credits with **Grant credit** on the admin Employers list.
+
 ## Approve one exact draft job
 
 Job review accepts exactly this body at `POST /api/hermes/v1/jobs/approve/review`:

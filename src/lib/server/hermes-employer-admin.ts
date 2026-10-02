@@ -304,6 +304,7 @@ export interface HermesEmployerVerifiedProjection {
   status: string;
   verified: boolean;
   subscriptionTier: string;
+  /** True only for a paid Premium term; complimentary access, including every Hermes grant, is false. */
   unlimitedJobPostings: boolean;
   subscriptionStart: string;
   subscriptionEnd: string;
@@ -615,6 +616,24 @@ function dateOnly(value: unknown): string {
   return Number.isNaN(parsed.getTime()) ? value.slice(0, 10) : parsed.toISOString().slice(0, 10);
 }
 
+/**
+ * Unlimited job postings come only with a paid Premium term (SUBSCRIPTION_PLANS.tier2 in
+ * pricing.ts). Complimentary access, a $0 admin grant or any Hermes grant, never funds job
+ * postings; administrators give free postings with job posting credits instead. Publication
+ * decides with receipts (paid-job-term.ts). This receipt-free projection accepts only the
+ * payment evidence that check starts from, a Stripe term (its termId is the Checkout Session
+ * id) or a paid manual term, so a grant or an ambiguous record never reads as unlimited.
+ */
+function isPaidPremiumTerm(tier: string, subscription: Record<string, unknown>): boolean {
+  if (tier !== "premium" || subscription.status !== "active") return false;
+  const paymentId = typeof subscription.paymentId === "string" ? subscription.paymentId : "";
+  if (paymentId.startsWith("admin-grant-")) return false;
+  const stripeTerm = typeof subscription.termId === "string" && /^cs_[A-Za-z0-9_-]+$/.test(subscription.termId);
+  const paidManualTerm = paymentId === "admin-manual-tier2" &&
+    typeof subscription.amountPaid === "number" && subscription.amountPaid > 0;
+  return stripeTerm || paidManualTerm;
+}
+
 export function projectHermesEmployerState(
   command: HermesEmployerCommand,
   user: HermesEmployerDocument,
@@ -637,7 +656,7 @@ export function projectHermesEmployerState(
     status: pickText(source, "status") || pickText(employer.data, "status"),
     verified: source.verified === true || employer.data.verified === true,
     subscriptionTier: tier,
-    unlimitedJobPostings: tier === "premium" && Number(subscription.amountPaid ?? 0) === 0,
+    unlimitedJobPostings: isPaidPremiumTerm(tier, subscription),
     subscriptionStart: dateOnly(start),
     subscriptionEnd: dateOnly(end),
   };
@@ -651,7 +670,8 @@ function desiredProjection(command: HermesEmployerCommand): HermesEmployerVerifi
     status: "approved",
     verified: true,
     subscriptionTier: "premium",
-    unlimitedJobPostings: true,
+    // A Hermes grant is always complimentary ($0), so it never includes job postings.
+    unlimitedJobPostings: false,
     subscriptionStart: command.subscriptionStart,
     subscriptionEnd: command.subscriptionEnd,
   };

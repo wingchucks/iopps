@@ -543,6 +543,7 @@ test("Firestore Hermes apply is atomic, deterministic, sanitized, and rereads co
   assert.equal(first.verified.organizationName, "Correct Organization");
   assert.equal(first.verified.role, "employer");
   assert.equal(first.verified.subscriptionTier, "premium");
+  assert.equal(first.verified.unlimitedJobPostings, false, "a complimentary grant does not include job postings");
   assert.ok(memory.stats().outsideReads >= 4, "post-write state must be reread outside the transaction");
   assert.deepEqual(memory.get("users", "user_1")?.data, {
     email: command.email,
