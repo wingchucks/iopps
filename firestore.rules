@@ -266,11 +266,14 @@ service cloud.firestore {
       allow read, update: if false;
     }
 
-    // Notifications: users can read/update/create their own
+    // Notifications are created only by trusted server code. Owners read their
+    // own and may only mark them read; every other field, including userId, is fixed.
     match /notifications/{notifId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if false;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data['read'] is bool;
     }
 
     // Existing conversations: participants can read/update; creation is retired.
