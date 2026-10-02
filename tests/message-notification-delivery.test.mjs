@@ -5,6 +5,13 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import * as crypto from 'node:crypto';
 
+// The actual escaping template: the route passes raw names and never pre-escapes them.
+function templates() {
+  const exports = {};
+  vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/email-templates.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports });
+  return exports;
+}
+
 function harness() {
   let now = 1_800_000_000_000, providerError = false, receiptWriteError = false;
   const documents = new Map([
@@ -37,7 +44,7 @@ function harness() {
       if (id === '@/lib/api-auth') return { verifyAuthToken: async () => unauthorized ? { success: false, response: { status: 401 } } : { success: true, decodedToken: { uid: user } } };
       if (id === '@/lib/firebase-admin') return { getAdminDb: () => db, getAdminAuth: () => ({ getUser: async uid => { assert.equal(uid, 'recipient'); return identity; } }) };
       if (id === 'firebase-admin/firestore') return { FieldValue: { serverTimestamp: () => now } };
-      if (id === '@/lib/email-templates') return { newMessageEmail: (recipient, sender) => `${recipient} received a message from ${sender}: https://www.iopps.ca/messages` };
+      if (id === '@/lib/email-templates') return templates();
       if (id === 'node:crypto') return crypto;
       if (id === '@/lib/email') return { sendMessageNotification: async (payload, key) => {
         calls.push({ payload, key });
@@ -58,6 +65,9 @@ test('message notification uses verified Auth address, escaped identity, private
   const { payload, key } = h.calls[0];
   assert.equal(payload.to, 'verified@example.test');
   assert.match(payload.html, /&lt;b&gt;Sender&lt;\/b&gt;/);
+  assert.match(payload.html, /Hi &lt;i&gt;Recipient&lt;\/i&gt;,/);
+  assert.doesNotMatch(payload.html, /<b>Sender|<i>Recipient|&amp;lt;/, 'names are escaped exactly once');
+  assert.match(payload.html, /href="https:\/\/www\.iopps\.ca\/messages"/);
   assert.doesNotMatch(payload.html, /PRIVATE BODY/);
   assert.ok(key.length < 256);
   assert.equal(h.documents.get('mail/message-msg').status, 'accepted');

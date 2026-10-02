@@ -5,10 +5,15 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
+// Subjects are plain header text: user-chosen names must never start another header line.
+function emailSubject(value: unknown): string {
+  return String(value ?? "").replace(/[\r\n\t\v\f\u2028\u2029]+/g, " ").trim();
+}
+
 // Resend can resolve with an error response instead of rejecting the promise.
 async function sendCheckedEmail(options: Parameters<Resend["emails"]["send"]>[0], deliveryOptions?: Parameters<Resend["emails"]["send"]>[1]) {
   if (!resend) throw new Error("Email not configured");
-  const result = await resend.emails.send(options, deliveryOptions);
+  const result = await resend.emails.send({ ...options, subject: emailSubject(options.subject) }, deliveryOptions);
   if (result.error) throw new Error(result.error.message);
   if (!result.data?.id) throw new Error("Email provider did not confirm acceptance");
   return result.data;
@@ -174,14 +179,14 @@ export async function sendEmployerWelcome(opts: {
       <p style="${STYLES.text};margin-bottom:14px;">
         Please confirm this email address so you can finish onboarding, manage your organization, and post public content.
       </p>
-      <a href="${opts.verificationLink}" style="${STYLES.button}">Confirm Email</a>
+      <a href="${escapeHtml(opts.verificationLink)}" style="${STYLES.button}">Confirm Email</a>
     </div>`
     : "";
 
   const html = emailWrapper(`
-    <h2 style="${STYLES.h2}">Welcome to IOPPS, ${opts.contactName}! 👋</h2>
+    <h2 style="${STYLES.h2}">Welcome to IOPPS, ${escapeHtml(opts.contactName)}! 👋</h2>
     <p style="${STYLES.text}">
-      <strong>${opts.orgName}</strong> is now registered on IOPPS.ca — Canada's
+      <strong>${escapeHtml(opts.orgName)}</strong> is now registered on IOPPS.ca — Canada's
       Indigenous careers, events, and community platform.
     </p>
     ${confirmationBlock}
@@ -263,9 +268,9 @@ export async function sendAdminNewSignup(opts: {
     <div style="background:${typeColor};color:#fff;display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:16px;">${typeLabel.toUpperCase()}</div>
     <h2 style="${STYLES.h2}">New Signup on IOPPS.ca</h2>
     <table style="width:100%;border-collapse:collapse;font-size:14px;color:#374151;margin-bottom:24px;">
-      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;width:40%;">Name</td><td style="padding:10px 0;font-weight:600;">${opts.name}</td></tr>
-      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Email</td><td style="padding:10px 0;">${opts.email}</td></tr>
-      ${opts.orgName ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Organization</td><td style="padding:10px 0;font-weight:600;">${opts.orgName}</td></tr>` : ""}
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;width:40%;">Name</td><td style="padding:10px 0;font-weight:600;">${escapeHtml(opts.name)}</td></tr>
+      <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Email</td><td style="padding:10px 0;">${escapeHtml(opts.email)}</td></tr>
+      ${opts.orgName ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Organization</td><td style="padding:10px 0;font-weight:600;">${escapeHtml(opts.orgName)}</td></tr>` : ""}
       <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:10px 0;color:#9ca3af;">Type</td><td style="padding:10px 0;">${typeLabel}</td></tr>
       <tr><td style="padding:10px 0;color:#9ca3af;">Time</td><td style="padding:10px 0;">${new Date().toLocaleString("en-CA", { timeZone: "America/Regina" })} CST</td></tr>
     </table>
@@ -389,12 +394,12 @@ export async function sendSubscriptionConfirmation(opts: {
   const html = emailWrapper(`
     <h2 style="${STYLES.h2}">Payment Confirmed ✅</h2>
     <p style="${STYLES.text}">
-      Thank you, ${opts.contactName}! Your <strong>${opts.planName}</strong> plan
-      for <strong>${opts.orgName}</strong> is now active.
+      Thank you, ${escapeHtml(opts.contactName)}! Your <strong>${escapeHtml(opts.planName)}</strong> plan
+      for <strong>${escapeHtml(opts.orgName)}</strong> is now active.
     </p>
     <div style="background:#f9fafb;border-radius:12px;padding:20px;margin:20px 0;">
       <table style="width:100%;font-size:14px;color:#374151;">
-        <tr><td>Plan</td><td style="text-align:right;font-weight:700">${opts.planName}</td></tr>
+        <tr><td>Plan</td><td style="text-align:right;font-weight:700">${escapeHtml(opts.planName)}</td></tr>
         <tr><td>Amount</td><td style="text-align:right">$${opts.amount.toFixed(2)} CAD</td></tr>
         <tr><td>GST (5%)</td><td style="text-align:right">$${opts.gst.toFixed(2)} CAD</td></tr>
         <tr style="border-top:1px solid #e5e7eb"><td style="font-weight:700;padding-top:8px">Total</td><td style="text-align:right;font-weight:700;padding-top:8px">$${total.toFixed(2)} CAD</td></tr>

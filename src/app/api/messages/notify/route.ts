@@ -6,7 +6,6 @@ import { newMessageEmail } from "@/lib/email-templates";
 import { sendMessageNotification } from "@/lib/email";
 import { createHash, randomUUID } from "node:crypto";
 
-const escape = (value: string) => value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
 const MANAGED_BY = "message-resend-v1";
 const LEASE_MS = 120_000;
 // Resend caches keys for 24 hours. Stop retries before the provider cache expires.
@@ -49,7 +48,8 @@ export async function POST(request: NextRequest) {
       const payload = previous ? { to: previous.to as string, subject: previous.message.subject as string, html: previous.message.html as string } : {
         to: identity.email,
         subject: `New message from ${name}`,
-        html: newMessageEmail(escape(String(recipient.data()?.displayName || "Member")), escape(name)),
+        // The template escapes both names; the email subject is plain text.
+        html: newMessageEmail(String(recipient.data()?.displayName || "Member"), name),
       };
       const idempotencyKey = `message-${createHash("sha256").update(messageId).digest("hex")}`;
       if (queued.exists) tx.update(receipt, { leaseToken, leaseUntil: now + LEASE_MS, status: "sending" });
