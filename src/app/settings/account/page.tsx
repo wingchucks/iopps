@@ -44,7 +44,8 @@ function AccountContent() {
   const { showToast } = useToast();
   const router = useRouter();
   const providerIds = user?.providerData?.map((provider) => provider.providerId) ?? [];
-  const googleOnly = !providerIds.includes("password") && providerIds.includes("google.com");
+  // Exact Firebase provider IDs, not URLs.
+  const googleOnly = !providerIds.some((id) => id === "password") && providerIds.some((id) => id === "google.com");
 
   // Display name
   const [displayName, setDisplayName] = useState(user?.displayName || "");

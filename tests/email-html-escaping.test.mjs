@@ -61,7 +61,7 @@ test('employer welcome and subscription confirmation escape names, plans and lin
   await email.sendSubscriptionConfirmation({ email: 'owner@example.invalid', contactName: LINK, orgName: IMAGE, planName: '<script>alert(1)</script>', amount: 100, gst: 5 });
   for (const message of sent) assertInert(message.html);
   assert.ok(sent[0].html.includes('href="https://www.iopps.ca/auth/action?mode=verifyEmail&amp;oobCode=fictional&quot;&gt;&lt;b&gt;"'));
-  assert.doesNotMatch(sent[1].html, /<script>/);
+  assert.doesNotMatch(sent[1].html, /<script\b/i);
   assert.ok(sent[1].html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
   assert.ok(sent[1].html.includes('$105.00 CAD'));
 });
