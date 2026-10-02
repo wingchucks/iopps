@@ -112,7 +112,7 @@ function NotificationsContent() {
             const content = (
               <Card
                 key={n.id}
-                onClick={() => handleClick(n)}
+                onClick={n.link ? undefined : () => handleClick(n)}
                 className={n.link ? "" : "cursor-pointer"}
               >
                 <div
@@ -145,7 +145,7 @@ function NotificationsContent() {
               </Card>
             );
             return n.link ? (
-              <Link key={n.id} href={n.link} className="no-underline" >
+              <Link key={n.id} href={n.link} className="no-underline" onClick={() => handleClick(n)}>
                 {content}
               </Link>
             ) : (

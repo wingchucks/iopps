@@ -667,6 +667,18 @@ try {
   }finally{await closePage(phone);}
  });
 
+ await check('NOT-02','Linked notifications mark read and navigate through keyboard Enter and pointer activation',async()=>{
+  need(state.aUid,'individual account');const page=await newPage();
+  const records=[['keyboard','QA keyboard notification'],['pointer','QA pointer notification']];
+  for(const [kind,title] of records)await db.doc(`notifications/${prefix}-${kind}`).set({userId:state.aUid,type:'system',title,body:'Fictional activation check',link:'/profile',read:false,createdAt:new Date()});
+  try{await login(page,state.aEmail);
+   for(const [kind,title] of records){await page.goto(server.base+'/notifications');const link=page.getByRole('link',{name:new RegExp(title)});await expect(link).toBeVisible();
+    if(kind==='keyboard'){await link.focus();await page.keyboard.press('Enter');}else await link.click();
+    await page.waitForURL(url=>url.pathname==='/profile');await expect.poll(async()=>(await db.doc(`notifications/${prefix}-${kind}`).get()).data().read).toBe(true);
+   }
+  }finally{await closePage(page);}
+ });
+
  await check('APP-05','Receipt-read failure offers retry without false Job Not Found; retry restores the existing receipt',async()=>{
   const page=await newPage();
   try{await login(page,state.aEmail);let fail=true;

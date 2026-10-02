@@ -39,12 +39,31 @@ function fixture(path, supplied = {}, hook = false) {
   };
   return {
     render, subscriptions, writes, value: () => value,
+    nodes: () => nodes(value),
     text: () => JSON.stringify(value),
     flush: async () => { for (let i = 0; i < 20; i++) await Promise.resolve(); render(); },
     retry: () => { nodes(value).find(n => n.props?.children === 'Retry').props.onClick(); render(); },
     switchUser: uid => { user = { uid, getIdToken: async () => 'fictional-token' }; render(); },
   };
 }
+
+test('linked notification activation handles keyboard Enter once on the anchor; only unlinked cards handle clicks', async () => {
+  const marked = [];
+  const rows = [{ id: 'qa-linked', userId: 'qa-a', read: false, title: 'Linked fixture', link: '/profile' }, { id: 'qa-unlinked', userId: 'qa-a', read: false, title: 'Unlinked fixture' }];
+  const h = fixture('src/app/notifications/page.tsx', {
+    '@/lib/use-current-time': { useCurrentTime: () => 0 },
+    '@/lib/use-notifications': { useNotifications: () => ({ notifications: rows, loading: false, error: '', unreadCount: 2, actionError: '', busy: false, retry() {}, markRead: async row => { marked.push(row.id); } }) },
+  });
+  h.render();
+  const anchor = h.nodes().find(node => node.type === 'next/link' && node.props.href === '/profile');
+  assert.equal(typeof anchor.props.onClick, 'function', 'Native Enter activation dispatches click to the focused anchor');
+  assert.equal(anchor.props.children.props.onClick, undefined, 'Pointer bubbling must not also activate its descendant card');
+  await anchor.props.onClick({ detail: 0 });
+  assert.deepEqual(marked, ['qa-linked']);
+  const unlinked = h.nodes().find(node => node.type === '@/components/Card' && JSON.stringify(node.props.children).includes('Unlinked fixture'));
+  await unlinked.props.onClick();
+  assert.deepEqual(marked, ['qa-linked', 'qa-unlinked']);
+});
 
 test('25-record history: unread older than recent 20 still contributes to total; larger window returns it', () => {
   const h = fixture('src/lib/use-notifications.ts', {}, true); h.render();
