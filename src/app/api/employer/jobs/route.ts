@@ -270,7 +270,6 @@ export async function POST(req: NextRequest) {
 
     const db = getAdminDb();
     const baseSlug = normalizeString(body.slug) || `${slugify(title)}-${Date.now().toString(36)}`;
-    const employerRef = db.collection("employers").doc(context.employerId);
     const jobRef = db.collection("jobs").doc(baseSlug);
 
     const { payload, status, featured } = buildJobPayload(body, {
@@ -301,8 +300,11 @@ export async function POST(req: NextRequest) {
       const paid = await preparePaidPublication(firestorePublicationReader(db, transaction), {
         employerId: context.employerId, organizationId: context.orgId, jobId: baseSlug,
         current: null, status, featured, durationDays: body.durationDays, now: publicationNow,
+        writesResolvedEmployerDocument: true,
       });
-      if (status === 'active') transaction.set(employerRef, {
+      // Credits and plan usage live on the resolved billing document (employers/{employerId},
+      // else employers/{orgId}), the same document Stripe fulfillment credits.
+      if (status === 'active') transaction.set(db.collection("employers").doc(paid.employerDocumentId), {
         ...paid.employerPatch, updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
       transaction.create(jobRef, stripUndefined({

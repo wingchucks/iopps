@@ -185,7 +185,6 @@ export async function PUT(
       return NextResponse.json({ error: `The job ${tooLong} is too long.`, field: tooLong }, { status: 400 });
     }
     const db = getAdminDb();
-    const employerRef = db.collection("employers").doc(context.employerId);
 
     let nextFeaturedSummary = null;
     let changesPublicListing = false;
@@ -243,8 +242,10 @@ export async function PUT(
         employerId: context.employerId, organizationId: context.orgId, jobId: id,
         current: current.data, status: requestedStatus, featured: requestedFeatured,
         durationDays: body.durationDays, now: publicationNow,
+        writesResolvedEmployerDocument: true,
       });
-      if (requestedStatus === 'active') transaction.set(employerRef, {
+      // Credits and plan usage live on the resolved billing document (see the create route).
+      if (requestedStatus === 'active') transaction.set(db.collection("employers").doc(paid.employerDocumentId), {
         ...paid.employerPatch, updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
 
