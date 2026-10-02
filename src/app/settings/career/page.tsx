@@ -48,6 +48,8 @@ function CareerSettingsContent() {
   const { loading: roleLoading, isEmployer } = useAccountContext();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // Saving blank defaults after a failed read would erase stored career preferences.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // Career fields
   const [openToWork, setOpenToWork] = useState(false);
@@ -64,19 +66,20 @@ function CareerSettingsContent() {
     if (!user) return;
     try {
       const data = await getMemberProfile(user.uid);
-      if (data) {
-        setOpenToWork(data.openToWork ?? false);
-        setTargetRoles(data.targetRoles ?? []);
-        if (data.salaryRange) {
-          setSalaryMin(String(data.salaryRange.min));
-          setSalaryMax(String(data.salaryRange.max));
-        }
-        setWorkPreference(data.workPreference ?? "any");
-        setSkills(data.skills ?? []);
-        setEducation(data.education ?? []);
+      if (!data) throw new Error("Member profile unavailable");
+      setOpenToWork(data.openToWork ?? false);
+      setTargetRoles(data.targetRoles ?? []);
+      if (data.salaryRange) {
+        setSalaryMin(String(data.salaryRange.min));
+        setSalaryMax(String(data.salaryRange.max));
       }
+      setWorkPreference(data.workPreference ?? "any");
+      setSkills(data.skills ?? []);
+      setEducation(data.education ?? []);
+      setLoadFailed(false);
     } catch (err) {
       console.error("Failed to load career preferences:", err);
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -104,11 +107,11 @@ function CareerSettingsContent() {
     setTargetRoles((prev) => prev.filter((r) => r !== role));
   };
 
+  // Skills are also saved as comma-separated text for the Profile page, so a comma
+  // separates skills here too and the two views round-trip without changes.
   const addSkill = () => {
-    const val = skillInput.trim();
-    if (val && !skills.includes(val)) {
-      setSkills((prev) => [...prev, val]);
-    }
+    const additions = skillInput.split(",").map((value) => value.trim()).filter(Boolean);
+    setSkills((prev) => additions.reduce((next, value) => (next.includes(value) ? next : [...next, value]), prev));
     setSkillInput("");
   };
 
@@ -131,7 +134,7 @@ function CareerSettingsContent() {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || loadFailed) return;
     const validationError = (Boolean(salaryMin) !== Boolean(salaryMax))
       ? "Enter both a minimum and maximum salary, or leave both blank."
       : salaryRangeError(salaryMin && salaryMax ? { min: Number(salaryMin), max: Number(salaryMax) } : null);
@@ -165,6 +168,23 @@ function CareerSettingsContent() {
   }
 
   if (isEmployer) return null;
+
+  if (loadFailed) {
+    return (
+      <div className="max-w-[700px] mx-auto px-4 py-8 md:px-10 pb-24" role="alert">
+        <h1 className="text-xl font-bold text-text mb-2">Career preferences could not be loaded</h1>
+        <p className="text-sm text-text-muted mb-4">
+          Editing is paused so your saved preferences are not replaced. Check your connection and try again. If you have not finished setting up your profile, <Link href="/setup" className="text-teal font-semibold">complete setup</Link> first.
+        </p>
+        <Button small onClick={() => { setLoading(true); void loadProfile(); }}>
+          Try again
+        </Button>
+        <Link href="/settings" className="block mt-4 text-sm text-teal font-semibold no-underline hover:underline">
+          &larr; Back to Settings
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[700px] mx-auto px-4 py-8 md:px-10 pb-24">

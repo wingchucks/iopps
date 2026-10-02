@@ -325,6 +325,11 @@ function NotificationContent() {
               </label>
             </div>
           )}
+          {prefs.quietHours.enabled && (
+            <p className="text-xs text-text-muted mt-3 mb-0">
+              Quiet hours use Saskatchewan time (America/Regina).
+            </p>
+          )}
         </div>
       </Card>
 

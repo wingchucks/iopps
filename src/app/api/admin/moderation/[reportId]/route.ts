@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
@@ -99,11 +99,12 @@ export async function POST(
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
+    // Firestore rejects serverTimestamp() inside array elements, which made every action fail.
     const historyEntry = {
       action,
       notes: notes || "",
       resolvedBy: auth.decodedToken.uid,
-      timestamp: FieldValue.serverTimestamp(),
+      timestamp: Timestamp.now(),
     };
 
     const update: Record<string, unknown> = {

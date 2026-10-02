@@ -96,6 +96,71 @@ test('logout aborts an in-flight request without retrying under the next account
   assert.equal(h.unsubscribed, 1);
 });
 
+// Safari < 17.4, Chrome < 116 and Firefox < 124 ship AbortController but not AbortSignal.any.
+async function withoutAbortSignalAny(run, replacement) {
+  const descriptor = Object.getOwnPropertyDescriptor(AbortSignal, 'any');
+  if (replacement) Object.defineProperty(AbortSignal, 'any', { ...descriptor, value: replacement });
+  else delete AbortSignal.any;
+  try { return await run(); } finally { Object.defineProperty(AbortSignal, 'any', descriptor); }
+}
+
+test('browsers without AbortSignal.any still send one notification request', async () => {
+  await withoutAbortSignalAny(async () => {
+    assert.equal(typeof AbortSignal.any, 'undefined');
+    const h = harness([{ notification: 'accepted' }]);
+    assert.equal((await h.run()).state, 'accepted');
+    assert.equal(h.requests.length, 1);
+    assert.equal(h.requests[0].url, '/api/messages/notify');
+    assert.deepEqual(JSON.parse(h.requests[0].options.body), { messageId: 'just-saved-message' });
+    assert.ok(h.requests[0].options.signal instanceof AbortSignal);
+    assert.equal(h.requests[0].options.signal.aborted, false);
+    assert.deepEqual(h.delays, []);
+    assert.equal(h.unsubscribed, 1);
+  });
+});
+
+test('without AbortSignal.any, logout still aborts the in-flight request', async () => {
+  await withoutAbortSignalAny(async () => {
+    const h = harness(); let started;
+    const requestStarted = new Promise(resolve => { started = resolve; });
+    h.dependencies.fetch = async (_url, options) => { started(); return new Promise((_resolve, reject) => options.signal.addEventListener('abort', () => reject(Error('aborted')), { once: true })); };
+    const pending = h.run(); await requestStarted; h.change(null);
+    assert.equal((await pending).state, 'cancelled');
+    assert.deepEqual(h.delays, []);
+    assert.equal(h.unsubscribed, 1);
+  });
+});
+
+test('without AbortSignal.any, a hung attempt times out and the same message retries', async t => {
+  await withoutAbortSignalAny(async () => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const h = harness([{ notification: 'accepted' }]);
+    const respond = h.dependencies.fetch;
+    let hung = 0, started;
+    const requestStarted = new Promise(resolve => { started = resolve; });
+    h.dependencies.fetch = async (url, options) => {
+      if (hung++) return respond(url, options);
+      started();
+      return new Promise((_resolve, reject) => options.signal.addEventListener('abort', () => reject(Error('timed out')), { once: true }));
+    };
+    const pending = h.run(); await requestStarted;
+    t.mock.timers.tick(10000);
+    assert.equal((await pending).state, 'accepted');
+    assert.equal(hung, 2);
+    assert.deepEqual(h.delays, [1000]);
+  });
+});
+
+test('a synchronous attempt setup failure is not retried as a transient error', async () => {
+  await withoutAbortSignalAny(async () => {
+    const h = harness([{ notification: 'accepted' }]);
+    assert.equal((await h.run()).state, 'failed');
+    assert.equal(h.requests.length, 0);
+    assert.deepEqual(h.delays, []);
+    assert.equal(h.unsubscribed, 1);
+  }, () => { throw new TypeError('Broken AbortSignal.any'); });
+});
+
 test('foreign sender and absent current user never enter notification flow', async () => {
   const h = harness();
   assert.equal((await notifyNewMessage('just-saved-message', 'stranger', h.dependencies)).state, 'cancelled');
