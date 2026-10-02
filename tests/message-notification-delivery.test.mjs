@@ -173,18 +173,17 @@ test('recipients who turned off direct messages are skipped on first attempts an
   assert.equal((await allowed.request()).body.notification, 'accepted');
 });
 
-test('quiet hours skip email in the saved time zone, defaulting to America/Regina', async () => {
-  // The fixture clock is 2027-01-15 08:00 UTC: 02:00 in Regina, 03:00 in Toronto, 17:00 in Tokyo.
+test('quiet hours skip email using their start and end times in America/Regina', async () => {
+  // The fixture clock is 2027-01-15 08:00 UTC, which is 02:00 in Regina (no daylight saving).
   for (const [quietHours, expected] of [
     [{ enabled: true, start: '22:00', end: '08:00' }, 'skipped'],
-    [{ enabled: true, start: '22:00', end: '08:00', timeZone: 'America/Toronto' }, 'skipped'],
-    [{ enabled: true, start: '22:00', end: '08:00', timeZone: 'Asia/Tokyo' }, 'accepted'],
-    [{ enabled: true, start: '22:00', end: '08:00', timeZone: 'Not/AZone' }, 'skipped'],
-    [{ enabled: true, start: '01:30', end: '02:00' }, 'accepted'],
     [{ enabled: true, start: '02:00', end: '02:30' }, 'skipped'],
+    [{ enabled: true, start: '01:30', end: '02:00' }, 'accepted'],
+    [{ enabled: true, start: '07:30', end: '08:30' }, 'accepted'],
     [{ enabled: true, start: '09:00', end: '17:00' }, 'accepted'],
     [{ enabled: false, start: '22:00', end: '08:00' }, 'accepted'],
     [{ enabled: true, start: 'late', end: '08:00' }, 'accepted'],
+    [{ enabled: true, start: '02:00', end: '02:00' }, 'accepted'],
   ]) {
     const h = harness();
     h.documents.set('notification_preferences/recipient', { categories: { messages: { email: true } }, quietHours });

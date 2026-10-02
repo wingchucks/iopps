@@ -16,7 +16,8 @@ const CONVERSATION_WINDOW_MS = 15 * 60 * 1000;
 // Each sender gets a bounded share of the Resend quota that password-reset and
 // verification email also use. Retries of a counted message are never re-counted.
 const SENDER_LIMITS = [{ max: 10, window: 60 * 60 * 1000 }, { max: 30, window: 24 * 60 * 60 * 1000 }];
-const DEFAULT_TIME_ZONE = "America/Regina";
+// Quiet hours are stored as plain start/end times (no zone) and read in IOPPS's home zone.
+const QUIET_HOURS_TIME_ZONE = "America/Regina";
 const SKIPPED = { state: "skipped", status: 200 } as const;
 
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -26,22 +27,19 @@ function clockMinutes(value: unknown): number | null {
   return match ? Number(match[1]) * 60 + Number(match[2]) : null;
 }
 
-function minutesInZone(now: number, timeZone: string): number | null {
-  try {
-    const parts = new Intl.DateTimeFormat("en-CA", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
-    const hour = Number(parts.find(part => part.type === "hour")?.value);
-    const minute = Number(parts.find(part => part.type === "minute")?.value);
-    return Number.isInteger(hour) && Number.isInteger(minute) ? (hour % 24) * 60 + minute : null;
-  } catch { return null; }
+function reginaMinutes(now: number): number | null {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: QUIET_HOURS_TIME_ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
+  const hour = Number(parts.find(part => part.type === "hour")?.value);
+  const minute = Number(parts.find(part => part.type === "minute")?.value);
+  return Number.isInteger(hour) && Number.isInteger(minute) ? (hour % 24) * 60 + minute : null;
 }
 
-// Quiet hours use the time zone saved with them, otherwise IOPPS's home time zone.
 function quietHoursActive(quietHours: unknown, now: number): boolean {
   if (!quietHours || typeof quietHours !== "object") return false;
-  const { enabled, start, end, timeZone } = quietHours as Record<string, unknown>;
+  const { enabled, start, end } = quietHours as Record<string, unknown>;
   const from = clockMinutes(start), to = clockMinutes(end);
   if (enabled !== true || from === null || to === null || from === to) return false;
-  const current = (typeof timeZone === "string" && timeZone ? minutesInZone(now, timeZone) : null) ?? minutesInZone(now, DEFAULT_TIME_ZONE);
+  const current = reginaMinutes(now);
   if (current === null) return false;
   return from < to ? current >= from && current < to : current >= from || current < to;
 }
