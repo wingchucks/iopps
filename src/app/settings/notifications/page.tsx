@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
@@ -97,27 +97,25 @@ function NotificationContent() {
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [prefsOwner, setPrefsOwner] = useState("");
 
   const categoryLabels = isEmployer ? employerCategoryLabels : memberCategoryLabels;
 
-  const loadPrefs = useCallback(async () => {
-    if (!user) return;
-    try {
-      const prefsData = await getNotificationPreferences(user.uid);
-      setPrefs(prefsData);
-    } catch (err) {
-      console.error("Failed to load notification preferences:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
   useEffect(() => {
-    loadPrefs();
-  }, [loadPrefs]);
+    if (!user) return;
+    let active = true;
+    setLoading(true); setLoadFailed(false); setPrefs(null); setPrefsOwner(user.uid);
+    getNotificationPreferences(user.uid)
+      .then(data => { if (active) setPrefs(data); })
+      .catch(err => { console.error("Failed to load notification preferences:", err); if (active) setLoadFailed(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [user, retry]);
 
   const handleSave = async () => {
-    if (!user || !prefs) return;
+    if (!user || !prefs || prefsOwner !== user.uid) return;
     setSaving(true);
     try {
       await updateNotificationPreferences(user.uid, {
@@ -151,9 +149,11 @@ function NotificationContent() {
     });
   };
 
-  if (roleLoading || loading) {
+  if (roleLoading || loading || prefsOwner !== user?.uid) {
     return <PageSkeleton variant="list" />;
   }
+
+  if (loadFailed) return <div className="max-w-[700px] mx-auto px-4 py-8" role="alert"><h1 className="text-xl font-bold mb-2">Notification preferences could not be loaded</h1><p className="mb-4">Please try again.</p><button className="brand-button px-4 py-2 rounded-xl" onClick={() => { setLoading(true); setRetry(value => value + 1); }}>Retry</button><Link href="/settings" className="block mt-4 text-teal">Back to Settings</Link></div>;
 
   if (!prefs) return null;
 

@@ -12,6 +12,7 @@ import {
   writeBatch,
   onSnapshot,
   type QueryConstraint,
+  type FirestoreError,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -79,9 +80,11 @@ export async function markAllAsRead(userId: string): Promise<void> {
     query(col, where("userId", "==", userId), where("read", "==", false))
   );
   if (unread.empty) return;
-  const batch = writeBatch(db);
-  unread.docs.forEach((d) => batch.update(d.ref, { read: true }));
-  await batch.commit();
+  for (let offset = 0; offset < unread.docs.length; offset += 500) {
+    const batch = writeBatch(db);
+    unread.docs.slice(offset, offset + 500).forEach((d) => batch.update(d.ref, { read: true }));
+    await batch.commit();
+  }
 }
 
 // --- Real-time listeners (return unsubscribe functions) ---
@@ -89,25 +92,28 @@ export async function markAllAsRead(userId: string): Promise<void> {
 // Listen to notifications for a user in real time (latest 20)
 export function onNotifications(
   userId: string,
-  callback: (notifications: Notification[]) => void
+  callback: (notifications: Notification[]) => void,
+  onError?: (error: FirestoreError) => void,
+  pageSize = 20
 ): () => void {
   const q = query(
     col,
     where("userId", "==", userId),
     orderBy("createdAt", "desc"),
-    limit(20)
+    limit(pageSize)
   );
   return onSnapshot(q, (snap) => {
     callback(
       snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Notification)
     );
-  });
+  }, onError);
 }
 
 // Listen to unread notification count in real time
 export function onUnreadNotificationCount(
   userId: string,
-  callback: (count: number) => void
+  callback: (count: number) => void,
+  onError?: (error: FirestoreError) => void
 ): () => void {
   const q = query(
     col,
@@ -116,5 +122,5 @@ export function onUnreadNotificationCount(
   );
   return onSnapshot(q, (snap) => {
     callback(snap.size);
-  });
+  }, onError);
 }

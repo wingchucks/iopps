@@ -130,6 +130,8 @@ function SavedContent() {
   const [items, setItems] = useState<SavedItem[]>([]);
   const [aliases, setAliases] = useState<SavedJobAlias[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>("All");
   const [removing, setRemoving] = useState<string | null>(null);
   // open / closed / unavailable per saved postId, so closed or removed listings are marked, not dead ends.
@@ -139,7 +141,7 @@ function SavedContent() {
   useEffect(() => {
     if (!user) return;
     let active = true;
-    setItems([]); setAliases([]); setStatuses({}); setLoading(true);
+    setItems([]); setAliases([]); setStatuses({}); setLoading(true); setLoadFailed(false);
     getSavedItems(user.uid)
       .then(async records => {
         if (!active) return;
@@ -156,10 +158,10 @@ function SavedContent() {
           if (res.ok && active) setStatuses(((await res.json()) as { statuses?: Record<string, "open" | "closed" | "unavailable"> }).statuses || {});
         } catch { /* Without statuses, saved items still open normally. */ }
       })
-      .catch((err) => console.error("Failed to load saved items:", err))
+      .catch((err) => { console.error("Failed to load saved items:", err); if (active) setLoadFailed(true); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [user]);
+  }, [user, retry]);
 
   const handleRemove = async (item: SavedAliasGroup) => {
     if (!user || removing) return;
@@ -188,6 +190,8 @@ function SavedContent() {
         : groups.filter(
             (i) => i.postType === activeTab.toLowerCase().replace(/s$/, "")
           );
+
+  if (loadFailed) return <div className="max-w-[900px] mx-auto px-4 py-8" role="alert"><h1 className="text-xl font-bold mb-2">Saved items could not be loaded</h1><p className="mb-4">Please try again.</p><Button onClick={() => { setLoading(true); setLoadFailed(false); setRetry(value => value + 1); }}>Retry</Button></div>;
 
   if (loading) {
     return (

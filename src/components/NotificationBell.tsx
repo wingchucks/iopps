@@ -2,14 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
 import { useCurrentTime } from "@/lib/use-current-time";
-import {
-  onNotifications,
-  markAsRead,
-  markAllAsRead,
-  type Notification,
-} from "@/lib/firestore/notifications";
+import { useNotifications } from "@/lib/use-notifications";
+import type { Notification } from "@/lib/firestore/notifications";
 
 const typeIcons: Record<string, string> = {
   welcome: "\u{1F44B}",
@@ -21,19 +16,10 @@ const typeIcons: Record<string, string> = {
 };
 
 export default function NotificationBell() {
-  const { user } = useAuth();
   const now = useCurrentTime();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { notifications, loading, error, unreadCount, actionError, busy, retry, markRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  useEffect(() => {
-    if (!user) return;
-    const unsub = onNotifications(user.uid, setNotifications);
-    return unsub;
-  }, [user]);
 
   // Close on click outside
   useEffect(() => {
@@ -46,20 +32,9 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const handleMarkAllRead = async () => {
-    if (!user) return;
-    await markAllAsRead(user.uid);
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const handleClickNotification = async (n: Notification) => {
-    if (!n.read) {
-      await markAsRead(n.id);
-      setNotifications((prev) =>
-        prev.map((item) => (item.id === n.id ? { ...item, read: true } : item))
-      );
-    }
-    setOpen(false);
+  const handleMarkAllRead = () => markRead();
+  const handleClickNotification = async (notification: Notification) => {
+    if (await markRead(notification)) setOpen(false);
   };
 
   const formatTime = (ts: unknown) => {
@@ -79,10 +54,10 @@ export default function NotificationBell() {
         onClick={() => setOpen(!open)}
         className="relative w-10 h-10 rounded-[10px] border-none cursor-pointer text-lg text-white"
         style={{ background: "rgba(255,255,255,.08)" }}
-        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+        aria-label={`Notifications${unreadCount !== null && unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
       >
         &#128276;
-        {unreadCount > 0 && (
+        {unreadCount !== null && unreadCount > 0 && (
           <span
             className="absolute top-0.5 right-0.5 min-w-4 h-4 rounded-full bg-red text-white flex items-center justify-center"
             style={{ fontSize: 9, fontWeight: 700 }}
@@ -94,7 +69,7 @@ export default function NotificationBell() {
 
       {open && (
         <div
-          className="absolute right-0 top-12 w-[340px] max-h-[420px] overflow-y-auto rounded-2xl bg-card border border-border z-50"
+          className="absolute right-0 top-12 w-[340px] max-w-[calc(100vw-32px)] max-h-[420px] overflow-y-auto rounded-2xl bg-card border border-border z-50"
           style={{ boxShadow: "0 8px 40px rgba(0,0,0,.15)" }}
         >
           <div
@@ -102,8 +77,9 @@ export default function NotificationBell() {
             style={{ padding: "14px 16px" }}
           >
             <p className="text-sm font-bold text-text m-0">Notifications</p>
-            {unreadCount > 0 && (
+            {unreadCount !== null && unreadCount > 0 && (
               <button
+                disabled={busy}
                 onClick={handleMarkAllRead}
                 className="text-[11px] font-semibold text-teal border-none bg-transparent cursor-pointer hover:underline"
               >
@@ -112,7 +88,8 @@ export default function NotificationBell() {
             )}
           </div>
 
-          {notifications.length === 0 ? (
+          {actionError && <p role="alert" className="text-red px-4">{actionError}</p>}
+          {error ? <div className="p-4"><p role="alert">{error}</p><button onClick={retry} className="text-teal">Retry</button></div> : loading ? <p className="p-4">Loading notifications...</p> : notifications.length === 0 ? (
             <div style={{ padding: "30px 16px" }} className="text-center">
               <p className="text-3xl mb-2">&#128276;</p>
               <p className="text-sm text-text-muted">No notifications yet</p>
@@ -159,13 +136,13 @@ export default function NotificationBell() {
             })
           )}
 
-          {notifications.length > 0 && (
+          {(
             <Link
               href="/notifications"
               onClick={() => setOpen(false)}
               className="block text-center text-xs text-teal font-semibold py-3 no-underline hover:underline border-t border-border"
             >
-              View all notifications
+              View notification history
             </Link>
           )}
         </div>
