@@ -1,6 +1,7 @@
 process.env.TZ = 'UTC';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { sourceModule } from './helpers/security-fixtures.mjs';
 
 // Loads the real employer job routes against in-memory doubles. Payment
@@ -199,6 +200,31 @@ test('the admin draft notification links to the admin jobs page, not the employe
   assert.deepEqual(h.calls.emails.map(email => email.urlPath), ['/admin/jobs?search=Fictional+coordinator', '/jobs/live-notice']);
 });
 
+test('public job caches are refreshed after publish, live edits, close and delete only', async () => {
+  const refreshed = [{ tag: 'public-jobs', profile: { expire: 0 } }];
+  let h = jobRoutes();
+  await h.post({ title: 'Fictional coordinator', slug: 'draft-only', status: 'draft' });
+  assert.deepEqual(h.calls.revalidated, [], 'a new draft is not public');
+  await h.post({ title: 'Fictional coordinator', slug: 'published', status: 'active' });
+  assert.deepEqual(h.calls.revalidated, refreshed);
+  for (const [current, body, count] of [
+    [{ status: 'active', active: true }, { title: 'Edited while live' }, 1],
+    [{ status: 'active', active: true }, { status: 'closed' }, 1],
+    [{ status: 'active', active: true }, { status: 'draft' }, 1],
+    [{ status: 'draft', active: false }, { title: 'Draft edit' }, 0],
+  ]) {
+    h = jobRoutes({ jobs: { job: draftJob(current) } });
+    assert.equal((await h.put('job', body)).status, 200);
+    assert.equal(h.calls.revalidated.length, count, JSON.stringify(body));
+  }
+  h = jobRoutes({ jobs: { job: draftJob({ status: 'active', active: true }) } });
+  assert.equal((await h.remove('job')).status, 200);
+  assert.deepEqual(h.calls.revalidated, refreshed);
+  h = jobRoutes({ jobs: { job: draftJob() }, paid: () => { throw new paidPublication.PublicationError('payment_required', 'A paid posting credit or eligible annual plan is required.'); } });
+  assert.equal((await h.put('job', { status: 'active' })).status, 402);
+  assert.deepEqual(h.calls.revalidated, [], 'nothing changed, nothing to refresh');
+});
+
 test('expected payment and placement denials are JSON with a code and logged as warnings, not errors', async () => {
   for (const [code, status] of [['payment_required', 402], ['invalid_duration', 409]]) {
     const h = jobRoutes({ jobs: { job: draftJob({ featured: true }) }, paid: () => { throw new paidPublication.PublicationError(code, 'Denied for the fixture.'); } });
@@ -211,4 +237,12 @@ test('expected payment and placement denials are JSON with a code and logged as 
   const broken = jobRoutes({ jobs: { job: draftJob() }, paid: () => { throw new Error('Fixture datastore failure'); } });
   assert.equal((await broken.put('job', { status: 'active' })).status, 500);
   assert.equal(broken.calls.logs.error.length, 1, 'unexpected failures still reach error monitoring');
+});
+
+test('a cache refresh outside a Next.js request never fails the saved job change', () => {
+  const warnings = [];
+  const cache = sourceModule('src/lib/employer-job-cache.ts', { globals: { console: { warn: (...args) => warnings.push(args) } } });
+  assert.doesNotThrow(() => cache.refreshPublicJobs());
+  assert.equal(warnings.length, 1);
+  assert.match(readFileSync('src/lib/server/public-page-cache.ts', 'utf8'), new RegExp(`tags: \\["${cache.PUBLIC_JOBS_CACHE_TAG}"\\]`), 'the tag the public job caches use');
 });

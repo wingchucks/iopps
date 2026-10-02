@@ -59,6 +59,7 @@ async function harness(t: any) {
         if (id === '@/lib/job-hiring-details') return hiringDetails;
         if (id === '@/lib/server/job-input-limits') return jobInputLimits;
         if (id === '@/lib/job-closing-date') return closingDate;
+        if (id === '@/lib/employer-job-cache') return { refreshPublicJobs: () => {} };
         if (id === '@/lib/email') return { sendAdminContentPosted: async () => {} };
         throw new Error(id);
       },

@@ -19,6 +19,7 @@ import { jobInputLimitError } from "@/lib/server/job-input-limits";
 import { isSchoolOrganization } from "@/lib/school-visibility";
 import { sendAdminContentPosted } from "@/lib/email";
 import { isClosingDateBeforeToday, PAST_CLOSING_DATE_MESSAGE } from "@/lib/job-closing-date";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 export const runtime = "nodejs";
 
@@ -330,6 +331,7 @@ export async function POST(req: NextRequest) {
     }).catch((error) => {
       console.error("[api/employer/jobs][POST] Admin content email failed:", error);
     });
+    if (status === "active") refreshPublicJobs();
 
     return NextResponse.json({
       success: true,

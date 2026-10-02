@@ -16,6 +16,7 @@ import { firestorePublicationReader } from "@/lib/server/paid-job-publication-fi
 import { PublicationError } from "@/lib/server/paid-job-publication";
 import { jobInputLimitError } from "@/lib/server/job-input-limits";
 import { isClosingDateBeforeToday, PAST_CLOSING_DATE_MESSAGE } from "@/lib/job-closing-date";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 export const runtime = "nodejs";
 
@@ -185,6 +186,7 @@ export async function PUT(
     const employerRef = db.collection("employers").doc(context.employerId);
 
     let nextFeaturedSummary = null;
+    let changesPublicListing = false;
     const publicationNow = new Date();
 
     await db.runTransaction(async (transaction) => {
@@ -234,6 +236,7 @@ export async function PUT(
         // A live job with a past closing date is hidden and refuses applications, so never (re)publish one.
         if (isClosingDateBeforeToday(closingDate, publicationNow)) throw new EmployerApiError(400, PAST_CLOSING_DATE_MESSAGE, "closing_date_passed");
       }
+      changesPublicListing = requestedStatus === "active" || current.data.status === "active" || current.data.active === true;
       const paid = await preparePaidPublication(firestorePublicationReader(db, transaction), {
         employerId: context.employerId, organizationId: context.orgId, jobId: id,
         current: current.data, status: requestedStatus, featured: requestedFeatured,
@@ -289,6 +292,7 @@ export async function PUT(
       });
     });
 
+    if (changesPublicListing) refreshPublicJobs();
     return NextResponse.json({ success: true, jobId: id, featuredSummary: nextFeaturedSummary });
   } catch (error) {
     return failureResponse(error, "[api/employer/jobs/:id][PUT]", "Failed to update job.");
@@ -326,6 +330,7 @@ export async function DELETE(
       else transaction.create(jobRef,{...patch,employerId:context.employerId,orgId:context.orgId,createdAt:FieldValue.serverTimestamp()});
       if (mirror.exists && mirror.data()?.type === 'job' && isJobOwnedByEmployer(mirror.data()!,context.employerId,context.orgId)) transaction.update(postRef,patch);
     });
+    refreshPublicJobs();
     return NextResponse.json({ success: true });
   } catch (error) {
     return failureResponse(error, "[api/employer/jobs/:id][DELETE]", "Failed to delete job.");
