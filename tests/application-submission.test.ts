@@ -48,3 +48,37 @@ test('employer-facing applicant snapshot comes from the stored profile and verif
  const {application:noProfile}=await submitApplication(db,'newcomer',{postId:'role'},async()=>{},{email:'newcomer@example.invalid'});
  assert.equal(noProfile.profileSnapshot.email,'newcomer@example.invalid');
 });
+
+test('profile applications attach the saved member-profile resume, never a client-supplied URL', async()=>{
+ const {submitApplication}=await import(new URL('../src/lib/server/application-submission.ts',import.meta.url).href);
+ const saved='https://firebasestorage.googleapis.com/v0/b/demo.test/o/resumes%2Fcandidate%2Fsaved.pdf?alt=media&token=t';
+ const records=new Map<string,any>([
+  ['posts/required',{type:'job',title:'Required',status:'active',requiresResume:true}],
+  ['posts/optional',{type:'job',title:'Optional',status:'active'}],
+  ['members/candidate',{displayName:'Stored Name',resumeUrl:saved,resumeFileName:'Saved CV.pdf'}],
+  // The apply page offers only the member profile's resume; another stored field is not it.
+  ['users/newcomer',{resumeUrl:'https://firebasestorage.googleapis.com/v0/b/demo.test/o/resumes%2Fnewcomer%2Flegacy.pdf'}],
+ ]);
+ let writes=0;
+ const db={collection:(c:string)=>({doc:(id:string)=>({path:`${c}/${id}`})}),runTransaction:async(fn:(transaction:any)=>Promise<any>)=>fn({get:async(ref:any)=>({exists:records.has(ref.path),data:()=>records.get(ref.path)}),create:(ref:any,data:any)=>{writes++;records.set(ref.path,data);}})};
+ const sources:any[]=[];
+ const archive=async(resume:any)=>{sources.push(resume);return resume.resumeUrl?'https://archive.invalid/copy':'';};
+ const forged='https://firebasestorage.googleapis.com/v0/b/demo.test/o/resumes%2Fcandidate%2Fother.pdf';
+ const {application}=await submitApplication(db,'candidate',{postId:'required',resumeType:'profile',resumeUrl:forged,resumeFileName:'Forged.pdf'},archive);
+ assert.deepEqual(sources,[{resumeType:'profile',resumeUrl:saved}]);
+ assert.equal(application.resumeUrl,'https://archive.invalid/copy');
+ assert.equal(application.resumeType,'profile');
+ assert.equal(application.resumeFileName,'Saved CV.pdf');
+ // Without a saved resume a required-file job is refused before any copy or write...
+ await assert.rejects(submitApplication(db,'newcomer',{postId:'required',resumeType:'profile',resumeUrl:saved},archive),/A resume file is required/);
+ assert.equal(sources.length,1);assert.equal(writes,1);
+ // ...and other jobs are saved without a resume.
+ const {application:withoutResume}=await submitApplication(db,'newcomer',{postId:'optional',resumeType:'profile',resumeFileName:'Forged.pdf'},archive);
+ assert.deepEqual(sources[1],{resumeType:'profile',resumeUrl:''});
+ assert.equal(withoutResume.resumeUrl,'');assert.equal(withoutResume.resumeFileName,null);
+ // An uploaded file is the applicant's own upload, passed to the same server verification.
+ const upload='https://firebasestorage.googleapis.com/v0/b/demo.test/o/resumes%2Fcandidate%2Fupload.pdf';
+ const {application:uploaded}=await submitApplication(db,'candidate',{postId:'optional',resumeType:'file',resumeUrl:upload,resumeFileName:'Upload.pdf'},archive);
+ assert.deepEqual(sources[2],{resumeType:'file',resumeUrl:upload});
+ assert.equal(uploaded.resumeUrl,'https://archive.invalid/copy');assert.equal(uploaded.resumeFileName,'Upload.pdf');
+});

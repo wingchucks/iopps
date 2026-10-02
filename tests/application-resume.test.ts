@@ -9,4 +9,6 @@ test('resume URL must identify an owned object in the configured bucket',async()
  assert.equal(path('http://127.0.0.1:9199/v0/b/demo.appspot.com/o/resumes%2Fu%2Ffile.pdf','u','demo.appspot.com','127.0.0.1:9199'),'resumes/u/file.pdf');
  assert.throws(()=>path('http://127.0.0.1:9199/v0/b/demo.appspot.com/o/resumes%2Fu%2Ffile.pdf','u','demo.appspot.com'));
  for(const value of ['https://evil.test/resume.pdf','https://firebasestorage.googleapis.com/v0/b/other/o/resumes%2Fu%2Ffile.pdf','https://firebasestorage.googleapis.com/v0/b/demo.appspot.com/o/resumes%2Fother%2Ffile.pdf']) assert.throws(()=>path(value,'u','demo.appspot.com'));
+ // A stored value that is not a URL at all is an invalid file, not an unexpected server error.
+ for(const value of ['resumes/u/file.pdf','not a url']) assert.throws(()=>path(value,'u','demo.appspot.com'),/^Error: Invalid resume file\.$/);
 });
