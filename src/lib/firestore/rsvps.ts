@@ -74,6 +74,7 @@ export async function setRSVP(rsvp: {
   postLocation?: string;
   status: RSVPStatus;
 }): Promise<void> {
+  // Rules bind every write to this ID and owner: one RSVP per member and event.
   const docId = `${rsvp.userId}_${rsvp.postId}`;
   await setDoc(doc(db, "event_rsvps", docId), {
     ...rsvp,

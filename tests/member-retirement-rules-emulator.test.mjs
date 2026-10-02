@@ -5,7 +5,7 @@ import { getAuth as adminAuth } from 'firebase-admin/auth';
 import { getFirestore as adminFirestore } from 'firebase-admin/firestore';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator, doc, collection, getDocFromServer, getDocsFromServer, setDoc, updateDoc, terminate } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator, doc, collection, getDocFromServer, getDocsFromServer, setDoc, updateDoc, serverTimestamp, terminate } from 'firebase/firestore';
 
 const denied = error => error.code === 'permission-denied';
 test('member retirement direct-client boundaries preserve private workflows and archives', { skip: process.env.IOPPS_TEST_MEMBER_RETIREMENT !== 'true' }, async t => {
@@ -74,7 +74,7 @@ test('member retirement direct-client boundaries preserve private workflows and 
       const forged = prefix + '-forged'; paths.add(`conversations/${forged}`);
       await assert.rejects(setDoc(doc(owner.db, 'conversations', forged), { participants: [owner.uid, outsider.uid] }), denied);
       paths.add(`messages/${prefix}`);
-      await setDoc(doc(owner.db, 'messages', prefix), { conversationId: prefix, senderId: owner.uid, text: 'Private fixture' });
+      await setDoc(doc(owner.db, 'messages', prefix), { conversationId: prefix, senderId: owner.uid, text: 'Private fixture', createdAt: serverTimestamp() });
       assert.equal((await getDocFromServer(doc(peer.db, 'messages', prefix))).data().text, 'Private fixture');
       await assert.rejects(getDocFromServer(doc(outsider.db, 'messages', prefix)), denied);
     });

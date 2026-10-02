@@ -53,6 +53,9 @@ export async function getUnreadCount(userId: string): Promise<number> {
   return snap.size;
 }
 
+// Retired client path (only the retired mentorship flow references it): Firestore
+// rules accept notifications from trusted server code only, and owners may only
+// change `read`.
 export async function addNotification(
   userId: string,
   data: {

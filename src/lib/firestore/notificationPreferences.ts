@@ -32,6 +32,7 @@ export interface NotificationPreferences {
 
 export type NotificationCategory = keyof NotificationPreferences["categories"];
 
+// Writes must stay within notificationPreferencesValid in firestore.rules.
 const COLLECTION = "notification_preferences";
 
 const defaultChannels: NotificationChannels = {
