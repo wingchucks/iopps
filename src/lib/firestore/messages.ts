@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   onSnapshot,
   type QueryConstraint,
+  type FirestoreError,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
@@ -172,7 +173,8 @@ export function onConversations(
 // Listen to messages in a conversation in real time
 export function onMessages(
   conversationId: string,
-  callback: (msgs: Message[]) => void
+  callback: (msgs: Message[]) => void,
+  onError?: (error: FirestoreError) => void
 ): () => void {
   const q = query(
     msgCol,
@@ -182,7 +184,7 @@ export function onMessages(
   );
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Message));
-  });
+  }, onError);
 }
 
 // Listen to unread conversation count in real time
