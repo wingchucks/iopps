@@ -92,6 +92,7 @@ const button = (tree, label) => nodes(tree).find(node => node.type === 'button' 
 const input = (tree, placeholder) => nodes(tree).find(node => node.props?.placeholder === placeholder);
 const alertText = tree => nodes(tree).filter(node => node.props?.role === 'alert').map(text).join('');
 const SKILLS = 'e.g. Project Management, Web Development';
+const HEADLINE = 'e.g. Software Developer | Treaty 6';
 const fullProfile = {
   displayName: 'Fictional Member', community: 'Fictional community', location: 'Saskatoon, SK', bio: 'Stored biography',
   nation: 'Cree', territory: 'Treaty 6', languages: 'Cree, English', headline: 'Community developer',
@@ -149,6 +150,21 @@ test('skills added in Career Preferences survive saving the Profile page', async
   assert.equal(h.stored().bio, 'Updated biography');
   const synced = harness('profile', { ...fullProfile, skillsText: 'Excel,  Cree Translation' });
   assert.equal(input(await openEditor(synced), SKILLS).props.value, 'Excel,  Cree Translation', 'matching text keeps its own formatting');
+});
+
+test('a stored headline over 80 characters can be shortened but not lengthened', async () => {
+  const long = 'h'.repeat(100);
+  const h = harness('profile', { ...fullProfile, headline: long });
+  await openEditor(h);
+  input(h.render(), HEADLINE).props.onChange({ target: { value: long + 'x' } });
+  assert.equal(input(h.render(), HEADLINE).props.value, long, 'typing past the stored length is refused');
+  input(h.render(), HEADLINE).props.onChange({ target: { value: long.slice(0, -1) } });
+  assert.equal(input(h.render(), HEADLINE).props.value.length, 99, 'backspace works');
+  input(h.render(), HEADLINE).props.onChange({ target: { value: 'Shorter headline' } });
+  input(h.render(), HEADLINE).props.onChange({ target: { value: 'Shorter headline!' } });
+  assert.equal(input(h.render(), HEADLINE).props.value, 'Shorter headline!', 'normal typing resumes under the limit');
+  input(h.render(), HEADLINE).props.onChange({ target: { value: 'x'.repeat(81) } });
+  assert.equal(input(h.render(), HEADLINE).props.value, 'Shorter headline!', 'new text is still capped at 80');
 });
 
 test('career preferences read failure keeps saving unavailable and retry recovers', async () => {

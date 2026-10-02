@@ -501,7 +501,8 @@ function ProfileContent() {
                     aria-invalid={saveError?.field === "headline"}
                     aria-describedby={saveError?.field === "headline" ? "profile-save-error" : undefined}
                     onChange={(e) => {
-                      if (e.target.value.length <= 80) setHeadline(e.target.value);
+                      // Same rule as setup: older headlines over 80 characters can still be shortened.
+                      if (e.target.value.length <= 80 || e.target.value.length < headline.length) setHeadline(e.target.value);
                     }}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
                     placeholder="e.g. Software Developer | Treaty 6"
