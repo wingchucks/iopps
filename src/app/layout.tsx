@@ -9,7 +9,7 @@ import SessionManager from "@/components/SessionManager";
 import OrganizationSetupReminder from "@/components/OrganizationSetupReminder";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
-import { serializeJsonLd, siteJsonLd } from "@/lib/server/seo";
+import { serializeJsonLd, siteJsonLd, SITE_OG_IMAGE } from "@/lib/server/seo";
 import "./globals.css";
 import "./opportunity.css";
 import "./buttons.css";
@@ -27,7 +27,6 @@ export const metadata: Metadata = {
   description:
     "Jobs, events, scholarships, businesses, and livestreams — all in one place for Indigenous people across North America.",
   metadataBase: new URL("https://www.iopps.ca"),
-  alternates: { canonical: "/" },
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
@@ -37,28 +36,17 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "IOPPS",
   },
+  // Site-wide share defaults only. The canonical URL, share URL and share title
+  // belong to each page (the homepage declares its own), so no route inherits
+  // the homepage's.
   openGraph: {
-    title: "IOPPS.CA — Empowering Indigenous Success",
-    description:
-      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, and livestreams — built for Indigenous communities across North America.",
     siteName: "IOPPS.CA",
-    url: "https://www.iopps.ca",
     type: "website",
-    images: [
-      {
-        url: "https://www.iopps.ca/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "IOPPS.CA — Empowering Indigenous Success",
-      },
-    ],
+    images: [SITE_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
-    title: "IOPPS.CA — Empowering Indigenous Success",
-    description:
-      "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, and livestreams — built for Indigenous communities across North America.",
-    images: ["https://www.iopps.ca/og-image.jpg"],
+    images: [SITE_OG_IMAGE.url],
   },
 };
 

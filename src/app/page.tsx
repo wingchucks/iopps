@@ -11,8 +11,11 @@ import LandingLivePreview from "@/components/landing/LandingLivePreview";
 
 import Footer from "@/components/Footer";
 
+import type { Metadata } from "next";
+
 import { getCachedLatestJobs, getCachedPartners } from "@/lib/server/public-page-cache";
 import { publicReadOr } from "@/lib/public-read-timeout";
+import { SITE_OG_IMAGE, SITE_URL } from "@/lib/server/seo";
 
 export const runtime = "nodejs";
 
@@ -20,10 +23,30 @@ export const dynamic = "force-dynamic";
 
 export const maxDuration = 30;
 
-export const metadata = {
+const shareTitle = "IOPPS.CA — Empowering Indigenous Success";
+const shareDescription =
+  "Canada's Indigenous professional platform. Find jobs, events, scholarships, businesses, and livestreams — built for Indigenous communities across North America.";
+
+// The homepage's own canonical and share card; other routes must not inherit them.
+export const metadata: Metadata = {
   title: "IOPPS — Empowering Indigenous Success",
   description:
     "Find your next job, connect with Indigenous entrepreneurs, and discover IOPPS Live and community events.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: shareTitle,
+    description: shareDescription,
+    siteName: "IOPPS.CA",
+    url: SITE_URL,
+    type: "website",
+    images: [SITE_OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: shareTitle,
+    description: shareDescription,
+    images: [SITE_OG_IMAGE.url],
+  },
 };
 
 export default async function Home() {

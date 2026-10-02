@@ -3,6 +3,12 @@ import type { Metadata } from "next";
 export const SITE_NAME = "IOPPS.ca";
 export const SITE_URL = "https://www.iopps.ca";
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
+export const SITE_OG_IMAGE = {
+  url: DEFAULT_OG_IMAGE,
+  width: 1200,
+  height: 630,
+  alt: "IOPPS.CA — Empowering Indigenous Success",
+};
 
 type ListingMetadataInput = {
   title: string;

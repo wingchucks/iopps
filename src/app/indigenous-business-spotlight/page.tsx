@@ -6,12 +6,15 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
+import { buildListingMetadata } from "@/lib/server/seo";
 
-export const metadata: Metadata = {
-  title: "Indigenous Business Spotlight | IOPPS.CA",
+export const metadata: Metadata = buildListingMetadata({
+  title: "Indigenous Business Spotlight",
   description:
     "Create a free Indigenous business profile on IOPPS.CA and help customers, partners, and communities discover what you offer.",
-};
+  path: "/indigenous-business-spotlight",
+  type: "website",
+});
 
 const steps = [
   {
