@@ -30,7 +30,7 @@ const OPEN_STATUSES = new Set(["pending", "pending_elder"]);
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
 const invalid = (error: string) => NextResponse.json({ error }, { status: 400 });
 
-// Optional single-line text: absent/blank is null, non-strings and overlong values are invalid.
+// Optional text (single-line unless multiline): absent or blank is null; non-strings and overlong values are invalid.
 function optionalText(value: unknown, max: number, multiline = false): string | null | false {
   if (value === undefined || value === null) return null;
   if (typeof value !== "string") return false;
