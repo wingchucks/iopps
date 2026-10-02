@@ -1,166 +1,94 @@
-# Stripe Payment Integration - Setup Complete! 🎉
+# Stripe Payment Integration
 
-## What We Built
+IOPPS sells paid job postings and annual employer plans through Stripe Checkout
+(one-time `payment` mode sessions, CAD, 5% GST as a separate line item).
 
-We've successfully integrated Stripe payments for job postings on IOPPS with two pricing tiers:
+## Products
 
-### Pricing Tiers
-- **Single Job Post**: $125 (30 days, standard placement)
-- **Featured Job Ad**: $300 (45 days, featured spotlight, analytics)
+Prices and copy live in `src/lib/pricing.ts`; checkout and fulfillment never trust client amounts.
 
----
+| Product (plan ID) | Price (CAD + GST) | What it grants |
+|---|---|---|
+| Standard Job Post (`standard-post`) | $125 | 1 standard posting credit (30-day listing) |
+| Featured Job Post (`featured-post`) | $200 | 1 featured posting credit (listing of up to 45 days) |
+| Standard plan (`tier1`) | $1,250/year | 15 job postings in the annual term |
+| Premium plan (`tier2`) | $2,500/year | Unlimited job postings and 4 included featured slots |
 
-## Files Created
+`program-post` and the School plan (`tier3`) are retired for sale; existing receipts still fulfill and display.
 
-### 1. **Stripe Configuration** (`lib/stripe.ts`)
-- Stripe client initialization
-- Job posting product configurations
+## Files
 
-### 2. **Checkout API** (`app/api/stripe/checkout/route.ts`)
-- Creates Stripe Checkout sessions
-- Handles payment metadata
+- `src/app/api/stripe/checkout/route.ts` — `POST` creates a Checkout session for the organization
+  owner (server-side amounts and metadata, fixed success/cancel URLs). `GET` returns the account's
+  billing overview (current paid term, paid renewal, complimentary access, and which annual plans
+  can be bought now) for the plan picker, billing page and checkout page.
+- `src/app/api/stripe/webhook/route.ts` — verifies the raw-body signature and fulfills or revokes
+  payments. Every Stripe event is claimed once (`stripeWebhookEvents/{eventId}`) in the same Firestore
+  transaction as its effects; receipts are `subscriptions/{checkoutSessionId}`.
+- `src/lib/server/paid-job-term.ts` / `paid-job-publication-reader.ts` — the paid term and credits
+  that fund publication (`employers/{employerId}`, else `employers/{orgId}`).
+- `src/app/api/cron/check-subscriptions/route.ts` — daily expiry (`CRON_SECRET`), which also promotes
+  a paid renewal into the account projection when the renewed term ends.
 
-### 3. **Webhook Handler** (`app/api/stripe/webhook/route.ts`)
-- Processes successful payments
-- Auto-creates job postings after payment
-- Handles expiration dates
+## Webhook endpoint (required)
 
-### 4. **Firebase Admin** (`lib/firebase-admin.ts`)
-- Server-side Firestore access for webhook handler
+Production endpoint: `https://www.iopps.ca/api/stripe/webhook`
 
-### 5. **Success Page** (`app/employer/jobs/success/page.tsx`)
-- Payment confirmation page
+In the [Stripe Dashboard → Developers → Webhooks](https://dashboard.stripe.com/webhooks), the endpoint
+must be subscribed to **all four** events:
 
-### 6. **Updated Job Form** (`app/employer/jobs/new/page.tsx`)
-- Added pricing selection UI
-- Payment flow integration
+| Event | Effect |
+|---|---|
+| `checkout.session.completed` | Fulfills paid sessions; delayed payment methods (`payment_status: unpaid`) are deferred |
+| `checkout.session.async_payment_succeeded` | Fulfills sessions paid by a delayed payment method (same session, granted once) |
+| `charge.refunded` | Full refunds withdraw the purchase (partial refunds are acknowledged and left to the owner) |
+| `charge.dispute.created` | A chargeback withdraws the purchase the same way as a full refund |
 
----
+Copy the endpoint's signing secret into Vercel as `STRIPE_WEBHOOK_SECRET`. After adding the two
+`charge.*` events, confirm on the endpoint page that the next deliveries succeed (2xx). Avoid
+dashboard "Send test event" for `charge.*` events in live mode: synthetic payment intents are recorded
+as unmatched revocations.
 
-## ⚠️ IMPORTANT: Next Steps to Complete Setup
-
-### Step 1: Add Firebase Service Account Credentials
-
-The webhook needs Firebase Admin credentials to create jobs. Add these to `.env.local`:
+For local testing with the Stripe CLI:
 
 ```bash
-# Firebase Admin (for server-side operations)
-FIREBASE_CLIENT_EMAIL=your-firebase-admin@your-project.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+stripe listen \
+  --events checkout.session.completed,checkout.session.async_payment_succeeded,charge.refunded,charge.dispute.created \
+  --forward-to localhost:3000/api/stripe/webhook
+# Put the printed whsec_... in .env.local as STRIPE_WEBHOOK_SECRET
 ```
 
-**How to get these:**
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Select your project
-3. Go to **Project Settings** > **Service Accounts**
-4. Click **"Generate New Private Key"**
-5. Download the JSON file
-6. Copy `client_email` and `private_key` to `.env.local`
+## Billing rules the code enforces
 
-### Step 2: Set Up Stripe Webhook
+- **Annual terms** last exactly one calendar year from the moment they start, on the Saskatchewan
+  (America/Regina) clock; February 29 ends on February 28.
+- **No overlapping purchases.** While a paid annual term is active, checkout refuses another annual
+  purchase (HTTP 409) except a **same-tier renewal during the last 60 days** of the term. A renewal
+  starts when the current term ends, so no paid time is lost; listings funded by the earlier term stay
+  editable until their own expiry. Mid-term plan changes are refused with "contact us to change plans"
+  (annual plans are not prorated). If a payment for an annual plan still arrives during a paid term
+  (for example an old open Checkout session), it is queued after the current term and flagged
+  `reviewRequired` on its receipt instead of replacing anything.
+- **Complimentary access** ($0 admin or Hermes grants) is not a paid plan and never funds job postings;
+  buying a paid plan replaces it immediately.
+- **Refunds and disputes.** The receipt is found by its stored `stripePaymentIntent` and marked
+  `refunded` or `disputed`. If it funds the current annual term, that term ends now (the account and
+  organization show Free/expired). A one-time purchase's credit is removed while it is still unused —
+  never below zero — and published jobs are never changed. A refund or dispute that arrives before
+  fulfillment is remembered in `stripeRevocations/{paymentIntent}` so the later fulfillment grants
+  nothing. A dispute that is later won is **not** restored automatically: re-apply the term or credit
+  from the admin tools.
 
-Stripe needs to send payment confirmations to your server:
+## Environment variables (Vercel)
 
-1. **For Local Testing:**
-   ```bash
-   # Install Stripe CLI
-   stripe listen --forward-to localhost:3000/api/stripe/webhook
-   
-   # Copy the webhook signing secret (starts with whsec_...)
-   # Add it to .env.local:
-   STRIPE_WEBHOOK_SECRET=whsec_...
-   ```
-
-2. **For Production (Vercel):**
-   - Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
-   - Click **"Add endpoint"**
-   - Enter: `https://iopps.vercel.app/api/stripe/webhook`
-   - Select event: `checkout.session.completed`
-   - Copy the signing secret
-   - Add to Vercel environment variables as `STRIPE_WEBHOOK_SECRET`
-
-### Step 3: Add Environment Variables to Vercel
-
-Go to your Vercel project settings and add:
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET` (from Step 2)
-- `FIREBASE_CLIENT_EMAIL` (from Step 1)
-- `FIREBASE_PRIVATE_KEY` (from Step 1)
+- `STRIPE_WEBHOOK_SECRET` (from the webhook endpoint above)
+- `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (Firebase Admin service account)
+- `CRON_SECRET` (daily subscription check)
 
----
+## Testing
 
-## How It Works
-
-### Payment Flow:
-
-1. **Employer fills out job form** → Selects pricing tier
-2. **Clicks "Continue to Payment"** → Draft job created (inactive) & redirected to Stripe
-3. **Completes payment** → Stripe processes payment
-4. **Webhook triggered** → Your server receives notification
-5. **Job activated automatically** → Status updated to active with expiration date
-6. **Success page shown** → Confirmation to employer
-
----
-
-## Testing the Integration
-
-### Test Mode (Recommended First):
-1. Use Stripe test keys (pk_test_... / sk_test_...)
-2. Use test card: `4242 4242 4242 4242`
-3. Any future expiry date, any CVC
-
-### Live Mode:
-- Already configured with your live keys
-- Real payments will be processed
-- **Test thoroughly in test mode first!**
-
----
-
-## Features Included
-
-✅ Secure payment processing via Stripe Checkout  
-✅ Automatic job creation after successful payment  
-✅ Job expiration dates (30/45 days)  
-✅ Featured job flag for premium listings  
-✅ Payment metadata tracking  
-✅ Beautiful pricing selection UI  
-✅ Success/failure handling  
-
----
-
-## What's NOT Included Yet (Future Enhancements)
-
-❌ Featured job visual differentiation on job board  
-❌ View/click analytics for featured jobs  
-❌ Email receipts (Stripe sends default emails)  
-❌ Employer dashboard to see payment history  
-❌ Refund handling  
-❌ Annual subscription tiers (Tier 1-3)  
-❌ Conference/Event payments  
-❌ Shop vendor subscriptions  
-
----
-
-## Next Steps
-
-1. **Complete Firebase Admin setup** (Step 1 above)
-2. **Set up webhook** (Step 2 above)
-3. **Test in development** with test cards
-4. **Deploy to Vercel** and add environment variables
-5. **Test on production** with test mode
-6. **Switch to live mode** when ready
-
----
-
-## Need Help?
-
-If you encounter any issues:
-1. Check browser console for errors
-2. Check Vercel logs for webhook errors
-3. Check Stripe Dashboard → Events for webhook status
-4. Let me know and I'll help debug!
-
----
-
-**Status**: ✅ Code complete, ready for environment setup and testing!
+- Use test keys (`sk_test_…`) and the test card `4242 4242 4242 4242` before switching to live keys.
+- Runtime tests: `tests/stripe-billing-lifecycle.test.ts` (runs locally) and the emulator-backed
+  `tests/stripe-payment-emulator.test.ts` (CI).
