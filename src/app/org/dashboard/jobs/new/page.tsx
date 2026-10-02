@@ -1317,6 +1317,7 @@ export default function NewJobWizardPage() {
                           checked={form.featured}
                           onChange={(value) => set("featured", value)}
                           onPurchase={(purchase) => canPurchase ? void leaveForPurchase(purchase) : setSubmitError(askOwner)}
+                          canPurchase={canPurchase}
                         />
                         {form.featured ? <label htmlFor="featured-duration">Featured listing duration (days, up to 45)
                           <input id="featured-duration" type="number" min={1} max={45} step={1} value={form.durationDays} onChange={event => set("durationDays", event.target.value)} className="w-full rounded-xl border p-3" />
