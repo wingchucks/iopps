@@ -386,17 +386,21 @@ service cloud.firestore {
         && notificationPreferencesValid(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
     }
 
-    // Event RSVPs: authenticated users can read (for count queries),
-    // users can create/update/delete their own RSVPs
+    // Event RSVPs: users can create/update/delete their own RSVPs.
     // RSVPs are private to their owner (IDs are "<uid>_<eventId>"). Public going
     // counts come from the event API, never from reading other members' RSVPs.
+    // Writes stay bound to that ID, so each member has one RSVP per event.
+    function ownsRsvpWrite(rsvpId) {
+      return request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId is string
+        && rsvpId == request.auth.uid + '_' + request.resource.data.postId;
+    }
     match /event_rsvps/{rsvpId} {
       allow get: if isSignedIn() && rsvpId.matches(request.auth.uid + '_.+')
         && (resource == null || resource.data.userId == request.auth.uid);
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid
-        && rsvpId.matches(request.auth.uid + '_.+');
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && ownsRsvpWrite(rsvpId);
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && ownsRsvpWrite(rsvpId);
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
