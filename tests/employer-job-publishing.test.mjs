@@ -7,6 +7,7 @@ import { sourceModule } from './helpers/security-fixtures.mjs';
 // decisions are stubbed and counted so a test can prove they never ran.
 // Every module shares the host Error so cross-module errors keep their messages, as in one realm.
 const realAuth = sourceModule('src/lib/server/employer-auth.ts', { mocks: { '@/lib/firebase-admin': {} }, globals: { Error } });
+const paidPublication = sourceModule('src/lib/server/paid-job-publication.ts', { globals: { Error } });
 const owner = (overrides = {}) => ({
   uid: 'owner', employerId: 'owner', orgId: 'owner', orgRole: 'owner', emailVerified: true,
   userData: { displayName: 'Fictional owner', email: 'owner@example.invalid' }, memberData: {},
@@ -14,14 +15,16 @@ const owner = (overrides = {}) => ({
   ...overrides,
 });
 
-export function jobRoutes({ context = owner(), jobs = {}, now = '2026-10-02T18:00:00.000Z', paid } = {}) {
+// 2026-10-02 12:00 in Saskatchewan unless a test says otherwise.
+export function jobRoutes({ context = owner(), jobs = {}, now = '2026-10-02T18:00:00.000Z', paid, rows = [] } = {}) {
   const calls = { prepared: 0, writes: [], emails: [], revalidated: [], logs: { error: [], warn: [] } };
   const store = { jobs: structuredClone(jobs), posts: {}, employers: { owner: {} } };
-  const ref = (collection, id) => ({ collection, id, path: `${collection}/${id}` });
+  const snapshot = target => ({ ref: target, exists: Boolean(store[target.collection]?.[target.id]), data: () => store[target.collection]?.[target.id] });
+  const ref = (collection, id) => { const target = { collection, id, path: `${collection}/${id}` }; target.get = async () => snapshot(target); return target; };
   const db = {
     collection: collection => ({ doc: id => ref(collection, id) }),
     runTransaction: async action => action({
-      get: async target => ({ exists: Boolean(store[target.collection]?.[target.id]), data: () => store[target.collection]?.[target.id] }),
+      get: async target => snapshot(target),
       set: (target, data) => { calls.writes.push({ op: 'set', path: target.path, data }); },
       create: (target, data) => { calls.writes.push({ op: 'create', path: target.path, data }); },
       update: (target, data) => { calls.writes.push({ op: 'update', path: target.path, data }); },
@@ -34,7 +37,8 @@ export function jobRoutes({ context = owner(), jobs = {}, now = '2026-10-02T18:0
     'firebase-admin/firestore': { FieldValue: { serverTimestamp: () => 'server-timestamp' } },
     '@/lib/firebase-admin': { getAdminDb: () => db },
     '@/lib/server/employer-auth': { ...realAuth, requireEmployerContext: async () => context, requireEmployerPublishingContext: async () => context },
-    '@/lib/server/employer-job-list': { loadEmployerJobRows: async () => [] },
+    '@/lib/server/employer-job-list': { loadEmployerJobRows: async () => rows },
+    '@/lib/server/paid-job-publication': paidPublication,
     '@/lib/server/paid-job-publication-firestore': { firestorePublicationReader: () => ({}) },
     '@/lib/server/paid-job-publication-reader': {
       readPaidFeaturedSummary: async () => null,
@@ -67,7 +71,9 @@ test('a rejected organization cannot publish a new job, and no payment logic run
   const h = jobRoutes({ context: rejected });
   const response = await h.post({ title: 'Fictional coordinator', slug: 'fictional-coordinator', status: 'active' });
   assert.equal(response.status, 403);
-  assert.match((await response.json()).error, /hasn't approved this organization/);
+  const body = await response.json();
+  assert.equal(body.code, 'organization_not_approved');
+  assert.match(body.error, /hasn't approved this organization/);
   assert.equal(h.calls.prepared, 0);
   assert.deepEqual(h.calls.writes, []);
 });
@@ -144,3 +150,19 @@ for (const kind of ['events', 'scholarships']) {
     assert.equal(approved.saved.length, 2);
   });
 }
+
+const draftJob = (extra = {}) => ({ title: 'Fictional job', employerId: 'owner', orgId: 'owner', managedBy: 'employer', status: 'draft', active: false, ...extra });
+
+test('expected payment and placement denials are JSON with a code and logged as warnings, not errors', async () => {
+  for (const [code, status] of [['payment_required', 402], ['invalid_duration', 409]]) {
+    const h = jobRoutes({ jobs: { job: draftJob({ featured: true }) }, paid: () => { throw new paidPublication.PublicationError(code, 'Denied for the fixture.'); } });
+    const response = await h.put('job', { status: 'active' });
+    assert.equal(response.status, status);
+    assert.deepEqual(await response.json(), { error: 'Denied for the fixture.', code });
+    assert.equal(h.calls.logs.error.length, 0);
+    assert.equal(h.calls.logs.warn.length, 1);
+  }
+  const broken = jobRoutes({ jobs: { job: draftJob() }, paid: () => { throw new Error('Fixture datastore failure'); } });
+  assert.equal((await broken.put('job', { status: 'active' })).status, 500);
+  assert.equal(broken.calls.logs.error.length, 1, 'unexpected failures still reach error monitoring');
+});

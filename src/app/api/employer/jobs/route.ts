@@ -146,6 +146,19 @@ function buildJobPayload(input: EmployerJobInput, authorContext: { uid: string; 
   return { payload, status, featured };
 }
 
+/**
+ * Expected denials (payment, placement, validation, access) are part of normal
+ * use: answer them with their code and log a warning, not a runtime error.
+ */
+function failureResponse(error: unknown, label: string, fallback: string) {
+  const status = error instanceof PublicationError ? (error.code === "payment_required" ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
+  const code = error instanceof PublicationError || error instanceof EmployerApiError ? error.code : undefined;
+  const message = error instanceof Error ? error.message : fallback;
+  if (status >= 500) console.error(label, error);
+  else console.warn(label, status, code ?? "", message);
+  return NextResponse.json({ error: message, ...(code ? { code } : {}) }, { status });
+}
+
 function serialize(value: unknown): unknown {
   if (value === null || value === undefined) return value;
   if (typeof value === "object" && value !== null && typeof (value as Record<string, unknown>).toDate === "function") {
@@ -229,10 +242,7 @@ export async function GET(req: NextRequest) {
       orgTier: (context.organizationData.tier as string | undefined) || (context.employerData.tier as string | undefined),
     });
   } catch (error) {
-    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
-    const message = error instanceof Error ? error.message : "Failed to load jobs.";
-    console.error("[api/employer/jobs][GET]", error);
-    return NextResponse.json({ error: message }, { status });
+    return failureResponse(error, "[api/employer/jobs][GET]", "Failed to load jobs.");
   }
 }
 
@@ -321,9 +331,6 @@ export async function POST(req: NextRequest) {
       featuredSummary: nextFeaturedSummary,
     });
   } catch (error) {
-    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
-    const message = error instanceof Error ? error.message : "Failed to create job.";
-    console.error("[api/employer/jobs][POST]", error);
-    return NextResponse.json({ error: message }, { status });
+    return failureResponse(error, "[api/employer/jobs][POST]", "Failed to create job.");
   }
 }

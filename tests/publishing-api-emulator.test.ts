@@ -38,7 +38,7 @@ async function harness(t: any) {
   function load(file: string) {
     const exports: any = {};
     vm.runInNewContext(ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
-      exports, Date, Error, console: { log() {}, error(...args: any[]) { console.error(...args.map(value => value instanceof Error ? { name: value.name, message: value.message, code: (value as any).code } : value)); } }, require: (id: string) => {
+      exports, Date, Error, console: { log() {}, warn() {}, error(...args: any[]) { console.error(...args.map(value => value instanceof Error ? { name: value.name, message: value.message, code: (value as any).code } : value)); } }, require: (id: string) => {
         if (id === '@/lib/server/employer-job-list') return { loadEmployerJobRows };
         if (id === 'next/server') return { NextResponse: { json: Response.json } };
         if (id === 'firebase-admin/firestore') return { FieldValue };

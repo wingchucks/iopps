@@ -49,6 +49,19 @@ interface EmployerJobInput {
   requiresReferences?: boolean;
 }
 
+/**
+ * Expected denials (payment, placement, validation, access) are part of normal
+ * use: answer them with their code and log a warning, not a runtime error.
+ */
+function failureResponse(error: unknown, label: string, fallback: string) {
+  const status = error instanceof PublicationError ? (error.code === "payment_required" ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
+  const code = error instanceof PublicationError || error instanceof EmployerApiError ? error.code : undefined;
+  const message = error instanceof Error ? error.message : fallback;
+  if (status >= 500) console.error(label, error);
+  else console.warn(label, status, code ?? "", message);
+  return NextResponse.json({ error: message, ...(code ? { code } : {}) }, { status });
+}
+
 function serialize(value: unknown): unknown {
   if (value === null || value === undefined) return value;
   if (typeof value === "object" && value !== null && typeof (value as Record<string, unknown>).toDate === "function") {
@@ -151,10 +164,7 @@ export async function GET(
       featuredSummary,
     });
   } catch (error) {
-    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
-    const message = error instanceof Error ? error.message : "Failed to load job.";
-    console.error("[api/employer/jobs/:id][GET]", error);
-    return NextResponse.json({ error: message }, { status });
+    return failureResponse(error, "[api/employer/jobs/:id][GET]", "Failed to load job.");
   }
 }
 
@@ -275,10 +285,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, jobId: id, featuredSummary: nextFeaturedSummary });
   } catch (error) {
-    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
-    const message = error instanceof Error ? error.message : "Failed to update job.";
-    console.error("[api/employer/jobs/:id][PUT]", error);
-    return NextResponse.json({ error: message }, { status });
+    return failureResponse(error, "[api/employer/jobs/:id][PUT]", "Failed to update job.");
   }
 }
 
@@ -315,9 +322,6 @@ export async function DELETE(
     });
     return NextResponse.json({ success: true });
   } catch (error) {
-    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
-    const message = error instanceof Error ? error.message : "Failed to delete job.";
-    console.error("[api/employer/jobs/:id][DELETE]", error);
-    return NextResponse.json({ error: message }, { status });
+    return failureResponse(error, "[api/employer/jobs/:id][DELETE]", "Failed to delete job.");
   }
 }
