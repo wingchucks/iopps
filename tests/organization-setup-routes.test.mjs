@@ -9,7 +9,7 @@ const DELETE = Symbol('delete');
 const OWNER_EMAIL = 'nathan.arias@iopps.ca'; // the super-admin policy address
 const plain = value => JSON.parse(JSON.stringify(value));
 
-function memoryFirestore(seed = {}) {
+function memoryFirestore(seed = {}, options = {}) {
   const docs = new Map(Object.entries(seed));
   let autoId = 0;
   const ref = (collection, id = `auto-${++autoId}`) => ({ id, path: `${collection}/${id}`, get: async () => snapshot(`${collection}/${id}`) });
@@ -44,7 +44,9 @@ function memoryFirestore(seed = {}) {
         set: (target, data, options) => writes.push({ path: target.path, data, merge: options?.merge === true }),
         update: (target, data) => writes.push({ path: target.path, data, merge: true }),
       });
-      if (writes.some(write => write.create && docs.has(write.path))) throw Object.assign(new Error('ALREADY_EXISTS'), { code: 6 });
+      if (writes.some(write => write.create && (docs.has(write.path) || options.conflictOn?.test(write.path)))) {
+        throw options.alreadyExists ?? Object.assign(new Error('ALREADY_EXISTS'), { code: 6 });
+      }
       for (const write of writes) apply(write.path, write.data, write.merge);
       return result;
     },
@@ -203,3 +205,20 @@ test('slug lookups prefer the public, oldest organization regardless of document
   assert.equal((await resolvePublicOrganization(db, 'private-name')).id, 'c-private', 'without a public match the choice is still stable');
   assert.equal((await resolvePublicOrganization(db, 'legacy-shared')).id, 'b-listed');
 });
+
+// Over gRPC Firestore reports a create conflict as ALREADY_EXISTS (6); over the REST
+// transport the HTTP 409 arrives as ABORTED (10) with "Document already exists".
+for (const [transport, alreadyExists] of [
+  ['gRPC', Object.assign(new Error('6 ALREADY_EXISTS: Document already exists: organizations/member'), { code: 6 })],
+  ['REST', Object.assign(new Error('Document already exists: projects/demo/databases/(default)/documents/organizations/member'), { code: 10 })],
+]) {
+  test(`organization upgrade reports an organization created concurrently (${transport} error)`, async () => {
+    const db = memoryFirestore(
+      { 'users/member': { role: 'community', status: 'active' }, 'members/member': { role: 'community', displayName: 'Fictional Member' } },
+      { conflictOn: /^organizations\//, alreadyExists },
+    );
+    const response = await create(load(db, memoryAuth({ member: identity('member') })), 'upgrade', 'member', 'Fictional Raced Workspace');
+    assert.equal(response.status, 409, await response.clone().text());
+    assert.match((await response.json()).error, /already exists for this account/);
+  });
+}

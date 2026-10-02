@@ -226,7 +226,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, orgId: uid, slug });
   } catch (err) {
     // ALREADY_EXISTS: an organization record for this account was created elsewhere.
-    if (err && typeof err === "object" && "code" in err && err.code === 6) {
+    if (err && typeof err === "object" && "code" in err && (err.code === 6 ||
+      // Over Firestore's REST transport ALREADY_EXISTS arrives as HTTP 409, mapped to ABORTED (10).
+      (err.code === 10 && /already exists/i.test(String((err as { message?: unknown }).message))))) {
       return NextResponse.json({ error: "An organization already exists for this account. Open your organization dashboard to continue." }, { status: 409 });
     }
     console.error("employer/upgrade error:", err);

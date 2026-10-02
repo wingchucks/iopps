@@ -367,7 +367,9 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     // A concurrent signup may finish after the initial lookup. The create
     // preconditions keep the entire batch from overwriting the winning account.
-    if (err && typeof err === "object" && "code" in err && err.code === 6) {
+    if (err && typeof err === "object" && "code" in err && (err.code === 6 ||
+      // Over Firestore's REST transport ALREADY_EXISTS arrives as HTTP 409, mapped to ABORTED (10).
+      (err.code === 10 && /already exists/i.test(String((err as { message?: unknown }).message))))) {
       const existing = await existingSignupResponse(uid);
       if (existing) return existing;
     }
