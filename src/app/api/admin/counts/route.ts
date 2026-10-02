@@ -59,7 +59,12 @@ export async function GET(request: NextRequest) {
       adminDb.collection("conferences").count().get(),
       adminDb.collection("applications").count().get(),
       adminDb.collection("powwows").count().get(),
-      adminDb.collection("contentFlags").count().get(),
+      // Open reports only: resolved and dismissed reports no longer need moderation.
+      adminDb
+        .collection("contentFlags")
+        .where("status", "in", ["pending", "pending_elder"])
+        .count()
+        .get(),
       adminDb
         .collection("verificationRequests")
         .where("status", "==", "pending")
