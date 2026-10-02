@@ -14,36 +14,9 @@ export type FeaturedTalentProfile = {
   isActive: boolean;
 };
 
-export const featuredTalentProfiles: FeaturedTalentProfile[] = [
-  {
-    slug: "audrey-fiddler",
-    name: "Audrey Fiddler",
-    featuredLabel: "Featured Talent",
-    headline: "Administrative, training, and community project support",
-    nation: "Waterhen Lake First Nation",
-    location: "Saskatchewan • Open to relocation",
-    openTo: "Seeking full-time employment",
-    imageUrl: "/featured-talent/audrey-fiddler.jpeg",
-    publicEmail: "audreylynnefiddler@outlook.com",
-    summary:
-      "Audrey brings experience across office administration, employment and training support, community projects, and client service. She is ready for a full-time role where she can contribute strong organization, communication, and people-first support.",
-    skills: [
-      "Administrative support",
-      "Employment and training",
-      "Community projects",
-      "Client service",
-      "Business administration",
-      "Leadership",
-    ],
-    experience: [
-      "Office and administrative coordination",
-      "Employment, training, and participant support",
-      "Community-focused programming and project work",
-      "Customer service and front-line communication",
-    ],
-    isActive: false,
-  },
-];
+// Photos under public/featured-talent/ are served whatever isActive says, so a
+// deactivated profile's photo is removed along with it.
+export const featuredTalentProfiles: FeaturedTalentProfile[] = [];
 
 /** Profiles that may be shown publicly; a deactivated profile is never built or served. */
 export function getActiveFeaturedTalentProfiles(): FeaturedTalentProfile[] {
