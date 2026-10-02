@@ -91,10 +91,11 @@ test('#17 actual feed scholarship adapter excludes expired dates and preserves r
   assert.deepEqual((await fetchScholarships()).map(x=>x.id), ['future','rolling','unknown']);
 });
 test('#7 related API and list collapse proven duplicates while preserving locations and intakes', async () => {
-  const base = {id:'a', title:'Advisor',employerName:'Example',location:'Regina',description:'Full source description',closingDate:'2099-01-01'};
+  // Public jobs records are active; related suggestions use the listing's eligibility.
+  const base = {id:'a', title:'Advisor',employerName:'Example',location:'Regina',description:'Full source description',closingDate:'2099-01-01',active:true};
   const jobs = [base,{...base,id:'b'},{...base,id:'c',location:'Saskatoon'},{...base,id:'d',closingDate:'2099-02-01'}];
   const {RelatedJobList} = load('src/app/jobs/[slug]/JobDetailClient.tsx',['RelatedJobList']);
-  const query={limit(){return this;},get:async()=>({docs:jobs.map(job=>({id:job.id,data:()=>job}))})};
+  const query={where(){return this;},limit(){return this;},get:async()=>({docs:jobs.map(job=>({id:job.id,data:()=>job}))})};
   const {GET}=load('src/app/api/jobs/[id]/related/route.ts',[],{
     'next/server':{NextResponse:{json:Response.json}},
     '@/lib/firebase-admin':{getAdminDb:()=>({collection:()=>({where:()=>query,doc:id=>({get:async()=>({id,exists:true,data:()=>({employerId:'org'})})})})})},

@@ -19,7 +19,7 @@ vm.runInNewContext(ts.transpileModule('export '+page.slice(page.indexOf('functio
 });
 const shared={title:'Advisor',employerId:'org',employerName:'Example',location:'Town',description:'Full source description',closingDate:'2099-01-01',active:true,status:'active'};
 async function related(records,section='employerJobs') {
- const query={limit(){return this;},async get(){return {docs:records.map(row=>({id:row.id,data:()=>row}))};}};
+ const query={where(){return this;},limit(){return this;},async get(){return {docs:records.map(row=>({id:row.id,data:()=>row}))};}};
  const current=section==='employerJobs'?{employerId:'org'}:{category:'care'};
  const db={collection(){return {doc:id=>({get:async()=>({id,exists:true,data:()=>current})}),where:()=>query};}};
  const {GET}=sourceModule('src/app/api/jobs/[id]/related/route.ts',{mocks:{'next/server':{NextResponse:{json:Response.json}},'@/lib/firebase-admin':{getAdminDb:()=>db},'@/lib/server/public-job-routing':{findPublicJobDocument:async()=>({source:'jobs',id:'current'})},'@/lib/server/job-slugs':{buildJobRouteSlug:row=>row.id},'@/lib/public-jobs':{isPublicJobVisible:()=>true},'@/lib/server/public-detail-cache':{withPublicDetailCache:response=>response}}});

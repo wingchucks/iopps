@@ -8,6 +8,7 @@ import {
   normalizeImportedDescription,
 } from "@/lib/server/imported-job-descriptions";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
+import { loadCachedPublicJobRouteIndex } from "@/lib/public-job-route-cache";
 import { findJobRecordAnyState, type JobRecordMatch } from "@/lib/server/job-record-lookup";
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 import { listingClosedOn, listingState } from "@/lib/listing-lifecycle";
@@ -15,6 +16,7 @@ import { normalizeJobDiscoveryMetadata } from "@/lib/job-metadata";
 import { normalizeApplyUrlFields } from "@/lib/utils";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 function serialize(value: unknown): unknown {
   if (value === null || value === undefined) return value;
@@ -40,7 +42,7 @@ export async function GET(
     const { id } = await params;
     const db = getAdminDb();
 
-    const found = await findPublicJobDocument(db, id);
+    const found = await findPublicJobDocument(db, id, loadCachedPublicJobRouteIndex);
     if (!found) {
       return closedJobResponse(await findJobRecordAnyState(db, id));
     }

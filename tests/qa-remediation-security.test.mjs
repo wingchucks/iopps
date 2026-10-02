@@ -23,6 +23,8 @@ import * as schoolVisibility from '../src/lib/school-visibility.ts';
 import * as jobDetailDates from '../src/lib/job-detail-dates.ts';
 import * as accessState from '../src/lib/access-state.ts';
 import * as businessReview from '../src/lib/business-listing-review.ts';
+import * as listingFreshness from '../src/lib/listing-freshness.ts';
+import * as contentRecord from '../src/lib/server/public-content-record.ts';
 
 const requireNative = createRequire(import.meta.url);
 function load(file, dependencies, globals = {}) {
@@ -263,6 +265,7 @@ test('organization metadata resolves the canonical record and immediately drops 
     react: { cache: fn => fn }, '@/lib/firebase-admin': { getAdminDb: () => db }, '@/lib/server/public-opportunities': {},
     '@/lib/public-job-merge': jobs, '@/lib/organization-profile': organization, '@/lib/server/public-job-routing': {},
     '@/lib/server/public-organization-resolver': resolver, '@/lib/server/seo': seo,
+    '@/lib/access-state': accessState, '@/lib/listing-freshness': listingFreshness, '@/lib/public-job-route-cache': {},
   });
   const hidden = await metadata.generateOrgMetadata('legacy');
   assert.equal(hidden.robots.index, false); assert.ok(!JSON.stringify(hidden).includes('Private canonical name') && !JSON.stringify(hidden).includes('Stale public name'));
@@ -296,13 +299,18 @@ test('scoped organization job links resolve the exact listing when another organ
     '@/lib/public-job-merge': jobs, '@/lib/server/partner-promotion': { withPartnerPromotion: value => value },
     '@/lib/organization-profile': { isOrganizationPubliclyVisible: () => true, normalizeOrganizationRecord: value => value },
     '@/lib/school-visibility': { isSchoolOrganization: () => false },
+    '@/lib/server/public-content-record': contentRecord,
   }, { process: { env: { NODE_ENV: 'production' } } });
   const response = await route.GET(new Request('https://example.invalid/api/org/qa'), { params: Promise.resolve({ slug: 'qa' }) });
   assert.equal(response.status, 200);
   const payload = await response.json();
   assert.equal(payload.jobs[0].href, '/jobs/shared-job--owned-id');
   const resolver = load('src/lib/server/public-job-routing.ts', { '@/lib/server/job-slugs': jobSlugs, '@/lib/public-jobs': publicJobs, './public-job-documents': jobDocuments });
-  const db = { collection: name => { const query = { where: () => query, get: async () => ({ docs: name === 'jobs' ? [doc(foreign), doc(owned)] : [] }) }; return query; } };
+  const rows = { jobs: [doc(foreign), doc(owned)], posts: [] };
+  const db = {
+    collection: name => { const query = { where: () => query, select: () => query, limit: () => query, doc: id => ({ name, id }), get: async () => ({ docs: rows[name] }) }; return query; },
+    getAll: async (...refs) => refs.map(ref => { const row = rows[ref.name].find(candidate => candidate.id === ref.id); return row ? { ...row, exists: true } : { id: ref.id, exists: false, data: () => undefined }; }),
+  };
   const resolved = await resolver.findPublicJobDocument(db, payload.jobs[0].href.slice('/jobs/'.length));
   assert.equal(resolved.id, 'owned-id');
 });
@@ -339,6 +347,7 @@ test('organization profiles omit opportunity tombstones, stale mirrors, hidden l
       '@/lib/public-job-merge': jobs, '@/lib/server/partner-promotion': { withPartnerPromotion: value => value },
       '@/lib/organization-profile': { isOrganizationPubliclyVisible: () => true, normalizeOrganizationRecord: value => value },
       '@/lib/school-visibility': { isSchoolOrganization: () => false },
+      '@/lib/server/public-content-record': contentRecord,
     };
     Object.assign(mocks, { '@/lib/server/employer-auth': { requireEmployerContext: async () => { throw new Error('Public fixture must not request private access'); } }, '@/lib/access-state': accessState, '@/lib/business-listing-review': businessReview });
     const route = load('src/app/api/org/[slug]/route.ts', mocks, { process: { env: { NODE_ENV: 'production' } } });

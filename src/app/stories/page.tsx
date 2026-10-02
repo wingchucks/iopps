@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { getPosts, type Post } from "@/lib/firestore/posts";
+import type { Post } from "@/lib/firestore/posts";
+import { getPublicPostsByType } from "@/lib/public-posts";
 import { displayLocation } from "@/lib/utils";
 
 type TabFilter = "all" | "story" | "spotlight";
@@ -16,9 +17,10 @@ export default function StoriesBrowsePage() {
   const [tab, setTab] = useState<TabFilter>("all");
 
   useEffect(() => {
+    // Each type is read with the server's bound instead of the whole feed.
     Promise.all([
-      getPosts({ type: "story" }),
-      getPosts({ type: "spotlight" }),
+      getPublicPostsByType("story", 200),
+      getPublicPostsByType("spotlight", 200),
     ])
       .then(([s, sp]) => {
         setStories(s);

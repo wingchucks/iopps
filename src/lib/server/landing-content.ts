@@ -155,74 +155,69 @@ async function getStats(): Promise<LandingStats> {
   }
 }
 
+// Cached by public-page-cache: a read error must throw, never return an empty list,
+// so the last good value stays in place and the page renders its own fallback.
 export async function getPartners(): Promise<LandingPartner[]> {
-  try {
-    const db = getAdminDb();
-    const snap = await db.collection("organizations").get();
+  const db = getAdminDb();
+  const snap = await db.collection("organizations").get();
 
-    return buildPartnersPayload(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as JsonRecord))).partners
-      .filter((org) => org.partnerTier !== "school")
-      .slice(0, 4)
-      .map((org) => {
-        const name = text(org.name) || text(org.orgName) || "IOPPS Partner";
-        const shortName = text(org.shortName) || name;
-        return {
-          id: text(org.id) || shortName,
-          name,
-          shortName,
-          tier: text(org.partnerTier) || "standard",
-          label: text(org.partnerBadgeLabel) || text(org.partnerLabel) || "Partner",
-          location: displayLocation(org.location) || "Canada",
-          focus:
-            text(org.description) ||
-            text(org.summary) ||
-            "Creating opportunities, events, hiring visibility, and community connection through IOPPS.",
-          href: text(org.slug) ? `/org/${text(org.slug)}` : "/partners",
-          logoUrl: text(org.logoUrl) || text(org.logo) || undefined,
-        };
-      });
-  } catch {
-    return [];
-  }
+  return buildPartnersPayload(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as JsonRecord))).partners
+    .filter((org) => org.partnerTier !== "school")
+    .slice(0, 4)
+    .map((org) => {
+      const name = text(org.name) || text(org.orgName) || "IOPPS Partner";
+      const shortName = text(org.shortName) || name;
+      return {
+        id: text(org.id) || shortName,
+        name,
+        shortName,
+        tier: text(org.partnerTier) || "standard",
+        label: text(org.partnerBadgeLabel) || text(org.partnerLabel) || "Partner",
+        location: displayLocation(org.location) || "Canada",
+        focus:
+          text(org.description) ||
+          text(org.summary) ||
+          "Creating opportunities, events, hiring visibility, and community connection through IOPPS.",
+        href: text(org.slug) ? `/org/${text(org.slug)}` : "/partners",
+        logoUrl: text(org.logoUrl) || text(org.logo) || undefined,
+      };
+    });
 }
 
+// Cached by public-page-cache: errors propagate (see getPartners).
 export async function getLatestJobs(): Promise<LandingJob[]> {
-  try {
-    const db = getAdminDb();
-    const { jobs, posts } = await loadPublicJobDocuments(db);
+  const db = getAdminDb();
+  const { jobs, posts } = await loadPublicJobDocuments(db);
 
-    const publicJobs = mergePublicJobRecords<JsonRecord & { id: string }, JsonRecord & { id: string }>(
-      jobs.map((doc) => ({ ...normalizeJobDocument(doc, "jobs"), id: doc.id, active: doc.data()!.active === true })),
-      posts.map((doc) => ({ ...normalizeJobDocument(doc, "posts"), id: doc.id })),
-    );
+  const publicJobs = mergePublicJobRecords<JsonRecord & { id: string }, JsonRecord & { id: string }>(
+    jobs.map((doc) => ({ ...normalizeJobDocument(doc, "jobs"), id: doc.id, active: doc.data()!.active === true })),
+    posts.map((doc) => ({ ...normalizeJobDocument(doc, "posts"), id: doc.id })),
+  );
 
-    const slugMap = buildPublicJobRouteSlugMap(
-      publicJobs.map((job) => ({
-        id: text(job.id),
-        slug: text(job.slug) || undefined,
-        title: text(job.title) || undefined,
-      })),
-    );
+  const slugMap = buildPublicJobRouteSlugMap(
+    publicJobs.map((job) => ({
+      id: text(job.id),
+      slug: text(job.slug) || undefined,
+      title: text(job.title) || undefined,
+    })),
+  );
 
-    return selectHomepageJobs(publicJobs, 5)
-      .map((job) => {
-        const id = text(job.id);
-        const slug = slugMap.get(id) || text(job.slug) || id;
-        return {
-          id,
-          title: text(job.title) || "Current opportunity",
-          employer: text(job.employerName) || text(job.orgName) || text(job.companyName) || "Hiring partner",
-          location: displayLocation(job.location) || text(job.workLocation) || "Location listed",
-          type: getJobType(job),
-          salary: getJobSalary(job),
-          href: `/jobs/${slug}`,
-          badge: getClosingSoonLabel(job),
-          featured: job.featured === true,
-        };
-      });
-  } catch {
-    return [];
-  }
+  return selectHomepageJobs(publicJobs, 5)
+    .map((job) => {
+      const id = text(job.id);
+      const slug = slugMap.get(id) || text(job.slug) || id;
+      return {
+        id,
+        title: text(job.title) || "Current opportunity",
+        employer: text(job.employerName) || text(job.orgName) || text(job.companyName) || "Hiring partner",
+        location: displayLocation(job.location) || text(job.workLocation) || "Location listed",
+        type: getJobType(job),
+        salary: getJobSalary(job),
+        href: `/jobs/${slug}`,
+        badge: getClosingSoonLabel(job),
+        featured: job.featured === true,
+      };
+    });
 }
 
 async function getUpcomingEvents(): Promise<LandingEvent[]> {

@@ -9,7 +9,8 @@ import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ShareButton from "@/components/ShareButton";
-import { getPost, getPosts, type Post } from "@/lib/firestore/posts";
+import { getPost, type Post } from "@/lib/firestore/posts";
+import { getPublicPostsByType } from "@/lib/public-posts";
 import { getPublicOrganization, type Organization } from "@/lib/firestore/organizations";
 import { savePost, unsavePost, isPostSaved } from "@/lib/firestore/savedItems";
 import { useAuth } from "@/lib/auth-context";
@@ -55,8 +56,8 @@ function StoryDetailContent() {
         }
         // Load related stories and spotlights
         const [stories, spotlights] = await Promise.all([
-          getPosts({ type: "story", max: 10 }),
-          getPosts({ type: "spotlight", max: 10 }),
+          getPublicPostsByType("story", 10),
+          getPublicPostsByType("spotlight", 10),
         ]);
         const all = [...stories, ...spotlights];
         setRelated(

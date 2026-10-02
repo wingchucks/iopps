@@ -18,6 +18,37 @@ function calendarDate(value: string): string | null {
   const date = new Date(Date.UTC(year, month - 1, day));
   return year >= 1000 && month > 0 && date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? date.toISOString().slice(0,10) : null;
 }
+// Saskatchewan keeps UTC-6 all year (no daylight saving time).
+const SASKATCHEWAN_OFFSET_MS = 6 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** End (exclusive) of the Saskatchewan calendar day that contains `time`. */
+export function saskatchewanDayEnd(time: number): number {
+  return (Math.floor((time - SASKATCHEWAN_OFFSET_MS) / DAY_MS) + 1) * DAY_MS + SASKATCHEWAN_OFFSET_MS;
+}
+
+/**
+ * When a listing date stops applying, in ms: a calendar date lasts until the end
+ * of that day in Saskatchewan (as expiry does); an instant is itself. Null when
+ * the value is not a date.
+ */
+export function listingDateEnd(value: unknown): number | null {
+  if (typeof value === "string") {
+    const day = calendarDate(value);
+    if (day) return saskatchewanDayEnd(Date.parse(`${day}T12:00:00Z`));
+    const time = Date.parse(value);
+    return Number.isFinite(time) ? time : null;
+  }
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.getTime() : null;
+  if (value && typeof value === "object") {
+    const record = value as { toDate?: unknown; seconds?: unknown };
+    if (typeof record.toDate === "function") return listingDateEnd((record.toDate as () => Date)());
+    if (record.seconds !== undefined) return listingDateEnd(Number(record.seconds) * 1000);
+  }
+  return null;
+}
+
 /**
  * Human display of a listing date. A calendar date ("2026-09-10", "Sep 10, 2026")
  * is a day, shown as that same day everywhere; an instant is shown in the same

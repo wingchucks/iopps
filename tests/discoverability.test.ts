@@ -65,3 +65,14 @@ test("sitemap entries deduplicate and preserve source timestamps", () => {
   assert.equal(new Date(entries[0].lastModified!).toISOString(), newer.toISOString());
   assert.equal(recordLastModified({ updatedAt: "2026-07-02" })?.toISOString(), new Date("2026-07-02").toISOString());
 });
+
+test("date-only expiry lasts through that Saskatchewan calendar day", () => {
+  // 7 pm in Regina on Sep 30 is already Oct 1 in UTC; the listing is still open.
+  const evening = new Date("2026-10-01T01:00:00Z");
+  assert.equal(isIndexableRecord({ id: "job", closingDate: "2026-09-30" }, evening), true);
+  assert.equal(isIndexableRecord({ id: "job", deadline: "Sep 30, 2026" }, evening), true);
+  assert.equal(isIndexableRecord({ id: "job", closingDate: "2026-09-29" }, evening), false);
+  // An instant expires at that instant.
+  assert.equal(isIndexableRecord({ id: "job", expiresAt: "2026-10-01T00:30:00.000Z" }, evening), false);
+  assert.equal(isIndexableRecord({ id: "job", expiresAt: "2026-10-01T02:30:00.000Z" }, evening), true);
+});

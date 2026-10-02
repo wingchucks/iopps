@@ -8,10 +8,18 @@ const aliasFixture = {schemaVersion:1,active:true,kind:'duplicate',originalId:'o
 const canonicalFixture = {active:true,slug:'role--new',employerId:'tsRvNLiRWARbOoiBOiEVFDwFfZn2',externalUrl:'https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=11111111-1111-1111-1111-111111111111&jobId=R'};
 
 test('alias destination with a persisted canonical suffix resolves through the actual public resolver', async () => {
- const db = {collection:(name:string)=>{
-  const query = {where:()=>query,get:async()=>({docs:name==='jobs'?[{id:'new',data:()=>canonicalFixture}]:[]})};
-  return query;
- }};
+ const rows: Record<string, Array<{id:string; data:()=>Record<string, unknown>}>> = {jobs:[{id:'new',data:()=>canonicalFixture}], posts:[]};
+ const db = {
+  collection:(name:string)=>{
+   const query = {where:()=>query,select:()=>query,limit:()=>query,doc:(id:string)=>({name,id}),get:async()=>({docs:rows[name]})};
+   return query;
+  },
+  // The resolver reads only the referenced documents.
+  getAll:async(...refs:Array<{name:string;id:string}>)=>refs.map(ref=>{
+   const row = rows[ref.name].find(candidate => candidate.id === ref.id);
+   return row ? {...row, exists:true} : {id:ref.id, exists:false, data:()=>undefined};
+  }),
+ };
  const resolved = resolveAliasRecord('old', aliasFixture, canonicalFixture, null);
  assert.ok(resolved);
  const target = await findPublicJobDocument(db as unknown as Firestore, resolved.destination.slice('/jobs/'.length));

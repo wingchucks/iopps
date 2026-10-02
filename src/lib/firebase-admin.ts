@@ -1,6 +1,6 @@
 import { initializeApp, getApps, cert, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
-import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getFirestore, initializeFirestore, type Firestore } from "firebase-admin/firestore";
 
 let _app: App | null = null;
 let _auth: Auth | null = null;
@@ -136,7 +136,18 @@ export function getAdminAuth(): Auth {
 
 export function getAdminDb(): Firestore {
   if (_db) return _db;
-  _db = getFirestore(getAdminApp());
+  const app = getAdminApp();
+  try {
+    // HTTP/1.1 REST instead of the default gRPC channel: serverless calls must not
+    // wait minutes on an idle channel (keepalive off, 300 s deadlines, retries).
+    // The SDK still switches to gRPC by itself for listeners, which need it.
+    _db = initializeFirestore(app, { preferRest: true });
+  } catch (error) {
+    // Only possible when another caller in this process initialized the same app
+    // with different settings; reuse that instance rather than failing requests.
+    console.warn("[firebase-admin] Firestore was already initialized; using the existing client.", error);
+    _db = getFirestore(app);
+  }
   return _db;
 }
 

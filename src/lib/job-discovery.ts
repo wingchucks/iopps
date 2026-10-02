@@ -1,5 +1,6 @@
 import { descriptionSnippet } from "./description-snippet";
 import type { Job } from "./firestore/jobs";
+import { formatListingDay, listingDateEnd, saskatchewanDayEnd } from "./listing-freshness";
 import { normalizeJobDiscoveryMetadata } from "./job-metadata";
 import { classifyJobArea } from "./job-taxonomy";
 
@@ -63,7 +64,21 @@ export function timestamp(value: unknown): number {
   return 0;
 }
 export const addedAt = (job: Job) => timestamp(job.createdAt) || timestamp(job.postedAt) || timestamp(job.order);
-export const closesAt = (job: Job) => timestamp(job.closingDate || job.expiresAt);
+// A calendar closing day stays open until the end of that day in Saskatchewan.
+export const closesAt = (job: Job) => listingDateEnd(job.closingDate || job.expiresAt) ?? 0;
+/** A listing date as the Saskatchewan calendar day it falls on, when it is a date. */
+export function listingDayLabel(value: unknown): string | null {
+  return listingDateEnd(value) === null ? null : formatListingDay(value);
+}
+const lowerText = (value: unknown) => typeof value === "string" ? value.toLowerCase() : "";
+/** Explicit remote evidence only; a structured location says so with remote: true. */
+export function isRemoteJob(job: Job): boolean {
+  const location: unknown = job.location;
+  const remoteLocation = location && typeof location === "object"
+    ? (location as Record<string, unknown>).remote === true
+    : lowerText(location).includes("remote");
+  return remoteLocation || lowerText(job.jobType).includes("remote") || lowerText(job.workLocation).includes("remote") || Boolean(job.remoteFlag);
+}
 export function jobSummary(job: Job): string {
   const entities: Record<string, string> = { "&nbsp;": " ", "&#160;": " ", "&amp;": "&", "&quot;": '"', "&#39;": "'" };
   let text = (job.description || "").replace(/<[^>]*>/g, " ").replace(/&(?:nbsp|amp|quot|#160|#39);/g, entity => entities[entity]);
@@ -101,7 +116,8 @@ export function matchesDiscoveryFilters(job: Job, filters: DiscoveryFilters, now
   if (filters.area && jobArea(job) !== filters.area) return false;
   const added = addedAt(job), closing = closesAt(job);
   if (filters.added && (!added || added < now - Number(filters.added) * 86400000)) return false;
-  if (filters.closing === "1" && (!closing || closing < now || closing > now + 7 * 86400000)) return false;
+  // Closing within the next seven Saskatchewan calendar days, today included.
+  if (filters.closing === "1" && (!closing || closing < now || closing > saskatchewanDayEnd(now + 7 * 86400000))) return false;
   if (filters.training === "1" && job.willTrain !== true) return false;
   const salary = salaryInfo(job);
   if (filters.disclosed === "1" && !salary) return false;
