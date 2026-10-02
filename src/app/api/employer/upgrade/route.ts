@@ -10,6 +10,7 @@ import {
 } from "@/lib/server/signup-protection";
 import { newBusinessListingReview } from "@/lib/business-listing-review";
 import { conflictingOrganizationLink, ORGANIZATION_LINK_CONFLICT, parseLocationText } from "@/lib/server/personal-workspace";
+import { organizationOwnerClaims, platformRoleOf } from "@/lib/server/admin-user-role";
 import { availableOrganizationSlug } from "@/lib/server/public-organization-resolver";
 
 export const runtime = "nodejs";
@@ -121,10 +122,14 @@ export async function POST(req: NextRequest) {
   const memberRef = db.collection("members").doc(uid);
 
   try {
+    const { customClaims } = await adminAuth.getUser(uid);
     const created = await db.runTransaction(async tx => {
       const [user, member, organization, employer] = await tx.getAll(userRef, memberRef, organizationRef, employerRef);
       if (organization.exists || employer.exists) return { conflict: "exists" } as const;
       if (conflictingOrganizationLink(uid, user.data(), member.data())) return { conflict: "link" } as const;
+      // Setting up an organization adds a workspace; it never replaces a
+      // platform role (admin or moderator), which stays in role and claims.
+      const platformRole = platformRoleOf(decoded, customClaims, user.data(), member.data());
       const slug = await availableOrganizationSlug(tx, db, name, uid);
 
       // 1. Create organizations doc. create() never overwrites an existing
@@ -183,9 +188,10 @@ export async function POST(req: NextRequest) {
         updatedAt: now,
       });
 
-      // 3. Update users doc — flip role. Personal profile fields are untouched.
+      // 3. Update users doc — link the organization. Personal profile fields
+      // and any platform role are untouched.
       tx.set(userRef, {
-        role: "employer",
+        ...(platformRole ? {} : { role: "employer" }),
         employerId: uid,
         orgId: uid,
         orgRole: "owner",
@@ -210,8 +216,8 @@ export async function POST(req: NextRequest) {
     }
     const { slug } = created;
 
-    // Set Firebase Auth custom claims
-    await adminAuth.setCustomUserClaims(uid, { role: "employer", employerId: uid });
+    // Merge into the current claims: replacing them would drop admin access.
+    await adminAuth.setCustomUserClaims(uid, organizationOwnerClaims(customClaims, uid));
 
     // Send welcome email (non-blocking)
     sendEmployerWelcome({ orgName: name, email, contactName }).catch(() => {});

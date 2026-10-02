@@ -11,6 +11,7 @@ import {
   getSignupClientIp,
 } from "@/lib/server/signup-protection";
 import { conflictingOrganizationLink, ORGANIZATION_LINK_CONFLICT, personalIdentityDefaults } from "@/lib/server/personal-workspace";
+import { organizationOwnerClaims, platformRoleOf } from "@/lib/server/admin-user-role";
 import { availableOrganizationSlug } from "@/lib/server/public-organization-resolver";
 
 export const runtime = "nodejs";
@@ -213,10 +214,14 @@ export async function POST(req: NextRequest) {
   const memberRef = db.collection("members").doc(uid);
 
   try {
+    const { customClaims } = await adminAuth.getUser(uid);
     const created = await db.runTransaction(async tx => {
       const [user, member, organization, employer] = await tx.getAll(userRef, memberRef, organizationRef, employerRef);
       if (organization.exists || employer.exists) return { conflict: "exists" } as const;
       if (conflictingOrganizationLink(uid, user.data(), member.data())) return { conflict: "link" } as const;
+      // Signing up an organization adds a workspace; it never replaces a
+      // platform role (admin or moderator), which stays in role and claims.
+      const platformRole = platformRoleOf(decoded, customClaims, user.data(), member.data());
       const slug = await availableOrganizationSlug(tx, db, name, uid);
 
       // 1. organizations/{uid}
@@ -276,10 +281,11 @@ export async function POST(req: NextRequest) {
         updatedAt: now,
       });
 
-      // 3. users/{uid} — set employer role (merge to keep existing fields).
-      // The person's own name and sign-in email are theirs, not the organization's.
+      // 3. users/{uid} — set employer role (merge to keep existing fields) unless
+      // the account holds a platform role. The person's own name and sign-in
+      // email are theirs, not the organization's.
       tx.set(userRef, {
-        role: "employer",
+        ...(platformRole ? {} : { role: "employer" }),
         orgRole: "owner",
         employerId: uid,
         orgId: uid,
@@ -294,7 +300,7 @@ export async function POST(req: NextRequest) {
         ...personalIdentityDefaults(member.data(), { displayName: contactName, email: accountEmail || normalizedContactEmail }),
         orgId: uid,
         orgRole: "owner",
-        role: "employer",
+        ...(platformRole ? {} : { role: "employer" }),
         emailVerified,
         ...(member.exists ? {} : { createdAt: now }),
         updatedAt: now,
@@ -326,8 +332,9 @@ export async function POST(req: NextRequest) {
     }
     const { slug } = created;
 
-    // Set custom claims so auth token reflects employer role
-    await adminAuth.setCustomUserClaims(uid, { role: "employer", employerId: uid });
+    // Merge into the current claims so the token reflects the organization;
+    // replacing them would drop admin access.
+    await adminAuth.setCustomUserClaims(uid, organizationOwnerClaims(customClaims, uid));
 
     let verificationLink: string | null = null;
     if (!emailVerified) {

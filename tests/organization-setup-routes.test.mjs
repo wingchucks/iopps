@@ -90,6 +90,7 @@ function load(db, auth) {
 }
 
 const identity = (uid, claims = {}, extra = {}) => ({ uid, email: uid === 'owner' ? OWNER_EMAIL : `${uid}@example.invalid`, claims, ...extra });
+const authorized = (uid, path = '/api/admin/users') => new Request('https://www.iopps.ca' + path, { headers: { authorization: `Bearer ${uid}` } });
 const body = (kind, uid, name) => kind === 'signup'
   ? { name, type: 'employer', contactName: 'Fictional Contact', contactEmail: `${uid}@example.invalid`, formStartedAt: Date.now() - 10000 }
   : { name, type: 'employer', formStartedAt: Date.now() - 10000 };
@@ -98,6 +99,50 @@ async function create(routes, kind, uid, name) {
     method: 'POST', headers: { authorization: `Bearer ${uid}`, 'content-type': 'application/json' }, body: JSON.stringify(body(kind, uid, name)),
   }));
 }
+
+for (const kind of ['upgrade', 'signup']) {
+  test(`organization ${kind} keeps the owner's super-admin and admin access`, async () => {
+    const db = memoryFirestore({
+      'users/owner': { role: 'admin', status: 'active', claimsValidAfter: 1_000_000_000, displayName: 'Fictional Owner' },
+      'members/owner': { role: 'admin', displayName: 'Fictional Owner' },
+    });
+    const auth = memoryAuth({ owner: identity('owner', { admin: true, role: 'admin' }) });
+    const routes = load(db, auth);
+    const response = await create(routes, kind, 'owner', 'Fictional Owner Workspace');
+    assert.equal(response.status, 200, await response.clone().text());
+    assert.equal(db.docs.get('users/owner').role, 'admin');
+    assert.equal(db.docs.get('members/owner').role, 'admin');
+    assert.equal(db.docs.get('users/owner').orgId, 'owner');
+    assert.equal(db.docs.get('members/owner').orgRole, 'owner');
+    assert.deepEqual(auth.accounts.owner.claims, { admin: true, role: 'admin', employerId: 'owner' });
+    const owner = await routes.api.verifySuperAdminToken(authorized('owner'));
+    assert.equal(owner.success, true, 'admin APIs still accept the owner');
+    assert.equal(owner.isSuperAdmin, true);
+    const workspace = await routes.employer.requireEmployerContext(authorized('owner', '/api/employer/check'));
+    assert.deepEqual([workspace.orgId, workspace.orgRole], ['owner', 'owner'], 'and the organization workspace works');
+  });
+}
+
+test('organization signup never replaces a moderator role or claim', async () => {
+  const db = memoryFirestore({ 'users/moderator': { role: 'moderator', status: 'active' }, 'members/moderator': { role: 'moderator', displayName: 'Fictional Moderator' } });
+  const auth = memoryAuth({ moderator: identity('moderator', { role: 'moderator' }) });
+  const response = await create(load(db, auth), 'signup', 'moderator', 'Fictional Moderated Workspace');
+  assert.equal(response.status, 200, await response.clone().text());
+  assert.equal(db.docs.get('users/moderator').role, 'moderator');
+  assert.equal(db.docs.get('members/moderator').role, 'moderator');
+  assert.deepEqual(auth.accounts.moderator.claims, { role: 'moderator', employerId: 'moderator' });
+});
+
+test('members become employers while unrelated claims survive and stale organization claims are replaced', async () => {
+  for (const kind of ['upgrade', 'signup']) {
+    const db = memoryFirestore({ 'users/member': { role: 'community', status: 'active' }, 'members/member': { displayName: 'Fictional Member' } });
+    const auth = memoryAuth({ member: identity('member', { role: 'community', fictionalPreview: true, orgId: 'stale-org', orgRole: 'member' }) });
+    const response = await create(load(db, auth), kind, 'member', 'Fictional Member Workspace');
+    assert.equal(response.status, 200, await response.clone().text());
+    assert.equal(db.docs.get('users/member').role, 'employer');
+    assert.deepEqual(auth.accounts.member.claims, { role: 'employer', fictionalPreview: true, employerId: 'member' });
+  }
+});
 
 test('suspended, admin-disabled, closed and revoked accounts cannot create or repair an organization', async () => {
   const cases = [
