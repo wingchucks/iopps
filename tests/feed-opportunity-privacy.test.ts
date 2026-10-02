@@ -7,6 +7,7 @@ import ts from "typescript";
 import { loadFeedOpportunityCanonical, publicFeedPosts } from "../src/lib/server/public-feed-posts.ts";
 import { publicContentRecord } from "../src/lib/server/public-content-record.ts";
 import { getPublicOpportunities, getPublicOpportunity } from "../src/lib/server/public-opportunities.ts";
+import * as accessState from "../src/lib/access-state.ts";
 import type { Firestore } from "firebase-admin/firestore";
 
 test("active feed copies cannot revive private, closed, deleted or rejected canonical opportunities", () => {
@@ -62,7 +63,10 @@ test("GET /api/posts scopes detail reads and canonical aliases while preserving 
   const db = {
     collection: (name: string) => ({
       doc: (id: string) => ({ name, id, get: async () => snapshot(name, id) }),
-      orderBy: () => ({ get: async () => { assert.equal(name, 'posts'); assert.equal(detail, false, 'detail requests must not scan posts'); return { docs: fixtures[name].map(row => snapshot(name, row.id)) }; } }),
+      orderBy: () => {
+        const ordered = { limit: () => ordered, get: async () => { assert.equal(name, 'posts'); assert.equal(detail, false, 'detail requests must not scan posts'); return { docs: fixtures[name].map(row => snapshot(name, row.id)) }; } };
+        return ordered;
+      },
       where: (field: string, operator: string, value: string | string[]) => ({ get: async () => {
         assert.equal(field, 'slug');
         if (name !== 'posts') { assert.equal(operator, 'in'); assert.ok(Array.isArray(value) && value.length <= 10); canonicalReads.push(name); }
@@ -82,6 +86,7 @@ test("GET /api/posts scopes detail reads and canonical aliases while preserving 
       if (id === "@/lib/server/public-feed-posts") return { publicFeedPosts, loadFeedOpportunityCanonical };
       if (id === "@/lib/server/public-content-record") return { publicContentRecord };
       if (id === "@/lib/firebase-admin") return { getAdminDb: () => db };
+      if (id === "@/lib/access-state") return accessState;
       if (["@/lib/account-labels", "firebase-admin/firestore", "@/lib/api-auth", "@/lib/email"].includes(id)) return {};
       throw new Error(id);
     },

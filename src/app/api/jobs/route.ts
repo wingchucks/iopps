@@ -14,10 +14,21 @@ import { loadPublicJobDocuments } from "@/lib/server/public-job-documents";
 
 export const runtime = "nodejs";
 export const revalidate = 0; // Evaluate public eligibility on every read.
+export const maxDuration = 30;
 
 const PUBLIC_LIST_CACHE_HEADERS = {
   "Cache-Control": "no-store",
 };
+
+// Callers that show only the newest jobs (search: 300, feed: 40) pass ?limit;
+// the /jobs directory omits it and receives every public job.
+const MAX_LIST_LIMIT = 500;
+
+function listLimit(value: string | null): number | null {
+  if (value === null || !value.trim()) return null;
+  const limit = Math.floor(Number(value));
+  return Number.isFinite(limit) ? Math.min(MAX_LIST_LIMIT, Math.max(1, limit)) : null;
+}
 
 type NormalizedJob = Record<string, unknown> & {
   id: string;
@@ -100,6 +111,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const employerName = searchParams.get("employerName");
     const employerId = searchParams.get("employerId");
+    const limit = listLimit(searchParams.get("limit"));
 
     const { jobs, posts } = await loadPublicJobDocuments(db);
 
@@ -121,10 +133,11 @@ export async function GET(request: Request) {
     const sortedJobs = sortJobsByRecency(projectPublicJobDiscovery(publicJobs.filter(job =>
       (!employerId || job.employerId === employerId || job.orgId === employerId) &&
       (!employerName || job.employerName === employerName || job.orgName === employerName)
-    )).map(normalizeJobDisplay));
+    )));
+    const listed = (limit === null ? sortedJobs : sortedJobs.slice(0, limit)).map(normalizeJobDisplay);
 
     return NextResponse.json(
-      { jobs: sortedJobs.map(publicContentRecord), count: sortedJobs.length },
+      { jobs: listed.map(publicContentRecord), count: listed.length, total: sortedJobs.length },
       { headers: PUBLIC_LIST_CACHE_HEADERS },
     );
   } catch (err) {
