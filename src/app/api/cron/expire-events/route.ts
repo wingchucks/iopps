@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Firestore, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { isEventCompleted } from "@/lib/public-events";
+import { hasEventEnded } from "@/lib/public-events";
 
 export const runtime = "nodejs";
+
+// Firestore allows 500 writes per batch; stay well below it.
+const BATCH_LIMIT = 400;
 
 function isEventLikePost(data: Record<string, unknown>): boolean {
   const type = typeof data.type === "string" ? data.type.trim().toLowerCase() : "";
@@ -22,9 +26,39 @@ function isEventLikePost(data: Record<string, unknown>): boolean {
 }
 
 /**
+ * The same publication gate public listings use: explicitly active or published,
+ * or a status-less legacy import that was never deactivated. Drafts, reviews,
+ * rejected, hidden and deleted records keep their own state.
+ */
+function isPublished(data: Record<string, unknown>): boolean {
+  if (data.active === false) return false;
+  return !data.status || ["active", "published"].includes(String(data.status).toLowerCase());
+}
+
+async function completeEndedEvents(db: Firestore, docs: QueryDocumentSnapshot[], now: Date): Promise<number> {
+  const ended = docs.filter(doc => {
+    const data = doc.data() as Record<string, unknown>;
+    return isPublished(data) && hasEventEnded(data, now);
+  });
+  for (let start = 0; start < ended.length; start += BATCH_LIMIT) {
+    const batch = db.batch();
+    for (const doc of ended.slice(start, start + BATCH_LIMIT)) {
+      batch.update(doc.ref, {
+        status: "completed",
+        active: false,
+        updatedAt: now.toISOString(),
+      });
+    }
+    await batch.commit();
+  }
+  return ended.length;
+}
+
+/**
  * GET /api/cron/expire-events
- * Runs daily. Marks completed events inactive so expired items stop surfacing
- * on public pages and member profile event lists.
+ * Runs daily. Marks published events whose last day (or end time) has passed
+ * in their own time zone as completed, so they stop surfacing on public pages
+ * and member profile event lists.
  * Protected by CRON_SECRET header.
  */
 export async function GET(req: NextRequest) {
@@ -37,50 +71,12 @@ export async function GET(req: NextRequest) {
     const db = getAdminDb();
     const now = new Date();
 
-    let expiredEvents = 0;
     const eventsSnap = await db.collection("events").get();
-    const eventBatch = db.batch();
+    const expiredEvents = await completeEndedEvents(db, eventsSnap.docs, now);
 
-    for (const eventDoc of eventsSnap.docs) {
-      const data = eventDoc.data() as Record<string, unknown>;
-      if (!isEventCompleted(data, now)) continue;
-
-      if (data.status === "completed" && data.active === false) continue;
-
-      eventBatch.update(eventDoc.ref, {
-        status: "completed",
-        active: false,
-        updatedAt: now.toISOString(),
-      });
-      expiredEvents++;
-    }
-
-    if (expiredEvents > 0) {
-      await eventBatch.commit();
-    }
-
-    let expiredPosts = 0;
     const postsSnap = await db.collection("posts").get();
-    const postBatch = db.batch();
-
-    for (const postDoc of postsSnap.docs) {
-      const data = postDoc.data() as Record<string, unknown>;
-      if (!isEventLikePost(data)) continue;
-      if (!isEventCompleted(data, now)) continue;
-
-      if (data.status === "completed" && data.active === false) continue;
-
-      postBatch.update(postDoc.ref, {
-        status: "completed",
-        active: false,
-        updatedAt: now.toISOString(),
-      });
-      expiredPosts++;
-    }
-
-    if (expiredPosts > 0) {
-      await postBatch.commit();
-    }
+    const eventPosts = postsSnap.docs.filter(doc => isEventLikePost(doc.data() as Record<string, unknown>));
+    const expiredPosts = await completeEndedEvents(db, eventPosts, now);
 
     return NextResponse.json({
       ok: true,
