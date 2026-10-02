@@ -153,6 +153,44 @@ for (const kind of ['events', 'scholarships']) {
 
 const draftJob = (extra = {}) => ({ title: 'Fictional job', employerId: 'owner', orgId: 'owner', managedBy: 'employer', status: 'draft', active: false, ...extra });
 
+test('publishing a new job with a closing date before today (Saskatchewan) is refused before payment', async () => {
+  const h = jobRoutes();
+  const response = await h.post({ title: 'Fictional coordinator', slug: 'past', status: 'active', closingDate: '2026-10-01' });
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), { error: "This job's closing date has passed. Choose today or a later closing date, or clear it, before publishing.", code: 'closing_date_passed', field: 'closingDate' });
+  assert.equal(h.calls.prepared, 0);
+  assert.deepEqual(h.calls.writes, []);
+  assert.equal((await h.post({ title: 'Fictional coordinator', slug: 'today', status: 'active', closingDate: '2026-10-02' })).status, 200, 'today is still open');
+  assert.equal((await h.post({ title: 'Fictional coordinator', slug: 'draft', status: 'draft', closingDate: '2026-10-01' })).status, 200, 'drafts may keep any date');
+});
+
+test('closing dates use the Saskatchewan day, not the UTC day, in the evening', async () => {
+  // 21:00 on 2026-10-02 in Regina is already 2026-10-03 in UTC.
+  const h = jobRoutes({ now: '2026-10-03T03:00:00.000Z' });
+  assert.equal((await h.post({ title: 'Fictional coordinator', slug: 'evening', status: 'active', closingDate: '2026-10-02' })).status, 200);
+  const next = jobRoutes({ now: '2026-10-03T06:00:00.000Z' });
+  assert.equal((await next.post({ title: 'Fictional coordinator', slug: 'midnight', status: 'active', closingDate: '2026-10-02' })).status, 400);
+});
+
+test('activating or reopening a job keeps its stored closing date unless a new one is sent', async () => {
+  for (const [body, expected, prepared] of [
+    [{ status: 'active' }, 400, 0],
+    [{ status: 'active', closingDate: '2026-09-30' }, 400, 0],
+    [{ status: 'active', closingDate: '2026-10-15' }, 200, 1],
+    [{ status: 'active', closingDate: '' }, 200, 1],
+    [{ status: 'closed' }, 200, 1],
+  ]) {
+    const h = jobRoutes({ jobs: { job: draftJob({ status: 'closed', closingDate: '2026-09-30' }) } });
+    const response = await h.put('job', body);
+    assert.equal(response.status, expected, JSON.stringify(body));
+    if (expected === 400) {
+      assert.equal((await response.json()).code, 'closing_date_passed');
+      assert.deepEqual(h.calls.writes, []);
+    }
+    assert.equal(h.calls.prepared, prepared, JSON.stringify(body));
+  }
+});
+
 test('expected payment and placement denials are JSON with a code and logged as warnings, not errors', async () => {
   for (const [code, status] of [['payment_required', 402], ['invalid_duration', 409]]) {
     const h = jobRoutes({ jobs: { job: draftJob({ featured: true }) }, paid: () => { throw new paidPublication.PublicationError(code, 'Denied for the fixture.'); } });

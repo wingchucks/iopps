@@ -15,6 +15,7 @@ import { preparePaidPublication, readPaidFeaturedSummary } from "@/lib/server/pa
 import { firestorePublicationReader } from "@/lib/server/paid-job-publication-firestore";
 import { PublicationError } from "@/lib/server/paid-job-publication";
 import { jobInputLimitError } from "@/lib/server/job-input-limits";
+import { isClosingDateBeforeToday, PAST_CLOSING_DATE_MESSAGE } from "@/lib/job-closing-date";
 
 export const runtime = "nodejs";
 
@@ -227,7 +228,12 @@ export async function PUT(
       const requestedStatus = normalizeStatus(body.status ?? current.data.status);
       const requestedFeatured = typeof body.featured === "boolean" ? body.featured : Boolean(current.data.featured);
       // Refuse publishing before any payment logic runs; drafts and closing stay available.
-      if (requestedStatus === "active") assertOrganizationCanPublish(context);
+      if (requestedStatus === "active") {
+        assertOrganizationCanPublish(context);
+        const closingDate = typeof body.closingDate === "string" ? body.closingDate : current.data.closingDate;
+        // A live job with a past closing date is hidden and refuses applications, so never (re)publish one.
+        if (isClosingDateBeforeToday(closingDate, publicationNow)) throw new EmployerApiError(400, PAST_CLOSING_DATE_MESSAGE, "closing_date_passed");
+      }
       const paid = await preparePaidPublication(firestorePublicationReader(db, transaction), {
         employerId: context.employerId, organizationId: context.orgId, jobId: id,
         current: current.data, status: requestedStatus, featured: requestedFeatured,

@@ -18,6 +18,7 @@ import { PublicationError } from "@/lib/server/paid-job-publication";
 import { jobInputLimitError } from "@/lib/server/job-input-limits";
 import { isSchoolOrganization } from "@/lib/school-visibility";
 import { sendAdminContentPosted } from "@/lib/email";
+import { isClosingDateBeforeToday, PAST_CLOSING_DATE_MESSAGE } from "@/lib/job-closing-date";
 
 export const runtime = "nodejs";
 
@@ -258,6 +259,10 @@ export async function POST(req: NextRequest) {
     const tooLong = jobInputLimitError(body as Record<string, unknown>);
     if (tooLong) {
       return NextResponse.json({ error: `The job ${tooLong} is too long.`, field: tooLong }, { status: 400 });
+    }
+    // A job published with a past closing date is never visible yet would still use a paid credit.
+    if (normalizeStatus(body.status) === "active" && isClosingDateBeforeToday(body.closingDate)) {
+      return NextResponse.json({ error: PAST_CLOSING_DATE_MESSAGE, code: "closing_date_passed", field: "closingDate" }, { status: 400 });
     }
 
     const db = getAdminDb();
