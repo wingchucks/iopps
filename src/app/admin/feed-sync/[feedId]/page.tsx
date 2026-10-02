@@ -571,7 +571,7 @@ export default function FeedDetailPage() {
               <div key={job.id} className="flex items-center justify-between px-5 py-3 hover:bg-[var(--input-bg)] transition-colors">
                 <div className="min-w-0 flex-1">
                   <Link
-                    href={`/admin/jobs?search=${encodeURIComponent(job.title)}`}
+                    href={`/admin/jobs?${new URLSearchParams({ startAt: job.id, search: job.title })}`}
                     className="text-sm font-medium text-[var(--text-primary)] hover:text-[#D97706] hover:underline"
                   >
                     {job.title}

@@ -158,6 +158,9 @@ export default function AdminJobsPage() {
   // Filter & search
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  // ?startAt=<jobId>&search=<title> (from admin emails and feed sync) opens the list at that job.
+  const [anchorJobId, setAnchorJobId] = useState<string | null>(null);
+  const [urlRead, setUrlRead] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -172,7 +175,7 @@ export default function AdminJobsPage() {
 
   // Fetch jobs from API
   const fetchJobs = useCallback(async () => {
-    if (!user) return;
+    if (!user || !urlRead) return;
     const sequence = ++requestSequence.current;
     setLoading(true);
     setError(null);
@@ -181,7 +184,8 @@ export default function AdminJobsPage() {
       const token = await user.getIdToken();
       const params = new URLSearchParams();
       if (activeTab !== "all") params.set("status", activeTab);
-      if (pageCursors[page - 1]) params.set("cursor", pageCursors[page - 1]);
+      if (page === 1 && anchorJobId) params.set("startAt", anchorJobId);
+      else if (pageCursors[page - 1]) params.set("cursor", pageCursors[page - 1]);
       params.set("limit", String(PAGE_SIZE));
 
       const res = await fetch(`/api/admin/jobs?${params.toString()}`, {
@@ -207,7 +211,16 @@ export default function AdminJobsPage() {
     } finally {
       if (sequence === requestSequence.current) setLoading(false);
     }
-  }, [user, activeTab, page, pageCursors]);
+  }, [user, urlRead, activeTab, page, pageCursors, anchorJobId]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const startAt = params.get("startAt");
+    const search = params.get("search");
+    if (startAt) setAnchorJobId(startAt);
+    if (search) setSearchQuery(search);
+    setUrlRead(true);
+  }, []);
 
   useEffect(() => {
     fetchJobs();
@@ -328,6 +341,19 @@ export default function AdminJobsPage() {
           />
         </div>
 
+        {anchorJobId && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-[var(--text-muted)]">
+            <span>Showing jobs starting from <span className="font-mono text-[var(--text-primary)]">{anchorJobId}</span>.</span>
+            <button
+              type="button"
+              onClick={() => { setAnchorJobId(null); setSearchQuery(""); setPage(1); setPageCursors([""]); }}
+              className="px-3 py-1.5 text-sm rounded-lg border border-[var(--card-border)] button-gradient-soft hover:bg-accent/10"
+            >
+              Show all jobs
+            </button>
+          </div>
+        )}
+
         {/* Filter Tabs + Search */}
         <Card>
           <CardContent className="p-6">
@@ -338,7 +364,7 @@ export default function AdminJobsPage() {
                   <button
                     key={tab.value}
                     type="button"
-                    onClick={() => { setPage(1); setPageCursors([""]); setActiveTab(tab.value); }}
+                    onClick={() => { setPage(1); setPageCursors([""]); setAnchorJobId(null); setActiveTab(tab.value); }}
                     className={[
                       "flex-shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-all duration-200",
                       activeTab === tab.value

@@ -197,7 +197,7 @@ test('the admin draft notification links to the admin jobs page, not the employe
   await h.post({ title: 'Fictional coordinator', slug: 'draft-notice', status: 'draft' });
   await h.post({ title: 'Fictional coordinator', slug: 'live-notice', status: 'active' });
   await new Promise(resolve => setImmediate(resolve));
-  assert.deepEqual(h.calls.emails.map(email => email.urlPath), ['/admin/jobs?search=Fictional+coordinator', '/jobs/live-notice']);
+  assert.deepEqual(h.calls.emails.map(email => email.urlPath), ['/admin/jobs?startAt=draft-notice&search=Fictional+coordinator', '/jobs/live-notice']);
 });
 
 test('public job caches are refreshed after publish, live edits, close and delete only', async () => {
