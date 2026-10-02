@@ -221,7 +221,7 @@ async function checkLegacyMessages(page, width) {
     await composer.fill('Newer unsent Beta draft');
     const completed = page.waitForResponse(response => response.url() === notifyUrl);
     releaseNotify();
-    assert.equal((await completed).status(), 200);
+    assert.equal((await completed).status(), 503); // Delayed notification also has no isolated provider credentials.
     await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
     await expect(composer).toHaveValue('Newer unsent Beta draft');
     const after = await db.collection('messages').where('conversationId', '==', b).get();
