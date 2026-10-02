@@ -132,6 +132,11 @@ for(const outcome of ['pending','denied','signout'])test('OrgRoute rejects old A
  if(outcome==='denied'){h.requests[1].resolve(response('B',false));await h.settle();}
  h.requests[0].resolve(response('A'));await h.settle();assert.ok(!h.text().includes('SECRET_CHILD'));assert.ok(!h.routes.includes('/admin'));
 });
+for(const userRole of ['moderator','admin'])test('OrgRoute keeps '+userRole+' staff in the organization workspace the server authorized',async()=>{
+ const h=harness('src/components/OrgRoute.tsx',user('A'));h.render();await h.settle();
+ h.requests[0].resolve({ok:true,json:async()=>({authorized:true,profile:{uid:'A',orgRole:'owner'},profileReady:true,userRole})});await h.settle();
+ assert.ok(h.text().includes('SECRET_CHILD'));assert.deepEqual(h.routes,[]);
+});
 test('OrgRoute binds role and retry generations, including reversed completion',async()=>{
  const h=harness('src/components/OrgRoute.tsx',user('A'));h.render();await h.settle();h.setProps({requiredRole:'owner'});await h.settle();h.requests[1].reject(new Error('offline'));await h.settle();
  h.nodes().find(n=>n.type==='button').props.onClick();h.render();await h.settle();h.requests[2].resolve(response('A',false));await h.settle();h.requests[0].resolve(response('A'));await h.settle();assert.ok(!h.text().includes('SECRET_CHILD'));

@@ -19,9 +19,10 @@ export async function GET(req: NextRequest) {
     const decoded = await getAdminAuth().verifyIdToken(authorization.slice(7));
     const { userData } = await assertUserCanAccessApp(decoded);
     const member = await getAdminDb().collection("members").doc(decoded.uid).get();
-    const memberData = member.data() || {};
-    const admin = decoded.admin === true || [decoded.role, userData.role, memberData.role]
-      .some(role => role === "admin" || role === "moderator");
+    // Only accounts the admin APIs accept (verifyAdminToken) are sent to /admin.
+    // Moderators have no admin tools; they use their own or their organization's workspace.
+    const admin = (decoded.admin === true || decoded.role === "admin") &&
+      (userData.claimsValidAfter === undefined || userData.role === "admin");
     let organization;
 
     if (!admin) {
