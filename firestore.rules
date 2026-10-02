@@ -331,16 +331,59 @@ service cloud.firestore {
         && canMessage(get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants);
     }
 
-    // Member settings: users can read/write their own settings
+    // Member settings (src/lib/firestore/memberSettings.ts). Legacy documents keep
+    // historical fields; saves write only the current privacy fields and shapes.
+    function memberSettingsValid(data, changed) {
+      return (!changed.hasAny(['userId']) || data.userId == request.auth.uid)
+        && (!changed.hasAny(['profileVisibility']) || data.profileVisibility in ['public', 'members_only', 'private'])
+        && (!changed.hasAny(['fieldVisibility']) || (data.fieldVisibility is map
+          && data.fieldVisibility.keys().hasOnly(['email', 'community', 'location', 'bio', 'interests'])
+          && data.fieldVisibility.values().hasOnly(['everyone', 'members', 'only_me'])))
+        && (!changed.hasAny(['showOnlineStatus']) || data.showOnlineStatus is bool)
+        && (!changed.hasAny(['allowDirectMessages']) || data.allowDirectMessages is bool)
+        && (!changed.hasAny(['showInDirectory']) || data.showInDirectory is bool)
+        && (!changed.hasAny(['updatedAt']) || data.updatedAt == request.time);
+    }
     match /member_settings/{userId} {
       allow read: if isOwner(userId);
-      allow create, update: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['userId', 'profileVisibility', 'fieldVisibility',
+          'showOnlineStatus', 'allowDirectMessages', 'showInDirectory', 'updatedAt'])
+        && memberSettingsValid(request.resource.data, request.resource.data.keys());
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['profileVisibility',
+          'fieldVisibility', 'showOnlineStatus', 'allowDirectMessages', 'showInDirectory', 'updatedAt'])
+        && memberSettingsValid(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
     }
 
-    // Notification preferences: users can read/write their own preferences
+    // Notification preferences (src/lib/firestore/notificationPreferences.ts).
+    function channelsValid(categories, category) {
+      return !categories.keys().hasAny([category]) || (categories[category] is map
+        && categories[category].keys().hasOnly(['email', 'push', 'inApp'])
+        && categories[category].values().hasOnly([true, false]));
+    }
+    function notificationPreferencesValid(data, changed) {
+      return (!changed.hasAny(['userId']) || data.userId == request.auth.uid)
+        && (!changed.hasAny(['categories']) || (data.categories is map
+          && data.categories.keys().hasOnly(['applications', 'messages', 'community', 'events', 'opportunities'])
+          && channelsValid(data.categories, 'applications') && channelsValid(data.categories, 'messages')
+          && channelsValid(data.categories, 'community') && channelsValid(data.categories, 'events')
+          && channelsValid(data.categories, 'opportunities')))
+        && (!changed.hasAny(['quietHours']) || (data.quietHours is map
+          && data.quietHours.keys().hasOnly(['enabled', 'start', 'end'])
+          && data.quietHours.get('enabled', false) is bool
+          && data.quietHours.get('start', '') is string && data.quietHours.get('start', '').size() <= 12
+          && data.quietHours.get('end', '') is string && data.quietHours.get('end', '').size() <= 12))
+        && (!changed.hasAny(['updatedAt']) || data.updatedAt == request.time);
+    }
     match /notification_preferences/{userId} {
       allow read: if isOwner(userId);
-      allow create, update: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['userId', 'categories', 'quietHours', 'updatedAt'])
+        && notificationPreferencesValid(request.resource.data, request.resource.data.keys());
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['categories', 'quietHours', 'updatedAt'])
+        && notificationPreferencesValid(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
     }
 
     // Event RSVPs: authenticated users can read (for count queries),
@@ -392,14 +435,28 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Training enrollments: users can read/create/update their own, admin/moderator can read all
+    // Training enrollments: users can read/create their own, admin/moderator can read all.
+    // Progress and certificates are not client-tracked, so members may only record a
+    // new, not-yet-started enrollment (src/lib/firestore/training.ts enrollInProgram).
+    function validNewEnrollment() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['userId', 'programId', 'programTitle', 'progress', 'completedModules',
+          'totalModules', 'status', 'enrolledAt', 'completedAt', 'certificateUrl'])
+        && data.userId == request.auth.uid
+        && data.programId is string && data.programId.size() > 0 && data.programId.size() <= 1500
+        && (data.programTitle == null || (data.programTitle is string && data.programTitle.size() <= 5000))
+        && data.progress == 0 && data.completedModules is list && data.completedModules.size() == 0
+        && data.totalModules is int && data.totalModules >= 0
+        && data.status == 'enrolled' && data.enrolledAt == request.time
+        && data.completedAt == null && data.certificateUrl == null;
+    }
     match /training_enrollments/{enrollmentId} {
       allow read: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
         isAdminOrMod()
       );
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && validNewEnrollment();
+      allow update: if false;
     }
 
     // Feed sources: admin only
