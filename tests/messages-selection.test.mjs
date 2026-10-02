@@ -9,11 +9,12 @@ import ts from 'typescript';
 function harness(sendResult = () => Promise.resolve()) {
   const slots = [], pending = [], sent = [], read = [], errors = [];
   let cursor = 0, inbox, tree, query = 'peer-a';
+  const messageListeners = [];
   let user = { uid: 'self' };
   const react = {
     useState(initial) { const i = cursor++; slots[i] ??= { value: initial }; return [slots[i].value, value => { slots[i].value = typeof value === 'function' ? value(slots[i].value) : value; }]; },
     useRef(initial) { const i = cursor++; slots[i] ??= { current: initial }; return slots[i]; },
-    useEffect(fn, deps) { const i = cursor++, prev = slots[i]; if (!prev || deps.some((v, j) => !Object.is(v, prev.deps[j]))) { slots[i] = { deps }; pending.push(fn); } },
+    useEffect(fn, deps) { const i = cursor++, prev = slots[i]; if (!prev || deps.some((v, j) => !Object.is(v, prev.deps[j]))) { slots[i] = { deps, cleanup: prev?.cleanup }; pending.push(() => { slots[i].cleanup?.(); slots[i].cleanup = fn(); }); } },
   };
   const jsx = (type, props) => ({ type, props });
   const imports = {
@@ -22,7 +23,7 @@ function harness(sendResult = () => Promise.resolve()) {
     '@/lib/auth-context': { useAuth: () => ({ user }) },
     '@/lib/firestore/messages': {
       onConversations: (_uid, callback) => { inbox = callback; return () => {}; },
-      onMessages: () => () => {}, markConversationRead: id => { read.push(id); },
+      onMessages: (id, snapshot, error) => { messageListeners.push({ id, snapshot, error }); return () => {}; }, markConversationRead: id => { read.push(id); },
       getConversationPeer: async () => null,
       sendMessage: async (...args) => { sent.push(args); await sendResult(); },
     },
@@ -33,19 +34,62 @@ function harness(sendResult = () => Promise.resolve()) {
   }).outputText, { exports, console: { error: (...args) => errors.push(args) }, URLSearchParams, require: id => imports[id] || { default: id } });
   function nodes(value) { if (!value || typeof value !== 'object') return []; if (Array.isArray(value)) return value.flatMap(nodes); return [value, ...nodes(value.props?.children)]; }
   const Content = nodes(exports.default()).find(n => typeof n.type === 'function').type;
-  function render() { cursor = 0; tree = Content(); for (const fn of pending.splice(0)) fn(); cursor = 0; tree = Content(); return tree; }
+  function render() {
+    for (let turn = 0; turn < 10; turn++) {
+      cursor = 0; tree = Content();
+      if (!pending.length) return tree;
+      for (const fn of pending.splice(0)) fn();
+    }
+    throw new Error('Fixture hooks did not settle');
+  }
   function input() { return nodes(tree).find(n => n.type === 'input'); }
   function select(label) { nodes(tree).find(n => n.props?.onClick && JSON.stringify(n.props.children).includes(label)).props.onClick(); render(); }
   return { render, snapshot: rows => { inbox(rows); render(); }, select, input,
     type: text => { input().props.onChange({ target: { value: text } }); render(); },
     send: async () => { await nodes(tree).find(n => n.type === 'button' && n.props.children === 'Send').props.onClick(); render(); },
     query: value => { query = value; render(); },
-    user: uid => { user = { uid }; render(); }, sent, read, errors };
+    user: uid => { user = { uid }; render(); },
+    messageListeners,
+    messageSnapshot: rows => { messageListeners.at(-1).snapshot(rows); render(); },
+    messageError: () => { messageListeners.at(-1).error(new Error('fictional missing index')); render(); },
+    text: () => JSON.stringify(tree),
+    retry: () => { nodes(tree).find(n => n.type === 'button' && n.props.children === 'Retry').props.onClick(); render(); },
+    sent, read, errors };
 }
 const rows = [
   { id: 'a', participants: ['self', 'peer-a'], lastMessage: 'Thread Alpha' },
   { id: 'b', participants: ['self', 'peer-b'], lastMessage: 'Thread Beta', unreadBy: 'self' },
 ];
+
+test('message listener loading and failure never claim an empty history; retry resubscribes', () => {
+  const h = harness(); h.render(); h.snapshot(rows);
+  assert.match(h.text(), /Loading messages/);
+  assert.doesNotMatch(h.text(), /No messages yet/);
+  h.messageError();
+  assert.match(h.text(), /Messages could not be loaded/);
+  assert.doesNotMatch(h.text(), /No messages yet/);
+  const subscriptions = h.messageListeners.length;
+  h.retry();
+  assert.equal(h.messageListeners.length, subscriptions + 1);
+  assert.match(h.text(), /Loading messages/);
+  h.messageSnapshot([{ id: 'existing', senderId: 'self', text: 'Existing fixture history' }]);
+  assert.match(h.text(), /Existing fixture history/);
+  assert.doesNotMatch(h.text(), /Loading messages|No messages yet|Messages could not be loaded/);
+});
+
+test('only a successful empty snapshot shows empty history; stale callbacks cannot cross threads', () => {
+  const h = harness(); h.render(); h.snapshot(rows);
+  const old = h.messageListeners.at(-1);
+  h.messageSnapshot([{ id: 'a-message', senderId: 'self', text: 'Alpha-only fixture' }]);
+  h.select('Thread Beta');
+  assert.match(h.text(), /Loading messages/);
+  assert.doesNotMatch(h.text(), /Alpha-only fixture|No messages yet/);
+  old.snapshot([{ id: 'late', text: 'Stale Alpha message' }]); h.render();
+  assert.doesNotMatch(h.text(), /Stale Alpha message/);
+  h.messageSnapshot([]);
+  assert.match(h.text(), /No messages yet/);
+  assert.doesNotMatch(h.text(), /Loading messages|Messages could not be loaded/);
+});
 test('legacy query is consumed once; manual selection and recipient-bound drafts survive read and incoming snapshots', async () => {
   const h = harness(); h.render(); h.snapshot(rows);
   h.type('draft for A'); h.select('Thread Beta');

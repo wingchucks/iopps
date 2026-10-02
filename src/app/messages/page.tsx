@@ -19,6 +19,8 @@ import AppShell from "@/components/AppShell";
 import Card from "@/components/Card";
 import Avatar from "@/components/Avatar";
 
+const EMPTY_MESSAGES: Message[] = [];
+
 export default function MessagesPage() {
   return (
     <ProtectedRoute>
@@ -36,10 +38,20 @@ function MessagesContent() {
   const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messageState, setMessageState] = useState<{
+    key: string;
+    messages: Message[];
+    failed: boolean;
+  } | null>(null);
+  const [messageRetry, setMessageRetry] = useState(0);
   const [profiles, setProfiles] = useState<Record<string, ConversationPeer>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const draftKey = JSON.stringify([user?.uid, activeConvId]);
+  const messageKey = JSON.stringify([user?.uid, activeConvId, messageRetry]);
+  const currentMessages = messageState?.key === messageKey ? messageState : null;
+  const messages = currentMessages?.messages || EMPTY_MESSAGES;
+  const messagesLoading = !currentMessages;
+  const messagesFailed = currentMessages?.failed === true;
   const newMessage = drafts[draftKey] || "";
   const setNewMessage = (text: string) => setDrafts(previous => ({ ...previous, [draftKey]: text }));
   const [sending, setSending] = useState(false);
@@ -83,16 +95,20 @@ function MessagesContent() {
   // Real-time messages listener for active conversation
   useEffect(() => {
     if (!activeConvId || !user) return;
+    let active = true;
     const unsub = onMessages(activeConvId, (msgs) => {
-      setMessages(msgs);
+      if (active) setMessageState({ key: messageKey, messages: msgs, failed: false });
+    }, (error) => {
+      console.error("Failed to load messages:", error);
+      if (active) setMessageState({ key: messageKey, messages: [], failed: true });
     });
     // Mark as read when opening a conversation
     const conv = conversations.find((c) => c.id === activeConvId);
     if (conv?.unreadBy === user.uid) {
       markConversationRead(activeConvId);
     }
-    return unsub;
-  }, [activeConvId, user]);
+    return () => { active = false; unsub(); };
+  }, [activeConvId, user, messageKey]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -191,7 +207,7 @@ function MessagesContent() {
                   return (
                     <div
                       key={conv.id}
-                      onClick={() => setActiveConvId(conv.id)}
+                      onClick={() => { setMessageState(null); setActiveConvId(conv.id); setMessageRetry(previous => previous + 1); }}
                       className="flex items-center gap-3 rounded-xl cursor-pointer transition-colors"
                       style={{
                         padding: "12px 14px",
@@ -280,7 +296,14 @@ function MessagesContent() {
 
               {/* Messages */}
               <div className="flex-1 overflow-y-auto" style={{ padding: "16px" }}>
-                {messages.length === 0 ? (
+                {messagesLoading ? (
+                  <p role="status" className="text-center text-text-muted text-sm py-12">Loading messages...</p>
+                ) : messagesFailed ? (
+                  <div role="alert" className="text-center py-12">
+                    <p className="text-text-muted text-sm">Messages could not be loaded. Please try again.</p>
+                    <button onClick={() => setMessageRetry(previous => previous + 1)} className="text-teal text-sm font-semibold border-none bg-transparent cursor-pointer mt-2">Retry</button>
+                  </div>
+                ) : messages.length === 0 ? (
                   <div className="text-center py-12">
                     <p className="text-text-muted text-sm">
                       No messages yet. Say hello!
