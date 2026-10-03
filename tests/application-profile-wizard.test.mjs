@@ -37,7 +37,7 @@ test('profile wizard: accessible selection, explained requirements and profile-o
   const navigation = write('navigation.js', `const router={replace:()=>{}}; export const useRouter=()=>router; export const useParams=()=>({slug:'fixture-role'});`);
   const toast = write('toast.js', 'const showToast=()=>{}; export const useToast=()=>({showToast});');
   const data = write('data.js', 'export const getPost=async()=>window.fixture.job; export const getMemberProfile=async()=>window.fixture.profile; export const getApplicantReceipt=async()=>null;');
-  const storage = write('storage.js', `export const storage={}; export const ref=()=>({}); export const uploadBytes=async()=>{await new Promise(resolve=>{window.finishFixtureUpload=resolve;});}; export const getDownloadURL=async()=>'https://fixture.invalid/resume.pdf'; export const getBlob=async()=>{throw Error('Unexpected saved resume read');};`);
+  const storage = write('storage.js', `const calls=window.fixtureStorageCalls=[]; export const storage={}; export const ref=()=>{calls.push('ref');return {};}; export const uploadBytes=async()=>{calls.push('uploadBytes');await new Promise(resolve=>{window.finishFixtureUpload=resolve;});}; export const getDownloadURL=async()=>{calls.push('getDownloadURL');return 'https://fixture.invalid/resume.pdf';}; export const getBlob=async()=>{calls.push('getBlob');throw Error('Unexpected saved resume read');};`);
   const loader = write('loader.cjs', `const ts=require(${JSON.stringify(require.resolve('typescript'))});module.exports=function(source){return ts.transpileModule(source,{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;};`);
   const entry = write('entry.js', `import React from 'react'; import {createRoot} from 'react-dom/client'; import Page from ${JSON.stringify(path.join(root, 'src/app/jobs/[slug]/apply/page.tsx'))}; createRoot(document.getElementById('root')).render(React.createElement(Page));`);
   const { webpack } = require('next/dist/compiled/webpack/webpack');
@@ -145,5 +145,20 @@ test('profile wizard: accessible selection, explained requirements and profile-o
     assert.equal(notifications, 1);
     assert.equal(records.get('applications/fixture-applicant_fixture-role').resumeUrl, '');
   });
+  await t.test('a saved profile resume is attached by the server, with no browser Storage download', async () => {
+    records.delete('applications/fixture-applicant_fixture-role'); const before = writes;
+    await load({ requiresResume: true }, { ...profile, resumeUrl: 'https://fixture.invalid/saved.pdf', resumeFileName: 'Saved CV.pdf' });
+    await toggle().click(); await next().click(); await next().click();
+    await page.getByRole('button', { name: 'Submit Application', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Application saved' })).toBeVisible();
+    await expect(page.getByRole('listitem').filter({ hasText: 'Saved CV.pdf' })).toBeVisible();
+    assert.deepEqual(await page.evaluate(() => window.fixtureStorageCalls), [], 'no getBlob, upload or download URL in the browser');
+    assert.deepEqual([submitted.resumeType, submitted.resumeUrl, submitted.resumeFileName], ['profile', '', null]);
+    // The fixture server runs the real submission without the archive step: it reads the stored member profile.
+    const stored = records.get('applications/fixture-applicant_fixture-role');
+    assert.deepEqual([stored.resumeType, stored.resumeUrl, stored.resumeFileName], ['profile', 'https://fixture.invalid/saved.pdf', 'Saved CV.pdf']);
+    assert.equal(writes, before + 1);
+  });
+  // No request ever left the fixture origin: the saved resume's Storage URL is never fetched by the browser.
   assert.deepEqual(escaped, []); assert.deepEqual(errors, []);
 });

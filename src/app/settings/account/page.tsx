@@ -7,7 +7,9 @@ import {
   updateProfile,
   updatePassword,
   EmailAuthProvider,
+  GoogleAuthProvider,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
 } from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
 import { authErrorMessage } from "@/lib/auth-errors";
@@ -30,10 +32,20 @@ export default function AccountSettingsPage() {
   );
 }
 
+// Members who signed up with Google have no password to confirm with.
+function deleteErrorMessage(error: unknown): string {
+  const code = error && typeof error === "object" && "code" in error ? (error as { code?: unknown }).code : undefined;
+  if (code === "auth/user-mismatch") return "Choose the Google account you use to sign in to IOPPS, then try again.";
+  return authErrorMessage(error, "Unable to delete your account. If you manage an organization, transfer its ownership or contact support before trying again.");
+}
+
 function AccountContent() {
   const { user, signOut } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
+  const providerIds = user?.providerData?.map((provider) => provider.providerId) ?? [];
+  // Exact Firebase provider IDs, not URLs.
+  const googleOnly = !providerIds.some((id) => id === "password") && providerIds.some((id) => id === "google.com");
 
   // Display name
   const [displayName, setDisplayName] = useState(user?.displayName || "");
@@ -102,20 +114,27 @@ function AccountContent() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!user || !user.email) return;
+    if (!user || (!googleOnly && !user.email)) return;
     setDeleteError("");
     setDeleting(true);
     try {
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        deletePassword
-      );
-      await reauthenticateWithCredential(user, credential);
+      if (googleOnly) {
+        // Open the popup straight from the click, as sign-in does, so browsers allow it.
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        await reauthenticateWithPopup(user, provider);
+      } else {
+        const credential = EmailAuthProvider.credential(
+          user.email!,
+          deletePassword
+        );
+        await reauthenticateWithCredential(user, credential);
+      }
       await deleteOwnAccount(user.uid);
       await signOut();
       router.push("/");
     } catch (err: unknown) {
-      setDeleteError(authErrorMessage(err, "Unable to delete your account. If you manage an organization, transfer its ownership or contact support before trying again."));
+      setDeleteError(deleteErrorMessage(err));
     } finally {
       setDeleting(false);
     }
@@ -187,53 +206,61 @@ function AccountContent() {
           <h3 className="text-[15px] font-bold text-text mb-3">
             Change Password
           </h3>
-          <div className="flex flex-col gap-3 mb-3">
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-              placeholder="Current password"
-            />
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-              placeholder="New password"
-            />
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
-              placeholder="Confirm new password"
-            />
-          </div>
-          {passwordError && (
-            <p className="text-sm text-red mb-3">{passwordError}</p>
+          {googleOnly ? (
+            <p className="text-sm text-text-muted m-0">
+              You sign in with Google, so there is no IOPPS password to change. Manage your password in your Google account.
+            </p>
+          ) : (
+            <>
+              <div className="flex flex-col gap-3 mb-3">
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                  placeholder="Current password"
+                />
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                  placeholder="New password"
+                />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-text text-sm outline-none transition-all focus:border-teal"
+                  placeholder="Confirm new password"
+                />
+              </div>
+              {passwordError && (
+                <p className="text-sm text-red mb-3">{passwordError}</p>
+              )}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleChangePassword}
+                  disabled={
+                    savingPassword || !currentPassword || !newPassword || !confirmPassword
+                  }
+                  className="brand-button px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+                  style={{
+                    background: "var(--button-gradient)",
+                    opacity:
+                      savingPassword ||
+                      !currentPassword ||
+                      !newPassword ||
+                      !confirmPassword
+                        ? 0.5
+                        : 1,
+                  }}
+                >
+                  {savingPassword ? "Changing..." : "Change Password"}
+                </button>
+              </div>
+            </>
           )}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleChangePassword}
-              disabled={
-                savingPassword || !currentPassword || !newPassword || !confirmPassword
-              }
-              className="brand-button px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
-              style={{
-                background: "var(--button-gradient)",
-                opacity:
-                  savingPassword ||
-                  !currentPassword ||
-                  !newPassword ||
-                  !confirmPassword
-                    ? 0.5
-                    : 1,
-              }}
-            >
-              {savingPassword ? "Changing..." : "Change Password"}
-            </button>
-          </div>
         </div>
       </Card>
 
@@ -292,16 +319,24 @@ function AccountContent() {
             </button>
           ) : (
             <div>
-              <p className="text-sm text-text-sec mb-3">
-                Enter your password to confirm account deletion:
-              </p>
-              <input
-                type="password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-red bg-card text-text text-sm outline-none mb-3"
-                placeholder="Your password"
-              />
+              {googleOnly ? (
+                <p className="text-sm text-text-sec mb-3">
+                  To confirm, sign in again with the Google account you use for IOPPS. Your account is deleted as soon as you confirm.
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-text-sec mb-3">
+                    Enter your password to confirm account deletion:
+                  </p>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-red bg-card text-text text-sm outline-none mb-3"
+                    placeholder="Your password"
+                  />
+                </>
+              )}
               {deleteError && (
                 <p className="text-sm text-red mb-3">{deleteError}</p>
               )}
@@ -323,14 +358,14 @@ function AccountContent() {
                 </button>
                 <button
                   onClick={handleDeleteAccount}
-                  disabled={deleting || !deletePassword}
+                  disabled={deleting || (!googleOnly && !deletePassword)}
                   className="px-5 py-2.5 rounded-xl border-none font-semibold text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
                   style={{
                     background: "var(--red)",
-                    opacity: deleting || !deletePassword ? 0.5 : 1,
+                    opacity: deleting || (!googleOnly && !deletePassword) ? 0.5 : 1,
                   }}
                 >
-                  {deleting ? "Deleting..." : "Permanently Delete"}
+                  {deleting ? "Deleting..." : googleOnly ? "Confirm with Google & Delete" : "Permanently Delete"}
                 </button>
               </div>
             </div>

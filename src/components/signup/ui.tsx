@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { CSS } from "./constants";
+import { PROFILE_MEDIA_ALLOWED_MIME_TYPES } from "@/lib/profile-media";
 
 /* ── Background Mesh ── */
 export function BackgroundMesh() {
@@ -236,6 +237,7 @@ export function UploadZone({ label, hint, hasFile, onFileChange }: {
   onFileChange: (f: File | null) => void;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const [unsupportedType, setUnsupportedType] = React.useState(false);
   return (
     <div
       onClick={() => inputRef.current?.click()}
@@ -256,8 +258,18 @@ export function UploadZone({ label, hint, hasFile, onFileChange }: {
       <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.6 }}>{hasFile ? "✅" : "🖼️"}</div>
       <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>{hasFile ? "File Selected" : label}</div>
       <div style={{ fontSize: 12, color: CSS.textDim }}>{hint}</div>
-      <input ref={inputRef} type="file" aria-label={label} accept="image/*" style={{ display: "none" }}
-        onChange={e => onFileChange(e.target.files?.[0] || null)} />
+      {unsupportedType && (
+        <div role="alert" style={{ fontSize: 12, color: CSS.error, marginTop: 6 }}>Choose a PNG, JPG, WebP or GIF image.</div>
+      )}
+      <input ref={inputRef} type="file" aria-label={label} accept={PROFILE_MEDIA_ALLOWED_MIME_TYPES.join(",")} style={{ display: "none" }}
+        onChange={e => {
+          const file = e.target.files?.[0] || null;
+          // Storage only accepts these raster types for public organization images.
+          const supported = !file || (PROFILE_MEDIA_ALLOWED_MIME_TYPES as readonly string[]).includes(file.type.toLowerCase());
+          setUnsupportedType(!supported);
+          if (!supported) e.target.value = "";
+          onFileChange(supported ? file : null);
+        }} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getDashboardHref, getStandaloneDashboardHref, getDashboardRedirect } from "@/lib/dashboard-navigation";
+import { COMPLIMENTARY_ACCESS_LABEL } from "@/lib/pricing";
 import BusinessListingStatus from "@/components/business-review/BusinessListingStatus";
 import type { BusinessListingReview } from "@/lib/business-listing-review";
 import BusinessOverview from "@/components/employer/BusinessOverview";
@@ -129,6 +130,8 @@ function OrgDashboardContent() {
   const searchParams = useSearchParams();
 
   const [org, setOrg] = useState<Organization | null>(null);
+  // $0 admin or Hermes access is not the paid plan: it never funds job postings.
+  const [complimentaryAccess, setComplimentaryAccess] = useState(false);
   const [jobs, setJobs] = useState<DashJob[]>([]);
   const [schoolPrograms, setSchoolPrograms] = useState<SchoolProgramItem[]>([]);
   const [studentInquiries, setStudentInquiries] = useState<StudentInquiryItem[]>([]);
@@ -227,6 +230,7 @@ function OrgDashboardContent() {
 
         const normalizedOrg = normalizeOrganizationRecord(dashData.org as Organization);
         setOrg(normalizedOrg);
+        setComplimentaryAccess(Boolean(dashData.billing?.complimentary));
         const jobPosts = (dashData.posts || []).filter((post: Record<string, unknown>) => post.type === "job");
         const programPosts = (dashData.schoolPrograms || dashData.posts || []).filter(
           (post: Record<string, unknown>) => post.type === "program" || !post.type,
@@ -499,8 +503,8 @@ function OrgDashboardContent() {
                           {org?.plan && (
                             <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{
                               background: `rgba(${ACCENT_RGB},0.12)`, color: ACCENT,
-                            }}>
-                              {org.plan} plan
+                            }} title={complimentaryAccess ? COMPLIMENTARY_ACCESS_LABEL : undefined}>
+                              {complimentaryAccess ? `Complimentary ${org.plan} · no paid postings` : `${org.plan} plan`}
                             </span>
                           )}
                           {isSchoolOrg && (

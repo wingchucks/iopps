@@ -1,10 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import OpportunityHeader from "@/components/OpportunityHeader";
 import Footer from "@/components/Footer";
-export const metadata = {
-  title: "Indigenous Entrepreneurship Conference | IOPPS",
+import { buildListingMetadata } from "@/lib/server/seo";
+export const metadata: Metadata = buildListingMetadata({
+  title: "Indigenous Entrepreneurship Conference",
   description: "Explore the vision for an IOPPS gathering. In planning.",
-};
+  path: "/conference",
+  type: "website",
+});
 export default function ConferencePage() {
   return (
     <div className="op-site">

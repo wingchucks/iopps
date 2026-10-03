@@ -1,84 +1,58 @@
-import {
-  collection,
-  getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
-  doc,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-  getCountFromServer,
-  type Timestamp,
-} from "firebase/firestore";
-import { db } from "../firebase";
+// Content reports are submitted through /api/reports. The server validates them,
+// rate-limits and de-duplicates per member, and writes the moderation queue
+// (contentFlags) that /admin/moderation reads. Browsers never write reports directly.
+// The API route shares these limits, so keep this module free of Firebase SDK imports.
+
+export const REPORT_TARGET_TYPES = ["post", "member", "message", "conversation"] as const;
+export const REPORT_REASONS = ["spam", "harassment", "inappropriate", "misinformation", "other"] as const;
+export const REPORT_DETAILS_MAX_LENGTH = 2000;
+export const REPORT_TITLE_MAX_LENGTH = 300;
+export const REPORT_TARGET_ID_MAX_LENGTH = 300;
+
+export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
+export type ReportReason = (typeof REPORT_REASONS)[number];
 
 export interface ContentReport {
-  id: string;
-  reporterId: string;
-  reporterName?: string;
-  targetType: "post" | "member" | "message" | "conversation";
+  targetType: ReportTargetType;
   targetId: string;
   targetTitle?: string;
-  reason: "spam" | "harassment" | "inappropriate" | "misinformation" | "other";
+  reason: ReportReason;
   details?: string;
-  status: "pending" | "reviewing" | "resolved" | "dismissed";
-  adminNote?: string;
-  createdAt: Timestamp | ReturnType<typeof serverTimestamp>;
-  resolvedAt?: Timestamp | ReturnType<typeof serverTimestamp>;
 }
 
-const col = () => collection(db, "content_reports");
+export type ReportSubmissionResult = { duplicate: boolean };
+
+export class ReportSubmissionError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ReportSubmissionError";
+    this.status = status;
+  }
+}
 
 export async function submitReport(
-  report: Omit<ContentReport, "id" | "status" | "createdAt">
-): Promise<string> {
-  const docRef = await addDoc(col(), {
-    ...report,
-    status: "pending",
-    createdAt: serverTimestamp(),
+  reporter: { getIdToken(): Promise<string> },
+  report: ContentReport,
+): Promise<ReportSubmissionResult> {
+  // Optional text is omitted rather than sent as undefined or an empty string.
+  const title = report.targetTitle?.trim().slice(0, REPORT_TITLE_MAX_LENGTH);
+  const details = report.details?.trim();
+  const response = await fetch("/api/reports", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await reporter.getIdToken()}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      targetType: report.targetType,
+      targetId: report.targetId,
+      reason: report.reason,
+      ...(title ? { targetTitle: title } : {}),
+      ...(details ? { details } : {}),
+    }),
   });
-  return docRef.id;
-}
-
-export async function getReports(
-  status?: ContentReport["status"]
-): Promise<ContentReport[]> {
-  const constraints = status
-    ? [where("status", "==", status), orderBy("createdAt", "desc")]
-    : [orderBy("createdAt", "desc")];
-  const q = query(col(), ...constraints);
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as ContentReport));
-}
-
-export async function getUserReports(userId: string): Promise<ContentReport[]> {
-  const q = query(
-    col(),
-    where("reporterId", "==", userId),
-    orderBy("createdAt", "desc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as ContentReport));
-}
-
-export async function updateReportStatus(
-  reportId: string,
-  status: ContentReport["status"],
-  adminNote?: string
-): Promise<void> {
-  const ref = doc(db, "content_reports", reportId);
-  const updates: Record<string, unknown> = { status };
-  if (adminNote !== undefined) updates.adminNote = adminNote;
-  if (status === "resolved" || status === "dismissed") {
-    updates.resolvedAt = serverTimestamp();
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new ReportSubmissionError(typeof result.error === "string" ? result.error : "Unable to submit report", response.status);
   }
-  await updateDoc(ref, updates);
-}
-
-export async function getPendingReportCount(): Promise<number> {
-  const q = query(col(), where("status", "==", "pending"));
-  const snap = await getCountFromServer(q);
-  return snap.data().count;
+  return { duplicate: result.duplicate === true };
 }

@@ -4,8 +4,11 @@ import {readFileSync} from 'node:fs';
 const source=(p:string)=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 test('application API stores server archive URLs rather than mutable client documents',()=>{
  const route=source('src/app/api/applications/route.ts');
- assert.match(route,/archiveApplicationResume/);
- assert.match(route,/input\.resumeUrl = await/);
+ assert.match(route,/archiveApplicationResume\(bucket, resume\.resumeUrl/);
+ assert.match(route,/return await archive/);
+ // The receipt stores the server copy returned by the verifier, not the source URL.
+ const submission=source('src/lib/server/application-submission.ts');
+ assert.match(submission,/resumeUrl: typeof storedResumeUrl === "string" \? storedResumeUrl/);
 });
 test('only authenticated server can create applications; applicants cannot delete and recreate',()=>{
  const rules=source('firestore.rules').split('match /applications/{applicationId}')[1].split('// Posts')[0];

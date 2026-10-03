@@ -51,6 +51,10 @@ export interface Message {
   createdAt: unknown;
 }
 
+// Keep aligned with validNewMessage/sendsOwnPreview in firestore.rules.
+export const MESSAGE_TEXT_MAX = 5000;
+const PREVIEW_LENGTH = 80;
+
 const convCol = collection(db, "conversations");
 const msgCol = collection(db, "messages");
 
@@ -66,7 +70,8 @@ export async function getConversations(userId: string): Promise<Conversation[]> 
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Conversation);
 }
 
-// Get or create a conversation between two users
+// Starting conversations is retired: only an existing conversation the caller
+// participates in can be opened (the rules deny creating or probing others).
 export async function getOrCreateConversation(
   uid1: string,
   uid2: string
@@ -77,15 +82,7 @@ export async function getOrCreateConversation(
 
   const snap = await getDoc(doc(db, "conversations", convId));
   if (snap.exists()) return convId;
-
-  await setDoc(doc(db, "conversations", convId), {
-    participants: sorted,
-    lastMessage: "",
-    lastMessageAt: serverTimestamp(),
-    lastSenderId: "",
-    unreadBy: "",
-  });
-  return convId;
+  throw new Error("Starting new conversations is no longer available");
 }
 
 // Get messages in a conversation
@@ -109,6 +106,7 @@ export async function sendMessage(
   text: string,
   recipientId: string
 ): Promise<{ messageId: string; notification: Promise<MessageNotificationResult> }> {
+  if (!text || text.length > MESSAGE_TEXT_MAX) throw new Error("Message must be 1 to 5,000 characters");
   const msgId = `${conversationId}_${Date.now()}`;
   await setDoc(doc(db, "messages", msgId), {
     conversationId,
@@ -118,7 +116,7 @@ export async function sendMessage(
   });
   // Update conversation metadata
   await updateDoc(doc(db, "conversations", conversationId), {
-    lastMessage: text.length > 80 ? text.slice(0, 80) + "\u2026" : text,
+    lastMessage: text.length > PREVIEW_LENGTH ? text.slice(0, PREVIEW_LENGTH) + "\u2026" : text,
     lastMessageAt: serverTimestamp(),
     lastSenderId: senderId,
     unreadBy: recipientId,

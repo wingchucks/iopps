@@ -1,4 +1,4 @@
-import { getEventStartDate, getEventEndDate } from "@/lib/public-events";
+import { getEventStartDate, getEventEndDate, hasEventEnded } from "@/lib/public-events";
 import { provinceCode } from "@/lib/canadian-provinces";
 import { scholarshipDeadlineType } from "@/lib/opportunity-posting";
 import { isJobRecordExpired } from "@/lib/listing-freshness";
@@ -10,7 +10,8 @@ export function matchesEventDate(item: Record<string, unknown>, filter: string, 
   const start = getEventStartDate(item), end = getEventEndDate(item);
   if (filter === "unconfirmed") return !start;
   if (filter === "all") return true;
-  if (!start || !end || end < now) return false;
+  // Same end rule as the public events API: the event's own time zone, else Saskatchewan.
+  if (!start || !end || hasEventEnded(item, now)) return false;
   if (filter === "week") { const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() + 7); cutoff.setHours(23, 59, 59, 999); return start <= cutoff; }
   if (filter === "month") return start <= new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
   return true;

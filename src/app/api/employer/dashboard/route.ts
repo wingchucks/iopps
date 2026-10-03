@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { readPaidPublishingSummaries } from "@/lib/server/paid-job-publication-reader";
+import { readBillingOverview, readPaidPublishingSummaries } from "@/lib/server/paid-job-publication-reader";
 import { firestorePublicationReader } from "@/lib/server/paid-job-publication-firestore";
+import { PublicationError } from "@/lib/server/paid-job-publication";
+import type { BillingOverview } from "@/lib/pricing";
+import type { PublishingSummary } from "@/lib/job-publishing-summary";
+import type { FeaturedJobSummary } from "@/lib/server/featured-job-entitlements";
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 import { normalizeOrganizationRecord } from "@/lib/organization-profile";
 import { isSchoolOrganization } from "@/lib/school-visibility";
@@ -200,7 +204,26 @@ export async function GET(req: NextRequest) {
     }
 
     const summaryNow = new Date();
-    const { featuredSummary, publishingSummary } = await adminDb.runTransaction(tx => readPaidPublishingSummaries(firestorePublicationReader(adminDb,tx), {employerId,organizationId:context.orgId,now:summaryNow}));
+    const summaryInput = { employerId, organizationId: context.orgId, now: summaryNow };
+    const canPurchase = context.uid === context.orgId && context.orgRole === "owner";
+    let featuredSummary: FeaturedJobSummary | null = null;
+    let publishingSummary: PublishingSummary | null = null;
+    let billing: BillingOverview;
+    let publishingUnavailable: { code: string; message: string } | null = null;
+    try {
+      ({ featuredSummary, publishingSummary, billing } = await adminDb.runTransaction(tx =>
+        readPaidPublishingSummaries(firestorePublicationReader(adminDb, tx), summaryInput, { canPurchase })));
+    } catch (error) {
+      // Payment evidence that needs reconciliation must not take the whole dashboard down.
+      if (!(error instanceof PublicationError)) throw error;
+      console.error("[employer/dashboard] publishing summary unavailable:", error.code);
+      publishingUnavailable = {
+        code: error.code,
+        message: "Your publishing balance needs a quick review by IOPPS. Drafts still save; contact hello@iopps.ca before publishing.",
+      };
+      billing = (await adminDb.runTransaction(tx =>
+        readBillingOverview(firestorePublicationReader(adminDb, tx), summaryInput, { canPurchase }))).overview;
+    }
 
     return NextResponse.json({
       org: orgData,
@@ -211,6 +234,8 @@ export async function GET(req: NextRequest) {
       studentInquiries,
       featuredSummary,
       publishingSummary,
+      publishingUnavailable,
+      billing,
       profile: {
         uid,
         email: userData.email,

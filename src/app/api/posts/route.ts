@@ -1,6 +1,7 @@
 import { publicContentRecord } from "@/lib/server/public-content-record";
 import { NextRequest, NextResponse } from "next/server";
 import { ANONYMOUS_MEMBER_NAME } from "@/lib/account-labels";
+import { isPublicPostVisible } from "@/lib/access-state";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyAuthToken } from "@/lib/api-auth";
@@ -27,6 +28,32 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
+const POST_TYPES = new Set(["job", "event", "scholarship", "program", "story", "spotlight"]);
+// Feed lists are bounded (stories request each type with its own limit); a page
+// of hidden or pending posts is skipped by reading at most a few further pages.
+const MAX_POST_LIMIT = 200;
+const MAX_POST_PAGES = 5;
+
+function postLimit(value: string | null): number {
+  const limit = Math.floor(Number(value));
+  return value !== null && value.trim() && Number.isFinite(limit) ? Math.min(MAX_POST_LIMIT, Math.max(1, limit)) : MAX_POST_LIMIT;
+}
+
+async function readFeedPosts(db: FirebaseFirestore.Firestore, type: string | null, limit: number) {
+  const collection = db.collection("posts");
+  const ordered = (type ? collection.where("type", "==", type) : collection).orderBy("order", "asc");
+  const documents: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+  let visible = 0;
+  for (let page = 0; page < MAX_POST_PAGES; page++) {
+    const last = documents[documents.length - 1];
+    const snapshot = await (last ? ordered.startAfter(last) : ordered).limit(limit).get();
+    documents.push(...snapshot.docs);
+    visible += snapshot.docs.filter(doc => isPublicPostVisible(doc.data())).length;
+    if (snapshot.docs.length < limit || visible >= limit) break;
+  }
+  return documents;
+}
+
 function slugify(value: string): string {
   return value
     .toLowerCase()
@@ -39,6 +66,11 @@ export async function GET(request: NextRequest) {
   try {
     const db = getAdminDb();
     const requestedId = request.nextUrl.searchParams.get("id");
+    const type = request.nextUrl.searchParams.get("type");
+    if (type !== null && !POST_TYPES.has(type)) {
+      return NextResponse.json({ error: "Unknown post type" }, { status: 400, headers: { "Cache-Control": "no-store" } });
+    }
+    let limit = Number.POSITIVE_INFINITY;
     let documents: FirebaseFirestore.DocumentSnapshot[];
     if (requestedId) {
       const validId = !requestedId.includes("/") && ![".", ".."].includes(requestedId) && Buffer.byteLength(requestedId) <= 1500;
@@ -48,10 +80,11 @@ export async function GET(request: NextRequest) {
       ]);
       documents = [...new Map([...(direct?.exists ? [direct] : []), ...slugs.docs].map(doc => [doc.id, doc])).values()];
     } else {
-      documents = (await db.collection("posts").orderBy("order", "asc").get()).docs;
+      limit = postLimit(request.nextUrl.searchParams.get("limit"));
+      documents = await readFeedPosts(db, type, limit);
     }
     const records = documents.map(doc => serialize({ ...doc.data(), id: doc.id }) as JsonRecord);
-    const posts = publicFeedPosts(records, await loadFeedOpportunityCanonical(db, records));
+    const posts = publicFeedPosts(records, await loadFeedOpportunityCanonical(db, records)).slice(0, limit);
     return NextResponse.json({ posts: posts.map(post => publicContentRecord(post as Record<string, unknown>)) }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     console.error("Posts API error:", err);

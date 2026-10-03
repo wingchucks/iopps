@@ -10,6 +10,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as entitlements from '../src/lib/server/featured-job-entitlements.ts';
 import * as hiringDetails from "../src/lib/job-hiring-details.ts";
 import * as jobInputLimits from "../src/lib/server/job-input-limits.ts";
+import * as closingDate from "../src/lib/job-closing-date.ts";
 import * as school from '../src/lib/school-visibility.ts';
 import * as paidPublication from '../src/lib/server/paid-job-publication.ts';
 import * as paidReader from '../src/lib/server/paid-job-publication-reader.ts';
@@ -38,7 +39,7 @@ async function harness(t: any) {
   function load(file: string) {
     const exports: any = {};
     vm.runInNewContext(ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
-      exports, Date, Error, console: { log() {}, error(...args: any[]) { console.error(...args.map(value => value instanceof Error ? { name: value.name, message: value.message, code: (value as any).code } : value)); } }, require: (id: string) => {
+      exports, Date, Error, URLSearchParams, console: { log() {}, warn() {}, error(...args: any[]) { console.error(...args.map(value => value instanceof Error ? { name: value.name, message: value.message, code: (value as any).code } : value)); } }, require: (id: string) => {
         if (id === '@/lib/server/employer-job-list') return { loadEmployerJobRows };
         if (id === 'next/server') return { NextResponse: { json: Response.json } };
         if (id === 'firebase-admin/firestore') return { FieldValue };
@@ -47,7 +48,7 @@ async function harness(t: any) {
         if (id === '@/lib/server/admin-job-lifecycle') return {activateAdminJob};
         if (id === '@/lib/server/employer-auth') {
           const authorize = async (req: Request) => { if (!req.headers.has('authorization')) throw new EmployerApiError(401, 'Unauthorized'); context.employerData=(await employer.get()).data() ?? {}; return context; };
-          return { EmployerApiError, requireEmployerContext: authorize, requireEmployerPublishingContext: authorize };
+          return { EmployerApiError, requireEmployerContext: authorize, requireEmployerPublishingContext: authorize, assertOrganizationCanPublish: () => {} };
         }
         if (id === '@/lib/server/featured-job-entitlements') return entitlements;
         if (id === '@/lib/server/paid-job-publication') return paidPublication;
@@ -57,6 +58,8 @@ async function harness(t: any) {
         if (id === '@/lib/school-visibility') return school;
         if (id === '@/lib/job-hiring-details') return hiringDetails;
         if (id === '@/lib/server/job-input-limits') return jobInputLimits;
+        if (id === '@/lib/job-closing-date') return closingDate;
+        if (id === '@/lib/employer-job-cache') return { refreshPublicJobs: () => {} };
         if (id === '@/lib/email') return { sendAdminContentPosted: async () => {} };
         throw new Error(id);
       },

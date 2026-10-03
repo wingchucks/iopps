@@ -84,7 +84,13 @@ function normalizePost(id: string, data: Record<string, unknown>): Post {
 }
 
 export async function getPosts(opts?: { type?: PostType; max?: number }): Promise<Post[]> {
-  const response = await fetch("/api/posts", { cache: "no-store" });
+  // The posts API is bounded, so ask it for the wanted type and count rather than
+  // filtering a capped, mixed page here (which could miss every post of a rarer type).
+  const params = new URLSearchParams();
+  if (opts?.type) params.set("type", opts.type);
+  if (opts?.max) params.set("limit", String(opts.max));
+  const query = params.toString();
+  const response = await fetch(query ? `/api/posts?${query}` : "/api/posts", { cache: "no-store" });
   if (!response.ok) throw new Error("Unable to load posts");
   const data = await response.json();
   const posts = data.posts.map((post: Record<string, unknown>) => normalizePost(String(post.id), post)).filter((post: Post) => !opts?.type || post.type === opts.type);

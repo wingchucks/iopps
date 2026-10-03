@@ -40,14 +40,14 @@ export default function NavBar() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const { theme, toggle } = useTheme();
-  const { hasOrg, isAdmin, isEmployer, loading: accountLoading, orgId, orgSlug, orgName, orgType } = useAccountContext();
+  const { hasOrg, isAdmin, canAccessAdmin, isEmployer, loading: accountLoading, orgId, orgSlug, orgName, orgType } = useAccountContext();
   const isAuthenticated = Boolean(user);
   const brandHref = getBrandHref(isAuthenticated);
   const desktopNavItems = getDesktopTopNavItems({ isAuthenticated });
   const mobileExploreLinks = getAppExploreNavItems({
     isAuthenticated,
     hasOrg,
-    isAdmin,
+    isAdmin: canAccessAdmin,
   });
   const mobileUtilityLinks = isAuthenticated ? getMemberUtilityNavItems() : [];
   const publicAuthLinks = getPublicAuthNavItems();

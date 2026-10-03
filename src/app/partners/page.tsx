@@ -27,7 +27,7 @@ export default function PartnersPage() {
 
 function PartnersContent() {
   const { user } = useAuth();
-  const { hasOrg, isEmployer, loading: accountLoading } = useAccountContext();
+  const { hasOrg, isAdmin, isEmployer, loading: accountLoading } = useAccountContext();
   const [filter, setFilter] = useState<TierFilter>("All Partners");
   const [search, setSearch] = useState("");
   const [orgs, setOrgs] = useState<Organization[]>([]);
@@ -45,12 +45,16 @@ function PartnersContent() {
       return { href: "/org/plans", label: "Upgrade Your Plan" };
     }
 
+    // Staff are not invited to become partners, matching the navigation, which
+    // offers them no create-organization entry.
+    if (isAdmin) return null;
+
     if (user) {
       return { href: "/org/upgrade", label: "Set Up Organization" };
     }
 
     return { href: "/signup?type=employer", label: "Get Started" };
-  }, [accountLoading, hasOrg, isEmployer, user]);
+  }, [accountLoading, hasOrg, isAdmin, isEmployer, user]);
 
   useEffect(() => {
     async function load() {
@@ -236,20 +240,22 @@ function PartnersContent() {
               <span className="flex items-center gap-1.5">&#10003; Analytics dashboard</span>
             </div>
             <div className="flex justify-center gap-3">
-              <Link href={partnerCta.href}>
-                <Button className="brand-button"
-                  primary
-                  style={{
-                    background: "var(--button-gradient)",
-                    borderRadius: 12,
-                    fontWeight: 700,
-                    fontSize: 15,
-                    padding: "12px 28px",
-                  }}
-                >
-                  {partnerCta.label}
-                </Button>
-              </Link>
+              {partnerCta && (
+                <Link href={partnerCta.href}>
+                  <Button className="brand-button"
+                    primary
+                    style={{
+                      background: "var(--button-gradient)",
+                      borderRadius: 12,
+                      fontWeight: 700,
+                      fontSize: 15,
+                      padding: "12px 28px",
+                    }}
+                  >
+                    {partnerCta.label}
+                  </Button>
+                </Link>
+              )}
               <Link href="/pricing">
                 <Button className="brand-button"
                   style={{

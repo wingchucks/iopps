@@ -7,6 +7,7 @@ import { resolvePublicOrganization } from "@/lib/server/public-organization-reso
 import { loadPublicOrganizationJobDocuments } from "@/lib/server/public-organization-jobs";
 import { mergeOpportunitySources, publicOpportunityRecord } from "@/lib/server/public-opportunities";
 import { mergePublicJobRecords, jobMatchesOrganization } from "@/lib/public-job-merge";
+import { publicContentRecord } from "@/lib/server/public-content-record";
 import { withPartnerPromotion } from "@/lib/server/partner-promotion";
 import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
 import { isSchoolOrganization, isSchoolPubliclyVisible } from "@/lib/school-visibility";
@@ -146,7 +147,8 @@ async function loadJobs(db: FirebaseFirestore.Firestore, organization: JsonRecor
   return sortFeatured(publicJobs.filter(job => jobMatchesOrganization(job, organization)).map(job => {
     const slug = buildJobRouteSlug({ id: job.id, slug: typeof job.slug === "string" ? job.slug : undefined, title: typeof job.title === "string" ? job.title : undefined });
     // Scoped results cannot detect another organization's matching display slug.
-    return { ...job, href: `/jobs/${slug}--${job.id}` };
+    // Public fields only, like /api/jobs: no author, billing, import or admin data.
+    return { ...publicContentRecord(job), href: `/jobs/${slug}--${job.id}` };
   }));
 }
 

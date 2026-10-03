@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   EmployerApiError,
+  assertOrganizationCanPublish,
   requireEmployerContext,
   requireEmployerPublishingContext,
 } from "@/lib/server/employer-auth";
@@ -14,6 +15,8 @@ import { preparePaidPublication, readPaidFeaturedSummary } from "@/lib/server/pa
 import { firestorePublicationReader } from "@/lib/server/paid-job-publication-firestore";
 import { PublicationError } from "@/lib/server/paid-job-publication";
 import { jobInputLimitError } from "@/lib/server/job-input-limits";
+import { isClosingDateBeforeToday, PAST_CLOSING_DATE_MESSAGE } from "@/lib/job-closing-date";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 export const runtime = "nodejs";
 
@@ -46,6 +49,19 @@ interface EmployerJobInput {
   requiresResume?: boolean;
   requiresCoverLetter?: boolean;
   requiresReferences?: boolean;
+}
+
+/**
+ * Expected denials (payment, placement, validation, access) are part of normal
+ * use: answer them with their code and log a warning, not a runtime error.
+ */
+function failureResponse(error: unknown, label: string, fallback: string) {
+  const status = error instanceof PublicationError ? (error.code === "payment_required" ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
+  const code = error instanceof PublicationError || error instanceof EmployerApiError ? error.code : undefined;
+  const message = error instanceof Error ? error.message : fallback;
+  if (status >= 500) console.error(label, error);
+  else console.warn(label, status, code ?? "", message);
+  return NextResponse.json({ error: message, ...(code ? { code } : {}) }, { status });
 }
 
 function serialize(value: unknown): unknown {
@@ -148,12 +164,11 @@ export async function GET(
       job: serialize({ id, ...job.data, _source: job.source }),
       readOnly: !isEditableEmployerJob(job.source, job.data, context.uid),
       featuredSummary,
+      // Mirrors the checkout rule: only the organization's owner account can buy credits or plans.
+      canPurchase: context.uid === context.orgId && context.orgRole === "owner",
     });
   } catch (error) {
-    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
-    const message = error instanceof Error ? error.message : "Failed to load job.";
-    console.error("[api/employer/jobs/:id][GET]", error);
-    return NextResponse.json({ error: message }, { status });
+    return failureResponse(error, "[api/employer/jobs/:id][GET]", "Failed to load job.");
   }
 }
 
@@ -170,9 +185,9 @@ export async function PUT(
       return NextResponse.json({ error: `The job ${tooLong} is too long.`, field: tooLong }, { status: 400 });
     }
     const db = getAdminDb();
-    const employerRef = db.collection("employers").doc(context.employerId);
 
     let nextFeaturedSummary = null;
+    let changesPublicListing = false;
     const publicationNow = new Date();
 
     await db.runTransaction(async (transaction) => {
@@ -215,12 +230,22 @@ export async function PUT(
       }
       const requestedStatus = normalizeStatus(body.status ?? current.data.status);
       const requestedFeatured = typeof body.featured === "boolean" ? body.featured : Boolean(current.data.featured);
+      // Refuse publishing before any payment logic runs; drafts and closing stay available.
+      if (requestedStatus === "active") {
+        assertOrganizationCanPublish(context);
+        const closingDate = typeof body.closingDate === "string" ? body.closingDate : current.data.closingDate;
+        // A live job with a past closing date is hidden and refuses applications, so never (re)publish one.
+        if (isClosingDateBeforeToday(closingDate, publicationNow)) throw new EmployerApiError(400, PAST_CLOSING_DATE_MESSAGE, "closing_date_passed");
+      }
+      changesPublicListing = requestedStatus === "active" || current.data.status === "active" || current.data.active === true;
       const paid = await preparePaidPublication(firestorePublicationReader(db, transaction), {
         employerId: context.employerId, organizationId: context.orgId, jobId: id,
         current: current.data, status: requestedStatus, featured: requestedFeatured,
         durationDays: body.durationDays, now: publicationNow,
+        writesResolvedEmployerDocument: true,
       });
-      if (requestedStatus === 'active') transaction.set(employerRef, {
+      // Credits and plan usage live on the resolved billing document (see the create route).
+      if (requestedStatus === 'active') transaction.set(db.collection("employers").doc(paid.employerDocumentId), {
         ...paid.employerPatch, updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
 
@@ -270,12 +295,10 @@ export async function PUT(
       });
     });
 
+    if (changesPublicListing) refreshPublicJobs();
     return NextResponse.json({ success: true, jobId: id, featuredSummary: nextFeaturedSummary });
   } catch (error) {
-    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
-    const message = error instanceof Error ? error.message : "Failed to update job.";
-    console.error("[api/employer/jobs/:id][PUT]", error);
-    return NextResponse.json({ error: message }, { status });
+    return failureResponse(error, "[api/employer/jobs/:id][PUT]", "Failed to update job.");
   }
 }
 
@@ -310,11 +333,9 @@ export async function DELETE(
       else transaction.create(jobRef,{...patch,employerId:context.employerId,orgId:context.orgId,createdAt:FieldValue.serverTimestamp()});
       if (mirror.exists && mirror.data()?.type === 'job' && isJobOwnedByEmployer(mirror.data()!,context.employerId,context.orgId)) transaction.update(postRef,patch);
     });
+    refreshPublicJobs();
     return NextResponse.json({ success: true });
   } catch (error) {
-    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
-    const message = error instanceof Error ? error.message : "Failed to delete job.";
-    console.error("[api/employer/jobs/:id][DELETE]", error);
-    return NextResponse.json({ error: message }, { status });
+    return failureResponse(error, "[api/employer/jobs/:id][DELETE]", "Failed to delete job.");
   }
 }

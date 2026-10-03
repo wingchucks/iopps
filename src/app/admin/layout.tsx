@@ -512,20 +512,21 @@ export default function AdminLayout({
 
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
-  // Auth guard: redirect when auth resolves
+  // Auth guard: redirect when auth resolves. Every admin API requires an
+  // administrator, so other roles (including moderators) are not admitted.
   useEffect(() => {
     if (loading) return;
     if (!user) {
       router.replace("/login");
       return;
     }
-    if (role !== "admin" && role !== "moderator") {
+    if (role !== "admin") {
       router.replace("/");
     }
   }, [loading, user, role, router]);
 
   // While loading or unauthorized, show spinner
-  if (loading || !user || (role !== "admin" && role !== "moderator")) {
+  if (loading || !user || role !== "admin") {
     return <LoadingSpinner />;
   }
 

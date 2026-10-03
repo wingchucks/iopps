@@ -6,6 +6,7 @@ type Dependencies = {
   fetch?: typeof fetch;
   wait?: (milliseconds: number, signal: AbortSignal) => Promise<void>;
 };
+type AttemptSignal = { signal: AbortSignal; dispose(): void };
 
 function wait(milliseconds: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -26,6 +27,21 @@ function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
   });
 }
 
+// One attempt ends on logout/account switch or after its timeout. AbortSignal.any is
+// missing in Safari < 17.4, Chrome < 116 and Firefox < 124, so combine manually there.
+function attemptSignal(session: AbortSignal, milliseconds: number): AttemptSignal {
+  const native = AbortSignal as { any?: unknown; timeout?: unknown };
+  if (typeof native.any === 'function' && typeof native.timeout === 'function') {
+    return { signal: AbortSignal.any([session, AbortSignal.timeout(milliseconds)]), dispose() {} };
+  }
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  const timer = setTimeout(abort, milliseconds);
+  session.addEventListener('abort', abort, { once: true });
+  if (session.aborted) abort();
+  return { signal: controller.signal, dispose() { clearTimeout(timer); session.removeEventListener('abort', abort); } };
+}
+
 // Retry only the just-saved message. Never retry the Firestore write or scan mail.
 // Four attempts, short backoff and request timeouts stay within the server age guard.
 export async function notifyNewMessage(messageId: string, senderId: string, dependencies: Dependencies): Promise<MessageNotificationResult> {
@@ -39,16 +55,18 @@ export async function notifyNewMessage(messageId: string, senderId: string, depe
   try {
     for (const delay of [0, 1000, 3000, 10000]) {
       if (!current()) return { state: 'cancelled' };
+      let attempt: AttemptSignal | undefined;
       try {
         if (delay) await pause(delay, session.signal);
         if (!current()) return { state: 'cancelled' };
-        const attempt = AbortSignal.any([session.signal, AbortSignal.timeout(10000)]);
-        const token = await abortable(sender.getIdToken(), attempt);
+        // A setup failure is not transient: retrying could never send a request.
+        try { attempt = attemptSignal(session.signal, 10000); } catch { return { state: 'failed' }; }
+        const token = await abortable(sender.getIdToken(), attempt.signal);
         if (!current()) return { state: 'cancelled' };
         const response = await request('/api/messages/notify', {
           method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ messageId }),
-          signal: attempt,
+          signal: attempt.signal,
         });
         if (!current()) return { state: 'cancelled' };
         if (response.ok) {
@@ -60,7 +78,7 @@ export async function notifyNewMessage(messageId: string, senderId: string, depe
       } catch {
         if (!current()) return { state: 'cancelled' };
         // Timeout, network error or malformed response: same ID safely retries.
-      }
+      } finally { attempt?.dispose(); }
     }
     return { state: 'failed' };
   } finally { unsubscribe(); }

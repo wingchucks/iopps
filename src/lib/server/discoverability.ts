@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { hasJobExpired } from "@/lib/listing-freshness";
 
 export type DiscoverableRecord = Record<string, unknown> & { id?: string };
 export type SitemapChangeFrequency = MetadataRoute.Sitemap[number]["changeFrequency"];
@@ -28,26 +29,14 @@ export function isExplicitTestRecord(record: DiscoverableRecord): boolean {
   return TEST_SOURCES.has(text(record.source).toLowerCase());
 }
 
-function dateValue(value: unknown): Date | null {
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-  if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
-    const date = (value.toDate as () => Date)();
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-  if (typeof value === "string" || typeof value === "number") {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-  return null;
-}
-
 export function isIndexableRecord(record: DiscoverableRecord, now = new Date()): boolean {
   if (isExplicitTestRecord(record) || record.active === false || record.isPublished === false) return false;
   if (HIDDEN_STATUSES.has(text(record.status || record.publicationStatus).toLowerCase())) return false;
   if (record.deletedAt) return false;
+  // A calendar date lasts through that day in Saskatchewan, exactly as listing
+  // expiry does; it is not midnight UTC (6 pm the evening before).
   for (const value of [record.endDate, record.endAt, record.expiresAt, record.closingDate, record.deadline]) {
-    const expiry = dateValue(value);
-    if (expiry && expiry.getTime() < now.getTime()) return false;
+    if (typeof value === "number" ? value < now.getTime() : hasJobExpired(value, now)) return false;
   }
   return safePublicSlug(record) !== null;
 }

@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { storage } from "@/lib/firebase";
 import { getApplicantReceipt } from "@/lib/firestore/applications";
-import { ref, uploadBytes, getDownloadURL, getBlob } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import { createResumeObjectName, buildApplicationProfileSnapshot } from "@/lib/application-snapshot";
 import { getMemberProfile, type MemberProfile } from "@/lib/firestore/members";
@@ -211,13 +211,6 @@ function ApplyWizard() {
     setSubmitting(true);
     try {
       await assertLaunchAvailable();
-      let applicationResumeUrl = resumeUrl;
-      if (useProfile && profile?.resumeUrl) {
-        const resumeBlob = await getBlob(ref(storage, profile.resumeUrl));
-        const snapshotRef = ref(storage, `resumes/${user.uid}/${createResumeObjectName(profile.resumeFileName || "resume.pdf")}`);
-        await uploadBytes(snapshotRef, resumeBlob, { contentType: resumeBlob.type || "application/pdf" });
-        applicationResumeUrl = await getDownloadURL(snapshotRef);
-      }
       const idToken = await user.getIdToken();
       const response = await fetch("/api/applications", {
         method: "POST", headers: {"Content-Type":"application/json", Authorization: `Bearer ${idToken}`},
@@ -231,10 +224,12 @@ function ApplyWizard() {
         jobId: post.id,
         status: "submitted",
 
-        resumeUrl: applicationResumeUrl,
+        // With the profile option the server attaches the saved profile resume itself. The
+        // browser never downloads it, which would need a CORS policy on the Storage bucket.
+        resumeUrl: useProfile ? "" : resumeUrl,
         profileSnapshot: profile ? buildApplicationProfileSnapshot(profile, new Date().toISOString()) : null,
         resumeType: useProfile ? "profile" : "file",
-        resumeFileName: useProfile ? profile?.resumeFileName || null : resumeFile?.name || null,
+        resumeFileName: useProfile ? null : resumeFile?.name || null,
         coverLetter, references,
         }),
       });

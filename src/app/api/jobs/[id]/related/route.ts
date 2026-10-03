@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
+import { loadCachedPublicJobRouteIndex } from "@/lib/public-job-route-cache";
 import { findJobRecordAnyState } from "@/lib/server/job-record-lookup";
 import { listingState } from "@/lib/listing-lifecycle";
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 import { isPublicJobVisible } from "@/lib/public-jobs";
 import { mergePublicJobRecords, publicJobIdentityKey } from "@/lib/public-job-merge";
+import { publicContentRecord } from "@/lib/server/public-content-record";
 import { withPublicDetailCache } from "@/lib/server/public-detail-cache";
 
 export const runtime = "nodejs";
-export const revalidate = 300;
+// No ISR: a closed listing leaves recommendations at once (listing-lifecycle);
+// only the short CDN window of withPublicDetailCache applies.
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 type JobRow = Record<string, unknown> & { id: string };
 
@@ -53,13 +58,20 @@ function normalizeJob(doc: FirebaseFirestore.QueryDocumentSnapshot): JobRow {
 }
 
 // Canonical evidence (especially structured salary) must reach dedupe intact.
-// Only the final display projection may discard it; the client renders these rows.
-function relatedDisplayRows(rows: JobRow[]): JobRow[] {
+// Only the final display projection may discard it; the client renders these
+// rows, which carry only the public allow-list (never author, billing or import data).
+function relatedDisplayRows(rows: JobRow[]): Record<string, unknown>[] {
   return mergePublicJobRecords(rows, []).map(row => {
     if (!row.salary || typeof row.salary !== "object") return row;
     const salary = row.salary as Record<string, unknown>;
     return { ...row, salary: salary.display ? String(salary.display) : "" };
-  });
+  }).map(publicContentRecord);
+}
+
+// The same eligibility as the public listing and detail: a jobs record is public
+// only while active === true and visible.
+function isPublicJobRecord(data: FirebaseFirestore.DocumentData): boolean {
+  return data.active === true && isPublicJobVisible(data);
 }
 
 function firstLocationSegment(value: unknown): string {
@@ -81,7 +93,7 @@ export async function GET(
     const { id } = await params;
     const db = getAdminDb();
 
-    let found = await findPublicJobDocument(db, id);
+    let found = await findPublicJobDocument(db, id, loadCachedPublicJobRouteIndex);
     if (!found) {
       // A closed job's page still offers open alternatives.
       const record = await findJobRecordAnyState(db, id);
@@ -124,12 +136,13 @@ export async function GET(
       const snap = await db
         .collection("jobs")
         .where("employerId", "==", currentEmployerId)
+        .where("active", "==", true)
         .limit(MAX_EACH + 4)
         .get();
       for (const d of snap.docs) {
         if (d.id === currentDoc.id) continue;
         if (isCopyOfCurrent(d)) continue;
-        if (!isPublicJobVisible(d.data())) continue;
+        if (!isPublicJobRecord(d.data())) continue;
         employerResults.push(normalizeJob(d));
         if (employerResults.length >= MAX_EACH) break;
       }
@@ -138,12 +151,13 @@ export async function GET(
       const snap = await db
         .collection("jobs")
         .where("employerName", "==", currentEmployerName)
+        .where("active", "==", true)
         .limit(MAX_EACH + 4)
         .get();
       for (const d of snap.docs) {
         if (d.id === currentDoc.id) continue;
         if (isCopyOfCurrent(d)) continue;
-        if (!isPublicJobVisible(d.data())) continue;
+        if (!isPublicJobRecord(d.data())) continue;
         employerResults.push(normalizeJob(d));
         if (employerResults.length >= MAX_EACH) break;
       }
@@ -161,12 +175,13 @@ export async function GET(
       const snap = await db
         .collection("jobs")
         .where("category", "==", currentCategory)
+        .where("active", "==", true)
         .limit(MAX_EACH + 10)
         .get();
       for (const d of snap.docs) {
         if (similarSeen.has(d.id)) continue;
         if (isCopyOfCurrent(d)) continue;
-        if (!isPublicJobVisible(d.data())) continue;
+        if (!isPublicJobRecord(d.data())) continue;
         similarResults.push(normalizeJob(d));
         similarSeen.add(d.id);
         if (similarResults.length >= MAX_EACH) break;
@@ -174,11 +189,11 @@ export async function GET(
     }
 
     if (similarResults.length < MAX_EACH && currentCity) {
-      const snap = await db.collection("jobs").limit(80).get();
+      const snap = await db.collection("jobs").where("active", "==", true).limit(80).get();
       for (const d of snap.docs) {
         if (similarSeen.has(d.id)) continue;
         if (isCopyOfCurrent(d)) continue;
-        if (!isPublicJobVisible(d.data())) continue;
+        if (!isPublicJobRecord(d.data())) continue;
         const data = d.data();
         if (firstLocationSegment(data.location) !== currentCity) continue;
         similarResults.push(normalizeJob(d));

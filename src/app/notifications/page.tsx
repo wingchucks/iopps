@@ -19,6 +19,14 @@ const typeIcons: Record<string, string> = {
   system: "\u{2699}\uFE0F",
 };
 
+// Notification records are rendered defensively: only strings are shown and only
+// plain same-site paths are followed. Anything that could resolve to another
+// origin (protocol-relative, backslashes, whitespace, dot segments) stays unlinked.
+const plainText = (value: unknown) => (typeof value === "string" ? value : "");
+const typeIcon = (type: unknown) => (typeof type === "string" && Object.hasOwn(typeIcons, type) ? typeIcons[type] : "\u{1F514}");
+const internalHref = (value: unknown) =>
+  typeof value === "string" && value.startsWith("/") && !/\/\/|\\|\s|\.\./.test(value) ? value : null;
+
 export default function NotificationsPage() {
   return (
     <ProtectedRoute>
@@ -109,11 +117,12 @@ function NotificationsContent() {
       ) : (
         <div className="space-y-2">
           {(activeTab === "Unread" ? notifications.filter((n) => !n.read) : notifications).map((n) => {
+            const href = internalHref(n.link);
             const content = (
               <Card
                 key={n.id}
-                onClick={n.link ? undefined : () => handleClick(n)}
-                className={n.link ? "" : "cursor-pointer"}
+                onClick={href ? undefined : () => handleClick(n)}
+                className={href ? "" : "cursor-pointer"}
               >
                 <div
                   className="flex gap-3.5 items-start"
@@ -123,19 +132,19 @@ function NotificationsContent() {
                   }}
                 >
                   <span className="text-xl shrink-0 mt-0.5">
-                    {typeIcons[n.type] || "\u{1F514}"}
+                    {typeIcon(n.type)}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <p className="text-[15px] font-semibold text-text m-0">
-                        {n.title}
+                        {plainText(n.title)}
                       </p>
                       {!n.read && (
                         <span className="w-2 h-2 rounded-full bg-teal shrink-0" />
                       )}
                     </div>
                     <p className="text-sm text-text-sec m-0 leading-relaxed">
-                      {n.body}
+                      {plainText(n.body)}
                     </p>
                     <p className="text-xs text-text-muted mt-1.5 m-0">
                       {formatDate(n.createdAt)}
@@ -144,8 +153,8 @@ function NotificationsContent() {
                 </div>
               </Card>
             );
-            return n.link ? (
-              <Link key={n.id} href={n.link} className="no-underline" onClick={() => handleClick(n)}>
+            return href ? (
+              <Link key={n.id} href={href} className="no-underline" onClick={() => handleClick(n)}>
                 {content}
               </Link>
             ) : (

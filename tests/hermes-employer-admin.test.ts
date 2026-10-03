@@ -6,6 +6,7 @@ import {
   createHermesEmployerReviewToken,
   hermesEmployerSubscriptionMatches,
   normalizeHermesEmployerCommand,
+  projectHermesEmployerState,
   reviewHermesEmployer,
   applyHermesEmployer,
   verifyHermesEmployerDesiredDocuments,
@@ -320,7 +321,7 @@ function verifiedProjection() {
     status: "approved",
     verified: true,
     subscriptionTier: "premium",
-    unlimitedJobPostings: true,
+    unlimitedJobPostings: false,
     subscriptionStart: "2026-08-19",
     subscriptionEnd: "2027-08-19",
   };
@@ -688,7 +689,73 @@ test("applyHermesEmployer commits one minimal plan and returns a verified projec
   assert.equal(plans.length, 1);
   assert.equal(applied.verified.organizationName, "Battlefords Agency Tribal Chiefs");
   assert.equal(applied.verified.subscriptionTier, "premium");
-  assert.equal(applied.verified.unlimitedJobPostings, true);
+  assert.equal(applied.verified.unlimitedJobPostings, false);
+});
+
+test("Hermes projections report unlimited job postings only for a paid Premium term", () => {
+  const normalized = normalizeHermesEmployerCommand(commandInput);
+  assert.equal(normalized.ok, true);
+  if (!normalized.ok) return;
+  const command = normalized.command;
+  const user = doc("user_1", "u1", { role: "employer" });
+  const plan = buildHermesEmployerMutationPlan(command, { orgId: "org_1", now: new Date("2026-08-19T18:00:00.000Z") });
+  const account = (subscription: Record<string, unknown>, tier = "premium") =>
+    doc("org_1", "e1", { subscriptionTier: tier, subscriptionStatus: "active", subscription: { tier, status: "active", ...subscription } });
+  const unlimited = (employer: ReturnType<typeof doc>) =>
+    projectHermesEmployerState(command, user, employer, null).unlimitedJobPostings;
+
+  // Paid Premium terms include unlimited job postings.
+  assert.equal(unlimited(account({ termId: "cs_test_fixture" })), true, "Stripe-paid Premium term");
+  assert.equal(unlimited(account({ paymentId: "admin-manual-tier2", amountPaid: 2500 })), true, "paid manual Premium term");
+
+  // Complimentary access never does, whatever else the account records.
+  assert.equal(unlimited(doc("org_1", "e1", plan.employerPatch)), false, "Hermes grant (employer)");
+  assert.equal(unlimited(doc("org_1", "o1", plan.organizationPatch)), false, "Hermes grant (organization)");
+  assert.equal(unlimited(account({ paymentId: "admin-grant-tier2", amountPaid: 0, termId: "f".repeat(64) })), false, "$0 admin grant");
+  assert.equal(
+    unlimited(account({ termId: "cs_test_fixture", paymentId: "admin-grant-tier2", amountPaid: 0 })),
+    false,
+    "grant merged over an earlier Stripe term",
+  );
+  assert.equal(unlimited(account({ amountPaid: 0 })), false, "Premium label without payment evidence");
+  assert.equal(unlimited(account({})), false, "Premium label alone");
+  assert.equal(unlimited(account({ termId: "cs_test_fixture" }, "standard")), false, "paid Standard term");
+  assert.equal(unlimited(account({ termId: "cs_test_fixture", status: "expired" })), false, "ended Premium term");
+});
+
+test("applyHermesEmployer verifies a complimentary grant from the written documents without unlimited postings", async () => {
+  const reviewed = await reviewHermesEmployer(commandInput, serviceDeps());
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  assert.equal(reviewed.current.unlimitedJobPostings, false);
+  assert.equal(reviewed.desired.unlimitedJobPostings, false, "a complimentary Hermes grant does not include job postings");
+
+  const deps = serviceDeps();
+  const applied = await applyHermesEmployer(
+    { command: commandInput, reviewToken: reviewed.reviewToken, confirmation: "APPLY IOPPS EMPLOYER UPDATE" },
+    {
+      ...deps,
+      // Project the documents as the apply leaves them, as the Firestore adapter does after its reread.
+      commit: async ({ command, plan }) => ({
+        committedAt: "2026-08-19T18:00:00.000Z",
+        verified: projectHermesEmployerState(
+          command,
+          doc("user_1", "u2", { email: "courtney.lewis@batc.ca", ...plan.userPatch }),
+          doc("org_1", "e2", { email: "courtney.lewis@batc.ca", ...plan.employerPatch }),
+          doc("org_1", "o2", plan.organizationPatch),
+        ),
+        userVerified: true,
+        employerVerified: true,
+        organizationVerified: true,
+      }),
+    },
+  );
+
+  assert.equal(applied.ok, true, "post-write verification accepts the honest projection");
+  if (!applied.ok) return;
+  assert.equal(applied.status, "applied");
+  assert.equal(applied.verified.subscriptionTier, "premium");
+  assert.equal(applied.verified.unlimitedJobPostings, false);
 });
 
 test("applyHermesEmployer treats an already-correct target with older bookkeeping timestamps as a verified no-op", async () => {

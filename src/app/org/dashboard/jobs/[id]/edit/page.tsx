@@ -1,6 +1,6 @@
 "use client";
 import ClosingDateField from "@/components/employer/ClosingDateField";
-import { isValidClosingDate } from "@/lib/job-closing-date";
+import { isClosingDateBeforeToday, isValidClosingDate, reginaCalendarDay } from "@/lib/job-closing-date";
 import JobLocationFields from "@/components/employer/JobLocationFields";
 import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
 import { normalizeHiringDetails } from "@/lib/job-hiring-details";
@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 
 type PostStatus = "draft" | "active" | "closed";
+type Purchase = "standard-post" | "featured-post" | "plans";
 
 interface EditableJob {
   publication?: { durationDays?: number };
@@ -119,6 +120,9 @@ export default function JobEditPage() {
   const [featured, setFeatured] = useState(false);
   const [durationDays, setDurationDays] = useState("");
   const [featuredSummary, setFeaturedSummary] = useState<FeaturedJobSummary | null>(null);
+  const [canPurchase, setCanPurchase] = useState(false);
+  // Why the last attempt to publish was refused, and what can be bought to fix it.
+  const [publishBlock, setPublishBlock] = useState<{ message: string; purchase: Exclude<Purchase, "plans"> | null } | null>(null);
 
   const [isImported, setIsImported] = useState(false);
 
@@ -139,6 +143,7 @@ export default function JobEditPage() {
 
         const p = data.job as EditableJob;
         setFeaturedSummary((data.featuredSummary as FeaturedJobSummary | null) ?? null);
+        setCanPurchase(data.canPurchase === true);
         setIsImported(Boolean(data.readOnly));
         setPost(p);
         setTitle(p.title || "");
@@ -169,13 +174,17 @@ export default function JobEditPage() {
     })();
   }, [postId, router, user]);
 
-  const handleSave = async () => {
-    if (!user) return;
-    if (status === 'active' && featured && !post?.publication && post?.status === 'draft' && (!/^\d+$/.test(durationDays) || Number(durationDays) < 1 || Number(durationDays) > 45)) { showToast("Choose a featured listing duration from 1 to 45 days.", "error"); return; }
-    if (!isValidClosingDate(closingDate)) { showToast("Enter a valid closing date or clear it.", "error"); return; }
+  /** Saves the form; `saveAs` overrides the chosen status (a draft saved before checkout). */
+  const handleSave = async (saveAs?: PostStatus): Promise<boolean> => {
+    if (!user) return false;
+    const nextStatus = saveAs ?? status;
+    if (nextStatus === 'active' && featured && !post?.publication && post?.status === 'draft' && (!/^\d+$/.test(durationDays) || Number(durationDays) < 1 || Number(durationDays) > 45)) { showToast("Choose a featured listing duration from 1 to 45 days.", "error"); return false; }
+    if (!isValidClosingDate(closingDate)) { showToast("Enter a valid closing date or clear it.", "error"); return false; }
+    // The server refuses this too: a live job with a past closing date is hidden right away.
+    if (nextStatus === "active" && isClosingDateBeforeToday(closingDate)) { showToast("The closing date has passed. Choose today or a later date, or clear it, before publishing.", "error"); return false; }
     if (!title.trim()) {
       showToast("Title is required", "error");
-      return;
+      return false;
     }
     setSaving(true);
     try {
@@ -215,32 +224,46 @@ export default function JobEditPage() {
           closingDate,
           applicationUrl,
           ...documents,
-          status,
+          status: nextStatus,
           featured,
           durationDays: post?.publication ? undefined : featured ? Number(durationDays) : 30,
         }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        showToast(
-          typeof result.error === "string" ? result.error : "Failed to save changes",
-          "error"
-        );
+        const message = typeof result.error === "string" ? result.error : "Failed to save changes";
+        showToast(message, "error");
+        // Keep the reason on the page: payment can be bought (by the owner); approval needs IOPPS.
+        if (response.status === 402) setPublishBlock({ message, purchase: featured ? "featured-post" : "standard-post" });
+        else if (result.code === "organization_not_approved") setPublishBlock({ message, purchase: null });
         if (result.featuredSummary) {
           setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
         }
-        return;
+        return false;
       }
+      setPublishBlock(null);
+      if (saveAs) setStatus(saveAs);
       if (result.featuredSummary) {
         setFeaturedSummary(result.featuredSummary as FeaturedJobSummary);
       }
-      showToast("Job updated successfully", "success");
+      showToast(saveAs === "draft" ? "Draft saved" : "Job updated successfully", "success");
+      return true;
     } catch (err) {
       console.error("Failed to update post:", err);
       showToast("Failed to save changes", "error");
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+
+  /** Saves the edits as a draft first, so checkout or plans return to them here. */
+  const saveDraftAndBuy = async (purchase: Purchase) => {
+    const returnTo = `/org/dashboard/jobs/${encodeURIComponent(postId)}/edit`;
+    if (!(await handleSave("draft"))) return;
+    router.push(purchase === "plans"
+      ? `/org/plans?${new URLSearchParams({ redirect: returnTo })}`
+      : `/org/checkout?${new URLSearchParams({ plan: purchase, redirect: returnTo })}`);
   };
 
   const handleUnpublish = async () => {
@@ -276,7 +299,8 @@ export default function JobEditPage() {
     if (!user) return;
     setSaving(true);
     try {
-      const closedOn = new Date().toISOString().split("T")[0];
+      // Today in Saskatchewan; the UTC date is already tomorrow during Canadian evenings.
+      const closedOn = reginaCalendarDay();
       const response = await fetch(`/api/employer/jobs/${postId}`, {
         method: "PUT",
         headers: {
@@ -644,7 +668,7 @@ export default function JobEditPage() {
                     )}
                   </div>
 
-                  <ClosingDateField value={closingDate} onChange={setClosingDate} />
+                  <ClosingDateField value={closingDate} onChange={setClosingDate} publishing={status === "active"} />
 
                   <HiringDetailsFields value={hiringDetails} onChange={setHiringDetails} />
                   {/* Application URL */}
@@ -688,6 +712,9 @@ export default function JobEditPage() {
                     onChange={setFeatured}
                     disabled={isImported}
                     returnTo={`/org/dashboard/jobs/${encodeURIComponent(postId)}/edit`}
+                    // Checkout is owner-only: explain that instead of sending other team members to a refusal.
+                    onPurchase={canPurchase ? undefined : () => showToast("Only your organization’s owner can buy featured credits or plans. Ask them to buy one.", "info")}
+                    canPurchase={canPurchase}
                   />
                   {featured && !post?.publication && post?.status === 'draft' ? <label htmlFor="featured-duration">Featured listing duration (days, up to 45)
                     <input id="featured-duration" type="number" min={1} max={45} step={1} value={durationDays} onChange={event => setDurationDays(event.target.value)} disabled={isImported} className="w-full rounded-xl border p-3" />
@@ -728,11 +755,36 @@ export default function JobEditPage() {
                     </div>
                   </fieldset>
 
+                  {publishBlock && (
+                    <section aria-labelledby="publish-block-title" className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--bg)" }}>
+                      <h2 id="publish-block-title" className="text-sm font-bold mb-1" style={{ color: "var(--text)" }}>
+                        {publishBlock.purchase ? "This job isn’t published yet" : "Publishing is paused for this organization"}
+                      </h2>
+                      <p role="alert" className="text-sm" style={{ color: "var(--text-sec)" }}>{publishBlock.message}</p>
+                      {publishBlock.purchase && (canPurchase ? (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          <button type="button" disabled={saving} onClick={() => void saveDraftAndBuy(publishBlock.purchase!)}
+                            className="button-gradient min-h-11 px-4 rounded-xl border text-sm font-semibold disabled:opacity-50">
+                            {publishBlock.purchase === "featured-post" ? "Save draft & buy featured post" : "Save draft & buy standard post"}
+                          </button>
+                          <button type="button" disabled={saving} onClick={() => void saveDraftAndBuy("plans")}
+                            className="button-gradient-soft min-h-11 px-4 rounded-xl border text-sm font-semibold disabled:opacity-50">
+                            See annual plans
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-sm mt-2" style={{ color: "var(--text-sec)" }}>
+                          Only your organization’s owner can buy posting credits or plans. Ask them to buy one, then publish this job.
+                        </p>
+                      ))}
+                    </section>
+                  )}
+
                   {/* Action buttons */}
                   <div className="flex flex-wrap gap-3 pt-3 border-t" style={{ borderColor: "var(--border)" }}>
                     <Button
                       primary
-                      onClick={handleSave}
+                      onClick={() => void handleSave()}
                       className={saving || isImported ? "opacity-50 pointer-events-none" : ""}
                     >
                       {isImported ? "Read Only" : saving ? "Saving..." : "Save Changes"}

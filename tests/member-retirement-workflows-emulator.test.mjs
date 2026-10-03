@@ -70,7 +70,11 @@ test('retirement preserves authenticated applicant fallback, private peer identi
       await seed('conversations', id, { participants: [employer.uid, outsider.uid], createdBy: employer.uid });
       const before = (await db.doc(`members/${outsider.uid}`).get()).data();
       for (const forged of [null, { verified: true, trusted: true, acceptedBy: outsider.uid, provenance: 'server', identityProjection: { displayName: 'SECRET PRIVATE NAME', photoURL: '/secret-avatar.png' } }]) {
-        if (forged) await updateDoc(doc(employer.store, 'conversations', id), forged);
+        if (forged) {
+          // Participants can no longer write such fields; reproduce records forged under the former rules.
+          await assert.rejects(updateDoc(doc(employer.store, 'conversations', id), forged), error => error.code === 'permission-denied');
+          await db.doc(`conversations/${id}`).update(forged);
+        }
         const response = await peer.GET(request(`/api/messages/peer?conversationId=${id}`, employer));
         assert.equal(response.status, 200);
         assert.deepEqual(await response.json(), { peer: { uid: outsider.uid, displayName: 'IOPPS member' } });

@@ -194,9 +194,9 @@ export default function IconRailSidebar() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const { theme, toggle } = useTheme();
-  const { hasOrg, isAdmin, isEmployer, loading: accountLoading, orgId, orgSlug, orgName, orgType } = useAccountContext();
+  const { hasOrg, isAdmin, canAccessAdmin, isEmployer, loading: accountLoading, orgId, orgSlug, orgName, orgType } = useAccountContext();
   const isAuthenticated = Boolean(user);
-  const navItems = getRailNavItems({ isAuthenticated, hasOrg, isAdmin });
+  const navItems = getRailNavItems({ isAuthenticated, hasOrg, isAdmin: canAccessAdmin });
   const utilityItems = isAuthenticated ? getMemberUtilityNavItems() : [];
   const publicAuthItems = getPublicAuthNavItems();
   const brandHref = getBrandHref(isAuthenticated);

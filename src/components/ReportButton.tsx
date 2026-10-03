@@ -1,24 +1,44 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
-import { submitReport, type ContentReport } from "@/lib/firestore/reports";
+import {
+  REPORT_DETAILS_MAX_LENGTH,
+  submitReport,
+  type ReportReason,
+  type ReportTargetType,
+} from "@/lib/firestore/reports";
 import Button from "./Button";
 
 interface ReportButtonProps {
-  targetType: ContentReport["targetType"];
+  targetType: ReportTargetType;
   targetId: string;
   targetTitle?: string;
 }
 
-const REASONS: { value: ContentReport["reason"]; label: string }[] = [
+const REASONS: { value: ReportReason; label: string }[] = [
   { value: "spam", label: "Spam" },
   { value: "harassment", label: "Harassment" },
   { value: "inappropriate", label: "Inappropriate Content" },
   { value: "misinformation", label: "Misinformation" },
   { value: "other", label: "Other" },
 ];
+
+function reportErrorMessage(error: unknown): string {
+  const status = error && typeof error === "object" && "status" in error ? (error as { status?: unknown }).status : undefined;
+  if (status === 401) return "Please sign in again to report this content.";
+  if (status === 403) return "Your account can't send reports right now. Contact IOPPS for help.";
+  if (status === 429) return "You have sent several reports recently. Please try again later.";
+  if (status === 400) return "This report could not be sent. Check the details and try again.";
+  return "Failed to submit report. Please try again.";
+}
+
+// Return here after signing in; the dialog only renders after a click in the browser.
+function signInHref(): string {
+  return `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+}
 
 export default function ReportButton({
   targetType,
@@ -28,34 +48,29 @@ export default function ReportButton({
   const { user } = useAuth();
   const { showToast } = useToast();
   const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState<ContentReport["reason"] | "">("");
+  const [reason, setReason] = useState<ReportReason | "">("");
   const [details, setDetails] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [duplicate, setDuplicate] = useState(false);
 
   const handleSubmit = async () => {
-    if (!user || !reason) return;
+    if (!user || !reason || submitting) return;
     setSubmitting(true);
     try {
-      await submitReport({
-        reporterId: user.uid,
-        reporterName: user.displayName || undefined,
-        targetType,
-        targetId,
-        targetTitle,
-        reason,
-        details: details.trim() || undefined,
-      });
+      const result = await submitReport(user, { targetType, targetId, targetTitle, reason, details });
+      setDuplicate(result.duplicate);
       setSubmitted(true);
       setTimeout(() => {
         setOpen(false);
         setSubmitted(false);
+        setDuplicate(false);
         setReason("");
         setDetails("");
       }, 1500);
     } catch (err) {
       console.error("Failed to submit report:", err);
-      showToast("Failed to submit report. Please try again.", "error");
+      showToast(reportErrorMessage(err), "error");
     } finally {
       setSubmitting(false);
     }
@@ -102,15 +117,52 @@ export default function ReportButton({
           >
             <div style={{ padding: "20px 24px" }}>
               {submitted ? (
-                <div className="text-center py-6">
+                <div className="text-center py-6" role="status">
                   <p className="text-3xl mb-2">&#10003;</p>
                   <p className="text-base font-bold text-text mb-1">
-                    Report Submitted
+                    {duplicate ? "Already Reported" : "Report Submitted"}
                   </p>
                   <p className="text-sm text-text-muted">
-                    Thank you. Our team will review this.
+                    {duplicate
+                      ? "You already reported this. Our team will review it."
+                      : "Thank you. Our team will review this."}
                   </p>
                 </div>
+              ) : !user ? (
+                <>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-text m-0">
+                      Report Content
+                    </h3>
+                    <button
+                      onClick={() => setOpen(false)}
+                      className="text-text-muted cursor-pointer hover:text-text"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        fontSize: 20,
+                        lineHeight: 1,
+                      }}
+                      aria-label="Close report dialog"
+                    >
+                      &#215;
+                    </button>
+                  </div>
+                  <p className="text-sm text-text-sec mb-4">
+                    Sign in to report content. Reports are reviewed by the IOPPS moderation team.
+                  </p>
+                  <div className="flex gap-2.5">
+                    <Button onClick={() => setOpen(false)} style={{ flex: 1 }}>
+                      Not Now
+                    </Button>
+                    <Link
+                      href={signInHref()}
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-[14px] button-gradient px-5 text-sm font-semibold text-white no-underline"
+                    >
+                      Sign In to Report
+                    </Link>
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="flex justify-between items-center mb-4">
@@ -178,7 +230,9 @@ export default function ReportButton({
                     onChange={(e) => setDetails(e.target.value)}
                     placeholder="Provide any additional context..."
                     rows={3}
-                    className="w-full rounded-xl text-sm text-text mb-4 resize-none"
+                    maxLength={REPORT_DETAILS_MAX_LENGTH}
+                    aria-describedby="report-details-count"
+                    className="w-full rounded-xl text-sm text-text resize-none"
                     style={{
                       padding: "10px 14px",
                       background: "var(--bg)",
@@ -186,6 +240,9 @@ export default function ReportButton({
                       outline: "none",
                     }}
                   />
+                  <p id="report-details-count" className="text-xs text-text-muted text-right mt-1 mb-4">
+                    {details.length}/{REPORT_DETAILS_MAX_LENGTH}
+                  </p>
 
                   <div className="flex gap-2.5">
                     <Button
@@ -197,6 +254,7 @@ export default function ReportButton({
                     <Button
                       primary
                       onClick={handleSubmit}
+                      disabled={!reason || submitting}
                       style={{
                         flex: 1,
                         background: "var(--red)",

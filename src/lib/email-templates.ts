@@ -1,7 +1,17 @@
 /**
  * Email template functions that return responsive HTML strings
  * with IOPPS brand colors (navy #0F2B4C, teal #0D9488).
+ * Every argument is untrusted plain text and is escaped here; never pre-escape it.
  */
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function layout(title: string, body: string): string {
   return `<!DOCTYPE html>
@@ -52,7 +62,7 @@ function btn(text: string, url: string): string {
 export function welcomeEmail(name: string): string {
   return layout(
     "Welcome to IOPPS",
-    `<h2 style="margin:0 0 16px;font-size:20px;color:#0F2B4C;">Welcome, ${name}!</h2>
+    `<h2 style="margin:0 0 16px;font-size:20px;color:#0F2B4C;">Welcome, ${escapeHtml(name)}!</h2>
 <p style="margin:0 0 12px;">Thank you for joining the Indigenous Opportunity Portal &amp; Partnerships System. We are excited to have you as part of our community.</p>
 <p style="margin:0 0 12px;">Here is what you can do next:</p>
 <ul style="margin:0 0 12px;padding-left:20px;color:#374151;">
@@ -77,16 +87,16 @@ export function applicationStatusEmail(
     offered: "has received an offer",
     rejected: "was not selected to move forward",
   };
-  const message = statusLabel[status] || `has been updated to "${status}"`;
+  const message = Object.hasOwn(statusLabel, status) ? statusLabel[status] : `has been updated to "${escapeHtml(status)}"`;
 
   return layout(
     "Application Status Update",
     `<h2 style="margin:0 0 16px;font-size:20px;color:#0F2B4C;">Application Update</h2>
-<p style="margin:0 0 12px;">Hi ${name},</p>
-<p style="margin:0 0 12px;">Your application for <strong>${jobTitle}</strong> ${message}.</p>
+<p style="margin:0 0 12px;">Hi ${escapeHtml(name)},</p>
+<p style="margin:0 0 12px;">Your application for <strong>${escapeHtml(jobTitle)}</strong> ${message}.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;width:100%;">
 <tr><td style="background:#f0fdfa;border-left:4px solid #0D9488;padding:12px 16px;border-radius:0 8px 8px 0;">
-  <span style="font-size:13px;color:#0D9488;font-weight:600;">Status: ${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+  <span style="font-size:13px;color:#0D9488;font-weight:600;">Status: ${escapeHtml(status.charAt(0).toUpperCase() + status.slice(1))}</span>
 </td></tr>
 </table>
 ${btn("View Application", "https://www.iopps.ca/applications")}
@@ -98,8 +108,8 @@ export function newMessageEmail(name: string, senderName: string): string {
   return layout(
     "New Message on IOPPS",
     `<h2 style="margin:0 0 16px;font-size:20px;color:#0F2B4C;">New Message</h2>
-<p style="margin:0 0 12px;">Hi ${name},</p>
-<p style="margin:0 0 12px;">You have received a new message from <strong>${senderName}</strong> on IOPPS.</p>
+<p style="margin:0 0 12px;">Hi ${escapeHtml(name)},</p>
+<p style="margin:0 0 12px;">You have received a new message from <strong>${escapeHtml(senderName)}</strong> on IOPPS.</p>
 ${btn("Read Message", "https://www.iopps.ca/messages")}
 <p style="margin:0;color:#6b7280;font-size:13px;">You are receiving this because you have message notifications enabled.</p>`
   );
@@ -113,12 +123,12 @@ export function eventReminderEmail(
   return layout(
     "Event Reminder",
     `<h2 style="margin:0 0 16px;font-size:20px;color:#0F2B4C;">Event Reminder</h2>
-<p style="margin:0 0 12px;">Hi ${name},</p>
-<p style="margin:0 0 12px;">This is a reminder that <strong>${eventTitle}</strong> is coming up on <strong>${eventDate}</strong>.</p>
+<p style="margin:0 0 12px;">Hi ${escapeHtml(name)},</p>
+<p style="margin:0 0 12px;">This is a reminder that <strong>${escapeHtml(eventTitle)}</strong> is coming up on <strong>${escapeHtml(eventDate)}</strong>.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;width:100%;">
 <tr><td style="background:#f0fdfa;border-left:4px solid #0D9488;padding:12px 16px;border-radius:0 8px 8px 0;">
-  <span style="font-size:14px;color:#0F2B4C;font-weight:600;">${eventTitle}</span><br/>
-  <span style="font-size:13px;color:#6b7280;">${eventDate}</span>
+  <span style="font-size:14px;color:#0F2B4C;font-weight:600;">${escapeHtml(eventTitle)}</span><br/>
+  <span style="font-size:13px;color:#6b7280;">${escapeHtml(eventDate)}</span>
 </td></tr>
 </table>
 ${btn("View Event", "https://www.iopps.ca/events")}
@@ -134,12 +144,12 @@ export function jobMatchEmail(
   return layout(
     "New Job Match",
     `<h2 style="margin:0 0 16px;font-size:20px;color:#0F2B4C;">New Job Match</h2>
-<p style="margin:0 0 12px;">Hi ${name},</p>
+<p style="margin:0 0 12px;">Hi ${escapeHtml(name)},</p>
 <p style="margin:0 0 12px;">A new opportunity matching your profile has been posted:</p>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;width:100%;">
 <tr><td style="background:#f0fdfa;border:1px solid #ccfbf1;padding:16px;border-radius:8px;">
-  <span style="font-size:16px;color:#0F2B4C;font-weight:700;">${jobTitle}</span><br/>
-  <span style="font-size:13px;color:#6b7280;">at ${orgName}</span>
+  <span style="font-size:16px;color:#0F2B4C;font-weight:700;">${escapeHtml(jobTitle)}</span><br/>
+  <span style="font-size:13px;color:#6b7280;">at ${escapeHtml(orgName)}</span>
 </td></tr>
 </table>
 ${btn("View Opportunity", "https://www.iopps.ca/jobs")}

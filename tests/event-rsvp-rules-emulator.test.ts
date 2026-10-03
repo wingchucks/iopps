@@ -5,7 +5,7 @@ import { initializeApp as initializeAdmin, deleteApp as deleteAdmin } from 'fire
 import { getFirestore as getAdminDb } from 'firebase-admin/firestore';
 import { initializeApp, deleteApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInAnonymously } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator, collection, doc, getDoc, getDocs, query, setDoc, where, terminate, type Firestore } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, terminate, type Firestore } from 'firebase/firestore';
 
 const denied = (e: unknown) => (e as { code?: string }).code === 'permission-denied';
 test('event RSVP rules: members read only their own RSVPs', { skip: process.env.IOPPS_TEST_EMULATORS !== 'true' }, async t => {
@@ -45,6 +45,29 @@ test('event RSVP rules: members read only their own RSVPs', { skip: process.env.
     await t.test('RSVPs cannot be written under another member ID', async () => {
       await assert.rejects(setDoc(doc(a.db, 'event_rsvps', `${b.uid}_other`), { userId: a.uid, postId: 'other', status: 'going' }), denied);
       await assert.rejects(setDoc(doc(a.db, 'event_rsvps', `${a.uid}_forged`), { userId: b.uid, postId: 'forged', status: 'going' }), denied);
+      await assert.rejects(setDoc(doc(a.db, 'event_rsvps', `${b.uid}_${eventId}`), { userId: a.uid, postId: eventId, status: 'going' }), denied);
+    });
+    await t.test('each member has one RSVP per event, bound to its owner and event', async () => {
+      const own = doc(a.db, 'event_rsvps', `${a.uid}_${eventId}`);
+      const rsvp = { userId: a.uid, postId: eventId, postTitle: 'Fixture', postDate: '2027-06-12', postLocation: 'Winnipeg, MB', status: 'interested', rsvpedAt: serverTimestamp() };
+      // Extra IDs for the same event would add uncounted duplicate "going" RSVPs.
+      for (const id of [`${a.uid}_${eventId}-duplicate`, `${a.uid}_${eventId}_2`, `${a.uid}_other-event`]) {
+        await assert.rejects(setDoc(doc(a.db, 'event_rsvps', id), { ...rsvp, status: 'going' }), denied);
+      }
+      await setDoc(own, rsvp);
+      // An RSVP cannot be reassigned to another member's "My Events" or to another event.
+      await assert.rejects(setDoc(own, { ...rsvp, userId: b.uid }), denied);
+      await assert.rejects(updateDoc(own, { userId: b.uid }), denied);
+      await assert.rejects(setDoc(own, { ...rsvp, postId: 'other-event' }), denied);
+      await assert.rejects(updateDoc(own, { postId: 'other-event' }), denied);
+      await assert.rejects(updateDoc(doc(b.db, 'event_rsvps', `${a.uid}_${eventId}`), { status: 'not_going' }), denied);
+      await setDoc(own, { ...rsvp, status: 'going' });
+      const stored = (await server.doc(`event_rsvps/${a.uid}_${eventId}`).get()).data();
+      assert.equal(stored?.userId, a.uid);
+      assert.equal(stored?.status, 'going');
+      await assert.rejects(deleteDoc(doc(b.db, 'event_rsvps', `${a.uid}_${eventId}`)), denied);
+      await deleteDoc(own);
+      assert.equal((await server.doc(`event_rsvps/${a.uid}_${eventId}`).get()).exists, false);
     });
   } finally {
     await Promise.all(dbs.map(db => terminate(db)));

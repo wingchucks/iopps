@@ -9,7 +9,17 @@ import Button from "@/components/Button";
 import Badge from "@/components/Badge";
 import type { FeaturedJobSummary } from "@/components/FeaturedJobControl";
 import { useAuth } from "@/lib/auth-context";
-import { ONE_TIME_PLANS, SUBSCRIPTION_PLANS } from "@/lib/pricing";
+import {
+  BILLING_SUPPORT_EMAIL,
+  COMPLIMENTARY_ACCESS_DETAIL,
+  COMPLIMENTARY_ACCESS_LABEL,
+  ONE_TIME_PLANS,
+  SUBSCRIPTION_PLANS,
+  formatBillingDate,
+  lapsedPaidTier,
+  type AnnualPurchaseOption,
+  type BillingOverview,
+} from "@/lib/pricing";
 
 interface EmployerData {
   plan?: string;
@@ -24,7 +34,7 @@ interface EmployerData {
   name?: string;
   openJobs?: number;
   standardPostCredits?: number;
-  featuredSummary?: FeaturedJobSummary;
+  featuredSummary?: FeaturedJobSummary | null;
 }
 
 const PLAN_FEATURES: Record<string, { label: string; features: string[]; color: string; jobLimit: string }> = {
@@ -54,6 +64,14 @@ const PLAN_FEATURES: Record<string, { label: string; features: string[]; color: 
   },
 };
 
+// Complimentary ($0 admin or Hermes) access is deliberately not a paid plan: it never funds postings.
+const COMPLIMENTARY_FEATURES = [
+  "Organization profile with directory review",
+  "Events and scholarships",
+  "Application management for jobs you publish",
+  "Job postings use paid posting credits or a paid annual plan",
+];
+
 export default function BillingPage() {
   return (
     <OrgRoute>
@@ -69,6 +87,8 @@ export default function BillingPage() {
 function BillingContent() {
   const { user } = useAuth();
   const [employer, setEmployer] = useState<EmployerData | null>(null);
+  const [billing, setBilling] = useState<BillingOverview | null>(null);
+  const [publishingNotice, setPublishingNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -81,6 +101,8 @@ function BillingContent() {
         });
         const data = await response.json();
         setEmployer((data.employer as EmployerData | null) || null);
+        setBilling((data.billing as BillingOverview | null) || null);
+        setPublishingNotice(typeof data.publishingUnavailable?.message === "string" ? data.publishingUnavailable.message : null);
       } catch (error) {
         console.error(error);
       } finally {
@@ -89,19 +111,22 @@ function BillingContent() {
     })();
   }, [user]);
 
-  const currentPlan = employer?.subscriptionTier || employer?.plan || "free";
-  const planInfo = PLAN_FEATURES[currentPlan] || PLAN_FEATURES.free;
+  // The server billing overview is authoritative: only a paid annual term is a paid plan.
+  const paidTerm = billing?.paidTerm ?? null;
+  const complimentary = paidTerm ? null : billing?.complimentary ?? null;
+  // A paid plan whose term has ended stays named on the account until the daily expiry job
+  // runs: show it as inactive, so the lapse is visible, rather than as an active Free plan.
+  const lapsedTier = billing && !paidTerm && !complimentary ? lapsedPaidTier(employer, new Date()) : null;
+  const currentPlan = billing ? (paidTerm?.tier ?? lapsedTier ?? "free") : (employer?.subscriptionTier || employer?.plan || "free");
+  const planInfo = complimentary
+    ? { label: `Complimentary ${PLAN_FEATURES[complimentary.tier]?.label ?? "access"}`, color: "var(--text-muted)", jobLimit: COMPLIMENTARY_ACCESS_LABEL, features: COMPLIMENTARY_FEATURES }
+    : PLAN_FEATURES[currentPlan] || PLAN_FEATURES.free;
   const billingStart = employer?.billingStartAt || employer?.subscriptionStart;
-  const billingStartLabel = billingStart
-    ? new Date(billingStart).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })
-    : null;
-  const subscriptionEndLabel = employer?.subscriptionEnd
-    ? new Date(employer.subscriptionEnd).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })
-    : null;
-  const hasBonusAccess = Boolean(employer?.bonusAccessGrantedAt && billingStart && new Date(billingStart).getTime() > Date.now());
-
-  const hasExpired = Boolean(employer?.subscriptionEnd && Date.parse(employer.subscriptionEnd) <= Date.now());
-  const isActive = currentPlan === "free" || (!hasExpired && (employer?.subscriptionStatus === "active" || hasBonusAccess));
+  const billingStartLabel = billingStart ? formatBillingDate(billingStart) : null;
+  const termStartLabel = paidTerm ? formatBillingDate(paidTerm.startsAt) : billingStartLabel;
+  const termEndLabel = paidTerm ? formatBillingDate(paidTerm.endsAt) : complimentary?.endsAt ? formatBillingDate(complimentary.endsAt) : null;
+  const hasBonusAccess = Boolean(paidTerm && employer?.bonusAccessGrantedAt && billingStart && new Date(billingStart).getTime() > Date.now());
+  const isActive = Boolean(paidTerm) || (!complimentary && currentPlan === "free");
 
   if (loading) {
     return (
@@ -129,28 +154,49 @@ function BillingContent() {
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
               <p className="text-xs font-bold text-text-muted tracking-widest mb-2">CURRENT PLAN</p>
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-3 flex-wrap">
                 <h2 className="text-3xl font-extrabold" style={{ color: planInfo.color }}>{planInfo.label}</h2>
-                {isActive && <Badge text="✓ Active" color="#10B981" bg="rgba(16,185,129,.12)" />}
-                {!isActive && <Badge text="Inactive" color="var(--text-muted)" bg="var(--border)" />}
+                {complimentary && <Badge text="Complimentary" color="var(--text-muted)" bg="var(--border)" />}
+                {!complimentary && isActive && <Badge text="✓ Active" color="#10B981" bg="rgba(16,185,129,.12)" />}
+                {!complimentary && !isActive && <Badge text="Inactive" color="var(--text-muted)" bg="var(--border)" />}
               </div>
               <p className="text-sm text-text-muted">{planInfo.jobLimit}</p>
+              {complimentary && (
+                <p className="mt-2 mb-0 max-w-[520px] text-xs text-text-muted">
+                  {COMPLIMENTARY_ACCESS_DETAIL}{termEndLabel ? ` Complimentary access ends ${termEndLabel}.` : ""}
+                </p>
+              )}
               {hasBonusAccess && billingStartLabel && (
                 <div className="mt-3 rounded-xl border border-[var(--gold-soft)] px-4 py-3" style={{ background: "rgba(217,119,6,.08)" }}>
                   <p className="mb-1 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: "var(--gold)" }}>
                     Bonus early access
                   </p>
                   <p className="m-0 text-sm text-text">
-                    Your access is active now as a bonus. Your paid Premium term begins on <strong>{billingStartLabel}</strong>.
+                    Your access is active now as a bonus. Your paid {planInfo.label} term begins on <strong>{billingStartLabel}</strong>.
                   </p>
                   {employer?.bonusAccessReason && (
                     <p className="mt-1 mb-0 text-xs text-text-muted">{employer.bonusAccessReason}</p>
                   )}
                 </div>
               )}
-              {!hasBonusAccess && billingStartLabel && (
+              {!hasBonusAccess && paidTerm && termStartLabel && (
                 <p className="mt-3 text-xs text-text-muted">
-                  Plan start: {billingStartLabel}{subscriptionEndLabel ? ` · Renews/expires: ${subscriptionEndLabel}` : ""}
+                  Plan start: {termStartLabel}{termEndLabel ? ` · Ends: ${termEndLabel}` : ""}
+                </p>
+              )}
+              {billing?.renewal && (
+                <p className="mt-1 text-xs text-text-muted">
+                  Renewal paid: {SUBSCRIPTION_PLANS[billing.renewal.tier === "standard" ? "tier1" : billing.renewal.tier === "premium" ? "tier2" : "tier3"].title} from {formatBillingDate(billing.renewal.startsAt)} to {formatBillingDate(billing.renewal.endsAt)}.
+                </p>
+              )}
+              {billing?.reviewRequired && (
+                <p className="mt-3 mb-0 rounded-xl px-4 py-3 text-sm text-text" style={{ background: "rgba(217,119,6,.08)", border: "1px solid var(--gold-soft)" }}>
+                  Your annual plan needs a quick review by IOPPS before it can be renewed or changed. Contact {BILLING_SUPPORT_EMAIL}. Single job postings can still be purchased.
+                </p>
+              )}
+              {publishingNotice && (
+                <p className="mt-3 mb-0 rounded-xl px-4 py-3 text-sm text-text" style={{ background: "rgba(217,119,6,.08)", border: "1px solid var(--gold-soft)" }}>
+                  {publishingNotice}
                 </p>
               )}
               {employer?.featuredSummary && (
@@ -200,21 +246,17 @@ function BillingContent() {
       {/* Plan Pricing Overview */}
       <h2 className="text-lg font-bold text-text mb-4">Available Plans</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        {[
+        {([
           { key: "tier1", name: SUBSCRIPTION_PLANS.tier1.title, price: `${SUBSCRIPTION_PLANS.tier1.priceLabel}${SUBSCRIPTION_PLANS.tier1.periodLabel}`, desc: SUBSCRIPTION_PLANS.tier1.shortDescription, highlight: false },
           { key: "tier2", name: SUBSCRIPTION_PLANS.tier2.title, price: `${SUBSCRIPTION_PLANS.tier2.priceLabel}${SUBSCRIPTION_PLANS.tier2.periodLabel}`, desc: SUBSCRIPTION_PLANS.tier2.shortDescription, highlight: true },
-        ].map((p) => (
+        ] as const).map((p) => (
           <Card key={p.key} className={p.highlight ? "ring-2 ring-teal" : ""}>
             <div className="p-4 text-center">
               {p.highlight && <p className="text-xs font-bold text-teal mb-2 tracking-widest">MOST POPULAR</p>}
               <h3 className="text-lg font-extrabold text-text mb-1">{p.name}</h3>
               <p className="text-2xl font-extrabold mb-2" style={{ color: "var(--teal)" }}>{p.price}</p>
               <p className="text-xs text-text-muted mb-4">{p.desc}</p>
-              <Link href={`/org/checkout?plan=${p.key}`}>
-                <Button primary={p.highlight} small className="w-full">
-                  {currentPlan === p.key.replace("tier1","standard").replace("tier2","premium").replace("tier3","school") ? "Current Plan" : "Select"}
-                </Button>
-              </Link>
+              <AnnualPlanAction planId={p.key} option={billing?.annualPlans[p.key] ?? null} canPurchase={billing?.canPurchase ?? true} highlight={p.highlight} />
             </div>
           </Card>
         ))}
@@ -249,11 +291,41 @@ function BillingContent() {
             <p className="font-bold text-text mb-1">Need help with billing?</p>
             <p className="text-sm text-text-muted">Contact us and we&apos;ll get back to you quickly.</p>
           </div>
-          <a href="mailto:hello@iopps.ca">
+          <a href={`mailto:${BILLING_SUPPORT_EMAIL}`}>
             <Button small>Contact Support</Button>
           </a>
         </div>
       </Card>
+    </div>
+  );
+}
+
+/** Never offers an annual purchase checkout would refuse: current plan, plan change or renewal. */
+function AnnualPlanAction({ planId, option, canPurchase, highlight }: { planId: "tier1" | "tier2"; option: AnnualPurchaseOption | null; canPurchase: boolean; highlight: boolean }) {
+  if (option && !option.available) {
+    return (
+      <div className="flex flex-col gap-2">
+        <Button small className="w-full" disabled>{option.label ?? "Not available"}</Button>
+        {option.message && <p className="m-0 text-xs text-text-muted">{option.message}</p>}
+        {option.reason === "plan_change" && (
+          <a href={`mailto:${BILLING_SUPPORT_EMAIL}?subject=${encodeURIComponent("Change my IOPPS plan")}`} className="text-xs font-semibold" style={{ color: "var(--teal)" }}>
+            Contact us to change plans
+          </a>
+        )}
+      </div>
+    );
+  }
+  if (!canPurchase) {
+    return <Button small className="w-full" disabled>Owner purchases only</Button>;
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <Link href={`/org/checkout?plan=${planId}`}>
+        <Button primary={highlight} small className="w-full">
+          {option?.kind === "renewal" ? "Renew for another year" : "Select"}
+        </Button>
+      </Link>
+      {option?.kind === "renewal" && option.message && <p className="m-0 text-xs text-text-muted">{option.message}</p>}
     </div>
   );
 }

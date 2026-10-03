@@ -11,7 +11,7 @@ import {
 } from "@/lib/admin/subscription-drafts";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateTime } from "@/lib/format-date";
-import { getSubscriptionPlanByTier, SUBSCRIPTION_PLANS, type SubscriptionTier } from "@/lib/pricing";
+import { COMPLIMENTARY_ACCESS_DETAIL, COMPLIMENTARY_ACCESS_LABEL, getSubscriptionPlanByTier, SUBSCRIPTION_PLANS, type SubscriptionTier } from "@/lib/pricing";
 import toast from "react-hot-toast";
 import OrganizationAdminAssignment from "@/components/admin/OrganizationAdminAssignment";
 
@@ -78,6 +78,19 @@ const PLAN_ID_BY_TIER: Record<SubscriptionTier, "tier1" | "tier2" | "tier3"> = {
   school: "tier3",
 };
 
+/** Complimentary access never funds postings; free postings are given as job posting credits. */
+const FREE_POSTINGS_HINT = "To let an organization post jobs for free, use “Grant credit” on the Employers list.";
+
+/** $0 admin or Hermes grants: shown as complimentary, because they never fund job postings. */
+function isComplimentaryAccess(employer: Employer): boolean {
+  const subscription = employer.subscription && typeof employer.subscription === "object" ? employer.subscription : {};
+  const paymentId = typeof subscription.paymentId === "string" ? subscription.paymentId : "";
+  const amounts = [subscription.amountPaid, subscription.totalAmount].filter((value): value is number => typeof value === "number");
+  const zero = amounts.length > 0 && amounts.every((value) => value <= 0);
+  const reason = String(subscription.bonusAccessReason ?? employer.bonusAccessReason ?? "").toLowerCase();
+  return (paymentId.startsWith("admin-grant") && zero) || (zero && reason.includes("complimentary"));
+}
+
 export default function OrganizationDetailPage() {
   const { orgId } = useParams<{ orgId: string }>();
   const router = useRouter();
@@ -93,6 +106,8 @@ export default function OrganizationDetailPage() {
   const [subscriptionDraft, setSubscriptionDraft] = useState<AdminSubscriptionDraft>(() =>
     buildAdminSubscriptionDraft({ accountType: "business" }),
   );
+  // Optional explicit reconciliation of a paid Standard term's postings already used.
+  const [jobPostingUsed, setJobPostingUsed] = useState("");
 
   const fetchData = async () => {
     try {
@@ -161,6 +176,18 @@ export default function OrganizationDetailPage() {
       return;
     }
 
+    const used = jobPostingUsed.trim() === "" ? undefined : Number(jobPostingUsed);
+    if (used !== undefined && (!Number.isSafeInteger(used) || used < 0)) {
+      toast.error("Postings already used must be a whole number of 0 or more");
+      return;
+    }
+
+    if (amount <= 0 && !window.confirm(
+      `Grant complimentary ${SUBSCRIPTION_PLANS[PLAN_ID_BY_TIER[subscriptionDraft.subscriptionTier]].title} access for $0?\n\n${COMPLIMENTARY_ACCESS_DETAIL}\n\n${FREE_POSTINGS_HINT}`,
+    )) {
+      return;
+    }
+
     setSubscriptionSaving(true);
     try {
       const token = await user?.getIdToken();
@@ -180,6 +207,7 @@ export default function OrganizationDetailPage() {
           gstAmount,
           totalAmount,
           createSubscriptionRecord: subscriptionDraft.createSubscriptionRecord,
+          ...(used !== undefined && subscriptionDraft.subscriptionTier === "standard" ? { jobPostingUsed: used } : {}),
         }),
       });
 
@@ -190,9 +218,10 @@ export default function OrganizationDetailPage() {
 
       toast.success(
         amount <= 0
-          ? `${SUBSCRIPTION_PLANS[PLAN_ID_BY_TIER[subscriptionDraft.subscriptionTier]].title} complimentary access applied`
+          ? `${SUBSCRIPTION_PLANS[PLAN_ID_BY_TIER[subscriptionDraft.subscriptionTier]].title} complimentary access applied (paid postings not included)`
           : `${SUBSCRIPTION_PLANS[PLAN_ID_BY_TIER[subscriptionDraft.subscriptionTier]].title} subscription applied`,
       );
+      setJobPostingUsed("");
       await fetchData();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Subscription update failed";
@@ -271,6 +300,7 @@ export default function OrganizationDetailPage() {
   const currentBillingStart = employer.billingStartAt || employer.subscriptionStart;
   const currentRenewalDate = employer.subscriptionEnd || employer.renewalDate;
   const currentStatus = employer.subscriptionStatus || (currentPlan ? "active" : "inactive");
+  const complimentaryAccess = Boolean(currentPlan) && isComplimentaryAccess(employer);
   const selectedPlan = SUBSCRIPTION_PLANS[PLAN_ID_BY_TIER[subscriptionDraft.subscriptionTier]];
   const isComplimentaryDraft = Number(subscriptionDraft.amount) <= 0;
   const canAssignSubscription = data.capabilities?.canAssignSubscription === true;
@@ -368,7 +398,7 @@ export default function OrganizationDetailPage() {
             <p className="mt-1 text-sm leading-6" style={{ color: "var(--text-muted)" }}>
               Apply Standard, Premium, or School access directly from admin. Paid amounts create paid subscriptions.
               Setting the amount to <span className="font-semibold text-[var(--warning)]">$0.00</span> creates complimentary
-              admin-grant access instead.
+              admin-grant access instead, which does not include job postings or featured slots.
             </p>
           </div>
           <span className={cn(
@@ -386,11 +416,11 @@ export default function OrganizationDetailPage() {
         <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>Plan</p>
-            <p className="font-medium">{currentPlan ? `${currentPlan.title} ${currentPlan.priceLabel}${currentPlan.periodLabel}` : employer.plan || "Free"}</p>
+            <p className="font-medium">{currentPlan ? (complimentaryAccess ? `${currentPlan.title} · ${COMPLIMENTARY_ACCESS_LABEL}` : `${currentPlan.title} ${currentPlan.priceLabel}${currentPlan.periodLabel}`) : employer.plan || "Free"}</p>
           </div>
           <div>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>Price</p>
-            <p className="font-medium">{currentPlan ? `${currentPlan.priceLabel}${currentPlan.periodLabel}` : employer.planPrice ? `$${employer.planPrice}` : "—"}</p>
+            <p className="font-medium">{complimentaryAccess ? "$0 (complimentary)" : currentPlan ? `${currentPlan.priceLabel}${currentPlan.periodLabel}` : employer.planPrice ? `$${employer.planPrice}` : "—"}</p>
           </div>
           <div>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>Billing Start</p>
@@ -519,6 +549,24 @@ export default function OrganizationDetailPage() {
                   className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground/90 focus:outline-none"
                 />
               </label>
+
+              {subscriptionDraft.subscriptionTier === "standard" && !isComplimentaryDraft && (
+                <label className="space-y-2">
+                  <span className="text-sm font-medium">Postings already used this term (optional)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={jobPostingUsed}
+                    onChange={(event) => setJobPostingUsed(event.target.value)}
+                    placeholder="Leave blank unless reconciling"
+                    className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm text-foreground focus:border-[var(--input-focus)] focus:outline-none focus:ring-2 focus:ring-accent/20"
+                  />
+                  <p className="text-xs leading-5" style={{ color: "var(--text-muted)" }}>
+                    Sets the Standard annual posting count for this exact term. Without it, an existing paid term keeps its counter, or publishing counts the term&apos;s own listings.
+                  </p>
+                </label>
+              )}
             </div>
 
             <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-dashed p-4" style={{ borderColor: isComplimentaryDraft ? "var(--warning)" : "var(--card-border)" }}>
@@ -545,7 +593,7 @@ export default function OrganizationDetailPage() {
                 isComplimentaryDraft ? "text-amber-300" : "text-[var(--text-secondary)]",
               )}>
                 {isComplimentaryDraft
-                  ? "Amount is set to $0.00. This will create complimentary admin-grant access and it will not count as a paid public-partner subscription."
+                  ? `Amount is set to $0.00. This will create complimentary admin-grant access (${COMPLIMENTARY_ACCESS_LABEL}). It will not count as a paid public-partner subscription. ${COMPLIMENTARY_ACCESS_DETAIL} ${FREE_POSTINGS_HINT}`
                   : `This will apply the ${selectedPlan.title} annual plan at ${selectedPlan.priceLabel}${selectedPlan.periodLabel}.`}
               </p>
             </div>
@@ -557,7 +605,7 @@ export default function OrganizationDetailPage() {
                 disabled={subscriptionSaving}
                 className="rounded-xl button-gradient px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {subscriptionSaving ? "Applying..." : `Apply ${selectedPlan.title}`}
+                {subscriptionSaving ? "Applying..." : isComplimentaryDraft ? `Apply complimentary ${selectedPlan.title} (no paid postings)` : `Apply ${selectedPlan.title}`}
               </button>
               <p className="text-xs leading-5" style={{ color: "var(--text-muted)" }}>
                 The organization profile and employer profile will both be updated when you apply this change.

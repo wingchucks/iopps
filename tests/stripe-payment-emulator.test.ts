@@ -8,9 +8,12 @@ import Stripe from 'stripe';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as pricing from '../src/lib/pricing.ts';
-import { resolvePaidPublicationTerm } from '../src/lib/server/paid-job-term.ts';
-import { expireSubscriptionAtomically } from '../src/lib/server/subscription-expiration.ts';
+import * as publicationModule from '../src/lib/server/paid-job-publication.ts';
+import * as termModule from '../src/lib/server/paid-job-term.ts';
+import * as expirationModule from '../src/lib/server/subscription-expiration.ts';
 import { buildSubscriptionState } from '../src/lib/server/subscription-state.ts';
+const { resolvePaidPublicationTerm } = termModule;
+const { expireSubscriptionAtomically } = expirationModule;
 
 const enabled = process.env.IOPPS_TEST_EMULATORS === 'true';
 const secret = 'whsec_fictional_local_regression_only';
@@ -23,6 +26,7 @@ async function harness(t: any) {
   await employer.set({ name: 'Fictional organization', contactEmail: 'fixture@example.invalid', standardPostCredits: 0 });
   await db.doc(`organizations/${orgId}`).set({ name: 'Fictional organization' });
   const events: string[] = [];
+  const intents: string[] = [];
   const sends: any[] = [];
   let failNextPath = '';
   let rejectEmails = false;
@@ -61,10 +65,15 @@ async function harness(t: any) {
       if (id === 'next/server') return { NextResponse: { json: Response.json } };
       if (id === '@/lib/firebase-admin') return { getAdminDb: () => port };
       if (id === '@/lib/pricing') return pricing;
+      if (id === '@/lib/server/paid-job-publication') return publicationModule;
+      if (id === '@/lib/server/paid-job-term') return termModule;
+      if (id === '@/lib/server/subscription-expiration') return expirationModule;
       if (id === '@/lib/email') {
         const send = async (p: any) => { sends.push(p); if (rejectEmails) throw new Error('Fictional email failure'); };
-        return { sendAdminPaymentNotification: send, sendSubscriptionConfirmation: send };
+        return { sendAdminPaymentNotification: send, sendSubscriptionConfirmation: send, sendSubscriptionRenewalConfirmation: send };
       }
+      // Partner-card refreshes are asserted in stripe-billing-lifecycle.test.ts.
+      if (id === '@/lib/public-partner-cache') return { refreshPublicPartners() {} };
       throw new Error(`Unexpected import: ${id}`);
     },
   });
@@ -72,6 +81,13 @@ async function harness(t: any) {
     const e = { id: `evt_${crypto.randomUUID()}`, object: 'event', created: Math.floor(Date.now() / 1000), type, livemode: false,
       data: { object: { id: sessionId, object: 'checkout.session', mode: 'payment', status: 'complete', payment_status: 'paid', currency: 'cad', payment_intent: 'pi_fictional', amount_total: 13125,
         metadata: { orgId, planId: 'standard-post', amount: '12500', gstAmount: '625' }, ...overrides } } };
+    events.push(e.id); return e;
+  }
+  function chargeEvent(type: 'charge.refunded' | 'charge.dispute.created', paymentIntent: string) {
+    intents.push(paymentIntent);
+    const object = type === 'charge.refunded' ? { id: 'ch_fictional', object: 'charge', payment_intent: paymentIntent, amount: 1, amount_refunded: 1, refunded: true }
+      : { id: 'dp_fictional', object: 'dispute', payment_intent: paymentIntent, charge: 'ch_fictional', amount: 1, status: 'needs_response' };
+    const e = { id: `evt_${crypto.randomUUID()}`, object: 'event', created: Math.floor(Date.now() / 1000), type, livemode: false, data: { object } };
     events.push(e.id); return e;
   }
   async function send(e: any, bad = false) {
@@ -83,10 +99,11 @@ async function harness(t: any) {
   t.after(async () => {
     for (const receipt of (await purchases()).docs) await receipt.ref.delete();
     for (const id of events) await db.doc(`stripeWebhookEvents/${id}`).delete();
+    for (const id of intents) await db.doc(`stripeRevocations/${id}`).delete();
     await employer.delete(); await db.doc(`organizations/${orgId}`).delete();
     await db.doc(`organizations/legacy-${orgId}`).delete(); await db.terminate(); await deleteApp(app);
   });
-  return { db, orgId, employer, sends, event, send, purchases,
+  return { db, orgId, employer, sends, event, chargeEvent, send, purchases,
     failOnce: (path = employer.path) => { failNextPath = path; },
     rejectEmails: () => { rejectEmails = true; } };
 }
@@ -196,6 +213,11 @@ test('each supported plan fulfills and annual organization mirrors update atomic
       assert.equal((await h.employer.get()).data()?.subscriptionTier, plan.tier);
       assert.equal((await h.db.doc(`organizations/${h.orgId}`).get()).data()?.plan, plan.tier);
       assert.ok(receipt.data()?.expiresAt.toDate() > new Date());
+      assert.equal(receipt.data()?.expiresAt.toDate().getTime(), pricing.addOneCalendarYear(receipt.data()?.startsAt.toDate()).getTime());
+      // Let this term lapse so the next annual plan starts at payment rather than queueing behind it.
+      await h.send(e);
+      assert.equal(await expireSubscriptionAtomically(h.db, e.data.object.id, new Date(receipt.data()?.expiresAt.toDate().getTime() + 1000)), true);
+      continue;
     }
     await h.send(e);
   }
@@ -286,4 +308,46 @@ test('actual paid renewal after expiry restores normalized employer and organiza
  for(const ref of [h.employer,h.db.doc('organizations/'+h.orgId)]){
   const state=buildSubscriptionState((await ref.get()).data()!);assert.equal(state.tier,'premium');assert.equal(state.status,'active');assert.ok(Date.parse(String(state.subscriptionEnd))>Date.now());
  }
+});
+
+test('paid renewal during an active term starts at its end and the daily check promotes it', { skip: !enabled }, async t => {
+  const h = await harness(t);
+  const plan = pricing.SUBSCRIPTION_PLANS.tier2; const amount = plan.amount * 100; const gst = Math.round(amount * 0.05);
+  const first = h.event({ amount_total: amount + gst, metadata: { orgId: h.orgId, planId: plan.id, amount: String(amount), gstAmount: String(gst) } });
+  assert.equal((await h.send(first)).status, 200);
+  const current = (await h.db.doc(`subscriptions/${first.data.object.id}`).get()).data()!;
+  const before = (await h.employer.get()).data();
+  const renewal = h.event({ amount_total: amount + gst, metadata: { orgId: h.orgId, planId: plan.id, amount: String(amount), gstAmount: String(gst) } });
+  assert.equal((await h.send(renewal)).status, 200);
+  const queued = (await h.db.doc(`subscriptions/${renewal.data.object.id}`).get()).data()!;
+  assert.equal(queued.startsAt.toDate().getTime(), current.expiresAt.toDate().getTime());
+  assert.equal(queued.renewalOf, first.data.object.id);
+  assert.deepEqual((await h.employer.get()).data(), before);
+  const boundary = new Date(current.expiresAt.toDate().getTime() + 1000);
+  assert.equal(await expireSubscriptionAtomically(h.db, first.data.object.id, boundary), true);
+  const promoted = (await h.employer.get()).data()!;
+  assert.equal(promoted.subscription.termId, renewal.data.object.id);
+  const receipts = (await h.purchases()).docs.map(d => ({ id: d.id, data: d.data() }));
+  assert.equal(resolvePaidPublicationTerm({ employerId: h.orgId, employer: promoted, receipts, now: boundary })?.id, renewal.data.object.id);
+});
+
+test('full refunds withdraw an unused credit and end a refunded current annual term atomically', { skip: !enabled }, async t => {
+  const h = await harness(t);
+  const credit = h.event({ payment_intent: 'pi_emulator_credit' });
+  assert.equal((await h.send(credit)).status, 200);
+  assert.equal((await h.employer.get()).data()?.standardPostCredits, 1);
+  const refund = h.chargeEvent('charge.refunded', 'pi_emulator_credit');
+  assert.equal((await h.send(refund)).status, 200);
+  assert.equal((await h.send(refund)).status, 200);
+  assert.equal((await h.employer.get()).data()?.standardPostCredits, 0);
+  assert.equal((await h.db.doc(`subscriptions/${credit.data.object.id}`).get()).data()?.status, 'refunded');
+  const plan = pricing.SUBSCRIPTION_PLANS.tier1; const amount = plan.amount * 100; const gst = Math.round(amount * 0.05);
+  const annual = h.event({ payment_intent: 'pi_emulator_annual', amount_total: amount + gst, metadata: { orgId: h.orgId, planId: plan.id, amount: String(amount), gstAmount: String(gst) } });
+  assert.equal((await h.send(annual)).status, 200);
+  assert.equal((await h.send(h.chargeEvent('charge.dispute.created', 'pi_emulator_annual'))).status, 200);
+  const account = (await h.employer.get()).data()!;
+  assert.equal(account.plan, 'free');
+  assert.equal(account.subscription.endedReason, 'disputed');
+  const receipts = (await h.purchases()).docs.map(d => ({ id: d.id, data: d.data() }));
+  assert.equal(resolvePaidPublicationTerm({ employerId: h.orgId, employer: account, receipts, now: new Date() }), null);
 });

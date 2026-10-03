@@ -9,6 +9,7 @@ import { verifyAdminToken } from "@/lib/api-auth";
 import { FieldValue } from "firebase-admin/firestore";
 import { fetchImportedDescriptionPatch, normalizeImportedDescription } from "@/lib/server/imported-job-descriptions";
 import { updateImportedJobWithEditorialGuard } from "@/lib/server/job-cleanup-guards";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -32,6 +33,8 @@ export async function POST(
 
   const { feedId } = await params;
   const startTime = Date.now();
+  // Any applied import, update or expiry changes public jobs, even if a later step fails.
+  let publicJobsChanged = false;
 
   try {
     const feedDoc = await adminDb.collection("rssFeeds").doc(feedId).get();
@@ -88,9 +91,10 @@ export async function POST(
               const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
           if (feed.updateExistingJobs || (feedType === "dayforce" && feed.updateExistingJobs !== false)) {
             const appliedPatch = await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, { ...identity, title, location: item.location || "Canada", ...feedContent, description: resolvedDescription, descriptionFormat: "plain-text", ...(descriptionPatch || {}), ...lifecycle, ...sourcePostingDatePatch(item.sourcePostingDate), updatedAt: FieldValue.serverTimestamp() }, normalizeImportedDescription);
-            if (Object.keys(appliedPatch).length) jobsUpdated++;
+            if (Object.keys(appliedPatch).length) { jobsUpdated++; publicJobsChanged = true; }
           } else if (Object.keys(lifecycle).length || (feedType === "dayforce" && existingDoc.get("feedId") !== feed.id)) {
-            await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, {...identity,...lifecycle}, normalizeImportedDescription);
+            const appliedLifecycle = await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, {...identity,...lifecycle}, normalizeImportedDescription);
+            if (Object.keys(appliedLifecycle).length) publicJobsChanged = true;
           }
           continue;
         }
@@ -120,7 +124,7 @@ export async function POST(
 
         Object.assign(jobData, sourcePublishedAtPatch(item.pubDate));
 
-        if (await createImportedJobOnce(adminDb, jobData)) jobsImported++;
+        if (await createImportedJobOnce(adminDb, jobData)) { jobsImported++; publicJobsChanged = true; }
       } catch (itemErr) {
         jobsFailed++;
         console.error(`[admin/feeds/sync] Error processing item:`, itemErr);
@@ -131,7 +135,7 @@ export async function POST(
         let jobsExpired = 0;
                 for (const id of missingIds) {
                   const appliedPatch = await updateImportedJobWithEditorialGuard(adminDb, adminDb.collection("jobs").doc(id), expirationPatch("removed_from_source"), normalizeImportedDescription);
-                  if (Object.keys(appliedPatch).length) jobsExpired++;
+                  if (Object.keys(appliedPatch).length) { jobsExpired++; publicJobsChanged = true; }
                 }
     // Update feed metadata
     await adminDb.collection("rssFeeds").doc(feedId).update({
@@ -189,5 +193,7 @@ export async function POST(
     }
 
     return NextResponse.json({ error: "Sync failed" }, { status: 500 });
+  } finally {
+    if (publicJobsChanged) refreshPublicJobs();
   }
 }

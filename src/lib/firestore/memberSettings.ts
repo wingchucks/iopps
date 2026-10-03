@@ -27,6 +27,7 @@ export interface MemberSettings {
   updatedAt: unknown;
 }
 
+// Writes must stay within memberSettingsValid in firestore.rules.
 const COLLECTION = "member_settings";
 
 const defaultFieldVisibility: ProfileVisibility = {

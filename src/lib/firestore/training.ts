@@ -1,9 +1,7 @@
 import {
   collection,
-  doc,
   getDocs,
   addDoc,
-  updateDoc,
   query,
   where,
   orderBy,
@@ -105,6 +103,8 @@ export async function enrollInProgram(
     );
   }
 
+  // Keep aligned with validNewEnrollment in firestore.rules: progress, completion
+  // and certificates are not client-writable.
   const ref = await addDoc(enrollmentsCol, {
     userId,
     programId: program.id,
@@ -135,16 +135,3 @@ export async function getUserEnrollments(
   );
 }
 
-export async function updateEnrollmentProgress(
-  enrollmentId: string,
-  progress: number,
-  completedModules: string[]
-): Promise<void> {
-  const ref = doc(db, "training_enrollments", enrollmentId);
-  await updateDoc(ref, {
-    progress,
-    completedModules,
-    status: progress >= 100 ? "completed" : "in-progress",
-    ...(progress >= 100 ? { completedAt: serverTimestamp() } : {}),
-  });
-}

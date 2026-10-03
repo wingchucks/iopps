@@ -5,9 +5,13 @@ type EventLike = {
   endDate?: string | null;
   startTime?: string | null;
   endTime?: string | null;
+  timeZone?: string | null;
   status?: string | null;
   active?: boolean | null;
 };
+
+/** Events without a valid time zone are Saskatchewan events, like listing expiry. */
+export const DEFAULT_EVENT_TIME_ZONE = "America/Regina";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   "career fair": "Career Fair",
@@ -149,13 +153,156 @@ export function getEventDisplayDates(event: EventLike): string {
   return "";
 }
 
+/*
+ * Expiry compares wall-clock values in the event's own time zone (or
+ * Saskatchewan time), never in the server's time zone. A calendar date ends
+ * at the end of that day there; an end time ends the event at that time.
+ */
+const MONTH_NAMES = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+const zoneFormatters = new Map<string, Intl.DateTimeFormat>();
+type EventBoundary = { day: string; time?: string } | { instant: Date };
+
+function zoneFormatter(timeZone: string): Intl.DateTimeFormat | null {
+  if (!zoneFormatters.has(timeZone)) {
+    try {
+      zoneFormatters.set(timeZone, new Intl.DateTimeFormat("en-CA", {
+        timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+      }));
+    } catch {
+      return null;
+    }
+  }
+  return zoneFormatters.get(timeZone) ?? null;
+}
+
+function eventTimeZone(event: EventLike): string {
+  const zone = typeof event.timeZone === "string" ? event.timeZone.trim() : "";
+  return zone && zoneFormatter(zone) ? zone : DEFAULT_EVENT_TIME_ZONE;
+}
+
+/** "YYYY-MM-DDTHH:mm" for an instant, as a clock in the time zone shows it. */
+function wallClock(instant: Date, timeZone: string): string {
+  const parts = Object.fromEntries(zoneFormatter(timeZone)!.formatToParts(instant).map(part => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour === "24" ? "00" : parts.hour}:${parts.minute}`;
+}
+
+function isoDay(year: number, month: number, day: number): string | null {
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return year >= 1000 && month >= 1 && month <= 12 && date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+    ? date.toISOString().slice(0, 10)
+    : null;
+}
+
+function monthNumber(name: string): number {
+  const key = name.toLowerCase().replace(/\.$/, "");
+  return key.length >= 3 ? MONTH_NAMES.findIndex(month => month.startsWith(key)) + 1 : 0;
+}
+
+/** Calendar dates as written ("2026-10-02", "Oct 2, 2026", "2 October 2026"), independent of any time zone. */
+function calendarDay(value: string): string | null {
+  const raw = value.trim().replace(/(\d)(st|nd|rd|th)\b/gi, "$1");
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return isoDay(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+  const named = raw.match(/^([A-Za-z]+\.?)\s+(\d{1,2}),?\s+(\d{4})$/);
+  if (named) return isoDay(Number(named[3]), monthNumber(named[1]), Number(named[2]));
+  const reverse = raw.match(/^(\d{1,2})\s+([A-Za-z]+\.?),?\s+(\d{4})$/);
+  if (reverse) return isoDay(Number(reverse[3]), monthNumber(reverse[2]), Number(reverse[1]));
+  return null;
+}
+
+function nextDay(day: string): string {
+  const date = new Date(`${day}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
+/** "HH:mm" from "19:30", "7:30 PM" or "7 pm"; anything else is not a usable time. */
+function clockTime(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const raw = value.trim().toLowerCase();
+  const twentyFour = raw.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  if (twentyFour) return `${twentyFour[1].padStart(2, "0")}:${twentyFour[2]}`;
+  const twelve = raw.match(/^(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*([ap])\.?\s*m\.?$/);
+  if (!twelve) return null;
+  const hour = (Number(twelve[1]) % 12) + (twelve[3] === "p" ? 12 : 0);
+  return `${String(hour).padStart(2, "0")}:${twelve[2] || "00"}`;
+}
+
+function boundaryFromInstant(instant: Date, timeZone: string, isEnd: boolean): EventBoundary | null {
+  if (!Number.isFinite(instant.getTime())) return null;
+  // A stored date-only value (midnight UTC) names its UTC calendar day, not a moment.
+  if (instant.toISOString().endsWith("T00:00:00.000Z")) return { day: instant.toISOString().slice(0, 10) };
+  return isEnd ? { instant } : { day: wallClock(instant, timeZone).slice(0, 10) };
+}
+
+/** Reads one stored date field: a calendar day (with an optional local time) or an absolute instant. */
+function readBoundary(value: unknown, timeZone: string, isEnd: boolean): EventBoundary | null {
+  if (value instanceof Date) return boundaryFromInstant(value, timeZone, isEnd);
+  if (value && typeof value === "object" && typeof (value as { toDate?: unknown }).toDate === "function") {
+    return boundaryFromInstant((value as { toDate: () => Date }).toDate(), timeZone, isEnd);
+  }
+  if (typeof value !== "string" || !value.trim()) return null;
+  const raw = value.trim();
+  const day = calendarDay(raw);
+  if (day) return { day };
+  const parsed = new Date(raw);
+  if (!Number.isFinite(parsed.getTime())) return null;
+  if (/\d:\d{2}(?::\d{2}(?:\.\d+)?)?\s*(?:Z|GMT|UTC|[+-]\d{2}:?\d{2})\b/i.test(raw)) return boundaryFromInstant(parsed, timeZone, isEnd);
+  // Without an explicit offset the text is a local date (and time): the
+  // parser reads it in the process time zone, so its local fields are exactly
+  // what was written, whichever time zone the server runs in.
+  const pad = (part: number) => String(part).padStart(2, "0");
+  const localDay = isoDay(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate());
+  if (!localDay) return null;
+  const time = isEnd && /\d:\d{2}/.test(raw) ? `${pad(parsed.getHours())}:${pad(parsed.getMinutes())}` : undefined;
+  return time ? { day: localDay, time } : { day: localDay };
+}
+
+/** The last calendar day named by a legacy label such as "June 12-14, 2026" or "Oct 30 - Nov 2, 2026". */
+function labelEndDay(label: unknown, timeZone: string): string | null {
+  if (typeof label !== "string") return null;
+  const text = label.split("\u2022")[0].replace(/[\u2013\u2014]/g, "-").replace(/\s+/g, " ").trim();
+  const sameMonth = text.match(/^([A-Za-z]+\.?) (\d{1,2}) ?- ?(\d{1,2}), ?(\d{4})$/);
+  if (sameMonth) return calendarDay(`${sameMonth[1]} ${sameMonth[3]}, ${sameMonth[4]}`);
+  // "Oct 30 - Nov 2, 2026" and "Dec 30, 2026 - Jan 2, 2027" both end on the second date.
+  const parts = text.split(" - ");
+  const rangeEnd = parts.length === 2 ? calendarDay(parts[1]) : null;
+  if (rangeEnd) return rangeEnd;
+  const single = readBoundary(text, timeZone, false);
+  return single && "day" in single ? single.day : null;
+}
+
+/** When the event is over: its end date (or single day) and end time, read in the event's time zone. */
+function eventEndBoundary(event: EventLike, timeZone: string): EventBoundary | null {
+  const startTime = clockTime(event.startTime);
+  const endTime = clockTime(event.endTime);
+  const start = readBoundary(event.startDate, timeZone, false) ?? readBoundary(event.date, timeZone, false);
+  const startDay = start && "day" in start ? start.day : null;
+  const end = readBoundary(event.endDate, timeZone, true) ?? (startDay ? { day: startDay } : null);
+  if (end) {
+    if ("instant" in end || end.time || !endTime) return end;
+    // A same-day listing that ends at or before it starts runs past midnight.
+    const overnight = end.day === startDay && startTime !== null && endTime <= startTime;
+    return { day: overnight ? nextDay(end.day) : end.day, time: endTime };
+  }
+  const labelDay = labelEndDay(event.dates, timeZone);
+  return labelDay ? { day: labelDay } : null;
+}
+
+/** True once the event's last day (or end time) has passed where it takes place. Unknown dates never end. */
+export function hasEventEnded(event: EventLike, now = new Date()): boolean {
+  const timeZone = eventTimeZone(event);
+  const end = eventEndBoundary(event, timeZone);
+  if (!end) return false;
+  if ("instant" in end) return now.getTime() > end.instant.getTime();
+  return wallClock(now, timeZone) > `${end.day}T${end.time ?? "23:59"}`;
+}
+
 export function isEventCompleted(event: EventLike, now = new Date()): boolean {
   const status = typeof event.status === "string" ? event.status.trim().toLowerCase() : "";
   if (HIDDEN_STATUSES.has(status)) return true;
   if (event.active === false) return true;
-
-  const end = getEventEndDate(event);
-  return Boolean(end && end.getTime() < now.getTime());
+  return hasEventEnded(event, now);
 }
 
 export function isPublicEventVisible(event: EventLike, now = new Date()): boolean {

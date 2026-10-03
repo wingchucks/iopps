@@ -14,7 +14,7 @@ import { rememberDirectoryPosition, restoreDirectoryScroll } from "@/lib/directo
 import OpportunityHeader from "@/components/OpportunityHeader";
 import Card from "@/components/Card";
 import EmployerLogo from "@/components/EmployerLogo";
-import { addedAt, closesAt, employerLogo, employerName as getEmployerName, jobArea, jobSummary, loadEmployerBrands, matchesEmploymentType, matchesDiscoveryFilters, salaryInfo, type EmployerBrand } from "@/lib/job-discovery";
+import { addedAt, closesAt, employerLogo, employerName as getEmployerName, isRemoteJob, jobArea, jobSummary, listingDayLabel, loadEmployerBrands, matchesEmploymentType, matchesDiscoveryFilters, salaryInfo, type EmployerBrand } from "@/lib/job-discovery";
 import DirectoryPagination, {
   useDirectoryFilter,
   useDirectoryFilterActions,
@@ -157,7 +157,7 @@ function JobsPageContent() {
             .split(/\s+/)
             .map((word) => word[0] || "")
             .join(""),
-          job.location,
+          displayJobLocation(job.location),
           job.employmentType || job.jobType,
           job.salary,
           jobArea(job),
@@ -179,13 +179,8 @@ function JobsPageContent() {
       result = result.filter(job => matchesEmploymentType(job, typeFilter));
     }
     if (remoteOnly) {
-      result = result.filter(
-        (job) =>
-          job.location?.toLowerCase().includes("remote") ||
-          job.jobType?.toLowerCase().includes("remote") ||
-          job.workLocation?.toLowerCase().includes("remote") ||
-          job.remoteFlag,
-      );
+      // Locations may be structured ({ city, province, remote }); never assume text.
+      result = result.filter(isRemoteJob);
     }
     result = result.filter(job => matchesEmployerFilter(job, employer, employers) && matchesDiscoveryFilters(job, { employer: "", area, added, closing, disclosed, training, salaryPeriod, salaryMin, salaryMax }));
     return result;
@@ -441,8 +436,11 @@ function JobsPageContent() {
                 const employerName = getEmployerName(job);
                 const payLabel = job.source === "feed" ? importedSalaryLabel(job.salary) : salaryInfo(job)?.display;
                 const summary = jobSummary(job);
-                const closingDate = closesAt(job);
-                const imported = jobImportLabels(job, { pay: Boolean(payLabel), closing: Boolean(closingDate) });
+                // The application deadline, as the Saskatchewan day the listing closes.
+                const closingDay = listingDayLabel(job.closingDate);
+                // A paid listing's expiry is how long it stays listed, not an application deadline.
+                const listedUntil = listingDayLabel(job.expiresAt);
+                const imported = jobImportLabels(job, { pay: Boolean(payLabel), closing: Boolean(closingDay) });
                 const posted = daysAgo(job);
                 return (
                   <div key={job.id}>
@@ -454,11 +452,11 @@ function JobsPageContent() {
                       <div className="job-facts"><span>{displayJobLocation(job.location) || "Location not listed"}</span>{(job.employmentType || job.jobType) && <span>{job.employmentType || job.jobType}</span>}{job.workLocation && <span>{job.workLocation}</span>}</div>
                       <p className="job-summary">{summary || "Explore this opportunity and review the employer’s application details."}</p>
                       <div className="job-facts job-benefits">{job.willTrain && <span className="job-chip">Training provided</span>}{job.indigenousPreference && <span className="job-chip">Indigenous preference stated</span>}{job.benefits?.slice(0,2).map(benefit => <span className="job-chip" key={benefit}>{benefit}</span>)}</div>
-                      <div className="job-card-bottom"><div><strong>{payLabel || imported.pay || "Pay not listed"}</strong><span>{closingDate ? `Closes ${new Date(closingDate).toLocaleDateString("en-CA", {month:"short",day:"numeric",timeZone:"UTC"})}` : imported.closing || "See listing for closing details"}</span></div><span className="job-view">View opportunity <span aria-hidden="true">↗</span></span></div>
+                      <div className="job-card-bottom"><div><strong>{payLabel || imported.pay || "Pay not listed"}</strong><span>{closingDay ? `Closes ${closingDay}` : imported.closing || (listedUntil ? `Listed until ${listedUntil}` : "See listing for closing details")}</span></div><span className="job-view">View opportunity <span aria-hidden="true">↗</span></span></div>
                       <div className="job-footnote"><span>{getApplyLabel(job)}</span>{posted && <span>{`Added to IOPPS ${posted.toLowerCase()}`}</span>}</div>
                     </div>
                   </Link>
-                  {((!payLabel && imported.pay) || (!closingDate && imported.closing)) && imported.sourceHref && (
+                  {((!payLabel && imported.pay) || (!closingDay && imported.closing)) && imported.sourceHref && (
                     <a href={imported.sourceHref} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-teal underline underline-offset-4">Check original posting <span>(opens in a new tab)</span></a>
                   )}
                   </div>

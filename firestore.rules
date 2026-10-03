@@ -266,63 +266,141 @@ service cloud.firestore {
       allow read, update: if false;
     }
 
-    // Notifications: users can read/update/create their own
+    // Notifications are created only by trusted server code. Owners read their
+    // own and may only mark them read; every other field, including userId, is fixed.
     match /notifications/{notifId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if false;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data['read'] is bool;
     }
 
-    // Existing conversations: participants can read/update; creation is retired.
-    // Allow get for non-existent docs (existence check before create).
-    // Allow list when querying by unreadBy (used for unread count badge).
+    // ── Private messaging (src/lib/firestore/messages.ts) ──
+    // Settings → Privacy "Allow Direct Messages" (member_settings.allowDirectMessages).
+    function acceptsDirectMessages(uid) {
+      return !exists(/databases/$(database)/documents/member_settings/$(uid))
+        || get(/databases/$(database)/documents/member_settings/$(uid)).data.get('allowDirectMessages', true) != false;
+    }
+    // Conversations are two-person; the client marks the first other participant unread.
+    function canMessage(participants) {
+      let others = participants.removeAll([request.auth.uid]);
+      return request.auth.uid in participants && (others.size() == 0 || acceptsDirectMessages(others[0]));
+    }
+    // Keep aligned with MESSAGE_TEXT_MAX in src/lib/firestore/messages.ts.
+    function validNewMessage() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['conversationId', 'senderId', 'text', 'createdAt'])
+        && data.senderId == request.auth.uid && data.conversationId is string
+        && data.text is string && data.text.size() > 0 && data.text.size() <= 5000
+        && data.createdAt == request.time;
+    }
+    // A reader clears only their own unread marker.
+    function clearsOwnUnreadMarker() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['unreadBy'])
+        && request.resource.data.get('unreadBy', '') == ''
+        && resource.data.get('unreadBy', '') in [request.auth.uid, ''];
+    }
+    // A sender stamps their own preview (80 characters plus an ellipsis) at the
+    // server time and marks the other participant unread.
+    function sendsOwnPreview() {
+      let stamped = request.resource.data;
+      let others = resource.data.participants.removeAll([request.auth.uid]);
+      return stamped.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'lastMessageAt', 'lastSenderId', 'unreadBy'])
+        && stamped.lastSenderId == request.auth.uid
+        && stamped.lastMessage is string && stamped.lastMessage.size() > 0 && stamped.lastMessage.size() <= 81
+        && stamped.lastMessageAt == request.time
+        && ((others.size() == 0 && stamped.unreadBy == '')
+          || (others.size() > 0 && stamped.unreadBy == others[0] && acceptsDirectMessages(others[0])));
+    }
+
+    // Existing conversations: participants only (missing documents are not
+    // disclosed); creation is retired and participants never change.
     match /conversations/{convId} {
-      allow get: if isSignedIn() && (
-        !exists(/databases/$(database)/documents/conversations/$(convId)) ||
-        request.auth.uid in resource.data.participants
-      );
-      allow list: if isSignedIn() && (
-        request.auth.uid in resource.data.participants
-      );
+      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
       allow create: if false; // Existing conversations only; no forged peer-lookup grants.
-      allow update: if isSignedIn() &&
-        request.auth.uid in resource.data.participants &&
-        request.resource.data.participants == resource.data.participants;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants
+        && (clearsOwnUnreadMarker() || sendsOwnPreview());
     }
 
-    // Messages: only conversation participants can read,
-    // authenticated users can create messages in their conversations
+    // Messages: participants read; senders add plain-text messages at the server time.
     match /messages/{msgId} {
       allow read: if isSignedIn() &&
         request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
-      allow create: if isSignedIn() &&
-        request.resource.data.senderId == request.auth.uid &&
-        request.auth.uid in get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants;
+      allow create: if isSignedIn() && validNewMessage()
+        && canMessage(get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants);
     }
 
-    // Member settings: users can read/write their own settings
+    // Member settings (src/lib/firestore/memberSettings.ts). Legacy documents keep
+    // historical fields; saves write only the current privacy fields and shapes.
+    function memberSettingsValid(data, changed) {
+      return (!changed.hasAny(['userId']) || data.userId == request.auth.uid)
+        && (!changed.hasAny(['profileVisibility']) || data.profileVisibility in ['public', 'members_only', 'private'])
+        && (!changed.hasAny(['fieldVisibility']) || (data.fieldVisibility is map
+          && data.fieldVisibility.keys().hasOnly(['email', 'community', 'location', 'bio', 'interests'])
+          && data.fieldVisibility.values().hasOnly(['everyone', 'members', 'only_me'])))
+        && (!changed.hasAny(['showOnlineStatus']) || data.showOnlineStatus is bool)
+        && (!changed.hasAny(['allowDirectMessages']) || data.allowDirectMessages is bool)
+        && (!changed.hasAny(['showInDirectory']) || data.showInDirectory is bool)
+        && (!changed.hasAny(['updatedAt']) || data.updatedAt == request.time);
+    }
     match /member_settings/{userId} {
       allow read: if isOwner(userId);
-      allow create, update: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['userId', 'profileVisibility', 'fieldVisibility',
+          'showOnlineStatus', 'allowDirectMessages', 'showInDirectory', 'updatedAt'])
+        && memberSettingsValid(request.resource.data, request.resource.data.keys());
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['profileVisibility',
+          'fieldVisibility', 'showOnlineStatus', 'allowDirectMessages', 'showInDirectory', 'updatedAt'])
+        && memberSettingsValid(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
     }
 
-    // Notification preferences: users can read/write their own preferences
+    // Notification preferences (src/lib/firestore/notificationPreferences.ts).
+    function channelsValid(categories, category) {
+      return !categories.keys().hasAny([category]) || (categories[category] is map
+        && categories[category].keys().hasOnly(['email', 'push', 'inApp'])
+        && categories[category].values().hasOnly([true, false]));
+    }
+    function notificationPreferencesValid(data, changed) {
+      return (!changed.hasAny(['userId']) || data.userId == request.auth.uid)
+        && (!changed.hasAny(['categories']) || (data.categories is map
+          && data.categories.keys().hasOnly(['applications', 'messages', 'community', 'events', 'opportunities'])
+          && channelsValid(data.categories, 'applications') && channelsValid(data.categories, 'messages')
+          && channelsValid(data.categories, 'community') && channelsValid(data.categories, 'events')
+          && channelsValid(data.categories, 'opportunities')))
+        && (!changed.hasAny(['quietHours']) || (data.quietHours is map
+          && data.quietHours.keys().hasOnly(['enabled', 'start', 'end'])
+          && data.quietHours.get('enabled', false) is bool
+          && data.quietHours.get('start', '') is string && data.quietHours.get('start', '').size() <= 12
+          && data.quietHours.get('end', '') is string && data.quietHours.get('end', '').size() <= 12))
+        && (!changed.hasAny(['updatedAt']) || data.updatedAt == request.time);
+    }
     match /notification_preferences/{userId} {
       allow read: if isOwner(userId);
-      allow create, update: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['userId', 'categories', 'quietHours', 'updatedAt'])
+        && notificationPreferencesValid(request.resource.data, request.resource.data.keys());
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['categories', 'quietHours', 'updatedAt'])
+        && notificationPreferencesValid(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
     }
 
-    // Event RSVPs: authenticated users can read (for count queries),
-    // users can create/update/delete their own RSVPs
+    // Event RSVPs: users can create/update/delete their own RSVPs.
     // RSVPs are private to their owner (IDs are "<uid>_<eventId>"). Public going
     // counts come from the event API, never from reading other members' RSVPs.
+    // Writes stay bound to that ID, so each member has one RSVP per event.
+    function ownsRsvpWrite(rsvpId) {
+      return request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId is string
+        && rsvpId == request.auth.uid + '_' + request.resource.data.postId;
+    }
     match /event_rsvps/{rsvpId} {
       allow get: if isSignedIn() && rsvpId.matches(request.auth.uid + '_.+')
         && (resource == null || resource.data.userId == request.auth.uid);
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid
-        && rsvpId.matches(request.auth.uid + '_.+');
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && ownsRsvpWrite(rsvpId);
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && ownsRsvpWrite(rsvpId);
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
@@ -333,8 +411,8 @@ service cloud.firestore {
         resource.data.reporterId == request.auth.uid ||
         isAdmin()
       );
-      allow create: if isSignedIn() &&
-        request.resource.data.reporterId == request.auth.uid;
+      // Reports are submitted through POST /api/reports, which writes contentFlags.
+      allow create: if false;
       allow update: if isAdmin();
     }
 
@@ -361,14 +439,28 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Training enrollments: users can read/create/update their own, admin/moderator can read all
+    // Training enrollments: users can read/create their own, admin/moderator can read all.
+    // Progress and certificates are not client-tracked, so members may only record a
+    // new, not-yet-started enrollment (src/lib/firestore/training.ts enrollInProgram).
+    function validNewEnrollment() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['userId', 'programId', 'programTitle', 'progress', 'completedModules',
+          'totalModules', 'status', 'enrolledAt', 'completedAt', 'certificateUrl'])
+        && data.userId == request.auth.uid
+        && data.programId is string && data.programId.size() > 0 && data.programId.size() <= 1500
+        && (data.programTitle == null || (data.programTitle is string && data.programTitle.size() <= 5000))
+        && data.progress == 0 && data.completedModules is list && data.completedModules.size() == 0
+        && data.totalModules is int && data.totalModules >= 0
+        && data.status == 'enrolled' && data.enrolledAt == request.time
+        && data.completedAt == null && data.certificateUrl == null;
+    }
     match /training_enrollments/{enrollmentId} {
       allow read: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
         isAdminOrMod()
       );
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && validNewEnrollment();
+      allow update: if false;
     }
 
     // Feed sources: admin only

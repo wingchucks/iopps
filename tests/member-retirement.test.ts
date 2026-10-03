@@ -62,6 +62,7 @@ test("retired member metadata never resolves a member identity", async () => {
     "@/lib/server/member-privacy": {},
     "@/lib/public-job-merge": {}, "@/lib/organization-profile": {},
     "@/lib/server/public-job-routing": {}, "@/lib/server/public-organization-resolver": {},
+    "@/lib/access-state": {}, "@/lib/listing-freshness": {}, "@/lib/public-job-route-cache": {},
     "@/lib/server/seo": { buildListingMetadata: (data: unknown) => data },
   });
   const metadata = await mod.generateMemberMetadata("PRIVATE_UID");

@@ -5,14 +5,20 @@ import Toast from "@/components/Toast";
 
 type ToastType = "success" | "error" | "info";
 
+interface ToastOptions {
+  /** How long the toast stays before it dismisses itself; defaults to 4 seconds. */
+  durationMs?: number;
+}
+
 interface ToastItem {
   id: number;
   message: string;
   type: ToastType;
+  durationMs?: number;
 }
 
 interface ToastContextValue {
-  showToast: (message: string, type?: ToastType) => void;
+  showToast: (message: string, type?: ToastType, options?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextValue>({
@@ -24,9 +30,9 @@ let nextId = 0;
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const showToast = useCallback((message: string, type: ToastType = "success") => {
+  const showToast = useCallback((message: string, type: ToastType = "success", options?: ToastOptions) => {
     const id = nextId++;
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type, durationMs: options?.durationMs }]);
   }, []);
 
   const removeToast = useCallback((id: number) => {
@@ -42,6 +48,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={toast.id}
             message={toast.message}
             type={toast.type}
+            durationMs={toast.durationMs}
             onClose={() => removeToast(toast.id)}
           />
         ))}

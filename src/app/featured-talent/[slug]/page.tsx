@@ -7,10 +7,11 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
-import { featuredTalentProfiles, getFeaturedTalentProfile } from "@/lib/featured-talent";
+import { getActiveFeaturedTalentProfiles, getFeaturedTalentProfile } from "@/lib/featured-talent";
 
+// Only active profiles are built; any other slug renders not found.
 export function generateStaticParams() {
-  return featuredTalentProfiles.map((profile) => ({ slug: profile.slug }));
+  return getActiveFeaturedTalentProfiles().map((profile) => ({ slug: profile.slug }));
 }
 
 type FeaturedTalentParams = Promise<{ slug: string }>;
@@ -18,7 +19,7 @@ type FeaturedTalentParams = Promise<{ slug: string }>;
 export async function generateMetadata({ params }: { params: FeaturedTalentParams }): Promise<Metadata> {
   const { slug } = await params;
   const profile = getFeaturedTalentProfile(slug);
-  if (!profile) return { title: "Featured Talent | IOPPS.CA" };
+  if (!profile) return { title: "Featured Talent | IOPPS.CA", robots: { index: false, follow: false } };
   return {
     title: `${profile.name} | Featured Talent | IOPPS.CA`,
     description: profile.summary,

@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue, FieldPath } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 import { recordedAmount } from "@/lib/admin/reporting";
 
@@ -58,8 +59,11 @@ export async function GET(request: NextRequest) {
     }
     const limit = Number(searchParams.get("limit") ?? "20");
     const cursor = searchParams.get("cursor");
+    // Links to one job (e.g. admin draft emails) open the listing at that document ID.
+    const startAt = searchParams.get("startAt");
     const legacyPage = searchParams.get("page");
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || (legacyPage !== null && legacyPage !== "1") || (cursor !== null && (!cursor || cursor.length > 1500 || cursor.includes("/")))) {
+    const invalidId = (value: string | null) => value !== null && (!value || value.length > 1500 || value.includes("/"));
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || (legacyPage !== null && legacyPage !== "1") || invalidId(cursor) || invalidId(startAt)) {
       return NextResponse.json({ error: "limit must be 1–100; use a valid document-ID cursor for subsequent pages" }, { status: 400 });
     }
     // Document-ID order includes undated legacy records without scanning the
@@ -68,6 +72,7 @@ export async function GET(request: NextRequest) {
     if (status) inventory = inventory.where("active", "==", status === "active");
     let query = inventory.orderBy(FieldPath.documentId()).limit(limit + 1);
     if (cursor) query = query.startAfter(cursor);
+    else if (startAt) query = query.startAt(startAt);
     const [count, snapshot] = await Promise.all([inventory.count().get(), query.get()]);
     const scanned = snapshot.docs.slice(0, limit);
     const hasNext = snapshot.docs.length > limit;
@@ -177,6 +182,7 @@ export async function POST(request: NextRequest) {
         break;
     }
 
+    refreshPublicJobs();
     return NextResponse.json({
       success: true,
       jobId: body.jobId,

@@ -12,8 +12,6 @@ test("former current Featured Talent profile is removed", () => {
 
   assert.doesNotMatch(talent, /Lauren Moosuk|lauren-moosuk|laurenmoosuk70@gmail\.com/);
   assert.doesNotMatch(home, /Lauren Moosuk|lauren-moosuk|Featured Talent/);
-  assert.match(talent, /Audrey Fiddler/);
-  assert.match(talent, /isActive: false/);
 });
 
 test("homepage section now supports Indigenous businesses", () => {

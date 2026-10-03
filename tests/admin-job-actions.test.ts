@@ -18,7 +18,7 @@ test('admin jobs UI uses the implemented authenticated POST action endpoint', ()
 });
 
 test('admin activate/deactivate synchronize both publication fields', async () => {
-  const store=paidImportMemoryDb();const updates=store.jobWrites;
+  const store=paidImportMemoryDb();const updates=store.jobWrites;let refreshed=0;
   store.rows.set('jobs/fixture',{employerId:'owner',status:'draft',active:false});
   store.rows.set('employers/owner',{standardPostCredits:1});
   const exports: any = {};
@@ -31,15 +31,21 @@ test('admin activate/deactivate synchronize both publication fields', async () =
       if (id === 'firebase-admin/firestore') return { FieldValue: { serverTimestamp: () => 'fictional-time' } };
       if (id === '@/lib/admin/reporting') return reporting;
       if (id === '@/lib/api-auth') return { verifyAdminToken: async () => ({ success: true }) };
+      if (id === '@/lib/employer-job-cache') return { refreshPublicJobs: () => { refreshed++; } };
       throw new Error(id);
     },
   });
   for (const [action, status, active] of [['activate', 'active', true], ['deactivate', 'closed', false]]) {
+    const before = refreshed;
     const response = await exports.POST(new Request('http://127.0.0.1/api/admin/jobs', { method: 'POST', body: JSON.stringify({ jobId: 'fixture', action }) }));
     assert.equal(response.status, 200);
     assert.equal(updates.at(-1).active, active);
     assert.equal(updates.at(-1).status, status);
+    assert.equal(refreshed, before + 1, `${action} refreshes the public job caches`);
   }
+  store.rows.set('jobs/fixture',{employerId:'owner',status:'draft',active:false,featured:'yes'});
+  assert.equal((await exports.POST(new Request('http://127.0.0.1/api/admin/jobs', { method: 'POST', body: JSON.stringify({ jobId: 'fixture', action: 'activate' }) }))).status, 400);
+  assert.equal(refreshed, 2, 'a refused activation changes nothing public');
 });
 
 test('admin jobs UI surfaces activation failures instead of failing silently', () => {

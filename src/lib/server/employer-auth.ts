@@ -5,15 +5,18 @@ import {
   hasLinkedOrganization,
   resolveLinkedOrganizationId,
 } from "@/lib/account-state";
-import { getOrganizationAccessBlockReason } from "@/lib/access-state";
-import { assertUserCanAccessApp, type AccountAccessDeps } from "@/lib/server/account-access";
+import { getOrganizationAccessBlockReason, getOrganizationPublishingBlockReason } from "@/lib/access-state";
+import { AccountAccessError, assertUserCanAccessApp, type AccountAccessDeps } from "@/lib/server/account-access";
 
 export class EmployerApiError extends Error {
   status: number;
+  /** Stable machine-readable reason, e.g. "session_expired", for clients that need to react. */
+  code?: string;
 
-  constructor(status: number, message: string) {
-    super(message);
+  constructor(status: number, message: string, code?: string, options?: ErrorOptions) {
+    super(message, options);
     this.status = status;
+    if (code) this.code = code;
   }
 }
 
@@ -46,9 +49,28 @@ function isOrganizationRole(value: unknown): boolean {
 function getBearerToken(req: Request): string {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
-    throw new EmployerApiError(401, "Unauthorized");
+    throw new EmployerApiError(401, "Sign in to continue.", "session_missing");
   }
   return authHeader.split("Bearer ")[1];
+}
+
+const AUTH_UNAVAILABLE_MESSAGE = "We couldn't confirm your sign-in right now. Please try again in a moment.";
+// Token problems the user fixes by signing in again. Public-key fetch and
+// transport failures are also reported as argument errors, so those messages
+// are excluded and treated as an outage instead.
+const REJECTED_SESSION_CODES = new Set(["auth/id-token-expired", "auth/id-token-revoked", "auth/invalid-id-token", "auth/argument-error"]);
+const AUTH_TRANSPORT_FAILURE = /error fetching|error while making request|network|timed? ?out|socket|ECONN|ENOTFOUND|EAI_AGAIN/i;
+
+/** Maps a verifyIdToken(token, true) failure to what the user can do about it. */
+function sessionVerificationError(error: unknown): EmployerApiError {
+  const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code) : "";
+  const message = error instanceof Error ? error.message : "";
+  if (code === "auth/user-disabled") return new EmployerApiError(403, "This account has been disabled.", "account_blocked");
+  if (code === "auth/user-not-found") return new EmployerApiError(403, "This account no longer exists.", "account_blocked");
+  if (REJECTED_SESSION_CODES.has(code) && !AUTH_TRANSPORT_FAILURE.test(message)) {
+    return new EmployerApiError(401, "Your session has expired. Sign in again to continue.", "session_expired");
+  }
+  return new EmployerApiError(503, AUTH_UNAVAILABLE_MESSAGE, "auth_unavailable", { cause: error });
 }
 
 export async function requireEmployerContext(
@@ -58,13 +80,20 @@ export async function requireEmployerContext(
   const adminAuth = deps.adminAuth ?? getAdminAuth();
   const adminDb = deps.adminDb ?? getAdminDb();
 
+  const token = getBearerToken(req);
   let decoded: DecodedIdToken;
-  try { decoded = await adminAuth.verifyIdToken(getBearerToken(req), true); }
-  catch { throw new EmployerApiError(401, "Invalid session"); }
-  await assertUserCanAccessApp(decoded as Pick<DecodedIdToken, "uid" | "email">, deps.accountAccessDeps ?? {
-    auth: adminAuth,
-    db: adminDb,
-  });
+  try { decoded = await adminAuth.verifyIdToken(token, true); }
+  catch (error) { throw sessionVerificationError(error); }
+  try {
+    await assertUserCanAccessApp(decoded as Pick<DecodedIdToken, "uid" | "email">, deps.accountAccessDeps ?? {
+      auth: adminAuth,
+      db: adminDb,
+    });
+  } catch (error) {
+    // Blocked accounts and revoked permissions keep their own status (403/401).
+    if (error instanceof AccountAccessError) throw new EmployerApiError(error.status, error.message, error.code);
+    throw new EmployerApiError(503, AUTH_UNAVAILABLE_MESSAGE, "auth_unavailable", { cause: error });
+  }
   const uid = decoded.uid;
 
   const [userDoc, memberDoc] = await Promise.all([
@@ -191,4 +220,32 @@ export async function requireEmployerPublishingContext(
   }
 
   return context;
+}
+
+function organizationPublishingBlockReason(context: EmployerContext): string | null {
+  return getOrganizationPublishingBlockReason(context.organizationData) ??
+    getOrganizationPublishingBlockReason(context.employerData);
+}
+
+/** Publishing (not draft saving) is refused while IOPPS has rejected the organization. */
+export function assertOrganizationCanPublish(context: EmployerContext): void {
+  const reason = organizationPublishingBlockReason(context);
+  if (reason) throw new EmployerApiError(403, reason, "organization_not_approved");
+}
+
+/**
+ * For handlers that resolve their own employer context (events, scholarships):
+ * answers a publish request from a rejected organization with 403 before the
+ * handler runs. Drafts, other requests and authentication failures are left to
+ * the handler, which reports them exactly as before.
+ */
+export async function rejectUnapprovedPublishing(req: Request, deps: EmployerContextDeps = {}): Promise<Response | null> {
+  const body: unknown = await req.clone().json().catch(() => null);
+  if (!body || typeof body !== "object" || (body as Record<string, unknown>).status !== "active") return null;
+  let context: EmployerContext;
+  try { context = await requireEmployerContext(req, deps); } catch { return null; }
+  const reason = organizationPublishingBlockReason(context);
+  return reason
+    ? Response.json({ error: reason, code: "organization_not_approved" }, { status: 403, headers: { "Cache-Control": "private, no-store" } })
+    : null;
 }

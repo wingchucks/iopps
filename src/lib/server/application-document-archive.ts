@@ -7,7 +7,11 @@ import { applicationResumePath } from "../application-resume";
  */
 export async function archiveApplicationResume(bucket: Bucket, url: string, uid: string, emulatorHost?: string): Promise<string> {
   const path = applicationResumePath(url, uid, bucket.name, emulatorHost);
-  const [metadata] = await bucket.file(path).getMetadata();
+  const [metadata] = await bucket.file(path).getMetadata().catch((error: unknown) => {
+    // A deleted source is for the applicant to replace, not an outage to retry.
+    if ((error as { code?: unknown } | null)?.code === 404) throw new Error("Invalid resume file.");
+    throw error;
+  });
   const size = Number(metadata.size);
   if (!Number.isFinite(size) || size <= 0 || size >= 5 * 1024 * 1024 || !["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(metadata.contentType || "") || !metadata.generation) throw new Error("Invalid resume file.");
   const destination = `application-documents/${uid}/${randomUUID()}`;

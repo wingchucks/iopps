@@ -9,6 +9,7 @@ import {
   sendMessage,
   markConversationRead,
   getConversationPeer,
+  MESSAGE_TEXT_MAX,
   type ConversationPeer,
   type Conversation,
   type Message,
@@ -21,6 +22,8 @@ import Avatar from "@/components/Avatar";
 
 const EMPTY_MESSAGES: Message[] = [];
 const EMPTY_CONVERSATIONS: Conversation[] = [];
+// Stored conversation text is rendered only when it is a string.
+const plainText = (value: unknown) => (typeof value === "string" ? value : "");
 
 export default function MessagesPage() {
   return (
@@ -60,6 +63,8 @@ function MessagesContent() {
   const [inboxFailed, setInboxFailed] = useState(false);
   const [inboxRetry, setInboxRetry] = useState(0);
   const [notificationStates, setNotificationStates] = useState<Record<string, "pending" | "failed">>({});
+  const [sendErrors, setSendErrors] = useState<Record<string, string>>({});
+  const sendError = sendErrors[draftKey] || "";
   const notificationEpoch = useRef(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -155,6 +160,13 @@ function MessagesContent() {
     setSending(true);
     const senderId = user.uid;
     const epoch = notificationEpoch.current;
+    const errorKey = draftKey;
+    setSendErrors(previous => {
+      if (!previous[errorKey]) return previous;
+      const next = { ...previous };
+      delete next[errorKey];
+      return next;
+    });
     try {
       const saved = await sendMessage(activeConvId, senderId, newMessage.trim(), recipientId);
       // Clear only the submitted draft, never text typed while the send awaited.
@@ -176,6 +188,12 @@ function MessagesContent() {
       // Real-time listeners will auto-update messages and conversations
     } catch (err) {
       console.error("Failed to send:", err);
+      // Rules deny messages to a member who turned off "Allow Direct Messages".
+      const denied = (err as { code?: unknown } | null)?.code === "permission-denied";
+      setSendErrors(previous => ({
+        ...previous,
+        [errorKey]: denied ? "This member isn't accepting messages." : "Your message could not be sent. Please try again.",
+      }));
     } finally {
       setSending(false);
     }
@@ -287,7 +305,7 @@ function MessagesContent() {
                             }}
                           >
                             {conv.lastSenderId === user?.uid ? "You: " : ""}
-                            {conv.lastMessage || "Start a conversation"}
+                            {plainText(conv.lastMessage) || "Start a conversation"}
                           </p>
                           {isUnread && (
                             <span className="w-2 h-2 rounded-full bg-teal shrink-0" />
@@ -374,7 +392,7 @@ function MessagesContent() {
                             }}
                           >
                             <p className="text-sm m-0 leading-relaxed whitespace-pre-wrap">
-                              {msg.text}
+                              {plainText(msg.text)}
                             </p>
                             <p
                               className="text-[10px] mt-1 m-0"
@@ -397,6 +415,12 @@ function MessagesContent() {
                 )}
               </div>
 
+              {sendError && (
+                <p role="alert" className="shrink-0 text-sm text-red m-0" style={{ padding: "8px 16px 0" }}>
+                  {sendError}
+                </p>
+              )}
+
               {/* Input */}
               <div
                 className="shrink-0 flex gap-2 border-t border-border"
@@ -404,6 +428,7 @@ function MessagesContent() {
               >
                 <input
                   type="text"
+                  maxLength={MESSAGE_TEXT_MAX}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => {

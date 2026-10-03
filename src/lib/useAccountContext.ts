@@ -16,7 +16,10 @@ interface AccountContextState {
   memberProfile: MemberProfile | null;
   hasOrg: boolean;
   isEmployer: boolean;
+  /** Staff (admin or moderator): hides organization sign-up prompts. */
   isAdmin: boolean;
+  /** Admins only: every /admin API is admin-only, so only admins get the Admin link. */
+  canAccessAdmin: boolean;
   orgId: string | null;
   orgSlug: string | null;
   orgName: string | null;
@@ -30,6 +33,7 @@ const defaultState: AccountContextState = {
   hasOrg: false,
   isEmployer: false,
   isAdmin: false,
+  canAccessAdmin: false,
   orgId: null,
   orgSlug: null,
   orgName: null,
@@ -203,6 +207,7 @@ export function useAccountContext(): AccountContextState {
         memberProfile?.role === "moderator" ||
         userRole === "admin" ||
         userRole === "moderator";
+      const canAccessAdmin = memberProfile?.role === "admin" || userRole === "admin";
 
       if (isCurrent()) {
         setState({
@@ -211,6 +216,7 @@ export function useAccountContext(): AccountContextState {
           hasOrg: Boolean(activeOrgId),
           isEmployer,
           isAdmin,
+          canAccessAdmin,
           orgId: activeOrgId,
           orgSlug,
           orgName,

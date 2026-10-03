@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { authIntentHref } from "@/lib/auth-redirect";
-import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
-import { isPlanAvailableForPurchase, ONE_TIME_PLANS, SUBSCRIPTION_PLANS, type BillingPlanId } from "@/lib/pricing";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { EmployerApiError, requireEmployerContext, type EmployerContext } from "@/lib/server/employer-auth";
+import { firestorePublicationReader } from "@/lib/server/paid-job-publication-firestore";
+import { readBillingOverview } from "@/lib/server/paid-job-publication-reader";
+import { BILLING_SUPPORT_EMAIL, isPlanAvailableForPurchase, isSubscriptionPlanId, ONE_TIME_PLANS, SUBSCRIPTION_PLANS, type BillingPlanId } from "@/lib/pricing";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /* ── Plan → Stripe price mapping ── */
 const PLAN_PRICES: Record<BillingPlanId, { amount: number; name: string; mode: Stripe.Checkout.SessionCreateParams.Mode }> = {
@@ -30,6 +34,38 @@ function getStripe(): Stripe | null {
   return new Stripe(key);
 }
 
+function isBillingOwner(context: EmployerContext): boolean {
+  // Canonical organization signup uses the owner's UID as the org document ID.
+  // Profile orgId/orgRole fields are not proof of billing ownership.
+  return context.uid === context.orgId && context.orgRole === "owner";
+}
+
+/** Current billing state, read the same way publication and fulfillment read it. */
+function readAccountBilling(context: EmployerContext, now: Date) {
+  const db = getAdminDb();
+  return db.runTransaction((tx) => readBillingOverview(firestorePublicationReader(db, tx), {
+    employerId: context.employerId, organizationId: context.orgId, now,
+  }, { canPurchase: isBillingOwner(context) }));
+}
+
+/** What an annual purchase would do now, so plan pickers never offer a purchase checkout refuses. */
+export async function GET(req: NextRequest) {
+  let context;
+  try {
+    context = await requireEmployerContext(req);
+  } catch (error) {
+    const status = error instanceof EmployerApiError ? error.status : 401;
+    return NextResponse.json({ error: "Billing authorization failed" }, { status });
+  }
+  try {
+    const { overview } = await readAccountBilling(context, new Date());
+    return NextResponse.json({ billing: overview }, { headers: { "Cache-Control": "no-store" } });
+  } catch (err: unknown) {
+    console.error("[stripe/checkout] Billing state read failed", err instanceof Error ? err.name : "Error");
+    return NextResponse.json({ error: "Unable to load billing details. Please try again." }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   let context;
   try {
@@ -45,9 +81,7 @@ export async function POST(req: NextRequest) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return NextResponse.json({ error: "Invalid checkout request" }, { status: 400 });
   }
-  // Canonical organization signup uses the owner's UID as the org document ID.
-  // Profile orgId/orgRole fields are not proof of billing ownership.
-  if (context.uid !== context.orgId || (body.orgId !== undefined && body.orgId !== context.orgId) || context.orgRole !== "owner") {
+  if (!isBillingOwner(context) || (body.orgId !== undefined && body.orgId !== context.orgId)) {
     return NextResponse.json({ error: "Organization owner access required" }, { status: 403 });
   }
   if (!isPlanAvailableForPurchase(body.planId)) return NextResponse.json({ error: "This product is no longer available. Choose a paid single job posting or an annual plan." }, { status: 400 });
@@ -76,6 +110,26 @@ export async function POST(req: NextRequest) {
         { error: `Unknown plan: ${planId}` },
         { status: 400 }
       );
+    }
+
+    const { employerDocumentId, overview } = await readAccountBilling(context, new Date());
+    // Fulfillment credits employers/{orgId}; publishing reads the resolved billing document.
+    // Never take payment that would land on a document publishing does not use.
+    if (employerDocumentId !== orgId) {
+      return NextResponse.json({
+        error: `Your organization's billing account needs a quick review before checkout. Contact ${BILLING_SUPPORT_EMAIL} and we'll sort it out.`,
+        reason: "billing_review",
+      }, { status: 409 });
+    }
+    if (isSubscriptionPlanId(planId)) {
+      // A paid annual term is never replaced or shortened by a new purchase.
+      const option = planId === "tier3" ? null : overview.annualPlans[planId];
+      if (!option?.available) {
+        return NextResponse.json({
+          error: option?.message ?? "This product is no longer available. Choose a paid single job posting or an annual plan.",
+          reason: option?.reason ?? "unavailable",
+        }, { status: 409 });
+      }
     }
 
     const gstAmount = Math.round(plan.amount * GST_RATE);

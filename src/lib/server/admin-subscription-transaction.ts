@@ -1,7 +1,8 @@
 import {createHash} from 'node:crypto';
 import {FieldValue, type Firestore, type DocumentSnapshot} from 'firebase-admin/firestore';
 import {buildAdminSubscriptionOverrideArtifacts, type SubscriptionOverrideBody} from './admin-subscription-override';
-import {publicationDate} from './paid-job-publication';
+import {PublicationError, publicationDate} from './paid-job-publication';
+import {resolvePaidPublicationTerm} from './paid-job-term';
 
 type Data=Record<string,unknown>;
 export class SubscriptionOverrideError extends Error {
@@ -16,17 +17,32 @@ const planFor=(value:unknown)=>({standard:'tier1',premium:'tier2',school:'tier3'
 const date=(value:unknown)=>publicationDate(value)?.toISOString();
 
 
-function projectionTerm(account:Data) {
+const NO_PLAN=new Set(['free','none','basic','']);
+const ENDED_STATUSES=new Set(['expired','canceled','cancelled','inactive']);
+const noPlan=(value:unknown)=>typeof value==='string' && NO_PLAN.has(value.trim().toLowerCase());
+const endedStatus=(value:unknown)=>typeof value==='string' && ENDED_STATUSES.has(value.trim().toLowerCase());
+const REVOKED_RECEIPT_STATUSES=new Set(['refunded','disputed']);
+
+type ProjectedTerm={plan:string;start:Date;end:Date};
+/**
+ * The current term an account projection claims, or null when it claims none. Normal signup
+ * (`plan: null`), free accounts and lapsed projections (expired by the daily check, or past
+ * their end) have no current term: their retained historical dates are ignored.
+ */
+function projectionTerm(account:Data,now:Date):ProjectedTerm|null {
   const nested=object(account.subscription);
+  const plans=[nested.tier,account.subscriptionTier,account.plan].filter(v=>v!==undefined && v!==null);
+  if(plans.every(noPlan)) return null;
+  const statuses=[nested.status,account.subscriptionStatus].filter(v=>v!==undefined && v!==null);
+  if(statuses.length && statuses.every(endedStatus)) return null;
   const starts=[nested.billingStartAt,account.billingStartAt,account.subscriptionStart].filter(v=>v!==undefined);
   const ends=[nested.subscriptionEnd,nested.expiresAt,account.subscriptionEnd].filter(v=>v!==undefined);
-  const plans=[nested.tier,account.subscriptionTier,account.plan].filter(v=>v!==undefined);
-  if(!starts.length && !ends.length && plans.every(v=>v==='free')) return null;
   if(starts.some(v=>!date(v) || date(v)!==date(starts[0])) || ends.some(v=>!date(v) || date(v)!==date(ends[0])) || plans.some(v=>!planFor(v) || planFor(v)!==planFor(plans[0]))) conflict('Contradictory current-term projection requires reconciliation.');
   if(!starts.length && !ends.length) return null;
   if(!starts.length || !ends.length || !plans.length) conflict('Incomplete current-term projection requires reconciliation.');
   const start=publicationDate(starts[0])!,end=publicationDate(ends[0])!;
   if(end<=start) conflict('Invalid current-term projection requires reconciliation.');
+  if(end<=now) return null;
   return {plan:planFor(plans[0]),start,end};
 }
 function canonical(value:unknown):unknown {
@@ -60,6 +76,10 @@ export async function applyAdminSubscriptionOverride(db:Firestore,orgId:string,b
     if(!Number.isFinite(artifacts[field]) || artifacts[field]<0) invalid(`Invalid ${field}.`);
   }
   if(Math.round((artifacts.amount+artifacts.gstAmount)*100)!==Math.round(artifacts.totalAmount*100)) invalid('Payment totals do not match.');
+  // Explicit super-admin reconciliation of a paid Standard term's annual posting usage.
+  const explicitUsed=body.jobPostingUsed;
+  if(explicitUsed!==undefined && (typeof explicitUsed!=='number' || !Number.isSafeInteger(explicitUsed) || explicitUsed<0 || explicitUsed>10000)) invalid('Invalid jobPostingUsed.');
+  if(explicitUsed!==undefined && (plan!=='tier1' || artifacts.amount<=0)) invalid('Posting usage applies only to a paid Standard term.');
   const bonusStart=body.bonusAccessGrantedAt?new Date(body.bonusAccessGrantedAt):null;
   const bonusEnd=body.bonusAccessEndsAt?new Date(body.bonusAccessEndsAt):null;
   if(Boolean(bonusStart)!==Boolean(bonusEnd) || (bonusStart && bonusEnd && (bonusStart>=bonusEnd || bonusEnd.getTime()!==start.getTime()))) invalid('An explicit bonus window must end at the paid term start.');
@@ -99,6 +119,8 @@ export async function applyAdminSubscriptionOverride(db:Firestore,orgId:string,b
       if(!planFor(r.plan) || r.billingCycle!=='annual') continue;
       if(!rs || !re || re<=rs) conflict('Malformed annual history requires reconciliation.');
       if(planFor(r.plan)===plan && rs.getTime()===start.getTime() && re.getTime()===end.getTime()) matches.push([id,r]);
+      // A refunded or disputed payment no longer holds a paid term.
+      else if(REVOKED_RECEIPT_STATUSES.has(String(r.status))) continue;
       else if(start<re && end>rs && typeof r.amount==='number' && r.amount>0) conflict('Overlapping paid terms require reconciliation.');
     }
     if(matches.length>1) conflict('Duplicate annual receipts require reconciliation.');
@@ -107,15 +129,26 @@ export async function applyAdminSubscriptionOverride(db:Firestore,orgId:string,b
     if(matched && (matched[1].status!=='active' || matched[1].amount!==artifacts.amount || matched[1].gstAmount!==artifacts.gstAmount || matched[1].totalAmount!==artifacts.totalAmount)) conflict('Existing receipt financial facts are immutable.');
     const current=object(employer.subscription);
     const organization=target.data()!;
-    const employerTerm=projectionTerm(employer),organizationTerm=projectionTerm(organization);
+    // Payments made before the 2026-09-24 release left stale grant/manual payment ids, bonus
+    // fields or dates beside the paid term. When the requested term is exactly one active Stripe
+    // receipt and publication already resolves that receipt as the current term, rewriting both
+    // projections from it is a repair, not a replacement. Anything else keeps every protection.
+    let resolved:ReturnType<typeof resolvePaidPublicationTerm>=null;
+    if(matched && matched[1].status==='active' && typeof matched[1].stripeSessionId==='string') {
+      try { resolved=resolvePaidPublicationTerm({employerId:orgId,employer,receipts:[...receipts].map(([id,data])=>({id,data})),now}); }
+      catch(error) { if(!(error instanceof PublicationError)) throw error; }
+    }
+    const repairFromReceipt=Boolean(matched && resolved?.id===matched[0]);
+    const employerTerm=repairFromReceipt ? {plan,start,end} : projectionTerm(employer,now);
+    const organizationTerm=repairFromReceipt ? null : projectionTerm(organization,now);
     if(organizationTerm && (!employerTerm || !sameValue(employerTerm,organizationTerm))) conflict('Account and organization current terms require reconciliation.');
     if(organizationTerm) {
       const orgSubscription=object(organization.subscription);
       for(const key of ['paymentId','amountPaid','gstAmount','totalAmount','termId']) if(!sameValue(current[key],orgSubscription[key])) conflict('Account and organization financial evidence requires reconciliation.');
     }
     const sameCurrent=employerTerm?.plan===plan && employerTerm.start.getTime()===start.getTime() && employerTerm.end.getTime()===end.getTime();
-    const currentManual=current.paymentId===`admin-manual-${plan}` && typeof current.amountPaid==='number' && current.amountPaid>0;
-    const currentGrant=current.paymentId===`admin-grant-${plan}` && current.amountPaid===0;
+    const currentManual=!repairFromReceipt && current.paymentId===`admin-manual-${plan}` && typeof current.amountPaid==='number' && current.amountPaid>0;
+    const currentGrant=!repairFromReceipt && current.paymentId===`admin-grant-${plan}` && current.amountPaid===0;
     for(const prior of [employerTerm,organizationTerm]) if(prior && !(prior.plan===plan && prior.start.getTime()===start.getTime() && prior.end.getTime()===end.getTime())){
       if(start<prior.start || end<=prior.end) conflict('An older request cannot replace the current term.');
       if(prior.end>now && start>now) conflict('Scheduling a future replacement is not supported.');
@@ -130,13 +163,17 @@ export async function applyAdminSubscriptionOverride(db:Firestore,orgId:string,b
     if(plan==='tier3' && !(matched || (sameCurrent && (currentManual || currentGrant)))) conflict('School plans are retired; only existing historical terms may be maintained.');
     let usage:Data|undefined;
     if(plan==='tier1' && artifacts.amount>0){
-      if(existing){
-        const saved=object(employer.jobPostingUsage);
-        if(saved.termId!==termId || !Number.isSafeInteger(saved.used) || Number(saved.used)<0) conflict('Existing Standard usage requires explicit reconciliation.');
-        usage=saved;
-      }else usage={termId,used:0};
+      const saved=object(employer.jobPostingUsage);
+      const savedValid=saved.termId===termId && Number.isSafeInteger(saved.used) && Number(saved.used)>=0;
+      if(explicitUsed!==undefined) usage={termId,used:explicitUsed};
+      else if(!existing) usage={termId,used:0};
+      else if(savedValid) usage=saved;
+      // A receipt-backed term without its own counter is counted by publication from that
+      // term's listings; never guess here. Corrupt counters and receipt-less terms need a number.
+      else if(!((matched || createReceipt) && saved.termId!==termId)) conflict('Existing Standard usage requires explicit reconciliation: enter the postings already used this term (jobPostingUsed).');
     }
-    const subscription:Data={tier:artifacts.tier,status:'active',billingStartAt:start.toISOString(),subscriptionEnd:end.toISOString(),expiresAt:end.toISOString(),paymentId:artifacts.subscriptionPayload.paymentId,amountPaid:artifacts.amount,gstAmount:artifacts.gstAmount,totalAmount:artifacts.totalAmount,
+    const paymentId=repairFromReceipt ? String(matched![1].stripeSessionId) : artifacts.subscriptionPayload.paymentId;
+    const subscription:Data={tier:artifacts.tier,status:'active',billingStartAt:start.toISOString(),subscriptionEnd:end.toISOString(),expiresAt:end.toISOString(),paymentId,amountPaid:artifacts.amount,gstAmount:artifacts.gstAmount,totalAmount:artifacts.totalAmount,
       ...(matched || createReceipt?{termId}:{}),...(bonusStart && bonusEnd?{bonusAccessGrantedAt:bonusStart.toISOString(),bonusAccessEndsAt:bonusEnd.toISOString(),bonusAccessReason:body.bonusAccessReason??'Bonus early access before paid term begins'}:{})};
     if(audit.exists){
       const expected:Data={plan:artifacts.tier,subscriptionTier:artifacts.tier,subscriptionStatus:'active',subscriptionStart:start.toISOString(),billingStartAt:start.toISOString(),subscriptionEnd:end.toISOString(),subscription,
@@ -144,6 +181,14 @@ export async function applyAdminSubscriptionOverride(db:Firestore,orgId:string,b
       if(audit.data()?.payloadHash!==payloadHash || audit.data()?.termId!==termId || audit.data()?.organizationId!==target.id || !sameCurrent) conflict('Override replay identity does not match the current term.');
       for(const account of [employer,organization]) for(const [key,value] of Object.entries(expected)) if(!sameValue(account[key],value)) conflict('Override replay detected entitlement projection drift.');
       if(organization.employerId!==orgId || organization.tier!==artifacts.tier) conflict('Override replay detected organization projection drift.');
+      if(explicitUsed!==undefined && !sameValue(employer.jobPostingUsage,usage)) {
+        // An applied term's posting counter can still be reconciled explicitly, with its own audit entry.
+        const usageAudit=employerRef.collection('actionHistory').doc(`usage-${hash([...identity,explicitUsed,now.toISOString()])}`);
+        tx.set(employerRef,{jobPostingUsage:usage,updatedAt:now.toISOString()},{mergeFields:['jobPostingUsage','updatedAt']});
+        tx.set(target.ref,{jobPostingUsage:usage,updatedAt:now.toISOString()},{mergeFields:['jobPostingUsage','updatedAt']});
+        tx.create(usageAudit,{action:'standard_usage_reconciliation',adminId,timestamp:now.toISOString(),termId,organizationId:target.id,previous:employer.jobPostingUsage ?? null,used:explicitUsed});
+        return {success:true,orgId,planId:plan,tier:artifacts.tier,subscriptionStart:start.toISOString(),subscriptionEnd:end.toISOString(),duplicate:true,usageReconciled:true};
+      }
       return {success:true,orgId,planId:plan,tier:artifacts.tier,subscriptionStart:start.toISOString(),subscriptionEnd:end.toISOString(),duplicate:true};
     }
     const update:Data={plan:artifacts.tier,subscriptionTier:artifacts.tier,subscriptionStatus:'active',subscriptionStart:start.toISOString(),billingStartAt:start.toISOString(),subscriptionEnd:end.toISOString(),subscription,
@@ -152,7 +197,8 @@ export async function applyAdminSubscriptionOverride(db:Firestore,orgId:string,b
     tx.set(employerRef,update,{mergeFields:Object.keys(update)});
     const orgUpdate={...update,employerId:orgId,tier:artifacts.tier};
     tx.set(target.ref,orgUpdate,{mergeFields:Object.keys(orgUpdate)});
-    tx.create(auditRef,{action:'subscription_override',adminId,timestamp:now.toISOString(),payloadHash,termId,organizationId:target.id,details:artifacts.actionHistoryDetails});
+    tx.create(auditRef,{action:'subscription_override',adminId,timestamp:now.toISOString(),payloadHash,termId,organizationId:target.id,details:artifacts.actionHistoryDetails,
+      ...(repairFromReceipt?{repairedFromReceipt:matched![0]}:{}),...(explicitUsed!==undefined?{jobPostingUsed:explicitUsed,previousJobPostingUsage:employer.jobPostingUsage ?? null}:{})});
     return {success:true,orgId,planId:plan,tier:artifacts.tier,subscriptionStart:start.toISOString(),subscriptionEnd:end.toISOString(),duplicate:false};
   });
 }

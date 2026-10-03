@@ -9,6 +9,8 @@ interface AccountDestination {
     profileReady?: boolean;
     missingProfileFields?: unknown;
   };
+  /** The account's organization exists but can no longer be used (disabled, deleted or archived). */
+  organizationUnavailable?: boolean;
 }
 
 /** Destination only; every protected page/API still enforces its own authorization. */
@@ -26,6 +28,7 @@ export function accountDestination(account: AccountDestination): string {
     }
     return "/org/dashboard";
   }
-  if (account.signupIntent === "organization") return "/signup?resume=organization&type=employer";
+  // A removed organization must not send its members back into organization signup.
+  if (account.signupIntent === "organization" && !account.organizationUnavailable) return "/signup?resume=organization&type=employer";
   return (account.setupComplete || account.hasMemberProfile) ? "/feed" : "/setup";
 }

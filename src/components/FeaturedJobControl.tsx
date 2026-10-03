@@ -21,6 +21,8 @@ interface FeaturedJobControlProps {
   onPurchase?: (purchase: "featured-post" | "plans") => void;
   /** Local page to return to after checkout or plan selection. */
   returnTo?: string;
+  /** Checkout is owner-only; other team members see who can buy instead of purchase buttons. */
+  canPurchase?: boolean;
 }
 
 function purchaseHref(purchase: "featured-post" | "plans", returnTo?: string): string {
@@ -44,6 +46,7 @@ export default function FeaturedJobControl({
   disabled = false,
   onPurchase,
   returnTo,
+  canPurchase = true,
 }: FeaturedJobControlProps) {
   const planLabel = PLAN_LABELS[summary?.plan || "free"] || "Free";
   const hasCapacity = Boolean(summary?.canFeatureJobs);
@@ -175,7 +178,13 @@ export default function FeaturedJobControl({
             ))}
           </div>
 
-          {!hasCapacity && !checked && (
+          {!hasCapacity && !checked && !canPurchase && (
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>
+              Ask your organization&apos;s owner to buy a featured credit or upgrade the plan.
+            </p>
+          )}
+
+          {!hasCapacity && !checked && canPurchase && (
             <div
               style={{
                 display: "flex",

@@ -4,6 +4,7 @@ import { Suspense, useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setupDestination, setupCompletionDestination } from "./destination";
 import { useAuth } from "@/lib/auth-context";
+import { rememberSignInNotice } from "@/lib/sign-in-notice";
 import { getMemberProfile, updateMemberProfile } from "@/lib/firestore/members";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
@@ -22,6 +23,16 @@ const stepInfo = [
   { num: 4, title: "Your Interests", subtitle: "Choose what matters most to you and we'll personalize your feed." },
   { num: 5, title: "You're Ready", subtitle: "Welcome to the community. Your journey starts now." },
 ];
+
+// Same rule as the profile page: `skills` (what employers receive) may have been edited in
+// Career Preferences, so show those chips whenever the stored text no longer describes them.
+function editableSkillsText(profile: { skills?: unknown; skillsText?: unknown }): string {
+  const text = typeof profile.skillsText === "string" ? profile.skillsText : "";
+  if (!Array.isArray(profile.skills)) return text;
+  const skills = profile.skills.filter((skill): skill is string => typeof skill === "string");
+  const parsed = text.split(",").map((skill) => skill.trim()).filter(Boolean);
+  return parsed.length === skills.length && parsed.every((skill, index) => skill === skills[index]) ? text : skills.join(", ");
+}
 
 export default function SetupPage() {
   return (
@@ -66,6 +77,8 @@ function SetupAccess() {
           photoRepair = !!member?.photoURL && member.photoURL !== loadingUser.photoURL;
         }
         const destination = setupDestination(data.destination, searchParams, false, photoRepair);
+        // Signing up with Google into an existing account lands here, not on /login.
+        rememberSignInNotice(user.uid, data);
         if (destination) router.replace(destination);
         else setReadyUid(user.uid);
       } catch {
@@ -134,7 +147,7 @@ function SetupWizard() {
       setTerritory(existing?.territory || "");
       setLanguages(existing?.languages || "");
       setHeadline(existing?.headline || "");
-      setSkillsText(existing?.skillsText ?? existing?.skills?.join(", ") ?? "");
+      setSkillsText(existing ? editableSkillsText(existing) : "");
       setTargetRolesText(existing?.targetRoles?.join(", ") ?? "");
       setSavedDisplayName(existing?.displayName || "");
       setInterests(existing?.interests || []);

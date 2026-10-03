@@ -5,6 +5,7 @@ import { FieldValue, type Firestore, type Transaction } from "firebase-admin/fir
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   EmployerApiError,
+  assertOrganizationCanPublish,
   requireEmployerContext,
   requireEmployerPublishingContext,
 } from "@/lib/server/employer-auth";
@@ -17,6 +18,8 @@ import { PublicationError } from "@/lib/server/paid-job-publication";
 import { jobInputLimitError } from "@/lib/server/job-input-limits";
 import { isSchoolOrganization } from "@/lib/school-visibility";
 import { sendAdminContentPosted } from "@/lib/email";
+import { isClosingDateBeforeToday, PAST_CLOSING_DATE_MESSAGE } from "@/lib/job-closing-date";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 export const runtime = "nodejs";
 
@@ -145,6 +148,19 @@ function buildJobPayload(input: EmployerJobInput, authorContext: { uid: string; 
   return { payload, status, featured };
 }
 
+/**
+ * Expected denials (payment, placement, validation, access) are part of normal
+ * use: answer them with their code and log a warning, not a runtime error.
+ */
+function failureResponse(error: unknown, label: string, fallback: string) {
+  const status = error instanceof PublicationError ? (error.code === "payment_required" ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
+  const code = error instanceof PublicationError || error instanceof EmployerApiError ? error.code : undefined;
+  const message = error instanceof Error ? error.message : fallback;
+  if (status >= 500) console.error(label, error);
+  else console.warn(label, status, code ?? "", message);
+  return NextResponse.json({ error: message, ...(code ? { code } : {}) }, { status });
+}
+
 function serialize(value: unknown): unknown {
   if (value === null || value === undefined) return value;
   if (typeof value === "object" && value !== null && typeof (value as Record<string, unknown>).toDate === "function") {
@@ -196,6 +212,8 @@ export async function GET(req: NextRequest) {
           status: d.status || "active",
           active: d.active ?? true,
           featured: Boolean(d.featured),
+          // A featured draft without a publication still needs its duration chosen.
+          publication: d.publication ? { durationDays: (d.publication as { durationDays?: unknown }).durationDays ?? null } : null,
           closingDate: d.closingDate || null,
           createdAt: d.createdAt || null,
           applicationCount,
@@ -228,10 +246,7 @@ export async function GET(req: NextRequest) {
       orgTier: (context.organizationData.tier as string | undefined) || (context.employerData.tier as string | undefined),
     });
   } catch (error) {
-    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
-    const message = error instanceof Error ? error.message : "Failed to load jobs.";
-    console.error("[api/employer/jobs][GET]", error);
-    return NextResponse.json({ error: message }, { status });
+    return failureResponse(error, "[api/employer/jobs][GET]", "Failed to load jobs.");
   }
 }
 
@@ -248,10 +263,13 @@ export async function POST(req: NextRequest) {
     if (tooLong) {
       return NextResponse.json({ error: `The job ${tooLong} is too long.`, field: tooLong }, { status: 400 });
     }
+    // A job published with a past closing date is never visible yet would still use a paid credit.
+    if (normalizeStatus(body.status) === "active" && isClosingDateBeforeToday(body.closingDate)) {
+      return NextResponse.json({ error: PAST_CLOSING_DATE_MESSAGE, code: "closing_date_passed", field: "closingDate" }, { status: 400 });
+    }
 
     const db = getAdminDb();
     const baseSlug = normalizeString(body.slug) || `${slugify(title)}-${Date.now().toString(36)}`;
-    const employerRef = db.collection("employers").doc(context.employerId);
     const jobRef = db.collection("jobs").doc(baseSlug);
 
     const { payload, status, featured } = buildJobPayload(body, {
@@ -261,6 +279,9 @@ export async function POST(req: NextRequest) {
       orgName: (context.organizationData.name as string) || (context.employerData.name as string) || (context.employerData.orgName as string),
       orgShort: (context.organizationData.shortName as string) || (context.organizationData.short as string) || undefined,
     });
+
+    // Refuse publishing before any payment logic runs; drafts are always allowed.
+    if (status === "active") assertOrganizationCanPublish(context);
 
     let nextFeaturedSummary = null;
     const publicationNow = new Date();
@@ -279,8 +300,11 @@ export async function POST(req: NextRequest) {
       const paid = await preparePaidPublication(firestorePublicationReader(db, transaction), {
         employerId: context.employerId, organizationId: context.orgId, jobId: baseSlug,
         current: null, status, featured, durationDays: body.durationDays, now: publicationNow,
+        writesResolvedEmployerDocument: true,
       });
-      if (status === 'active') transaction.set(employerRef, {
+      // Credits and plan usage live on the resolved billing document (employers/{employerId},
+      // else employers/{orgId}), the same document Stripe fulfillment credits.
+      if (status === 'active') transaction.set(db.collection("employers").doc(paid.employerDocumentId), {
         ...paid.employerPatch, updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
       transaction.create(jobRef, stripUndefined({
@@ -306,10 +330,12 @@ export async function POST(req: NextRequest) {
       authorName: (context.userData.displayName as string) || (context.memberData.displayName as string) || null,
       authorEmail: (context.userData.email as string) || (context.memberData.email as string) || (context.employerData.contactEmail as string) || null,
       id: baseSlug,
-      urlPath: status === "active" ? `/jobs/${baseSlug}` : `/org/dashboard/jobs/${baseSlug}/edit`,
+      // The employer editor is closed to admins of other organizations; drafts are reviewed in admin Jobs.
+      urlPath: status === "active" ? `/jobs/${baseSlug}` : `/admin/jobs?${new URLSearchParams({ startAt: baseSlug, search: title })}`,
     }).catch((error) => {
       console.error("[api/employer/jobs][POST] Admin content email failed:", error);
     });
+    if (status === "active") refreshPublicJobs();
 
     return NextResponse.json({
       success: true,
@@ -317,9 +343,6 @@ export async function POST(req: NextRequest) {
       featuredSummary: nextFeaturedSummary,
     });
   } catch (error) {
-    const status = error instanceof PublicationError ? (error.code === 'payment_required' ? 402 : 409) : error instanceof EmployerApiError ? error.status : 500;
-    const message = error instanceof Error ? error.message : "Failed to create job.";
-    console.error("[api/employer/jobs][POST]", error);
-    return NextResponse.json({ error: message }, { status });
+    return failureResponse(error, "[api/employer/jobs][POST]", "Failed to create job.");
   }
 }

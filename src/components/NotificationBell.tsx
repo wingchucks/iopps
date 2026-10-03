@@ -15,6 +15,14 @@ const typeIcons: Record<string, string> = {
   system: "\u{2699}\uFE0F",
 };
 
+// Notification records are rendered defensively: only strings are shown and only
+// plain same-site paths are followed. Anything that could resolve to another
+// origin (protocol-relative, backslashes, whitespace, dot segments) stays unlinked.
+const plainText = (value: unknown) => (typeof value === "string" ? value : "");
+const typeIcon = (type: unknown) => (typeof type === "string" && Object.hasOwn(typeIcons, type) ? typeIcons[type] : "\u{1F514}");
+const internalHref = (value: unknown) =>
+  typeof value === "string" && value.startsWith("/") && !/\/\/|\\|\s|\.\./.test(value) ? value : null;
+
 export default function NotificationBell() {
   const now = useCurrentTime();
   const { notifications, loading, error, unreadCount, actionError, busy, retry, markRead } = useNotifications();
@@ -96,10 +104,11 @@ export default function NotificationBell() {
             </div>
           ) : (
             notifications.slice(0, 15).map((n) => {
+              const href = internalHref(n.link);
               const inner = (
                 <div
                   key={n.id}
-                  onClick={n.link ? undefined : () => handleClickNotification(n)}
+                  onClick={href ? undefined : () => handleClickNotification(n)}
                   className="flex gap-3 items-start cursor-pointer transition-colors hover:bg-bg"
                   style={{
                     padding: "12px 16px",
@@ -108,14 +117,14 @@ export default function NotificationBell() {
                   }}
                 >
                   <span className="text-lg shrink-0 mt-0.5">
-                    {typeIcons[n.type] || "\u{1F514}"}
+                    {typeIcon(n.type)}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-text m-0 mb-0.5">
-                      {n.title}
+                      {plainText(n.title)}
                     </p>
                     <p className="text-xs text-text-sec m-0 leading-relaxed">
-                      {n.body}
+                      {plainText(n.body)}
                     </p>
                     <p className="text-[11px] text-text-muted mt-1 m-0">
                       {formatTime(n.createdAt)}
@@ -126,8 +135,8 @@ export default function NotificationBell() {
                   )}
                 </div>
               );
-              return n.link ? (
-                <Link key={n.id} href={n.link} className="no-underline" onClick={() => handleClickNotification(n)}>
+              return href ? (
+                <Link key={n.id} href={href} className="no-underline" onClick={() => handleClickNotification(n)}>
                   {inner}
                 </Link>
               ) : (

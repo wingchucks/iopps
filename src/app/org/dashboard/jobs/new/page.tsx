@@ -1,6 +1,7 @@
 "use client";
 import ClosingDateField from "@/components/employer/ClosingDateField";
-import { isValidClosingDate } from "@/lib/job-closing-date";
+import { isClosingDateBeforeToday, isValidClosingDate } from "@/lib/job-closing-date";
+import { canBuyForOrganization } from "@/lib/employer-api-errors";
 import JobLocationFields, { formatJobLocation } from "@/components/employer/JobLocationFields";
 
 import HiringDetailsFields from "@/components/employer/HiringDetailsFields";
@@ -758,6 +759,7 @@ export default function NewJobWizardPage() {
   const validateStep0 = (): boolean => {
     const e: Record<string, string> = {};
     if (!isValidClosingDate(form.closingDate)) e.closingDate = "Enter a valid closing date or clear it";
+    else if (isClosingDateBeforeToday(form.closingDate)) e.closingDate = "Choose today or a later closing date, or clear it";
     if (!form.title.trim()) e.title = "Title is required";
     if (!form.category) e.category = "Category is required";
     if (!form.locationProvince) e.location = "Select a province, territory, or multiple-province option";
@@ -794,6 +796,8 @@ export default function NewJobWizardPage() {
   const handleSave = async (status: "active" | "draft") => {
     if (status === 'active' && form.featured && (!/^\d+$/.test(form.durationDays) || Number(form.durationDays) < 1 || Number(form.durationDays) > 45)) { setSubmitError("Choose a featured listing duration from 1 to 45 days."); return; }
     if (!isValidClosingDate(form.closingDate)) { setSubmitError("Enter a valid closing date or clear it."); return; }
+    // The server refuses this too: a job published with a past closing date is hidden right away.
+    if (status === "active" && isClosingDateBeforeToday(form.closingDate)) { setSubmitError("The closing date has passed. Go back to Job Details and choose today or a later date, or clear it."); return; }
     if (!profile?.orgId || !user) { setSubmitError("Your organization session isn’t ready. Please reload and try again."); return; }
     setSubmitError("");
     setSaving(true);
@@ -877,6 +881,9 @@ export default function NewJobWizardPage() {
   };
 
   const publishing = describePublishing(publishingSummary, form.featured);
+  // Checkout is owner-only; other team members are pointed to their owner instead.
+  const canPurchase = canBuyForOrganization(profile);
+  const askOwner = "Only your organization’s owner can buy posting credits or plans. Ask them to buy one, then publish this job. You can save it as a draft now.";
 
   /* ---- Render ---- */
   const cardStyle: React.CSSProperties = {
@@ -1195,7 +1202,7 @@ export default function NewJobWizardPage() {
                     </fieldset>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                      <ClosingDateField value={form.closingDate} onChange={v => set("closingDate", v)} />
+                      <ClosingDateField value={form.closingDate} onChange={v => set("closingDate", v)} publishing />
                       <FormField
                         label="External Apply URL"
                         hint="Leave blank to use IOPPS built-in apply form"
@@ -1309,7 +1316,8 @@ export default function NewJobWizardPage() {
                           summary={featuredSummary}
                           checked={form.featured}
                           onChange={(value) => set("featured", value)}
-                          onPurchase={(purchase) => void leaveForPurchase(purchase)}
+                          onPurchase={(purchase) => canPurchase ? void leaveForPurchase(purchase) : setSubmitError(askOwner)}
+                          canPurchase={canPurchase}
                         />
                         {form.featured ? <label htmlFor="featured-duration">Featured listing duration (days, up to 45)
                           <input id="featured-duration" type="number" min={1} max={45} step={1} value={form.durationDays} onChange={event => set("durationDays", event.target.value)} className="w-full rounded-xl border p-3" />
@@ -1631,18 +1639,18 @@ export default function NewJobWizardPage() {
                       {publishing.headline}
                     </h3>
                     <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>
-                      {publishing.detail}
+                      {publishing.purchasePlan && !canPurchase ? askOwner : publishing.detail}
                       {publishing.covered ? " Paid jobs go live on the IOPPS job board right away." : ""}
                     </p>
                     {!publishing.covered && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 14 }}>
-                        {publishing.purchasePlan && (
+                        {publishing.purchasePlan && canPurchase && (
                           <button type="button" className="brand-button" disabled={saving} onClick={() => void leaveForPurchase(publishing.purchasePlan!)}
                             style={{ padding: "10px 16px", borderRadius: 10, border: "none", background: "var(--button-gradient)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: saving ? "wait" : "pointer" }}>
                             {saving ? "Saving draft..." : publishing.purchasePlan === "featured-post" ? "Save draft & buy featured post" : "Save draft & buy standard post"}
                           </button>
                         )}
-                        {publishing.purchasePlan && (
+                        {publishing.purchasePlan && canPurchase && (
                           <button type="button" className="brand-button" disabled={saving} onClick={() => void leaveForPurchase("plans")}
                             style={{ padding: "10px 16px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--button-gradient-soft)", color: "var(--button-gradient-soft-text)", fontSize: 14, fontWeight: 600, cursor: saving ? "wait" : "pointer" }}>
                             See annual plans
@@ -1650,7 +1658,7 @@ export default function NewJobWizardPage() {
                         )}
                         <button type="button" disabled={checkingSummary} onClick={() => void checkSummaryAgain()}
                           style={{ padding: "10px 16px", borderRadius: 10, border: "1px solid var(--border)", background: "transparent", color: "var(--text)", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                          {checkingSummary ? "Checking..." : "I just paid: check again"}
+                          {checkingSummary ? "Checking..." : canPurchase ? "I just paid: check again" : "Check again"}
                         </button>
                       </div>
                     )}
