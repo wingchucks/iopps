@@ -55,6 +55,8 @@ function wizard({existing=profile,readFailure=false,saveFailure=false,fieldError
  const deps={react:hooks,'react/jsx-runtime':{jsx,jsxs:jsx},'next/navigation':{useSearchParams:()=>new URLSearchParams(),useRouter:()=>({push:p=>routes.push(p)})},'next/link':{default:'a'},'./destination':{setupDestination,setupCompletionDestination},'@/lib/auth-context':{useAuth:()=>({user})},'@/lib/firestore/members':{getMemberProfile:async uid=>{assert.equal(uid,user.uid);if(readFailure)throw Error('offline');return existing;}},'@/lib/constants/interests':{interestOptions:[{id:'jobs',label:'Jobs',desc:'Work',icon:'*'}]}};
  for(const name of ['ProtectedRoute','Avatar','Badge','AccountAvatarMenu'])deps[`@/components/${name}`]={default:name};
  deps['firebase/storage']={};deps['firebase/auth']={updateProfile:async(target,data)=>Object.assign(target,data)};deps['@/lib/firebase']={storage:{},auth:{get currentUser(){return user}}};
+ // The wizard never reads the account lookup; SetupAccess hands its notice over (round6-setup-completion).
+ deps['@/lib/sign-in-notice']={rememberSignInNotice(){}};
  const component=load('src/app/setup/page.tsx',deps,'\nexport const TestWizard=SetupWizard;', {fetch:async(url,options)=>{requests.push({url,...options});return {ok:!saveFailure,status:fieldError?400:503,json:async()=>({field:fieldError,error:"untrusted provider text"})};}}).TestWizard;
  return {render(){cursor=0;return component();},async flush(){for(const effect of effects.splice(0))effect();await new Promise(r=>setImmediate(r));},routes,requests,switchUser(){user={...user,uid:'other'};},recoverSave(){saveFailure=false;}};
 }

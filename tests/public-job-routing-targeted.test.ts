@@ -124,3 +124,43 @@ test("a lookup reads only the referenced documents and the jobs sharing that rou
   }
   assert.ok(db.reads.documents < 60, `read ${db.reads.documents} documents`);
 });
+
+// A scheduled feed import can publish hundreds of title-routed jobs (no stored slug)
+// while a shared route index is cached; each one must resolve before the index refreshes.
+function importedAfter(index: PublicJobRouteIndex, count: number) {
+  const jobs: Record<string, Record<string, unknown>> = { listed: { title: "Listed Role", active: true, status: "active" } };
+  for (let at = 0; at < count; at++) {
+    // Same commit time in pairs, as one transaction or batch stamps several records alike.
+    jobs[`import-${at}`] = { title: `Imported Role ${at}`, active: true, status: "active", updatedAt: new Date(index.builtAt! + 1000 + Math.floor(at / 2)) };
+  }
+  return jobs;
+}
+
+test("more than 200 jobs written after the cached index was read all resolve by their title routes", async () => {
+  const db = memoryFirestore({ jobs: { listed: { title: "Listed Role", active: true, status: "active" } }, posts: {} }) as any;
+  const index: PublicJobRouteIndex = { ...(await buildPublicJobRouteIndex(db)), builtAt: Date.now() };
+  for (const [id, row] of Object.entries(importedAfter(index, 450))) db.store.get("jobs").set(id, row);
+  db.reads.queries.length = 0;
+  for (const at of [0, 1, 199, 200, 249, 250, 449]) {
+    assert.deepEqual(await findPublicJobDocument(db, `imported-role-${at}`, async () => index), { id: `import-${at}`, source: "jobs", routeSlug: `imported-role-${at}` }, `job ${at}`);
+  }
+  assert.deepEqual(await findPublicJobDocument(db, "listed-role", async () => index), { id: "listed", source: "jobs", routeSlug: "listed-role" });
+  const changeQueries = db.reads.queries.filter((query: any) => query.collection === "jobs" && query.filters.some(([field]: [string]) => field === "updatedAt"));
+  assert.equal(changeQueries.length, 8 * 3, "three pages of at most 200 changes per lookup");
+  for (const query of changeQueries) assert.ok(query.limit <= 200, JSON.stringify(query));
+  assert.ok(!db.reads.queries.some((query: any) => query.filters.some(([field]: [string]) => field === "active") && !query.filters.some(([field]: [string]) => field === "slug")), "the cached index is still used");
+});
+
+test("more changes than the bounded paging reads use the current index instead of a partial one", async () => {
+  const db = memoryFirestore({ jobs: {}, posts: {} }) as any;
+  const index: PublicJobRouteIndex = { ...(await buildPublicJobRouteIndex(db)), builtAt: Date.now() };
+  for (const [id, row] of Object.entries(importedAfter(index, 1001))) db.store.get("jobs").set(id, row);
+  db.reads.queries.length = 0;
+  for (const at of [0, 500, 1000]) {
+    assert.deepEqual(await findPublicJobDocument(db, `imported-role-${at}`, async () => index), { id: `import-${at}`, source: "jobs", routeSlug: `imported-role-${at}` }, `job ${at}`);
+  }
+  const fullReads = db.reads.queries.filter((query: any) => query.collection === "jobs" && query.filters.some(([field, , value]: [string, string, unknown]) => field === "active" && value === true) && !query.filters.some(([field]: [string]) => field === "slug"));
+  assert.equal(fullReads.length, 3, "one current index read per lookup, never a truncated patch");
+  assert.ok(db.reads.queries.filter((query: any) => query.collection === "jobs" && query.filters.some(([field]: [string]) => field === "updatedAt")).length <= 3 * 5, "paging stops at its bound");
+});
+

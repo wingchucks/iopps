@@ -7,6 +7,7 @@ import { safeAuthRedirect, authIntentHref, postSignupDestination } from "@/lib/a
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { authErrorMessage } from "@/lib/auth-errors";
+import { rememberSignInNotice } from "@/lib/sign-in-notice";
 
 const REASON_MESSAGES: Record<string, string> = {
   timeout: "You were signed out due to inactivity.",
@@ -33,7 +34,7 @@ function LoginForm() {
   const [slowRedirect, setSlowRedirect] = useState(false);
   const [redirectAttempt, setRedirectAttempt] = useState(0);
 
-  const resolvePostAuthDestination = useCallback(async (currentUser: {getIdToken: () => Promise<string>}) => {
+  const resolvePostAuthDestination = useCallback(async (currentUser: {uid: string; getIdToken: () => Promise<string>}) => {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 10000);
     try {
@@ -45,6 +46,8 @@ function LoginForm() {
       if (!response.ok) throw new Error(data.error || "We couldn’t load your account. Please retry.");
       const destination = safeAuthRedirect(data.destination);
       if (!destination) throw new Error("We couldn’t open your workspace. Please retry.");
+      // Shown once on the page this sign-in lands on (for example, a disabled organization).
+      rememberSignInNotice(currentUser.uid, data);
       if (destination.startsWith("/org/onboarding")) return authIntentHref(destination, searchParams);
       if (destination === "/org/dashboard") return postSignupDestination(searchParams, destination);
       return safeAuthRedirect(searchParams.get("redirect")) || destination;

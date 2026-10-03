@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 interface ToastProps {
   message: string;
   type: "success" | "error" | "info";
+  /** Defaults to 4 seconds; a longer explanation can ask for more reading time. */
+  durationMs?: number;
   onClose: () => void;
 }
 
@@ -29,7 +31,7 @@ const typeStyles: Record<ToastProps["type"], { bg: string; border: string; color
   },
 };
 
-export default function Toast({ message, type, onClose }: ToastProps) {
+export default function Toast({ message, type, durationMs = 4000, onClose }: ToastProps) {
   const [visible, setVisible] = useState(false);
   const style = typeStyles[type];
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -40,13 +42,13 @@ export default function Toast({ message, type, onClose }: ToastProps) {
     const dismissTimer = setTimeout(() => {
       setVisible(false);
       closeTimerRef.current = setTimeout(onClose, 300);
-    }, 4000);
+    }, durationMs);
 
     return () => {
       clearTimeout(dismissTimer);
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     };
-  }, [onClose]);
+  }, [onClose, durationMs]);
 
   return (
     <div

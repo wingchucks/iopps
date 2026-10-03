@@ -8,6 +8,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { fetchImportedDescriptionPatch, normalizeImportedDescription } from "@/lib/server/imported-job-descriptions";
 import { updateImportedJobWithEditorialGuard } from "@/lib/server/job-cleanup-guards";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -29,6 +30,8 @@ export async function GET(request: NextRequest) {
 
   const startTime = Date.now();
   const results: Array<{ feedId: string; feedName: string; jobsImported: number; error?: string }> = [];
+  // Any applied import, update or expiry changes public jobs, even if a later feed fails.
+  let publicJobsChanged = false;
 
   try {
     // Get all active feeds
@@ -91,9 +94,10 @@ export async function GET(request: NextRequest) {
               const identity = { feedId: feed.id, externalId: externalId || null, externalUrl: externalUrl || null };
               if (feed.updateExistingJobs || (feedType === "dayforce" && feed.updateExistingJobs !== false)) {
                 const appliedPatch = await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, { ...identity, title, location: item.location || "Canada", ...feedContent, description: resolvedDescription, descriptionFormat: "plain-text", ...(descriptionPatch || {}), ...lifecycle, ...sourcePostingDatePatch(item.sourcePostingDate), updatedAt: FieldValue.serverTimestamp() }, normalizeImportedDescription);
-                if (Object.keys(appliedPatch).length) jobsUpdated++;
+                if (Object.keys(appliedPatch).length) { jobsUpdated++; publicJobsChanged = true; }
               } else if (Object.keys(lifecycle).length || (feedType === "dayforce" && existingDoc.get("feedId") !== feed.id)) {
-                await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, {...identity,...lifecycle}, normalizeImportedDescription);
+                const appliedLifecycle = await updateImportedJobWithEditorialGuard(adminDb, existingDoc.ref, {...identity,...lifecycle}, normalizeImportedDescription);
+                if (Object.keys(appliedLifecycle).length) publicJobsChanged = true;
               }
               continue;
             }
@@ -123,7 +127,7 @@ export async function GET(request: NextRequest) {
 
             Object.assign(jobData, sourcePublishedAtPatch(item.pubDate));
 
-            if (await createImportedJobOnce(adminDb, jobData)) jobsImported++;
+            if (await createImportedJobOnce(adminDb, jobData)) { jobsImported++; publicJobsChanged = true; }
           } catch (itemErr) {
             jobsFailed++;
             console.error(`[cron/sync-feeds] Error processing item:`, itemErr);
@@ -134,7 +138,7 @@ export async function GET(request: NextRequest) {
         let jobsExpired = 0;
                 for (const id of missingIds) {
                   const appliedPatch = await updateImportedJobWithEditorialGuard(adminDb, adminDb.collection("jobs").doc(id), expirationPatch("removed_from_source"), normalizeImportedDescription);
-                  if (Object.keys(appliedPatch).length) jobsExpired++;
+                  if (Object.keys(appliedPatch).length) { jobsExpired++; publicJobsChanged = true; }
                 }
         await adminDb.collection("rssFeeds").doc(feed.id).update({
           lastSyncedAt: FieldValue.serverTimestamp(),
@@ -182,5 +186,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error("[cron/sync-feeds] Error:", err);
     return NextResponse.json({ error: "Cron sync failed" }, { status: 500 });
+  } finally {
+    if (publicJobsChanged) refreshPublicJobs();
   }
 }

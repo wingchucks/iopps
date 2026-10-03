@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { verifyAdminToken } from "@/lib/api-auth";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +97,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
+    // Public job cards show the featured badge.
+    if (collection === "jobs") refreshPublicJobs();
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Error updating pinned item:", err);

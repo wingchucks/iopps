@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { expireSubscriptionAtomically, isSubscriptionExpiryDue } from '@/lib/server/subscription-expiration';
+import { refreshPublicPartners } from '@/lib/public-partner-cache';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
@@ -37,6 +38,8 @@ export async function GET(req: NextRequest) {
       failures.push({ id: candidate.id, error: message });
     }
   }
+  // An ended paid term takes the organization off the partner cards.
+  if (expired) refreshPublicPartners();
   return NextResponse.json(
     { checked: candidates.size, due: due.length, expired, failed: failures.length, failures, timestamp: now.toISOString() },
     { status: failures.length ? 500 : 200 },

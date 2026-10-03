@@ -2,12 +2,15 @@ import { cleanupWriteAllowed } from '@/lib/server/job-cleanup-guards';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { expirationPatch, isJobRecordExpired } from '@/lib/server/job-expiration';
+import { refreshPublicJobs } from '@/lib/employer-job-cache';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 /** Candidate enumeration is advisory; re-evaluate every decision under the write transaction. */
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({error:'Unauthorized'},{status:401});
+  // Every committed close or mirror repair changes public jobs, even if a later one fails.
+  let publicJobsChanged = false;
   try {
     const db = getAdminDb();
     const now = new Date();
@@ -40,11 +43,13 @@ export async function GET(req: NextRequest) {
           tx.update(doc.ref,expirationPatch('closing_date',now));
           return collection === 'posts' ? 'closedPosts' as const : 'closedJobs' as const;
         });
-        if (outcome) counts[outcome]++;
+        if (outcome) { counts[outcome]++; publicJobsChanged = true; }
       }
     }
     return NextResponse.json({ok:true,...counts,checkedAt:now.toISOString()});
   } catch {
     return NextResponse.json({error:'Failed to expire jobs'},{status:500});
+  } finally {
+    if (publicJobsChanged) refreshPublicJobs();
   }
 }

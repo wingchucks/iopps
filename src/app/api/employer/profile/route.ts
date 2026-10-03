@@ -7,6 +7,8 @@ import { buildSchoolVisibilityPatch, isSchoolOrganization } from "@/lib/school-v
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 import { reviewAfterProfileEdit } from "@/lib/business-listing-review";
 import { recordReviewChange, reviewError } from "@/lib/server/business-listing-review";
+import { hasPartnerSubscription } from "@/lib/server/partner-promotion";
+import { refreshPublicPartners } from "@/lib/public-partner-cache";
 
 // Public profile links are rendered as clickable links and images, so a new or
 // changed link must be a complete web address, matching the directory review rules.
@@ -51,11 +53,14 @@ export async function PUT(req: NextRequest) {
       throw new EmployerApiError(400, "Enter a valid public contact email, or leave it blank to show no email.");
     }
     const db = getAdminDb();
+    // Only an organization with a partner plan can be on the cached partner cards.
+    let partnerCardChanged = false;
     const result = await db.runTransaction(async tx => {
       const ref = db.collection("organizations").doc(context.orgId);
       const snapshot = await tx.get(ref);
       if (!snapshot.exists) throw new EmployerApiError(404, "Organization not found.");
       const data = snapshot.data()!;
+      partnerCardChanged = hasPartnerSubscription(data);
       const invalidLink = firstInvalidProfileLink(updates, data);
       if (invalidLink) throw new EmployerApiError(400, `Use a complete link that starts with https:// or http:// for your ${invalidLink}.`);
       const school = isSchoolOrganization(data);
@@ -68,6 +73,7 @@ export async function PUT(req: NextRequest) {
       tx.set(ref.collection("activity").doc(), { type: "profile_update", message: `Profile updated: ${touchedFields.join(", ")}`, timestamp: FieldValue.serverTimestamp() });
       return { success: true, updates, directoryReview: review };
     });
+    if (partnerCardChanged) refreshPublicPartners();
     return NextResponse.json(result);
   } catch (error) { return reviewError(error); }
 }

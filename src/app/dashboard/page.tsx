@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { rememberSignInNotice } from "@/lib/sign-in-notice";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { setupDestination } from "../setup/destination";
 
@@ -31,7 +32,9 @@ function DashboardDestination() {
         if (!response.ok) throw new Error("Account unavailable");
         const data = await response.json();
         const destination = setupDestination(data.destination, new URLSearchParams(), true);
-        if (!cancelled && destination) router.replace(destination);
+        if (cancelled) return;
+        rememberSignInNotice(user.uid, data);
+        if (destination) router.replace(destination);
       } catch { if (!cancelled) setError(true); }
       finally { clearTimeout(timer); }
     })();

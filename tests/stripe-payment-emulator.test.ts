@@ -72,6 +72,8 @@ async function harness(t: any) {
         const send = async (p: any) => { sends.push(p); if (rejectEmails) throw new Error('Fictional email failure'); };
         return { sendAdminPaymentNotification: send, sendSubscriptionConfirmation: send, sendSubscriptionRenewalConfirmation: send };
       }
+      // Partner-card refreshes are asserted in stripe-billing-lifecycle.test.ts.
+      if (id === '@/lib/public-partner-cache') return { refreshPublicPartners() {} };
       throw new Error(`Unexpected import: ${id}`);
     },
   });

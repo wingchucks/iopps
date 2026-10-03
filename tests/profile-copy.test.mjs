@@ -123,6 +123,8 @@ function harness(page, initial = null, count = 0) {
     '@/lib/firestore/rsvps': { getUserRSVPs: async () => [] },
     '@/lib/account-labels': { getPublicAccountTypeLabel: () => 'Member' },
     '@/lib/constants/interests': { interestOptions: [], interestLabels: {} },
+    // Only SetupAccess hands the account lookup's sign-in notice over (round6-setup-completion).
+    '@/lib/sign-in-notice': { rememberSignInNotice() {} },
   };
   for (const name of ['ProtectedRoute', 'Avatar', 'Badge', 'AppShell', 'Footer', 'Button', 'Card', 'AccountAvatarMenu']) {
     dependencies[`@/components/${name}`] = { default: name === 'Button' ? 'button' : 'div' };

@@ -7,6 +7,7 @@ import { EXISTING_LISTING_REVIEW, LISTING_REVIEW_STATUSES, businessListingIssues
 import { isOrganizationPubliclyVisible, normalizeOrganizationRecord } from "@/lib/organization-profile";
 import { isSchoolOrganization } from "@/lib/school-visibility";
 import { listingReviewPayload, recordReviewChange, reviewError } from "@/lib/server/business-listing-review";
+import { refreshPublicPartners } from "@/lib/public-partner-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,8 @@ export async function POST(req: NextRequest) {
       recordReviewChange(tx, orgId, employerId, review, auth.decodedToken.uid, `Business listing ${status.replaceAll("_", " ")}.`);
       return listingReviewPayload(orgId, { ...data, directoryReview: review });
     });
+    // Only an approved listing can be shown as a partner.
+    refreshPublicPartners();
     return NextResponse.json(result);
   } catch (error) { return reviewError(error); }
 }

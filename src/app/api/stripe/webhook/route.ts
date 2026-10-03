@@ -7,6 +7,7 @@ import { addOneCalendarYear, formatBillingDate } from "@/lib/pricing";
 import { PublicationError, publicationDate } from "@/lib/server/paid-job-publication";
 import { renewalChain, resolvePaidPublicationTerm } from "@/lib/server/paid-job-term";
 import { buildEndedSubscriptionAccessPatch } from "@/lib/server/subscription-expiration";
+import { refreshPublicPartners } from "@/lib/public-partner-cache";
 
 export const runtime = "nodejs";
 
@@ -193,6 +194,8 @@ export async function POST(req: NextRequest) {
     const kind: RevocationKind = event.type === "charge.refunded" ? "refunded" : "disputed";
     try {
       const result = await revokePayment(getAdminDb(), event, kind, paymentIntent);
+      // An ended paid term takes the organization off the partner cards.
+      if (result.outcome === "revoked" && result.termEnded) refreshPublicPartners();
       if (result.outcome === "revoked") {
         // Stripe notifies the account owner of refunds and disputes; this is the audit trail.
         console.error(`[stripe/webhook] Payment ${kind}: receipt ${result.receiptId}, credits removed ${result.creditsRemoved}, term ended ${result.termEnded}`);
@@ -332,6 +335,8 @@ export async function POST(req: NextRequest) {
       // External email is deliberately outside the retried transaction.
       // Email failure must never undo/repeat a committed entitlement grant.
       const { employer, revokedKind, renewal } = result;
+      // A new paid term can list the organization as a partner; credits and renewals change nothing public.
+      if (tier && !revokedKind && !renewal) refreshPublicPartners();
       const planName = tier ? (TIER_TITLES[tier] || tier) : planId;
       const notification = {
         email: String(employer.contactEmail || employer.email || session.customer_email || ""),

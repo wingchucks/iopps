@@ -9,6 +9,7 @@ import {
 } from "@/lib/server/imported-job-descriptions";
 import { findPublicJobDocument } from "@/lib/server/public-job-routing";
 import { loadCachedPublicJobRouteIndex } from "@/lib/public-job-route-cache";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 import { findJobRecordAnyState, type JobRecordMatch } from "@/lib/server/job-record-lookup";
 import { buildJobRouteSlug } from "@/lib/server/job-slugs";
 import { listingClosedOn, listingState } from "@/lib/listing-lifecycle";
@@ -79,6 +80,8 @@ export async function GET(
       if (hydratedPatch) {
         const firestorePatch = await updateImportedJobWithEditorialGuard(db, docRef.ref, { ...hydratedPatch }, normalizeImportedDescription);
         if (!Object.keys(firestorePatch).length) return NextResponse.json({ error: "Job not found" }, { status: 404 });
+        // The stored description (job page metadata) changed, or the source closed the job.
+        refreshPublicJobs();
         Object.assign(data, firestorePatch);
 
         if (!isPublicJobRecordVisible(data, new Date())) {

@@ -3,6 +3,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { normalizeAdminEmployerRow } from "@/lib/admin/employers";
+import { refreshPublicPartners } from "@/lib/public-partner-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -177,6 +178,8 @@ export async function POST(request: NextRequest) {
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
     }
+    // Approval and rejection decide whether the organization can appear as a partner.
+    refreshPublicPartners();
 
     return NextResponse.json({
       success: true,
