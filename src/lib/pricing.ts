@@ -334,6 +334,34 @@ export interface BillingOverview extends AnnualPurchaseState {
   canPurchase: boolean;
 }
 
+/** Epoch milliseconds from an ISO string, Date, epoch number or serialized Firestore Timestamp. */
+function recordTime(value: unknown): number {
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "string" || typeof value === "number") return new Date(value).getTime();
+  if (value && typeof value === "object") {
+    const { seconds, _seconds } = value as { seconds?: unknown; _seconds?: unknown };
+    const wholeSeconds = typeof seconds === "number" ? seconds : _seconds;
+    if (typeof wholeSeconds === "number") return wholeSeconds * 1000;
+  }
+  return Number.NaN;
+}
+
+/**
+ * The paid tier an account record still names after that plan's term ended. The daily
+ * expiry job moves such a record to Free; until it runs, the billing page shows the plan
+ * as inactive instead of as an active Free plan. Only meaningful when the server billing
+ * overview reports neither a paid term nor complimentary access.
+ */
+export function lapsedPaidTier(
+  account: { plan?: unknown; subscriptionTier?: unknown; subscriptionStatus?: unknown; subscriptionEnd?: unknown } | null | undefined,
+  now: Date,
+): SubscriptionTier | null {
+  const tier = normalizePaidTier(account?.subscriptionTier || account?.plan);
+  if (!tier) return null;
+  const end = recordTime(account?.subscriptionEnd);
+  return account?.subscriptionStatus !== "active" || (Number.isFinite(end) && end <= now.getTime()) ? tier : null;
+}
+
 export const COMPLIMENTARY_ACCESS_LABEL = "Complimentary — paid postings not included";
 export const COMPLIMENTARY_ACCESS_DETAIL =
   "Complimentary access is not a paid plan: it does not include job postings or featured job slots. Each job posting still needs a paid posting credit or a paid annual plan.";

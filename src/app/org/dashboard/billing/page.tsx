@@ -16,6 +16,7 @@ import {
   ONE_TIME_PLANS,
   SUBSCRIPTION_PLANS,
   formatBillingDate,
+  lapsedPaidTier,
   type AnnualPurchaseOption,
   type BillingOverview,
 } from "@/lib/pricing";
@@ -113,7 +114,10 @@ function BillingContent() {
   // The server billing overview is authoritative: only a paid annual term is a paid plan.
   const paidTerm = billing?.paidTerm ?? null;
   const complimentary = paidTerm ? null : billing?.complimentary ?? null;
-  const currentPlan = billing ? (paidTerm?.tier ?? "free") : (employer?.subscriptionTier || employer?.plan || "free");
+  // A paid plan whose term has ended stays named on the account until the daily expiry job
+  // runs: show it as inactive, so the lapse is visible, rather than as an active Free plan.
+  const lapsedTier = billing && !paidTerm && !complimentary ? lapsedPaidTier(employer, new Date()) : null;
+  const currentPlan = billing ? (paidTerm?.tier ?? lapsedTier ?? "free") : (employer?.subscriptionTier || employer?.plan || "free");
   const planInfo = complimentary
     ? { label: `Complimentary ${PLAN_FEATURES[complimentary.tier]?.label ?? "access"}`, color: "var(--text-muted)", jobLimit: COMPLIMENTARY_ACCESS_LABEL, features: COMPLIMENTARY_FEATURES }
     : PLAN_FEATURES[currentPlan] || PLAN_FEATURES.free;

@@ -4,7 +4,7 @@ import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {readFileSync} from 'node:fs';
 import {sourceModule} from './helpers/security-fixtures.mjs';
-import {addOneCalendarYear,annualPurchaseOption,annualPurchaseOptions,formatBillingDate,renewalWindowOpensAt} from '../src/lib/pricing.ts';
+import {addOneCalendarYear,annualPurchaseOption,annualPurchaseOptions,formatBillingDate,lapsedPaidTier,renewalWindowOpensAt} from '../src/lib/pricing.ts';
 
 test('annual terms end exactly one calendar year later on the Saskatchewan clock',()=>{
  // Old code truncated to midnight: new Date(y+1, m, d) gave 364.x days, shown a day early.
@@ -81,4 +81,19 @@ test('billing, checkout and admin pages show paid terms and complimentary access
  const dashboard=readFileSync('src/app/org/dashboard/page.tsx','utf8');
  assert.match(dashboard,/setComplimentaryAccess\(Boolean\(dashData\.billing\?\.complimentary\)\)/,'the dashboard badge follows the server billing state');
  assert.match(dashboard,/complimentaryAccess \? `Complimentary \$\{org\.plan\} · no paid postings` : `\$\{org\.plan\} plan`/);
+});
+
+test('a paid plan the account still names after its term ended shows as inactive, not as an active Free plan',()=>{
+ const now=new Date('2026-10-03T12:00:00Z');
+ // The daily expiry job has not run yet: the record still says premium/active with a past end.
+ assert.equal(lapsedPaidTier({plan:'premium',subscriptionTier:'premium',subscriptionStatus:'active',subscriptionEnd:'2000-01-01T00:00:00.000Z'},now),'premium');
+ assert.equal(lapsedPaidTier({plan:'premium',subscriptionStatus:'active',subscriptionEnd:{_seconds:Date.parse('2026-10-03T11:59:59Z')/1000,_nanoseconds:0}},now),'premium','serialized Timestamps count');
+ assert.equal(lapsedPaidTier({plan:'tier1',subscriptionStatus:'canceled'},now),'standard','a paid plan that is no longer active');
+ assert.equal(lapsedPaidTier({plan:'premium',subscriptionStatus:'active',subscriptionEnd:'2027-01-01T00:00:00.000Z'},now),null,'a current term has not lapsed');
+ assert.equal(lapsedPaidTier({plan:'premium',subscriptionStatus:'active'},now),null,'no end date is not a lapse');
+ assert.equal(lapsedPaidTier({plan:'free',subscriptionTier:'free',subscriptionStatus:'expired'},now),null,'after the expiry job the account is on Free');
+ assert.equal(lapsedPaidTier(null,now),null);
+ const billing=readFileSync('src/app/org/dashboard/billing/page.tsx','utf8');
+ assert.match(billing,/billing && !paidTerm && !complimentary \? lapsedPaidTier\(employer, new Date\(\)\) : null/);
+ assert.match(billing,/paidTerm\?\.tier \?\? lapsedTier \?\? "free"/,'the plan card names the lapsed plan, which is not active');
 });
