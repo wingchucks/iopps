@@ -4,6 +4,8 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-auth";
 import { getBusinessProfileReadiness, normalizeOrganizationRecord } from "@/lib/organization-profile";
 import { isSchoolOrganization } from "@/lib/school-visibility";
+import { hasPartnerSubscription } from "@/lib/server/partner-promotion";
+import { refreshPublicPartners } from "@/lib/public-partner-cache";
 
 export const runtime = "nodejs";
 
@@ -68,6 +70,8 @@ export async function POST(req: Request) {
         type: "onboarding_complete", message: "Organization setup completed. Directory review is managed separately.", timestamp: now,
       });
     });
+    // A paid partner whose profile was unfinished can now be listed on the partner cards.
+    if (hasPartnerSubscription(context.organizationData)) refreshPublicPartners();
 
     return NextResponse.json({ success: true });
   } catch (error) {

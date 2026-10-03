@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue, FieldPath } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { isPublicJobRecordVisible } from "@/lib/public-job-merge";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 import { recordedAmount } from "@/lib/admin/reporting";
 
@@ -181,6 +182,7 @@ export async function POST(request: NextRequest) {
         break;
     }
 
+    refreshPublicJobs();
     return NextResponse.json({
       success: true,
       jobId: body.jobId,

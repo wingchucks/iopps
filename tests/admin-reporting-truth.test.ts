@@ -43,6 +43,8 @@ function load(route: string, collections: Record<string, Record<string, unknown>
     "@/lib/server/partner-subscription": partnerSubscription,
     "@/lib/public-job-merge": {isPublicJobRecordVisible: (record: Record<string, unknown>) => record.active === true},
     "@/lib/server/admin-job-lifecycle": {},
+    // The admin jobs route refreshes public caches after its writes; reporting reads never do.
+    "@/lib/employer-job-cache": {refreshPublicJobs: () => { throw Error("A reporting read refreshed the public job caches"); }},
     "firebase-admin/firestore": {FieldPath: {documentId: () => "__name__"}},
   };
   const code = ts.transpileModule(readFileSync(route, "utf8"), {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022}}).outputText;

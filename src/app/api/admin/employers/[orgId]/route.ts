@@ -5,6 +5,8 @@ import { adminDb, getAdminAuth } from "@/lib/firebase-admin";
 import { FieldValue, type DocumentReference, type Query } from "firebase-admin/firestore";
 import { normalizeAdminEmployerRow } from "@/lib/admin/employers";
 import { isSuperAdminAccount } from "@/lib/server/super-admin";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
+import { refreshPublicPartners } from "@/lib/public-partner-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -134,6 +136,11 @@ async function collectUniqueDocRefs(
   }
 
   return { counts, refs };
+}
+
+/** Public job listings come from the jobs collection and job posts in the posts collection. */
+function includesPublicJobRecords(refs: DocumentReference[]): boolean {
+  return refs.some((ref) => ref.parent.id === "jobs" || ref.parent.id === "posts");
 }
 
 function shouldResetRole(value: unknown): boolean {
@@ -372,6 +379,9 @@ export async function PATCH(
 
   const { orgId } = await params;
   const body = recordFrom(await request.json());
+  // Set as each public write starts, so a later failure still refreshes what changed.
+  let publicJobsChanged = false;
+  let publicPartnersChanged = false;
 
   try {
     const employerRef = adminDb.collection("employers").doc(orgId);
@@ -453,11 +463,13 @@ export async function PATCH(
         deletedAt,
       );
 
+      publicPartnersChanged = true;
       await Promise.all([
         employerRef.set(deletionMetadata, { merge: true }),
         organizationRef.set(deletionMetadata, { merge: true }),
       ]);
 
+      publicJobsChanged = includesPublicJobRecords(relatedContent.refs);
       await updateDocumentRefsInChunks(
         relatedContent.refs,
         (ref) => buildSoftDeleteContentPatch(ref.parent.id, deletedAt),
@@ -524,6 +536,8 @@ export async function PATCH(
     updateData.updatedAt = updatedAt;
     organizationUpdateData.updatedAt = updatedAt;
 
+    // Verification, disabling, plan and profile changes all reach the public partner cards.
+    publicPartnersChanged = true;
     await Promise.all([
       Object.keys(updateData).length > 1
         ? employerRef.update(updateData)
@@ -547,6 +561,9 @@ export async function PATCH(
   } catch (error) {
     console.error("Error updating employer:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } finally {
+    if (publicJobsChanged) refreshPublicJobs();
+    if (publicPartnersChanged) refreshPublicPartners();
   }
 }
 
@@ -574,6 +591,9 @@ export async function DELETE(
     );
   }
 
+  // Set as each purge starts, so a later failure still refreshes what changed.
+  let publicJobsChanged = false;
+  let publicPartnersChanged = false;
   try {
     const employerRef = adminDb.collection("employers").doc(orgId);
     const organizationRef = adminDb.collection("organizations").doc(orgId);
@@ -643,11 +663,13 @@ export async function DELETE(
 
     let deletedDocumentCount = 0;
 
+    publicJobsChanged = includesPublicJobRecords(relatedContent.refs);
     for (const ref of relatedContent.refs) {
       deletedDocumentCount += await deleteDocumentTree(ref);
     }
 
     if (organizationDoc.exists) {
+      publicPartnersChanged = true;
       deletedDocumentCount += await deleteDocumentTree(organizationRef);
     }
     if (employerDoc.exists) {
@@ -685,5 +707,8 @@ export async function DELETE(
   } catch (error) {
     console.error(`Error deleting employer ${orgId}:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } finally {
+    if (publicJobsChanged) refreshPublicJobs();
+    if (publicPartnersChanged) refreshPublicPartners();
   }
 }

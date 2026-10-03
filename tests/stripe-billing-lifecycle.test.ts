@@ -16,6 +16,7 @@ const secret = 'whsec_fictional_lifecycle_only';
 function harness(seed: Record<string, unknown> = {}) {
   const memory = memoryFirestore({ 'employers/org1': { name: 'Fictional org', contactEmail: 'fixture@example.invalid' }, 'organizations/org1': { name: 'Fictional org' }, ...seed });
   const sends: any[] = [];
+  const refreshes = { partners: 0 };
   const exports: any = {};
   vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/stripe/webhook/route.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
     exports, Date, Promise, console: { log() {}, error() {} },
@@ -26,6 +27,7 @@ function harness(seed: Record<string, unknown> = {}) {
         '@/lib/firebase-admin': { getAdminDb: () => memory.db }, '@/lib/pricing': pricing,
         '@/lib/server/paid-job-publication': publication, '@/lib/server/paid-job-term': term, '@/lib/server/subscription-expiration': expiration,
         '@/lib/email': { sendAdminPaymentNotification: async (p: any) => { sends.push(['admin', p]); }, sendSubscriptionConfirmation: async (p: any) => { sends.push(['customer', p]); } },
+        '@/lib/public-partner-cache': { refreshPublicPartners: () => { refreshes.partners++; } },
       };
       if (!Object.hasOwn(modules, id)) throw new Error(`Unexpected import: ${id}`);
       return modules[id];
@@ -53,7 +55,7 @@ function harness(seed: Record<string, unknown> = {}) {
   }
   const receipts = () => memory.paths('subscriptions/').map(path => ({ id: path.split('/')[1], data: memory.read(path) as any }));
   const resolveAt = (at: Date) => term.resolvePaidPublicationTerm({ employerId: 'org1', employer: memory.read('employers/org1') as any, receipts: receipts(), now: at });
-  return { memory, sends, checkout, charge, send, receipts, resolveAt, employer: () => memory.read('employers/org1') as any, organization: () => memory.read('organizations/org1') as any };
+  return { memory, sends, refreshes, checkout, charge, send, receipts, resolveAt, employer: () => memory.read('employers/org1') as any, organization: () => memory.read('organizations/org1') as any };
 }
 const paidTerm = (startsAt: Date, overrides: any = {}) => ({
   plan: 'premium', subscriptionTier: 'premium', subscriptionStatus: 'active', subscriptionStart: startsAt, billingStartAt: startsAt, subscriptionEnd: pricing.addOneCalendarYear(startsAt),
@@ -74,6 +76,9 @@ test('a first annual purchase runs exactly one calendar year from payment, in Sa
   assert.equal(h.employer().subscription.termId, receipt.id);
   assert.equal(h.resolveAt(new Date())?.id, receipt.id);
   assert.deepEqual(h.sends.map(([kind]) => kind).sort(), ['admin', 'customer']);
+  assert.equal(h.refreshes.partners, 1, 'a new paid term refreshes the partner cards');
+  assert.equal((await h.send({ ...h.checkout('tier2', { id: receipt.id }) })).status, 200);
+  assert.equal(h.refreshes.partners, 1, 'a replayed session changes nothing');
 });
 
 test('renewing during the current paid term starts the new year when the current term ends', async () => {
@@ -90,6 +95,7 @@ test('renewing during the current paid term starts the new year when the current
   assert.equal(h.resolveAt(new Date())?.id, 'cs_current');
   assert.equal(h.resolveAt(currentEnd)?.id, renewal.id, 'the renewal takes over at the boundary');
   assert.deepEqual(h.sends.map(([kind]) => kind), ['admin'], 'no "now active" confirmation for a term that starts later');
+  assert.equal(h.refreshes.partners, 0, 'a queued renewal changes nothing public yet');
   assert.match(h.sends[0][1].planName, /renewal starting/);
   // A second paid renewal (race) chains after the first rather than overlapping it.
   assert.equal((await h.send(h.checkout('tier2'))).status, 200);
@@ -143,6 +149,7 @@ test('a full refund removes an unused purchased credit once, and replays are ide
   assert.equal((await (await h.send(refund)).json()).outcome, 'duplicate');
   assert.equal((await (await h.send(h.charge('charge.dispute.created', 'pi_refund_me'))).json()).outcome, 'already_revoked');
   assert.equal(h.employer().standardPostCredits, 0, 'never below zero, never removed twice');
+  assert.equal(h.refreshes.partners, 0, 'credits are not public');
   assert.equal((h.memory.read(`stripeWebhookEvents/${refund.id}`) as any).outcome, 'revoked');
 });
 
@@ -171,6 +178,7 @@ test('a refunded or disputed annual payment ends the term it currently funds', a
     assert.equal(h.organization().plan, null);
     assert.equal(h.resolveAt(new Date()), null);
     assert.deepEqual(h.memory.read('jobs/live'), { employerId: 'org1', status: 'active', publication: { version: 1, funding: 'premium_subscription', termId: 'cs_current' } }, 'published jobs are untouched');
+    assert.equal(h.refreshes.partners, 1, 'the ended term refreshes the partner cards');
   }
 });
 

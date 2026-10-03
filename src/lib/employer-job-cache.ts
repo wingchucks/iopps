@@ -1,13 +1,16 @@
 import { revalidateTag } from "next/cache";
 
-/** Homepage job cards and job page metadata are cached under this tag (see server/public-page-cache.ts). */
+/**
+ * Homepage job cards, job page metadata and the public job route index are cached under
+ * this tag (see server/public-page-cache.ts and public-job-route-cache.ts).
+ */
 export const PUBLIC_JOBS_CACHE_TAG = "public-jobs";
 
 /**
- * Server only: expire cached public job data after an employer publishes a job,
- * edits a live one, closes it or deletes it. Route handlers cannot use updateTag;
- * { expire: 0 } makes the next public read wait for fresh data instead of
- * serving the stale copy once more.
+ * Server only: expire cached public job data after any writer (employer, admin, Hermes,
+ * feed sync, expiry cron, detail hydration) publishes, edits, closes, expires, deletes,
+ * features or unfeatures a job. Route handlers cannot use updateTag; { expire: 0 } makes
+ * the next public read wait for fresh data instead of serving the stale copy once more.
  */
 export function refreshPublicJobs(): void {
   try {

@@ -25,6 +25,8 @@ import * as cleanupGuards from '../src/lib/server/job-cleanup-guards.ts';
 import * as listingLifecycle from '../src/lib/listing-lifecycle.ts';
 import * as jobRecordLookup from '../src/lib/server/job-record-lookup.ts';
 const nativeRequire = createRequire(import.meta.url);
+// Counts refreshPublicJobs() calls made by the routes under test.
+const publicJobRefreshes = { count: 0 };
 function jobFixture(jobs: Array<Record<string, any>>, posts: Array<Record<string, any>> = []) {
   const records: Record<string, Array<Record<string, any>>> = { jobs, posts };
   const snapshot = (row: Record<string, any>) => ({ id: row.id, exists: true, data: () => row });
@@ -71,6 +73,7 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
     '@/lib/server/public-job-documents': jobDocuments,
     // Routes pass the shared index to the routing module, which these tests replace.
     '@/lib/public-job-route-cache': { loadCachedPublicJobRouteIndex: () => { throw new Error('Mocked routing never reads the shared route index'); } },
+    '@/lib/employer-job-cache': { refreshPublicJobs: () => { publicJobRefreshes.count++; } },
     ...mocks,
   };
   vm.runInNewContext(source, {exports, require:(id: string) => {
@@ -83,6 +86,7 @@ function loadRoute(path: string, mocks: Record<string, unknown>) {
   return exports;
 }
 test('job detail rechecks fresh full data before hydration or any write', async () => {
+  publicJobRefreshes.count = 0;
   let writes = 0;
   let hydrations = 0;
   const doc = {exists:true,id:'past',data:()=>({active:true,status:'active',description:'Deadline is August 28, 2026'}),ref:{set:async()=>{writes++},update:async()=>{writes++}}};
@@ -101,6 +105,7 @@ test('job detail rechecks fresh full data before hydration or any write', async 
   assert.deepEqual((await response.json()).closed,{closedOn:'2026-08-28T12:00:00.000Z'});
   assert.equal(writes,0);
   assert.equal(hydrations,0);
+  assert.equal(publicJobRefreshes.count,0,'nothing written, nothing to refresh');
 });
 
 test('scholarship API marks closed intakes without deleting recurring programs', async () => {
@@ -140,6 +145,7 @@ test('job list removes expired records and emits inferred compensation without s
 
 test('detail checks newly hydrated deadlines and enriches eligible metadata without stale caching', async () => {
   for(const description of ['Deadline is August 28, 2026','Salary: hourly range $25.00 - $30.00']) {
+    publicJobRefreshes.count = 0;
     const route=loadRoute('src/app/api/jobs/[id]/route.ts',{
       'next/server':next,
       '@/lib/firebase-admin':{getAdminDb:()=>({collection:(name:string)=>({doc:()=>({parent:{id:name},get:async()=>({exists:true,id:'one',data:()=>({active:true,status:'active',slug:'one'}),ref:{id:'one',parent:{id:'jobs'},update:async()=>{}}})})}),runTransaction:async(fn:any)=>fn({get:async(ref:any)=>ref.parent.id==='jobs'?{exists:true,data:()=>({active:true,status:'active',slug:'one'})}:{exists:false},update:()=>{}})})},
@@ -149,6 +155,7 @@ test('detail checks newly hydrated deadlines and enriches eligible metadata with
       '@/lib/utils':{normalizeApplyUrlFields:(r:unknown)=>r},
     });
     const response=await route.GET(new Request('https://example.test/api/jobs/one'),{params:Promise.resolve({id:'one'})});
+    assert.equal(publicJobRefreshes.count,1,'the hydrated description (or the closing it revealed) is refreshed in public caches');
     if(description.startsWith('Deadline'))assert.equal(response.status,404);
     else {
       assert.ok((await response.json()).job.salaryRange);
@@ -214,9 +221,12 @@ test('expiry cron uses full record cutoffs and keeps active/status mirrors align
   const writes: Array<{id:string;patch:any}> = [];
   const db = {collection:(collection:string) => ({doc:(id:string)=>({collection,id}),where:(_field:string,_op:string,value:unknown) => ({get:async()=>({docs:collection === 'jobs' ? rows.filter(r=>r[_field as keyof typeof r]===value).map(row=>({id:row.id,ref:row.id,data:()=>row})) : []})})}), runTransaction:async(callback:any)=>callback({get:async(id:any)=>typeof id==='string'?{exists:true,id,ref:id,data:()=>rows.find(row=>row.id===id)}:{exists:false},update:(id:string,patch:unknown)=>writes.push({id,patch})})};
   const route = loadRoute('src/app/api/cron/expire-jobs/route.ts', {'next/server':next,'@/lib/firebase-admin':{getAdminDb:()=>db}});
+  publicJobRefreshes.count = 0;
   assert.equal((await route.GET({headers:new Headers()})).status,401);
   assert.equal(writes.length,0);
+  assert.equal(publicJobRefreshes.count,0);
   assert.equal((await route.GET({headers:new Headers({authorization:'Bearer test-only'})})).status,200);
+  assert.equal(publicJobRefreshes.count,1,'one refresh after the run closed jobs');
   assert.equal(writes.find(w=>w.id==='prose')?.patch.status,'expired');
   assert.equal(writes.find(w=>w.id==='expiry')?.patch.active,false);
   assert.equal(writes.find(w=>w.id==='hidden')?.patch.active,false);

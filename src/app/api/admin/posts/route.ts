@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { verifyAdminToken } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase-admin";
 import { activateAdminJob } from "@/lib/server/admin-job-lifecycle";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -129,6 +130,7 @@ export async function POST(request: NextRequest) {
         data: data, // preserve full original data
       });
       await docRef.update({ status: "archived", archived: true });
+      if (collection === "jobs") refreshPublicJobs();
 
       return NextResponse.json({ success: true });
     }
@@ -145,6 +147,7 @@ export async function POST(request: NextRequest) {
       if (origCollection !== collection || !COLLECTIONS.some(item => item.name === origCollection)) return NextResponse.json({error:'Archive identity requires review'}, {status:409});
       if (origCollection === 'jobs') {
         const error=await activateAdminJob(adminDb,postId,{restore:true});
+        if (!error) refreshPublicJobs();
         return error ? NextResponse.json({error},{status:409}) : NextResponse.json({success:true});
       }
 
@@ -161,6 +164,7 @@ export async function POST(request: NextRequest) {
     if (action === "feature") {
       if (collection === 'jobs') {
         const error=await activateAdminJob(adminDb,postId,{feature:true});
+        if (!error) refreshPublicJobs();
         return error ? NextResponse.json({error},{status:409}) : NextResponse.json({success:true});
       }
       await adminDb.collection(collection).doc(postId).update({

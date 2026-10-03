@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/api-auth";
+import { refreshPublicJobs } from "@/lib/employer-job-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -145,6 +146,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Batches commit one at a time: refresh for any that did, even if a later one failed.
+  let committedBatches = 0;
   try {
     const body = (await request.json()) as CleanupBody;
 
@@ -215,6 +218,7 @@ export async function POST(request: NextRequest) {
       }
 
       await batch.commit();
+      committedBatches++;
     }
 
     return NextResponse.json({
@@ -228,5 +232,7 @@ export async function POST(request: NextRequest) {
       { error: "Failed to cleanup jobs" },
       { status: 500 }
     );
+  } finally {
+    if (committedBatches) refreshPublicJobs();
   }
 }

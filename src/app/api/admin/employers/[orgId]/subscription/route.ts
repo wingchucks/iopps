@@ -3,6 +3,7 @@ import { applyAdminSubscriptionOverride, SubscriptionOverrideError } from "@/lib
 import { NextResponse, type NextRequest } from "next/server";
 import { verifySuperAdminToken } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase-admin";
+import { refreshPublicPartners } from "@/lib/public-partner-cache";
 
 export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest, { params }: { params: Promise<{ orgId: string }> }) {
@@ -13,6 +14,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { orgId } = await params;
     const body = await request.json() as SubscriptionOverrideBody;
     const result = await applyAdminSubscriptionOverride(adminDb, orgId, body, auth.decodedToken.uid);
+    // A paid term decides whether the organization is listed as a partner.
+    refreshPublicPartners();
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof SubscriptionOverrideError) return NextResponse.json({ error: error.message }, { status: error.status });

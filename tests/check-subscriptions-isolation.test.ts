@@ -11,16 +11,18 @@ function cron(seed: Record<string, unknown>) {
   const memory = memoryFirestore(seed);
   const exports: any = {};
   const logged: string[] = [];
+  let refreshes = 0;
   vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/cron/check-subscriptions/route.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
     exports, Promise, Error, Date, console: { log() {}, error: (message: string) => logged.push(message) }, process: { env: { CRON_SECRET: 'fictional-cron' } },
     require: (name: string) => {
       if (name === 'next/server') return { NextResponse: { json: Response.json } };
       if (name === '@/lib/firebase-admin') return { getAdminDb: () => memory.db };
       if (name === '@/lib/server/subscription-expiration') return expiration;
+      if (name === '@/lib/public-partner-cache') return { refreshPublicPartners: () => { refreshes++; } };
       throw new Error(name);
     },
   });
-  return { memory, logged, run: () => exports.GET(new Request('http://127.0.0.1/api/cron/check-subscriptions', { headers: { authorization: 'Bearer fictional-cron' } })) };
+  return { memory, logged, get refreshes() { return refreshes; }, run: () => exports.GET(new Request('http://127.0.0.1/api/cron/check-subscriptions', { headers: { authorization: 'Bearer fictional-cron' } })) };
 }
 
 test('one receipt needing reconciliation is reported without stopping the rest of the run', async () => {
@@ -43,6 +45,7 @@ test('one receipt needing reconciliation is reported without stopping the rest o
   assert.equal((h.memory.read('subscriptions/a-bad') as any).status, 'active', 'the bad receipt is untouched, not partially expired');
   assert.equal((h.memory.read('employers/owner-a') as any).plan, 'premium');
   assert.ok(h.logged.some(line => line.includes('a-bad')));
+  assert.equal(h.refreshes, 1, 'the expired term refreshes the partner cards even though another receipt failed');
 });
 
 test('a clean run answers 200 with an empty failure list', async () => {
@@ -50,4 +53,8 @@ test('a clean run answers 200 with an empty failure list', async () => {
   const response = await h.run();
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).failures, []);
+  assert.equal(h.refreshes, 1);
+  const quiet = cron({ 'subscriptions/c-current': { orgId: 'owner-c', plan: 'tier1', status: 'active', expiresAt: new Date('2999-01-01') } });
+  assert.equal((await quiet.run()).status, 200);
+  assert.equal(quiet.refreshes, 0, 'nothing expired, nothing to refresh');
 });

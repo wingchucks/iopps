@@ -20,7 +20,9 @@ async function harness(t){
  if(id==='@/lib/server/admin-subscription-transaction')return transactionModule;
  if(id==='next/server')return {NextResponse:{json:Response.json}};
  if(id==='@/lib/api-auth')return {verifySuperAdminToken:async()=>({success:true,decodedToken:{uid:'fixture-admin'}})};
- if(id==='@/lib/firebase-admin')return {adminDb:port};throw Error(id);
+ if(id==='@/lib/firebase-admin')return {adminDb:port};
+ // Partner-card refreshes are asserted in admin-subscription-repair.test.mjs.
+ if(id==='@/lib/public-partner-cache')return {refreshPublicPartners(){}};throw Error(id);
  }});
  const read=async()=>({employer:(await emp.get()).data(),organization:(await org.get()).data(),receipts:(await db.collection('subscriptions').where('orgId','==',id).get()).docs.map(d=>({id:d.id,data:d.data()})),audits:(await emp.collection('actionHistory').get()).docs.map(d=>({id:d.id,data:d.data()}))});
  t.after(async()=>{for(const ref of extraRefs){await ref.delete();assert.equal((await ref.get()).exists,false);}for(const d of (await db.collection('subscriptions').where('orgId','==',id).get()).docs)await d.ref.delete();for(const d of (await emp.collection('actionHistory').get()).docs)await d.ref.delete();await emp.delete();await org.delete();assert.equal((await emp.get()).exists,false);assert.equal((await org.get()).exists,false);assert.equal((await db.collection('subscriptions').where('orgId','==',id).get()).size,0);await db.terminate();await deleteApp(app);});

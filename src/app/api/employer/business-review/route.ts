@@ -5,6 +5,8 @@ import { EmployerApiError, requireEmployerContext } from "@/lib/server/employer-
 import { businessListingIssues, getBusinessListingReview, newBusinessListingReview } from "@/lib/business-listing-review";
 import { listingReviewPayload, recordReviewChange, reviewError } from "@/lib/server/business-listing-review";
 import { isSchoolOrganization } from "@/lib/school-visibility";
+import { hasPartnerSubscription } from "@/lib/server/partner-promotion";
+import { refreshPublicPartners } from "@/lib/public-partner-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +30,10 @@ export async function POST(req: Request) {
     if (!context.emailVerified) throw new EmployerApiError(403, "Verify your sign-in email before submitting your listing.");
     const body = await req.json();
     const db = getAdminDb();
+    // A partner's listing leaves the cached partner cards while it waits for review.
+    let partnerCardChanged = false;
     const result = await db.runTransaction(async tx => {
+      partnerCardChanged = false;
       const snapshot = await tx.get(db.collection("organizations").doc(context.orgId));
       if (!snapshot.exists) throw new EmployerApiError(404, "Organization not found.");
       const data = snapshot.data()!;
@@ -42,10 +47,12 @@ export async function POST(req: Request) {
       }
       const review = { ...current, status: "pending" as const, submittedRevision: current.revision, submittedAt: new Date().toISOString(), submittedBy: context.uid, approvedRevision: 0 };
       recordReviewChange(tx, context.orgId, context.employerId, review, context.uid, "Business listing submitted for review.");
+      partnerCardChanged = hasPartnerSubscription(data);
       tx.update(snapshot.ref, { emailVerified: true });
       tx.set(db.collection("adminNotifications").doc(), { title: "Business listing ready for review", message: `${data.name} submitted a directory listing.`, type: "info", read: false, orgId: context.orgId, link: "/admin/business-reviews", createdAt: FieldValue.serverTimestamp() });
       return listingReviewPayload(context.orgId, { ...data, directoryReview: review, emailVerified: true });
     });
+    if (partnerCardChanged) refreshPublicPartners();
     return NextResponse.json(result);
   } catch (error) { return reviewError(error); }
 }

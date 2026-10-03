@@ -7,8 +7,9 @@ import { sourceModule, offlineNetwork } from './helpers/security-fixtures.mjs';
 // the first real handler stored. No Firebase bootstrap, env files or live sources.
 const memoryDb = paidImportMemoryDb;
 
-function harness(kind) {
+function harness(kind, { failRefresh = false } = {}) {
   const store = memoryDb();
+  const revalidated = [], warnings = [];
   store.rows.set('employers/fixture-org',{standardPostCredits:4});
   store.rows.set('rssFeeds/fixture-feed', {
     active: true, feedUrl: 'https://example.test/jobs.xml', feedName: 'Fictional feed',
@@ -18,10 +19,12 @@ function harness(kind) {
   const net = offlineNetwork();
   const options = {
     ...net, baseline: false,
-    globals: { ...net.globals, Date, process: { env: { CRON_SECRET: 'offline-fixture' } } },
+    globals: { ...net.globals, Date, process: { env: { CRON_SECRET: 'offline-fixture' } }, console: { log() {}, error() {}, warn: (...args) => warnings.push(args) } },
     mocks: {
       ...net.mocks,
       'next/server': { NextResponse: { json: Response.json } },
+      // The real refreshPublicJobs helper runs; only Next's cache API is recorded.
+      'next/cache': { revalidateTag: (tag, profile) => { if (failRefresh) throw new Error('Fictional cache outage'); revalidated.push({ tag, profile: { ...profile } }); } },
       '@/lib/firebase-admin': { adminDb: store.db },
       '@/lib/api-auth': { verifyAdminToken: async () => ({ success: true, decodedToken: { uid: 'fixture' } }) },
       'firebase-admin/firestore': { FieldValue: { serverTimestamp: () => 'fixture-time' } },
@@ -33,7 +36,7 @@ function harness(kind) {
     },
   };
   const route = sourceModule(kind === 'manual' ? 'src/app/api/admin/feeds/[feedId]/sync/route.ts' : 'src/app/api/cron/sync-feeds/route.ts', options);
-  return { ...store, async sync(nextItems) {
+  return { ...store, revalidated, warnings, async sync(nextItems) {
     items = nextItems;
     const request = new Request('https://fixture.test/sync', { method: kind === 'manual' ? 'POST' : 'GET', headers: { authorization: 'Bearer offline-fixture' } });
     const response = kind === 'manual' ? await route.POST(request, { params: Promise.resolve({ feedId: 'fixture-feed' }) }) : await route.GET(request);
@@ -82,6 +85,32 @@ for (const kind of ['manual', 'cron']) {
     await h.sync(items.map(({ sourcePostingDate, ...item }) => ({ ...item, description: 'Refreshed' })));
     assert.equal(project(h.jobs()[0][1]).sourcePostingDate, '2028-02-29');
     assert.equal(h.jobs()[0][1].description, 'Refreshed');
+  });
+}
+
+for (const kind of ['manual', 'cron']) {
+  test(`${kind}: a sync that imports, updates or expires jobs refreshes the public job caches once`, async () => {
+    const h = harness(kind);
+    const parser = sourceModule('src/lib/server/feed-source.ts');
+    const items = parser.parseSimpleXml('<jobs><job><guid>refresh-a</guid><title>Refresh role A</title></job><job><guid>refresh-b</guid><title>Refresh role B</title></job></jobs>');
+    await h.sync(items);
+    assert.deepEqual(h.revalidated, [{ tag: 'public-jobs', profile: { expire: 0 } }], 'new imports are public right away');
+    // Nothing to write: existing jobs are not updated and nothing left the source.
+    h.rows.get('rssFeeds/fixture-feed').updateExistingJobs = false;
+    await h.sync(items);
+    assert.equal(h.revalidated.length, 1, 'an unchanged sync keeps the cache');
+    h.rows.get('rssFeeds/fixture-feed').updateExistingJobs = true;
+    await h.sync(items.map(item => ({ ...item, description: 'Edited at the source' })));
+    assert.equal(h.revalidated.length, 2, 'updated live jobs are refreshed');
+  });
+  test(`${kind}: a cache refresh failure is logged and never changes the sync result`, async () => {
+    const h = harness(kind, { failRefresh: true });
+    const parser = sourceModule('src/lib/server/feed-source.ts');
+    const body = await h.sync(parser.parseSimpleXml('<jobs><job><guid>refresh-c</guid><title>Refresh role C</title></job></jobs>'));
+    assert.equal(body.success, true);
+    assert.equal(h.jobs().length, 1);
+    assert.equal(h.warnings.length, 1);
+    assert.match(String(h.warnings[0][0]), /public-jobs cache/);
   });
 }
 
