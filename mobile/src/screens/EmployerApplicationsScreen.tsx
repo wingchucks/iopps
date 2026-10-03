@@ -12,31 +12,58 @@ import {
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import {
-  getEmployerApplications,
-  updateApplicationStatus,
-  formatTimestamp,
-} from "../lib/firestore";
-import type { JobApplication, ApplicationStatus } from "../types";
+import { ApiError } from "../lib/api";
+import { listAllEmployerApplications, updateApplicationStatus } from "../lib/employer";
+import { formatTimestamp } from "../lib/dates";
+import { APPLICATION_STATUS_CONFIG } from "../lib/applicationStatus";
+import type { ApplicationStatus, EmployerApplication } from "../types";
 import { logger } from "../lib/logger";
 
-type FilterType = "all" | "pending" | "reviewed" | "shortlisted" | "hired" | "rejected";
+type FilterType = "all" | "pending" | "shortlisted" | "interview" | "offered" | "rejected";
+type EmployerStatus = Exclude<ApplicationStatus, "withdrawn">;
+
+// The next steps offered on each card; every status is available on the detail screen.
+const NEXT_STEPS: Partial<Record<ApplicationStatus, { status: EmployerStatus; label: string }[]>> = {
+  submitted: [
+    { status: "reviewing", label: "Mark Reviewing" },
+    { status: "shortlisted", label: "Shortlist" },
+  ],
+  reviewing: [
+    { status: "shortlisted", label: "Shortlist" },
+    { status: "rejected", label: "Reject" },
+  ],
+  shortlisted: [
+    { status: "interview", label: "Interview" },
+    { status: "rejected", label: "Reject" },
+  ],
+  interview: [
+    { status: "offered", label: "Offer" },
+    { status: "rejected", label: "Reject" },
+  ],
+};
 
 export default function EmployerApplicationsScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [applications, setApplications] = useState<EmployerApplication[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
 
   const loadApplications = async () => {
     if (!user) return;
     try {
-      const apps = await getEmployerApplications(user.uid);
+      const apps = await listAllEmployerApplications();
       setApplications(apps);
+      setError(null);
     } catch (error) {
       logger.error("Error loading applications:", error);
+      setError(
+        error instanceof ApiError && error.status === 403
+          ? "Only organization owners and admins can review applications."
+          : "Unable to load applications. Pull down to try again."
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -56,11 +83,11 @@ export default function EmployerApplicationsScreen() {
 
   const handleStatusUpdate = async (
     applicationId: string,
-    newStatus: ApplicationStatus
+    newStatus: EmployerStatus
   ) => {
     Alert.alert(
       "Update Status",
-      `Mark this application as "${newStatus}"?`,
+      `Mark this application as "${APPLICATION_STATUS_CONFIG[newStatus].label}"?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -76,7 +103,10 @@ export default function EmployerApplicationsScreen() {
               );
             } catch (error) {
               logger.error("Error updating application status:", error);
-              Alert.alert("Error", "Failed to update status. Please try again.");
+              Alert.alert(
+                "Error",
+                error instanceof ApiError ? error.message : "Failed to update status. Please try again."
+              );
             }
           },
         },
@@ -84,26 +114,9 @@ export default function EmployerApplicationsScreen() {
     );
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "submitted":
-        return "#3B82F6";
-      case "reviewed":
-        return "#F59E0B";
-      case "shortlisted":
-        return "#14B8A6";
-      case "hired":
-        return "#22C55E";
-      case "rejected":
-        return "#EF4444";
-      default:
-        return "#64748B";
-    }
-  };
-
   const filteredApplications = applications.filter((app) => {
     if (filter === "all") return true;
-    if (filter === "pending") return app.status === "submitted" || app.status === "reviewed";
+    if (filter === "pending") return app.status === "submitted" || app.status === "reviewing";
     return app.status === filter;
   });
 
@@ -111,127 +124,96 @@ export default function EmployerApplicationsScreen() {
     { key: "all", label: "All" },
     { key: "pending", label: "Pending" },
     { key: "shortlisted", label: "Shortlisted" },
-    { key: "hired", label: "Hired" },
+    { key: "interview", label: "Interview" },
+    { key: "offered", label: "Offered" },
     { key: "rejected", label: "Rejected" },
   ];
 
-  const renderApplication = ({ item }: { item: JobApplication }) => (
-    <TouchableOpacity
-      style={styles.applicationCard}
-      onPress={() =>
-        (navigation as any).navigate("ApplicationDetail", {
-          applicationId: item.id,
-        })
-      }
-      activeOpacity={0.7}
-    >
-      <View style={styles.applicationHeader}>
-        <View style={styles.applicantInfo}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {(item.memberDisplayName || item.memberEmail || "A").charAt(0).toUpperCase()}
-            </Text>
+  const stepStyle = (status: EmployerStatus) =>
+    status === "rejected"
+      ? { button: styles.rejectButton, text: styles.rejectButtonText }
+      : status === "offered"
+      ? { button: styles.hireButton, text: styles.hireButtonText }
+      : status === "reviewing"
+      ? { button: styles.reviewButton, text: styles.reviewButtonText }
+      : { button: styles.shortlistButton, text: styles.shortlistButtonText };
+
+  const renderApplication = ({ item }: { item: EmployerApplication }) => {
+    const status = APPLICATION_STATUS_CONFIG[item.status];
+    return (
+      <TouchableOpacity
+        style={styles.applicationCard}
+        onPress={() =>
+          (navigation as any).navigate("ApplicationDetail", {
+            applicationId: item.id,
+            application: item,
+          })
+        }
+        activeOpacity={0.7}
+      >
+        <View style={styles.applicationHeader}>
+          <View style={styles.applicantInfo}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {(item.applicantName || item.applicantEmail || "A").charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.applicantDetails}>
+              <Text style={styles.applicantName} numberOfLines={1}>
+                {item.applicantName || "Applicant"}
+              </Text>
+              <Text style={styles.applicantEmail} numberOfLines={1}>
+                {item.applicantEmail}
+              </Text>
+            </View>
           </View>
-          <View style={styles.applicantDetails}>
-            <Text style={styles.applicantName} numberOfLines={1}>
-              {item.memberDisplayName || "Applicant"}
-            </Text>
-            <Text style={styles.applicantEmail} numberOfLines={1}>
-              {item.memberEmail}
-            </Text>
+          <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
+            <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
           </View>
         </View>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(item.status) + "20" },
-          ]}
-        >
-          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-            {item.status}
+
+        <View style={styles.jobInfo}>
+          <Text style={styles.jobTitle} numberOfLines={1}>
+            {item.jobTitle || "Job Position"}
+          </Text>
+          <Text style={styles.applicationDate}>
+            Applied {formatTimestamp(item.appliedAt)}
           </Text>
         </View>
-      </View>
 
-      <View style={styles.jobInfo}>
-        <Text style={styles.jobTitle} numberOfLines={1}>
-          {item.jobTitle || "Job Position"}
-        </Text>
-        <Text style={styles.applicationDate}>
-          Applied {formatTimestamp(item.createdAt)}
-        </Text>
-      </View>
-
-      {item.coverLetter && (
-        <Text style={styles.coverLetterPreview} numberOfLines={2}>
-          "{item.coverLetter}"
-        </Text>
-      )}
-
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        {item.resumeUrl && (
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => Linking.openURL(item.resumeUrl!)}
-          >
-            <Text style={styles.actionButtonText}>View Resume</Text>
-          </TouchableOpacity>
+        {!!item.coverLetter && (
+          <Text style={styles.coverLetterPreview} numberOfLines={2}>
+            "{item.coverLetter}"
+          </Text>
         )}
 
-        {item.status === "submitted" && (
-          <>
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          {!!item.resumeUrl && (
             <TouchableOpacity
-              style={[styles.actionButton, styles.reviewButton]}
-              onPress={() => handleStatusUpdate(item.id, "reviewed")}
+              style={styles.actionButton}
+              onPress={() => Linking.openURL(item.resumeUrl)}
             >
-              <Text style={styles.reviewButtonText}>Mark Reviewed</Text>
+              <Text style={styles.actionButtonText}>View Resume</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.shortlistButton]}
-              onPress={() => handleStatusUpdate(item.id, "shortlisted")}
-            >
-              <Text style={styles.shortlistButtonText}>Shortlist</Text>
-            </TouchableOpacity>
-          </>
-        )}
+          )}
 
-        {item.status === "reviewed" && (
-          <>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.shortlistButton]}
-              onPress={() => handleStatusUpdate(item.id, "shortlisted")}
-            >
-              <Text style={styles.shortlistButtonText}>Shortlist</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => handleStatusUpdate(item.id, "rejected")}
-            >
-              <Text style={styles.rejectButtonText}>Reject</Text>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {item.status === "shortlisted" && (
-          <>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.hireButton]}
-              onPress={() => handleStatusUpdate(item.id, "hired")}
-            >
-              <Text style={styles.hireButtonText}>Mark Hired</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => handleStatusUpdate(item.id, "rejected")}
-            >
-              <Text style={styles.rejectButtonText}>Reject</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+          {(NEXT_STEPS[item.status] ?? []).map((step) => {
+            const style = stepStyle(step.status);
+            return (
+              <TouchableOpacity
+                key={step.status}
+                style={[styles.actionButton, style.button]}
+                onPress={() => handleStatusUpdate(item.id, step.status)}
+              >
+                <Text style={style.text}>{step.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -290,9 +272,11 @@ export default function EmployerApplicationsScreen() {
             <Text style={styles.emptyIcon}>📭</Text>
             <Text style={styles.emptyTitle}>No Applications</Text>
             <Text style={styles.emptyText}>
-              {filter === "all"
+              {error
+                ? error
+                : filter === "all"
                 ? "Applications will appear here when candidates apply to your jobs."
-                : `No ${filter} applications found.`}
+                : `No ${filters.find((option) => option.key === filter)?.label.toLowerCase()} applications found.`}
             </Text>
           </View>
         }

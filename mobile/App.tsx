@@ -37,7 +37,6 @@ import LiveStreamsScreen from "./src/screens/LiveStreamsScreen";
 
 // Member screens
 import SavedJobsScreen from "./src/screens/SavedJobsScreen";
-import JobAlertsScreen from "./src/screens/JobAlertsScreen";
 import ApplicationsScreen from "./src/screens/ApplicationsScreen";
 import EditProfileScreen from "./src/screens/EditProfileScreen";
 
@@ -53,7 +52,6 @@ import EmployerDashboardScreen from "./src/screens/EmployerDashboardScreen";
 import EmployerApplicationsScreen from "./src/screens/EmployerApplicationsScreen";
 import EmployerJobsScreen from "./src/screens/EmployerJobsScreen";
 import ApplicationDetailScreen from "./src/screens/ApplicationDetailScreen";
-import VendorDashboardScreen from "./src/screens/VendorDashboardScreen";
 
 // Tab icon components with badge support
 function JobsIcon({ focused }: { focused: boolean }) {
@@ -142,7 +140,6 @@ const linking: LinkingOptions<any> = {
       Applications: "applications",
       ApplicationDetail: "application/:applicationId",
       SavedJobs: "saved-jobs",
-      JobAlerts: "job-alerts",
       EditProfile: "edit-profile",
       SignIn: "sign-in",
       SignUp: "sign-up",
@@ -332,14 +329,6 @@ function RootNavigator() {
         }}
       />
       <Stack.Screen
-        name="JobAlerts"
-        component={JobAlertsScreen}
-        options={{
-          title: "Job Alerts",
-          headerBackTitle: "Profile",
-        }}
-      />
-      <Stack.Screen
         name="Applications"
         component={ApplicationsScreen}
         options={{
@@ -415,16 +404,6 @@ function RootNavigator() {
         options={{
           title: "Application Details",
           headerBackTitle: "Back",
-        }}
-      />
-
-      {/* Vendor Dashboard Screen */}
-      <Stack.Screen
-        name="VendorDashboard"
-        component={VendorDashboardScreen}
-        options={{
-          title: "Vendor Dashboard",
-          headerBackTitle: "Profile",
         }}
       />
     </Stack.Navigator>

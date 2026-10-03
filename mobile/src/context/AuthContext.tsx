@@ -10,11 +10,7 @@ import {
 } from "firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { auth } from "../lib/firebase";
-import {
-  registerForPushNotificationsAsync,
-  savePushToken,
-  removePushToken,
-} from "../lib/notifications";
+import { registerForPushNotificationsAsync } from "../lib/notifications";
 import { authLogger } from "../lib/logger";
 import * as WebBrowser from "expo-web-browser";
 import {
@@ -85,15 +81,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const previousUserId = useRef<string | null>(null);
 
-  // Register push notifications for a user
+  // Register push notifications for a user. The token stays on the device: no IOPPS
+  // service sends push notifications, and firestore.rules keeps it off the profile.
   const registerPushNotifications = async (): Promise<boolean> => {
     try {
       const token = await registerForPushNotificationsAsync();
       if (token) {
         setExpoPushToken(token);
-        if (user) {
-          await savePushToken(user.uid, token);
-        }
         return true;
       }
       return false;
@@ -128,13 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      // Handle sign out - remove push token for previous user
+      // Handle sign out - forget the previous user's push token
       if (previousUserId.current && !firebaseUser) {
-        try {
-          await removePushToken(previousUserId.current);
-        } catch (error) {
-          authLogger.error("Error removing push token", error);
-        }
         setExpoPushToken(null);
       }
 
@@ -152,7 +141,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const token = await registerForPushNotificationsAsync();
           if (token) {
             setExpoPushToken(token);
-            await savePushToken(firebaseUser.uid, token);
           }
         } catch (error) {
           authLogger.error("Error registering push notifications", error);
@@ -186,14 +174,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    // Remove push token before signing out
-    if (user) {
-      try {
-        await removePushToken(user.uid);
-      } catch (error) {
-        authLogger.error("Error removing push token on sign out", error);
-      }
-    }
     // Sign out from Google to allow choosing a different account next time
     try {
       await GoogleSignin.signOut();

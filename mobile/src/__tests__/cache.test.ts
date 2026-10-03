@@ -97,7 +97,8 @@ describe('Cache utilities', () => {
 
   describe('CACHE_KEYS', () => {
     it('should have correct key formats', () => {
-      expect(CACHE_KEYS.JOBS).toBe('jobs');
+      // Bumped when the cached job shape changed, so old entries are never read.
+      expect(CACHE_KEYS.JOBS).toBe('jobs:v2');
       expect(CACHE_KEYS.JOB_DETAIL('123')).toBe('job:123');
       expect(CACHE_KEYS.USER_PROFILE('user-1')).toBe('user:user-1');
       expect(CACHE_KEYS.SAVED_JOBS('user-1')).toBe('savedJobs:user-1');

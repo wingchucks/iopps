@@ -11,17 +11,24 @@ import {
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import {
-  getEmployerStats,
-  getEmployerJobs,
-  getEmployerApplications,
-  formatTimestamp,
-} from "../lib/firestore";
-import type { JobPosting, JobApplication } from "../types";
+import { API_BASE, ApiError } from "../lib/api";
+import { listAllEmployerApplications, listEmployerJobs } from "../lib/employer";
+import { getUnreadConversationCount } from "../lib/messaging";
+import { formatTimestamp } from "../lib/dates";
+import { APPLICATION_STATUS_CONFIG } from "../lib/applicationStatus";
+import type { EmployerApplication, EmployerJob } from "../types";
 import { logger } from "../lib/logger";
 
-const WEB_DASHBOARD_URL = "https://iopps.ca/organization/dashboard";
-const WEB_PROFILE_URL = "https://iopps.ca/organization/profile";
+const WEB_DASHBOARD_URL = `${API_BASE}/org/dashboard`;
+const WEB_PROFILE_URL = `${API_BASE}/org/dashboard/profile`;
+
+/** Null when the API refuses this account (403), e.g. a team member reviewing applications. */
+function unlessForbidden<T>(request: Promise<T>): Promise<T | null> {
+  return request.catch((error) => {
+    if (error instanceof ApiError && error.status === 403) return null;
+    throw error;
+  });
+}
 
 export default function EmployerDashboardScreen() {
   const navigation = useNavigation();
@@ -35,20 +42,34 @@ export default function EmployerDashboardScreen() {
     pendingApplications: 0,
     unreadMessages: 0,
   });
-  const [recentJobs, setRecentJobs] = useState<JobPosting[]>([]);
-  const [recentApplications, setRecentApplications] = useState<JobApplication[]>([]);
+  const [recentJobs, setRecentJobs] = useState<EmployerJob[]>([]);
+  const [recentApplications, setRecentApplications] = useState<EmployerApplication[]>([]);
+  const [canReviewApplications, setCanReviewApplications] = useState(true);
 
   const loadData = async () => {
     if (!user) return;
     try {
-      const [statsData, jobs, applications] = await Promise.all([
-        getEmployerStats(user.uid),
-        getEmployerJobs(user.uid),
-        getEmployerApplications(user.uid),
+      const [jobList, applications, unreadMessages] = await Promise.all([
+        unlessForbidden(listEmployerJobs()),
+        // Only organization owners and admins review applications.
+        unlessForbidden(listAllEmployerApplications()),
+        getUnreadConversationCount(user.uid).catch(() => 0),
       ]);
-      setStats(statsData);
+      const jobs = jobList ?? [];
+      setCanReviewApplications(applications !== null);
+      setStats({
+        totalJobs: jobs.length,
+        activeJobs: jobs.filter((job) => job.active).length,
+        totalApplications: applications
+          ? applications.length
+          : jobs.reduce((total, job) => total + job.applicationCount, 0),
+        pendingApplications: (applications ?? []).filter(
+          (app) => app.status === "submitted" || app.status === "reviewing"
+        ).length,
+        unreadMessages,
+      });
       setRecentJobs(jobs.slice(0, 3));
-      setRecentApplications(applications.slice(0, 5));
+      setRecentApplications((applications ?? []).slice(0, 5));
     } catch (error) {
       logger.error("Error loading employer dashboard:", error);
     } finally {
@@ -68,23 +89,6 @@ export default function EmployerDashboardScreen() {
   const handleRefresh = () => {
     setRefreshing(true);
     loadData();
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "submitted":
-        return "#3B82F6"; // blue
-      case "reviewed":
-        return "#F59E0B"; // amber
-      case "shortlisted":
-        return "#14B8A6"; // teal
-      case "hired":
-        return "#22C55E"; // green
-      case "rejected":
-        return "#EF4444"; // red
-      default:
-        return "#64748B"; // gray
-    }
   };
 
   if (loading) {
@@ -201,7 +205,11 @@ export default function EmployerDashboardScreen() {
         {recentApplications.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyIcon}>📭</Text>
-            <Text style={styles.emptyText}>No applications yet</Text>
+            <Text style={styles.emptyText}>
+              {canReviewApplications
+                ? "No applications yet"
+                : "Only organization owners and admins can review applications"}
+            </Text>
           </View>
         ) : (
           recentApplications.map((app) => (
@@ -211,26 +219,27 @@ export default function EmployerDashboardScreen() {
               onPress={() =>
                 (navigation as any).navigate("ApplicationDetail", {
                   applicationId: app.id,
+                  application: app,
                 })
               }
             >
               <View style={styles.applicationHeader}>
                 <Text style={styles.applicantName} numberOfLines={1}>
-                  {app.memberDisplayName || app.memberEmail || "Applicant"}
+                  {app.applicantName || app.applicantEmail || "Applicant"}
                 </Text>
                 <View
                   style={[
                     styles.statusBadge,
-                    { backgroundColor: getStatusColor(app.status) + "20" },
+                    { backgroundColor: APPLICATION_STATUS_CONFIG[app.status].bg },
                   ]}
                 >
                   <Text
                     style={[
                       styles.statusText,
-                      { color: getStatusColor(app.status) },
+                      { color: APPLICATION_STATUS_CONFIG[app.status].color },
                     ]}
                   >
-                    {app.status}
+                    {APPLICATION_STATUS_CONFIG[app.status].label}
                   </Text>
                 </View>
               </View>
@@ -238,7 +247,7 @@ export default function EmployerDashboardScreen() {
                 {app.jobTitle || "Job Position"}
               </Text>
               <Text style={styles.applicationDate}>
-                Applied {formatTimestamp(app.createdAt)}
+                Applied {formatTimestamp(app.appliedAt)}
               </Text>
             </TouchableOpacity>
           ))
@@ -298,18 +307,14 @@ export default function EmployerDashboardScreen() {
                       !job.active && styles.inactiveBadgeText,
                     ]}
                   >
-                    {job.active ? "Active" : "Inactive"}
+                    {job.active ? "Active" : job.status === "draft" ? "Draft" : "Closed"}
                   </Text>
                 </View>
               </View>
-              <Text style={styles.jobLocation}>{job.location}</Text>
+              {!!job.location && <Text style={styles.jobLocation}>{job.location}</Text>}
               <View style={styles.jobStats}>
                 <Text style={styles.jobStatText}>
-                  {job.viewsCount || 0} views
-                </Text>
-                <Text style={styles.jobStatDot}>•</Text>
-                <Text style={styles.jobStatText}>
-                  {job.applicationsCount || 0} applications
+                  {job.applicationCount} {job.applicationCount === 1 ? "application" : "applications"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -588,11 +593,6 @@ const styles = StyleSheet.create({
   jobStatText: {
     fontSize: 12,
     color: "#64748B",
-  },
-  jobStatDot: {
-    fontSize: 12,
-    color: "#64748B",
-    marginHorizontal: 6,
   },
   webDashboardButton: {
     flexDirection: "row",

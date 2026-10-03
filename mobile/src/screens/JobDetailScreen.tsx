@@ -9,11 +9,11 @@ import {
   Linking,
   Alert,
 } from "react-native";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
 import { JobPosting } from "../types";
 import { useAuth } from "../context/AuthContext";
-import { isJobSaved, saveJob, unsaveJob } from "../lib/firestore";
+import { getJob } from "../lib/jobs";
+import { isJobSaved, saveJob, unsaveJob } from "../lib/savedJobs";
+import { formatTimestamp } from "../lib/dates";
 import { logger } from "../lib/logger";
 
 interface JobDetailScreenProps {
@@ -44,16 +44,7 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const jobDoc = await getDoc(doc(db, "jobs", jobId));
-        if (jobDoc.exists()) {
-          setJob({ id: jobDoc.id, ...jobDoc.data() } as JobPosting);
-        }
-
-        // Check if job is saved
-        if (user) {
-          const saved = await isJobSaved(user.uid, jobId);
-          setIsSaved(saved);
-        }
+        setJob(await getJob(jobId));
       } catch (error) {
         logger.error("Error fetching job:", error);
       } finally {
@@ -62,6 +53,16 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
     };
 
     fetchJob();
+  }, [jobId]);
+
+  useEffect(() => {
+    if (!user) {
+      setIsSaved(false);
+      return;
+    }
+    isJobSaved(user.uid, jobId)
+      .then(setIsSaved)
+      .catch((error) => logger.error("Error checking saved job:", error));
   }, [jobId, user]);
 
   const handleToggleSave = async () => {
@@ -83,7 +84,7 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
         await unsaveJob(user.uid, jobId);
         setIsSaved(false);
       } else {
-        await saveJob(user.uid, jobId);
+        await saveJob(user.uid, { id: job?.id || jobId, title: job?.title, employerName: job?.employerName });
         setIsSaved(true);
       }
     } catch (error) {
@@ -97,10 +98,20 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
   const handleApply = async () => {
     if (!job) return;
 
+    if (!job.active) {
+      Alert.alert("Applications Closed", "This job is no longer accepting applications.");
+      return;
+    }
+
     try {
       if (job.quickApplyEnabled && user) {
         // Navigate to quick apply screen
-        navigation.navigate("QuickApply", { jobId: job.id });
+        navigation.navigate("QuickApply", {
+          jobId: job.id,
+          requiresResume: job.requiresResume === true,
+          requiresCoverLetter: job.requiresCoverLetter === true,
+          requiresReferences: job.requiresReferences === true,
+        });
       } else if (job.quickApplyEnabled && !user) {
         Alert.alert(
           "Sign In Required",
@@ -145,7 +156,12 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {job.featured && (
+        {!job.active && (
+          <View style={styles.closedBanner}>
+            <Text style={styles.closedText}>This job is closed</Text>
+          </View>
+        )}
+        {job.active && job.featured && (
           <View style={styles.featuredBanner}>
             <Text style={styles.featuredText}>Featured Opportunity</Text>
           </View>
@@ -166,14 +182,18 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
         </View>
 
         <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <Text style={styles.metaLabel}>Location</Text>
-            <Text style={styles.metaValue}>{job.location}</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Text style={styles.metaLabel}>Type</Text>
-            <Text style={styles.metaValue}>{job.employmentType}</Text>
-          </View>
+          {!!job.location && (
+            <View style={styles.metaItem}>
+              <Text style={styles.metaLabel}>Location</Text>
+              <Text style={styles.metaValue}>{job.location}</Text>
+            </View>
+          )}
+          {!!job.employmentType && (
+            <View style={styles.metaItem}>
+              <Text style={styles.metaLabel}>Type</Text>
+              <Text style={styles.metaValue}>{job.employmentType}</Text>
+            </View>
+          )}
         </View>
 
         {job.salaryRange && (
@@ -233,7 +253,7 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
         {job.closingDate && (
           <View style={styles.closingDate}>
             <Text style={styles.closingLabel}>Application Deadline:</Text>
-            <Text style={styles.closingValue}>{job.closingDate}</Text>
+            <Text style={styles.closingValue}>{formatTimestamp(job.closingDate) || job.closingDate}</Text>
           </View>
         )}
       </ScrollView>
@@ -248,9 +268,12 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
             {savingJob ? "..." : isSaved ? "Saved" : "Save"}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
+        <TouchableOpacity
+          style={[styles.applyButton, !job.active && styles.applyButtonDisabled]}
+          onPress={handleApply}
+        >
           <Text style={styles.applyButtonText}>
-            {job.quickApplyEnabled ? "Quick Apply" : "Apply Now"}
+            {!job.active ? "Closed" : job.quickApplyEnabled ? "Quick Apply" : "Apply Now"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -296,6 +319,19 @@ const styles = StyleSheet.create({
   },
   featuredText: {
     color: "#0F172A",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  closedBanner: {
+    backgroundColor: "#334155",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+    marginBottom: 16,
+  },
+  closedText: {
+    color: "#F8FAFC",
     fontSize: 12,
     fontWeight: "bold",
   },
@@ -474,6 +510,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: "center",
+  },
+  applyButtonDisabled: {
+    backgroundColor: "#475569",
   },
   applyButtonText: {
     color: "#0F172A",

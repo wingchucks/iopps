@@ -55,7 +55,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       } else if (data.screen) {
         navigation.navigate(data.screen);
       } else if (data.type === "job_alert") {
-        navigation.navigate("JobAlerts");
+        navigation.navigate("MainTabs", { screen: "Jobs" });
       } else if (data.type === "message") {
         navigation.navigate("Messages");
       } else if (data.type === "notification") {

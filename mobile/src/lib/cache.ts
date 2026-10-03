@@ -128,7 +128,8 @@ export async function clearExpiredCache(): Promise<void> {
 
 // Cache keys for different data types
 export const CACHE_KEYS = {
-  JOBS: "jobs",
+  // v2: the website API's job shape; older entries held database records.
+  JOBS: "jobs:v2",
   JOB_DETAIL: (id: string) => `job:${id}`,
   CONFERENCES: "conferences",
   CONFERENCE_DETAIL: (id: string) => `conference:${id}`,

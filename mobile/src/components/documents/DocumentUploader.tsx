@@ -8,7 +8,7 @@ import {
     Alert,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { uploadResume } from "../../lib/storage";
+import { MAX_UPLOAD_BYTES, resumeContentType, uploadResume } from "../../lib/storage";
 import { logger } from "../../lib/logger";
 
 interface DocumentUploaderProps {
@@ -44,7 +44,15 @@ export default function DocumentUploader({
 
             if (!result.canceled && result.assets && result.assets[0]) {
                 const file = result.assets[0];
-                handleUpload(file.uri, file.name);
+                if (!resumeContentType(file.name, file.mimeType)) {
+                    Alert.alert("Unsupported File", "Please choose a PDF or Word document.");
+                    return;
+                }
+                if (typeof file.size === "number" && file.size >= MAX_UPLOAD_BYTES) {
+                    Alert.alert("File Too Large", `Your ${label.toLowerCase()} must be under 5 MB.`);
+                    return;
+                }
+                handleUpload(file.uri, file.name, file.mimeType);
             }
         } catch (error) {
             logger.error("Error picking document:", error);
@@ -52,13 +60,13 @@ export default function DocumentUploader({
         }
     };
 
-    const handleUpload = async (uri: string, name: string) => {
+    const handleUpload = async (uri: string, name: string, mimeType?: string) => {
         setUploading(true);
         setProgress(0);
         try {
             const result = await uploadResume(userId, uri, name, (p) => {
                 setProgress(p.progress);
-            });
+            }, mimeType);
             onUploadComplete(result.downloadURL, name);
             Alert.alert("Success", `${label} uploaded successfully!`);
         } catch (error) {

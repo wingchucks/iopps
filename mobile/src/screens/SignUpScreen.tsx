@@ -10,10 +10,9 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { sendEmailVerification } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
-import { auth, db } from "../lib/firebase";
+import { auth } from "../lib/firebase";
 
 interface SignUpScreenProps {
   navigation: any;
@@ -46,14 +45,8 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
     try {
       await signUp(email.trim(), password);
 
-      // Create user document in Firestore
+      // As on the website, the member profile is created when it is first saved.
       if (auth.currentUser) {
-        await setDoc(doc(db, "users", auth.currentUser.uid), {
-          email: email.trim(),
-          role: "user",
-          createdAt: serverTimestamp(),
-        });
-
         // Send email verification
         try {
           await sendEmailVerification(auth.currentUser);

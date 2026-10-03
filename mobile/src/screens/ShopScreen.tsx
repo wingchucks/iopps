@@ -10,7 +10,7 @@ import {
   Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { listVendors } from "../lib/firestore";
+import { listVendors } from "../lib/listings";
 import type { VendorProfile } from "../types";
 import { logger } from "../lib/logger";
 
@@ -23,7 +23,7 @@ export default function ShopScreen() {
 
   const loadVendors = async () => {
     try {
-      const data = await listVendors(50);
+      const data = await listVendors();
       setVendors(data);
     } catch (error) {
       logger.error("Error loading vendors:", error);
@@ -62,7 +62,7 @@ export default function ShopScreen() {
         ) : (
           <View style={styles.logoPlaceholder}>
             <Text style={styles.logoText}>
-              {item.businessName.charAt(0).toUpperCase()}
+              {(item.businessName || "?").charAt(0).toUpperCase()}
             </Text>
           </View>
         )}
@@ -72,46 +72,27 @@ export default function ShopScreen() {
               <Text style={styles.featuredText}>Featured</Text>
             </View>
           )}
-          {item.isIndigenousOwned && (
-            <View style={styles.indigenousBadge}>
-              <Text style={styles.indigenousText}>Indigenous Owned</Text>
-            </View>
-          )}
         </View>
       </View>
 
       <Text style={styles.businessName}>{item.businessName}</Text>
-      {item.tagline && <Text style={styles.tagline}>{item.tagline}</Text>}
 
       <View style={styles.metaRow}>
-        {item.category && (
+        {!!item.category && (
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryText}>{item.category}</Text>
           </View>
         )}
-        {item.location && (
+        {!!item.location && (
           <Text style={styles.location}>📍 {item.location}</Text>
         )}
       </View>
 
-      {item.about && (
+      {!!item.about && (
         <Text style={styles.about} numberOfLines={2}>
           {item.about}
         </Text>
       )}
-
-      <View style={styles.tagsRow}>
-        {item.shipsCanadaWide && (
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>🚚 Ships Canada-Wide</Text>
-          </View>
-        )}
-        {item.isOnlineOnly && (
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>🌐 Online Store</Text>
-          </View>
-        )}
-      </View>
     </TouchableOpacity>
   );
 
@@ -292,28 +273,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "600",
   },
-  indigenousBadge: {
-    backgroundColor: "#14B8A620",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  indigenousText: {
-    color: "#14B8A6",
-    fontSize: 10,
-    fontWeight: "600",
-  },
   businessName: {
     fontSize: 18,
     fontWeight: "600",
     color: "#F8FAFC",
     marginBottom: 4,
-  },
-  tagline: {
-    fontSize: 14,
-    color: "#EC4899",
-    marginBottom: 8,
-    fontStyle: "italic",
   },
   metaRow: {
     flexDirection: "row",
@@ -342,21 +306,6 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     lineHeight: 20,
     marginBottom: 12,
-  },
-  tagsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  tag: {
-    backgroundColor: "#0F172A",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  tagText: {
-    fontSize: 12,
-    color: "#94A3B8",
   },
   loadingText: {
     color: "#94A3B8",

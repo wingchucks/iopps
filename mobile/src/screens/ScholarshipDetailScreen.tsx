@@ -11,7 +11,9 @@ import {
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import { getScholarship, formatTimestamp } from "../lib/firestore";
+import { API_BASE } from "../lib/api";
+import { getScholarship } from "../lib/listings";
+import { formatTimestamp } from "../lib/dates";
 import { logger } from "../lib/logger";
 import type { Scholarship } from "../types";
 
@@ -54,7 +56,7 @@ export default function ScholarshipDetailScreen() {
     }
 
     // Open scholarship on IOPPS website for application
-    const scholarshipUrl = `https://iopps.ca/scholarships/${scholarshipId}`;
+    const scholarshipUrl = `${API_BASE}/scholarships/${encodeURIComponent(scholarship?.slug || scholarshipId)}`;
     try {
       const supported = await Linking.canOpenURL(scholarshipUrl);
       if (supported) {
@@ -98,17 +100,21 @@ export default function ScholarshipDetailScreen() {
           <View style={styles.typeBadge}>
             <Text style={styles.typeText}>{scholarship.type}</Text>
           </View>
-          <View style={styles.levelBadge}>
-            <Text style={styles.levelText}>{scholarship.level}</Text>
-          </View>
+          {!!scholarship.level && (
+            <View style={styles.levelBadge}>
+              <Text style={styles.levelText}>{scholarship.level}</Text>
+            </View>
+          )}
         </View>
 
         <Text style={styles.title}>{scholarship.title}</Text>
-        <Text style={styles.provider}>Provided by {scholarship.provider}</Text>
+        {!!scholarship.provider && (
+          <Text style={styles.provider}>Provided by {scholarship.provider}</Text>
+        )}
 
         {/* Key Details Card */}
         <View style={styles.detailsCard}>
-          {scholarship.amount && (
+          {!!scholarship.amount && (
             <View style={styles.detailRow}>
               <Text style={styles.detailIcon}>💰</Text>
               <View style={styles.detailContent}>
@@ -120,24 +126,24 @@ export default function ScholarshipDetailScreen() {
             </View>
           )}
 
-          {scholarship.deadline && (
+          {!!scholarship.deadline && (
             <>
-              {scholarship.amount && <View style={styles.divider} />}
+              {!!scholarship.amount && <View style={styles.divider} />}
               <View style={styles.detailRow}>
                 <Text style={styles.detailIcon}>⏰</Text>
                 <View style={styles.detailContent}>
                   <Text style={styles.detailLabel}>Application Deadline</Text>
                   <Text style={[styles.detailValue, styles.deadlineValue]}>
-                    {formatTimestamp(scholarship.deadline)}
+                    {formatTimestamp(scholarship.deadline) || scholarship.deadline}
                   </Text>
                 </View>
               </View>
             </>
           )}
 
-          {scholarship.region && (
+          {!!scholarship.region && (
             <>
-              <View style={styles.divider} />
+              {!!(scholarship.amount || scholarship.deadline) && <View style={styles.divider} />}
               <View style={styles.detailRow}>
                 <Text style={styles.detailIcon}>📍</Text>
                 <View style={styles.detailContent}>

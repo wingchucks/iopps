@@ -9,7 +9,8 @@ import {
   RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { listPowwows, formatTimestamp } from "../lib/firestore";
+import { listPowwows } from "../lib/listings";
+import { formatDateRange } from "../lib/dates";
 import type { PowwowEvent } from "../types";
 import { logger } from "../lib/logger";
 
@@ -21,7 +22,7 @@ export default function PowwowsScreen() {
 
   const loadPowwows = async () => {
     try {
-      const data = await listPowwows(50);
+      const data = await listPowwows();
       setPowwows(data);
     } catch (error) {
       logger.error("Error loading powwows:", error);
@@ -47,55 +48,24 @@ export default function PowwowsScreen() {
         (navigation as any).navigate("PowwowDetail", { powwowId: item.id })
       }
     >
-      <View style={styles.cardHeader}>
-        {item.livestream && (
-          <View style={styles.livestreamBadge}>
-            <Text style={styles.livestreamText}>📺 Livestream</Text>
-          </View>
-        )}
-        {item.season && (
-          <View style={styles.seasonBadge}>
-            <Text style={styles.seasonText}>{item.season}</Text>
-          </View>
-        )}
-      </View>
-
       <Text style={styles.name}>{item.name}</Text>
-      {item.host && <Text style={styles.host}>Hosted by {item.host}</Text>}
+      {!!item.host && <Text style={styles.host}>Hosted by {item.host}</Text>}
 
-      <View style={styles.detailsRow}>
-        <View style={styles.detailItem}>
-          <Text style={styles.detailIcon}>📍</Text>
-          <Text style={styles.detailText}>{item.location}</Text>
+      {!!item.location && (
+        <View style={styles.detailsRow}>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText}>{item.location}</Text>
+          </View>
         </View>
-      </View>
+      )}
 
       <View style={styles.dateRow}>
         <Text style={styles.dateIcon}>📅</Text>
         <Text style={styles.dateText}>
-          {item.dateRange ||
-            (item.startDate &&
-              `${formatTimestamp(item.startDate)}${
-                item.endDate ? ` - ${formatTimestamp(item.endDate)}` : ""
-              }`)}
+          {item.dateRange || formatDateRange(item.startDate, item.endDate)}
         </Text>
       </View>
-
-      {item.registrationStatus && (
-        <View style={styles.registrationRow}>
-          <Text style={styles.registrationLabel}>Registration:</Text>
-          <Text
-            style={[
-              styles.registrationStatus,
-              item.registrationStatus.toLowerCase().includes("open")
-                ? styles.registrationOpen
-                : styles.registrationClosed,
-            ]}
-          >
-            {item.registrationStatus}
-          </Text>
-        </View>
-      )}
 
       <Text style={styles.description} numberOfLines={3}>
         {item.description}
@@ -185,33 +155,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#334155",
   },
-  cardHeader: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 12,
-  },
-  livestreamBadge: {
-    backgroundColor: "#EF444420",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  livestreamText: {
-    color: "#EF4444",
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  seasonBadge: {
-    backgroundColor: "#14B8A620",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  seasonText: {
-    color: "#14B8A6",
-    fontSize: 11,
-    fontWeight: "600",
-  },
   name: {
     fontSize: 18,
     fontWeight: "600",
@@ -254,25 +197,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#F8FAFC",
     fontWeight: "500",
-  },
-  registrationRow: {
-    flexDirection: "row",
-    marginBottom: 12,
-  },
-  registrationLabel: {
-    fontSize: 13,
-    color: "#64748B",
-    marginRight: 6,
-  },
-  registrationStatus: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  registrationOpen: {
-    color: "#10B981",
-  },
-  registrationClosed: {
-    color: "#F59E0B",
   },
   description: {
     fontSize: 14,

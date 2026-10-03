@@ -9,7 +9,7 @@ import {
   RefreshControl,
   Linking,
 } from "react-native";
-import { listLiveStreams } from "../lib/firestore";
+import { listLiveStreams } from "../lib/listings";
 import type { LiveStreamEvent } from "../types";
 import { logger } from "../lib/logger";
 
@@ -27,7 +27,7 @@ export default function LiveStreamsScreen() {
 
   const loadStreams = async () => {
     try {
-      const data = await listLiveStreams(50);
+      const data = await listLiveStreams();
       setStreams(data);
     } catch (error) {
       logger.error("Error loading live streams:", error);
@@ -57,12 +57,9 @@ export default function LiveStreamsScreen() {
     return (
       <TouchableOpacity
         style={styles.card}
-        onPress={() => {
-          // For now, open the platform URL if available
-          if (item.platform && item.platform.startsWith("http")) {
-            Linking.openURL(item.platform);
-          }
-        }}
+        onPress={() => Linking.openURL(item.url)}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.status}: ${item.title}`}
       >
         <View style={styles.cardHeader}>
           <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
@@ -71,7 +68,7 @@ export default function LiveStreamsScreen() {
               {item.status}
             </Text>
           </View>
-          {item.category && (
+          {!!item.category && (
             <View style={styles.categoryBadge}>
               <Text style={styles.categoryText}>{item.category}</Text>
             </View>
@@ -81,7 +78,7 @@ export default function LiveStreamsScreen() {
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.host}>Hosted by {item.host}</Text>
 
-        {item.startTime && (
+        {!!item.startTime && (
           <View style={styles.timeRow}>
             <Text style={styles.timeIcon}>🕐</Text>
             <Text style={styles.timeText}>{item.startTime}</Text>
@@ -92,16 +89,18 @@ export default function LiveStreamsScreen() {
           {item.description}
         </Text>
 
-        {item.platform && (
+        {!!item.platform && (
           <View style={styles.platformRow}>
             <Text style={styles.platformLabel}>Platform:</Text>
             <Text style={styles.platformText}>{item.platform}</Text>
           </View>
         )}
 
-        {item.status === "Live Now" && (
-          <TouchableOpacity style={styles.watchButton}>
-            <Text style={styles.watchButtonText}>Watch Now</Text>
+        {item.status !== "Upcoming" && (
+          <TouchableOpacity style={styles.watchButton} onPress={() => Linking.openURL(item.url)}>
+            <Text style={styles.watchButtonText}>
+              {item.status === "Live Now" ? "Watch Now" : "Watch Replay"}
+            </Text>
           </TouchableOpacity>
         )}
       </TouchableOpacity>
