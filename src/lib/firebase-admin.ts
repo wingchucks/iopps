@@ -137,6 +137,15 @@ export function getAdminAuth(): Auth {
 export function getAdminDb(): Firestore {
   if (_db) return _db;
   const app = getAdminApp();
+  if (process.env.FIRESTORE_EMULATOR_HOST) {
+    // The SDK always sends Firestore traffic to the emulator when this is set. Keep its
+    // default insecure gRPC channel there: the REST transport resolves Google Application
+    // Default Credentials before every request, and emulator runs (CI, isolated QA) have
+    // none, so every read failed with "Could not load the default credentials" before
+    // reaching the emulator.
+    _db = getFirestore(app);
+    return _db;
+  }
   try {
     // HTTP/1.1 REST instead of the default gRPC channel: serverless calls must not
     // wait minutes on an idle channel (keepalive off, 300 s deadlines, retries).

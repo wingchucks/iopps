@@ -22,10 +22,10 @@ test('homepage and partner readers propagate read failures instead of returning 
   await assert.rejects(landing.getPartners(), /UNAVAILABLE/);
 });
 
-function pageCache(overrides, globals = {}) {
+function pageCache(overrides, globals = {}, loadCachedPublicJobRouteIndex = async () => ({ routes: [] })) {
   return sourceModule('src/lib/server/public-page-cache.ts', { globals, mocks: {
     'next/cache': { unstable_cache: read => read },
-    '@/lib/public-job-route-cache': { loadCachedPublicJobRouteIndex: async () => ({ routes: [] }) },
+    '@/lib/public-job-route-cache': { loadCachedPublicJobRouteIndex },
     '@/lib/server/landing-content': { getLatestJobs: async () => [], getPartners: async () => [] },
     '@/lib/server/detail-metadata': {
       fallbackMetadata: sourceModule('src/lib/server/detail-metadata.ts', { mocks: { '@/lib/firebase-admin': {}, '@/lib/public-job-route-cache': {} } }).fallbackMetadata,
@@ -45,6 +45,18 @@ test('a hung or failed job metadata read renders a noindex fallback instead of h
   const healthy = pageCache({});
   assert.deepEqual(await healthy.getJobPageMetadata('registered-nurse'), { title: 'Cached job' });
   assert.deepEqual(await healthy.getJobPageJsonLd('registered-nurse'), { '@type': 'JobPosting' });
+});
+
+test('a hung shared route index warm-up never holds the job page metadata', async () => {
+  // Manual timers: only the warm-up bound fires; the metadata read itself stays healthy.
+  const timers = [];
+  const manual = { setTimeout: fn => timers.push(fn), clearTimeout: id => { timers[id - 1] = undefined; } };
+  const cache = pageCache({}, manual, () => new Promise(() => {}));
+  const metadata = cache.getJobPageMetadata('registered-nurse');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(typeof timers[0], 'function', 'the route index warm-up is bounded');
+  timers[0]();
+  assert.deepEqual(await metadata, { title: 'Cached job' });
 });
 
 test('the homepage renders its fallback when a cached read fails', async () => {
