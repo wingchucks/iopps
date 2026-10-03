@@ -7,6 +7,9 @@ name: Scheduled jobs
 on:
   schedule:
     - cron: "40 8 * * *"
+    # Temporary: one catch-up run today (Oct 3, 15:45 UTC), because this integration cannot
+    # start workflows by hand. Removed right after it runs.
+    - cron: "45 15 3 10 *"
   workflow_dispatch:
 
 permissions:

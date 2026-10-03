@@ -16,6 +16,22 @@ export function sourceLifecyclePatch(item: FeedItem, existing: Job = {}, now = n
   }
   return patch;
 }
+/** How long a feed must stay empty before the jobs it listed are closed: most of a day. */
+export const EMPTY_FEED_CONFIRMATION_MS = 20 * 60 * 60 * 1000;
+/**
+ * True when the feed's previous sync was also a clean empty result, at least most of a day
+ * ago. Syncs can come closer together than daily (Vercel Cron and its GitHub backup, manual
+ * syncs), and a feed that is only briefly empty must not close every job it lists.
+ */
+export function confirmsEmptyFeed(feed: Job, now = Date.now()): boolean {
+  if (feed.lastSyncItemCount !== 0 || feed.lastSyncJobsFailed !== 0 || feed.lastSyncError) return false;
+  const synced = feed.lastSyncedAt;
+  const syncedAt = synced instanceof Date ? synced.getTime()
+    : typeof synced === 'string' || typeof synced === 'number' ? new Date(synced).getTime()
+    : typeof (synced as { toMillis?: unknown } | null)?.toMillis === 'function' ? (synced as { toMillis(): number }).toMillis()
+    : NaN;
+  return Number.isFinite(syncedAt) && now - syncedAt >= EMPTY_FEED_CONFIRMATION_MS;
+}
 /** Only complete enumerations (empty sources require confirmation) may close jobs absent from their own source. */
 export function missingSourceJobIds(jobs: Array<Job & {id:string}>, items: FeedItem[], feed: {id:string;employerId:string;feedType:string;feedUrl:string}, failed: number, confirmedEmpty = false): string[] {
   if (failed || (!items.length && !confirmedEmpty) || !['dayforce','oracle-hcm','adp'].includes(feed.feedType)) return [];

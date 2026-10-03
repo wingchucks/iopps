@@ -1,6 +1,6 @@
 import { createImportedJobOnce, feedImportIdentity, importedJobCandidateSelector } from "@/lib/server/feed-import-identity";
 import { prepareImportedDescription, withImportedLabelQuality } from "@/lib/server/import-content-quality";
-import { missingSourceJobIds, expirationPatch, sourceLifecyclePatch } from "@/lib/server/job-expiration";
+import { confirmsEmptyFeed, missingSourceJobIds, expirationPatch, sourceLifecyclePatch } from "@/lib/server/job-expiration";
 import { loadFeedItems, stripCdata } from "@/lib/server/feed-source";
 import { sourcePostingDatePatch, sourcePublishedAtPatch } from "@/lib/server/source-posting-date";
 import { NextRequest, NextResponse } from "next/server";
@@ -131,7 +131,7 @@ export async function POST(
       }
     }
 
-        const missingIds = missingSourceJobIds(existingJobs.docs.map(d=>({id:d.id,...d.data()})), items, {id:feed.id,employerId:feed.employerId,feedType,feedUrl:feed.feedUrl!}, jobsFailed, (feed as Record<string, unknown>).lastSyncItemCount === 0 && (feed as Record<string, unknown>).lastSyncJobsFailed === 0 && !(feed as Record<string, unknown>).lastSyncError);
+        const missingIds = missingSourceJobIds(existingJobs.docs.map(d=>({id:d.id,...d.data()})), items, {id:feed.id,employerId:feed.employerId,feedType,feedUrl:feed.feedUrl!}, jobsFailed, confirmsEmptyFeed(feed as Record<string, unknown>));
         let jobsExpired = 0;
                 for (const id of missingIds) {
                   const appliedPatch = await updateImportedJobWithEditorialGuard(adminDb, adminDb.collection("jobs").doc(id), expirationPatch("removed_from_source"), normalizeImportedDescription);
