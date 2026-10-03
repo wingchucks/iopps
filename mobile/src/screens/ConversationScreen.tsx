@@ -39,14 +39,15 @@ const loadError = (error: { code?: string }): LoadError =>
 const isConversationId = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0 && value.length <= 500 && !value.includes("/");
 
-// Messages that arrive while the app is in the background stay unread.
-function useAppInForeground(): boolean {
-  const [foreground, setForeground] = useState(AppState.currentState !== "background");
+// Messages that arrive while the app is not active (in the background, the app
+// switcher or behind Control Center) stay unread.
+function useAppActive(): boolean {
+  const [active, setActive] = useState(AppState.currentState === "active");
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => setForeground(state !== "background"));
+    const subscription = AppState.addEventListener("change", (state) => setActive(state === "active"));
     return () => subscription.remove();
   }, []);
-  return foreground;
+  return active;
 }
 
 export default function ConversationScreen() {
@@ -54,7 +55,7 @@ export default function ConversationScreen() {
   const { user } = useAuth();
   const { isConnected } = useNetwork();
   const isFocused = useIsFocused();
-  const inForeground = useAppInForeground();
+  const appActive = useAppActive();
   const { conversationId, peerName } = (route.params ?? {}) as {
     conversationId?: string;
     peerName?: string;
@@ -116,12 +117,12 @@ export default function ConversationScreen() {
 
   // Clear the unread marker only while the member is actually looking at it.
   useEffect(() => {
-    if (!user || !conversation || !isFocused || !inForeground) return;
+    if (!user || !conversation || !isFocused || !appActive) return;
     if (conversation.unreadBy !== user.uid) return;
     markConversationRead(conversation.id).catch((error) =>
       logger.error("Error marking conversation as read:", error)
     );
-  }, [user, conversation, isFocused, inForeground]);
+  }, [user, conversation, isFocused, appActive]);
 
   useEffect(() => {
     if (peerName || !user || !isConversationId(conversationId)) return;

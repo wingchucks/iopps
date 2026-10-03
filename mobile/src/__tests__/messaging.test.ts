@@ -13,10 +13,16 @@ const mockCommit: { error: Error | null } = { error: null };
 const mockNotify = jest.fn();
 const mockUpdateDoc = jest.fn(async (..._args: unknown[]) => undefined);
 const mockGetDocs = jest.fn(async (..._args: unknown[]) => ({ size: 3 }));
+const mockIds = { next: 0 };
 
 jest.mock("firebase/firestore", () => ({
   collection: (_db: unknown, name: string) => name,
-  doc: (_db: unknown, name: string, id: string) => `${name}/${id}`,
+  // doc(collection) makes a new random ID, like Firestore; doc(db, name, id) names one.
+  doc: (parent: unknown, name?: string, id?: string) => {
+    if (name !== undefined) return `${name}/${id}`;
+    const generated = `random-id-${++mockIds.next}`;
+    return { path: `${parent}/${generated}`, id: generated };
+  },
   query: (target: string, ...constraints: unknown[]) => ({ target, constraints }),
   where: (...args: unknown[]) => ["where", ...args],
   orderBy: (...args: unknown[]) => ["orderBy", ...args],
@@ -80,6 +86,7 @@ beforeEach(() => {
   mockNotify.mockResolvedValue({ state: "accepted" });
   mockUpdateDoc.mockClear();
   mockGetDocs.mockClear();
+  mockIds.next = 0;
   auth.currentUser = null;
 });
 
@@ -89,24 +96,30 @@ afterEach(() => {
 
 describe("sendMessage", () => {
   it("saves the message and its preview in one commit with only the fields the rules allow", async () => {
-    jest.spyOn(Date, "now").mockReturnValue(1700000000000);
     const saved = await sendMessage("conv-1", "me", "Hello there", "them");
 
     expect(mockBatches).toEqual([
       {
-        set: [["messages/conv-1_1700000000000", { conversationId: "conv-1", senderId: "me", text: "Hello there", createdAt: "server-time" }]],
+        set: [[{ path: "messages/random-id-1", id: "random-id-1" }, { conversationId: "conv-1", senderId: "me", text: "Hello there", createdAt: "server-time" }]],
         update: [["conversations/conv-1", { lastMessage: "Hello there", lastMessageAt: "server-time", lastSenderId: "me", unreadBy: "them" }]],
         committed: true,
       },
     ]);
-    expect(saved.messageId).toBe("conv-1_1700000000000");
+    expect(saved.messageId).toBe("random-id-1");
     expect(mockNotify).toHaveBeenCalledTimes(1);
     expect(mockNotify).toHaveBeenCalledWith(
-      "conv-1_1700000000000",
+      "random-id-1",
       "me",
       expect.objectContaining({ endpoint: expect.stringMatching(/^https:\/\/[^/]+\/api\/messages\/notify$/) })
     );
     await expect(saved.notification).resolves.toEqual({ state: "accepted" });
+  });
+
+  it("gives messages sent in the same millisecond different IDs", async () => {
+    jest.spyOn(Date, "now").mockReturnValue(1700000000000);
+    const first = await sendMessage("conv-1", "me", "Hello", "them");
+    const second = await sendMessage("conv-1", "them", "Hi", "me");
+    expect(first.messageId).not.toBe(second.messageId);
   });
 
   it("refuses empty and over-long messages without writing anything", async () => {

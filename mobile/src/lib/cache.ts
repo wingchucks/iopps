@@ -73,6 +73,19 @@ export async function removeFromCache(key: string): Promise<void> {
 }
 
 /**
+ * Remove every cached item whose key starts with the given prefix
+ */
+export async function removeFromCacheByPrefix(prefix: string): Promise<void> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const matching = keys.filter((key) => key.startsWith(CACHE_PREFIX + prefix));
+    if (matching.length > 0) await AsyncStorage.multiRemove(matching);
+  } catch (error) {
+    cacheLogger.error("Cache remove error", error);
+  }
+}
+
+/**
  * Clear all cached data
  */
 export async function clearCache(): Promise<void> {
@@ -130,9 +143,12 @@ export const CACHE_KEYS = {
   SAVED_JOBS: (userId: string) => `savedJobs:${userId}`,
   APPLICATIONS: (userId: string) => `applications:${userId}`,
   JOB_ALERTS: (userId: string) => `jobAlerts:${userId}`,
-  CONVERSATIONS: (userId: string) => `conversations:${userId}`,
   NOTIFICATIONS: (userId: string) => `notifications:${userId}`,
 };
+
+// Earlier versions cached private message previews under this prefix, one key
+// per account. Nothing writes it any more; the app removes it on start.
+export const LEGACY_CONVERSATIONS_CACHE_PREFIX = "conversations:";
 
 // TTL configurations (in milliseconds)
 export const CACHE_TTL = {

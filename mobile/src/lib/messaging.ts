@@ -143,9 +143,11 @@ export async function sendMessage(
   recipientId: string
 ): Promise<{ messageId: string; notification: Promise<MessageNotificationResult> }> {
   if (!message || message.length > MESSAGE_TEXT_MAX) throw new Error("Message must be 1 to 5,000 characters");
-  const messageId = `${conversationId}_${Date.now()}`;
+  // A random ID, so two members sending in the same millisecond never collide.
+  const messageRef = doc(collection(db, "messages"));
+  const messageId = messageRef.id;
   const batch = writeBatch(db);
-  batch.set(doc(db, "messages", messageId), {
+  batch.set(messageRef, {
     conversationId,
     senderId,
     text: message,

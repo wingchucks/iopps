@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,6 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { formatTimestamp } from "../lib/firestore";
 import { getConversationPeer, onConversations, UNKNOWN_PEER_NAME } from "../lib/messaging";
-import { CACHE_KEYS, removeFromCache } from "../lib/cache";
 import { MessageListSkeleton } from "../components/Skeleton";
 import type { Conversation } from "../types";
 import { logger } from "../lib/logger";
@@ -25,11 +24,6 @@ export default function MessagesScreen() {
   const [peerNames, setPeerNames] = useState<Record<string, string>>({});
   const [subscription, setSubscription] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Earlier versions kept private message previews on the device; remove them.
-  useEffect(() => {
-    if (user) void removeFromCache(CACHE_KEYS.CONVERSATIONS(user.uid));
-  }, [user]);
 
   // Live inbox while this screen is in view.
   useFocusEffect(
