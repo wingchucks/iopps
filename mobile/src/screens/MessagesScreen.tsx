@@ -9,57 +9,81 @@ import {
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import { getMemberConversations, formatTimestamp } from "../lib/firestore";
-import { fetchWithCache, CACHE_KEYS, CACHE_TTL, saveToCache } from "../lib/cache";
+import { formatTimestamp } from "../lib/firestore";
+import { getConversationPeer, onConversations, UNKNOWN_PEER_NAME } from "../lib/messaging";
+import { CACHE_KEYS, removeFromCache } from "../lib/cache";
 import { MessageListSkeleton } from "../components/Skeleton";
 import type { Conversation } from "../types";
 import { logger } from "../lib/logger";
 
+type Inbox = { owner: string; conversations: Conversation[]; failed: boolean };
+
 export default function MessagesScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [inbox, setInbox] = useState<Inbox | null>(null);
+  const [peerNames, setPeerNames] = useState<Record<string, string>>({});
+  const [subscription, setSubscription] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadConversations = async (forceRefresh = false) => {
-    if (!user) return;
-    try {
-      const cacheKey = CACHE_KEYS.CONVERSATIONS(user.uid);
+  // Earlier versions kept private message previews on the device; remove them.
+  useEffect(() => {
+    if (user) void removeFromCache(CACHE_KEYS.CONVERSATIONS(user.uid));
+  }, [user]);
 
-      if (forceRefresh) {
-        const data = await getMemberConversations(user.uid);
-        await saveToCache(cacheKey, data, CACHE_TTL.SHORT);
-        setConversations(data);
-      } else {
-        const { data, fromCache } = await fetchWithCache<Conversation[]>(
-          cacheKey,
-          () => getMemberConversations(user.uid),
-          CACHE_TTL.SHORT
-        );
-        setConversations(data);
-      }
-    } catch (error) {
-      logger.error("Error loading conversations:", error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
+  // Live inbox while this screen is in view.
   useFocusEffect(
     useCallback(() => {
-      loadConversations();
-    }, [user])
+      if (!user) return;
+      const owner = user.uid;
+      let active = true;
+      const unsubscribe = onConversations(
+        owner,
+        (conversations) => {
+          if (!active) return;
+          setInbox({ owner, conversations, failed: false });
+          setRefreshing(false);
+          for (const conversation of conversations) {
+            const key = `${owner}/${conversation.id}`;
+            void getConversationPeer(conversation.id).then((peer) => {
+              if (!active || !peer) return;
+              setPeerNames((previous) =>
+                previous[key] === peer.displayName ? previous : { ...previous, [key]: peer.displayName }
+              );
+            });
+          }
+        },
+        (error) => {
+          logger.error("Error loading conversations:", error);
+          if (!active) return;
+          setInbox({ owner, conversations: [], failed: true });
+          setRefreshing(false);
+        }
+      );
+      return () => {
+        active = false;
+        unsubscribe();
+      };
+    }, [user, subscription])
   );
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadConversations(true);
+    setSubscription((value) => value + 1);
+  };
+
+  const retry = () => {
+    setInbox(null);
+    setSubscription((value) => value + 1);
   };
 
   const renderConversationCard = ({ item }: { item: Conversation }) => {
-    const hasUnread = item.memberUnreadCount > 0;
+    const hasUnread = item.unreadBy === user?.uid;
+    const loadedName = peerNames[`${user?.uid}/${item.id}`];
+    const name = loadedName || UNKNOWN_PEER_NAME;
+    const preview = item.lastMessage
+      ? `${item.lastSenderId === user?.uid ? "You: " : ""}${item.lastMessage}`
+      : "No messages yet";
 
     return (
       <TouchableOpacity
@@ -67,10 +91,10 @@ export default function MessagesScreen() {
         onPress={() =>
           (navigation as any).navigate("Conversation", {
             conversationId: item.id,
-            employerName: item.employerName,
+            peerName: loadedName,
           })
         }
-        accessibilityLabel={`Conversation with ${item.employerName || "Employer"}${hasUnread ? `, ${item.memberUnreadCount} unread message${item.memberUnreadCount > 1 ? "s" : ""}` : ""}`}
+        accessibilityLabel={`Conversation with ${name}${hasUnread ? ", unread messages" : ""}`}
         accessibilityRole="button"
         accessibilityHint="Tap to open conversation"
         testID={`conversation-card-${item.id}`}
@@ -78,7 +102,7 @@ export default function MessagesScreen() {
         <View style={styles.avatarContainer}>
           <View style={styles.avatar} accessibilityElementsHidden>
             <Text style={styles.avatarText}>
-              {(item.employerName || "E").charAt(0).toUpperCase()}
+              {name.charAt(0).toUpperCase()}
             </Text>
           </View>
           {hasUnread && <View style={styles.unreadDot} accessibilityElementsHidden />}
@@ -86,24 +110,20 @@ export default function MessagesScreen() {
 
         <View style={styles.conversationInfo}>
           <View style={styles.headerRow}>
-            <Text style={[styles.employerName, hasUnread && styles.unreadText]} numberOfLines={1} ellipsizeMode="tail">
-              {item.employerName || "Employer"}
+            <Text style={[styles.peerName, hasUnread && styles.unreadText]} numberOfLines={1} ellipsizeMode="tail">
+              {name}
             </Text>
             <Text style={styles.timestamp}>
               {item.lastMessageAt ? formatTimestamp(item.lastMessageAt) : ""}
             </Text>
           </View>
 
-          {item.jobTitle && (
-            <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">Re: {item.jobTitle}</Text>
-          )}
-
           <Text
             style={[styles.lastMessage, hasUnread && styles.unreadText]}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            {item.lastMessage || "No messages yet"}
+            {preview}
           </Text>
         </View>
       </TouchableOpacity>
@@ -118,19 +138,19 @@ export default function MessagesScreen() {
           Please sign in to view your messages.
         </Text>
         <TouchableOpacity
-          style={styles.signInButton}
+          style={styles.actionButton}
           onPress={() => (navigation as any).navigate("SignIn")}
           accessibilityLabel="Sign in to view messages"
           accessibilityRole="button"
           testID="messages-signin-button"
         >
-          <Text style={styles.signInButtonText}>Sign In</Text>
+          <Text style={styles.actionButtonText}>Sign In</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  if (loading) {
+  if (!inbox || inbox.owner !== user.uid) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -141,6 +161,28 @@ export default function MessagesScreen() {
       </View>
     );
   }
+
+  if (inbox.failed) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.messageTitle}>Unable to load messages</Text>
+        <Text style={styles.messageText}>
+          Please check your connection and try again.
+        </Text>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={retry}
+          accessibilityLabel="Try loading messages again"
+          accessibilityRole="button"
+          testID="messages-retry-button"
+        >
+          <Text style={styles.actionButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const { conversations } = inbox;
 
   return (
     <View style={styles.container}>
@@ -156,8 +198,7 @@ export default function MessagesScreen() {
           <Text style={styles.emptyIcon}>💬</Text>
           <Text style={styles.emptyTitle}>No messages yet</Text>
           <Text style={styles.emptyText}>
-            When you apply to jobs or employers contact you, your conversations
-            will appear here.
+            Your existing private conversations will appear here.
           </Text>
         </View>
       ) : (
@@ -259,7 +300,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 2,
   },
-  employerName: {
+  peerName: {
     fontSize: 16,
     fontWeight: "500",
     color: "#F8FAFC",
@@ -269,11 +310,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#64748B",
     marginLeft: 8,
-  },
-  jobTitle: {
-    fontSize: 12,
-    color: "#14B8A6",
-    marginBottom: 4,
   },
   lastMessage: {
     fontSize: 14,
@@ -295,20 +331,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-  signInButton: {
+  actionButton: {
     backgroundColor: "#14B8A6",
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 12,
   },
-  signInButtonText: {
+  actionButtonText: {
     color: "#0F172A",
     fontSize: 16,
     fontWeight: "600",
-  },
-  loadingText: {
-    color: "#94A3B8",
-    marginTop: 12,
   },
   emptyState: {
     flex: 1,

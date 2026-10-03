@@ -284,35 +284,28 @@ export interface LiveStreamEvent {
   active: boolean;
 }
 
-// Messaging
+// Messaging (shared with the website; see src/lib/messaging.ts)
 export interface Message {
   id: string;
   conversationId: string;
   senderId: string;
-  senderType: "employer" | "member";
-  content: string;
-  read: boolean;
+  text: string;
   createdAt?: any;
 }
 
 export interface Conversation {
   id: string;
-  employerId: string;
-  memberId: string;
-  jobId?: string;
-  applicationId?: string;
-  employerName?: string;
-  memberName?: string;
-  memberEmail?: string;
-  jobTitle?: string;
-  lastMessage?: string;
+  participants: string[];
+  lastMessage: string;
   lastMessageAt?: any;
-  lastMessageBy?: string;
-  employerUnreadCount: number;
-  memberUnreadCount: number;
-  status: "active" | "archived";
-  createdAt?: any;
-  updatedAt?: any;
+  lastSenderId: string;
+  unreadBy: string; // uid of the participant who has not read the latest message
+}
+
+export interface ConversationPeer {
+  uid: string;
+  displayName: string;
+  photoURL?: string;
 }
 
 // Notifications

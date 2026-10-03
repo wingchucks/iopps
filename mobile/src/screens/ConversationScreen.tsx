@@ -10,89 +10,163 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  AppState,
 } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { useIsFocused, useRoute } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
+import { useNetwork } from "../context/NetworkContext";
+import { formatDateTime } from "../lib/firestore";
 import {
-  getConversationMessages,
+  getConversationPeer,
+  markConversationRead,
+  onConversation,
+  onMessages,
   sendMessage,
-  markConversationAsRead,
-  formatDateTime,
-} from "../lib/firestore";
-import type { Message } from "../types";
+  MESSAGE_TEXT_MAX,
+  UNKNOWN_PEER_NAME,
+} from "../lib/messaging";
+import type { Conversation, Message } from "../types";
 import { logger } from "../lib/logger";
+
+// The rules refuse missing and foreign conversations alike: both are "unavailable".
+type LoadError = "unavailable" | "failed";
+type ConversationLoad = { key: string; conversation: Conversation | null; error?: LoadError };
+type MessagesLoad = { key: string; messages: Message[]; error?: LoadError };
+const loadError = (error: { code?: string }): LoadError =>
+  error.code === "permission-denied" ? "unavailable" : "failed";
+
+// Links from notifications are untrusted input: one plain document ID only.
+const isConversationId = (value: unknown): value is string =>
+  typeof value === "string" && value.length > 0 && value.length <= 500 && !value.includes("/");
+
+// Messages that arrive while the app is in the background stay unread.
+function useAppInForeground(): boolean {
+  const [foreground, setForeground] = useState(AppState.currentState !== "background");
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => setForeground(state !== "background"));
+    return () => subscription.remove();
+  }, []);
+  return foreground;
+}
 
 export default function ConversationScreen() {
   const route = useRoute();
   const { user } = useAuth();
-  const { conversationId, employerName } = route.params as {
-    conversationId: string;
-    employerName?: string;
+  const { isConnected } = useNetwork();
+  const isFocused = useIsFocused();
+  const inForeground = useAppInForeground();
+  const { conversationId, peerName } = (route.params ?? {}) as {
+    conversationId?: string;
+    peerName?: string;
   };
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [newMessage, setNewMessage] = useState("");
+  const validId = isConversationId(conversationId);
+  const [attempt, setAttempt] = useState(0);
+  const key = JSON.stringify([user?.uid, conversationId, attempt]);
+  const [conversationLoad, setConversationLoad] = useState<ConversationLoad | null>(null);
+  const [messagesLoad, setMessagesLoad] = useState<MessagesLoad | null>(null);
+  const [peerLookup, setPeerLookup] = useState<{ conversationId: string; name: string } | null>(null);
+  const [draft, setDraft] = useState({ conversationId, text: "" });
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  const loadMessages = async () => {
-    setLoadError(false);
-    try {
-      const data = await getConversationMessages(conversationId, 100);
-      setMessages(data);
-      // Mark conversation as read
-      if (user) {
-        await markConversationAsRead(conversationId, "member");
+  const conversationState = conversationLoad?.key === key ? conversationLoad : null;
+  const messagesState = messagesLoad?.key === key ? messagesLoad : null;
+  const conversation = conversationState?.conversation ?? null;
+  const messages = messagesState?.messages ?? [];
+  const unavailable = !validId || conversationState?.error === "unavailable" ||
+    messagesState?.error === "unavailable" ||
+    (!!conversationState && !conversationState.error && !conversation);
+  const failed = conversationState?.error === "failed" || messagesState?.error === "failed";
+  const loading = !unavailable && !failed && (!conversationState || !messagesState);
+  const newMessage = draft.conversationId === conversationId ? draft.text : "";
+  const displayName = peerName ||
+    (peerLookup && peerLookup.conversationId === conversationId ? peerLookup.name : "") ||
+    UNKNOWN_PEER_NAME;
+
+  // The conversation (participants and unread marker) and its latest messages, live.
+  useEffect(() => {
+    if (!user || !isConversationId(conversationId)) return;
+    let active = true;
+    const stopConversation = onConversation(
+      conversationId,
+      (value) => {
+        if (active) setConversationLoad({ key, conversation: value });
+      },
+      (error) => {
+        logger.error("Error loading conversation:", error);
+        if (active) setConversationLoad({ key, conversation: null, error: loadError(error) });
       }
-    } catch (error) {
-      logger.error("Error loading messages:", error);
-      setLoadError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
+    const stopMessages = onMessages(
+      conversationId,
+      (value) => {
+        if (active) setMessagesLoad({ key, messages: value });
+      },
+      (error) => {
+        logger.error("Error loading messages:", error);
+        if (active) setMessagesLoad({ key, messages: [], error: loadError(error) });
+      }
+    );
+    return () => {
+      active = false;
+      stopConversation();
+      stopMessages();
+    };
+  }, [user, conversationId, key]);
+
+  // Clear the unread marker only while the member is actually looking at it.
+  useEffect(() => {
+    if (!user || !conversation || !isFocused || !inForeground) return;
+    if (conversation.unreadBy !== user.uid) return;
+    markConversationRead(conversation.id).catch((error) =>
+      logger.error("Error marking conversation as read:", error)
+    );
+  }, [user, conversation, isFocused, inForeground]);
 
   useEffect(() => {
-    loadMessages();
-  }, [conversationId, user]);
+    if (peerName || !user || !isConversationId(conversationId)) return;
+    let active = true;
+    void getConversationPeer(conversationId).then((peer) => {
+      if (active && peer) setPeerLookup({ conversationId, name: peer.displayName });
+    });
+    return () => {
+      active = false;
+    };
+  }, [peerName, user, conversationId]);
+
+  const setNewMessage = (text: string) => setDraft({ conversationId, text });
 
   const handleSend = async () => {
-    if (!user || !newMessage.trim()) return;
-
-    const content = newMessage.trim();
-    const tempId = `temp-${Date.now()}`;
-    const previousMessages = [...messages];
+    const submitted = newMessage;
+    const text = submitted.trim();
+    if (!user || !conversation || !text || sending) return;
+    if (!isConnected) {
+      Alert.alert("No Internet Connection", "Connect to the internet to send your message.");
+      return;
+    }
+    const recipientId = conversation.participants.find((participant) => participant !== user.uid) ?? "";
 
     setSending(true);
-    setNewMessage(""); // Clear input optimistically
-
-    // Optimistic update
-    const tempMessage: Message = {
-      id: tempId,
-      conversationId,
-      senderId: user.uid,
-      senderType: "member",
-      content,
-      read: false,
-      createdAt: new Date(),
-    };
-    setMessages([...messages, tempMessage]);
-
     try {
-      await sendMessage(conversationId, user.uid, content);
-
-      // Refresh messages
-      const updatedMessages = await getConversationMessages(conversationId, 100);
-      setMessages(updatedMessages);
+      const saved = await sendMessage(conversation.id, user.uid, text, recipientId);
+      // Clear only the text that was sent, never anything typed while it was sending.
+      setDraft((current) =>
+        current.conversationId === conversation.id && current.text === submitted
+          ? { ...current, text: "" }
+          : current
+      );
+      void saved.notification.then((result) => {
+        if (result.state === "failed") logger.warn("Message sent; its email notification was not confirmed");
+      });
     } catch (error) {
       logger.error("Error sending message:", error);
-      // Rollback: remove optimistic message and restore input
-      setMessages(previousMessages);
-      setNewMessage(content);
+      // The rules refuse messages to a member who turned off "Allow Direct Messages".
+      const denied = (error as { code?: unknown } | null)?.code === "permission-denied";
       Alert.alert(
         "Failed to Send",
-        "Your message could not be sent. Please check your connection and try again."
+        denied
+          ? "This member isn't accepting messages."
+          : "Your message could not be sent. Please check your connection and try again."
       );
     } finally {
       setSending(false);
@@ -115,7 +189,7 @@ export default function ConversationScreen() {
             isOwnMessage ? styles.ownMessageText : styles.otherMessageText,
           ]}
         >
-          {item.content}
+          {item.text}
         </Text>
         <Text
           style={[
@@ -129,28 +203,42 @@ export default function ConversationScreen() {
     );
   };
 
-  if (loading) {
+  if (!user) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#14B8A6" />
+        <Text style={styles.errorText}>Please sign in to view this conversation.</Text>
       </View>
     );
   }
 
-  if (loadError) {
+  if (unavailable) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorIcon}>💬</Text>
+        <Text style={styles.errorText}>This conversation isn't available.</Text>
+      </View>
+    );
+  }
+
+  if (failed) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorIcon}>⚠️</Text>
         <Text style={styles.errorText}>Unable to load messages</Text>
         <TouchableOpacity
           style={styles.retryButton}
-          onPress={() => {
-            setLoading(true);
-            loadMessages();
-          }}
+          onPress={() => setAttempt((value) => value + 1)}
         >
           <Text style={styles.retryButtonText}>Try Again</Text>
         </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#14B8A6" />
       </View>
     );
   }
@@ -165,20 +253,19 @@ export default function ConversationScreen() {
       <View style={styles.header}>
         <View style={styles.headerAvatar}>
           <Text style={styles.headerAvatarText}>
-            {(employerName || "E").charAt(0).toUpperCase()}
+            {displayName.charAt(0).toUpperCase()}
           </Text>
         </View>
-        <View>
-          <Text style={styles.headerName}>{employerName || "Employer"}</Text>
-          <Text style={styles.headerStatus}>IOPPS Employer</Text>
-        </View>
+        <Text style={styles.headerName} numberOfLines={1}>
+          {displayName}
+        </Text>
       </View>
 
       {/* Messages List */}
       {messages.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>
-            No messages yet. Start the conversation!
+            No messages yet. Say hello!
           </Text>
         </View>
       ) : (
@@ -203,7 +290,8 @@ export default function ConversationScreen() {
           placeholder="Type a message..."
           placeholderTextColor="#64748B"
           multiline
-          maxLength={1000}
+          maxLength={MESSAGE_TEXT_MAX}
+          accessibilityLabel="Message"
         />
         <TouchableOpacity
           style={[
@@ -261,13 +349,10 @@ const styles = StyleSheet.create({
     color: "#0F172A",
   },
   headerName: {
+    flex: 1,
     fontSize: 16,
     fontWeight: "600",
     color: "#F8FAFC",
-  },
-  headerStatus: {
-    fontSize: 12,
-    color: "#64748B",
   },
   messagesList: {
     padding: 16,

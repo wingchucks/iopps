@@ -11,11 +11,11 @@ import {
   orderBy,
   limit,
   serverTimestamp,
-  increment,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { apiLogger } from "./logger";
+import { getUnreadConversationCount } from "./messaging";
 import type {
   JobPosting,
   SavedJob,
@@ -26,8 +26,6 @@ import type {
   VendorProfile,
   PowwowEvent,
   LiveStreamEvent,
-  Conversation,
-  Message,
   Notification,
   UserProfile,
   ScheduledInterview,
@@ -295,80 +293,7 @@ export async function listLiveStreams(limitCount = 50): Promise<LiveStreamEvent[
   })) as LiveStreamEvent[];
 }
 
-// ============ MESSAGING ============
-
-export async function getMemberConversations(
-  memberId: string
-): Promise<Conversation[]> {
-  const q = query(
-    collection(db, "conversations"),
-    where("memberId", "==", memberId),
-    where("status", "==", "active"),
-    orderBy("lastMessageAt", "desc")
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...docSnap.data(),
-  })) as Conversation[];
-}
-
-export async function getConversationMessages(
-  conversationId: string,
-  limitCount = 50
-): Promise<Message[]> {
-  const q = query(
-    collection(db, "conversations", conversationId, "messages"),
-    orderBy("createdAt", "asc"),
-    limit(limitCount)
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...docSnap.data(),
-  })) as Message[];
-}
-
-export async function sendMessage(
-  conversationId: string,
-  senderId: string,
-  content: string
-): Promise<string> {
-  // Add message to subcollection
-  const msgRef = await addDoc(
-    collection(db, "conversations", conversationId, "messages"),
-    {
-      conversationId,
-      senderId,
-      senderType: "member",
-      content,
-      read: false,
-      createdAt: serverTimestamp(),
-    }
-  );
-
-  // Update conversation
-  await updateDoc(doc(db, "conversations", conversationId), {
-    lastMessage: content.substring(0, 100),
-    lastMessageAt: serverTimestamp(),
-    lastMessageBy: senderId,
-    employerUnreadCount: increment(1),
-    updatedAt: serverTimestamp(),
-  });
-
-  return msgRef.id;
-}
-
-export async function markConversationAsRead(
-  conversationId: string,
-  userType: "member" | "employer"
-): Promise<void> {
-  const field =
-    userType === "member" ? "memberUnreadCount" : "employerUnreadCount";
-  await updateDoc(doc(db, "conversations", conversationId), {
-    [field]: 0,
-  });
-}
+// Messaging lives in ./messaging.
 
 // ============ NOTIFICATIONS ============
 
@@ -558,22 +483,6 @@ export async function updateApplicationStatus(
   await updateDoc(doc(db, "applications", applicationId), updates);
 }
 
-export async function getEmployerConversations(
-  employerId: string
-): Promise<Conversation[]> {
-  const q = query(
-    collection(db, "conversations"),
-    where("employerId", "==", employerId),
-    where("status", "==", "active"),
-    orderBy("lastMessageAt", "desc")
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...docSnap.data(),
-  })) as Conversation[];
-}
-
 export async function getEmployerStats(employerId: string): Promise<{
   totalJobs: number;
   activeJobs: number;
@@ -601,17 +510,8 @@ export async function getEmployerStats(employerId: string): Promise<{
     d => d.data().status === "submitted" || d.data().status === "reviewed"
   ).length;
 
-  // Get unread messages
-  const convQuery = query(
-    collection(db, "conversations"),
-    where("employerId", "==", employerId),
-    where("status", "==", "active")
-  );
-  const convSnapshot = await getDocs(convQuery);
-  const unreadMessages = convSnapshot.docs.reduce(
-    (sum, d) => sum + (d.data().employerUnreadCount || 0),
-    0
-  );
+  // Conversations with an unread message (participants are account uids)
+  const unreadMessages = await getUnreadConversationCount(employerId);
 
   return {
     totalJobs,
