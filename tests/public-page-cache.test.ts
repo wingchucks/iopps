@@ -9,7 +9,8 @@ test('homepage and job detail metadata use short-lived shared caches for public 
   assert.match(cache, /export const PUBLIC_PAGE_CACHE_SECONDS = 300;/);
   for (const [name, source] of [['getCachedLatestJobs', 'getLatestJobs'], ['getCachedPartners', 'getPartners'], ['getCachedJobMetadata', 'generateJobMetadata'], ['getCachedJobJsonLd', 'generateJobJsonLd']]) {
     // Bounded reads: a hung Firestore call fails (keeping the last good value) instead of holding the request.
-    assert.ok(cache.includes(`export const ${name} = unstable_cache(withPublicReadTimeout(${source}, `), name);
+    // keptAlive: the request waits for a stale entry's background refresh (cache-refresh-keepalive.ts).
+    assert.ok(cache.includes(`export const ${name} = keptAlive(unstable_cache(withPublicReadTimeout(${source}, `), name);
   }
   const home = read('src/app/page.tsx');
   // A failed read is handled outside the cache, so an empty result is never cached.
