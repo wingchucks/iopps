@@ -16,8 +16,8 @@ const emulator=process.env.IOPPS_TEST_EMULATORS==='true';
 const DAY=86400000;
 const iso=ms=>new Date(ms).toISOString();
 async function harness(t){
- let db;const refreshes={count:0};
- if(emulator){const app=initializeApp({projectId:'demo-iopps-admin-repair'},crypto.randomUUID());db=getFirestore(app);t.after(async()=>{await db.terminate();await deleteApp(app);});}
+ let db,app;const refreshes={count:0};
+ if(emulator){app=initializeApp({projectId:'demo-iopps-admin-repair'},crypto.randomUUID());db=getFirestore(app);}
  else db=memoryFirestore().db;
  const id=`repair-${crypto.randomUUID()}`;const emp=db.doc(`employers/${id}`);const org=db.doc(`organizations/${id}`);
  const exports={};vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/admin/employers/[orgId]/subscription/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,Date,console,require(name){
@@ -30,7 +30,12 @@ async function harness(t){
  }});
  const receipts=async()=>{const seen=new Map();for(const field of ['orgId','employerId'])for(const d of (await db.collection('subscriptions').where(field,'==',id).get()).docs)seen.set(d.id,{id:d.id,data:d.data()});return [...seen.values()];};
  const read=async()=>({employer:(await emp.get()).data(),organization:(await org.get()).data(),receipts:await receipts(),audits:(await emp.collection('actionHistory').get()).docs.map(d=>({id:d.id,data:d.data()}))});
- if(emulator) t.after(async()=>{for(const r of await receipts())await db.doc(`subscriptions/${r.id}`).delete();for(const d of (await emp.collection('actionHistory').get()).docs)await d.ref.delete();await emp.delete();await org.delete();});
+ // One hook, in this order: delete the fixtures while the client is open, then close it.
+ // A query on a terminated client never settles, which held the emulator run open.
+ if(emulator) t.after(async()=>{
+  try{for(const r of await receipts())await db.doc(`subscriptions/${r.id}`).delete();for(const d of (await emp.collection('actionHistory').get()).docs)await d.ref.delete();await emp.delete();await org.delete();}
+  finally{await db.terminate();await deleteApp(app);}
+ });
  const send=body=>exports.POST(new Request('http://localhost/api/admin/subscription',{method:'POST',body:JSON.stringify(body)}),{params:Promise.resolve({orgId:id})});
  const resolve=async(at=new Date())=>{const state=await read();return resolvePaidPublicationTerm({employerId:id,employer:state.employer,receipts:state.receipts,now:at});};
  return {db,id,emp,org,read,send,resolve,refreshes};
