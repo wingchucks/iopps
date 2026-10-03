@@ -21,8 +21,11 @@ export const getCachedJobJsonLd = unstable_cache(withPublicReadTimeout(generateJ
 
 // Metadata caches resolve routes in a nested cache scope, which bypasses
 // unstable_cache; reading the shared route index first keeps that nested read memoized.
+// Only an optimization, so it is bounded here as well: one in-flight index read is shared
+// through the memo, and it must never hold a job page longer than any other public read.
+const warmJobRouteIndex = withPublicReadTimeout(loadCachedPublicJobRouteIndex, "Job route index warm-up");
 async function warmJobRoutes(): Promise<void> {
-  await loadCachedPublicJobRouteIndex().catch(() => undefined);
+  await warmJobRouteIndex().catch(() => undefined);
 }
 
 export async function getJobPageMetadata(slug: string): Promise<Metadata> {

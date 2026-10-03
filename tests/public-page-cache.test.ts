@@ -29,6 +29,10 @@ test('personalized and live job data stay uncached', () => {
   assert.doesNotMatch(read('src/lib/server/landing-content.ts'), /unstable_cache|next\/cache/);
   assert.doesNotMatch(read('src/lib/server/detail-metadata.ts'), /unstable_cache|next\/cache/);
   assert.match(read('src/app/api/jobs/[id]/route.ts'), /no-store/);
-  // Alias redirects keep rollback semantics: resolved per request.
-  assert.match(read('src/app/jobs/[slug]/page.tsx'), /await readJobAliasRedirect\(getAdminDb\(\), slug\)/);
+  // Alias redirects keep rollback semantics: resolved per request, never cached. A failed or
+  // slow lookup renders the job page without a redirect instead of an error page.
+  const jobPage = read('src/app/jobs/[slug]/page.tsx');
+  assert.match(jobPage, /withPublicReadTimeout\(\s*\(slug: string\) => readJobAliasRedirect\(getAdminDb\(\), slug\),/);
+  assert.match(jobPage, /await publicReadOr\(`Job alias redirect for \$\{slug\}`, readAliasRedirect\(slug\), null\)/);
+  assert.doesNotMatch(jobPage, /unstable_cache|next\/cache/);
 });
