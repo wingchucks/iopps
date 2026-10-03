@@ -9,11 +9,11 @@ import {
   Alert,
   Linking,
 } from "react-native";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../lib/firebase";
-import { useAuth } from "../context/AuthContext";
-import { formatTimestamp } from "../lib/firestore";
-import type { JobApplication, ApplicationStatus } from "../types";
+import { ApiError } from "../lib/api";
+import { EMPLOYER_STATUSES, getEmployerApplication, updateApplicationStatus } from "../lib/employer";
+import { formatTimestamp } from "../lib/dates";
+import { APPLICATION_STATUS_CONFIG as STATUS_CONFIG } from "../lib/applicationStatus";
+import type { ApplicationStatus, EmployerApplication } from "../types";
 import { logger } from "../lib/logger";
 
 interface ApplicationDetailScreenProps {
@@ -21,52 +21,41 @@ interface ApplicationDetailScreenProps {
   navigation: any;
 }
 
-const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string; bg: string }> = {
-  submitted: { label: "Submitted", color: "#3B82F6", bg: "#3B82F620" },
-  reviewed: { label: "Reviewed", color: "#F59E0B", bg: "#F59E0B20" },
-  shortlisted: { label: "Shortlisted", color: "#10B981", bg: "#10B98120" },
-  rejected: { label: "Not Selected", color: "#EF4444", bg: "#EF444420" },
-  hired: { label: "Hired", color: "#22C55E", bg: "#22C55E20" },
-  withdrawn: { label: "Withdrawn", color: "#64748B", bg: "#64748B20" },
-};
-
-const STATUS_OPTIONS: { value: ApplicationStatus; label: string }[] = [
-  { value: "submitted", label: "Submitted" },
-  { value: "reviewed", label: "Reviewed" },
-  { value: "shortlisted", label: "Shortlisted" },
-  { value: "hired", label: "Hired" },
-  { value: "rejected", label: "Not Selected" },
-];
+type EmployerStatus = Exclude<ApplicationStatus, "withdrawn">;
 
 export default function ApplicationDetailScreen({
   route,
   navigation,
 }: ApplicationDetailScreenProps) {
-  const { applicationId } = route.params;
-  const { user } = useAuth();
-  const [application, setApplication] = useState<JobApplication | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Lists pass the application they show; otherwise it is looked up by ID.
+  const { applicationId, application: listed } = route.params as {
+    applicationId: string;
+    application?: EmployerApplication;
+  };
+  const [application, setApplication] = useState<EmployerApplication | null>(listed ?? null);
+  const [loading, setLoading] = useState(!listed);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
+    if (listed) return;
     const fetchApplication = async () => {
       try {
-        const appDoc = await getDoc(doc(db, "applications", applicationId));
-        if (appDoc.exists()) {
-          setApplication({ id: appDoc.id, ...appDoc.data() } as JobApplication);
-        }
+        setApplication(await getEmployerApplication(applicationId));
       } catch (error) {
         logger.error("Error fetching application:", error);
-        Alert.alert("Error", "Failed to load application details");
+        Alert.alert(
+          "Error",
+          error instanceof ApiError ? error.message : "Failed to load application details"
+        );
       } finally {
         setLoading(false);
       }
     };
 
     fetchApplication();
-  }, [applicationId]);
+  }, [applicationId, listed]);
 
-  const handleStatusUpdate = async (newStatus: ApplicationStatus) => {
+  const handleStatusUpdate = async (newStatus: EmployerStatus) => {
     if (!application) return;
 
     Alert.alert(
@@ -79,15 +68,15 @@ export default function ApplicationDetailScreen({
           onPress: async () => {
             setUpdating(true);
             try {
-              await updateDoc(doc(db, "applications", applicationId), {
-                status: newStatus,
-                updatedAt: serverTimestamp(),
-              });
+              await updateApplicationStatus(application.id, newStatus);
               setApplication({ ...application, status: newStatus });
               Alert.alert("Success", "Application status updated");
             } catch (error) {
               logger.error("Error updating application status:", error);
-              Alert.alert("Error", "Failed to update status");
+              Alert.alert(
+                "Error",
+                error instanceof ApiError ? error.message : "Failed to update status"
+              );
             } finally {
               setUpdating(false);
             }
@@ -100,8 +89,8 @@ export default function ApplicationDetailScreen({
   const handleContactApplicant = () => {
     if (!application) return;
 
-    if (application.memberEmail) {
-      Linking.openURL(`mailto:${application.memberEmail}`);
+    if (application.applicantEmail) {
+      Linking.openURL(`mailto:${application.applicantEmail}`);
     } else {
       Alert.alert("No Email", "Applicant email is not available");
     }
@@ -148,7 +137,7 @@ export default function ApplicationDetailScreen({
           </Text>
         </View>
         <Text style={styles.appliedDate}>
-          Applied {formatTimestamp(application.createdAt)}
+          Applied {formatTimestamp(application.appliedAt)}
         </Text>
       </View>
 
@@ -157,11 +146,17 @@ export default function ApplicationDetailScreen({
         <Text style={styles.sectionTitle}>Applicant</Text>
         <View style={styles.card}>
           <Text style={styles.applicantName}>
-            {application.memberDisplayName || "Name not provided"}
+            {application.applicantName || "Name not provided"}
           </Text>
+          {!!application.applicantHeadline && (
+            <Text style={styles.applicantEmail}>{application.applicantHeadline}</Text>
+          )}
           <Text style={styles.applicantEmail}>
-            {application.memberEmail || "Email not provided"}
+            {application.applicantEmail || "Email not provided"}
           </Text>
+          {!!application.applicantLocation && (
+            <Text style={styles.applicantEmail}>{application.applicantLocation}</Text>
+          )}
         </View>
       </View>
 
@@ -177,21 +172,18 @@ export default function ApplicationDetailScreen({
           <Text style={styles.jobTitle}>
             {application.jobTitle || "Job Position"}
           </Text>
-          {application.jobLocation && (
-            <Text style={styles.jobLocation}>{application.jobLocation}</Text>
-          )}
           <Text style={styles.viewJobLink}>View job posting →</Text>
         </TouchableOpacity>
       </View>
 
       {/* Resume */}
-      {application.resumeUrl && (
+      {!!application.resumeUrl && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Resume</Text>
           <TouchableOpacity style={styles.resumeCard} onPress={handleViewResume}>
             <Text style={styles.resumeIcon}>📄</Text>
             <View style={styles.resumeInfo}>
-              <Text style={styles.resumeText}>View Resume</Text>
+              <Text style={styles.resumeText}>{application.resumeFileName || "View Resume"}</Text>
               <Text style={styles.resumeSubtext}>Tap to open</Text>
             </View>
             <Text style={styles.resumeArrow}>→</Text>
@@ -200,7 +192,7 @@ export default function ApplicationDetailScreen({
       )}
 
       {/* Cover Letter */}
-      {application.coverLetter && (
+      {!!application.coverLetter && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Cover Letter</Text>
           <View style={styles.card}>
@@ -209,33 +201,44 @@ export default function ApplicationDetailScreen({
         </View>
       )}
 
-      {/* Status Update */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Update Status</Text>
-        <View style={styles.statusOptions}>
-          {STATUS_OPTIONS.map((option) => (
-            <TouchableOpacity
-              key={option.value}
-              style={[
-                styles.statusOption,
-                application.status === option.value && styles.statusOptionActive,
-              ]}
-              onPress={() => handleStatusUpdate(option.value)}
-              disabled={updating || application.status === option.value}
-            >
-              <Text
-                style={[
-                  styles.statusOptionText,
-                  application.status === option.value &&
-                    styles.statusOptionTextActive,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+      {!!application.references && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>References</Text>
+          <View style={styles.card}>
+            <Text style={styles.coverLetter}>{application.references}</Text>
+          </View>
         </View>
-      </View>
+      )}
+
+      {/* Status Update: a withdrawn application cannot be reopened by the employer */}
+      {application.status !== "withdrawn" && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Update Status</Text>
+          <View style={styles.statusOptions}>
+            {EMPLOYER_STATUSES.map((status) => (
+              <TouchableOpacity
+                key={status}
+                style={[
+                  styles.statusOption,
+                  application.status === status && styles.statusOptionActive,
+                ]}
+                onPress={() => handleStatusUpdate(status)}
+                disabled={updating || application.status === status}
+              >
+                <Text
+                  style={[
+                    styles.statusOptionText,
+                    application.status === status &&
+                      styles.statusOptionTextActive,
+                  ]}
+                >
+                  {STATUS_CONFIG[status].label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
 
       {/* Actions */}
       <View style={styles.actions}>
@@ -345,11 +348,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#F8FAFC",
     marginBottom: 4,
-  },
-  jobLocation: {
-    fontSize: 14,
-    color: "#94A3B8",
-    marginBottom: 8,
   },
   viewJobLink: {
     fontSize: 14,

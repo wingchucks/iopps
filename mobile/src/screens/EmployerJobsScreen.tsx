@@ -11,24 +11,28 @@ import {
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import { getEmployerJobs, formatTimestamp } from "../lib/firestore";
-import type { JobPosting } from "../types";
+import { API_BASE } from "../lib/api";
+import { listEmployerJobs } from "../lib/employer";
+import { formatTimestamp } from "../lib/dates";
+import type { EmployerJob } from "../types";
 import { logger } from "../lib/logger";
 
-const WEB_DASHBOARD_URL = "https://iopps.ca/organization/dashboard";
+const WEB_DASHBOARD_URL = `${API_BASE}/org/dashboard`;
+
+const STATUS_LABELS: Record<string, string> = { active: "Active", draft: "Draft", closed: "Closed" };
 
 export default function EmployerJobsScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [jobs, setJobs] = useState<EmployerJob[]>([]);
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
 
   const loadJobs = async () => {
     if (!user) return;
     try {
-      const jobsList = await getEmployerJobs(user.uid);
+      const jobsList = await listEmployerJobs();
       setJobs(jobsList);
     } catch (error) {
       logger.error("Error loading employer jobs:", error);
@@ -51,71 +55,49 @@ export default function EmployerJobsScreen() {
 
   const filteredJobs = jobs.filter((job) => {
     if (filter === "all") return true;
-    if (filter === "active") return job.active === true;
-    return job.active === false;
+    if (filter === "active") return job.active;
+    return !job.active;
   });
 
-  const formatSalary = (job: JobPosting) => {
-    if (!job.salaryRange) return null;
-    if (typeof job.salaryRange === "string") return job.salaryRange;
-    if (job.salaryRange.disclosed === false) return "Salary not disclosed";
-    const { min, max, currency = "CAD" } = job.salaryRange;
-    if (min && max) {
-      return `$${min.toLocaleString()} - $${max.toLocaleString()} ${currency}`;
+  // Open jobs show as members see them; drafts and closed jobs open in the website's job editor.
+  const openJob = (job: EmployerJob) => {
+    if (job.active) {
+      (navigation as any).navigate("JobDetail", { jobId: job.id });
+    } else {
+      Linking.openURL(`${WEB_DASHBOARD_URL}/jobs/${encodeURIComponent(job.id)}/edit`);
     }
-    if (min) return `From $${min.toLocaleString()} ${currency}`;
-    if (max) return `Up to $${max.toLocaleString()} ${currency}`;
-    return null;
   };
 
-  const renderJob = ({ item }: { item: JobPosting }) => (
-    <TouchableOpacity
-      style={styles.jobCard}
-      onPress={() => (navigation as any).navigate("JobDetail", { jobId: item.id })}
-    >
+  const renderJob = ({ item }: { item: EmployerJob }) => (
+    <TouchableOpacity style={styles.jobCard} onPress={() => openJob(item)}>
       <View style={styles.jobHeader}>
         <Text style={styles.jobTitle} numberOfLines={2}>
           {item.title}
         </Text>
         <View style={[styles.statusBadge, !item.active && styles.inactiveBadge]}>
           <Text style={[styles.statusText, !item.active && styles.inactiveText]}>
-            {item.active ? "Active" : "Inactive"}
+            {STATUS_LABELS[item.status] || item.status}
           </Text>
         </View>
       </View>
 
       <View style={styles.jobDetails}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>📍</Text>
-          <Text style={styles.detailText}>{item.location}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>💼</Text>
-          <Text style={styles.detailText}>{item.employmentType}</Text>
-        </View>
-        {formatSalary(item) && (
+        {!!item.location && (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText}>{item.location}</Text>
+          </View>
+        )}
+        {!!item.employmentType && (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>💼</Text>
+            <Text style={styles.detailText}>{item.employmentType}</Text>
+          </View>
+        )}
+        {!!item.salary && (
           <View style={styles.detailRow}>
             <Text style={styles.detailIcon}>💰</Text>
-            <Text style={styles.detailText}>{formatSalary(item)}</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Tags */}
-      <View style={styles.tagsRow}>
-        {item.remoteFlag && (
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>Remote</Text>
-          </View>
-        )}
-        {item.quickApplyEnabled && (
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>Quick Apply</Text>
-          </View>
-        )}
-        {item.indigenousPreference && (
-          <View style={[styles.tag, styles.indigenousTag]}>
-            <Text style={[styles.tagText, styles.indigenousTagText]}>Indigenous Preferred</Text>
+            <Text style={styles.detailText}>{item.salary}</Text>
           </View>
         )}
       </View>
@@ -123,12 +105,7 @@ export default function EmployerJobsScreen() {
       {/* Stats */}
       <View style={styles.statsRow}>
         <View style={styles.stat}>
-          <Text style={styles.statNumber}>{item.viewsCount || 0}</Text>
-          <Text style={styles.statLabel}>Views</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.stat}>
-          <Text style={styles.statNumber}>{item.applicationsCount || 0}</Text>
+          <Text style={styles.statNumber}>{item.applicationCount}</Text>
           <Text style={styles.statLabel}>Applications</Text>
         </View>
         <View style={styles.statDivider} />
@@ -313,29 +290,6 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 14,
     color: "#94A3B8",
-  },
-  tagsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 12,
-  },
-  tag: {
-    backgroundColor: "#334155",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: "#94A3B8",
-  },
-  indigenousTag: {
-    backgroundColor: "#14B8A620",
-  },
-  indigenousTagText: {
-    color: "#14B8A6",
   },
   statsRow: {
     flexDirection: "row",

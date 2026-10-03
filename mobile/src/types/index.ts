@@ -1,24 +1,14 @@
-import type { Timestamp } from "firebase/firestore";
-
-// Job-specific video type
-export interface JobVideo {
-  videoUrl: string;
-  videoProvider?: "youtube" | "vimeo" | "custom";
-  videoId?: string;
-  title?: string;
-  description?: string;
-  isIOPPSInterview?: boolean;
-}
-
+// A public job from the website's API (/api/jobs), normalized by lib/jobs.ts.
 export interface JobPosting {
   id: string;
-  employerId: string;
+  employerId?: string;
   employerName?: string;
   title: string;
   location: string;
   employmentType: string;
   remoteFlag?: boolean;
   indigenousPreference?: boolean;
+  /** Applications go through IOPPS (the app's Quick Apply or the website's form). */
   quickApplyEnabled?: boolean;
   salaryRange?: {
     min?: number;
@@ -30,23 +20,16 @@ export interface JobPosting {
   description: string;
   responsibilities?: string[];
   qualifications?: string[];
+  /** The employer's own application page, when applications happen there. */
   applicationLink?: string;
   applicationEmail?: string;
+  requiresResume?: boolean;
+  requiresCoverLetter?: boolean;
+  requiresReferences?: boolean;
+  /** False once the job has closed. */
   active: boolean;
   featured?: boolean;
-  createdAt: any;
-  updatedAt?: any;
-  expiresAt?: any;
-  viewsCount?: number;
-  applicationsCount?: number;
-  paymentStatus?: "paid" | "pending" | "failed";
-  paymentId?: string;
-  companyLogoUrl?: string;
-  // Job Requirements Flags
-  cpicRequired?: boolean; // Criminal record check required
-  willTrain?: boolean; // Employer will provide training
-  // Job-specific video
-  jobVideo?: JobVideo;
+  createdAt: string | null;
 }
 
 export interface EmployerProfile {
@@ -61,227 +44,155 @@ export interface EmployerProfile {
   createdAt: any;
 }
 
+// The member's users/{uid} record (role and account details).
 export interface UserProfile {
   uid: string;
   email: string;
   displayName?: string;
   photoURL?: string;
-  phone?: string;
-  location?: string;
-  bio?: string;
-  resumeUrl?: string;
-  resumeName?: string;
-  linkedIn?: string;
-  website?: string;
-  role: "user" | "employer" | "admin" | "moderator";
+  role: string;
   createdAt: any;
   updatedAt?: any;
 }
 
-export interface Application {
-  id: string;
-  jobId: string;
-  userId: string;
-  employerId: string;
-  status: "pending" | "reviewed" | "accepted" | "rejected";
-  resumeUrl?: string;
-  coverLetter?: string;
-  createdAt: any;
-}
-
-// Saved Jobs
+// Saved jobs: the member's saved_items records, shared with the website.
 export interface SavedJob {
   id: string;
   jobId: string;
-  memberId: string;
-  createdAt?: any;
-  job?: JobPosting | null;
+  title: string;
+  employerName: string;
+  savedAt: unknown;
 }
 
-// Job Alerts
-export type JobAlertFrequency = "instant" | "daily" | "weekly";
-
-export interface JobAlert {
-  id: string;
-  memberId: string;
-  alertName?: string;
-  keyword?: string;
-  location?: string;
-  employmentType?: string;
-  remoteOnly?: boolean;
-  indigenousOnly?: boolean;
-  minSalary?: number;
-  maxSalary?: number;
-  frequency: JobAlertFrequency;
-  active: boolean;
-  createdAt?: any;
-  updatedAt?: any;
-  lastSent?: any;
-}
-
-// Job Applications (enhanced)
+// Application statuses used by the website's applications API.
 export type ApplicationStatus =
   | "submitted"
-  | "reviewed"
+  | "reviewing"
   | "shortlisted"
+  | "interview"
+  | "offered"
   | "rejected"
-  | "hired"
   | "withdrawn";
 
-export interface JobApplication {
+// The member's own application (/api/applications).
+export interface MemberApplication {
   id: string;
   jobId: string;
-  employerId: string;
-  memberId: string;
-  memberEmail?: string;
-  memberDisplayName?: string;
+  jobTitle: string;
+  employerName: string;
   status: ApplicationStatus;
-  resumeUrl?: string;
-  coverLetter?: string;
-  note?: string;
-  createdAt?: any;
-  updatedAt?: any;
-  // Denormalized job data for display
-  jobTitle?: string;
-  jobEmployerName?: string;
-  jobLocation?: string;
+  appliedAt: unknown;
+  updatedAt: unknown;
 }
 
-// Conferences
+// An application to the employer's jobs (/api/employer/applications).
+export interface EmployerApplication {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  applicantId: string;
+  applicantName: string;
+  applicantEmail: string;
+  applicantLocation: string;
+  applicantHeadline: string;
+  status: ApplicationStatus;
+  resumeUrl: string;
+  resumeFileName: string;
+  coverLetter: string;
+  references: string;
+  appliedAt: unknown;
+  updatedAt: unknown;
+}
+
+// One of the employer's jobs (/api/employer/jobs), including drafts and closed jobs.
+export interface EmployerJob {
+  id: string;
+  title: string;
+  location: string;
+  employmentType: string;
+  salary: string;
+  status: string;
+  active: boolean;
+  featured: boolean;
+  closingDate: string;
+  createdAt: unknown;
+  applicationCount: number;
+}
+
+// Conferences and other events from the website's events API (/api/events).
 export interface Conference {
   id: string;
-  employerId: string;
-  employerName?: string;
-  organizerName?: string;
   title: string;
+  organizerName: string;
   description: string;
   location: string;
-  startDate: any;
-  endDate: any;
-  registrationLink?: string;
-  registrationUrl?: string;
-  cost?: string;
-  format?: string;
-  active: boolean;
-  createdAt?: any;
-  featured?: boolean;
-  viewsCount?: number;
+  startDate: string;
+  endDate: string;
+  /** The website's display label for the dates, when it has one. */
+  dates: string;
+  registrationUrl: string;
+  cost: string;
+  /** Event type, e.g. "Conference" or "Career Fair". */
+  format: string;
+  featured: boolean;
 }
 
-// Scholarships
+// Scholarships and other funding (/api/scholarships).
 export interface Scholarship {
   id: string;
-  employerId: string;
-  employerName?: string;
+  slug: string;
   title: string;
   provider: string;
   description: string;
-  amount?: string;
-  deadline?: any;
+  amount: string;
+  /** "YYYY-MM-DD", "Rolling" or "". */
+  deadline: string;
   level: string;
-  region?: string;
+  region: string;
   type: string;
-  createdAt?: any;
-  active: boolean;
 }
 
-export interface ScholarshipApplication {
-  id: string;
-  scholarshipId: string;
-  employerId: string;
-  memberId: string;
-  memberEmail?: string;
-  memberDisplayName?: string;
-  status: ApplicationStatus;
-  education?: string;
-  essay?: string;
-  createdAt?: any;
-  updatedAt?: any;
-}
-
-// Vendors / Shop
+// Shop Indigenous vendors (the public shop_vendors records the website lists).
 export interface VendorProfile {
   id: string;
-  ownerUserId: string;
   businessName: string;
-  tagline?: string;
-  category?: string;
-  location?: string;
-  region?: string;
-  websiteUrl?: string;
-  shopUrl?: string;
-  isIndigenousOwned: boolean;
-  about?: string;
-  originStory?: string;
-  communityConnections?: string;
-  offerings?: string;
-  shipsCanadaWide?: boolean;
-  isOnlineOnly?: boolean;
-  hasInPersonLocation?: boolean;
-  contactEmail?: string;
-  contactPhone?: string;
-  instagram?: string;
-  facebook?: string;
-  tiktok?: string;
-  otherLink?: string;
-  logoUrl?: string;
-  heroImageUrl?: string;
-  galleryImageUrls?: string[];
-  active?: boolean;
-  featured?: boolean;
-  createdAt?: any;
-  updatedAt?: any;
-}
-
-export interface ShopListing {
-  id: string;
-  employerId: string;
-  vendorId?: string;
-  owner?: string;
-  name: string;
-  description: string;
   category: string;
   location: string;
-  shipsCanadaWide?: boolean;
-  onlineStore?: boolean;
-  tags?: string[];
-  website?: string;
-  createdAt?: any;
-  active: boolean;
+  about: string;
+  logoUrl: string;
+  heroImageUrl: string;
+  websiteUrl: string;
+  contactEmail: string;
+  contactPhone: string;
+  instagram: string;
+  facebook: string;
+  featured: boolean;
 }
 
-// Pow Wows
+// Pow wows from the website's events API (/api/events).
 export interface PowwowEvent {
   id: string;
-  employerId: string;
   name: string;
-  host?: string;
+  host: string;
   location: string;
-  season?: string;
-  startDate?: any;
-  endDate?: any;
-  dateRange?: string;
+  startDate: string;
+  endDate: string;
+  dateRange: string;
   description: string;
-  registrationStatus?: string;
-  livestream?: boolean;
-  createdAt?: any;
-  active: boolean;
+  registrationUrl: string;
 }
 
-// Live Streams
+// IOPPS live streams and replays (/api/livestreams/youtube).
 export interface LiveStreamEvent {
   id: string;
-  employerId: string;
-  employerName?: string;
   title: string;
   host: string;
   description: string;
   category: string;
   startTime: string;
-  status: "Live Now" | "Upcoming" | "Replay" | string;
+  status: "Live Now" | "Upcoming" | "Replay";
   platform: string;
-  createdAt?: any;
-  active: boolean;
+  url: string;
 }
 
 // Messaging (shared with the website; see src/lib/messaging.ts)
@@ -332,61 +243,4 @@ export interface Notification {
   relatedConversationId?: string;
   relatedEmployerId?: string;
   createdAt?: any;
-}
-
-// Interviews
-export type ScheduledInterviewStatus = "scheduled" | "completed" | "cancelled" | "no-show";
-export type InterviewType = "virtual" | "phone" | "in-person";
-
-export interface ScheduledInterview {
-  id: string;
-  employerId: string;
-  applicationId: string;
-  candidateId: string;
-  jobId?: string;
-  jobTitle?: string;
-  candidateName?: string;
-  candidateEmail?: string;
-  type: InterviewType;
-  scheduledAt: any; // Timestamp
-  duration: number; // minutes
-  meetingUrl?: string;
-  phoneNumber?: string;
-  location?: string;
-  interviewerName?: string;
-  notes?: string;
-  status: ScheduledInterviewStatus;
-  cancelReason?: string;
-  createdAt?: any;
-  updatedAt?: any;
-}
-
-// Talent Search
-export type ExperienceLevel = "entry" | "mid" | "senior" | "";
-export type Availability = "yes" | "maybe" | "no" | "";
-
-export interface TalentSearchFilters {
-  query?: string;
-  location?: string;
-  skills?: string[];
-  experience?: ExperienceLevel;
-  availability?: Availability;
-  hasResume?: boolean;
-}
-
-export interface TalentSearchResult {
-  member: UserProfile;
-  matchScore?: number;
-  matchReasons?: string[];
-}
-
-export interface SavedTalent {
-  id: string;
-  employerId: string;
-  memberId: string;
-  memberName: string;
-  memberAvatar?: string;
-  notes?: string;
-  tags?: string[];
-  savedAt?: any;
 }

@@ -10,7 +10,8 @@ import {
   Linking,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { listConferences, formatTimestamp } from "../lib/firestore";
+import { listConferences } from "../lib/listings";
+import { formatDateRange } from "../lib/dates";
 import type { Conference } from "../types";
 import { logger } from "../lib/logger";
 
@@ -22,7 +23,7 @@ export default function ConferencesScreen() {
 
   const loadConferences = async () => {
     try {
-      const data = await listConferences(50);
+      const data = await listConferences();
       setConferences(data);
     } catch (error) {
       logger.error("Error loading conferences:", error);
@@ -42,9 +43,8 @@ export default function ConferencesScreen() {
   };
 
   const handleRegister = (conference: Conference) => {
-    const link = conference.registrationLink || conference.registrationUrl;
-    if (link) {
-      Linking.openURL(link);
+    if (conference.registrationUrl) {
+      Linking.openURL(conference.registrationUrl);
     }
   };
 
@@ -62,16 +62,16 @@ export default function ConferencesScreen() {
       )}
 
       <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.organizer}>
-        {item.organizerName || item.employerName}
-      </Text>
+      {!!item.organizerName && <Text style={styles.organizer}>{item.organizerName}</Text>}
 
       <View style={styles.detailsRow}>
-        <View style={styles.detailItem}>
-          <Text style={styles.detailIcon}>📍</Text>
-          <Text style={styles.detailText}>{item.location}</Text>
-        </View>
-        {item.format && (
+        {!!item.location && (
+          <View style={styles.detailItem}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText}>{item.location}</Text>
+          </View>
+        )}
+        {!!item.format && (
           <View style={styles.detailItem}>
             <Text style={styles.detailIcon}>🎯</Text>
             <Text style={styles.detailText}>{item.format}</Text>
@@ -82,12 +82,11 @@ export default function ConferencesScreen() {
       <View style={styles.dateRow}>
         <Text style={styles.dateIcon}>📅</Text>
         <Text style={styles.dateText}>
-          {formatTimestamp(item.startDate)}
-          {item.endDate && ` - ${formatTimestamp(item.endDate)}`}
+          {item.dates || formatDateRange(item.startDate, item.endDate)}
         </Text>
       </View>
 
-      {item.cost && (
+      {!!item.cost && (
         <View style={styles.costRow}>
           <Text style={styles.costLabel}>Cost:</Text>
           <Text style={styles.costText}>{item.cost}</Text>
@@ -98,7 +97,7 @@ export default function ConferencesScreen() {
         {item.description}
       </Text>
 
-      {(item.registrationLink || item.registrationUrl) && (
+      {!!item.registrationUrl && (
         <TouchableOpacity
           style={styles.registerButton}
           onPress={() => handleRegister(item)}

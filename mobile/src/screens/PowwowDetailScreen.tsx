@@ -6,18 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
+  Linking,
 } from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
-import { useAuth } from "../context/AuthContext";
-import { getPowwow, formatTimestamp } from "../lib/firestore";
+import { useRoute } from "@react-navigation/native";
+import { API_BASE } from "../lib/api";
+import { getPowwow } from "../lib/listings";
+import { formatDateRange } from "../lib/dates";
 import type { PowwowEvent } from "../types";
 import { logger } from "../lib/logger";
 
 export default function PowwowDetailScreen() {
   const route = useRoute();
-  const navigation = useNavigation();
-  const { user } = useAuth();
   const { powwowId } = route.params as { powwowId: string };
   const [powwow, setPowwow] = useState<PowwowEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,25 +35,10 @@ export default function PowwowDetailScreen() {
     loadPowwow();
   }, [powwowId]);
 
+  // The organizer's registration page, else the event's page on the IOPPS website.
   const handleRegister = () => {
-    if (!user) {
-      Alert.alert(
-        "Sign In Required",
-        "Please sign in to register for this event.",
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Sign In",
-            onPress: () => (navigation as any).navigate("SignIn"),
-          },
-        ]
-      );
-      return;
-    }
-    Alert.alert(
-      "Registration",
-      "Registration through the app is coming soon. Please visit the IOPPS website to register."
-    );
+    if (!powwow) return;
+    Linking.openURL(powwow.registrationUrl || `${API_BASE}/events/${encodeURIComponent(powwow.id)}`);
   };
 
   if (loading) {
@@ -76,22 +60,8 @@ export default function PowwowDetailScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {/* Badges */}
-        <View style={styles.badges}>
-          {powwow.livestream && (
-            <View style={styles.livestreamBadge}>
-              <Text style={styles.livestreamText}>📺 Livestream Available</Text>
-            </View>
-          )}
-          {powwow.season && (
-            <View style={styles.seasonBadge}>
-              <Text style={styles.seasonText}>{powwow.season}</Text>
-            </View>
-          )}
-        </View>
-
         <Text style={styles.name}>{powwow.name}</Text>
-        {powwow.host && <Text style={styles.host}>Hosted by {powwow.host}</Text>}
+        {!!powwow.host && <Text style={styles.host}>Hosted by {powwow.host}</Text>}
 
         {/* Key Details Card */}
         <View style={styles.detailsCard}>
@@ -99,7 +69,7 @@ export default function PowwowDetailScreen() {
             <Text style={styles.detailIcon}>📍</Text>
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>Location</Text>
-              <Text style={styles.detailValue}>{powwow.location}</Text>
+              <Text style={styles.detailValue}>{powwow.location || "To be announced"}</Text>
             </View>
           </View>
 
@@ -110,36 +80,10 @@ export default function PowwowDetailScreen() {
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>Date</Text>
               <Text style={styles.detailValue}>
-                {powwow.dateRange ||
-                  (powwow.startDate &&
-                    `${formatTimestamp(powwow.startDate)}${
-                      powwow.endDate ? ` - ${formatTimestamp(powwow.endDate)}` : ""
-                    }`)}
+                {powwow.dateRange || formatDateRange(powwow.startDate, powwow.endDate)}
               </Text>
             </View>
           </View>
-
-          {powwow.registrationStatus && (
-            <>
-              <View style={styles.divider} />
-              <View style={styles.detailRow}>
-                <Text style={styles.detailIcon}>📋</Text>
-                <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Registration</Text>
-                  <Text
-                    style={[
-                      styles.detailValue,
-                      powwow.registrationStatus.toLowerCase().includes("open")
-                        ? styles.registrationOpen
-                        : styles.registrationClosed,
-                    ]}
-                  >
-                    {powwow.registrationStatus}
-                  </Text>
-                </View>
-              </View>
-            </>
-          )}
         </View>
 
         {/* Description */}
@@ -165,7 +109,9 @@ export default function PowwowDetailScreen() {
       {/* Footer with Register Button */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-          <Text style={styles.registerButtonText}>Register to Attend</Text>
+          <Text style={styles.registerButtonText}>
+            {powwow.registrationUrl ? "Register to Attend" : "View on IOPPS"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -193,34 +139,6 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 100,
-  },
-  badges: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 16,
-  },
-  livestreamBadge: {
-    backgroundColor: "#EF444420",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  livestreamText: {
-    color: "#EF4444",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  seasonBadge: {
-    backgroundColor: "#14B8A620",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  seasonText: {
-    color: "#14B8A6",
-    fontSize: 12,
-    fontWeight: "600",
   },
   name: {
     fontSize: 28,
@@ -262,12 +180,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#F8FAFC",
     fontWeight: "500",
-  },
-  registrationOpen: {
-    color: "#10B981",
-  },
-  registrationClosed: {
-    color: "#F59E0B",
   },
   divider: {
     height: 1,

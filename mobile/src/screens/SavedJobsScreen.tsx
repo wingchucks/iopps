@@ -7,29 +7,25 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import { listSavedJobs, formatTimestamp } from "../lib/firestore";
-import type { JobPosting, SavedJob } from "../types";
+import { listSavedJobs, savedJobStates, unsaveJob, type SavedJobState } from "../lib/savedJobs";
+import { formatTimestamp } from "../lib/dates";
+import type { SavedJob } from "../types";
 import { logger } from "../lib/logger";
 
-function formatSalaryRange(job: JobPosting): string | null {
-  const salaryRange = job.salaryRange;
-  if (!salaryRange) return null;
-  if (typeof salaryRange === "string") return salaryRange;
-  if (salaryRange.disclosed === false) return "Salary not disclosed";
-  const { min, max, currency = "CAD" } = salaryRange;
-  if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()} ${currency}`;
-  if (min) return `From $${min.toLocaleString()} ${currency}`;
-  if (max) return `Up to $${max.toLocaleString()} ${currency}`;
-  return null;
-}
+const STATE_LABELS: Partial<Record<SavedJobState, string>> = {
+  closed: "Closed",
+  unavailable: "No longer available",
+};
 
 export default function SavedJobsScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
+  const [states, setStates] = useState<Record<string, SavedJobState>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -38,6 +34,10 @@ export default function SavedJobsScreen() {
     try {
       const data = await listSavedJobs(user.uid);
       setSavedJobs(data);
+      // Closed and removed jobs are marked; the list still shows without this.
+      savedJobStates(data.map((saved) => saved.jobId))
+        .then(setStates)
+        .catch((error) => logger.error("Error checking saved jobs:", error));
     } catch (error) {
       logger.error("Error loading saved jobs:", error);
     } finally {
@@ -57,64 +57,55 @@ export default function SavedJobsScreen() {
     loadSavedJobs();
   };
 
+  const removeSavedJob = (saved: SavedJob) => {
+    if (!user) return;
+    Alert.alert("Remove Saved Job", `Remove "${saved.title || "this job"}" from your saved jobs?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await unsaveJob(user.uid, saved.jobId);
+            setSavedJobs((current) => current.filter((item) => item.jobId !== saved.jobId));
+          } catch (error) {
+            logger.error("Error removing saved job:", error);
+            Alert.alert("Error", "Failed to remove this job. Please try again.");
+          }
+        },
+      },
+    ]);
+  };
+
   const renderJobCard = ({ item }: { item: SavedJob }) => {
-    const job = item.job;
-    if (!job) return null;
+    const stateLabel = STATE_LABELS[states[item.jobId]];
 
     return (
       <TouchableOpacity
         style={styles.card}
-        onPress={() => (navigation as any).navigate("JobDetail", { jobId: job.id })}
+        onPress={() => (navigation as any).navigate("JobDetail", { jobId: item.jobId })}
       >
-        <View style={styles.cardHeader}>
-          <View style={styles.cardHeaderLeft}>
-            {job.featured && (
-              <View style={styles.featuredBadge}>
-                <Text style={styles.featuredText}>Featured</Text>
-              </View>
-            )}
-            {!job.active && (
-              <View style={styles.closedBadge}>
-                <Text style={styles.closedText}>Closed</Text>
-              </View>
-            )}
+        {stateLabel && (
+          <View style={styles.cardHeader}>
+            <View style={styles.closedBadge}>
+              <Text style={styles.closedText}>{stateLabel}</Text>
+            </View>
           </View>
-        </View>
-
-        <Text style={styles.jobTitle}>{job.title}</Text>
-        <Text style={styles.employerName}>{job.employerName}</Text>
-
-        <View style={styles.metaRow}>
-          <Text style={styles.metaText}>{job.location}</Text>
-          <Text style={styles.metaDot}>•</Text>
-          <Text style={styles.metaText}>{job.employmentType}</Text>
-        </View>
-
-        {job.salaryRange && (
-          <Text style={styles.salary}>{formatSalaryRange(job)}</Text>
         )}
 
-        <View style={styles.tagsRow}>
-          {job.remoteFlag && (
-            <View style={[styles.tag, styles.remoteTag]}>
-              <Text style={styles.tagText}>Remote</Text>
-            </View>
-          )}
-          {job.indigenousPreference && (
-            <View style={[styles.tag, styles.indigenousTag]}>
-              <Text style={styles.tagText}>Indigenous Preference</Text>
-            </View>
-          )}
-          {job.quickApplyEnabled && (
-            <View style={[styles.tag, styles.quickApplyTag]}>
-              <Text style={styles.tagText}>Quick Apply</Text>
-            </View>
-          )}
-        </View>
+        <Text style={styles.jobTitle}>{item.title || "Saved job"}</Text>
+        {!!item.employerName && <Text style={styles.employerName}>{item.employerName}</Text>}
 
-        <Text style={styles.savedDate}>
-          Saved {formatTimestamp(item.createdAt)}
-        </Text>
+        <View style={styles.footerRow}>
+          <Text style={styles.savedDate}>Saved {formatTimestamp(item.savedAt)}</Text>
+          <TouchableOpacity
+            onPress={() => removeSavedJob(item)}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove ${item.title || "this job"} from saved jobs`}
+          >
+            <Text style={styles.removeText}>Remove</Text>
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -230,21 +221,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
   },
-  cardHeaderLeft: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  featuredBadge: {
-    backgroundColor: "#F59E0B20",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  featuredText: {
-    color: "#F59E0B",
-    fontSize: 11,
-    fontWeight: "600",
-  },
   closedBadge: {
     backgroundColor: "#64748B20",
     paddingHorizontal: 8,
@@ -267,53 +243,19 @@ const styles = StyleSheet.create({
     color: "#14B8A6",
     marginBottom: 8,
   },
-  metaRow: {
+  footerRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
-  },
-  metaText: {
-    fontSize: 13,
-    color: "#94A3B8",
-  },
-  metaDot: {
-    color: "#64748B",
-    marginHorizontal: 8,
-  },
-  salary: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#10B981",
-    marginBottom: 12,
-  },
-  tagsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 12,
-  },
-  tag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  remoteTag: {
-    backgroundColor: "#3B82F620",
-  },
-  indigenousTag: {
-    backgroundColor: "#14B8A620",
-  },
-  quickApplyTag: {
-    backgroundColor: "#8B5CF620",
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: "#F8FAFC",
   },
   savedDate: {
     fontSize: 12,
     color: "#64748B",
+  },
+  removeText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#EF4444",
   },
   messageTitle: {
     fontSize: 20,

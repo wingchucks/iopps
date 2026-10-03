@@ -10,24 +10,11 @@ import {
   ActivityIndicator,
   Linking,
 } from "react-native";
-import {
-  collection,
-  addDoc,
-  doc,
-  getDoc,
-  query,
-  where,
-  getDocs,
-  limit,
-  updateDoc,
-  increment,
-  serverTimestamp,
-} from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { db } from "../lib/firebase";
-import { getUserProfile } from "../lib/firestore";
+import { ApiError } from "../lib/api";
+import { applyToJob } from "../lib/jobs";
+import { getMemberProfile, type MemberProfile } from "../lib/profile";
 import { logger } from "../lib/logger";
-import type { UserProfile } from "../types";
 
 interface QuickApplyScreenProps {
   route: any;
@@ -35,12 +22,18 @@ interface QuickApplyScreenProps {
 }
 
 export default function QuickApplyScreen({ route, navigation }: QuickApplyScreenProps) {
-  const { jobId } = route.params;
+  const {
+    jobId,
+    requiresResume = false,
+    requiresCoverLetter = false,
+    requiresReferences = false,
+  } = route.params;
   const { user } = useAuth();
   const [coverLetter, setCoverLetter] = useState("");
+  const [references, setReferences] = useState("");
   const [loading, setLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<MemberProfile | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -49,7 +42,7 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
         return;
       }
       try {
-        const data = await getUserProfile(user.uid);
+        const data = await getMemberProfile(user.uid);
         setProfile(data);
       } catch (error) {
         logger.error("Error loading profile for Quick Apply:", error);
@@ -66,68 +59,35 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
       return;
     }
 
-    if (!coverLetter.trim()) {
+    // The website checks the same requirements again when the application arrives.
+    if (requiresResume && !profile?.resumeUrl) {
+      Alert.alert("Resume Required", "This job needs a resume. Add one to your profile, then apply.");
+      return;
+    }
+
+    if (requiresCoverLetter && !coverLetter.trim()) {
       Alert.alert("Error", "Please add a cover letter");
+      return;
+    }
+
+    if (requiresReferences && !references.trim()) {
+      Alert.alert("Error", "Please add your references");
       return;
     }
 
     setLoading(true);
     try {
-      // Check for duplicate application
-      const applicationsRef = collection(db, "applications");
-      const duplicateQuery = query(
-        applicationsRef,
-        where("memberId", "==", user.uid),
-        where("jobId", "==", jobId),
-        limit(1)
-      );
-      const duplicateSnap = await getDocs(duplicateQuery);
-
-      if (!duplicateSnap.empty) {
-        Alert.alert("Already Applied", "You have already applied to this job");
-        setLoading(false);
-        return;
-      }
-
-      // Get job details to find employerId
-      const jobRef = doc(db, "jobs", jobId);
-      const jobSnap = await getDoc(jobRef);
-
-      if (!jobSnap.exists()) {
-        Alert.alert("Error", "Job not found");
-        setLoading(false);
-        return;
-      }
-
-      const jobData = jobSnap.data();
-      const employerId = jobData.employerId;
-
-      // Create application
-      const applicationData = {
-        jobId,
-        memberId: user.uid,
-        employerId,
-        memberEmail: user.email || "",
-        memberDisplayName: profile?.displayName || user.displayName || "",
-        memberPhone: profile?.phone || "",
+      const { created } = await applyToJob(jobId, {
+        useProfileResume: !!profile?.resumeUrl,
         coverLetter: coverLetter.trim(),
-        resumeUrl: profile?.resumeUrl || null,
-        resumeName: profile?.resumeName || null,
-        status: "submitted",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      await addDoc(applicationsRef, applicationData);
-
-      // Increment application count on job
-      await updateDoc(jobRef, {
-        applicationsCount: increment(1),
+        references: references.trim(),
       });
 
       Alert.alert(
-        "Success",
-        "Your application has been submitted!",
+        created ? "Success" : "Already Applied",
+        created
+          ? "Your application has been submitted!"
+          : "You have already applied to this job. Your original application is saved.",
         [
           {
             text: "OK",
@@ -137,7 +97,10 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
       );
     } catch (error) {
       logger.error("Error submitting application:", error);
-      Alert.alert("Error", "Failed to submit application. Please try again.");
+      Alert.alert(
+        "Error",
+        error instanceof ApiError ? error.message : "Failed to submit application. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -178,7 +141,7 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
               <Text style={styles.resumeIcon}>📄</Text>
               <View style={styles.resumeInfo}>
                 <Text style={styles.resumeName} numberOfLines={1}>
-                  {profile.resumeName || "Resume attached"}
+                  {profile.resumeFileName || "Resume attached"}
                 </Text>
                 <TouchableOpacity
                   onPress={() => profile.resumeUrl && Linking.openURL(profile.resumeUrl)}
@@ -204,7 +167,7 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Cover Letter *</Text>
+          <Text style={styles.label}>Cover Letter{requiresCoverLetter ? " *" : " (optional)"}</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Tell us why you're a great fit for this role..."
@@ -216,6 +179,22 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
             textAlignVertical="top"
           />
         </View>
+
+        {requiresReferences && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>References *</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Names and contact details, shared with their permission"
+              placeholderTextColor="#64748B"
+              value={references}
+              onChangeText={setReferences}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
+        )}
 
         <TouchableOpacity
           style={[styles.submitButton, loading && styles.disabledButton]}

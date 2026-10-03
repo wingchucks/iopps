@@ -21,10 +21,11 @@ const replacements: Record<string, string> = {
 };
 registerHooks({
   resolve(specifier, context, next) {
-    if (!context.parentURL?.endsWith('/mobile/src/lib/messaging.ts')) return next(specifier, context);
+    if (!context.parentURL?.includes('/mobile/src/lib/')) return next(specifier, context);
     const replacement = replacements[specifier];
     if (replacement) return { url: `data:text/javascript,${encodeURIComponent(replacement)}`, shortCircuit: true };
-    return next(specifier, { ...context, parentURL: import.meta.url });
+    // The app's own modules (./api) load as they are; packages come from the SDK copy this suite connects.
+    return next(specifier, specifier.startsWith('.') ? context : { ...context, parentURL: import.meta.url });
   },
 });
 

@@ -170,8 +170,6 @@ jest.mock('./src/lib/firebase', () => ({
 // Mock notifications lib
 jest.mock('./src/lib/notifications', () => ({
   registerForPushNotificationsAsync: jest.fn(() => Promise.resolve('mock-push-token')),
-  savePushToken: jest.fn(() => Promise.resolve()),
-  removePushToken: jest.fn(() => Promise.resolve()),
 }));
 
 // Mock account state service

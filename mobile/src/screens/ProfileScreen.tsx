@@ -12,19 +12,20 @@ import {
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import { getUserProfile } from "../lib/firestore";
+import { API_BASE } from "../lib/api";
+import { getMemberProfile, type MemberProfile } from "../lib/profile";
 import { AccountState } from "../services/accountState";
-import type { UserProfile } from "../types";
 import { logger } from "../lib/logger";
 
-const PRIVACY_POLICY_URL = "https://iopps.ca/privacy";
-const HELP_SUPPORT_URL = "https://iopps.ca/contact";
+const PRIVACY_POLICY_URL = `${API_BASE}/privacy`;
+const HELP_SUPPORT_URL = `${API_BASE}/contact`;
+const ORGANIZATION_PROFILE_URL = `${API_BASE}/org/dashboard/profile`;
+const POST_JOB_URL = `${API_BASE}/org/dashboard/jobs/new`;
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
   const {
     user,
-    role,
     signOut,
     accountState,
     employerProfile,
@@ -32,7 +33,7 @@ export default function ProfileScreen() {
     isEmployerPending,
     refreshAccountState,
   } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
@@ -51,7 +52,7 @@ export default function ProfileScreen() {
     if (!user) return;
     setLoadError(false);
     try {
-      const data = await getUserProfile(user.uid);
+      const data = await getMemberProfile(user.uid);
       setProfile(data);
     } catch (error) {
       logger.error("Error loading profile:", error);
@@ -199,7 +200,7 @@ export default function ProfileScreen() {
         )}
         <Text style={styles.displayName} numberOfLines={1} ellipsizeMode="tail">{displayName}</Text>
         <Text style={styles.email} numberOfLines={1} ellipsizeMode="middle">{user.email}</Text>
-        {profile?.location && (
+        {!!profile?.location && (
           <Text style={styles.location} numberOfLines={1} ellipsizeMode="tail">📍 {profile.location}</Text>
         )}
         <View style={getRoleBadgeStyle()}>
@@ -228,26 +229,6 @@ export default function ProfileScreen() {
                     ? "Set up your organization profile"
                     : "Manage jobs, applications & more"}
                 </Text>
-              </View>
-            </View>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Vendor Dashboard - Only for vendors and admins */}
-      {(role === "vendor" || role === "admin") && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vendor Dashboard</Text>
-          <TouchableOpacity
-            style={styles.dashboardCard}
-            onPress={() => (navigation as any).navigate("VendorDashboard")}
-          >
-            <View style={styles.dashboardCardContent}>
-              <Text style={styles.dashboardIcon}>🛍️</Text>
-              <View style={styles.dashboardTextContainer}>
-                <Text style={styles.dashboardTitle}>Vendor Dashboard</Text>
-                <Text style={styles.dashboardSubtitle}>Manage your shop profile</Text>
               </View>
             </View>
             <Text style={styles.menuArrow}>›</Text>
@@ -295,18 +276,6 @@ export default function ProfileScreen() {
             <Text style={styles.menuItemText}>My Applications</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => (navigation as any).navigate("JobAlerts")}
-            accessibilityLabel="Job Alerts"
-            accessibilityRole="button"
-            testID="profile-job-alerts"
-          >
-            <Text style={styles.menuItemIcon}>🔔</Text>
-            <Text style={styles.menuItemText}>Job Alerts</Text>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
         </View>
       )}
 
@@ -317,7 +286,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => Linking.openURL("https://iopps.ca/organization/profile")}
+            onPress={() => Linking.openURL(ORGANIZATION_PROFILE_URL)}
           >
             <Text style={styles.menuItemIcon}>🏢</Text>
             <Text style={styles.menuItemText}>Edit Organization Profile</Text>
@@ -327,7 +296,7 @@ export default function ProfileScreen() {
           {!isEmployerPending && (
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => Linking.openURL("https://iopps.ca/organization/jobs/new")}
+              onPress={() => Linking.openURL(POST_JOB_URL)}
             >
               <Text style={styles.menuItemIcon}>📝</Text>
               <Text style={styles.menuItemText}>Post a Job</Text>

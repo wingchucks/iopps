@@ -9,7 +9,8 @@ import {
   Linking,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
-import { getConference, formatTimestamp } from "../lib/firestore";
+import { getConference } from "../lib/listings";
+import { formatDateRange } from "../lib/dates";
 import type { Conference } from "../types";
 import { logger } from "../lib/logger";
 
@@ -34,9 +35,8 @@ export default function ConferenceDetailScreen() {
   }, [conferenceId]);
 
   const handleRegister = () => {
-    const link = conference?.registrationLink || conference?.registrationUrl;
-    if (link) {
-      Linking.openURL(link);
+    if (conference?.registrationUrl) {
+      Linking.openURL(conference.registrationUrl);
     }
   };
 
@@ -66,9 +66,9 @@ export default function ConferenceDetailScreen() {
         )}
 
         <Text style={styles.title}>{conference.title}</Text>
-        <Text style={styles.organizer}>
-          Hosted by {conference.organizerName || conference.employerName}
-        </Text>
+        {!!conference.organizerName && (
+          <Text style={styles.organizer}>Hosted by {conference.organizerName}</Text>
+        )}
 
         {/* Key Details Card */}
         <View style={styles.detailsCard}>
@@ -76,7 +76,7 @@ export default function ConferenceDetailScreen() {
             <Text style={styles.detailIcon}>📍</Text>
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>Location</Text>
-              <Text style={styles.detailValue}>{conference.location}</Text>
+              <Text style={styles.detailValue}>{conference.location || "To be announced"}</Text>
             </View>
           </View>
 
@@ -87,13 +87,12 @@ export default function ConferenceDetailScreen() {
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>Date</Text>
               <Text style={styles.detailValue}>
-                {formatTimestamp(conference.startDate)}
-                {conference.endDate && ` - ${formatTimestamp(conference.endDate)}`}
+                {conference.dates || formatDateRange(conference.startDate, conference.endDate)}
               </Text>
             </View>
           </View>
 
-          {conference.format && (
+          {!!conference.format && (
             <>
               <View style={styles.divider} />
               <View style={styles.detailRow}>
@@ -106,7 +105,7 @@ export default function ConferenceDetailScreen() {
             </>
           )}
 
-          {conference.cost && (
+          {!!conference.cost && (
             <>
               <View style={styles.divider} />
               <View style={styles.detailRow}>
@@ -130,7 +129,7 @@ export default function ConferenceDetailScreen() {
       </ScrollView>
 
       {/* Footer with Register Button */}
-      {(conference.registrationLink || conference.registrationUrl) && (
+      {!!conference.registrationUrl && (
         <View style={styles.footer}>
           <TouchableOpacity
             style={styles.registerButton}

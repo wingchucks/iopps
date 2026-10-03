@@ -1,8 +1,6 @@
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
-import { doc, setDoc, deleteField, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebase";
 import { notificationLogger } from "./logger";
 
 // Configure how notifications should be handled when app is in foreground
@@ -96,47 +94,6 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   }
 
   return token;
-}
-
-/**
- * Save push token to Firestore for the given user
- */
-export async function savePushToken(userId: string, token: string): Promise<void> {
-  try {
-    await setDoc(
-      doc(db, "users", userId),
-      {
-        pushToken: token,
-        pushTokenPlatform: Platform.OS,
-        pushTokenUpdatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
-    notificationLogger.log("Push token saved to Firestore");
-  } catch (error) {
-    notificationLogger.error("Error saving push token", error);
-    throw error;
-  }
-}
-
-/**
- * Remove push token from Firestore (on sign out)
- */
-export async function removePushToken(userId: string): Promise<void> {
-  try {
-    await setDoc(
-      doc(db, "users", userId),
-      {
-        pushToken: deleteField(),
-        pushTokenPlatform: deleteField(),
-        pushTokenUpdatedAt: deleteField(),
-      },
-      { merge: true }
-    );
-    notificationLogger.log("Push token removed from Firestore");
-  } catch (error) {
-    notificationLogger.error("Error removing push token", error);
-  }
 }
 
 /**

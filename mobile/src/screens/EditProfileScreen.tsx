@@ -16,9 +16,8 @@ import * as ImagePicker from "expo-image-picker";
 import DocumentUploader from "../components/documents/DocumentUploader";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import { getUserProfile, updateUserProfile } from "../lib/firestore";
+import { getMemberProfile, saveMemberProfile, type MemberProfile, type MemberProfileUpdate } from "../lib/profile";
 import { uploadProfilePhoto } from "../lib/storage";
-import type { UserProfile } from "../types";
 import { logger } from "../lib/logger";
 
 export default function EditProfileScreen() {
@@ -27,45 +26,22 @@ export default function EditProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [profile, setProfile] = useState<Partial<UserProfile>>({});
+  const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageType, setSelectedImageType] = useState<string | null>(null);
   const [imageChanged, setImageChanged] = useState(false);
 
-  // Form state
+  // Form state: the profile fields the website shares with the app
   const [displayName, setDisplayName] = useState("");
-  const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [bio, setBio] = useState("");
-  const [linkedIn, setLinkedIn] = useState("");
-  const [website, setWebsite] = useState("");
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
   const [resumeName, setResumeName] = useState<string | null>(null);
 
   // Validation constants
   const MAX_DISPLAY_NAME = 50;
-  const MAX_PHONE = 20;
   const MAX_LOCATION = 100;
   const MAX_BIO = 500;
-  const MAX_URL = 200;
-
-  // URL validation helper
-  const isValidUrl = (url: string): boolean => {
-    if (!url.trim()) return true; // Empty is valid (optional field)
-    try {
-      const parsed = new URL(url);
-      return parsed.protocol === "http:" || parsed.protocol === "https:";
-    } catch {
-      return false;
-    }
-  };
-
-  // Phone validation helper (accepts various formats)
-  const isValidPhone = (phoneNum: string): boolean => {
-    if (!phoneNum.trim()) return true; // Empty is valid (optional field)
-    // Accept digits, spaces, dashes, parentheses, and + for international
-    const phoneRegex = /^[+]?[\d\s()-]{7,20}$/;
-    return phoneRegex.test(phoneNum);
-  };
 
   useEffect(() => {
     loadProfile();
@@ -74,20 +50,15 @@ export default function EditProfileScreen() {
   const loadProfile = async () => {
     if (!user) return;
     try {
-      const data = await getUserProfile(user.uid);
-      if (data) {
-        setProfile(data);
-        setDisplayName(data.displayName || "");
-        setPhone(data.phone || "");
-        setLocation(data.location || "");
-        setBio(data.bio || "");
-        setLinkedIn(data.linkedIn || "");
-        setWebsite(data.website || "");
-        setResumeUrl(data.resumeUrl || null);
-        setResumeName(data.resumeName || null);
-        if (data.photoURL) {
-          setSelectedImage(data.photoURL);
-        }
+      const data = await getMemberProfile(user.uid);
+      setProfile(data);
+      setDisplayName(data.displayName || user.displayName || "");
+      setLocation(data.location);
+      setBio(data.bio);
+      setResumeUrl(data.resumeUrl || null);
+      setResumeName(data.resumeFileName || null);
+      if (data.photoURL) {
+        setSelectedImage(data.photoURL);
       }
     } catch (error) {
       logger.error("Error loading profile:", error);
@@ -116,6 +87,7 @@ export default function EditProfileScreen() {
 
     if (!result.canceled && result.assets[0]) {
       setSelectedImage(result.assets[0].uri);
+      setSelectedImageType(result.assets[0].mimeType ?? null);
       setImageChanged(true);
     }
   };
@@ -138,6 +110,7 @@ export default function EditProfileScreen() {
 
     if (!result.canceled && result.assets[0]) {
       setSelectedImage(result.assets[0].uri);
+      setSelectedImageType(result.assets[0].mimeType ?? null);
       setImageChanged(true);
     }
   };
@@ -162,37 +135,22 @@ export default function EditProfileScreen() {
     ]);
   };
 
-
-
   const handleSave = async () => {
     if (!user) return;
 
-    // Validate inputs
-    const errors: string[] = [];
-
-    if (displayName.length > MAX_DISPLAY_NAME) {
-      errors.push(`Display name must be ${MAX_DISPLAY_NAME} characters or less`);
-    }
-
-    if (!isValidPhone(phone)) {
-      errors.push("Please enter a valid phone number");
-    }
-
-    if (location.length > MAX_LOCATION) {
-      errors.push(`Location must be ${MAX_LOCATION} characters or less`);
-    }
-
-    if (bio.length > MAX_BIO) {
-      errors.push(`Bio must be ${MAX_BIO} characters or less`);
-    }
-
-    if (linkedIn.trim() && !isValidUrl(linkedIn)) {
-      errors.push("Please enter a valid LinkedIn URL (e.g., https://linkedin.com/in/yourprofile)");
-    }
-
-    if (website.trim() && !isValidUrl(website)) {
-      errors.push("Please enter a valid website URL (e.g., https://yourwebsite.com)");
-    }
+    // Only fields edited here are checked and saved, so longer text written on the
+    // website (which allows more) stays as it is.
+    const fields = {
+      displayName: { value: displayName.trim(), max: MAX_DISPLAY_NAME, label: "Display name" },
+      location: { value: location.trim(), max: MAX_LOCATION, label: "Location" },
+      bio: { value: bio.trim(), max: MAX_BIO, label: "Bio" },
+    };
+    const edited = (Object.keys(fields) as (keyof typeof fields)[]).filter(
+      (key) => fields[key].value !== (profile?.[key] ?? "")
+    );
+    const errors = edited
+      .filter((key) => fields[key].value.length > fields[key].max)
+      .map((key) => `${fields[key].label} must be ${fields[key].max} characters or less`);
 
     if (errors.length > 0) {
       Alert.alert("Validation Error", errors.join("\n\n"));
@@ -201,7 +159,8 @@ export default function EditProfileScreen() {
 
     setSaving(true);
     try {
-      let photoURL = profile.photoURL;
+      const updates: MemberProfileUpdate = {};
+      for (const key of edited) updates[key] = fields[key].value;
 
       // Upload new photo if changed
       if (imageChanged && selectedImage && !selectedImage.startsWith("http")) {
@@ -210,31 +169,25 @@ export default function EditProfileScreen() {
           const uploadResult = await uploadProfilePhoto(
             user.uid,
             selectedImage,
-            (progress) => setUploadProgress(progress.progress)
+            (progress) => setUploadProgress(progress.progress),
+            selectedImageType
           );
-          photoURL = uploadResult.downloadURL;
+          updates.photoURL = uploadResult.downloadURL;
         } catch (error) {
           logger.error("Error uploading photo:", error);
           Alert.alert("Warning", "Failed to upload photo, but other changes will be saved.");
         }
         setUploadProgress(null);
       } else if (imageChanged && !selectedImage) {
-        photoURL = undefined;
+        updates.photoURL = "";
       }
 
-      const updates: Partial<UserProfile> = {
-        displayName: displayName.trim(),
-        phone: phone.trim(),
-        location: location.trim(),
-        bio: bio.trim(),
-        linkedIn: linkedIn.trim(),
-        website: website.trim(),
-        photoURL,
-        resumeUrl: resumeUrl || undefined,
-        resumeName: resumeName || undefined,
-      };
+      if ((resumeUrl || "") !== (profile?.resumeUrl || "")) {
+        updates.resumeUrl = resumeUrl || "";
+        updates.resumeFileName = resumeUrl ? resumeName || "Resume" : "";
+      }
 
-      await updateUserProfile(user.uid, updates);
+      await saveMemberProfile(user.uid, user.email, updates);
       Alert.alert("Success", "Your profile has been updated.", [
         { text: "OK", onPress: () => navigation.goBack() },
       ]);
@@ -328,20 +281,6 @@ export default function EditProfileScreen() {
           <Text style={styles.charCount}>{displayName.length}/{MAX_DISPLAY_NAME}</Text>
         </View>
 
-        {/* Phone */}
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Phone Number</Text>
-          <TextInput
-            style={styles.input}
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="(555) 555-5555"
-            placeholderTextColor="#64748B"
-            keyboardType="phone-pad"
-            maxLength={MAX_PHONE}
-          />
-        </View>
-
         {/* Location */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Location</Text>
@@ -392,38 +331,6 @@ export default function EditProfileScreen() {
             label="Resume"
           />
           <Text style={styles.fieldHint}>Your resume will be used for Quick Apply</Text>
-        </View>
-
-        {/* LinkedIn */}
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>LinkedIn Profile</Text>
-          <TextInput
-            style={styles.input}
-            value={linkedIn}
-            onChangeText={setLinkedIn}
-            placeholder="https://linkedin.com/in/yourprofile"
-            placeholderTextColor="#64748B"
-            keyboardType="url"
-            autoCapitalize="none"
-            maxLength={MAX_URL}
-          />
-          <Text style={styles.fieldHint}>Include full URL with https://</Text>
-        </View>
-
-        {/* Website */}
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Personal Website</Text>
-          <TextInput
-            style={styles.input}
-            value={website}
-            onChangeText={setWebsite}
-            placeholder="https://yourwebsite.com"
-            placeholderTextColor="#64748B"
-            keyboardType="url"
-            autoCapitalize="none"
-            maxLength={MAX_URL}
-          />
-          <Text style={styles.fieldHint}>Include full URL with https://</Text>
         </View>
 
         {/* Action Buttons */}

@@ -10,7 +10,7 @@ import {
   Image,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
-import { getVendor } from "../lib/firestore";
+import { getVendor } from "../lib/listings";
 import type { VendorProfile } from "../types";
 import { logger } from "../lib/logger";
 
@@ -70,168 +70,93 @@ export default function VendorDetailScreen() {
         ) : (
           <View style={styles.logoPlaceholder}>
             <Text style={styles.logoPlaceholderText}>
-              {vendor.businessName.charAt(0).toUpperCase()}
+              {(vendor.businessName || "?").charAt(0).toUpperCase()}
             </Text>
           </View>
         )}
 
         {/* Badges */}
-        <View style={styles.badges}>
-          {vendor.isIndigenousOwned && (
-            <View style={styles.indigenousBadge}>
-              <Text style={styles.indigenousText}>Indigenous Owned</Text>
-            </View>
-          )}
-          {vendor.featured && (
-            <View style={styles.featuredBadge}>
-              <Text style={styles.featuredText}>Featured</Text>
-            </View>
-          )}
-          {vendor.category && (
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>{vendor.category}</Text>
-            </View>
-          )}
-        </View>
+        {(vendor.featured || !!vendor.category) && (
+          <View style={styles.badges}>
+            {vendor.featured && (
+              <View style={styles.featuredBadge}>
+                <Text style={styles.featuredText}>Featured</Text>
+              </View>
+            )}
+            {!!vendor.category && (
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryText}>{vendor.category}</Text>
+              </View>
+            )}
+          </View>
+        )}
 
         <Text style={styles.businessName}>{vendor.businessName}</Text>
-        {vendor.tagline && <Text style={styles.tagline}>{vendor.tagline}</Text>}
 
-        {/* Location & Info */}
-        <View style={styles.infoCard}>
-          {vendor.location && (
+        {/* Location */}
+        {!!vendor.location && (
+          <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <Text style={styles.infoIcon}>📍</Text>
-              <Text style={styles.infoText}>
-                {vendor.location}
-                {vendor.region && `, ${vendor.region}`}
-              </Text>
+              <Text style={styles.infoText}>{vendor.location}</Text>
             </View>
-          )}
-          {vendor.shipsCanadaWide && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoIcon}>🚚</Text>
-              <Text style={styles.infoText}>Ships Canada-Wide</Text>
-            </View>
-          )}
-          {vendor.isOnlineOnly && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoIcon}>🌐</Text>
-              <Text style={styles.infoText}>Online Store</Text>
-            </View>
-          )}
-          {vendor.hasInPersonLocation && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoIcon}>🏪</Text>
-              <Text style={styles.infoText}>In-Person Location</Text>
-            </View>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* About */}
-        {vendor.about && (
+        {!!vendor.about && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>About</Text>
             <Text style={styles.sectionText}>{vendor.about}</Text>
           </View>
         )}
 
-        {/* Origin Story */}
-        {vendor.originStory && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Our Story</Text>
-            <Text style={styles.sectionText}>{vendor.originStory}</Text>
-          </View>
-        )}
-
-        {/* Offerings */}
-        {vendor.offerings && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>What We Offer</Text>
-            <Text style={styles.sectionText}>{vendor.offerings}</Text>
-          </View>
-        )}
-
-        {/* Community Connections */}
-        {vendor.communityConnections && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Community Connections</Text>
-            <Text style={styles.sectionText}>{vendor.communityConnections}</Text>
-          </View>
-        )}
-
-        {/* Gallery */}
-        {vendor.galleryImageUrls && vendor.galleryImageUrls.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Gallery</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {vendor.galleryImageUrls.map((url, index) => (
-                <Image
-                  key={index}
-                  source={{ uri: url }}
-                  style={styles.galleryImage}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
         {/* Contact & Social */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Connect</Text>
-          <View style={styles.socialLinks}>
-            {vendor.websiteUrl && (
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => openLink(vendor.websiteUrl)}
-              >
-                <Text style={styles.socialIcon}>🌐</Text>
-                <Text style={styles.socialText}>Website</Text>
-              </TouchableOpacity>
-            )}
-            {vendor.shopUrl && (
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => openLink(vendor.shopUrl)}
-              >
-                <Text style={styles.socialIcon}>🛒</Text>
-                <Text style={styles.socialText}>Shop</Text>
-              </TouchableOpacity>
-            )}
-            {vendor.instagram && (
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => openLink(`https://instagram.com/${vendor.instagram}`)}
-              >
-                <Text style={styles.socialIcon}>📸</Text>
-                <Text style={styles.socialText}>Instagram</Text>
-              </TouchableOpacity>
-            )}
-            {vendor.facebook && (
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => openLink(vendor.facebook)}
-              >
-                <Text style={styles.socialIcon}>👤</Text>
-                <Text style={styles.socialText}>Facebook</Text>
-              </TouchableOpacity>
-            )}
-            {vendor.tiktok && (
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => openLink(`https://tiktok.com/@${vendor.tiktok}`)}
-              >
-                <Text style={styles.socialIcon}>🎵</Text>
-                <Text style={styles.socialText}>TikTok</Text>
-              </TouchableOpacity>
-            )}
+        {!!(vendor.websiteUrl || vendor.instagram || vendor.facebook) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Connect</Text>
+            <View style={styles.socialLinks}>
+              {!!vendor.websiteUrl && (
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={() => openLink(vendor.websiteUrl)}
+                >
+                  <Text style={styles.socialIcon}>🌐</Text>
+                  <Text style={styles.socialText}>Website</Text>
+                </TouchableOpacity>
+              )}
+              {!!vendor.instagram && (
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={() =>
+                    openLink(
+                      vendor.instagram.startsWith("http")
+                        ? vendor.instagram
+                        : `https://instagram.com/${vendor.instagram.replace(/^@/, "")}`
+                    )
+                  }
+                >
+                  <Text style={styles.socialIcon}>📸</Text>
+                  <Text style={styles.socialText}>Instagram</Text>
+                </TouchableOpacity>
+              )}
+              {!!vendor.facebook && (
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={() => openLink(vendor.facebook)}
+                >
+                  <Text style={styles.socialIcon}>👤</Text>
+                  <Text style={styles.socialText}>Facebook</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Contact Info */}
-        {(vendor.contactEmail || vendor.contactPhone) && (
+        {!!(vendor.contactEmail || vendor.contactPhone) && (
           <View style={styles.contactCard}>
-            {vendor.contactEmail && (
+            {!!vendor.contactEmail && (
               <TouchableOpacity
                 style={styles.contactRow}
                 onPress={() => Linking.openURL(`mailto:${vendor.contactEmail}`)}
@@ -240,7 +165,7 @@ export default function VendorDetailScreen() {
                 <Text style={styles.contactText}>{vendor.contactEmail}</Text>
               </TouchableOpacity>
             )}
-            {vendor.contactPhone && (
+            {!!vendor.contactPhone && (
               <TouchableOpacity
                 style={styles.contactRow}
                 onPress={() => Linking.openURL(`tel:${vendor.contactPhone}`)}
@@ -254,11 +179,11 @@ export default function VendorDetailScreen() {
       </ScrollView>
 
       {/* Footer with Visit Shop Button */}
-      {(vendor.shopUrl || vendor.websiteUrl) && (
+      {!!vendor.websiteUrl && (
         <View style={styles.footer}>
           <TouchableOpacity
             style={styles.visitButton}
-            onPress={() => openLink(vendor.shopUrl || vendor.websiteUrl)}
+            onPress={() => openLink(vendor.websiteUrl)}
           >
             <Text style={styles.visitButtonText}>Visit Shop</Text>
           </TouchableOpacity>
@@ -322,17 +247,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 0,
   },
-  indigenousBadge: {
-    backgroundColor: "#14B8A620",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  indigenousText: {
-    color: "#14B8A6",
-    fontSize: 12,
-    fontWeight: "600",
-  },
   featuredBadge: {
     backgroundColor: "#F59E0B20",
     paddingHorizontal: 12,
@@ -361,13 +275,6 @@ const styles = StyleSheet.create({
     color: "#F8FAFC",
     paddingHorizontal: 20,
     paddingTop: 16,
-  },
-  tagline: {
-    fontSize: 16,
-    color: "#EC4899",
-    paddingHorizontal: 20,
-    marginTop: 4,
-    fontStyle: "italic",
   },
   infoCard: {
     backgroundColor: "#1E293B",
@@ -402,12 +309,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#94A3B8",
     lineHeight: 24,
-  },
-  galleryImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 12,
-    marginRight: 12,
   },
   socialLinks: {
     flexDirection: "row",

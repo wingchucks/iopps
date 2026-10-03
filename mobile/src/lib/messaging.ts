@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "./firebase";
+import { API_BASE } from "./api";
 import { notifyNewMessage, type MessageNotificationResult } from "./messageNotifications";
 import type { Conversation, ConversationPeer, Message } from "../types";
 
@@ -31,9 +32,6 @@ export const MESSAGE_PAGE_SIZE = 50;
 const PREVIEW_LENGTH = 80;
 // The website shows this name until it can safely share a participant's identity.
 export const UNKNOWN_PEER_NAME = "IOPPS member";
-
-// Website routes the app shares (message email notifications and peer names).
-const API_BASE = (process.env.EXPO_PUBLIC_API_URL || "https://www.iopps.ca").replace(/\/+$/, "");
 
 const text = (value: unknown) => (typeof value === "string" ? value : "");
 

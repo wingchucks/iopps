@@ -9,7 +9,8 @@ import {
   RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { listScholarships, formatTimestamp } from "../lib/firestore";
+import { listScholarships } from "../lib/listings";
+import { formatTimestamp } from "../lib/dates";
 import type { Scholarship } from "../types";
 import { logger } from "../lib/logger";
 
@@ -22,7 +23,7 @@ export default function ScholarshipsScreen() {
 
   const loadScholarships = async () => {
     try {
-      const data = await listScholarships(50);
+      const data = await listScholarships();
       setScholarships(data);
     } catch (error) {
       logger.error("Error loading scholarships:", error);
@@ -43,7 +44,8 @@ export default function ScholarshipsScreen() {
 
   const filteredScholarships = scholarships.filter((s) => {
     if (filter === "all") return true;
-    return s.type.toLowerCase() === filter;
+    // Website categories include "Business Grant" and "Community Grant".
+    return s.type.toLowerCase().includes(filter);
   });
 
   const renderScholarshipCard = ({ item }: { item: Scholarship }) => (
@@ -59,15 +61,17 @@ export default function ScholarshipsScreen() {
         <View style={styles.typeBadge}>
           <Text style={styles.typeText}>{item.type}</Text>
         </View>
-        <View style={styles.levelBadge}>
-          <Text style={styles.levelText}>{item.level}</Text>
-        </View>
+        {!!item.level && (
+          <View style={styles.levelBadge}>
+            <Text style={styles.levelText}>{item.level}</Text>
+          </View>
+        )}
       </View>
 
       <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.provider}>{item.provider}</Text>
+      {!!item.provider && <Text style={styles.provider}>{item.provider}</Text>}
 
-      {item.amount && (
+      {!!item.amount && (
         <View style={styles.amountRow}>
           <Text style={styles.amountLabel}>Award:</Text>
           <Text style={styles.amountText}>{item.amount}</Text>
@@ -79,15 +83,15 @@ export default function ScholarshipsScreen() {
       </Text>
 
       <View style={styles.footer}>
-        {item.deadline && (
+        {!!item.deadline && (
           <View style={styles.deadlineRow}>
             <Text style={styles.deadlineIcon}>⏰</Text>
             <Text style={styles.deadlineText}>
-              Deadline: {formatTimestamp(item.deadline)}
+              Deadline: {formatTimestamp(item.deadline) || item.deadline}
             </Text>
           </View>
         )}
-        {item.region && (
+        {!!item.region && (
           <View style={styles.regionRow}>
             <Text style={styles.regionIcon}>📍</Text>
             <Text style={styles.regionText}>{item.region}</Text>

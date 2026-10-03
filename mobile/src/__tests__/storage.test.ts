@@ -40,7 +40,7 @@ describe('Storage utilities', () => {
 
       expect(result).toEqual({
         downloadURL: 'https://example.com/file.jpg',
-        path: expect.stringContaining(`users/${userId}/profile`),
+        path: `avatars/${userId}.jpg`,
       });
     });
 
@@ -52,8 +52,16 @@ describe('Storage utilities', () => {
 
       expect(ref).toHaveBeenCalledWith(
         expect.anything(),
-        expect.stringContaining(`users/${userId}/profile.png`)
+        `avatars/${userId}.png`
       );
+    });
+
+    it('should send an image content type, which storage.rules requires', async () => {
+      await uploadProfilePhoto('test-user-123', 'file:///path/to/photo.png');
+      expect(uploadBytesResumable).toHaveBeenCalledWith(expect.anything(), mockBlob, { contentType: 'image/png' });
+
+      await uploadProfilePhoto('test-user-123', 'file:///path/to/photo', undefined, 'image/heic');
+      expect(uploadBytesResumable).toHaveBeenLastCalledWith(expect.anything(), mockBlob, { contentType: 'image/heic' });
     });
 
     it('should call uploadBytesResumable', async () => {
@@ -90,14 +98,12 @@ describe('Storage utilities', () => {
 
     it('should handle URIs without extension by using default jpg', async () => {
       const userId = 'test-user-123';
-      const localUri = 'file:///path/to/photo.jpg';
+      const localUri = 'file:///path/to/photo?size=large';
 
       await uploadProfilePhoto(userId, localUri);
 
-      expect(ref).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.stringContaining('profile.jpg')
-      );
+      expect(ref).toHaveBeenCalledWith(expect.anything(), `avatars/${userId}.jpg`);
+      expect(uploadBytesResumable).toHaveBeenCalledWith(expect.anything(), mockBlob, { contentType: 'image/jpeg' });
     });
   });
 
@@ -111,8 +117,25 @@ describe('Storage utilities', () => {
 
       expect(result).toEqual({
         downloadURL: 'https://example.com/file.jpg',
-        path: expect.stringContaining(`users/${userId}/resumes/`),
+        path: expect.stringMatching(new RegExp(`^resumes/${userId}/\\d+_My_Resume.pdf$`)),
       });
+      expect(uploadBytesResumable).toHaveBeenCalledWith(expect.anything(), mockBlob, { contentType: 'application/pdf' });
+    });
+
+    it('should send the Word content type for .docx files', async () => {
+      await uploadResume('test-user-123', 'file:///cache/upload', 'cv.docx');
+      expect(uploadBytesResumable).toHaveBeenCalledWith(
+        expect.anything(),
+        mockBlob,
+        { contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
+      );
+    });
+
+    it('should refuse other file types before uploading', async () => {
+      await expect(uploadResume('test-user-123', 'file:///cache/photo.png', 'photo.png', undefined, 'image/png'))
+        .rejects.toThrow('Please choose a PDF or Word document.');
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(uploadBytesResumable).not.toHaveBeenCalled();
     });
 
     it('should sanitize filename', async () => {

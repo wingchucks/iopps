@@ -11,9 +11,9 @@ import {
   ScrollView,
   Keyboard,
 } from "react-native";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
-import { db } from "../lib/firebase";
 import { JobPosting } from "../types";
+import { listJobs } from "../lib/jobs";
+import { toDate } from "../lib/dates";
 import { fetchWithCache, CACHE_KEYS, CACHE_TTL, saveToCache } from "../lib/cache";
 import { JobListSkeleton } from "../components/Skeleton";
 import { logger } from "../lib/logger";
@@ -60,34 +60,19 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
   const [tempFilters, setTempFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
 
-  const fetchJobsFromFirestore = async (): Promise<JobPosting[]> => {
-    const jobsQuery = query(
-      collection(db, "jobs"),
-      where("active", "==", true),
-      orderBy("createdAt", "desc"),
-      limit(100)
-    );
-
-    const snapshot = await getDocs(jobsQuery);
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as JobPosting[];
-  };
-
   const fetchJobs = async (forceRefresh = false) => {
     setError(null);
     try {
       if (forceRefresh) {
         // On refresh, fetch fresh data and update cache
-        const freshJobs = await fetchJobsFromFirestore();
+        const freshJobs = await listJobs();
         await saveToCache(CACHE_KEYS.JOBS, freshJobs, CACHE_TTL.MEDIUM);
         setJobs(freshJobs);
       } else {
         // Use cache-first strategy
         const { data, fromCache } = await fetchWithCache<JobPosting[]>(
           CACHE_KEYS.JOBS,
-          fetchJobsFromFirestore,
+          () => listJobs(),
           CACHE_TTL.MEDIUM
         );
         setJobs(data);
@@ -158,11 +143,9 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
     // Sort
     switch (filters.sortBy) {
       case "oldest":
-        result.sort((a, b) => {
-          const dateA = a.createdAt?.toDate?.() || new Date(0);
-          const dateB = b.createdAt?.toDate?.() || new Date(0);
-          return dateA.getTime() - dateB.getTime();
-        });
+        result.sort(
+          (a, b) => (toDate(a.createdAt)?.getTime() ?? 0) - (toDate(b.createdAt)?.getTime() ?? 0)
+        );
         break;
       case "salary":
         // Sort by salary (jobs with salary first, then by amount if parseable)
@@ -174,7 +157,7 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
         break;
       case "newest":
       default:
-        // Already sorted by newest from Firestore
+        // Already sorted by newest from the API
         break;
     }
 
@@ -230,7 +213,7 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
       <TouchableOpacity
         style={[styles.jobCard, item.featured && styles.featuredCard]}
         onPress={() => navigation.navigate("JobDetail", { jobId: item.id })}
-        accessibilityLabel={`${item.title} at ${item.employerName}, ${item.location}, ${item.employmentType}${item.featured ? ", Featured job" : ""}`}
+        accessibilityLabel={[item.title, item.employerName && `at ${item.employerName}`, item.location, item.employmentType, item.featured && "Featured job"].filter(Boolean).join(", ")}
         accessibilityRole="button"
         accessibilityHint="Tap to view job details"
         testID={`job-card-${item.id}`}
@@ -244,8 +227,8 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
         <Text style={styles.employerName} numberOfLines={1} ellipsizeMode="tail">{item.employerName}</Text>
         <View style={styles.jobMeta}>
           <Text style={styles.location} numberOfLines={1} ellipsizeMode="tail">{item.location}</Text>
-          <Text style={styles.separator}>•</Text>
-          <Text style={styles.employmentType}>{item.employmentType}</Text>
+          {!!item.location && !!item.employmentType && <Text style={styles.separator}>•</Text>}
+          {!!item.employmentType && <Text style={styles.employmentType}>{item.employmentType}</Text>}
         </View>
         {item.salaryRange && (
           <Text style={styles.salary}>
