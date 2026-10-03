@@ -9,18 +9,18 @@ import { FieldValue } from "firebase-admin/firestore";
 import { fetchImportedDescriptionPatch, normalizeImportedDescription } from "@/lib/server/imported-job-descriptions";
 import { updateImportedJobWithEditorialGuard } from "@/lib/server/job-cleanup-guards";
 import { refreshPublicJobs } from "@/lib/employer-job-cache";
+import { isScheduledJobRequest } from "@/lib/server/scheduled-job-auth";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 
 // ---------------------------------------------------------------------------
-// GET /api/cron/sync-feeds — Automated daily feed sync (Vercel Cron)
+// GET /api/cron/sync-feeds — Automated daily feed sync (Vercel Cron and GitHub Actions)
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret || request.headers.get("authorization") !== `Bearer ${cronSecret}`) {
+  if (!await isScheduledJobRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

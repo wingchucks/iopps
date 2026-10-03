@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import * as expiration from '../src/lib/server/subscription-expiration.ts';
 import { memoryFirestore } from './helpers/memory-firestore.mjs';
+import { scheduledJobAuth } from './helpers/scheduled-job-auth.mjs';
 
 function cron(seed: Record<string, unknown>, expirationModule: Record<string, unknown> = expiration) {
   const memory = memoryFirestore(seed);
@@ -19,6 +20,7 @@ function cron(seed: Record<string, unknown>, expirationModule: Record<string, un
       if (name === '@/lib/firebase-admin') return { getAdminDb: () => memory.db };
       if (name === '@/lib/server/subscription-expiration') return expirationModule;
       if (name === '@/lib/public-partner-cache') return { refreshPublicPartners: () => { refreshes++; } };
+      if (name === '@/lib/server/scheduled-job-auth') return scheduledJobAuth({ CRON_SECRET: 'fictional-cron' });
       throw new Error(name);
     },
   });

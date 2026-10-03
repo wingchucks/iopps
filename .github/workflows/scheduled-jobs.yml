@@ -1,0 +1,53 @@
+name: Scheduled jobs
+
+# Vercel Cron (vercel.json) stopped invoking these routes in September 2026, so this runs the
+# same five jobs once a day after Vercel's slots. Each job only changes what is still due, so
+# a day when both run is harmless. Requests carry this workflow's short-lived GitHub OIDC
+# token, which the routes verify (src/lib/server/scheduled-job-auth.ts); no secret is stored.
+on:
+  schedule:
+    - cron: "40 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: scheduled-jobs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Run the daily jobs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SITE_URL: https://www.iopps.ca
+      AUDIENCE: iopps-scheduled-jobs
+    steps:
+      - name: Call each job
+        shell: bash
+        run: |
+          set -uo pipefail
+          audience="$(jq -rn --arg value "$AUDIENCE" '$value | @uri')"
+          failed=0
+          for job in check-subscriptions expire-jobs expire-events account-cleanup sync-feeds; do
+            # OIDC tokens are short-lived, so every job gets a fresh one.
+            token="$(curl -sS --fail --max-time 30 -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$audience" | jq -r '.value // empty')" || token=""
+            if [ -z "$token" ]; then
+              echo "$job: no GitHub OIDC token"
+              failed=1
+              continue
+            fi
+            echo "::add-mask::$token"
+            status="$(curl -sS -o response.json -w '%{http_code}' --max-time 330 \
+              -H "Authorization: Bearer $token" "$SITE_URL/api/cron/$job")" || true
+            # The repository is public: print only counts and flags, never names or IDs.
+            summary="$(jq -c 'if type == "object" then with_entries(select(.value | type == "number" or type == "boolean")) else {} end' response.json 2>/dev/null)" || summary=""
+            echo "$job: HTTP ${status:-000} ${summary}"
+            [ "${status:-000}" = 200 ] || failed=1
+            rm -f response.json
+          done
+          exit "$failed"

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { getStorage } from "firebase-admin/storage";
 import { getAdminApp, getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { cleanClosedAccountUploads } from "@/lib/server/account-upload-cleanup";
+import { isScheduledJobRequest } from "@/lib/server/scheduled-job-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -10,7 +11,7 @@ const LEASE_MS = 360_000; // Longer than the invocation's hard runtime limit.
 const RETRY_MS = 24 * 60 * 60 * 1000;
 
 export async function GET(req: NextRequest) {
-  if (!process.env.CRON_SECRET || req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await isScheduledJobRequest(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const deadline = Date.now() + 240_000;
   const db = getAdminDb();
   const jobs = await db.collection("account_cleanup").where("notBefore", "<=", new Date().toISOString()).limit(50).get();

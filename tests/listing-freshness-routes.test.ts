@@ -18,6 +18,7 @@ import * as discoveryProjection from '../src/lib/server/public-job-discovery-pro
 import * as publicEvents from '../src/lib/public-events.ts';
 import * as eventDedupe from '../src/lib/event-directory-dedupe.ts';
 import * as opportunityPosting from '../src/lib/opportunity-posting.ts';
+import { scheduledJobAuth } from './helpers/scheduled-job-auth.mjs';
 import * as opportunityLookups from '../src/lib/server/opportunity-lookups.ts';
 import * as jobDocuments from '../src/lib/server/public-job-documents.ts';
 import * as editorialImportGuard from '../src/lib/server/editorial-import-guard.ts';
@@ -220,7 +221,7 @@ test('expiry cron uses full record cutoffs and keeps active/status mirrors align
   ];
   const writes: Array<{id:string;patch:any}> = [];
   const db = {collection:(collection:string) => ({doc:(id:string)=>({collection,id}),where:(_field:string,_op:string,value:unknown) => ({get:async()=>({docs:collection === 'jobs' ? rows.filter(r=>r[_field as keyof typeof r]===value).map(row=>({id:row.id,ref:row.id,data:()=>row})) : []})})}), runTransaction:async(callback:any)=>callback({get:async(id:any)=>typeof id==='string'?{exists:true,id,ref:id,data:()=>rows.find(row=>row.id===id)}:{exists:false},update:(id:string,patch:unknown)=>writes.push({id,patch})})};
-  const route = loadRoute('src/app/api/cron/expire-jobs/route.ts', {'next/server':next,'@/lib/firebase-admin':{getAdminDb:()=>db}});
+  const route = loadRoute('src/app/api/cron/expire-jobs/route.ts', {'next/server':next,'@/lib/firebase-admin':{getAdminDb:()=>db},'@/lib/server/scheduled-job-auth':scheduledJobAuth({CRON_SECRET:'test-only'})});
   publicJobRefreshes.count = 0;
   assert.equal((await route.GET({headers:new Headers()})).status,401);
   assert.equal(writes.length,0);

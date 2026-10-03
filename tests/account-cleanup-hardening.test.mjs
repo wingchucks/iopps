@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { scheduledJobAuth } from './helpers/scheduled-job-auth.mjs';
 
 const nativeRequire = createRequire(import.meta.url);
 function load(file, dependencies, globals = {}) {
@@ -77,6 +78,7 @@ function fixture() {
     'next/server': { NextResponse: Response }, 'firebase-admin/storage': { getStorage: () => ({ bucket: () => bucket }) },
     '@/lib/firebase-admin': { getAdminDb: () => db, getAdminApp: () => ({}), getAdminAuth: () => auth },
     '@/lib/server/account-upload-cleanup': helper,
+    '@/lib/server/scheduled-job-auth': scheduledJobAuth({ CRON_SECRET: 'fixture-secret' }),
   }, { Date: Clock, process: { env: { CRON_SECRET: 'fixture-secret' } } });
   return { uid, rows, objects, deletes, authDeletes, listings, queries, hooks, db, bucket, auth, helper,
     advance: ms => { now += ms; }, now: () => now,
