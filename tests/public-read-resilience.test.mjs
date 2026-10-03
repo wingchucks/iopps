@@ -22,9 +22,10 @@ test('homepage and partner readers propagate read failures instead of returning 
   await assert.rejects(landing.getPartners(), /UNAVAILABLE/);
 });
 
-function pageCache(overrides, globals = {}, loadCachedPublicJobRouteIndex = async () => ({ routes: [] })) {
+function pageCache(overrides, globals = {}, loadCachedPublicJobRouteIndex = async () => ({ routes: [] }), keepCacheRefreshesAlive = () => {}) {
   return sourceModule('src/lib/server/public-page-cache.ts', { globals, mocks: {
     'next/cache': { unstable_cache: read => read },
+    '@/lib/server/cache-refresh-keepalive': { keepCacheRefreshesAlive },
     '@/lib/public-job-route-cache': { loadCachedPublicJobRouteIndex },
     '@/lib/server/landing-content': { getLatestJobs: async () => [], getPartners: async () => [] },
     '@/lib/server/detail-metadata': {
@@ -45,6 +46,25 @@ test('a hung or failed job metadata read renders a noindex fallback instead of h
   const healthy = pageCache({});
   assert.deepEqual(await healthy.getJobPageMetadata('registered-nurse'), { title: 'Cached job' });
   assert.deepEqual(await healthy.getJobPageJsonLd('registered-nurse'), { '@type': 'JobPosting' });
+});
+
+test('every shared cached read keeps its request open for the refresh it may start', async () => {
+  let kept = 0;
+  const cache = pageCache({}, {}, async () => ({ routes: [] }), () => { kept++; });
+  for (const read of [cache.getCachedLatestJobs, cache.getCachedPartners, () => cache.getCachedJobMetadata('registered-nurse'), () => cache.getCachedJobJsonLd('registered-nurse')]) {
+    const before = kept;
+    await read();
+    assert.equal(kept, before + 1);
+  }
+  let indexKept = 0;
+  const routeCache = sourceModule('src/lib/public-job-route-cache.ts', { mocks: {
+    'next/cache': { unstable_cache: read => read },
+    '@/lib/firebase-admin': { getAdminDb: () => ({}) },
+    '@/lib/server/public-job-routing': { buildPublicJobRouteIndex: async () => ({ routes: [] }) },
+    '@/lib/server/cache-refresh-keepalive': { keepCacheRefreshesAlive: () => { indexKept++; } },
+  } });
+  await routeCache.loadCachedPublicJobRouteIndex();
+  assert.equal(indexKept, 1);
 });
 
 test('a hung shared route index warm-up never holds the job page metadata', async () => {

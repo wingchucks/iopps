@@ -4,6 +4,7 @@ import { getLatestJobs, getPartners } from "@/lib/server/landing-content";
 import { fallbackMetadata, generateJobJsonLd, generateJobMetadata } from "@/lib/server/detail-metadata";
 import { loadCachedPublicJobRouteIndex } from "@/lib/public-job-route-cache";
 import { publicReadOr, withPublicReadTimeout } from "@/lib/public-read-timeout";
+import { keepCacheRefreshesAlive } from "@/lib/server/cache-refresh-keepalive";
 
 // Public, non-personalized Firestore reads shared across requests for a short
 // window. Pages stay dynamic; the job detail content itself still loads live
@@ -14,10 +15,18 @@ export const PUBLIC_PAGE_CACHE_SECONDS = 300;
 
 const jobsCache = { revalidate: PUBLIC_PAGE_CACHE_SECONDS, tags: ["public-jobs"] };
 
-export const getCachedLatestJobs = unstable_cache(withPublicReadTimeout(getLatestJobs, "Homepage jobs"), ["landing-latest-jobs"], jobsCache);
-export const getCachedPartners = unstable_cache(withPublicReadTimeout(getPartners, "Partners"), ["landing-partners"], { revalidate: PUBLIC_PAGE_CACHE_SECONDS, tags: ["public-partners"] });
-export const getCachedJobMetadata = unstable_cache(withPublicReadTimeout(generateJobMetadata, "Job metadata"), ["job-detail-metadata"], jobsCache);
-export const getCachedJobJsonLd = unstable_cache(withPublicReadTimeout(generateJobJsonLd, "Job JSON-LD"), ["job-detail-json-ld"], jobsCache);
+// A stale entry is refreshed after the response; the request must wait for that refresh.
+function keptAlive<Args extends unknown[], Result>(read: (...args: Args) => Promise<Result>): (...args: Args) => Promise<Result> {
+  return (...args) => {
+    keepCacheRefreshesAlive();
+    return read(...args);
+  };
+}
+
+export const getCachedLatestJobs = keptAlive(unstable_cache(withPublicReadTimeout(getLatestJobs, "Homepage jobs"), ["landing-latest-jobs"], jobsCache));
+export const getCachedPartners = keptAlive(unstable_cache(withPublicReadTimeout(getPartners, "Partners"), ["landing-partners"], { revalidate: PUBLIC_PAGE_CACHE_SECONDS, tags: ["public-partners"] }));
+export const getCachedJobMetadata = keptAlive(unstable_cache(withPublicReadTimeout(generateJobMetadata, "Job metadata"), ["job-detail-metadata"], jobsCache));
+export const getCachedJobJsonLd = keptAlive(unstable_cache(withPublicReadTimeout(generateJobJsonLd, "Job JSON-LD"), ["job-detail-json-ld"], jobsCache));
 
 // Metadata caches resolve routes in a nested cache scope, which bypasses
 // unstable_cache; reading the shared route index first keeps that nested read memoized.

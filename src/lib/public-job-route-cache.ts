@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { withPublicReadTimeout } from "@/lib/public-read-timeout";
+import { keepCacheRefreshesAlive } from "@/lib/server/cache-refresh-keepalive";
 import { buildPublicJobRouteIndex, type PublicJobRouteIndex } from "@/lib/server/public-job-routing";
 
 // Same lifetime and tag as the other public job caches (PUBLIC_PAGE_CACHE_SECONDS).
@@ -24,6 +25,7 @@ let memo: { until: number; index: Promise<PublicJobRouteIndex> } | undefined;
  * rebuild; findPublicJobDocument merges anything changed after `builtAt`.
  */
 export function loadCachedPublicJobRouteIndex(): Promise<PublicJobRouteIndex> {
+  keepCacheRefreshesAlive();
   const now = Date.now();
   if (memo && memo.until > now) return memo.index;
   const index = readCachedRouteIndex();
