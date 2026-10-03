@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {hasJobExpired,sourceLifecyclePatch,missingSourceJobIds,expirationPatch} from '../src/lib/server/job-expiration.ts';
+import {hasJobExpired,sourceLifecyclePatch,missingSourceJobIds,expirationPatch,confirmsEmptyFeed} from '../src/lib/server/job-expiration.ts';
 const now=new Date('2026-09-08T05:30:00Z');
 const url='https://jobs.dayforcehcm.com/en-US/westlandcorp/CANDIDATEPORTAL';
 const feed={id:'feed',employerId:'westland',feedType:'dayforce',feedUrl:url};
@@ -38,6 +38,22 @@ test('missing-source cleanup scopes employer, feed, and board while preserving c
  assert.deepEqual(missingSourceJobIds(jobs,[],feed,0),[]);
  assert.deepEqual(missingSourceJobIds(jobs,current,feed,1),[]);
  assert.deepEqual(missingSourceJobIds(jobs,current,{...feed,feedType:'xml'},0),[]);
+});
+
+test('an empty feed closes its jobs only after staying empty for most of a day',()=>{
+ const at=Date.parse('2026-10-03T08:40:00Z');
+ const empty={lastSyncItemCount:0,lastSyncJobsFailed:0,lastSyncError:null};
+ const hoursAgo=(hours:number)=>new Date(at-hours*3600_000);
+ assert.equal(confirmsEmptyFeed({...empty,lastSyncedAt:hoursAgo(24)},at),true);
+ assert.equal(confirmsEmptyFeed({...empty,lastSyncedAt:{toMillis:()=>hoursAgo(20).getTime()}},at),true);
+ assert.equal(confirmsEmptyFeed({...empty,lastSyncedAt:hoursAgo(24).toISOString()},at),true);
+ // Vercel Cron at 08:00 then its GitHub backup at 08:40, or a repeated manual sync.
+ assert.equal(confirmsEmptyFeed({...empty,lastSyncedAt:hoursAgo(2/3)},at),false);
+ assert.equal(confirmsEmptyFeed({...empty,lastSyncedAt:{toMillis:()=>at-5*60_000}},at),false);
+ assert.equal(confirmsEmptyFeed(empty,at),false,'no recorded sync time');
+ for(const previous of [{lastSyncItemCount:3},{lastSyncJobsFailed:1},{lastSyncJobsFailed:undefined},{lastSyncError:'timeout'}]){
+  assert.equal(confirmsEmptyFeed({...empty,lastSyncedAt:hoursAgo(24),...previous},at),false,JSON.stringify(previous));
+ }
 });
 
 test('past source dates do not overwrite manual deletions',()=>{
