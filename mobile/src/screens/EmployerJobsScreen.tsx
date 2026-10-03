@@ -59,12 +59,12 @@ export default function EmployerJobsScreen() {
     return !job.active;
   });
 
-  // Open jobs show as members see them; drafts and closed jobs open in the web dashboard.
+  // Open jobs show as members see them; drafts and closed jobs open in the website's job editor.
   const openJob = (job: EmployerJob) => {
     if (job.active) {
       (navigation as any).navigate("JobDetail", { jobId: job.id });
     } else {
-      Linking.openURL(`${WEB_DASHBOARD_URL}/jobs/${encodeURIComponent(job.id)}`);
+      Linking.openURL(`${WEB_DASHBOARD_URL}/jobs/${encodeURIComponent(job.id)}/edit`);
     }
   };
 
