@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { expireSubscriptionAtomically, isSubscriptionExpiryDue } from '@/lib/server/subscription-expiration';
 import { refreshPublicPartners } from '@/lib/public-partner-cache';
+import { isScheduledJobRequest } from '@/lib/server/scheduled-job-auth';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
@@ -11,8 +12,7 @@ export const maxDuration = 300;
  * rest: the run still answers 500 so the failure stays visible in cron monitoring.
  */
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {
+  if (!await isScheduledJobRequest(req)) {
     return NextResponse.json({error:'Unauthorized'},{status:401});
   }
   let candidates;

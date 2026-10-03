@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Firestore, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { hasEventEnded } from "@/lib/public-events";
+import { isScheduledJobRequest } from "@/lib/server/scheduled-job-auth";
 
 export const runtime = "nodejs";
 
@@ -59,11 +60,10 @@ async function completeEndedEvents(db: Firestore, docs: QueryDocumentSnapshot[],
  * Runs daily. Marks published events whose last day (or end time) has passed
  * in their own time zone as completed, so they stop surfacing on public pages
  * and member profile event lists.
- * Protected by CRON_SECRET header.
+ * Called by Vercel Cron or the scheduled-jobs GitHub workflow.
  */
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!await isScheduledJobRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

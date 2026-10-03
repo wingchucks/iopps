@@ -3,12 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { expirationPatch, isJobRecordExpired } from '@/lib/server/job-expiration';
 import { refreshPublicJobs } from '@/lib/employer-job-cache';
+import { isScheduledJobRequest } from '@/lib/server/scheduled-job-auth';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 /** Candidate enumeration is advisory; re-evaluate every decision under the write transaction. */
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({error:'Unauthorized'},{status:401});
+  if (!await isScheduledJobRequest(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
   // Every committed close or mirror repair changes public jobs, even if a later one fails.
   let publicJobsChanged = false;
   try {

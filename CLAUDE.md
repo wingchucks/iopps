@@ -140,6 +140,7 @@ Edit `/firestore.rules` and verify with isolated demo emulators. Deploy only und
 
 Configured in root `vercel.json`:
 - Feed sync, subscription checks, and job/event expiry (daily); exact schedules are in root `vercel.json`.
+- `.github/workflows/scheduled-jobs.yml` calls the same routes daily at 08:40 UTC as a backup, because Vercel Cron stopped invoking them in September 2026. The routes accept `CRON_SECRET` or that workflow's GitHub OIDC token (`src/lib/server/scheduled-job-auth.ts`); keep the workflow's job list in step with `vercel.json`.
 
 ## Design System (Post-Migration)
 

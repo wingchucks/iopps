@@ -26,6 +26,7 @@ import * as pricing from '../src/lib/pricing.ts';
 import * as businessReview from '../src/lib/business-listing-review.ts';
 import * as listingFreshness from '../src/lib/listing-freshness.ts';
 import * as contentRecord from '../src/lib/server/public-content-record.ts';
+import { scheduledJobAuth } from './helpers/scheduled-job-auth.mjs';
 
 const requireNative = createRequire(import.meta.url);
 function load(file, dependencies, globals = {}) {
@@ -416,6 +417,7 @@ test('account cleanup cron requires its secret and retains failed jobs with a la
     '@/lib/firebase-admin': { getAdminApp: () => ({}), getAdminAuth: () => auth, getAdminDb: () => db },
     // Execute the actual helper and its ownership callback; no synthetic cursor result.
     '@/lib/server/account-upload-cleanup': { cleanClosedAccountUploads },
+    '@/lib/server/scheduled-job-auth': scheduledJobAuth({ CRON_SECRET: 'fictional-unit-secret' }),
   }, { process: { env: { CRON_SECRET: 'fictional-unit-secret' } } });
   assert.equal((await route.GET(new Request('https://example.invalid/cron'))).status, 401);
   assert.equal(scanned, 0);
