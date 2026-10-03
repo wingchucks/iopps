@@ -32,14 +32,17 @@ type PublicJobMatch = {
  */
 export type PublicJobRouteIndex = {
   routes: Array<[routeBase: string, documentId: string]>;
-  /** Set on a shared cached index; later changes come from a bounded fresh query. */
+  /** Set on a shared cached index; later changes come from a fresh, paged query. */
   builtAt?: number;
 };
 export type PublicJobRouteIndexLoader = () => Promise<PublicJobRouteIndex>;
 
 const ROUTE_FIELDS = ["slug", "title"] as const;
 const STORED_SLUG_LIMIT = 25;
-const RECENT_CHANGE_LIMIT = 200;
+const RECENT_CHANGE_PAGE = 200;
+// Paging stops after this many pages per collection (a large feed import, say) and the
+// lookup reads the current index instead, so no request pages through an unbounded history.
+const RECENT_CHANGE_PAGES = 5;
 // Server clocks and Firestore commit times may differ slightly.
 const RECENT_CHANGE_MARGIN_MS = 60_000;
 
@@ -118,13 +121,27 @@ async function storedSlugIds(db: Firestore, base: string): Promise<string[]> {
   return [...jobs.docs, ...posts.docs].map(doc => doc.id);
 }
 
-/** Records written after a cached index was read (publication, approval, imports). */
-async function recentlyChangedRoutes(db: Firestore, since: number): Promise<PublicJobRouteIndex["routes"]> {
+/**
+ * Records written after a cached index was read (publication, approval, imports), or
+ * null when there are too many to page through: never a silently truncated list.
+ */
+async function recentlyChangedRoutes(db: Firestore, since: number): Promise<PublicJobRouteIndex["routes"] | null> {
   const after = new Date(since - RECENT_CHANGE_MARGIN_MS);
-  const snapshots = await Promise.all(["jobs", "posts"].map(collection => db.collection(collection)
-    .where("updatedAt", ">=", after).orderBy("updatedAt", "desc")
-    .select(...ROUTE_FIELDS).limit(RECENT_CHANGE_LIMIT).get()));
-  return snapshots.flatMap(snapshot => snapshot.docs.map(doc => [routeBase(doc.id, doc.data()), doc.id] as [string, string]));
+  const changed = await Promise.all(["jobs", "posts"].map(async collection => {
+    // Oldest first: a record written again while paging moves ahead of the cursor
+    // instead of behind it. The cursor needs updatedAt in each snapshot.
+    let query = db.collection(collection).where("updatedAt", ">=", after).orderBy("updatedAt")
+      .select(...ROUTE_FIELDS, "updatedAt").limit(RECENT_CHANGE_PAGE);
+    const routes: PublicJobRouteIndex["routes"] = [];
+    for (let page = 0; page < RECENT_CHANGE_PAGES; page++) {
+      const snapshot = await query.get();
+      routes.push(...snapshot.docs.map(doc => [routeBase(doc.id, doc.data()), doc.id] as [string, string]));
+      if (snapshot.size < RECENT_CHANGE_PAGE) return routes;
+      query = query.startAfter(snapshot.docs[snapshot.docs.length - 1]);
+    }
+    return null;
+  }));
+  return changed.every(routes => routes !== null) ? changed.flat() : null;
 }
 
 /** Reads only the slug/title of active candidates; never descriptions or history. */
@@ -165,10 +182,12 @@ export async function findPublicJobDocument(
 ): Promise<PublicJobMatch | null> {
   const { exactId, baseSlug } = parsePublicJobRouteSlug(idOrSlug);
   let knownRoutes: Promise<PublicJobRouteIndex["routes"]> | undefined;
-  const routes = () => knownRoutes ||= loadIndex().then(async index => [
-    ...index.routes,
-    ...(index.builtAt === undefined ? [] : await recentlyChangedRoutes(db, index.builtAt)),
-  ]);
+  const routes = () => knownRoutes ||= loadIndex().then(async index => {
+    if (index.builtAt === undefined) return index.routes;
+    const changed = await recentlyChangedRoutes(db, index.builtAt);
+    // Too many changes since the cached index was read: use the current index instead.
+    return changed ? [...index.routes, ...changed] : (await buildPublicJobRouteIndex(db)).routes;
+  });
   const routeIds = async (base: string) => {
     const [indexed, stored] = await Promise.all([routes(), storedSlugIds(db, base)]);
     return [...indexed.filter(([route]) => route === base).map(([, id]) => id), ...stored];

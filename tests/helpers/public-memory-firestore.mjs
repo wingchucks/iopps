@@ -41,7 +41,11 @@ export function memoryFirestore(seed = {}) {
     orderBy: (field, direction = 'asc') => query(name, { ...state, order: [field, direction] }),
     select: (...fields) => query(name, { ...state, fields }),
     limit: max => query(name, { ...state, max }),
-    startAfter: document => query(name, { ...state, after: document.id }),
+    startAfter: document => {
+      // As in the Admin SDK, a snapshot cursor must carry the ordered field (select() must include it).
+      if (state.order && document.data()?.[state.order[0]] === undefined) throw new Error(`Field "${state.order[0]}" is missing in the provided DocumentSnapshot.`);
+      return query(name, { ...state, after: document.id });
+    },
     doc: id => ref(name, id),
     get: async () => {
       reads.queries.push({ collection: name, filters: state.filters.map(([field, operator, value]) => [field, operator, value]), fields: state.fields, limit: state.max, order: state.order });
