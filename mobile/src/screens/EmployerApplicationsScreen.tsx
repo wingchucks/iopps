@@ -229,18 +229,6 @@ export default function EmployerApplicationsScreen() {
             </TouchableOpacity>
           </>
         )}
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() =>
-            (navigation as any).navigate("Conversation", {
-              conversationId: item.id,
-              memberId: item.memberId,
-            })
-          }
-        >
-          <Text style={styles.actionButtonText}>Message</Text>
-        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );

@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { onUnreadConversationCount } from "../lib/messaging";
 import { useAuth } from "./AuthContext";
 import { logger } from "../lib/logger";
 
@@ -41,25 +42,14 @@ export function BadgeProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Listen to conversations with unread messages
-    const conversationsQuery = query(
-      collection(db, "conversations"),
-      where("memberId", "==", user.uid),
-      where("memberUnreadCount", ">", 0)
-    );
-
-    const unsubscribeConversations = onSnapshot(
-      conversationsQuery,
-      (snapshot) => {
-        let totalUnread = 0;
-        snapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          totalUnread += data.memberUnreadCount || 0;
-        });
+    // Listen to conversations with an unread message
+    const unsubscribeConversations = onUnreadConversationCount(
+      user.uid,
+      (unreadConversations) => {
         setCounts((prev) => ({
           ...prev,
-          messages: totalUnread,
-          total: totalUnread + prev.notifications,
+          messages: unreadConversations,
+          total: unreadConversations + prev.notifications,
         }));
       },
       (error) => {

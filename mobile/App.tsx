@@ -13,6 +13,7 @@ import { BadgeProvider, useBadges } from "./src/context/BadgeContext";
 import { ToastProvider } from "./src/context/ToastContext";
 import { NetworkProvider } from "./src/context/NetworkContext";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
+import { LEGACY_CONVERSATIONS_CACHE_PREFIX, removeFromCacheByPrefix } from "./src/lib/cache";
 
 // Main screens
 import JobsScreen from "./src/screens/JobsScreen";
@@ -458,6 +459,11 @@ function NavigationWrapper() {
 }
 
 export default function App() {
+  // Remove private message previews that earlier versions cached for any account on this device.
+  useEffect(() => {
+    void removeFromCacheByPrefix(LEGACY_CONVERSATIONS_CACHE_PREFIX);
+  }, []);
+
   return (
     <SafeAreaProvider>
       <ErrorBoundary>

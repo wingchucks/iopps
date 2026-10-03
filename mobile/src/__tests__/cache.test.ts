@@ -3,9 +3,11 @@ import {
   getFromCache,
   saveToCache,
   removeFromCache,
+  removeFromCacheByPrefix,
   clearCache,
   CACHE_KEYS,
   CACHE_TTL,
+  LEGACY_CONVERSATIONS_CACHE_PREFIX,
 } from '../lib/cache';
 
 describe('Cache utilities', () => {
@@ -74,6 +76,22 @@ describe('Cache utilities', () => {
 
       const result = await getFromCache('to-remove');
       expect(result).toBeNull();
+    });
+  });
+
+  describe('removeFromCacheByPrefix', () => {
+    it('removes legacy message previews for every account and nothing else', async () => {
+      await saveToCache('conversations:user-a', [{ lastMessage: 'Private to A' }]);
+      await saveToCache('conversations:user-b', [{ lastMessage: 'Private to B' }]);
+      await saveToCache(CACHE_KEYS.SAVED_JOBS('user-a'), ['job-1']);
+      await AsyncStorage.setItem('conversations:not-ours', 'kept');
+
+      await removeFromCacheByPrefix(LEGACY_CONVERSATIONS_CACHE_PREFIX);
+
+      expect(await getFromCache('conversations:user-a')).toBeNull();
+      expect(await getFromCache('conversations:user-b')).toBeNull();
+      expect(await getFromCache(CACHE_KEYS.SAVED_JOBS('user-a'))).toEqual(['job-1']);
+      expect(await AsyncStorage.getItem('conversations:not-ours')).toBe('kept');
     });
   });
 
