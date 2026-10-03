@@ -78,6 +78,9 @@ const PLAN_ID_BY_TIER: Record<SubscriptionTier, "tier1" | "tier2" | "tier3"> = {
   school: "tier3",
 };
 
+/** Complimentary access never funds postings; free postings are given as job posting credits. */
+const FREE_POSTINGS_HINT = "To let an organization post jobs for free, use “Grant credit” on the Employers list.";
+
 /** $0 admin or Hermes grants: shown as complimentary, because they never fund job postings. */
 function isComplimentaryAccess(employer: Employer): boolean {
   const subscription = employer.subscription && typeof employer.subscription === "object" ? employer.subscription : {};
@@ -180,7 +183,7 @@ export default function OrganizationDetailPage() {
     }
 
     if (amount <= 0 && !window.confirm(
-      `Grant complimentary ${SUBSCRIPTION_PLANS[PLAN_ID_BY_TIER[subscriptionDraft.subscriptionTier]].title} access for $0?\n\n${COMPLIMENTARY_ACCESS_DETAIL}`,
+      `Grant complimentary ${SUBSCRIPTION_PLANS[PLAN_ID_BY_TIER[subscriptionDraft.subscriptionTier]].title} access for $0?\n\n${COMPLIMENTARY_ACCESS_DETAIL}\n\n${FREE_POSTINGS_HINT}`,
     )) {
       return;
     }
@@ -590,7 +593,7 @@ export default function OrganizationDetailPage() {
                 isComplimentaryDraft ? "text-amber-300" : "text-[var(--text-secondary)]",
               )}>
                 {isComplimentaryDraft
-                  ? `Amount is set to $0.00. This will create complimentary admin-grant access (${COMPLIMENTARY_ACCESS_LABEL}). It will not count as a paid public-partner subscription. ${COMPLIMENTARY_ACCESS_DETAIL}`
+                  ? `Amount is set to $0.00. This will create complimentary admin-grant access (${COMPLIMENTARY_ACCESS_LABEL}). It will not count as a paid public-partner subscription. ${COMPLIMENTARY_ACCESS_DETAIL} ${FREE_POSTINGS_HINT}`
                   : `This will apply the ${selectedPlan.title} annual plan at ${selectedPlan.priceLabel}${selectedPlan.periodLabel}.`}
               </p>
             </div>

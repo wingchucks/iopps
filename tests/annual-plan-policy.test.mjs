@@ -74,4 +74,11 @@ test('billing, checkout and admin pages show paid terms and complimentary access
  const admin=readFileSync('src/app/admin/employers/[orgId]/page.tsx','utf8');
  assert.match(admin,/isComplimentaryAccess\(employer\)/);assert.match(admin,/window\.confirm/);assert.match(admin,/COMPLIMENTARY_ACCESS_DETAIL/);
  assert.match(admin,/jobPostingUsed/);
+ // Complimentary access never funds postings: the confirmation and help text point to the credit tool.
+ assert.match(admin,/FREE_POSTINGS_HINT = "To let an organization post jobs for free, use “Grant credit” on the Employers list\."/);
+ assert.match(admin,/window\.confirm\(\s*`[^`]*\$\{COMPLIMENTARY_ACCESS_DETAIL\}[^`]*\$\{FREE_POSTINGS_HINT\}`/);
+ assert.match(admin,/Amount is set to \$0\.00\.[^`]*\$\{FREE_POSTINGS_HINT\}`/);
+ const dashboard=readFileSync('src/app/org/dashboard/page.tsx','utf8');
+ assert.match(dashboard,/setComplimentaryAccess\(Boolean\(dashData\.billing\?\.complimentary\)\)/,'the dashboard badge follows the server billing state');
+ assert.match(dashboard,/complimentaryAccess \? `Complimentary \$\{org\.plan\} · no paid postings` : `\$\{org\.plan\} plan`/);
 });

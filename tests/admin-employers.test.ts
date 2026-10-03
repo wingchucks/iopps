@@ -53,3 +53,32 @@ test("marks school records with a school account type", () => {
   assert.equal(employer.accountType, "school");
   assert.equal(employer.publicHref, "/schools/school_1");
 });
+
+test("labels complimentary grants as complimentary instead of showing the paid plan price", () => {
+  const paid = normalizeAdminEmployerRow({
+    id: "org_paid",
+    subscriptionTier: "premium",
+    subscription: { tier: "premium", status: "active", termId: "cs_test_fixture" },
+  });
+  assert.equal(paid.planLabel, "Premium - $2,500/yr");
+
+  const adminGrant = normalizeAdminEmployerRow({
+    id: "org_admin_grant",
+    subscriptionTier: "premium",
+    subscription: { tier: "premium", status: "active", paymentId: "admin-grant-tier2", amountPaid: 0, totalAmount: 0 },
+  });
+  assert.equal(adminGrant.planLabel, "Premium · Complimentary — paid postings not included");
+
+  const hermesGrant = normalizeAdminEmployerRow({
+    id: "org_hermes_grant",
+    plan: "premium",
+    subscription: {
+      tier: "premium",
+      status: "active",
+      paymentId: "admin-grant-tier2",
+      amountPaid: 0,
+      bonusAccessReason: "Complimentary Hermes administrator grant",
+    },
+  });
+  assert.equal(hermesGrant.planLabel, "Premium · Complimentary — paid postings not included");
+});
