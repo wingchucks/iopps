@@ -7,7 +7,7 @@ import ts from 'typescript';
 import * as expiration from '../src/lib/server/subscription-expiration.ts';
 import { memoryFirestore } from './helpers/memory-firestore.mjs';
 
-function cron(seed: Record<string, unknown>) {
+function cron(seed: Record<string, unknown>, expirationModule: Record<string, unknown> = expiration) {
   const memory = memoryFirestore(seed);
   const exports: any = {};
   const logged: string[] = [];
@@ -16,7 +16,7 @@ function cron(seed: Record<string, unknown>) {
     require: (name: string) => {
       if (name === 'next/server') return { NextResponse: { json: Response.json } };
       if (name === '@/lib/firebase-admin') return { getAdminDb: () => memory.db };
-      if (name === '@/lib/server/subscription-expiration') return expiration;
+      if (name === '@/lib/server/subscription-expiration') return expirationModule;
       throw new Error(name);
     },
   });
@@ -50,4 +50,36 @@ test('a clean run answers 200 with an empty failure list', async () => {
   const response = await h.run();
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).failures, []);
+});
+
+test('one-time purchases and receipts not yet due never start an expiry transaction', async () => {
+  const transactions: string[] = [];
+  const counted = {
+    ...expiration,
+    expireSubscriptionAtomically: (db: any, id: string, now: Date) => {
+      transactions.push(id);
+      return expiration.expireSubscriptionAtomically(db, id, now);
+    },
+  };
+  const h = cron({
+    'subscriptions/one-time-1': { orgId: 'owner-b', plan: 'standard-post', status: 'active', billingCycle: 'one-time', kind: 'purchase', expiresAt: null },
+    'subscriptions/one-time-2': { orgId: 'owner-b', plan: 'featured-post', status: 'active', billingCycle: 'one-time', kind: 'purchase' },
+    'subscriptions/c-current': { orgId: 'owner-c', plan: 'tier1', status: 'active', expiresAt: new Date('2999-01-01') },
+    'subscriptions/b-good': { orgId: 'owner-b', plan: 'tier1', status: 'active', expiresAt: new Date('2000-01-01') },
+    'employers/owner-b': { plan: 'standard' }, 'organizations/owner-b': { plan: 'standard' },
+  }, counted);
+  const response = await h.run();
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.deepEqual({ checked: body.checked, due: body.due, expired: body.expired }, { checked: 4, due: 1, expired: 1 });
+  assert.deepEqual(transactions, ['b-good']);
+  assert.equal((h.memory.read('subscriptions/one-time-1') as any).status, 'active', 'one-time purchases are left alone');
+});
+
+test('the due check matches the transaction for Timestamps, dates and missing expiries', () => {
+  const now = new Date('2026-10-03T12:00:00Z');
+  assert.equal(expiration.isSubscriptionExpiryDue({ toDate: () => new Date('2026-10-03T11:59:59Z') }, now), true);
+  assert.equal(expiration.isSubscriptionExpiryDue(new Date('2026-10-03T12:00:00Z'), now), true);
+  assert.equal(expiration.isSubscriptionExpiryDue('2027-01-01T00:00:00Z', now), false);
+  for (const missing of [null, undefined, '', 'not a date']) assert.equal(expiration.isSubscriptionExpiryDue(missing, now), false);
 });

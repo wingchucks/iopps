@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
-import { expireSubscriptionAtomically } from '@/lib/server/subscription-expiration';
+import { expireSubscriptionAtomically, isSubscriptionExpiryDue } from '@/lib/server/subscription-expiration';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
@@ -24,7 +24,11 @@ export async function GET(req: NextRequest) {
   }
   let expired = 0;
   const failures: { id: string; error: string }[] = [];
-  for (const candidate of candidates.docs) {
+  // Only receipts whose expiry has passed start a transaction (which re-checks it). Active
+  // one-time posting purchases have no expiry and stay active for good, so without this
+  // filter every past purchase would cost a transaction on every run.
+  const due = candidates.docs.filter(candidate => isSubscriptionExpiryDue(candidate.data().expiresAt, now));
+  for (const candidate of due) {
     try {
       if (await expireSubscriptionAtomically(db,candidate.id,now)) expired++;
     } catch (error) {
@@ -34,7 +38,7 @@ export async function GET(req: NextRequest) {
     }
   }
   return NextResponse.json(
-    { checked: candidates.size, expired, failed: failures.length, failures, timestamp: now.toISOString() },
+    { checked: candidates.size, due: due.length, expired, failed: failures.length, failures, timestamp: now.toISOString() },
     { status: failures.length ? 500 : 200 },
   );
 }

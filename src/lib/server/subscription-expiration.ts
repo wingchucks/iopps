@@ -59,15 +59,30 @@ export function buildRenewalAccessPatch(renewal: { id: string; tier: string; sta
 }
 
 /** Recheck candidates and serialize expiry with the employer touched by paid fulfillment. */
+/**
+ * Whether a receipt's expiresAt has passed. One-time posting purchases have no expiry and
+ * are never due; the expiry transaction applies the same test to the document it re-reads.
+ */
+export function isSubscriptionExpiryDue(expiresAt: unknown, now: Date): boolean {
+  const expiry = subscriptionExpiryTime(expiresAt);
+  return Number.isFinite(expiry) && expiry <= now.getTime();
+}
+
+/** expiresAt as epoch milliseconds (Timestamp, Date, string or number), or NaN when missing. */
+function subscriptionExpiryTime(expiresAt: unknown): number {
+  const value = expiresAt as { toDate?: () => Date } | string | number | Date | null | undefined;
+  const rawExpiry = (value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') ? value.toDate() : value;
+  return rawExpiry ? new Date(rawExpiry as string | number | Date).getTime() : NaN;
+}
+
 export async function expireSubscriptionAtomically(db: Firestore, id: string, now: Date): Promise<boolean> {
   return db.runTransaction(async tx => {
     const ref = db.collection('subscriptions').doc(id);
     const snapshot = await tx.get(ref);
     if (!snapshot.exists) return false;
     const data = snapshot.data()!;
-    const rawExpiry = data.expiresAt?.toDate?.() ?? data.expiresAt;
-    const expiry = rawExpiry ? new Date(rawExpiry).getTime() : NaN;
-    if (data.status !== 'active' || !Number.isFinite(expiry) || expiry > now.getTime()) return false;
+    if (data.status !== 'active' || !isSubscriptionExpiryDue(data.expiresAt, now)) return false;
+    const expiry = subscriptionExpiryTime(data.expiresAt);
     const targets = resolveSubscriptionExpirationTargets(data);
     if ([targets.employerId, targets.organizationId].some(value => !value || value.includes('/'))) throw new Error('Subscription identity requires reconciliation');
     const employerRef = db.collection('employers').doc(targets.employerId);
