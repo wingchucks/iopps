@@ -46,7 +46,7 @@ const stubs={
  '@/lib/toast-context':{useToast:()=>({showToast:()=>{}})},
  '@/lib/useAccountContext':{useAccountContext:()=>({loading:false,isEmployer:location.search.includes('employer')})},
  '@/lib/firestore/notificationPreferences':{getNotificationPreferences:async()=>({categories,quietHours:{enabled:false,start:'22:00',end:'08:00'}}),updateNotificationPreferences:async(_uid,prefs)=>{window.savedPreferences=prefs}},
- '@/components/ProtectedRoute':{default:pass},'@/components/AppShell':{default:pass},'@/components/Card':{default:pass},'@/components/PageSkeleton':{default:()=>null}
+ '@/components/ProtectedRoute':{default:pass},'@/components/AppShell':{default:pass},'@/components/Card':{default:pass},'@/components/PageSkeleton':{default:()=>null},'./LiveBanner':{default:()=>null}
 };
 const load=fn=>{const exports={};fn(id=>{if(!(id in stubs))throw Error('Unapproved import '+id);return stubs[id]},exports);return exports};
 const Notification=load(function(require,exports){${notification}}).default;
