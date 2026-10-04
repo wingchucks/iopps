@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "lint:release": "eslint src public packages tests e2e scripts/*.mjs next.config.ts postcss.config.mjs eslint.config.mjs playwright.config.ts",
+    "audit:dependencies": "node scripts/audit-dependencies.mjs",
     "audit:public-links": "node scripts/audit-public-detail-links.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

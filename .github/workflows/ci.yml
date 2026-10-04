@@ -29,7 +29,7 @@ jobs:
         run: npm run lint:release
 
       - name: Audit root runtime and development dependencies
-        run: npm audit --audit-level=low
+        run: npm run audit:dependencies
 
       - name: Build root application
         run: npm run build
