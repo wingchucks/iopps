@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import Footer from "@/components/Footer";
+import LiveBanner from "@/components/LiveBanner";
 
 export const metadata: Metadata = {
   title: "About",
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-bg flex flex-col">
+      <LiveBanner />
       {/* Header */}
       <header
         className="text-center"

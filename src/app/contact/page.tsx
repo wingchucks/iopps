@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/Footer";
 import ContactForm from "./ContactForm";
+import LiveBanner from "@/components/LiveBanner";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-bg flex flex-col">
+      <LiveBanner />
       {/* Header */}
       <header
         className="text-center"
