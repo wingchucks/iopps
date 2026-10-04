@@ -4,12 +4,10 @@ name: Scheduled jobs
 # same five jobs once a day after Vercel's slots. Each job only changes what is still due, so
 # a day when both run is harmless. Requests carry this workflow's short-lived GitHub OIDC
 # token, which the routes verify (src/lib/server/scheduled-job-auth.ts); no secret is stored.
+# GitHub starts this repository's scheduled runs hours late (Oct 3: 2h20m); daily jobs allow it.
 on:
   schedule:
     - cron: "40 8 * * *"
-    # Temporary: one catch-up run today at 17:53 UTC, because this integration cannot start
-    # workflows by hand and GitHub never started the 15:45 one. Removed right after it runs.
-    - cron: "53 17 * * *"
   workflow_dispatch:
 
 permissions:
