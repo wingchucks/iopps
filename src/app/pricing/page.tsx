@@ -5,10 +5,12 @@ import Image from "next/image";
 import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
 import PricingTabs from "@/components/PricingTabs";
+import LiveBanner from "@/components/LiveBanner";
 
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-bg">
+      <LiveBanner />
       {/* Hero */}
       <section
         className="relative text-center overflow-hidden"

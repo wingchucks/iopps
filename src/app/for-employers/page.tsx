@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Footer from "@/components/Footer";
 import EmployerOfferGrid from "@/components/pricing/EmployerOfferGrid";
+import LiveBanner from "@/components/LiveBanner";
 
 const valueProps = [
   {
@@ -32,6 +33,7 @@ const valueProps = [
 export default function ForEmployersPage() {
   return (
     <div className="min-h-screen flex flex-col bg-bg">
+      <LiveBanner />
       {/* Hero */}
       <section
         className="relative overflow-hidden text-center"

@@ -6,6 +6,7 @@ import Footer from "./Footer";
 import NavBar from "./NavBar";
 import IconRailSidebar from "./IconRailSidebar";
 import OrgWorkspaceBanner from "./OrgWorkspaceBanner";
+import LiveBanner from "./LiveBanner";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const opportunityFlow =
@@ -33,7 +34,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <IconRailSidebar />
       </Suspense>
       {/* Content area — offset for the fixed sidebar on desktop */}
-      <div data-main-content tabIndex={-1} className="lg:pl-[240px] min-w-0 overflow-x-hidden"><OrgWorkspaceBanner />{children}</div>
+      <div data-main-content tabIndex={-1} className="lg:pl-[240px] min-w-0 overflow-x-hidden"><LiveBanner /><OrgWorkspaceBanner />{children}</div>
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { LivestreamFeed } from "@/lib/livestreams";
 
 export function useLivestreamFeed(videoId = "") {
@@ -33,5 +33,6 @@ export function useLivestreamFeed(videoId = "") {
     return () => { cancelled = true; window.clearTimeout(timeout); controller.abort(); };
   }, [attempt, videoId]);
 
-  return { data, loading, error, refresh: () => setAttempt(value => value + 1) };
+  const refresh = useCallback(() => setAttempt(value => value + 1), []);
+  return { data, loading, error, refresh };
 }
