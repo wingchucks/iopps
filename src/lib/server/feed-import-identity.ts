@@ -2,7 +2,7 @@ import { cleanupWriteAllowed } from "./job-cleanup-guards.ts";
 import { jobCategoryPatch } from "../job-taxonomy";
 import { createHash } from "node:crypto";
 import { canonicalLocationSet, feedJobKey } from "./feed-source";
-import type { Firestore } from "firebase-admin/firestore";
+import type { Firestore, Transaction } from "firebase-admin/firestore";
 import {preparePaidPublication} from './paid-job-publication-reader';
 import {firestorePublicationReader} from './paid-job-publication-firestore';
 import {PublicationError} from './paid-job-publication';
@@ -28,6 +28,21 @@ export function feedImportIdentity(job: Job): string {
   return createHash("sha256").update(JSON.stringify(fields)).digest("hex");
 }
 
+// The backend can invalidate a contention-aborted transaction with code 3, which the SDK does
+// not retry. Restart only that exact closed-transaction case, as the employer jobs API does. A
+// closed transaction commits nothing, and the fresh one sees any reservation another import made.
+async function runImportTransaction<T>(db: Firestore, action: (tx: Transaction) => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await db.runTransaction(action);
+    } catch (error) {
+      const failure = error as { code?: number; message?: string };
+      if (attempt >= 2 || failure?.code !== 3 ||
+        !failure.message?.includes("Transaction is invalid or closed.")) throw error;
+    }
+  }
+}
+
 /** Atomic reservation prevents concurrent manual/cron imports. Never revive a tombstone. */
 export async function createImportedJobOnce(db: Firestore, data: Job): Promise<boolean> {
   const identity = feedImportIdentity(data);
@@ -37,7 +52,7 @@ export async function createImportedJobOnce(db: Firestore, data: Job): Promise<b
   const publicationNow=new Date();
   const publicIntent=data.active===true || data.status==='active' || data.status==='published';
   if(publicIntent && (data.active===false || (data.status!==undefined && !['active','published'].includes(String(data.status))))) throw new PublicationError('invalid_lifecycle','Conflicting import publication state.');
-  return db.runTransaction(async tx => {
+  return runImportTransaction(db, async tx => {
     const [claim, existing, legacy] = await Promise.all([tx.get(reservation), tx.get(job), tx.get(mirror)]);
     if (claim.exists || existing.exists || legacy.exists) return false;
     if (!await cleanupWriteAllowed(db, tx, job.id, {}, data)) return false;
