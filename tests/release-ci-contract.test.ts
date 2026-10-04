@@ -23,3 +23,10 @@ test('CI requires lint for the complete root runtime and maintained verification
  assert.equal(pkg.scripts.lint,'eslint');
  assert.equal(pkg.scripts['lint:release'],'eslint src public packages tests e2e scripts/*.mjs next.config.ts postcss.config.mjs eslint.config.mjs playwright.config.ts');
 });
+
+test('CI audits every root dependency, with exceptions only for development tooling',()=>{
+ const ci=readFileSync('.github/workflows/ci.yml','utf8');
+ const build=ci.slice(ci.indexOf('  root-build:'),ci.indexOf('  mobile-lint:'));
+ assert.match(build,/run: npm run audit:dependencies/);
+ assert.equal(JSON.parse(readFileSync('package.json','utf8')).scripts['audit:dependencies'],'node scripts/audit-dependencies.mjs');
+});

@@ -42,6 +42,7 @@ const stubs={
  'next/link':{default:({children,...props})=>React.createElement('a',props,children)},
  'next/image':{default:()=>null},
  'next/navigation':{usePathname:()=>'/businesses'},
+ './LiveBanner':{default:()=>null},
  '@/lib/auth-context':{useAuth:()=>({user,loading:false})},
  '@/lib/toast-context':{useToast:()=>({showToast:()=>{}})},
  '@/lib/useAccountContext':{useAccountContext:()=>({loading:false,isEmployer:location.search.includes('employer')})},
